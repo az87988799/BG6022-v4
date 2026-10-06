@@ -142,11 +142,15 @@ def collect_result(store, run, step, attempt, outcome):
     """Archive completed files before publishing result references; never run conversion."""
     start = time.monotonic()
     workdir = store.path(attempt.directory)
+    # These identities belong to the startup reservation. A later Request or
+    # Plan must never relabel old execution; None explicitly records legacy unknowns.
+    versions = {name: getattr(attempt, name, None) for name in
+                ("request_version", "plan_version", "permission_version")}
     if outcome["state"] == "unknown":
         return Result(run_id=run.id, step_id=step.id, attempt_id=attempt.id,
                       operation_status="unknown", diagnostics=[{"category": "execution_unknown",
                       "reason": outcome.get("reason")}, *outcome.get("budget_violations", [])],
-                      source={"execution": outcome})
+                      source={"execution": outcome, **versions})
     artifacts = {}
     collection_error = None
     try:
@@ -210,7 +214,7 @@ def collect_result(store, run, step, attempt, outcome):
         operation_status=outcome["state"], checks=checks, qualified_outputs=outputs,
         observations=parsed["observations"], diagnostics=diagnostics,
         artifact_ids=[a.id for a in artifacts.values()],
-        source={"input_fingerprint": attempt.input_fingerprint,
+        source={**versions, "input_fingerprint": attempt.input_fingerprint,
                 "geometry_artifact_id": attempt.geometry_artifact_id,
                 "files": {name: {"artifact_id": a.id, "sha256": a.sha256}
                           for name, a in artifacts.items()}, "execution": outcome,

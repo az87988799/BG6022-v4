@@ -1,17 +1,13 @@
-"""A single fixed-Plan coordinator. No model, scientific parsing or tool-name branches."""
+"""Shared initialization, evidence collection and recovery for the single Agent loop."""
 
-import importlib
 import json
 import os
-
-import psutil
 
 from orca_agent.backends import local
 from orca_agent.doctor import diagnose
 from orca_agent.models import PermissionSnapshot, utc_now
-from orca_agent.store import BudgetExceeded, EnvironmentBusy, atomic_write, sha256_file
+from orca_agent.store import atomic_write, sha256_file
 from orca_agent.structured import prepare_task
-from orca_agent.tools.registry import get_tool
 from orca_agent.versions import CURRENT_CHECK_VERSION, is_supported_orca_version
 
 
@@ -74,7 +70,8 @@ def _goals(store, run, plan, results):
     for goal in request.goals:
         binding = plan.goal_map.get(goal.id) if plan else None
         result = results.get(binding.step_id) if binding else None
-        reference = binding.evidence if binding else run.goal_evidence.get(goal.id)
+        direct = run.goal_evidence.get(goal.id)
+        reference = direct or (binding.evidence if binding else None)
         if reference:
             if reference.run_id != run.id and reference.result_id not in run.permission.result_ids:
                 raise ValueError("goal evidence is outside the permission snapshot")
@@ -83,7 +80,7 @@ def _goals(store, run, plan, results):
                 raise ValueError("goal evidence Attempt differs")
         output = result.qualified_outputs.get(goal.port) if result else None
         valid = bool(result and validate_goal_evidence(store, run, request, goal, result)
-                     and not (binding and binding.gap))
+                     and not (binding and binding.gap and not direct))
         if output and not valid:
             mismatch = {"category": "check_rule_mismatch", "goal_id": goal.id,
                         "result_id": result.id, "required_version": goal.minimum_check_version,
@@ -240,108 +237,8 @@ def _validate_execution_rules(store, run):
         raise ValueError("frozen ORCA version is not enabled for scientific execution")
 
 
-def execute(store, config, run_id, *, resume=False, fault=None):
-    """Advance only while holding this Run's coordinator lock; signal writes remain available."""
-    with store.run_lock(run_id):
-        run = store.load_run(run_id)
-        plan = store.load_plan(run)
-        if resume:
-            control_path = store.path(f"runs/{run.id}/control.json")
-            control_before = control_path.read_bytes() if control_path.exists() else None
-            if not _recover(store, config, run, plan):
-                return run
-            with store.control_lock(run.id):
-                control_after = control_path.read_bytes() if control_path.exists() else None
-                if control_before == control_after and store.read_signal(run.id) == "pause":
-                    store.signal(run.id, None)
-        elif any(a.state in ("intent", "running", "unknown") for a in run.attempts):
-            raise ValueError("unfinished attempts require explicit resume and reconciliation")
-        results = _step_results(store, run)
-        if run.state in ("completed", "cancelled"):
-            _goals(store, run, plan, results)
-            store.save_run(run)
-            return run
-        if store.read_signal(run.id) == "cancel":
-            run.state = "cancelled"
-            store.save_run(run)
-            return run
-        if _goals(store, run, plan, results):
-            run.state = "completed"
-            store.save_run(run)
-            return run
-        # A fixed plan cannot retry failed inputs without an explicitly validated change.
-        if any(a.finished_at and a.state not in ("completed", "not_started") for a in run.attempts):
-            run.state = "failed"
-            store.record_diagnostic(run, "stopped", "Prior failed attempt retained; no automatic retry")
-            return run
-        run.state = "running"
-        store.save_run(run)
-        pending = [step for step in plan.steps if step.id not in results]
-        try:
-            while pending:
-                signal = store.read_signal(run.id)
-                if signal:
-                    run.state = "paused" if signal == "pause" else "cancelled"
-                    break
-                if utc_now() >= run.deadline:
-                    raise BudgetExceeded("run deadline exhausted")
-                step = next((s for s in pending if all(dep in results for dep in s.depends_on)), None)
-                if step is None:
-                    raise ValueError("no dependency-ready step")
-                reference = step.geometry
-                if reference.artifact_id:
-                    geometry_id = reference.artifact_id
-                else:
-                    output = results[reference.producer_step_id].qualified_outputs.get(reference.port)
-                    if output is None or not output.artifact_id:
-                        raise ValueError("required producer geometry did not pass its scientific checks")
-                    if any(check.rule_version != CURRENT_CHECK_VERSION for check in output.checks):
-                        raise ValueError("check_rule_revalidation_required: producer output uses historical checks")
-                    geometry_id = output.artifact_id
-                _validate_execution_rules(store, run)
-                attempt = store.reserve_attempt(run, step, geometry_id)
-                attempt.execution_handle = {"job_name": local.new_job_name(),
-                    "coordinator_pid": os.getpid(), "coordinator_create_time": psutil.Process().create_time()}
-                store.update_lease_handle(run.id, attempt.id, attempt.execution_handle)
-                store.save_run(run)
-                if fault:
-                    fault("after_intent_saved")
-                tool = get_tool(step.tool)
-                module, name = tool.implementation.rsplit(".", 1)
-                implementation = getattr(importlib.import_module(module), name)
-                result, outcome = implementation(store, run, step, attempt, config, fault)
-                store.save_result(result)
-                if fault:
-                    fault("after_result_saved")
-                _settle(store, run, attempt, result, outcome)
-                if fault:
-                    fault("after_run_updated")
-                if not outcome.get("not_started"):
-                    results[step.id] = result
-                    pending.remove(step)
-                # Every result updates goals and scientific prerequisites before another launch.
-                if _goals(store, run, plan, results):
-                    run.state = "completed"
-                    break
-                if outcome["state"] != "completed":
-                    signal = store.read_signal(run.id)
-                    run.state = ("paused" if signal == "pause" else "cancelled" if signal == "cancel"
-                                 else outcome["state"] if outcome["state"] in ("unknown", "cancelled") else "failed")
-                    break
-                store.save_run(run)
-            else:
-                run.state = "completed" if _goals(store, run, plan, results) else "failed"
-        except KeyboardInterrupt:
-            run.state = "unknown"
-            run.diagnostics.append({"category": "interrupted", "message": "Explicit resume required"})
-        except (ValueError, OSError, RuntimeError) as exc:
-            unfinished = any(a.finished_at is None for a in run.attempts)
-            run.state = ("unknown" if unfinished else
-                         "budget_exhausted" if isinstance(exc, BudgetExceeded) else "failed")
-            run.diagnostics.append({"category": type(exc).__name__, "message": str(exc),
-                                    "environment_occupied": isinstance(exc, EnvironmentBusy)})
-        _goals(store, run, plan, results)
-        if run.state == "unknown":
-            run.usage.resource_usage_complete = False
-        store.save_run(run)
-        return run
+def execute(store, config, run_id, *, resume=False, fault=None, transport=None, batch=None):
+    """Compatibility entry into the one feedback loop, including fixed structured plans."""
+    from orca_agent.agent import execute as run_agent
+    return run_agent(store, config, run_id, resume=resume, fault=fault,
+                     transport=transport, batch=batch)

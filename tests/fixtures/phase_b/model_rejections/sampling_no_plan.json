@@ -1,0 +1,368 @@
+{
+  "source_run_id": "run_0891ae527ca04480ac7253075955189f",
+  "scope": "Archived real responses; offline regression only, no model or ORCA execution.",
+  "responses": [
+    {
+      "request_hash": "7f6e2c14241593e71e08ab30d14185846423292704a441403b9047a2239c4bcf",
+      "proposal": {
+        "action": "initial_plan",
+        "request_version": 1,
+        "permission_version": 1,
+        "control_generation": 0,
+        "reason": "Plan: compute RHF/STO-3G single-point energies for the three required initial geometries (r=0.9394, 1.0194, 1.0994 Å), then run finite_sampling analysis to determine the distinguishable internal minimum and whether its nearest sampled neighbors span ≤0.12 Å. If evidence is insufficient, add at most one registered candidate (r=0.9794 or 1.0594 Å) and re-analyze.",
+        "parameters": {
+          "steps": [
+            {
+              "key": "sp_a1fd",
+              "logical_key": "orca_sp",
+              "tool": "orca.sp",
+              "parameters": {
+                "basis": "STO-3G",
+                "charge": 0,
+                "method": "HF",
+                "multiplicity": 1
+              },
+              "geometry": {
+                "artifact_id": "artifact_de84b9dd66254b41a5893ea417c3e568"
+              },
+              "depends_on": [],
+              "inputs": {}
+            },
+            {
+              "key": "sp_997a",
+              "logical_key": "orca_sp",
+              "tool": "orca.sp",
+              "parameters": {
+                "basis": "STO-3G",
+                "charge": 0,
+                "method": "HF",
+                "multiplicity": 1
+              },
+              "geometry": {
+                "artifact_id": "artifact_55a634f07fab4ba4a8fae19edc4381e6"
+              },
+              "depends_on": [],
+              "inputs": {}
+            },
+            {
+              "key": "sp_4551",
+              "logical_key": "orca_sp",
+              "tool": "orca.sp",
+              "parameters": {
+                "basis": "STO-3G",
+                "charge": 0,
+                "method": "HF",
+                "multiplicity": 1
+              },
+              "geometry": {
+                "artifact_id": "artifact_4bce09a71dee43e5af0cbb9771ba046d"
+              },
+              "depends_on": [],
+              "inputs": {}
+            },
+            {
+              "key": "analyze",
+              "logical_key": "finite_sampling",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "sampling_goal"
+              },
+              "depends_on": [
+                "sp_a1fd",
+                "sp_997a",
+                "sp_4551"
+              ],
+              "inputs": {
+                "qualified_energy": {
+                  "producer_key": "sp_a1fd",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "sampling_goal": {
+              "step_key": "analyze",
+              "port": "sampling"
+            }
+          }
+        },
+        "related_results": []
+      },
+      "error_category": null,
+      "retryable": false,
+      "usage": {
+        "prompt_tokens": 2833,
+        "completion_tokens": 476,
+        "total_tokens": 3309,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 2833
+      },
+      "response_hash": "dc28ec92d6784542bf3664202d335a9fe4a6a14c5db927c201c305e2ed545c42",
+      "response_bytes": 2164,
+      "response_model": "deepseek-flash",
+      "provider_request_id": null,
+      "completion_id": "15bf047e-3675-4a7a-833a-e5c690e2cf6c",
+      "finish_reason": "stop",
+      "http_status": 200,
+      "retry_after_seconds": null,
+      "elapsed_seconds": 3.0630000000237487
+    },
+    {
+      "request_hash": "0fac6f2dbba68f7cae37d2a5ed93c62725c0c44009c61ab37e0cc670faf61662",
+      "proposal": {
+        "action": "initial_plan",
+        "request_version": 1,
+        "permission_version": 1,
+        "control_generation": 0,
+        "reason": "The CONTROL validation error indicates that a direct geometry binding must reference the request's initial geometry. The request specifies three required initial systems (geom_a1fd9c54f540, geom_997a7b6154fa, geom_4551ffe49805) and two optional candidates. I will plan single-point RHF/STO-3G energy calculations for the three required geometries first, then run the finite-sampling analysis to determine whether the distinguishable internal minimum's nearest sampled neighbors span <= 0.12 Angstrom. If evidence is insufficient, one additional registered candidate may be added.",
+        "parameters": {
+          "goal_map": {
+            "sampling_goal": {
+              "step_key": "sampling_analysis",
+              "port": "sampling"
+            }
+          },
+          "steps": [
+            {
+              "key": "sp_geom_a1fd9c54f540",
+              "logical_key": "orca_sp_required_1",
+              "tool": "orca.sp",
+              "parameters": {
+                "basis": "STO-3G",
+                "charge": 0,
+                "method": "HF",
+                "multiplicity": 1,
+                "cores": 4,
+                "memory_mb": 1024,
+                "maxcore_mb": 192,
+                "scf_maxiter": 100,
+                "opt_maxiter": 100,
+                "timeout_seconds": 300
+              },
+              "geometry": {
+                "artifact_id": "artifact_de84b9dd66254b41a5893ea417c3e568"
+              },
+              "depends_on": []
+            },
+            {
+              "key": "sp_geom_997a7b6154fa",
+              "logical_key": "orca_sp_required_2",
+              "tool": "orca.sp",
+              "parameters": {
+                "basis": "STO-3G",
+                "charge": 0,
+                "method": "HF",
+                "multiplicity": 1,
+                "cores": 4,
+                "memory_mb": 1024,
+                "maxcore_mb": 192,
+                "scf_maxiter": 100,
+                "opt_maxiter": 100,
+                "timeout_seconds": 300
+              },
+              "geometry": {
+                "artifact_id": "artifact_55a634f07fab4ba4a8fae19edc4381e6"
+              },
+              "depends_on": []
+            },
+            {
+              "key": "sp_geom_4551ffe49805",
+              "logical_key": "orca_sp_required_3",
+              "tool": "orca.sp",
+              "parameters": {
+                "basis": "STO-3G",
+                "charge": 0,
+                "method": "HF",
+                "multiplicity": 1,
+                "cores": 4,
+                "memory_mb": 1024,
+                "maxcore_mb": 192,
+                "scf_maxiter": 100,
+                "opt_maxiter": 100,
+                "timeout_seconds": 300
+              },
+              "geometry": {
+                "artifact_id": "artifact_4bce09a71dee43e5af0cbb9771ba046d"
+              },
+              "depends_on": []
+            },
+            {
+              "key": "sampling_analysis",
+              "logical_key": "finite_sampling_analysis",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "sampling_goal"
+              },
+              "inputs": {
+                "qualified_energy": [
+                  {
+                    "producer_key": "sp_geom_a1fd9c54f540",
+                    "port": "energy"
+                  },
+                  {
+                    "producer_key": "sp_geom_997a7b6154fa",
+                    "port": "energy"
+                  },
+                  {
+                    "producer_key": "sp_geom_4551ffe49805",
+                    "port": "energy"
+                  }
+                ]
+              },
+              "depends_on": [
+                "sp_geom_a1fd9c54f540",
+                "sp_geom_997a7b6154fa",
+                "sp_geom_4551ffe49805"
+              ]
+            }
+          ]
+        }
+      },
+      "error_category": null,
+      "retryable": false,
+      "usage": {
+        "prompt_tokens": 2869,
+        "completion_tokens": 964,
+        "total_tokens": 3833,
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 2485
+      },
+      "response_hash": "8b0ec5bb7e949bed78e2f13f959ce0f621e0fc408cd429655a9acc9892acb718",
+      "response_bytes": 4147,
+      "response_model": "deepseek-flash",
+      "provider_request_id": null,
+      "completion_id": "5bd32cec-aa11-473c-9f40-24b636eb1b0c",
+      "finish_reason": "stop",
+      "http_status": 200,
+      "retry_after_seconds": null,
+      "elapsed_seconds": 3.452999999979511
+    }
+  ],
+  "records": [
+    {
+      "id": "model_ab89901ef945437ab3ff02ef06b2fb74",
+      "logical_id": "decision_f9b5cffd421d3b07e0a31734_1",
+      "request_hash": "7f6e2c14241593e71e08ab30d14185846423292704a441403b9047a2239c4bcf",
+      "basis": {
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0
+      },
+      "input_reserved": 9475,
+      "output_reserved": 2000,
+      "cost_reserved_usd": "0.0052425",
+      "created_at": "2026-10-06T15:50:30.060299+00:00",
+      "status": "known",
+      "prompt_version": "agent-json-v2",
+      "sdk_version": "2.28.0",
+      "model": "deepseek-flash",
+      "token_bound_version": "deepseek-v41-utf8-upper-v2",
+      "response_record_sha256": "6669b0283362d91d81c7e27ad1f9ea53b4aa22f112101e9abb26ef984339ec39",
+      "response_hash": "dc28ec92d6784542bf3664202d335a9fe4a6a14c5db927c201c305e2ed545c42",
+      "error_category": null,
+      "provider_request_id": null,
+      "response_model": "deepseek-flash",
+      "latency_seconds": 3.0630000000237487,
+      "http_status": 200,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2833,
+        "completion_tokens": 476,
+        "total_tokens": 3309,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 2833
+      },
+      "input_tokens": 2833,
+      "output_tokens": 476,
+      "total_tokens": 3309,
+      "cost_known_usd": "0.0014211"
+    },
+    {
+      "id": "model_2371fad5ede341b3a1f008a793bf9a7f",
+      "logical_id": "decision_f9b5cffd421d3b07e0a31734_2",
+      "request_hash": "0fac6f2dbba68f7cae37d2a5ed93c62725c0c44009c61ab37e0cc670faf61662",
+      "basis": {
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0
+      },
+      "input_reserved": 9633,
+      "output_reserved": 2000,
+      "cost_reserved_usd": "0.0052899",
+      "created_at": "2026-10-06T15:50:34.150096+00:00",
+      "status": "known",
+      "prompt_version": "agent-json-v2",
+      "sdk_version": "2.28.0",
+      "model": "deepseek-flash",
+      "token_bound_version": "deepseek-v41-utf8-upper-v2",
+      "response_record_sha256": "b94e46618b853ce11e283981902bea0cb1c38462715ff7a3202aa27a7bbeabba",
+      "response_hash": "8b0ec5bb7e949bed78e2f13f959ce0f621e0fc408cd429655a9acc9892acb718",
+      "error_category": null,
+      "provider_request_id": null,
+      "response_model": "deepseek-flash",
+      "latency_seconds": 3.452999999979511,
+      "http_status": 200,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2869,
+        "completion_tokens": 964,
+        "total_tokens": 3833,
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 2485
+      },
+      "input_tokens": 2869,
+      "output_tokens": 964,
+      "total_tokens": 3833,
+      "cost_known_usd": "0.0020175"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "model_ab89901ef945437ab3ff02ef06b2fb74",
+      "basis": {
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0
+      },
+      "action": "rejected",
+      "related_results": [],
+      "reason": "rejected",
+      "parameters": {
+        "error_category": "ValueError",
+        "recovery_kind": "correction",
+        "requirement": "direct geometry must bind the request's initial geometry"
+      }
+    },
+    {
+      "id": "model_2371fad5ede341b3a1f008a793bf9a7f",
+      "basis": {
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0
+      },
+      "action": "rejected",
+      "related_results": [],
+      "reason": "rejected",
+      "parameters": {
+        "error_category": "ValidationError",
+        "recovery_kind": "correction",
+        "requirement": [
+          {
+            "type": "dict_type",
+            "loc": [
+              "steps",
+              3,
+              "inputs",
+              "qualified_energy"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

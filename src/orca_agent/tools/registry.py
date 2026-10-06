@@ -11,6 +11,7 @@ from typing import Annotated, Any
 from pydantic import Field, field_validator
 
 from orca_agent.models import CalculationParameters, Identifier, Record, Tool
+from orca_agent.tools.analysis import sampling_check_contract
 from orca_agent.tools.evidence import (
     EvidenceDiscoverParameters,
     EvidenceSearchParameters,
@@ -135,10 +136,14 @@ for _name, _version, _port, _function in (
 ):
     TOOLS[_name] = _register(
         AnalysisParameters, name=_name,
-        description="Check explicitly bound energy members against immutable requested conditions.",
-        input_roles=["qualified_energy"], output_ports=[_port], observation_outputs=["analysis"],
+        description=("Check energy members against immutable requested conditions. "
+                     "Bind each member ID to one energy reference in Step.inputs, beside parameters."),
+        input_roles=["qualified_energy"],
+        output_ports=[_port] + (["member_table"] if _name == "analysis.energy_compare" else []),
+        observation_outputs=["analysis"],
         effects=["read_registered_artifact", "write_analysis"], max_cores=0, max_memory_mb=0,
         check_version=_version, required_input_checks={"energy": CURRENT_CHECK_VERSION},
+        check_contract=sampling_check_contract() if _version == "finite-sampling-1" else {},
         implementation=f"orca_agent.tools.dispatch.{_function}",
     )
 

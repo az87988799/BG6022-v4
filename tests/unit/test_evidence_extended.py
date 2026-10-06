@@ -178,6 +178,7 @@ def test_partial_import_and_missing_json_never_convert_or_fabricate_attempt(evid
     response = evidence.import_source(store, "source1", sources)
     assert response["status"] == "partial"
     assert response["missing"] == [{"file": "missing.json", "status": "missing"}]
+    assert response["conditions"] == "unknown"
     assert len(response["artifact_ids"]) == 1
     artifact = store.load_artifact(response["artifact_ids"][0])
     assert artifact.attempt_id is None and artifact.run_id is None

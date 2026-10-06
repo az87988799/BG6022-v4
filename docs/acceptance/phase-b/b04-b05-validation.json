@@ -1,0 +1,120 @@
+{
+  "scope": "B-04/B-05 development verification, with later cross-boundary regressions tracked separately",
+  "evidence_types_separated": true,
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit tests/integration -q",
+      "passed": 869,
+      "skipped": 1,
+      "failed": 1,
+      "failure": "test_context::test_sampling_plan_three_energies_and_analysis_gap_fit_actual_wire_bound",
+      "note": "Pre-final context revision checkpoint; superseded by targeted/final validation only after those run."
+    },
+    {
+      "command": "py -3.11 -m uv build --offline",
+      "status": "passed"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_agent.py tests/unit/test_phase_b_reliability.py -q",
+      "passed": 57
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_report_extended.py tests/unit/test_phase_b_budget.py tests/unit/test_dispatch.py -q",
+      "passed": 88
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/evals -q",
+      "skipped": 94,
+      "reason": "Explicit live gates disabled; unverified, not passes"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit tests/integration -q",
+      "passed": 991,
+      "skipped": 1,
+      "failed": 2,
+      "failure": "test_context long-ID replan/pending_analysis during in-progress projection changes",
+      "note": "Retained development checkpoint, not final passing regression. Stable context targeted regression subsequently 33 passed; revised protocol pending new targeted validation."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check .",
+      "status": "passed",
+      "checkpoint": "before final protocol refinement"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit tests/integration -q --junitxml=data/phase-b/regression-final.xml",
+      "passed": 1083,
+      "skipped": 1,
+      "failed": 0,
+      "seconds": 466.76,
+      "skip_reason": "Windows developer mode/symlink privilege unavailable",
+      "checkpoint": "native-control context and prelaunch accounting; subsequent explanation/context changes require targeted validation"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check .",
+      "status": "passed",
+      "checkpoint": "1083-pass full regression"
+    },
+    {
+      "command": "py -3.11 -m uv build --offline",
+      "status": "passed",
+      "artifacts": [
+        "dist/orca_agent-0.1.0.tar.gz",
+        "dist/orca_agent-0.1.0-py3-none-any.whl"
+      ]
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit tests/integration -q --junitxml=data/phase-b/regression-v3.xml",
+      "passed": 1128,
+      "failed": 1,
+      "skipped": 1,
+      "note": "Retained pre-release checkpoint: full pending analysis context exceeded bound; fixed without changing permission or scientific criteria."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit tests/integration -q --junitxml=data/phase-b/regression-v3-stable.xml",
+      "passed": 1129,
+      "failed": 0,
+      "skipped": 1,
+      "duration_seconds": 314.03,
+      "prompt_version": "agent-json-v3",
+      "note": "Only skip: Windows test symlink creation privilege. Default offline: no HTTP or science."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check src tests",
+      "status": "passed",
+      "checkpoint": "v3 implementation checkpoint"
+    }
+  ],
+  "first_joint_run": "run_18ebf62f5f9c487590b9126f77cabd13",
+  "first_joint_category": "development",
+  "first_joint_model_http_requests": 1,
+  "first_joint_orca_starts": 1,
+  "acceptance": "waiting_user_acceptance",
+  "full_regression_receipts": {
+    "junit": {
+      "path": "data/phase-b/regression-final.xml",
+      "sha256": "1cbc655e5e972e5f01c7d562661d7576c8c75e24e5c11ae7895ace13ece3fde8"
+    },
+    "log": {
+      "path": "data/phase-b/regression-final.log",
+      "sha256": "e9ccb3484b11165dc336b3826a3ae7294eaea952fa7781b8e9042917a98ce701"
+    }
+  },
+  "v3_regression_receipts": {
+    "regression-v3.xml": {
+      "path": "data/phase-b/regression-v3.xml",
+      "sha256": "39fa7eed8fed50284b64c7d2b11555d5858a925c8319355bc2e8e1cd61c94e10"
+    },
+    "regression-v3.log": {
+      "path": "data/phase-b/regression-v3.log",
+      "sha256": "e7758dce82ddedc4bc529bc2407e935a533b26b800c437c32c0516c580ccb79f"
+    },
+    "regression-v3-stable.xml": {
+      "path": "data/phase-b/regression-v3-stable.xml",
+      "sha256": "b63e4bad477d7402f4738d9ccd3752f6ae16af1b5ce18d4c792307b43a1da05b"
+    },
+    "regression-v3-stable.log": {
+      "path": "data/phase-b/regression-v3-stable.log",
+      "sha256": "9f8e71ed486ab6fddbaddbd6ff8d42901829ac762438d35c5de9ed0977e74566"
+    }
+  }
+}

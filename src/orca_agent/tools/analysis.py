@@ -125,6 +125,16 @@ class SamplingCandidate(Record):
     required_initial: bool
 
 
+def sampling_check_contract(parameters: SamplingParameters | None = None) -> dict:
+    """Public predicate and effective tolerance; no proposed point or hidden energy."""
+    tolerance = (parameters.distance_tolerance_angstrom if parameters is not None else
+                 SamplingParameters.model_fields["distance_tolerance_angstrom"].default)
+    return {
+        "rule": "min interior; each other sampled E-Emin>energy_threshold_eh; nearest sampled left/right: span<=target_width_angstrom+distance_tolerance_angstrom",
+        "distance_tolerance_angstrom" if parameters is not None else "default_distance_tolerance_angstrom": tolerance,
+    }
+
+
 def _coordinates(data: bytes):
     from orca_agent.tools.registry import validate_geometry
 
@@ -346,6 +356,7 @@ def finite_sampling(candidates: list[SamplingCandidate], members: list[AnalysisM
         except (KeyError, ValueError, UnicodeError) as exc:
             invalid[candidate.id] = str(exc) if not isinstance(exc, KeyError) else "geometry_missing"
     result = {"operation_status": "completed", "rule_version": SAMPLING_VERSION,
+              "acceptance_criteria": sampling_check_contract(parameters),
               "members": _rows(members), "geometry_facts": facts, "invalid_candidates": invalid,
               "target_width_angstrom": parameters.target_width_angstrom,
               "energy_threshold_eh": parameters.energy_threshold_eh,

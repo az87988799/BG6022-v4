@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "status": "implemented runtime configuration; formal evidence pending",
+  "base_design_profile": {
+    "path": "docs/acceptance/phase-b/profile.json",
+    "sha256": "0721e39745d82849732a4b514cb362f556862794f3234a815cb905f7ca5dcce1",
+    "historical_design_unchanged": true
+  },
+  "model": {
+    "provider": "DeepSeek",
+    "model": "deepseek-flash",
+    "base_url": "https://api.deepseek.com",
+    "prompt_version": "agent-json-v3",
+    "prompt_source": "src/orca_agent/context.py",
+    "openai_sdk_version": "2.28.0",
+    "httpx_version": "0.28.1",
+    "thinking": {
+      "type": "disabled"
+    },
+    "stream": false,
+    "temperature": 0,
+    "response_format": {
+      "type": "json_object"
+    },
+    "sdk_max_retries": 0,
+    "weights_pinned": false,
+    "credential_environment_variable": "DEEPSEEK_API_KEY"
+  },
+  "token_reservation": {
+    "version": "deepseek-v41-utf8-upper-v2",
+    "method": "UTF-8 byte-level BPE upper bound with verified fixed framing allowance",
+    "max_input": 12000,
+    "max_output": 2000,
+    "input_framing_bytes": 512,
+    "per_message_framing_bytes": 64,
+    "actual_usage_checked_against_reservation": true
+  },
+  "run_limits": {
+    "attempts_per_step": 3,
+    "orca_starts": 4,
+    "extra_orca_starts": 3,
+    "postprocess_starts": 0,
+    "run_seconds": 1800.0,
+    "model_calls": 8,
+    "plan_revisions": 2,
+    "model_tokens": 48000,
+    "input_tokens": 12000,
+    "output_tokens": 2000,
+    "decision_rounds": 12,
+    "evidence_reads": 24,
+    "analysis_executions": 8,
+    "corrections_per_proposal": 1,
+    "transport_retries": 1
+  },
+  "resources": {
+    "cores": 4,
+    "job_commit_memory_mib": 1024,
+    "maxcore_mb_per_process": 192,
+    "environment_science_concurrency": 1
+  },
+  "batch_limits": {
+    "orca_starts": {
+      "reference": 16,
+      "development": 32,
+      "formal": 48,
+      "total": 96
+    },
+    "model_http_requests": 600,
+    "model_tokens": 6000000,
+    "model_usd": "10",
+    "ledger": "data/phase-b/batch-ledger.json",
+    "unknown_usage": "keeps conservative occupancy; no resets"
+  },
+  "pricing": {
+    "input_uncached_usd_per_million": "0.30",
+    "output_usd_per_million": "1.20",
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "basis": "docs/acceptance/phase-b/pricing-basis.json",
+    "meaning": "conservative peak uncached estimate, not account billing"
+  },
+  "test_gates": {
+    "offline": {
+      "network": false,
+      "science": false
+    },
+    "model": [
+      "--live-model"
+    ],
+    "joint": [
+      "--live-model",
+      "--live-orca"
+    ],
+    "remote": "not implemented or tested"
+  },
+  "versions": {
+    "orca-pi": "2.0.0",
+    "openai": "2.28.0",
+    "httpx": "0.28.1",
+    "pydantic": "2.13.5",
+    "pytest": "9.1.1"
+  },
+  "provenance": "B-01 design v1 remains immutable; v2 development requests retain exact serialized prompts and hashes. Formal source/profile freeze will cite this runtime profile and actual v3 source."
+}

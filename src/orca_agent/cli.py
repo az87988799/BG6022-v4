@@ -81,6 +81,14 @@ def main(argv=None) -> int:
     commands.add_parser("tools", help="Print the registered tool contracts")
     run_parser = commands.add_parser("run", help="Execute an explicit structured request")
     run_parser.add_argument("request", type=Path)
+    ask_parser = commands.add_parser("ask", help="Start an Agent from natural text and independent user constraints")
+    ask_parser.add_argument("request", type=Path, help="User request bundle JSON; no execution Steps")
+    message_parser = commands.add_parser("message", help="Queue a user message without taking coordinator ownership")
+    message_parser.add_argument("run_id")
+    message_parser.add_argument("text")
+    message_parser.add_argument("--update-file", type=Path, help="Explicit user Request fields to apply after queuing")
+    report_parser = commands.add_parser("report", help="Render existing evidence and gaps without model or execution")
+    report_parser.add_argument("run_id")
     for command in ("status", "pause", "cancel", "resume"):
         command_parser = commands.add_parser(command)
         command_parser.add_argument("run_id")
@@ -127,20 +135,40 @@ def main(argv=None) -> int:
                 }))
         elif args.command == "status":
             emit(store.load_run(args.run_id))
+        elif args.command == "report":
+            from orca_agent.report import build_report, render_report
+            print(render_report(build_report(store, args.run_id)))
+        elif args.command == "message":
+            message_id = store.enqueue_message(args.run_id, args.text)
+            if args.update_file:
+                from orca_agent.natural import apply_user_update
+                if args.update_file.stat().st_size > 65536:
+                    raise ValueError("user update exceeds 64 KiB")
+                changes = json.loads(args.update_file.read_text(encoding="utf-8"))
+                apply_user_update(store, args.run_id, message_id, changes)
+            emit({"run_id": args.run_id, "message_id": message_id, "status": "queued",
+                  "execution": "active coordinator observes the new generation; otherwise explicitly resume"})
         elif args.command in ("pause", "cancel"):
             store.signal(args.run_id, args.command)
             emit({"run_id": args.run_id, "requested": args.command,
                   "confirmation": "inspect status; an active coordinator applies the signal"})
         else:
             from orca_agent.runner import execute, initialize
-            run = (initialize(store, config, args.request) if args.command == "run"
-                   else store.load_run(args.run_id))
+            if args.command == "ask":
+                from orca_agent.natural import initialize_bundle
+                run = initialize_bundle(store, config, args.request)
+            else:
+                run = (initialize(store, config, args.request) if args.command == "run"
+                       else store.load_run(args.run_id))
             emit({"run_id": run.id, "action": args.command})
             result = execute(store, config, run.id, resume=args.command == "resume")
             emit(result)
+            if result.agent_enabled:
+                from orca_agent.report import build_report, render_report
+                print(render_report(build_report(store, result)))
             return 0 if result.state == "completed" else 2
     except (ValueError, OSError, RuntimeError) as exc:
-        if args.command == "run" and run is None:
+        if args.command in {"run", "ask"} and run is None:
             emit(_reject_before_run(store, exc))
         else:
             emit({"error": type(exc).__name__, "errors": _safe_errors(exc)})

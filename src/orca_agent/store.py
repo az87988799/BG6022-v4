@@ -13,7 +13,7 @@ import re
 import stat
 from datetime import timedelta
 from pathlib import Path, PureWindowsPath
-from typing import Any
+from typing import Any, Callable
 from uuid import uuid4
 
 from filelock import FileLock
@@ -317,7 +317,8 @@ class Store:
                     raise StoreError(f"fixed run field cannot be changed: {field}")
             for field in ("orca_starts_reserved", "orca_starts_actual", "postprocess_starts",
                           "elapsed_seconds", "cpu_seconds", "extra_orca_starts_reserved",
-                          "model_calls", "model_tokens_used", "plan_revisions", "decision_rounds",
+                          "model_calls", "model_tokens_used", "model_tokens_unknown",
+                          "plan_revisions", "decision_rounds",
                           "evidence_reads", "analysis_executions"):
                 if getattr(run.usage, field) < getattr(previous.usage, field):
                     raise StoreError(f"cumulative usage cannot decrease: {field}")
@@ -339,10 +340,10 @@ class Store:
                 raise StoreError("result references cannot be removed")
             if previous.initial_science_steps != run.initial_science_steps:
                 raise StoreError("initial scientific baseline requires controlled plan activation")
-            for name in ("calls", "model_records", "decisions", "processed_messages", "processed_feedback"):
+            for name in ("calls", "model_records", "decisions", "processed_messages", "processed_feedback", "applied_decisions"):
                 if len(getattr(run, name)) < len(getattr(previous, name)):
                     raise StoreError("call/decision history cannot be removed")
-            for name in ("decisions", "processed_messages", "processed_feedback"):
+            for name in ("decisions", "processed_messages", "processed_feedback", "applied_decisions"):
                 if getattr(run, name)[:len(getattr(previous, name))] != getattr(previous, name):
                     raise StoreError("activated history cannot be rewritten")
             if not set(previous.usage.logical_steps).issubset(run.usage.logical_steps):
@@ -355,13 +356,44 @@ class Store:
                 if old.result_id and (old.result_id != new.result_id or old.state != new.state):
                     raise StoreError("settled Tool call cannot be rewritten")
             for old, new in zip(previous.model_records, run.model_records, strict=False):
-                if old.get("status") != "reserved" and old != new:
-                    raise StoreError("settled model records cannot be rewritten")
-                for field in ("id", "request_hash", "basis", "input_reserved", "output_reserved",
-                              "cost_reserved_usd", "created_at"):
-                    if old.get(field) != new.get(field):
-                        raise StoreError("model reservation cannot be rewritten")
+                if old != new:
+                    raise StoreError("model records require dedicated evidence-backed settlement")
             self._write_json(f"runs/{run.id}/run.json", run)
+
+    def settle_model(self, run: Run, ticket: str):
+        """Atomically settle only a recorded reservation from its immutable receipt.
+
+        Ordinary save_run cannot reduce unknown token occupancy or edit model
+        records. This entry point reads and validates the request/receipt itself;
+        caller-provided token numbers or proposed scientific outcomes have no say.
+        """
+        from orca_agent.model_usage import read_model_reply, settled_model_record
+
+        with self.run_lock(run.id):
+            if self.load_run(run.id) != run:
+                raise StoreError("Run changed before model settlement")
+            matches = [record for record in run.model_records if record.get("id") == ticket]
+            if len(matches) != 1:
+                raise StoreError("model settlement reservation identity mismatch")
+            record = matches[0]
+            reply, receipt_hash = read_model_reply(self, run, record)
+            if record.get("status") != "reserved":
+                if record.get("response_record_sha256") != receipt_hash:
+                    raise StoreError("settled model response changed")
+                return reply
+            updated = run.model_copy(deep=True)
+            index = run.model_records.index(record)
+            updated.model_records[index] = settled_model_record(record, reply, receipt_hash)
+            if reply.usage is not None:
+                reserved = record["input_reserved"] + record["output_reserved"]
+                if updated.usage.model_tokens_unknown < reserved:
+                    raise StoreError("model reservation occupancy is inconsistent")
+                updated.usage.model_tokens_unknown -= reserved
+                updated.usage.model_tokens_used += reply.usage.total_tokens
+            updated = Run.model_validate(updated.model_dump())
+            self._write_json(f"runs/{run.id}/run.json", updated)
+            run.__dict__.update(updated.__dict__)
+            return reply
 
     def import_artifact(
         self, path: str | Path, role: str, *, run_id: str | None = None,
@@ -414,8 +446,13 @@ class Store:
         path = controlled_path(self.environment_root, "lease.json")
         return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
 
-    def reserve_attempt(self, run: Run, step: Step, geometry_artifact_id: str) -> Attempt:
-        """Reserve once before any process creation; caller holds the coordinator lock."""
+    def reserve_attempt(self, run: Run, step: Step, geometry_artifact_id: str, *,
+                        before_reserve: Callable[[Attempt], None] | None = None) -> Attempt:
+        """Validate before external accounting; lock order is Run, environment, callback.
+
+        The callback may reserve an external budget but must not launch work.
+        Its fixed Attempt identity precedes all intent/lease/Run publication.
+        """
         with self.run_lock(run.id), self._environment_lock():
             current = self.load_run(run.id)
             if current.model_dump() != run.model_dump():
@@ -490,6 +527,10 @@ class Store:
                 permission_version=run.permission.version, frozen_step=step.model_copy(deep=True),
                 consumption={"geometry": {"artifact_id": geometry.id, "sha256": geometry.sha256}},
             )
+            if self.path(attempt.directory).exists():
+                raise StoreError("attempt directory already exists; reconcile its identity before reserving")
+            if before_reserve:
+                before_reserve(attempt)
             self.path(attempt.directory).mkdir(parents=True, exist_ok=False)
             self._write_json(f"{attempt.directory}/intent.json", {
                 "run_id": run.id, "attempt": attempt.model_dump(mode="json"),
@@ -507,6 +548,91 @@ class Store:
             run.usage.fingerprint_attempts[input_fingerprint] = same_input_number
             run.state = "running"
             self.save_run(run)
+            return attempt
+
+    def recover_unstarted_reservation(self, run: Run, draft: Attempt, *, before: dict,
+                                      reservation_sha256: str) -> Attempt:
+        """Recover a recorded pre-publication reservation without inventing a launch.
+
+        This requires the fixed draft supplied to reserve_attempt's callback.
+        Missing handles alone are insufficient: exact counters, frozen input,
+        intent, directory contents and lease must still prove the prelaunch boundary.
+        The original reservation remains charged even when actual starts are zero.
+        """
+        with self.run_lock(run.id), self._environment_lock():
+            current = self.load_run(run.id)
+            for field in type(run).model_fields:
+                setattr(run, field, getattr(current, field))
+            matches = [a for a in run.attempts if a.id == draft.id]
+            attempt = matches[0] if len(matches) == 1 else draft.model_copy(deep=True)
+            plan = self.load_plan_revision(run, draft.plan_version)
+            step = next((s for s in plan.steps if s.id == draft.step_id), None)
+            geometry = self.load_artifact(draft.geometry_artifact_id)
+            self.artifact_path(geometry.id)
+            if (step != draft.frozen_step or not step or draft.state != "intent"
+                    or draft.started or draft.execution_handle or draft.finished_at or draft.result_id
+                    or draft.input_fingerprint != fingerprint({"tool": step.tool,
+                        "parameters": step.parameters.model_dump(), "geometry_hash": geometry.sha256})
+                    or draft.directory != f"runs/{run.id}/steps/{draft.step_id}/attempt-{draft.number:03d}"):
+                raise StoreError("prelaunch reservation draft differs from its frozen inputs")
+            lease = self.environment_lease()
+            if lease and lease.get("run_id") == run.id:
+                if (lease.get("attempt_id") != draft.id or lease.get("input_fingerprint") != draft.input_fingerprint
+                        or lease.get("state") != "intent" or lease.get("execution_handle")):
+                    raise StoreError("reservation has crossed or conflicts with the prelaunch boundary")
+            directory = self.path(draft.directory)
+            allowed = {"intent.json", "prelaunch-aborted.json", "execution.json"}
+            if directory.exists() and any(p.name not in allowed or not p.is_file() for p in directory.iterdir()):
+                raise StoreError("reservation contains possible startup or scientific evidence")
+            original = {"run_id": run.id, "attempt": draft.model_dump(mode="json"),
+                        "parameters": step.parameters.model_dump(), "request_version": draft.request_version,
+                        "plan_version": draft.plan_version, "permission_version": draft.permission_version}
+            intent = directory / "intent.json"
+            if intent.exists() and self._read_json(f"{draft.directory}/intent.json") != original:
+                raise StoreError("prelaunch reservation intent changed")
+            proof_path = f"{draft.directory}/prelaunch-aborted.json"
+            expected_proof = {"attempt_id": draft.id, "reservation_sha256": reservation_sha256,
+                              "proof": "fixed reservation never crossed persisted execution preparation"}
+            if self.path(proof_path).exists() and self._read_json(proof_path) != expected_proof:
+                raise StoreError("prelaunch no-start proof changed")
+            outcome = {"state": "failed", "reason": "reservation aborted before execution preparation",
+                       "not_started": True, "handle": None, "resource_usage": {}, "exit_code": None,
+                       "reservation_sha256": reservation_sha256}
+            execution_path = f"{draft.directory}/execution.json"
+            if self.path(execution_path).exists() and self._read_json(execution_path) != outcome:
+                raise StoreError("existing execution receipt cannot be replaced by no-start proof")
+            expected_count = before["orca_starts_reserved"] + int(bool(matches))
+            if (run.usage.orca_starts_reserved != expected_count
+                    or [a.id for a in run.attempts if a.id != draft.id] != before["attempt_ids"]
+                    or run.usage.logical_attempts.get(draft.logical_id, 0) != draft.number - int(not matches)
+                    or (matches and (attempt.execution_handle or attempt.started or attempt.result_id
+                                     or attempt.state not in {"intent", "not_started"}))):
+                raise StoreError("Run counters or Attempt crossed the prelaunch reservation boundary")
+            if matches and attempt.finished_at:
+                if not self.path(proof_path).exists() or not self.path(execution_path).exists():
+                    raise StoreError("settled no-start reservation has no durable proof")
+                return attempt
+            self._write_json(f"{draft.directory}/intent.json", original, immutable=True)
+            self._write_json(proof_path, expected_proof, immutable=True)
+            self._write_json(execution_path, outcome, immutable=True)
+            if not matches:
+                run.attempts.append(attempt)
+                run.usage.orca_starts_reserved += 1
+                run.usage.logical_attempts[draft.logical_id] = draft.number
+                run.usage.fingerprint_attempts[draft.input_fingerprint] = before["fingerprint_attempts"] + 1
+                extra = draft.number > 1 or (run.initial_science_steps is not None
+                                             and draft.logical_id not in run.initial_science_steps)
+                repeated = max(before["extra_orca_starts_reserved"], sum(
+                    max(0, count - 1) for key, count in run.usage.logical_attempts.items()
+                    if key != draft.logical_id) + max(0, draft.number - 2))
+                run.usage.extra_orca_starts_reserved = repeated + int(extra)
+            if lease and lease.get("run_id") != run.id:
+                # No lease was acquired for this reservation. Preserve another
+                # Run's active job while settling this provably unstarted one.
+                attempt.state, attempt.finished_at = "not_started", utc_now()
+                self.save_run(run)
+            else:
+                self.finish_attempt(run, attempt.id, state="not_started", started=False, termination_confirmed=True)
             return attempt
 
     def _validate_future_binding(self, run: Run, step: Step, artifact_id: str) -> None:
@@ -602,7 +728,7 @@ class Store:
         return result
 
     def reserve_call(self, run: Run, tool: str, parameters: dict, step: Step | None = None,
-                     *, consumption: dict | None = None) -> ToolCall:
+                     *, consumption: dict | None = None, validate_only: bool = False) -> ToolCall | None:
         """Reserve a non-scientific Tool without acquiring the scientific environment slot."""
         with self.run_lock(run.id), self.control_lock(run.id):
             if self.load_run(run.id) != run:
@@ -635,9 +761,12 @@ class Store:
                 raise StoreError("external source is outside the permission snapshot")
             if params.get("run_id") and params["run_id"] != run.id:
                 raise StoreError("cross-Run listing requires explicit imported evidence")
-            counter = "analysis_executions" if writes or definition.output_ports else "evidence_reads"
+            counter = ("analysis_executions" if "write_analysis" in definition.effects
+                       or definition.output_ports else "evidence_reads")
             if getattr(run.usage, counter) >= getattr(run.budget, counter):
                 raise BudgetExceeded(f"{counter} budget exhausted")
+            if validate_only:
+                return None
             call = ToolCall(tool=tool, parameters=params, step_id=step.id if step else None,
                             request_version=run.request_version, plan_version=run.plan_version,
                             frozen_step=step.model_copy(deep=True) if step else None,

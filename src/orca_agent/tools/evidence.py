@@ -449,5 +449,6 @@ def import_source(store, source_id, sources: Mapping[str, dict[str, Any]], run_i
         imported.append(artifact.id)
     return _finish({"source_id": source_id, "status": "partial" if missing else "imported",
                     "artifact_ids": imported, "missing": missing,
+                    "conditions": "unknown",
                     "scientific_status": "unverified", "validation": OBSERVATION,
                     "effects": ["create_artifact"], "imported_bytes": total})

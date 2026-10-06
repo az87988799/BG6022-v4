@@ -24,6 +24,7 @@ from orca_agent.tools.analysis import (
     candidate_geometry,
     energy_compare,
     finite_sampling,
+    sampling_check_contract,
 )
 
 PROJECT = Path(__file__).resolve().parents[2]
@@ -191,6 +192,31 @@ def test_left_and_right_observations_change_relative_neighbor_energies_without_s
     right = finite_sampling(*sampling_case("right"))
     assert left["left_gap_eh"] < left["right_gap_eh"]
     assert right["right_gap_eh"] < right["left_gap_eh"]
+
+
+def test_sampling_contract_uses_effective_tolerance_and_inclusive_span_bound():
+    candidates, members, geometries, parameters = sampling_case("stop")
+    span = finite_sampling(candidates, members, geometries, parameters)["neighbor_span_angstrom"]
+    parameters.distance_tolerance_angstrom = 1e-7
+    parameters.target_width_angstrom = span - parameters.distance_tolerance_angstrom
+    boundary = finite_sampling(candidates, members, geometries, parameters)
+    assert boundary["goal_satisfied"]
+    assert boundary["acceptance_criteria"] == sampling_check_contract(parameters)
+    assert boundary["acceptance_criteria"]["distance_tolerance_angstrom"] == 1e-7
+    assert sampling_check_contract()["default_distance_tolerance_angstrom"] == 1e-8
+    assert "span<=target_width_angstrom+distance_tolerance_angstrom" in boundary["acceptance_criteria"]["rule"]
+    parameters.target_width_angstrom = span - 2 * parameters.distance_tolerance_angstrom
+    outside = finite_sampling(candidates, members, geometries, parameters)
+    assert not outside["goal_satisfied"] and outside["reason"] == "span_too_wide"
+
+
+def test_sampling_distinctness_compares_each_other_energy_with_minimum_not_every_pair():
+    candidates, members, geometries, parameters = sampling_case("stop")
+    required = [member for member in members if member.required]
+    required[0].evidence.energy_eh = required[-1].evidence.energy_eh = -74.0
+    result = finite_sampling(candidates, members, geometries, parameters)
+    assert result["goal_satisfied"]
+    assert "each other sampled E-Emin>energy_threshold_eh" in result["acceptance_criteria"]["rule"]
 
 
 @pytest.mark.parametrize("variant,reason", [

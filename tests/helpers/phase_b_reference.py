@@ -197,7 +197,13 @@ class BatchLedger:
                         or entry.get("execution_uncertain", True)):
                     raise ReferenceBlocked("same input/geometry has an unresolved reservation under another id")
                 self._validated_receipt(entry, check_evidence=True)
-            entries = list(ledger["entries"].values())
+            # Agent evaluations use the same frozen ledger and cannot create a
+            # second quota through a different execution helper.
+            agent_entries = list(ledger.get("agent_science", {}).values())
+            if any(item.get("state") == "reserved" and not item.get("attempt_id")
+                   for item in agent_entries):
+                raise ReferenceBlocked("Agent scientific reservation is unresolved; reconcile first")
+            entries = [*ledger["entries"].values(), *agent_entries]
             counts = {name: sum(item["category"] == name for item in entries)
                       for name in ("reference", "formal", "development")}
             if (counts[category] >= LIMITS["orca_starts"][category]

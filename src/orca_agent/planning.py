@@ -43,9 +43,11 @@ def _request_revision(prior: Request, proposed: Request, user_update: bool) -> b
     for identifier, old in old_goals.items():
         _require(identifier in new_goals, "required goals cannot be removed by a revision flag")
         new = new_goals[identifier]
-        _require(new.required and new.port == old.port,
+        clarified = (old.port == "unresolved" and old.minimum_check_version == "unresolved-1"
+                     and "missing:goal_definition" in old.unresolved)
+        _require(new.required and (new.port == old.port or clarified),
                  "required physical quantity cannot be removed or replaced")
-        _require(_compatible_rule(old.minimum_check_version, new.minimum_check_version),
+        _require(clarified or _compatible_rule(old.minimum_check_version, new.minimum_check_version),
                  "required scientific checks cannot be lowered or substituted")
         _require(set(old.minimum_evidence).issubset(new.minimum_evidence),
                  "minimum required evidence cannot be removed")
@@ -95,7 +97,9 @@ def _step_permissions(step: Step, run: Run) -> None:
     parameters = step.parameters.model_dump(mode="json")
     if parameters.get("artifact_id") is not None:
         _require(parameters["artifact_id"] in permission.artifact_ids,
-                 "tool Artifact is outside the permission snapshot")
+                 f"{step.tool}.parameters.artifact_id must be an authorized registered Artifact ID. "
+                 "Step keys are not Artifact IDs; after importing, use the returned ID. "
+                 "Keep a query whose Artifact is not yet available as a goal gap.")
     if parameters.get("source_id") is not None:
         _require(parameters["source_id"] in permission.source_ids,
                  "source ID is outside the permission snapshot")
@@ -201,10 +205,21 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
         prior_plan.validate_request(prior_request)
     user_change = _request_revision(prior_request, next_request, user_update)
     if next_plan is None:
-        _require(prior_plan is None or (user_change and bool(next_request.unresolved)),
+        _require(prior_plan is None or user_change,
                  "active Plan may only be suspended by a trusted clarification")
         return
     next_plan.validate_request(next_request)
+    if run.initial_science_steps is None:
+        initial_systems = next_request.conditions.get("initial_system_ids")
+        if initial_systems is not None:
+            offered = [s.system_id for s in next_plan.steps if _science(s)]
+            _require(len(offered) == len(initial_systems) and set(offered) == set(initial_systems),
+                     "initial Plan must contain exactly the required initial scientific members")
+        for step in next_plan.steps:
+            if _science(step):
+                for name, value in next_request.conditions.get("initial_parameters", {}).items():
+                    _require(getattr(step.parameters, name, None) == value,
+                             "initial scientific parameters differ from the user constraint")
     if prior_plan:
         _require(next_plan.id == prior_plan.id and next_plan.version == prior_plan.version + 1,
                  "Plan revision must preserve identity and increment version by one")
@@ -245,7 +260,12 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
                                            for attempt in run.attempts),
                  "historical Step snapshot is required to validate a repair")
         if old:
-            _repair(old, step, run, logical_by_id, user_change)
+            prior_versions = [a.request_version for a in run.attempts
+                              if a.logical_id == step.logical_id and a.request_version is not None]
+            user_retargeted = bool(prior_versions and max(prior_versions) < next_request.version
+                                   and next_request.messages
+                                   and all(m.get("source") == "user" for m in next_request.messages))
+            _repair(old, step, run, logical_by_id, user_change or user_retargeted)
         else:
             for previous in previous_steps:
                 if _science(previous):

@@ -287,6 +287,7 @@ class Tool(Record):
     check_version: str = LEGACY_CHECK_VERSION
     implementation: str
     required_input_checks: dict[str, str] = Field(default_factory=dict)
+    check_contract: dict[str, Any] = Field(default_factory=dict)
 
 
 class PermissionSnapshot(Record):

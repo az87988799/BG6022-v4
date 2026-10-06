@@ -1,0 +1,89 @@
+{
+  "id": "model_b6ef00b45a3e4684948f144b17f099e6",
+  "basis": {
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0
+  },
+  "request": {
+    "id": "request_d1025975adf9446b9d03a4220859c56f",
+    "version": 1,
+    "original_text": "对登记的水分子固定几何做 RHF/STO-3G 单点，电荷0、多重度1，交付电子能及来源。",
+    "geometry_artifact_id": "artifact_91707e8c13a74838b3cd01b82b29fdb9",
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "HF",
+    "basis": "STO-3G",
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "method": "explicit",
+      "basis": "explicit",
+      "geometry": "explicit"
+    },
+    "goals": [
+      {
+        "id": "result_goal",
+        "port": "energy",
+        "required": true,
+        "minimum_check_version": "orca-hf-2",
+        "original_text": "对登记的水分子固定几何做 RHF/STO-3G 单点，电荷0、多重度1，交付电子能及来源。",
+        "system_ids": [],
+        "conditions": {
+          "geometry_relation": "fixed_initial"
+        },
+        "minimum_evidence": [],
+        "unresolved": []
+      }
+    ],
+    "systems": [],
+    "messages": [],
+    "unresolved": [],
+    "conditions": {},
+    "normalization_status": "normalized"
+  },
+  "plan": {
+    "id": "plan_43f8ac1bdab04c1ca0607aafb450ac03",
+    "version": 1,
+    "request_id": "request_d1025975adf9446b9d03a4220859c56f",
+    "request_version": 1,
+    "steps": [
+      {
+        "id": "step_508750b408394cd29ffa0b091557eceb",
+        "logical_id": "logical_7a6684dcd00048fda2151cafca00c0ba",
+        "tool": "orca.sp",
+        "parameters": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "cores": 4,
+          "memory_mb": 1024,
+          "maxcore_mb": 192,
+          "scf_maxiter": 100,
+          "opt_maxiter": 100,
+          "timeout_seconds": 300.0
+        },
+        "geometry": {
+          "artifact_id": "artifact_91707e8c13a74838b3cd01b82b29fdb9",
+          "producer_step_id": null,
+          "port": null
+        },
+        "depends_on": [],
+        "inputs": {},
+        "system_id": null
+      }
+    ],
+    "goal_map": {
+      "result_goal": {
+        "step_id": "step_508750b408394cd29ffa0b091557eceb",
+        "port": "energy",
+        "evidence": null,
+        "gap": null
+      }
+    }
+  },
+  "related_results": [],
+  "user_message_ids": []
+}

@@ -16,6 +16,43 @@ class _MemberRequirement(Record):
     required: bool = Field(default=True, strict=True)
 
 
+def _source_hashes(store, source_run, result):
+    """Revalidate provenance even when the source has no qualified number."""
+    source = store.load_run(source_run)
+    if result.run_id != source_run or result.id not in source.result_ids:
+        raise StoreError("source Result is not bound to its Run")
+    if result.attempt_id is not None:
+        attempts = [a for a in source.attempts if a.id == result.attempt_id]
+        if len(attempts) != 1 or attempts[0].step_id != result.step_id:
+            raise StoreError("source Result has no exact Attempt/Step provenance")
+        attempt = attempts[0]
+        for key, expected in (("input_fingerprint", attempt.input_fingerprint),
+                              ("geometry_artifact_id", attempt.geometry_artifact_id)):
+            if key in result.source and result.source[key] != expected:
+                raise StoreError("source Result input/geometry provenance differs from its Attempt")
+    else:
+        calls = [c for c in source.calls if c.id == result.call_id]
+        if len(calls) != 1 or calls[0].step_id != result.step_id:
+            raise StoreError("source Result has no exact Tool call provenance")
+    hashes = {}
+    for artifact_id in result.artifact_ids:
+        store.artifact_path(artifact_id)
+        artifact = store.load_artifact(artifact_id)
+        if result.attempt_id is not None and (artifact.run_id, artifact.attempt_id) != (
+                source_run, result.attempt_id):
+            raise StoreError("source Artifact Run/Attempt provenance differs")
+        hashes[artifact_id] = artifact.sha256
+    files = result.source.get("files", {})
+    if not isinstance(files, dict):
+        raise StoreError("source file manifest is not a provenance mapping")
+    for entry in files.values():
+        if (not isinstance(entry, dict) or not isinstance(entry.get("artifact_id"), str)
+                or hashes.get(entry["artifact_id"]) != entry.get("sha256")
+                or entry.get("sha256") is None):
+            raise StoreError("source file manifest hash/provenance differs")
+    return hashes
+
+
 def bind_inputs(store, run, step, results):
     bound = {}
     for member_id, reference in step.inputs.items():
@@ -35,8 +72,7 @@ def bind_inputs(store, run, step, results):
             if source_run != run.id and result_id not in run.permission.result_ids:
                 raise StoreError("external Result is not authorized")
             result = store.load_result(source_run, result_id)
-        if result_id not in store.load_run(source_run).result_ids:
-            raise StoreError("source Result is not bound to its Run")
+        hashes = _source_hashes(store, source_run, result)
         if reference.attempt_id and result.attempt_id != reference.attempt_id:
             raise StoreError("source Attempt differs from its consumption binding")
         required = get_tool(step.tool).required_input_checks.get(reference.port)
@@ -52,10 +88,6 @@ def bind_inputs(store, run, step, results):
         elif (output.checks != result.checks.get(reference.port)
               or any(c.rule_version != required or c.status != "passed" for c in output.checks)):
             unavailable = "source_checks_do_not_satisfy_consumer_rule"
-        hashes = {}
-        for artifact_id in result.artifact_ids:
-            store.artifact_path(artifact_id)
-            hashes[artifact_id] = store.load_artifact(artifact_id).sha256
         if reference.artifact_id and hashes.get(reference.artifact_id) != reference.sha256:
             raise StoreError("source Artifact differs from the explicit binding")
         bound[member_id] = {"run_id": source_run, "result_id": result_id,
@@ -92,6 +124,8 @@ def _members(store, call, required, all_ids=()):
             if (binding.get("result_fingerprint")
                     and fingerprint(result) != binding["result_fingerprint"]):
                 raise StoreError("consumed Result changed after reservation")
+            if _source_hashes(store, binding["run_id"], result) != binding["artifact_hashes"]:
+                raise StoreError("consumed Result artifact provenance changed after reservation")
             if binding.get("status") == "unavailable":
                 # A failed/missing member is a provenance fact, never a numeric
                 # input. Neither observations nor raw files supply a fallback.
@@ -104,6 +138,41 @@ def _members(store, call, required, all_ids=()):
             id=member_id, required=member_id in required, evidence=evidence,
             missing_reason=missing_reason if not evidence else None,
             unavailable_source=unavailable_source))
+    return members
+
+
+def _current_comparison_members(store, request, members):
+    """A qualified historical energy must also match its requested operand."""
+    systems = {system.id: system for system in request.systems}
+    for member in members:
+        if member.evidence is None:
+            continue
+        evidence = member.evidence
+        system = systems.get(member.id)
+        declared = system.conditions if system else {}
+        expected = {key: declared.get(key, getattr(request, key))
+                    for key in ("method", "basis", "charge", "multiplicity")}
+        for key in ("electronic_state", "environment"):
+            if key in declared or key in request.conditions:
+                expected[key] = declared.get(key, request.conditions.get(key))
+        if expected["method"] == "RHF":
+            expected["method"] = "HF"
+        actual = evidence.conditions.model_dump()
+        mismatch = [key for key, value in expected.items() if value is None or value != actual.get(key)]
+        if "system" in declared and declared["system"] != "H2O":
+            mismatch.append("system")
+        if system and system.atom_mapping and system.atom_mapping != list(range(len(evidence.elements))):
+            mismatch.append("atom_mapping")
+        if system and system.geometry_artifact_id:
+            store.artifact_path(system.geometry_artifact_id)
+            if store.load_artifact(system.geometry_artifact_id).sha256 != evidence.geometry_sha256:
+                mismatch.append("geometry")
+        if mismatch:
+            member.unavailable_source = {key: value for key, value in evidence.model_dump(mode="json").items()
+                                         if key not in {"energy_eh", "unit"}}
+            member.unavailable_source.update(expected_conditions=expected, mismatched_fields=mismatch)
+            member.missing_reason = "source_not_applicable_to_requested_operand:" + ",".join(mismatch)
+            member.evidence = None
     return members
 
 
@@ -120,8 +189,9 @@ def compare(store, run, call):
     if any(item.id in required and not item.required for item in declared):
         raise StoreError("comparison operands cannot be optional")
     required.extend(item.id for item in declared if item.required and item.id not in required)
-    return analysis.energy_compare(_members(store, call, required, [item.id for item in declared]),
-                                   parameters)
+    members = _members(store, call, required, [item.id for item in declared])
+    members = _current_comparison_members(store, store.load_request(run), members)
+    return analysis.energy_compare(members, parameters)
 
 
 def sample(store, run, call):
@@ -191,6 +261,21 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
             artifact = store.import_artifact(path, "analysis", run_id=run.id,
                                              source={"call_id": call.id, "consumption": consumption})
             artifacts.append(artifact.id)
+            comparison = qualified.get("energy_difference")
+            members = data.get("members", [])
+            if ("member_table" in definition.output_ports and comparison is not None
+                    and data.get("scientific_status") == "passed"
+                    and data.get("reason") == "compatible_comparison"
+                    and members and all(m.get("status") == "qualified"
+                                        for m in members if m.get("required"))):
+                # The table is the same checked analysis, with its own immutable
+                # artifact binding. Missing optional rows remain explicit and
+                # never receive inferred or unverified numerical values.
+                qualified["member_table"] = QualifiedOutput(
+                    artifact_id=artifact.id, checks=list(comparison.checks),
+                    source={"members": members, "analysis_goal_id": call.parameters["goal_id"],
+                            "artifact_id": artifact.id, "sha256": artifact.sha256})
+                checks["member_table"] = list(comparison.checks)
         observation = {name: data for name in definition.observation_outputs}
         result = Result(run_id=run.id, step_id=call.step_id, call_id=call.id,
                         operation_status="completed", checks=checks, qualified_outputs=qualified,
