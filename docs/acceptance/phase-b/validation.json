@@ -1,0 +1,116 @@
+{
+  "scope": "B-01 only; contracts, independent reference support and acceptance evidence; no new production runtime feature",
+  "recorded_at": "2026-10-06T12:42:38.173732+00:00",
+  "timezone": "Asia/Hong_Kong",
+  "production_code_baseline": "236376e2d8289ce21ea23bec3e56f4e748c25475",
+  "repository_head_before_B01": "2ad1a5665d1400a6ade7e7eb2e78bce3a8d4d950",
+  "implementation_plan_sha256": "27ef550e293a120173965415e1598d8fa1ce977505082acbd0a131dfea99c5c4",
+  "final_commit": "the Git commit containing this validation record; reported after push",
+  "production_source_modified": false,
+  "dependency_lock_modified": false,
+  "checks": [
+    {
+      "command": "py -3.11 -m uv run --offline --locked pytest tests/unit/test_phase_b_reference.py tests/unit/test_phase_b_review.py tests/unit/test_phase_b_contract.py -q",
+      "result": "passed",
+      "passed": 93,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 7.34,
+      "log": "targeted-tests.txt"
+    },
+    {
+      "command": "py -3.11 -m uv run --offline --locked pytest -q",
+      "result": "passed",
+      "passed": 397,
+      "failed": 0,
+      "skipped": 14,
+      "seconds": 169.31,
+      "log": "offline-tests.txt",
+      "skip_reasons": {
+        "real_ORCA_not_enabled": 13,
+        "Windows_symlink_privilege_unavailable": 1
+      },
+      "skip_is_pass": false
+    },
+    {
+      "command": "py -3.11 -m uv run --offline --locked ruff check .",
+      "result": "passed"
+    },
+    {
+      "command": "py -3.11 -m uv build --offline",
+      "result": "passed",
+      "outputs": [
+        "dist/orca_agent-0.1.0.tar.gz",
+        "dist/orca_agent-0.1.0-py3-none-any.whl"
+      ]
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "independent exact-byte input -> managed runner -> independent raw stdout and XYZ review",
+      "result": "reference_gates_satisfied",
+      "real_ORCA_starts": 16,
+      "converged_sampling_references": 15,
+      "expected_real_SCF_nonconvergence": 1,
+      "unexpected_science_failures": 0,
+      "postprocess_starts": 0,
+      "new_model_requests": 0,
+      "evidence": "reference-review.json"
+    }
+  ],
+  "development_findings": [
+    {
+      "finding": "First new test collection failed because tests was not an importable package under the console pytest entry",
+      "resolution": "Use existing importlib test-helper loading pattern; final targeted and complete suites pass",
+      "new_scientific_launches": 0
+    },
+    {
+      "finding": "Initial offline evidence assembly assumed Result.checks was a list; it is a port-to-check-list mapping",
+      "resolution": "Corrected read-only assembler; original receipts untouched; no new ORCA launch",
+      "new_scientific_launches": 0
+    },
+    {
+      "finding": "Receipt payload integrity and identity binding missing from replay",
+      "resolution": "Hash/id/run binding checks plus conservative uncommitted receipt and negative tests"
+    },
+    {
+      "finding": "NaN and incomplete sampling evidence could make an acceptance oracle unreliable",
+      "resolution": "Require finite domains and complete 15-point independent reference coverage; negative tests"
+    },
+    {
+      "finding": "Internal left/right/stop fixture names disclose expected actions",
+      "resolution": "Opaque model input fixture IDs, identical user wording and whitelist/hash tests; final HTTP context inspection still required in B-04/B-09"
+    },
+    {
+      "finding": "Regex leading whitespace and CRCRLF make naive line counting ambiguous",
+      "resolution": "Exact token location with raw LF-delimited records; re-read unchanged raw evidence and retain original execution receipts"
+    },
+    {
+      "finding": "Missing local ledger after checkout could silently initialize a fresh batch",
+      "resolution": "Delivered snapshot without durable ledger blocks reads/starts until original archive restored"
+    }
+  ],
+  "final_review_file_sha256": {
+    "tests/helpers/phase_b_reference.py": "64d8ba4d50a8cb9a1aa8c7de387dff95849d3241ef9cccd9b2fdb647c0b00b89",
+    "tests/helpers/phase_b_review.py": "a7cf85b13403e9383dd4e57eeadd9aaa863c100edff821d71513db4de6e4c390",
+    "tests/unit/test_phase_b_contract.py": "e1bc0b32f4d20aa46f76e54d6f3c24b9164b19724d7ec1ef166616f1643f8ab5",
+    "tests/unit/test_phase_b_reference.py": "bf1b55a4643dfa34e64e7ba5381f4b8d6d571d53fc3dbb7024a1e6ad8b3f5f5d",
+    "tests/unit/test_phase_b_review.py": "973508caf927d49504203b52c451b61dcde4c68ce6c3bab476ff59d3eff2bcbe",
+    "tests/fixtures/phase_b/cases.json": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+    "tests/fixtures/phase_b/sampling-candidates.json": "c542b8d001e577686d709f792e2504beea3d9331348a06f05774b8009befaef4",
+    "tests/fixtures/phase_b/agent-json-v1.txt": "d43cb72e0acafe8a0cca26652b5ff9c2a989476f0f79fae2842d8de1bd7324a5",
+    "docs/acceptance/phase-b/profile.json": "0721e39745d82849732a4b514cb362f556862794f3234a815cb905f7ca5dcce1",
+    "docs/acceptance/phase-b/pricing-basis.json": "229b7547bcc7f39a3641a4cdb103860b2f9940b10028b7d3807a3ead81a0bdba"
+  },
+  "evidence_classes": {
+    "offline_specification_and_recovery_checks": "passed",
+    "real_local_ORCA_independent_references": "15 converged + 1 expected nonconverged",
+    "real_model": "not_run",
+    "real_model_plus_ORCA_joint": "not_run",
+    "real_remote": "unverified"
+  },
+  "B01_exit": "reference gates, case predicates, contracts and budgets frozen; missing model credentials explicitly recorded; wait for user acceptance",
+  "all_phase_B_runtime_variants": "not_run; not promoted by these test results"
+}

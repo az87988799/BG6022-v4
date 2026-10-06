@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "profile_id": "local-hf-agent-v1",
+  "frozen_date": "2026-10-06",
+  "timezone": "Asia/Hong_Kong",
+  "status": "B-01 design contract; runtime enforcement deferred to B-02 through B-10",
+  "science": {
+    "systems": ["H2O", "CH4"],
+    "method": "RHF", "basis": "STO-3G", "charge": 0, "multiplicity": 1,
+    "environment": "isolated gas-phase molecule; no solvent, field or embedding",
+    "checks": "orca-hf-2", "scf": "TightSCF", "optimization": "TightOpt EnforceStrictConvergence",
+    "allowed_operations": ["SP", "unconstrained Opt", "compatible electronic energy difference", "registered finite SP candidates"],
+    "repair_success": {"initial_scf_maxiter": 1, "allowed_repair_values": [100], "attempts": 2},
+    "repair_exhaustion": {"initial_scf_maxiter": 1, "allowed_repair_values": [2], "attempts": 2},
+    "repair_invariants": ["geometry", "method", "basis", "charge", "multiplicity", "TightSCF", "ConvForced 1", "goal", "minimum evidence"]
+  },
+  "resources": {"cores": 4, "job_commit_memory_mib": 1024, "maxcore_mb_per_process": 192, "environment_concurrency": 1},
+  "run_limits": {
+    "orca_starts": 4, "attempts_per_logical_step": 3, "extra_orca_starts": 3,
+    "postprocess_starts": 0, "plan_revisions": 2, "model_http_requests": 8,
+    "corrections_per_proposal": 1, "transport_retries_per_logical_request": 1,
+    "input_tokens_per_request": 12000, "output_tokens_per_request": 2000,
+    "total_model_tokens": 48000, "decision_rounds": 12, "evidence_reads": 24,
+    "analysis_executions": 8, "steps_per_plan": 8, "distinct_logical_steps": 12,
+    "members": 5, "run_seconds": 1800, "model_timeout_seconds": 60,
+    "sp_timeout_seconds": 300, "opt_timeout_seconds": 900,
+    "cleanup_timeout_seconds": 10, "collection_timeout_seconds": 30
+  },
+  "evidence_limits": {
+    "returned_bytes": 32768, "lines_hits_or_elements": 200, "path_depth": 12,
+    "read_seconds": 5, "source_scan_or_json_bytes": 16777216,
+    "import_files": 16, "import_file_bytes": 16777216, "import_total_bytes": 67108864
+  },
+  "batch_limits": {
+    "orca_starts": {"reference": 16, "formal": 48, "development": 32, "total": 96},
+    "model_http_requests": 600, "model_total_tokens": 6000000, "model_cost_usd": "10.00",
+    "ledger": "data/phase-b/batch-ledger.json",
+    "rules": ["reserve before sending or launching", "stable identity replay is read-only", "unknown consumes reservation", "never relabel to release quota", "repeat commands and new Runs do not reset totals", "all three model limits must pass"]
+  },
+  "model": {
+    "provider": "DeepSeek", "model": "deepseek-flash", "documented_version": "DeepSeek-V4.1-Flash",
+    "base_url": "https://api.deepseek.com", "endpoint": "/chat/completions", "stream": false,
+    "extra_body": {"thinking": {"type": "disabled"}}, "response_format": {"type": "json_object"},
+    "temperature": 0, "max_tokens": 2000, "sdk_max_retries": 0,
+    "credential_environment_variable": "DEEPSEEK_API_KEY", "sdk_version": null,
+    "sdk_selection": "B-04 must pin pyproject.toml and uv.lock and verify; no compatibility claim yet",
+    "prompt_version": "agent-json-v1", "prompt_path": "tests/fixtures/phase_b/agent-json-v1.txt",
+    "protocol": "local validated JSON proposal; no provider native Tool Calls",
+    "token_reservation": "Before B-04 validates a tokenizer or conservative UTF-8 byte bound with framing overhead, reserve the entire 12000 input + 2000 output token ceiling; no actual send until bounded serialization is verified. Never treat character count as token count.",
+    "unknown_usage": "keep full reservation, mark unknown; known usage settles actual without erasing HTTP count",
+    "retry": "401/403 never retry; at most one explicit network/429 retry, Retry-After capped by remaining Run deadline and 60 second request bound; every send reserved separately",
+    "pricing_source": "pricing-basis.json",
+    "weights_pinned": false
+  },
+  "context": {
+    "required": ["user originals and provenance", "Request/Plan/permission versions", "control generation", "required goals and unresolved conditions", "remaining budgets", "current results with source hashes and rule versions", "compact registry catalog then required schemas"],
+    "untrusted_data": ["artifact content", "import comments", "tool output", "retrieved documents"],
+    "never_include": ["credentials or authentication headers", "independent unsampled reference energies", "acceptance expected action labels including window/source/fixture names", "arbitrary filesystem paths"],
+    "sampling_input": "Use the manifest's model_context_fixture with opaque model_window_id/model_candidate_id; internal left/right/stop labels never enter the serialized model request. B-04/B-09 must inspect final HTTP JSON for leakage.",
+    "compression": "preserve authoritative goals and uncertainty; read evidence by bounded references"
+  },
+  "test_gates": {
+    "current": "Only --live-orca and live/backend exist; no changes to conftest in B-01",
+    "planned_B-04": [
+      {"mark": "offline", "flags": [], "network": "deny", "science": "deny including local._native"},
+      {"mark": "model", "flags": ["--live-model"], "network": "configured DeepSeek HTTPS only; reject redirects", "science": "deny including local._native"},
+      {"mark": "live", "flags": ["--live-orca"], "network": "deny", "science": "configured real ORCA only"},
+      {"mark": "e2e", "flags": ["--live-model", "--live-orca"], "network": "same model boundary", "science": "same ORCA boundary"}
+    ],
+    "missing_environment": "skip/unverified, never count as passed",
+    "ordinary_tests": "both live flags must not relax ordinary offline test isolation"
+  }
+}
