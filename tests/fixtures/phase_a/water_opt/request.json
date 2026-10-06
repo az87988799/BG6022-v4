@@ -1,0 +1,39 @@
+{
+  "description": "water_opt frozen acceptance request",
+  "geometry": "geometry.xyz",
+  "steps": [
+    {
+      "name": "calculation",
+      "tool": "orca.opt",
+      "parameters": {
+        "method": "HF",
+        "basis": "STO-3G",
+        "charge": 0,
+        "multiplicity": 1,
+        "cores": 4,
+        "memory_mb": 1024,
+        "maxcore_mb": 192,
+        "scf_maxiter": 100,
+        "opt_maxiter": 100,
+        "timeout_seconds": 300
+      }
+    }
+  ],
+  "goals": [
+    {
+      "name": "energy",
+      "step": "calculation",
+      "port": "energy"
+    },
+    {
+      "name": "optimized_geometry",
+      "step": "calculation",
+      "port": "optimized_geometry"
+    }
+  ],
+  "budget": {
+    "attempts_per_step": 1,
+    "orca_starts": 1,
+    "extra_orca_starts": 0
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "description": "methane_sp frozen acceptance request",
+  "geometry": "geometry.xyz",
+  "steps": [
+    {
+      "name": "calculation",
+      "tool": "orca.sp",
+      "parameters": {
+        "method": "HF",
+        "basis": "STO-3G",
+        "charge": 0,
+        "multiplicity": 1,
+        "cores": 4,
+        "memory_mb": 1024,
+        "maxcore_mb": 192,
+        "scf_maxiter": 100,
+        "opt_maxiter": 100,
+        "timeout_seconds": 120
+      }
+    }
+  ],
+  "goals": [
+    {
+      "name": "energy",
+      "step": "calculation",
+      "port": "energy"
+    }
+  ],
+  "budget": {
+    "attempts_per_step": 1,
+    "orca_starts": 1,
+    "extra_orca_starts": 0
+  }
+}
