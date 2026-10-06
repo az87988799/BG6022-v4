@@ -37,7 +37,7 @@ def initialize(store, config, spec_path):
 
 
 def _step_results(store, run):
-    result_by_step = {}
+    candidates = {}
     for attempt in run.attempts:
         if attempt.result_id and attempt.state != "not_started":
             chain = store.result_chain(run, attempt)
@@ -48,20 +48,42 @@ def _step_results(store, run):
                 raise ValueError("result does not match its bound attempt")
             for artifact_id in result.artifact_ids:
                 store.artifact_path(artifact_id)
-            if attempt.step_id in result_by_step:
-                raise ValueError("multiple results need an explicit consumption binding")
-            result_by_step[attempt.step_id] = result
+            candidates.setdefault(attempt.step_id, []).append(result)
+    for call in run.calls:
+        if call.step_id and call.result_id:
+            result = store.load_result(run.id, call.result_id)
+            if result.call_id != call.id or result.step_id != call.step_id:
+                raise ValueError("result does not match its bound Tool call")
+            for artifact_id in result.artifact_ids:
+                store.artifact_path(artifact_id)
+            candidates.setdefault(call.step_id, []).append(result)
+    result_by_step = {}
+    for step_id, values in candidates.items():
+        selected = run.selected_results.get(step_id)
+        if selected:
+            values = [value for value in values if value.id == selected]
+        if len(values) != 1:
+            raise ValueError("multiple results need an explicit consumption binding")
+        result_by_step[step_id] = values[0]
     return result_by_step
 
 
 def _goals(store, run, plan, results):
+    from orca_agent.goals import validate_goal_evidence
     request = store.load_request(run)
     for goal in request.goals:
-        binding = plan.goal_map.get(goal.id)
+        binding = plan.goal_map.get(goal.id) if plan else None
         result = results.get(binding.step_id) if binding else None
-        output = result.qualified_outputs.get(binding.port) if result and binding else None
-        valid = bool(output and all(c.rule_version == goal.minimum_check_version
-                                   for c in output.checks))
+        reference = binding.evidence if binding else run.goal_evidence.get(goal.id)
+        if reference:
+            if reference.run_id != run.id and reference.result_id not in run.permission.result_ids:
+                raise ValueError("goal evidence is outside the permission snapshot")
+            result = store.load_result(reference.run_id, reference.result_id)
+            if reference.attempt_id and result.attempt_id != reference.attempt_id:
+                raise ValueError("goal evidence Attempt differs")
+        output = result.qualified_outputs.get(goal.port) if result else None
+        valid = bool(result and validate_goal_evidence(store, run, request, goal, result)
+                     and not (binding and binding.gap))
         if output and not valid:
             mismatch = {"category": "check_rule_mismatch", "goal_id": goal.id,
                         "result_id": result.id, "required_version": goal.minimum_check_version,
@@ -162,7 +184,14 @@ def _recover(store, config, run, plan):
                            "reconciliation": reconciliation}
                 _record_reconciliation(store, run, attempt, reconciliation, outcome["resource_usage"])
         if needs_collection:
-            step = next(step for step in plan.steps if step.id == attempt.step_id)
+            if attempt.frozen_step:
+                step = attempt.frozen_step
+            else:
+                # Legacy Runs have no revision permission. Their original immutable
+                # Plan is the only admissible source; never use a new current Plan.
+                version = attempt.plan_version or 1
+                historical = store.load_plan_revision(run, version)
+                step = next(s for s in historical.steps if s.id == attempt.step_id)
             result = collect_result(store, run, step, attempt, outcome)
             result.supersedes_result_id = current.id if current else None
             store.save_result(result)
@@ -186,6 +215,7 @@ def _recover(store, config, run, plan):
             # Old versions could finish an attempt while retaining an empty
             # unknown Result. Supplement its evidence without charging it twice.
             attempt.result_id = result.id
+            run.selected_results[attempt.step_id] = result.id
             store.save_run(run)
             if owns_lease:
                 store.release_environment(run.id, attempt.id, termination_confirmed=True)
@@ -201,7 +231,8 @@ def _recover(store, config, run, plan):
 
 def _validate_execution_rules(store, run):
     request = store.load_request(run)
-    if any(goal.minimum_check_version != CURRENT_CHECK_VERSION for goal in request.goals):
+    if any(goal.minimum_check_version != CURRENT_CHECK_VERSION for goal in request.goals
+           if goal.port in ("energy", "optimized_geometry")):
         raise ValueError("check_rule_revalidation_required: historical Run may be inspected and recovered; "
                          "scientific continuation requires explicit rule revalidation")
     environment = json.loads(store.path(f"runs/{run.id}/environment.json").read_text())

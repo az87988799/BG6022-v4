@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from orca_agent.models import (
     BudgetLimits,
@@ -42,6 +42,12 @@ class TaskInput(Record):
     steps: list[StepInput] = Field(min_length=1, max_length=4)
     goals: list[GoalInput] = Field(min_length=1)
     budget: BudgetLimits = Field(default_factory=BudgetLimits)
+
+    @model_validator(mode="after")
+    def deterministic_permissions(self):
+        if self.budget.model_calls or self.budget.plan_revisions:
+            raise ValueError("fixed structured requests cannot grant model or revision activity")
+        return self
 
 
 def prepare_task(spec_path: Path, store):

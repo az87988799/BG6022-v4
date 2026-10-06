@@ -5,7 +5,7 @@ import os
 import time
 
 from orca_agent.backends import local
-from orca_agent.models import Check, QualifiedOutput, Result, utc_now
+from orca_agent.models import Check, PermissionSnapshot, QualifiedOutput, Result, utc_now
 from orca_agent.orca.adapter import prepare_input, read_outputs
 from orca_agent.store import atomic_write, sha256_file
 from orca_agent.versions import CURRENT_CHECK_VERSION, is_supported_orca_version
@@ -30,7 +30,7 @@ def revalidate(store, run, step, config):
     if step not in plan.steps:
         raise ValueError("step is no longer in the validated plan")
     permission = json.loads(store.path(f"runs/{run.id}/permission.json").read_text())
-    if permission != run.permission.model_dump(mode="json"):
+    if PermissionSnapshot.model_validate(permission) != run.permission:
         raise ValueError("permission changed after validation")
     if not run.permission.scientific_execution or step.tool not in run.permission.allowed_tools:
         raise ValueError("execution is not authorized")
@@ -38,7 +38,8 @@ def revalidate(store, run, step, config):
     if signal:
         raise _PrelaunchControl(signal)
     if any(goal.minimum_check_version != CURRENT_CHECK_VERSION
-           for goal in store.load_request(run).goals):
+           for goal in store.load_request(run).goals
+           if goal.port in ("energy", "optimized_geometry")):
         raise ValueError("check_rule_revalidation_required before scientific execution")
     if utc_now() >= run.deadline:
         raise ValueError("run deadline exhausted before execution")
@@ -90,6 +91,7 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
         revalidate(store, run, step, config)
         remaining = (run.deadline - utc_now()).total_seconds()
         child_environment = {key.upper(): value for key, value in os.environ.items()}
+        child_environment.pop("DEEPSEEK_API_KEY", None)
         directories = [str(config.orca_path.parent)]
         if config.mpi_path:
             directories.append(str(config.mpi_path.parent))

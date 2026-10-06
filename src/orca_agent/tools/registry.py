@@ -11,6 +11,11 @@ from typing import Annotated, Any
 from pydantic import Field, field_validator
 
 from orca_agent.models import CalculationParameters, Identifier, Record, Tool
+from orca_agent.tools.evidence import (
+    EvidenceDiscoverParameters,
+    EvidenceSearchParameters,
+    EvidenceValueParameters,
+)
 from orca_agent.versions import CURRENT_CHECK_VERSION
 
 
@@ -39,6 +44,14 @@ class EvidenceFieldParameters(Record):
         return value
 
 
+class ImportParameters(Record):
+    source_id: Identifier
+
+
+class AnalysisParameters(Record):
+    goal_id: Identifier
+
+
 @dataclass(frozen=True)
 class _Registration:
     """Local immutable registry entry, with no independent persisted lifecycle."""
@@ -58,6 +71,7 @@ TOOLS: dict[str, _Registration] = {
         check_version=CURRENT_CHECK_VERSION,
         description="H2O/CH4 HF/STO-3G neutral singlet single-point electronic energy in Eh.",
         output_ports=["energy"],
+        required_input_checks={"optimized_geometry": CURRENT_CHECK_VERSION},
         implementation="orca_agent.tools.electronic.execute",
     ),
     "orca.opt": _register(
@@ -69,6 +83,7 @@ TOOLS: dict[str, _Registration] = {
             "establish a minimum or its vibrational stability."
         ),
         output_ports=["energy", "optimized_geometry"],
+        required_input_checks={"optimized_geometry": CURRENT_CHECK_VERSION},
         implementation="orca_agent.tools.geometry.execute",
     ),
     "evidence.list": _register(
@@ -94,6 +109,39 @@ TOOLS: dict[str, _Registration] = {
     ),
 }
 
+for _name, _parameters, _description, _function, _port in (
+    ("evidence.discover", EvidenceDiscoverParameters, "Discover bounded existing JSON keys.",
+     "discover_content", "content_index"),
+    ("evidence.value", EvidenceValueParameters, "Read literal JSON keys, indices or a bounded slice.",
+     "read_value", "value_observation"),
+    ("evidence.search", EvidenceSearchParameters, "Search a bounded raw text window with LF line numbers.",
+     "search_text", "search_hits"),
+):
+    TOOLS[_name] = _register(
+        _parameters, name=_name, description=_description, input_roles=["registered_artifact"],
+        output_ports=[], observation_outputs=[_port], effects=["read_registered_artifact"],
+        max_cores=0, max_memory_mb=0, check_version="evidence-read-1",
+        implementation=f"orca_agent.tools.evidence.{_function}",
+    )
+TOOLS["evidence.import"] = _register(
+    ImportParameters, name="evidence.import", description="Copy an authorized immutable source snapshot.",
+    input_roles=["registered_source"], output_ports=[], observation_outputs=["imported_evidence"],
+    effects=["import_artifact"], max_cores=0, max_memory_mb=0, check_version="evidence-read-1",
+    implementation="orca_agent.tools.dispatch.import_evidence",
+)
+for _name, _version, _port, _function in (
+    ("analysis.energy_compare", "energy-compare-1", "energy_difference", "compare"),
+    ("analysis.finite_sampling", "finite-sampling-1", "sampling", "sample"),
+):
+    TOOLS[_name] = _register(
+        AnalysisParameters, name=_name,
+        description="Check explicitly bound energy members against immutable requested conditions.",
+        input_roles=["qualified_energy"], output_ports=[_port], observation_outputs=["analysis"],
+        effects=["read_registered_artifact", "write_analysis"], max_cores=0, max_memory_mb=0,
+        check_version=_version, required_input_checks={"energy": CURRENT_CHECK_VERSION},
+        implementation=f"orca_agent.tools.dispatch.{_function}",
+    )
+
 
 def _definition(name: str) -> _Registration:
     try:
@@ -110,12 +158,10 @@ def catalog() -> list[dict[str, Any]]:
     return [get_tool(name).model_dump(mode="json") for name in TOOLS]
 
 
-def validate_parameters(name: str, value: CalculationParameters | dict) -> CalculationParameters:
+def validate_parameters(name: str, value: Record | dict) -> Record:
     definition = _definition(name)
-    if definition.parameters is not CalculationParameters:
-        raise ValueError("a scientific Step requires a registered scientific tool")
     parameters = definition.parameters.model_validate(
-        value.model_dump() if isinstance(value, CalculationParameters) else value
+        value.model_dump() if isinstance(value, Record) else value
     )
     if name == "orca.sp" and parameters.timeout_seconds > 300:
         raise ValueError("single-point deadline may not exceed 300 seconds")

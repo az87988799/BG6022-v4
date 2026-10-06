@@ -1,0 +1,24 @@
+{
+  "scope": "B-02/B-03 foundational contracts, revision recovery, observation and analysis boundaries",
+  "evidence_type": "offline tests plus read-only reuse of previously archived real ORCA files",
+  "checks": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_models.py tests/unit/test_store.py tests/unit/test_structured.py tests/unit/test_registry.py tests/unit/test_evidence.py tests/unit/test_evidence_extended.py tests/unit/test_analysis.py tests/unit/test_dispatch.py tests/unit/test_planning.py tests/unit/test_revision_store.py tests/integration/test_runner.py -q",
+      "passed": 356,
+      "skipped": 1,
+      "skip_reason": "Windows symbolic-link privilege unavailable"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_planning.py tests/unit/test_revision_store.py tests/unit/test_dispatch.py -q",
+      "passed": 71,
+      "skipped": 0,
+      "purpose": "repeat targeted checks after orphan candidate and historical-version recovery fixes"
+    },
+    {"command": ".venv/Scripts/python.exe -m ruff check src tests", "status": "passed"},
+    {"command": "git diff --cached --check", "status": "passed"}
+  ],
+  "new_live_model_http_requests": 0,
+  "new_live_orca_starts": 0,
+  "remaining_validation": "Single feedback loop, real model and ORCA joint trajectories, final repeat evaluation",
+  "acceptance": "waiting_user_acceptance"
+}

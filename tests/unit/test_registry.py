@@ -47,9 +47,8 @@ def test_readonly_tools_share_schema_and_never_declare_scientific_ports(name, mo
     assert tool.implementation.startswith("orca_agent.tools.evidence.")
     with pytest.raises(ValueError):
         Step(id="inspect", logical_id="inspect", tool=name, geometry=InputRef(artifact_id="g"))
+    assert PermissionSnapshot(allowed_tools=[name]).scientific_execution is False
     with pytest.raises(ValueError):
-        PermissionSnapshot(scientific_execution=True, allowed_tools=[name])
-    with pytest.raises(ValueError, match="scientific Step"):
         validate_parameters(name, {})
 
 
