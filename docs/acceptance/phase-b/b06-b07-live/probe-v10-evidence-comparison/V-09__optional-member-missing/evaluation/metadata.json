@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "variant_id": "V-09/optional-member-missing",
+  "repetition": 1,
+  "input_id": "input_a648f293c1ec4e8daf223b83d687392b",
+  "category": "development",
+  "freeze_label": "probe-v10",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/6/expected",
+  "expected": [
+    {
+      "metric": "required_AB_comparison.published",
+      "operator": "eq",
+      "value": true
+    },
+    {
+      "metric": "optional_missing_C.disclosed",
+      "operator": "eq",
+      "value": true
+    }
+  ],
+  "artifact_ids": [
+    "artifact_839262f02776440f9cdfce4e49605c19",
+    "artifact_70a527a30fb64fd5a9893f98ef9d7fec",
+    "artifact_73814ea3d9824f6ebe0a6274ccaf313c",
+    "artifact_853d80379a32424aabca81b27003e9ed",
+    "artifact_778d8eae38bd4d83afdba45d556ce21f",
+    "artifact_6062c95f964745f29ceb56757a85eb53"
+  ],
+  "source_files": [],
+  "references": [
+    {
+      "reference_id": "sampling-left-center",
+      "run_id": "run_cf30441b40ea46418ef4a98762da8643",
+      "result_id": "result_2b37e67a22e8474d92d933ec94eac9e5",
+      "attempt_id": "attempt_9bbc1df0d21e4f4ab39ee88267f292f0",
+      "result_sha256": "9035086c8b3010302c9815e439c2d8ee4dea99c659f24ace15257abd03601b66",
+      "geometry_sha256": "997a7b6154fa44f7f6e2b287042d0445916d34ec8657ee6d38c7fe9403e7050b",
+      "raw_stdout": {
+        "path": "tests/fixtures/phase_b/independent/sampling-left-center/stdout.out",
+        "sha256": "20551d72c54ba51b91d5ee2cf0df6b4e0dee076ebc85e4ee45194b629bf61f1d",
+        "size_bytes": 43900
+      },
+      "independent_energy_eh": -74.964906308165
+    },
+    {
+      "reference_id": "sampling-left-minus_half",
+      "run_id": "run_d99a65a534c648ada325b512b3965430",
+      "result_id": "result_d89b2e5890ca4164882204c11993c35b",
+      "attempt_id": "attempt_a92e660cfbc44237b83c225125fdd481",
+      "result_sha256": "0dac211c23f9a2fd2737e721c576ea39845713a9a353e98b9fed785aecf89315",
+      "geometry_sha256": "e98835a38ce77d77775cd4c4cc32e6d343e9d1566adc63bdece588d1dbc13462",
+      "raw_stdout": {
+        "path": "tests/fixtures/phase_b/independent/sampling-left-minus_half/stdout.out",
+        "sha256": "d1ed2e8826d367c55ba8f982fcb3f2664bb31c96427087110894d9375d74d426",
+        "size_bytes": 43899
+      },
+      "independent_energy_eh": -74.965782208829
+    }
+  ],
+  "archive_imports": [],
+  "tested_scope": [],
+  "prepared_inputs": [],
+  "fixture_gaps": [],
+  "runtime_limitations": [],
+  "continuation_messages": [],
+  "evidence_kind": "real_model_with_frozen_evidence",
+  "model_executed": false,
+  "source_directory_files": {},
+  "run_id": "run_a5bf8165e85d458da08008bc0c06caae",
+  "initial_request": {
+    "id": "request_8d3f88a3668f4b47964375c000ec396d",
+    "version": 1,
+    "original_text": "比较登记的 A、B 两个水几何，RHF/STO-3G、中性单重态、气相，允许几何不同。计算 ΔE=E(B)-E(A)，单位 Eh，并列出来源。",
+    "geometry_artifact_id": null,
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "HF",
+    "basis": "STO-3G",
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "method": "explicit",
+      "basis": "explicit",
+      "geometry": "explicit"
+    },
+    "goals": [
+      {
+        "id": "electronic_energy_difference",
+        "port": "energy_difference",
+        "required": true,
+        "minimum_check_version": "energy-compare-1",
+        "original_text": "electronic_energy_difference",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "electronic_energy_difference",
+          "comparison": {
+            "member_a": "A",
+            "member_b": "B",
+            "allow_different_geometries": true,
+            "quantity": "electronic_energy_difference"
+          },
+          "members": [
+            {
+              "id": "A",
+              "required": true
+            },
+            {
+              "id": "B",
+              "required": true
+            },
+            {
+              "id": "C",
+              "required": false
+            }
+          ],
+          "formula": "E(B)-E(A)",
+          "unit": "Eh"
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      },
+      {
+        "id": "finite_member_table",
+        "port": "member_table",
+        "required": true,
+        "minimum_check_version": "energy-compare-1",
+        "original_text": "finite_member_table",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "finite_member_table",
+          "analysis_goal_id": "electronic_energy_difference"
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      }
+    ],
+    "systems": [
+      {
+        "id": "A",
+        "geometry_artifact_id": "artifact_73814ea3d9824f6ebe0a6274ccaf313c",
+        "conditions": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "system": "H2O"
+        },
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": ""
+      },
+      {
+        "id": "B",
+        "geometry_artifact_id": "artifact_6062c95f964745f29ceb56757a85eb53",
+        "conditions": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "system": "H2O"
+        },
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": ""
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_c09904169b4545818aeaff9e07eb2c0f",
+        "role": "user",
+        "text": "比较登记的 A、B 两个水几何，RHF/STO-3G、中性单重态、气相，允许几何不同。计算 ΔE=E(B)-E(A)，单位 Eh，并列出来源。",
+        "source": "user"
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "environment": "gas_phase",
+      "available_evidence": {
+        "A": {
+          "binding": {
+            "run_id": "run_cf30441b40ea46418ef4a98762da8643",
+            "result_id": "result_2b37e67a22e8474d92d933ec94eac9e5",
+            "attempt_id": "attempt_9bbc1df0d21e4f4ab39ee88267f292f0",
+            "port": "energy",
+            "rule_version": "orca-hf-2"
+          },
+          "geometry_artifact_id": "artifact_73814ea3d9824f6ebe0a6274ccaf313c",
+          "qualified": {
+            "value": -74.964906308165,
+            "unit": "Eh",
+            "rule_version": "orca-hf-2",
+            "all_checks_passed": true
+          },
+          "conditions": {
+            "method": "HF",
+            "basis": "STO-3G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RHF",
+            "environment": "gas_phase"
+          },
+          "geometry_sha256": "997a7b6154fa44f7f6e2b287042d0445916d34ec8657ee6d38c7fe9403e7050b"
+        },
+        "B": {
+          "binding": {
+            "run_id": "run_d99a65a534c648ada325b512b3965430",
+            "result_id": "result_d89b2e5890ca4164882204c11993c35b",
+            "attempt_id": "attempt_a92e660cfbc44237b83c225125fdd481",
+            "port": "energy",
+            "rule_version": "orca-hf-2"
+          },
+          "geometry_artifact_id": "artifact_6062c95f964745f29ceb56757a85eb53",
+          "qualified": {
+            "value": -74.965782208829,
+            "unit": "Eh",
+            "rule_version": "orca-hf-2",
+            "all_checks_passed": true
+          },
+          "conditions": {
+            "method": "HF",
+            "basis": "STO-3G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RHF",
+            "environment": "gas_phase"
+          },
+          "geometry_sha256": "e98835a38ce77d77775cd4c4cc32e6d343e9d1566adc63bdece588d1dbc13462"
+        }
+      },
+      "declared_operand_conditions": {
+        "A": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "system": "H2O"
+        },
+        "B": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "system": "H2O"
+        }
+      },
+      "explain_results": true
+    },
+    "normalization_status": "normalized"
+  },
+  "permission_sha256": "b046989923fb12a665203c693da1e2aa0a1d117820a52a2760608f921243869e",
+  "budget_sha256": "9b3c58568e36ee6ab75d4123ede739db80994dbeaa73945cb8f52f034722efc6"
+}

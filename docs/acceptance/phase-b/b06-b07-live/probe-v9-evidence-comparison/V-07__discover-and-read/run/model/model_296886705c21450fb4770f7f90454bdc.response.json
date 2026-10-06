@@ -1,0 +1,82 @@
+{
+  "request_hash": "1076367b6e6dfe8f419eecf59750e3f50f8c5c8080a56c78a6dd51550720d165",
+  "proposal": {
+    "action": "initial_plan",
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0,
+    "related_results": [],
+    "reason": "Two required goals need read-only evidence from artifact_e2e77a6253d94424b9961e5c72bbd58c: first discover the top-level fields (raw_field_discovery -> content_index), then read the literal dipole magnitude at Geometries[0].Dipole_Moment[0].dipoleMagnitude (raw_field_observation -> value_observation). Both are permitted read-only tools; no recomputation.",
+    "parameters": {
+      "steps": [
+        {
+          "key": "discover_fields",
+          "tool": "evidence.discover",
+          "parameters": {
+            "artifact_id": "artifact_e2e77a6253d94424b9961e5c72bbd58c",
+            "view": "raw_json"
+          }
+        },
+        {
+          "key": "read_dipole_magnitude",
+          "tool": "evidence.value",
+          "parameters": {
+            "artifact_id": "artifact_e2e77a6253d94424b9961e5c72bbd58c",
+            "view": "raw_json",
+            "path": [
+              {
+                "kind": "key",
+                "key": "Geometries"
+              },
+              {
+                "kind": "index",
+                "index": 0
+              },
+              {
+                "kind": "key",
+                "key": "Dipole_Moment"
+              },
+              {
+                "kind": "index",
+                "index": 0
+              },
+              {
+                "kind": "key",
+                "key": "dipoleMagnitude"
+              }
+            ]
+          }
+        }
+      ],
+      "goal_map": {
+        "raw_field_discovery": {
+          "step_key": "discover_fields",
+          "port": "content_index"
+        },
+        "raw_field_observation": {
+          "step_key": "read_dipole_magnitude",
+          "port": "value_observation"
+        }
+      }
+    }
+  },
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 2299,
+    "completion_tokens": 329,
+    "total_tokens": 2628,
+    "prompt_cache_hit_tokens": 256,
+    "prompt_cache_miss_tokens": 2043
+  },
+  "response_hash": "868eb8ba8254c083dcfa8882620b41915429a3c5292a852228a0344a24996a7f",
+  "response_bytes": 1747,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "c7d0b9c8-4729-42d5-b49d-0f67ac3fcb8a",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 2.172000000020489
+}

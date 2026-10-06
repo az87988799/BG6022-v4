@@ -1,0 +1,68 @@
+{
+  "variant_id": "V-09/different-method",
+  "repetition": 1,
+  "run_id": "run_677e7c40e5fd4d49a85ed6b935b849d7",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/3/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "energy_comparison.science_passed",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "quantity:electronic_energy_difference ΔE=E(B)-E(A)",
+      "rationale": "The final explanation retains the requested electronic quantity and E(B)-E(A) sign, and publishes no unqualified difference."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:Eh",
+      "rationale": "The requested difference and the actual qualified A energy retain Hartree units."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "member B's registered source result_d89b2e5890ca4164882204c11993c35b is STO-3G, but the request's declared operand condition for B is basis 6-31G",
+      "rationale": "The final stop correctly distinguishes actual B source STO-3G from the requested B 6-31G override. It also states RHF, neutral singlet, gas phase and allowed geometry differences. Unlike v9, the final explanation does not reverse the two bases. The initial proposal's incomplete operand-condition account is separately failed under the all-proposal review."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "member B's registered source result_d89b2e5890ca4164882204c11993c35b",
+      "rationale": "This is the exact original Result. The initial Plan binds the exact Run/Result/Attempt for both operands; the analysis consumption and original Artifact hashes were independently checked."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "scientific_status=insufficient_evidence, missing_required_member",
+      "rationale": "The actual analysis completed operationally but published no qualified scientific output. Both required goals remain insufficient; the model does not invent a difference or launch forbidden science."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "user must either supply/register a B energy computed at 6-31G (or correct B's declared basis to STO-3G)",
+      "rationale": "The final explanation identifies an evidence or user-clarification route that addresses the actual requested/source mismatch. It does not silently change the request or execute new science. The six-axis next-step assessment does not certify that a mixed-basis stability comparison would become scientifically valid; the common-method compatibility rule would still apply."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [
+    "real HF/STO-3G B remains unchanged; requested 6-31G B has no applicable evidence, not a fabricated 6-31G calculation"
+  ],
+  "tokens_used": 6718,
+  "tokens_unknown": 0,
+  "model_text_sha256": "eebb66a089c56c020c2d47b60d7cad26d8559b8c0ea406ebf3cf047d7f2432e0"
+}

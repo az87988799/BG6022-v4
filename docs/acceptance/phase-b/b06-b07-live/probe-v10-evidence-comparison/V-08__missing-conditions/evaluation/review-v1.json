@@ -1,0 +1,104 @@
+{
+  "variant_id": "V-08/missing-conditions",
+  "repetition": 1,
+  "run_id": "run_5dd3f2ecb1424db4acd050fd947761fc",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "instructions": "Review actual persisted model text independently; quote exact text. Do not infer a pass from fixture expectations.",
+  "behavior": {},
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "one stdout line 'FINAL SINGLE POINT ENERGY -74.962991615317'",
+      "rationale": "Exact scalar agrees with the sole actual line in the 50-byte imported excerpt; both inventory and search Goals are actually satisfied."
+    },
+    "unit": {
+      "passed": false,
+      "quote": "unit:hartree (ORCA default, not explicitly stated in the read text)",
+      "rationale": "Fails: the hash-bound search observation has units=null and only the unlabelled excerpt was read. An acknowledged conventional ORCA unit is still an unsupported assignment here; unknown must remain unknown."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "source conditions reported as 'unknown', stage 'unknown', scientific_status 'unverified'",
+      "rationale": "Unknown method, basis, geometry, charge, multiplicity, and stage are accurately retained; missing input/property JSON are disclosed."
+    },
+    "source": {
+      "passed": true,
+      "quote": "sha256 d95f79b65f03170f2fca06615f6d9d87f808e0af7476b4c76d577c63914d9476",
+      "rationale": "Full hash and exact Artifact/source identities match the imported snapshot and actual search Result."
+    },
+    "limits": {
+      "passed": true,
+      "quote": "the energy value is an unverified observation, not a scientific qualification",
+      "rationale": "Does not upgrade the raw excerpt to a scientific energy output or fabricate historical cost. Zero ORCA and postprocess starts are confirmed; the explicitly described import did create the permitted snapshot Artifact."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "next:none — both goals satisfied",
+      "rationale": "After the first invalid proposal, the one permitted correction places the future Artifact gap in goal_map. Actual import then search complete the two Goals before accepted stop. No further recomputation is proposed."
+    }
+  },
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "prompt_version": "agent-json-v4",
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_c72bd7f3bdb94a07b20dec7a95071aa0",
+      "request_sha256": "d4d43449293ff0259abe2beddf60abaf55b677248b85df8b3980fbfbf259feb6",
+      "response_sha256": "badf18e915dfaf5f09f1f7dbb05029993d0d9420352891222d46cb50ff79642a"
+    },
+    {
+      "model_id": "model_bb6f8a279c684966bf8ec67787621ecc",
+      "request_sha256": "86b7440cb309dc3c50efe6a879dfd705d58183b666f8c631333bde49992edda7",
+      "response_sha256": "c80e6d8b1f9a1d727024353a299fba6768e082a26aca56e546b2dd489bed38f1"
+    },
+    {
+      "model_id": "model_219d8518ae69447aa66ee9c96c4749a6",
+      "request_sha256": "9344cd0187ee082a840581f81990b129aa8ba74b867016cd238a5338c9a38fab",
+      "response_sha256": "2619d53715b4285c7a8ed842418ad1f5438120bb6b9ffbfe35f5b19cb5123bfa"
+    },
+    {
+      "model_id": "model_481a2695590440c594a246b261c54eab",
+      "request_sha256": "234713c19b255b315be96371ec701dce1a0c0f8485b294b2f6b7ff5af427cdf6",
+      "response_sha256": "3690197bbfc7c142738990516bdf7a8bc87172c1cc2f87caadb629615b46c0ef"
+    }
+  ],
+  "source_artifact_hashes": {
+    "artifact_86c011e7fe2e4cfeb88e5e70aa8ccade": "d95f79b65f03170f2fca06615f6d9d87f808e0af7476b4c76d577c63914d9476"
+  },
+  "source_files_verified": [
+    {
+      "path": "E:\\BG6022-V4\\data\\phase-b\\reference\\evaluation-inputs\\input_2d47e0687cd744169f6f2a11f8c6705d\\stdout_excerpt.out",
+      "sha256": "d95f79b65f03170f2fca06615f6d9d87f808e0af7476b4c76d577c63914d9476"
+    }
+  ],
+  "run_sha256": "ee55d235655fd176709cb950a5f4132b3c3ce838df88e4efd4a4c462d86d8f84",
+  "previous_failure_files_sha256": {
+    "review.json": "8bee5c89c9ee284a01d7d0394c2a454a98ec8c42d0fa095f90a689c8d3fa549d",
+    "grade.json": "c6234d46053f2146445c913010930fbe9a574370840f3bcec4a0d1ee75a7e261",
+    "execution.json": "b4150474cdf63178b25a6ec0f28b2a88f39353133e4ce51e4bf70dfa96cb1709"
+  },
+  "all_proposal_facts_passed": false,
+  "protocol_findings": [
+    {
+      "model_id": "model_c72bd7f3bdb94a07b20dec7a95071aa0",
+      "kind": "rejected_proposal",
+      "issue": "artifact_id used the import Step key; no Tool ran before rejection."
+    },
+    {
+      "model_id": "model_bb6f8a279c684966bf8ec67787621ecc",
+      "kind": "successful_correction",
+      "issue": "Correction correctly left the later search Goal as {gap,port} in goal_map and planned only the import."
+    },
+    {
+      "model_id": "model_481a2695590440c594a246b261c54eab",
+      "kind": "unsupported_unit",
+      "quote": "unit:hartree (ORCA default, not explicitly stated in the read text)",
+      "issue": "Fails: the hash-bound search observation has units=null and only the unlabelled excerpt was read. An acknowledged conventional ORCA unit is still an unsupported assignment here; unknown must remain unknown."
+    },
+    {
+      "kind": "imprecise_effect_summary",
+      "issue": "Evidence reads only is an imprecise shorthand because the expressly planned and described import created one permitted snapshot Artifact. No unannounced ORCA or conversion occurred."
+    }
+  ]
+}

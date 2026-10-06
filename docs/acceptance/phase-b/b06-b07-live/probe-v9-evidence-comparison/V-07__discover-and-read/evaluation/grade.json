@@ -1,0 +1,90 @@
+{
+  "variant_id": "V-07/discover-and-read",
+  "repetition": 1,
+  "run_id": "run_4071056229634dce8f1a59ea448d2365",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/6/variants/0/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "read.value_equals_raw_field",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "query_goal.satisfied",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "scientific_dipole_port.published",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "Dipole magnitude: path Geometries[0].Dipole_Moment[0].dipoleMagnitude = 0.6788282026678785",
+      "rationale": "Exact scalar and four root-key counts agree with the two actual hash-checked read Results."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:unknown (units field null in both reads)",
+      "rationale": "Neither raw observation carries a unit; the explanation preserves unknown."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "conditions/stage unknown",
+      "rationale": "Does not turn a raw path into a qualified method, state, or geometry-stage claim."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "artifact_e2e77a6253d94424b9961e5c72bbd58c",
+      "rationale": "Artifact identity and typed path resolve the original hash-verified JSON; all three receipts were checked."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "values are raw reads not validated scientific results",
+      "rationale": "Evidence success is explicitly separated from scientific qualification; no science or writes occurred."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "next:none — both goals satisfied",
+      "rationale": "Stop follows actual discovery and scalar reads; preceding action descriptions match executed Tools."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 3,
+  "tested_scope": [],
+  "tokens_used": 8913,
+  "tokens_unknown": 0,
+  "model_text_sha256": "fae6856d960155388666d3e4bafcdd47e9a0aff4b8e790b73ea7b74656071811"
+}

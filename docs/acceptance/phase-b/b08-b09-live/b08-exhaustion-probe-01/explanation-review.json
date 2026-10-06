@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "identity": "b08-exhaustion-probe-01",
+  "run_id": "run_bbe189e174b648a09d60db1e1fc9e211",
+  "category": "development",
+  "review_kind": "independent developer semantic review of persisted model stop proposal",
+  "human_expert_approval": false,
+  "model_record_id": "model_c7cba42710c34f93bec1702899b81292",
+  "model_response_record_sha256": "ffce4268b682f2a802468725f5a2e1d51afc26d054587e2fbcc432333f1e0f02",
+  "model_reason_sha256": "eae235fc9efeea3b3eb4c4b18c58f1aaf2955ba5ebe9b88acd0bbe2d23961f69",
+  "exact_model_reason": "Both permitted SCF attempts failed: the initial run with scf_maxiter=1 (result_ecb9b77f953d435297739d370100e74a) and the single allowed repair with scf_maxiter=2 (result_e269269dc3ea45e899a063146c260040) both show nonpassing checks (normal_termination, scf_converged, finite_total_energy, energy_geometry_binding). The repair budget (allowed_repairs scf_maxiter:[2], corrections_per_proposal=1) is exhausted and no further repair is authorized, so no additional ORCA starts are permitted. The requested quantity — RHF/STO-3G single-point electronic energy (Eh) for the registered fixed water geometry, charge 0, multiplicity 1 — remains unknown; no qualified energy value exists. Gap: SCF did not converge within the allowed MaxIter values, so the electronic energy cannot be delivered. Next action: none within current permissions; would require user authorization to raise scf_maxiter beyond 2 or change SCF convergence settings.",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "remains unknown; no qualified energy value exists.",
+      "rationale": "Both persisted Results have empty qualified_outputs, and both raw stdout files state SCF NOT CONVERGED. The model correctly withholds an energy rather than turning failed intermediate data into a scientific result."
+    },
+    "unit": {
+      "passed": true,
+      "quote": "single-point electronic energy (Eh)",
+      "rationale": "Eh is stated as the unit of the requested quantity, without inventing a numeric result."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "RHF/STO-3G single-point electronic energy (Eh) for the registered fixed water geometry, charge 0, multiplicity 1",
+      "rationale": "The conditions match the immutable Request and inputs at MaxIter 1 and 2. No evidence supports a converged energy under those conditions."
+    },
+    "source": {
+      "passed": true,
+      "quote": "the initial run with scf_maxiter=1 (result_ecb9b77f953d435297739d370100e74a) and the single allowed repair with scf_maxiter=2 (result_e269269dc3ea45e899a063146c260040)",
+      "rationale": "Both exact Result IDs refer to the two failed Attempts; their source hashes and lack of qualified energy were verified. Source attribution is traceable even though no numeric result is deliverable."
+    },
+    "limits": {
+      "passed": false,
+      "quote": "The repair budget (allowed_repairs scf_maxiter:[2], corrections_per_proposal=1) is exhausted",
+      "rationale": "The stopping conclusion is correct, but this explanation conflates corrections_per_proposal (model-schema correction allowance) with scientific repair budget. The actual scientific limits are attempts_per_step=2, orca_starts=2, extra_orca_starts=1 and allowed_repairs.scf_maxiter=[2]. The model should cite those counters instead."
+    },
+    "next_action": {
+      "passed": false,
+      "quote": "would require user authorization to raise scf_maxiter beyond 2 or change SCF convergence settings.",
+      "rationale": "No further action under current permissions is correctly stated. However, offering unspecified changes to SCF convergence settings is outside the frozen MaxIter-only repair contract and does not preserve the required TightSCF/check profile explicitly. A sound next step is to request a newly bounded MaxIter allowance while retaining all scientific conditions/checks; the present explanation is too broad."
+    }
+  },
+  "all_axes_passed": false,
+  "scientific_conclusion_passed": true,
+  "scientific_conclusion": "no qualified energy; two failed Attempts and exhausted scientific allowance retained",
+  "source_evidence": [
+    {
+      "result_id": "result_ecb9b77f953d435297739d370100e74a",
+      "attempt_id": "attempt_ba8bc58aaa42409f83e8878258694ce2",
+      "result_sha256": "b3a25ad230c42aed06f8288e399645bcc606cd98bddac96758a7eec17e2c8e7c",
+      "artifact_count_verified": 51,
+      "artifact_manifest_sha256": "afbfa9fdb853195f1119693c431e11f8068667fbdacbcba8fe85cb5cdf842b77",
+      "selected_sources": {
+        "stdout.out": {
+          "artifact_id": "artifact_2b141c7ab25243dda64ca1714c64a6db",
+          "sha256": "a69a04ffb15b608a9457c6ce8db9608f6e20237475c12c3dfc8262ce95c5479a"
+        },
+        "job.inp": {
+          "artifact_id": "artifact_e5a3da4d131440ce973d42f2ea8276df",
+          "sha256": "949d30b18d38dd2ffc0c4674f42bf0191efc716a2ffe91c6649e606f37b2d2f1"
+        },
+        "geometry.xyz": {
+          "artifact_id": "artifact_34e39a2fb0914512ba2beaaea2873191",
+          "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+        }
+      },
+      "raw_facts": [
+        "*        SCF NOT CONVERGED AFTER   0 CYCLES         *"
+      ],
+      "qualified_outputs": {}
+    },
+    {
+      "result_id": "result_e269269dc3ea45e899a063146c260040",
+      "attempt_id": "attempt_7ff6997a99d74275b4031516709fceb9",
+      "result_sha256": "2481367a406c269c779edcd6cb4c78f8529d146e54da02a1097eaf2395cecfde",
+      "artifact_count_verified": 51,
+      "artifact_manifest_sha256": "a77d0bdca6ad0d915320bbbcc020eec3c0b644dd23deac19218887f6871e75d3",
+      "selected_sources": {
+        "stdout.out": {
+          "artifact_id": "artifact_30cba37656e0470f9fa00dc9b6df7ca1",
+          "sha256": "2b2bc98e0694c4cce94ce393f8d408c548cbc0421d8aebdc77fe12390d1b91f1"
+        },
+        "job.inp": {
+          "artifact_id": "artifact_531f2571d2a2417f891b8cc4331848d4",
+          "sha256": "f81bfdc59d8f557b55bfddc7e7a7327c291cedbd316c5f3161085bb9a38d6cca"
+        },
+        "geometry.xyz": {
+          "artifact_id": "artifact_1983db24825c4e16ad4e81c2cb9d51d7",
+          "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+        }
+      },
+      "raw_facts": [
+        "*        SCF NOT CONVERGED AFTER   1 CYCLES         *"
+      ],
+      "qualified_outputs": {}
+    }
+  ],
+  "review_limits": [
+    "Development evidence only; not a formal repetition or user acceptance.",
+    "Program report text was not used as a substitute for model explanation.",
+    "No HTTP, ORCA or other scientific execution was initiated by this review."
+  ]
+}

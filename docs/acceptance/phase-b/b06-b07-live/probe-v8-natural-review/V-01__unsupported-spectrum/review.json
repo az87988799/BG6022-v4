@@ -1,0 +1,146 @@
+{
+  "variant_id": "V-01/unsupported-spectrum",
+  "repetition": 1,
+  "run_id": "run_ada35f8aa80a4e0abd2cbbf61202f244",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "status": "not_verified",
+      "delivered": false,
+      "reason": "No accepted model proposal exists; rejected text is separately reviewed below and cannot satisfy delivered explanation."
+    },
+    "unit": {
+      "status": "not_verified",
+      "delivered": false,
+      "reason": "No accepted model proposal exists; rejected text is separately reviewed below and cannot satisfy delivered explanation."
+    },
+    "conditions": {
+      "status": "not_verified",
+      "delivered": false,
+      "reason": "No accepted model proposal exists; rejected text is separately reviewed below and cannot satisfy delivered explanation."
+    },
+    "source": {
+      "status": "not_verified",
+      "delivered": false,
+      "reason": "No accepted model proposal exists; rejected text is separately reviewed below and cannot satisfy delivered explanation."
+    },
+    "limits": {
+      "status": "not_verified",
+      "delivered": false,
+      "reason": "No accepted model proposal exists; rejected text is separately reviewed below and cannot satisfy delivered explanation."
+    },
+    "next_action": {
+      "status": "not_verified",
+      "delivered": false,
+      "reason": "No accepted model proposal exists; rejected text is separately reviewed below and cannot satisfy delivered explanation."
+    }
+  },
+  "behavior": {},
+  "protocol_findings": [
+    {
+      "delivery_failure": "All model proposals were rejected; Run failed and no accepted clarification is counted. This is a protocol limit-disclosure/correction issue distinct from mostly correct clarification intent.",
+      "rejected_proposal_reviews": [
+        {
+          "model_id": "model_8fcb7f88859b46018d751d841bb0b570",
+          "accepted": false,
+          "reason_for_rejection": "unresolved has seven items; allowed maximum is five",
+          "axes": {
+            "quantity": {
+              "passed": true,
+              "quote": "IR spectrum of water_sp at 298.15 K",
+              "rationale": "Correctly preserves the unsupported infrared-spectrum quantity and seeks its concrete definition."
+            },
+            "unit": {
+              "passed": true,
+              "quote": "wavenumbers in cm^-1, intensities in km/mol",
+              "rationale": "Requests intended frequency/intensity units as examples, without asserting measured spectrum values."
+            },
+            "conditions": {
+              "passed": false,
+              "quote": "it is unclear whether the spectrum should be computed from the provided geometry artifact or whether an optimized geometry (water_opt) is intended",
+              "rationale": "The user explicitly selected water_sp; unsupported spectrum definition does not make that geometry reference unresolved. Asking about water_opt introduces avoidable ambiguity."
+            },
+            "source": {
+              "passed": true,
+              "quote": "provided geometry artifact",
+              "rationale": "Accurately acknowledges that the request provides geometry evidence, and does not invent any calculated spectrum."
+            },
+            "limits": {
+              "passed": true,
+              "quote": "the request lists 'unsupported_quantity'",
+              "rationale": "Reports unsupported quantity, missing goal definition and empty tool catalog without substituting another output."
+            },
+            "next_action": {
+              "passed": true,
+              "quote": "What exactly should 'infrared_spectrum' mean here: harmonic vibrational frequencies and IR intensities (stick spectrum), or a broadened/line-shape spectrum?",
+              "rationale": "Seeking a precise unsupported-goal definition is legitimate; acceptance nevertheless fails due to unresolved-list length."
+            }
+          },
+          "response_sha256": "c0ef37724ad27f3a492aef6f1103bf18870511544f101a35d20ed16757458e40"
+        },
+        {
+          "model_id": "model_1d93425bf46c43d4814c32b26ba650af",
+          "accepted": false,
+          "reason_for_rejection": "unresolved still has six items after generic correction feedback",
+          "axes": {
+            "quantity": {
+              "passed": true,
+              "quote": "infrared spectrum of water_sp at 298.15 K",
+              "rationale": "Retains the original spectrum quantity and temperature."
+            },
+            "unit": {
+              "passed": false,
+              "quote": "infrared spectrum of water_sp at 298.15 K",
+              "rationale": "K is the temperature unit, not a spectrum-output unit. Unlike the first rejected proposal, this second proposal neither requests nor labels unknown frequency/intensity units."
+            },
+            "conditions": {
+              "passed": false,
+              "quote": "it is unclear whether the spectrum should be computed for the named geometry water_sp",
+              "rationale": "The original request explicitly names water_sp; treating the geometry choice as unresolved is unwarranted, although no unauthorized alternate geometry executes."
+            },
+            "source": {
+              "passed": true,
+              "quote": "artifact_fe46210a47064044b7fab97c2967680b",
+              "rationale": "Cites the exact registered water_sp geometry Artifact referenced by the request."
+            },
+            "limits": {
+              "passed": true,
+              "quote": "No tool catalog is available, so no computation can be planned or executed.",
+              "rationale": "Correctly acknowledges lack of execution capability and unresolved spectrum definition."
+            },
+            "next_action": {
+              "passed": true,
+              "quote": "What exactly should 'infrared_spectrum' mean here: harmonic vibrational frequencies and IR intensities (stick spectrum), or a broadened/experimental-style IR spectrum?",
+              "rationale": "The spectrum-definition question remains a valid intended clarification; delivery fails because the bounds are again violated."
+            }
+          },
+          "response_sha256": "883374653f41a0acd49fa0341e71c6e1f2af19e57155ebef831bb403842b5f05"
+        }
+      ]
+    }
+  ],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_8fcb7f88859b46018d751d841bb0b570",
+      "request_sha256": "bf4ac634cc5004220c56364fa7f89382a40bfc5652c98d42f9f2b59b63536ee3",
+      "response_sha256": "c0ef37724ad27f3a492aef6f1103bf18870511544f101a35d20ed16757458e40",
+      "accepted": false
+    },
+    {
+      "model_id": "model_1d93425bf46c43d4814c32b26ba650af",
+      "request_sha256": "a148f08d1104577f49a1a306e6646998d80b22d251e98767d7a75d547e37b485",
+      "response_sha256": "883374653f41a0acd49fa0341e71c6e1f2af19e57155ebef831bb403842b5f05",
+      "accepted": false
+    }
+  ],
+  "reviewed_available_evidence": {},
+  "source_artifact_hashes": {
+    "artifact_fe46210a47064044b7fab97c2967680b": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_6877da25cd30436dbbfb7e2d573a3a4e": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "run_sha256": "ad58ea2e88f9673cd84841541c12e5cdc6fff731f6415218e896915266f94e3f",
+  "first_response_rejected": true
+}

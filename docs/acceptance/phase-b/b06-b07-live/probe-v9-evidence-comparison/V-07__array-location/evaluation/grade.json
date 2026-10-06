@@ -1,0 +1,74 @@
+{
+  "variant_id": "V-07/array-location",
+  "repetition": 1,
+  "run_id": "run_192fad86d94142fa91d5c522682adc37",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/6/variants/1/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "observation.geometry_index",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "query.typed_key_index_slice",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "value:0.6788282026678785",
+      "rationale": "The separately read scalar equals raw JSON. Discovery, slice, and scalar goals are all actually satisfied in requested order."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:unknown (units null)",
+      "rationale": "No conventional dipole unit is inferred."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "no validation of method/basis/charge/multiplicity",
+      "rationale": "Unknown conditions remain unknown and no qualified science port is claimed."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "result_cad18c6ef1de4c31a5588828cd4004ea",
+      "rationale": "The final reason separately names all three actual Results and supplies the scalar typed location."
+    },
+    "limits": {
+      "status": "failed",
+      "quote": "returned an empty partial preview (omitted=1), so the dipole magnitude was not actually read",
+      "rationale": "Intermediate accepted reason treats model-preview omission as evidence that the Tool did not read the value. The complete successful slice Result contains that scalar. A separate typed scalar read is correctly still needed for its distinct Goal, and the final reason correctly distinguishes empty preview from empty source, but that does not erase the earlier factual misstatement."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "Executing the slice step first is the correct next permitted action",
+      "rationale": "Actual order is discovery, slice, scalar, stop; every selected Tool matches its stated intended next operation."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 4,
+  "tested_scope": [],
+  "tokens_used": 13898,
+  "tokens_unknown": 0,
+  "model_text_sha256": "519a16f071d1340114c052abfc03b102bb32cc1c0c76ba29b9305e3647d7e83d"
+}

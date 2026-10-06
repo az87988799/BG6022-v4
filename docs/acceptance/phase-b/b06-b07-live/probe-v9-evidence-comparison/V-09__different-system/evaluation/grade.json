@@ -1,0 +1,78 @@
+{
+  "variant_id": "V-09/different-system",
+  "repetition": 1,
+  "run_id": "run_e849344e8a9b4f0ea03de4934db7614d",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/1/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "energy_comparison.science_passed",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "report.incompatibility_disclosed",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "quote": "A is H2O and B is CH4 (different systems), so such a comparison is not scientifically valid",
+      "rationale": "The actual chemical identities differ and this is explicitly disclosed rather than interpreted as ordinary same-system relative stability.",
+      "kind": "behavior_review"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "Therefore ΔE=E(B)-E(A) cannot be computed",
+      "rationale": "The model keeps the signed electronic difference and ultimately refuses both missing current qualification and the requested same-system stability interpretation."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "(-39.726863679792444 Eh)",
+      "rationale": "The historical methane value is explicitly labeled old-rule/not-verified and retains Eh; A is separately identified as qualified."
+    },
+    "conditions": {
+      "status": "failed",
+      "quote": "no new HF/STO-3G calculation for B can be performed",
+      "rationale": "The text identifies H2O versus CH4 and names HF/STO-3G, but neither proposal supplies charge, multiplicity or gas-phase conditions. These missing model explanations are not filled from metadata."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "run_ee3e1bb12de348e8a22839d7334cad22/result_c995a12606aa4526a53e19951e9ccaa4/attempt_d315e2bb5bfc4201a013ab4c94a9467a/port energy",
+      "rationale": "The initial proposal explicitly identifies the historical methane source and its old check rule. This lineage and the quoted energy were checked against archived Result/Artifact evidence."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "A is H2O and B is CH4 (different systems), so such a comparison is not scientifically valid",
+      "rationale": "The final answer correctly rejects same-system stability and never reports a qualified cross-system difference. Its initial prediction that the tool would report a difference is separately flagged in proposal review."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "The energy comparison cannot be completed with permitted actions.",
+      "rationale": "Stopping respects zero science permission/budget. The response does not attempt to requalify or recompute the archive automatically."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [
+    "original orca-hf-1 Result is ineligible for orca-hf-2; no automatic upgrade",
+    "actual CH4 archive versus H2O; legacy-rule rejection also applies, so system-only refusal is not isolated"
+  ],
+  "tokens_used": 6904,
+  "tokens_unknown": 0,
+  "model_text_sha256": "9ab14e2e570ebf2cf9d12710d1350b2c5384823fa56b385f076e8b7038b79f92"
+}

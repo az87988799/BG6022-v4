@@ -1,0 +1,106 @@
+{
+  "request_hash": "fc6918d925f82e5a5de20d3846044178d63d65534289168071e0f34caf15bb3c",
+  "proposal": {
+    "action": "initial_plan",
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0,
+    "related_results": [],
+    "reason": "quantity:raw_field_discovery, raw_geometry_slice, raw_field_observation;unit:unknown (no unit fields observed yet);conditions:all requested conditions preserved (artifact_5c0560dbb91945d682902c6d5205b1ee, Geometries[0:1] then Dipole_Moment[0].dipoleMagnitude);source:explicit from request goals;limits:read-only evidence tools, 8 evidence reads, no recomputation;next:discover top-level fields, read bounded geometry slice, then read dipole magnitude literal.",
+    "parameters": {
+      "steps": [
+        {
+          "key": "s1",
+          "tool": "evidence.discover",
+          "parameters": {
+            "artifact_id": "artifact_5c0560dbb91945d682902c6d5205b1ee",
+            "view": "raw_json",
+            "limit": 200
+          }
+        },
+        {
+          "key": "s2",
+          "tool": "evidence.value",
+          "parameters": {
+            "artifact_id": "artifact_5c0560dbb91945d682902c6d5205b1ee",
+            "view": "raw_json",
+            "path": [
+              {
+                "kind": "key",
+                "key": "Geometries"
+              },
+              {
+                "kind": "slice",
+                "start": 0,
+                "stop": 1
+              }
+            ]
+          }
+        },
+        {
+          "key": "s3",
+          "tool": "evidence.value",
+          "parameters": {
+            "artifact_id": "artifact_5c0560dbb91945d682902c6d5205b1ee",
+            "view": "raw_json",
+            "path": [
+              {
+                "kind": "key",
+                "key": "Geometries"
+              },
+              {
+                "kind": "index",
+                "index": 0
+              },
+              {
+                "kind": "key",
+                "key": "Dipole_Moment"
+              },
+              {
+                "kind": "index",
+                "index": 0
+              },
+              {
+                "kind": "key",
+                "key": "dipoleMagnitude"
+              }
+            ]
+          }
+        }
+      ],
+      "goal_map": {
+        "raw_field_discovery": {
+          "step_key": "s1",
+          "port": "content_index"
+        },
+        "raw_geometry_slice": {
+          "step_key": "s2",
+          "port": "value_observation"
+        },
+        "raw_field_observation": {
+          "step_key": "s3",
+          "port": "value_observation"
+        }
+      }
+    }
+  },
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 2435,
+    "completion_tokens": 437,
+    "total_tokens": 2872,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 2435
+  },
+  "response_hash": "2606d9743d1488861ecd5de33c7f08c2515b9bbd66153dde2c9997ad163177c2",
+  "response_bytes": 2116,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "ee82e2eb-a8d2-4551-9b0d-dddad70d4f25",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 2.469000000040978
+}

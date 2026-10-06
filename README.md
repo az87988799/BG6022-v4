@@ -2,11 +2,11 @@
 
 阶段 A 提供不依赖 LLM 的本地计算底座：结构化 Request/Plan → 注册 Tool → OPI 输入 → Windows 受管 ORCA → 逐输出科学检查 → 不可变证据及结果。阶段 A 已于 2026-10-06 获得[用户验收通过](docs/acceptance/phase-a/user-acceptance.md)，接受的代码基线为 `236376e`；历史真实证据见[验收报告](docs/acceptance/phase-a/report.md)。
 
-阶段 B 已开始首批 B-01：冻结用例、契约、预算并建立独立真实参考，见 [本批交付报告](docs/acceptance/phase-b/report.md)。本批不增加 Agent 运行时能力；B-02～B-11 尚未实施，后续按用户确认的范围推进。
+阶段 B 已建立独立参考、受控修订、DeepSeek 适配与单一反馈循环，并完成首个自然语言请求到真实水分子单点的闭环，见 [B-04/B-05 证据](docs/acceptance/phase-b/b04-b05.md)。查询、导入、能差分析及受限 SCF 修复已有真实开发证据；采样追加和模型解释仍有失败，正式三次重复未启动，详见[当前实施状态](docs/acceptance/phase-b/implementation-status.md)。阶段 B 尚未完成或验收通过。
 
 R-01～R-05 的后续修复见 [修复验收记录](docs/acceptance/phase-a-repair/report.md)。新请求采用 `orca-hf-2`；旧 Request/Result 保留原规则和原字节。旧 Run 仍可查看、取消、恢复对账及补收，但未完成的旧规则 Run 不会直接继续计算，需另行明确复验；本轮未实现自动规则迁移。
 
-当前科学范围是 **H₂O / CH₄ 组成、中性单重态、RHF/STO-3G、单点与无约束严格优化**。优化收敛只表示五项指定判据通过；未进行 Hessian/频率检查。DFT 泛函、更广体系、自然语言规划、自动修复、远程执行尚未实现。逐项状态见 [能力矩阵](docs/capabilities.md)。
+当前科学范围是 **H₂O / CH₄ 组成、中性单重态、RHF/STO-3G、单点与无约束严格优化**。优化收敛只表示五项指定判据通过；未进行 Hessian/频率检查。DFT 泛函、更广体系、远程执行尚未实现。逐项状态见 [能力矩阵](docs/capabilities.md)。
 
 ## 安装与环境
 
@@ -26,6 +26,16 @@ Copy-Item config.example.toml config.local.toml
 项目仅启用精确的 ORCA `6.1.1`；未知版本后缀、重复或含混版本证据会拒绝准入。第三方要求的最低兼容版本不等于本项目已验证范围。
 
 ## 结构化计算与控制
+
+自然语言入口接收原文、独立目标、条件、证据和许可，不接受预制 Plan。真实模型使用进程环境 `DEEPSEEK_API_KEY`；设置用户环境后须重新启动终端，或将该用户变量读入当前进程。密钥不写入配置、日志或计算子进程。SDK 固定 openai 2.28.0 / httpx 0.28.1，关闭隐式重试。
+
+```powershell
+.venv\Scripts\orca-agent.exe --config config.local.toml ask tests/fixtures/phase_a/water_sp/agent-request.json
+.venv\Scripts\orca-agent.exe --config config.local.toml message RUN_ID '补充或更改条件' --update-file user-update.json
+.venv\Scripts\orca-agent.exe --config config.local.toml report RUN_ID
+```
+
+`message` 的更新文件只能包含用户明确修改的 Request 字段；不会扩大许可或重置预算。`report` 根据已有证据确定性生成报告，不调用模型。
 
 ```powershell
 .venv\Scripts\orca-agent.exe --config config.local.toml run tests/fixtures/phase_a/water_sp/request.json

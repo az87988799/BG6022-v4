@@ -1,0 +1,84 @@
+{
+  "variant_id": "V-01/multi-turn",
+  "repetition": 1,
+  "run_id": "run_fcf1da1c5d84448a8517d9de6504abd1",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/2/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "clarification.before_complete",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "orca_starts.before_complete",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "request.user_messages_preserved",
+      "operator": "eq",
+      "value": 3,
+      "status": "passed",
+      "observed": 3,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "目标为固定几何电子能",
+      "rationale": "The final accepted response accurately preserves the quantity clarified in the second user turn."
+    },
+    "unit": {
+      "status": "failed",
+      "quote": "目标为固定几何电子能",
+      "rationale": "None of the three accepted clarifications states an expected or unknown unit. No numeric energy or incorrect unit conversion is produced."
+    },
+    "conditions": {
+      "status": "failed",
+      "quote": "default: charge 0, singlet multiplicity 1",
+      "rationale": "At the first ambiguous turn, the response labels neutral singlet as a default without user authorization. It asks rather than executes, and later correctly uses explicit user values, but this origin disclosure is still wrong and remains part of the accepted trajectory."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "artifact_2deec4b33a0d450e8d45411d68942b2e",
+      "rationale": "The later clarifications cite the exact registered water_sp Artifact from the second user message; the third turn method/basis/charge/multiplicity is accumulated correctly."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "permission.scientific_execution=false、allowed_tools=[]、orca_starts=0",
+      "rationale": "Accurately reports that the fully clarified request still cannot execute with zero science budget and no allowed Tool."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "请提供/启用执行 RHF/STO-3G 单点能计算的工具与权限，或指定替代方案。",
+      "rationale": "Accepted clarifications preserve all three user messages and remain waiting_user without launching science. Reconfirming the already explicit water_sp geometry is unnecessary but no alternate geometry is applied."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "accepted_action": "clarify",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "http_requests": 3,
+  "tested_scope": [],
+  "tokens_used": 5690,
+  "tokens_unknown": 0,
+  "model_text_sha256": "a23e5401d4341ab7b6f6e5b005b87462377717d8a228c6c6fe8e4881b0d2db32"
+}

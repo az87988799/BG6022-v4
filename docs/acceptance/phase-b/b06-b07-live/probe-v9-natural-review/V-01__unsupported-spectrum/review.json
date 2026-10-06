@@ -1,0 +1,106 @@
+{
+  "variant_id": "V-01/unsupported-spectrum",
+  "repetition": 1,
+  "run_id": "run_38ab0d8b59224cf893d2bbbdf68d9b92",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "infrared spectrum of water_sp at 298.15 K",
+      "rationale": "Preserves the requested unsupported infrared-spectrum quantity; does not replace it with an electronic-energy result.",
+      "quote_model_ids": [
+        "model_a51eabcd9a20427683cb99a182479d43"
+      ]
+    },
+    "unit": {
+      "passed": false,
+      "quote": "What output format do you expect for the IR spectrum (peak list, broadened spectrum, wavenumber range, resolution)?",
+      "rationale": "Asks about spectrum form/range, but names no frequency/intensity units and does not explicitly mark those units unknown. The temperature K does not supply spectrum-output units.",
+      "quote_model_ids": [
+        "model_a51eabcd9a20427683cb99a182479d43"
+      ]
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "infrared spectrum of water_sp at 298.15 K",
+      "rationale": "Retains the explicitly requested geometry and temperature, and separately reports unknown method/basis. It asks about optimization as a user scope decision rather than performing it.",
+      "quote_model_ids": [
+        "model_a51eabcd9a20427683cb99a182479d43"
+      ]
+    },
+    "source": {
+      "passed": true,
+      "quote": "the geometry artifact water_sp is provided",
+      "rationale": "Recognizes the provided registered geometry alias as the user source; no computed spectrum provenance is invented.",
+      "quote_model_ids": [
+        "model_a51eabcd9a20427683cb99a182479d43"
+      ]
+    },
+    "limits": {
+      "passed": true,
+      "quote": "the request lists 'unsupported_quantity'",
+      "rationale": "Reports the unresolved goal definition, empty catalog and disabled science, without claiming that the original spectrum goal has been met.",
+      "quote_model_ids": [
+        "model_a51eabcd9a20427683cb99a182479d43"
+      ]
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Do you want harmonic vibrational frequencies/IR intensities (e.g., via ORCA/HF or DFT), and should anharmonic corrections be included?",
+      "rationale": "Requests a precise spectrum definition and level of theory. This legal clarify is accepted first time, with zero computation; no implicit authorization is inferred.",
+      "quote_model_ids": [
+        "model_a51eabcd9a20427683cb99a182479d43"
+      ]
+    }
+  },
+  "behavior": {},
+  "protocol_findings": [],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_a51eabcd9a20427683cb99a182479d43",
+      "request_sha256": "b444b799f240f3cc68ff85c287e2526e414caab8766d920a937433199c17c058",
+      "response_sha256": "220ceadafd7402a63814b385807b6f58edec7240de48420b907fea864f627ae5",
+      "accepted": true
+    }
+  ],
+  "reviewed_available_evidence": {},
+  "source_artifact_hashes": {
+    "artifact_17fe58d58af942d5be0135d3b2a0bcee": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_1970bce17b4e46cabf1ea4bad768d638": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "run_sha256": "1ab52fd49510f3b5bda2d2e99ca43e423b7436afbcfd1cbb6fe90ab7edb3a115",
+  "first_response_rejected": false,
+  "reviewed_proposals": [
+    {
+      "model_id": "model_a51eabcd9a20427683cb99a182479d43",
+      "accepted": true,
+      "proposal": {
+        "action": "clarify",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "The request asks for the infrared spectrum of water_sp at 298.15 K, but the goal 'infrared_spectrum' is unresolved (missing:goal_definition) and the request lists 'unsupported_quantity'. No tools are available in the catalog (empty), scientific_execution is false, and allowed_tools is empty, so no computation can be performed. Additionally, method/basis are unspecified and the geometry artifact water_sp is provided but its provenance/level of theory is unknown. Clarification is needed before any plan can be built.",
+        "parameters": {
+          "questions": [
+            "What level of theory (method and basis set) should be used for the infrared spectrum calculation of water_sp?",
+            "Should the geometry water_sp be used as-is, or should it be re-optimized at the chosen level of theory before computing the IR spectrum?",
+            "Do you want harmonic vibrational frequencies/IR intensities (e.g., via ORCA/HF or DFT), and should anharmonic corrections be included?",
+            "What output format do you expect for the IR spectrum (peak list, broadened spectrum, wavenumber range, resolution)?"
+          ],
+          "unresolved": [
+            "missing:goal_definition for infrared_spectrum",
+            "unsupported_quantity",
+            "method and basis not specified",
+            "no tools available in catalog / scientific_execution disabled"
+          ]
+        }
+      },
+      "response_sha256": "220ceadafd7402a63814b385807b6f58edec7240de48420b907fea864f627ae5"
+    }
+  ]
+}

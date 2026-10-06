@@ -1,0 +1,106 @@
+{
+  "request_hash": "88bddbeb32a219fbdbdacc1c5ffd6777ca9451d372abab537d908e8eb8600517",
+  "proposal": {
+    "action": "initial_plan",
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0,
+    "related_results": [],
+    "reason": "Three read-only goals require bounded evidence reads on the registered artifact: discover top-level fields, read the first geometry slice, then read the dipole magnitude at Geometries[0].Dipole_Moment[0].dipoleMagnitude. No recomputation; only raw JSON observation.",
+    "parameters": {
+      "steps": [
+        {
+          "key": "s1",
+          "tool": "evidence.discover",
+          "parameters": {
+            "artifact_id": "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf",
+            "view": "raw_json",
+            "limit": 40
+          }
+        },
+        {
+          "key": "s2",
+          "tool": "evidence.value",
+          "parameters": {
+            "artifact_id": "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf",
+            "view": "raw_json",
+            "path": [
+              {
+                "kind": "key",
+                "key": "Geometries"
+              },
+              {
+                "kind": "slice",
+                "start": 0,
+                "stop": 1
+              }
+            ]
+          }
+        },
+        {
+          "key": "s3",
+          "tool": "evidence.value",
+          "parameters": {
+            "artifact_id": "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf",
+            "view": "raw_json",
+            "path": [
+              {
+                "kind": "key",
+                "key": "Geometries"
+              },
+              {
+                "kind": "index",
+                "index": 0
+              },
+              {
+                "kind": "key",
+                "key": "Dipole_Moment"
+              },
+              {
+                "kind": "index",
+                "index": 0
+              },
+              {
+                "kind": "key",
+                "key": "dipoleMagnitude"
+              }
+            ]
+          }
+        }
+      ],
+      "goal_map": {
+        "raw_field_discovery": {
+          "step_key": "s1",
+          "port": "content_index"
+        },
+        "raw_geometry_slice": {
+          "step_key": "s2",
+          "port": "value_observation"
+        },
+        "raw_field_observation": {
+          "step_key": "s3",
+          "port": "value_observation"
+        }
+      }
+    }
+  },
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 2470,
+    "completion_tokens": 379,
+    "total_tokens": 2849,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 2470
+  },
+  "response_hash": "de7ed28cf1b06d912db1ac5264d53ed4959e803d92316f551ab488b9331212cf",
+  "response_bytes": 1921,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "7e1abe08-3368-49ef-ab9f-09b5ebdcfdde",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 3.702999999979511
+}

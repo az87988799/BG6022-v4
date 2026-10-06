@@ -1,0 +1,135 @@
+{
+  "id": "model_a1fa77a60cd84963b923f40150a91324",
+  "basis": {
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0
+  },
+  "request": {
+    "id": "request_aa30b552b6534d51bba9b64f808cadf9",
+    "version": 1,
+    "original_text": "只导入这个登记来源中现有的 ORCA stdout，告诉我能读到什么以及缺少什么，不补算。",
+    "geometry_artifact_id": null,
+    "charge": null,
+    "multiplicity": null,
+    "method": null,
+    "basis": null,
+    "conditions_source": {},
+    "goals": [
+      {
+        "id": "available_external_observations",
+        "port": "imported_evidence",
+        "required": true,
+        "minimum_check_version": "evidence-read-1",
+        "original_text": "available_external_observations",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "available_external_observations",
+          "query": {
+            "source_id": "source_05aab9e6c7c5460fbd2b51c035668bbb"
+          },
+          "accept_partial_observations": true
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      },
+      {
+        "id": "imported_stdout_energy_line",
+        "port": "search_hits",
+        "required": true,
+        "minimum_check_version": "evidence-read-1",
+        "original_text": "imported_stdout_energy_line",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "imported_stdout_energy_line",
+          "imported_source_id": "source_05aab9e6c7c5460fbd2b51c035668bbb",
+          "require_nonempty_matches": true,
+          "query": {
+            "query": "FINAL SINGLE POINT ENERGY"
+          }
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      }
+    ],
+    "systems": [],
+    "messages": [
+      {
+        "id": "message_252211a121934ceb8b533343d750d9d5",
+        "role": "user",
+        "text": "只导入这个登记来源中现有的 ORCA stdout，告诉我能读到什么以及缺少什么，不补算。",
+        "source": "user"
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "registered_source_id": "source_05aab9e6c7c5460fbd2b51c035668bbb",
+      "source_manifest": [
+        {
+          "name": "stdout.out",
+          "role": "stdout"
+        },
+        {
+          "name": "job.inp",
+          "role": "orca_input"
+        },
+        {
+          "name": "job.property.json",
+          "role": "property_json"
+        }
+      ],
+      "source_read_hint": {
+        "source_id": "source_05aab9e6c7c5460fbd2b51c035668bbb",
+        "role": "stdout",
+        "source_sha256": "9c3c07310c5e8e8c4462646504bf0597387eb322f53a4ce12380fd5a23f458e1",
+        "query": "FINAL SINGLE POINT ENERGY",
+        "start_line": 664,
+        "max_lines": 5,
+        "total_lines": 849
+      },
+      "explain_results": true
+    },
+    "normalization_status": "normalized"
+  },
+  "plan": {
+    "id": "plan_79c91da72b31438f98c355854740e00f",
+    "version": 1,
+    "request_id": "request_aa30b552b6534d51bba9b64f808cadf9",
+    "request_version": 1,
+    "steps": [
+      {
+        "id": "step_b5b5c87e9f724d9ca57e675308b9e671",
+        "logical_id": "logical_af614bee564045f6ac6117f6debf3f23",
+        "tool": "evidence.import",
+        "parameters": {
+          "source_id": "source_05aab9e6c7c5460fbd2b51c035668bbb"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": null
+      }
+    ],
+    "goal_map": {
+      "available_external_observations": {
+        "step_id": "step_b5b5c87e9f724d9ca57e675308b9e671",
+        "port": "imported_evidence",
+        "evidence": null,
+        "gap": null
+      },
+      "imported_stdout_energy_line": {
+        "step_id": null,
+        "port": "search_hits",
+        "evidence": null,
+        "gap": "await registered Artifact ID after planned import"
+      }
+    }
+  },
+  "related_results": [],
+  "user_message_ids": []
+}

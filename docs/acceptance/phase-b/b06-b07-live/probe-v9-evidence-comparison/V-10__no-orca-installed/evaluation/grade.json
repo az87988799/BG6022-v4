@@ -1,0 +1,92 @@
+{
+  "variant_id": "V-10/no-orca-installed",
+  "repetition": 1,
+  "run_id": "run_74258dfc000c4b669451674b54b2a331",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/9/variants/0/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "read.succeeded",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "doctor.required",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "science_slot.acquired",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "returned 4 top-level entries (Calculation_Info, Calculation_Status, Calculation_Timings, Geometries)",
+      "rationale": "Matches actual bounded root-key discovery; this new Goal does not require a full-root value dump."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:unknown",
+      "rationale": "No scientific unit is inferred for metadata."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "unknown=units/stage/scientific meaning",
+      "rationale": "Explicitly distinguishes requested raw JSON structure from unknown scientific meaning."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "artifact_40f5653f5e544215bf78cbfaba1fe174",
+      "rationale": "Registered Artifact ID identifies the full hash-checked property JSON behind the discovery Result."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "read-only evidence, no scientific execution, no artifact writes",
+      "rationale": "Actual trace has one discovery, no doctor, zero science slots/starts, and zero writes."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "next:none — goal satisfied, JSON present",
+      "rationale": "Stops after the requested bounded observation without trying to install ORCA, convert, or recompute."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [
+    "V10 no-ORCA observes the actual registered JSON root-key content index through bounded discovery; it does not require an unbounded full-root value read or qualify scientific values."
+  ],
+  "tokens_used": 4367,
+  "tokens_unknown": 0,
+  "model_text_sha256": "a4f701977e55fd8bf80b892598e226fdc99c4d0fbf56016f5b7e49bd9ef31850"
+}

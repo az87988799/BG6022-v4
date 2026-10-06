@@ -1,0 +1,80 @@
+{
+  "variant_id": "V-01/multi-turn",
+  "repetition": 1,
+  "run_id": "run_01a39d96444f46a7a66a9538c3f6af0c",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "目标为固定几何电子能",
+      "rationale": "Final accepted clarification preserves the quantity explicitly supplied in the second user turn; the original vague request was not executed."
+    },
+    "unit": {
+      "passed": false,
+      "quote": "请求已归一化：water_sp 几何、RHF/STO-3G、电荷0、多重度1，目标为固定几何电子能。",
+      "rationale": "The initial rejected proposal requested energy units, but none of the three accepted clarifications states an expected or unknown unit. Rejected text cannot substitute for delivered explanation."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "water_sp 几何、RHF/STO-3G、电荷0、多重度1",
+      "rationale": "The final accepted reply correctly accumulates the geometry and later user-provided method, basis, charge and multiplicity across all three preserved user messages."
+    },
+    "source": {
+      "passed": true,
+      "quote": "用已登记的 water_sp 几何计算固定几何电子能",
+      "rationale": "The second accepted reply attributes the geometry and requested quantity to the user-provided registered water_sp reference; the final reply carries the later user conditions without pretending there is a scientific Result."
+    },
+    "limits": {
+      "passed": true,
+      "quote": "permission.scientific_execution=false、allowed_tools=[]",
+      "rationale": "No tool or scientific execution is authorized; the final clarification also states orca_starts=0 and does not imply computation occurred."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "请提供/启用用于 RHF/STO-3G 固定几何电子能计算的工具，或确认应如何继续？",
+      "rationale": "The run waits for further user direction after correctly collecting conditions, with zero science starts."
+    }
+  },
+  "behavior": {},
+  "protocol_findings": [
+    {
+      "first_response": "Rejected unresolved list had six items; correction reduced it to five. The first unit question belongs only to that rejected proposal and is not counted as accepted explanation."
+    }
+  ],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_de76c145f06c4bcc966cdc75009b36ac",
+      "request_sha256": "a5d79e63533fa89d56fda17b8cfc35ac93b08200b8f75d9681099ad2394fb314",
+      "response_sha256": "4477da172f72c959b872de6633b74a08f00ecb981c7e9888c201b5307f1d5bdd",
+      "accepted": false
+    },
+    {
+      "model_id": "model_650373a355e54a8cada1fae0561d2eca",
+      "request_sha256": "edcdaa86f7bc470afaa0aaa0e0283b3379e80eb8ac4043c618ebca6052cab019",
+      "response_sha256": "73257bc29b5b71f48d872963bd2ad9522b397a54e3169e3b8956b10ecbf40014",
+      "accepted": true
+    },
+    {
+      "model_id": "model_62ffb5f4d6a946ccb50a22158fcb1128",
+      "request_sha256": "4050126d7a128ba2ad1b5f952d880b3863561b6370b4514e7aff094f4f64eb10",
+      "response_sha256": "5a8e3687891cc8530d86e4f7c0d42f7adb604179b9a984a86a3dc00893a38c5f",
+      "accepted": true
+    },
+    {
+      "model_id": "model_fe8275220df64371971c094bcedfc9c8",
+      "request_sha256": "0af257e94697692a6de1461878420b7e6d1747e684ff761187c442aa581b466e",
+      "response_sha256": "243eae24a0760344722b1eb400a317eb13fba9456e652137c1a68de1e71853da",
+      "accepted": true
+    }
+  ],
+  "reviewed_available_evidence": {},
+  "source_artifact_hashes": {
+    "artifact_3b7b5640134542ddaa35867ab77bf981": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_5abd963a4c7d4c92ae29a0a0426369c4": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "run_sha256": "dbb3396e400d36c59efeffaef6c4674d833be16045485b96aabf8abf3b77e834",
+  "first_response_rejected": true
+}

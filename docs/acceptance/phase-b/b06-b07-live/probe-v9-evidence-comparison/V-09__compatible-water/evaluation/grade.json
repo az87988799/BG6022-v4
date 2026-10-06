@@ -1,0 +1,90 @@
+{
+  "variant_id": "V-09/compatible-water",
+  "repetition": 1,
+  "run_id": "run_c12503e9a9fd4fbdb3584b1e3b128a52",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/0/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "energy_difference.equals_independent_subtraction",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "energy_difference.unit",
+      "operator": "eq",
+      "value": "Eh",
+      "status": "passed",
+      "observed": "Eh",
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "sources.explicit_attempt_result_artifact_hash",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "goal.satisfied",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "quantity:electronic_energy_difference ΔE=E(B)-E(A)",
+      "rationale": "The explanation preserves the requested electronic quantity and sign. It quotes the correct A/B energies; the qualified difference itself passes independent raw-stdout subtraction. The model omits the numerical difference from prose, recorded as a delivery limitation without inventing text."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:Eh",
+      "rationale": "The stated source and difference unit is the actual Hartree unit."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "requested RHF/STO-3G, neutral singlet, gas phase, geometries A and B allowed to differ",
+      "rationale": "These conditions match the Request and source Results; the initial proposal also explicitly lists charge 0 and multiplicity 1."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "A=-74.964906308165 Eh (result_2b37e67a22e8474d92d933ec94eac9e5), B=-74.965782208829 Eh (result_d89b2e5890ca4164882204c11993c35b)",
+      "rationale": "The original source Result IDs and values are exact. Accepted initial Plan inputs bind the original Run and Attempt IDs; original Artifact hashes and the actual analysis output were checked independently."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "not a free energy, no geometry relaxation or thermochemistry",
+      "rationale": "The conclusion remains fixed-geometry electronic energy without thermal or relaxation guarantees."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "next:none, both required goals (electronic_energy_difference, finite_member_table) satisfied",
+      "rationale": "Both actual required ports are qualified and both goals satisfied. The accepted stop performs no additional operation."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [],
+  "tokens_used": 6270,
+  "tokens_unknown": 0,
+  "model_text_sha256": "0ad498aa6af77f93ee3c7de2ffb00602dd23639f6dac804f444d8b87ae065c31"
+}

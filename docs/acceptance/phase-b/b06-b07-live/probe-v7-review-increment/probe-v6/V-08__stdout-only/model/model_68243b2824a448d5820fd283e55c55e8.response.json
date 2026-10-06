@@ -1,0 +1,33 @@
+{
+  "request_hash": "d8d66ecb39c8c86df7f39d84361ddf5c883b890768d8c4b077a58f9a93d8b132",
+  "proposal": {
+    "action": "stop",
+    "request_version": 1,
+    "plan_version": 1,
+    "permission_version": 1,
+    "control_generation": 0,
+    "related_results": [
+      "result_72119a1d8bcb4f629db5380aa8f952d0"
+    ],
+    "reason": "Both required goals are satisfied by the registered source source_6b41409577d842e089ecc6426ce784f2, with no supplementary computation performed (orca_starts=0, postprocess_starts=0, analysis_executions=0).\n\nWhat was read: evidence.import ingested the registered stdout (artifact_400f9546335046a3a8faf195b6660933, 44123 bytes, sha256 9c3c07310c5e8e8c4462646504bf0597387eb322f53a4ce12380fd5a23f458e1). A bounded search for the literal string \"FINAL SINGLE POINT ENERGY\" over lines 664-668 (5 lines, next_line 669) returned exactly one match at line 666: \"FINAL SINGLE POINT ENERGY       -74.962991615317\". Quantity: total electronic energy of the final single point; unit: atomic units (Hartree) as emitted by ORCA; source: the registered stdout only; conditions/stage: unknown (the stdout header/route section was not read in this bounded window).\n\nWhat is missing: the source manifest lists job.inp (orca_input) and job.property.json (property_json), both reported missing by the import; therefore method, basis set, charge, multiplicity, geometry, solvation and any property data cannot be confirmed from this source. The earlier bounded scan (lines 1-200) found no match, so the match is localized to line 666. The energy value is an unverified raw observation, not a scientific qualification: no convergence, geometry, method/basis, or thermochemical validation was performed, and no global minimum, stability, or transition-state claim is made. Sampling was discrete (two bounded windows), not exhaustive over all 849 lines.\n\nBudget/authority: this stop consumes no ORCA starts (quota 0), no postprocess starts, and no analysis executions; permission.scientific_execution=false and allow_additional_science=false, so no further computation is permitted. Remaining model calls after this request: 0. Token usage for this response is unknown until settlement; final costs come from the report.\n\nNext action (requires user decision, not taken here): if the missing job.inp and job.property.json are needed to interpret the energy, the user must register or supply those files; any re-run or supplementary calculation would be a scope change requiring explicit user authorization.",
+    "parameters": {}
+  },
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 2761,
+    "completion_tokens": 588,
+    "total_tokens": 3349,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 2761
+  },
+  "response_hash": "490bb9a12f345f6f451d1cb39539474093af7c8c81fafc5eaceb09dcb858bc7a",
+  "response_bytes": 2880,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "6d2f37ba-e714-49e0-b78e-20e5a1fc74ea",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 3.2179999999934807
+}

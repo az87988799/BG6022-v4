@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "identity": "b08-repair-probe-02",
+  "run_id": "run_615456264ff54c5a9d11e43ffcd54e87",
+  "category": "development",
+  "review_kind": "independent developer semantic review of persisted model stop proposal",
+  "human_expert_approval": false,
+  "model_record_id": "model_73edcb7010a943eb89de021b64c85f79",
+  "model_response_record_sha256": "331b958dda943a56ecb1e377b6381f0fcdcfa2d8cd1b9a507b82f147a850d117",
+  "model_reason_sha256": "62d7c1ac46a3e05dcf78eed36a6711472605ff51b1285b66ee2699847d439fed",
+  "exact_model_reason": "Goal satisfied: RHF/STO-3G single point on the fixed registered water geometry (charge 0, multiplicity 1) completed with normal termination and SCF convergence. Qualified electronic energy = -74.96299161531732 Eh (unit Eh), from result_1e3dc5cf62584bb480f6febe4d4031c2 (step_9a306d31bb28433f944c906b950b3b88, run_615456264ff54c5a9d11e43ffcd54e87), passing all orca-hf-2 checks including input_integrity, normal_termination, orca_version, method_and_electronic_state, initial_geometry, parser_consistency, scf_converged, finite_total_energy, energy_geometry_binding. The initial attempt with scf_maxiter=1 failed (SCF not converged, no normal termination); the single permitted repair raised scf_maxiter to 100, which converged. Limits: single-point electronic energy only; no vibrational stability, no geometry optimization, no global/continuous minimum claims. Next action: none required; report the energy with its source and conditions.",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "Qualified electronic energy = -74.96299161531732 Eh",
+      "rationale": "The quantity is electronic energy, not free energy. The quoted value equals the qualified Result exactly and agrees with independently read raw FINAL SINGLE POINT ENERGY (-74.962991615317 Eh) within the printed precision."
+    },
+    "unit": {
+      "passed": true,
+      "quote": "Eh (unit Eh)",
+      "rationale": "The model explicitly states Hartree (Eh), matching the qualified output unit; no undocumented conversion is implied."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "RHF/STO-3G single point on the fixed registered water geometry (charge 0, multiplicity 1)",
+      "rationale": "These conditions match the immutable Request and both raw inputs. MaxIter changed from 1 to the sole permitted value 100; method, basis, charge, multiplicity, TightSCF and geometry remained unchanged."
+    },
+    "source": {
+      "passed": true,
+      "quote": "from result_1e3dc5cf62584bb480f6febe4d4031c2 (step_9a306d31bb28433f944c906b950b3b88, run_615456264ff54c5a9d11e43ffcd54e87)",
+      "rationale": "The exact Result, Step and Run identify the successful second Attempt. Its raw source Artifacts and hashes were checked independently during this review; the model did not substitute the failed first result."
+    },
+    "limits": {
+      "passed": true,
+      "quote": "Limits: single-point electronic energy only; no vibrational stability, no geometry optimization, no global/continuous minimum claims.",
+      "rationale": "The stated scientific scope is limited to the requested fixed-geometry SP result and makes no unsupported stability, optimization or minimum claim."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Next action: none required; report the energy with its source and conditions.",
+      "rationale": "Stopping is appropriate because the program-qualified energy satisfies the single required goal; no extra computation is proposed."
+    }
+  },
+  "all_axes_passed": true,
+  "scientific_conclusion_passed": true,
+  "scientific_conclusion": "qualified fixed-geometry electronic energy delivered after one permitted repair",
+  "source_evidence": [
+    {
+      "result_id": "result_181b89701289484b99f4a1759628c01f",
+      "attempt_id": "attempt_a45dd9e85b994d588d6e68baa7a60cf7",
+      "result_sha256": "c92afb6516529dc53d68b50c5a934183df45ca901b2fdbcfa765e7205226a3aa",
+      "artifact_count_verified": 51,
+      "artifact_manifest_sha256": "68453a312cdc64eb45e1afa60446bdbd9fee2c14aeb0ed40d4249cda5b00ca90",
+      "selected_sources": {
+        "stdout.out": {
+          "artifact_id": "artifact_b433e63b8de941e59c2e2d21601e3acc",
+          "sha256": "bd65ba5d57170b68b48b40755ea9e548d7a931e2df4e9b371325c7d7cd8e49a5"
+        },
+        "job.inp": {
+          "artifact_id": "artifact_8f7a68f89b564315a3fe8f2e72ada365",
+          "sha256": "949d30b18d38dd2ffc0c4674f42bf0191efc716a2ffe91c6649e606f37b2d2f1"
+        },
+        "geometry.xyz": {
+          "artifact_id": "artifact_eaa40f35e5b841f9a56e2662d473ef54",
+          "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+        }
+      },
+      "raw_facts": [
+        "*        SCF NOT CONVERGED AFTER   0 CYCLES         *"
+      ],
+      "qualified_outputs": {}
+    },
+    {
+      "result_id": "result_1e3dc5cf62584bb480f6febe4d4031c2",
+      "attempt_id": "attempt_d553fd86a46949fb8e95bd6d7e357e52",
+      "result_sha256": "0d80e1f6f15a8c2f5996531cdfe008e21e695b857dcba7cd62985ff47eeb1b68",
+      "artifact_count_verified": 15,
+      "artifact_manifest_sha256": "7468c03c12f926f13298945f2fbfba2aab366458a96b6e91b3a25c2f88ac9538",
+      "selected_sources": {
+        "stdout.out": {
+          "artifact_id": "artifact_9013389cb0cf428586c6ebe1fa5c659b",
+          "sha256": "c599d78b9adcbbae9562198c17e0342fe7b3a01eab81e9e031df4ff1efcb2dd5"
+        },
+        "job.inp": {
+          "artifact_id": "artifact_2b5a1a6fd69a4aafb2c19a08400a969f",
+          "sha256": "375dc9b5752cedee550031b01741b25d9517c5a43aad5b5a56a0465899cab2e8"
+        },
+        "geometry.xyz": {
+          "artifact_id": "artifact_5c9c1e6c3961412386b590cf9d448e25",
+          "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+        }
+      },
+      "raw_facts": [
+        "*           SCF CONVERGED AFTER   9 CYCLES          *",
+        "FINAL SINGLE POINT ENERGY       -74.962991615317",
+        "****ORCA TERMINATED NORMALLY****"
+      ],
+      "qualified_outputs": {
+        "energy": {
+          "value": -74.96299161531732,
+          "unit": "Eh"
+        }
+      }
+    }
+  ],
+  "review_limits": [
+    "Development evidence only; not a formal repetition or user acceptance.",
+    "Program report text was not used as a substitute for model explanation.",
+    "No HTTP, ORCA or other scientific execution was initiated by this review."
+  ]
+}

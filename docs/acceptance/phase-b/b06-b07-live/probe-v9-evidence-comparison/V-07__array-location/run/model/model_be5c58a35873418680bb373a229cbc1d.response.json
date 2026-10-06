@@ -1,0 +1,102 @@
+{
+  "request_hash": "7db36642f853e729c62ae16df3b812dbf6d4f48ba2d213d6ddccd8452f97e3bf",
+  "proposal": {
+    "action": "initial_plan",
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0,
+    "related_results": [],
+    "reason": "Three required goals need read-only evidence: discover the artifact's top-level fields, read the first geometry slice, then read the dipole magnitude at Geometries[0].Dipole_Moment[0].dipoleMagnitude. No plan exists yet, so create an initial plan mapping each goal to a read-only evidence step.",
+    "parameters": {
+      "steps": [
+        {
+          "key": "discover_fields",
+          "tool": "evidence.discover",
+          "parameters": {
+            "artifact_id": "artifact_fe7a3faf6e234d04b89a4dfaeb3ac21a"
+          }
+        },
+        {
+          "key": "read_geometry_slice",
+          "tool": "evidence.value",
+          "parameters": {
+            "artifact_id": "artifact_fe7a3faf6e234d04b89a4dfaeb3ac21a",
+            "path": [
+              {
+                "kind": "key",
+                "key": "Geometries"
+              },
+              {
+                "kind": "slice",
+                "start": 0,
+                "stop": 1
+              }
+            ]
+          }
+        },
+        {
+          "key": "read_dipole_magnitude",
+          "tool": "evidence.value",
+          "parameters": {
+            "artifact_id": "artifact_fe7a3faf6e234d04b89a4dfaeb3ac21a",
+            "path": [
+              {
+                "kind": "key",
+                "key": "Geometries"
+              },
+              {
+                "kind": "index",
+                "index": 0
+              },
+              {
+                "kind": "key",
+                "key": "Dipole_Moment"
+              },
+              {
+                "kind": "index",
+                "index": 0
+              },
+              {
+                "kind": "key",
+                "key": "dipoleMagnitude"
+              }
+            ]
+          }
+        }
+      ],
+      "goal_map": {
+        "raw_field_discovery": {
+          "step_key": "discover_fields",
+          "port": "content_index"
+        },
+        "raw_geometry_slice": {
+          "step_key": "read_geometry_slice",
+          "port": "value_observation"
+        },
+        "raw_field_observation": {
+          "step_key": "read_dipole_magnitude",
+          "port": "value_observation"
+        }
+      }
+    }
+  },
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 2453,
+    "completion_tokens": 388,
+    "total_tokens": 2841,
+    "prompt_cache_hit_tokens": 1024,
+    "prompt_cache_miss_tokens": 1429
+  },
+  "response_hash": "e243536d1581a5b81337636badf04e3d0032837c48eb61bbd2522711a583937d",
+  "response_bytes": 1975,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "b69145e6-52c8-4718-8b74-95531033975c",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 2.4839999999967404
+}

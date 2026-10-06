@@ -1,0 +1,123 @@
+{
+  "variant_id": "V-01/synonym-single-point",
+  "repetition": 1,
+  "run_id": "run_6da5a13e58334f61a069ba8bc6fe2f54",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "quantity:electronic_energy (RHF/STO-3G single point on water_sp, charge 0, multiplicity 1)",
+      "rationale": "Clearly preserves the requested electronic-energy quantity and single-point operation without substituting optimization or a thermodynamic quantity.",
+      "quote_model_ids": [
+        "model_2c5a3f0d827d4cb19a16bac93ec5e0a1"
+      ]
+    },
+    "unit": {
+      "passed": true,
+      "quote": "unit:hartree expected but not specified",
+      "rationale": "The response explicitly distinguishes a prospective expected unit from an unspecified user unit. No value exists and it does not infer a raw observed value's unit. This satisfies the clarification rubric allowing expected/unknown units.",
+      "quote_model_ids": [
+        "model_2c5a3f0d827d4cb19a16bac93ec5e0a1"
+      ]
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "conditions:method=HF explicit, basis=STO-3G explicit, charge=0 explicit, multiplicity=1 explicit, geometry=water_sp artifact explicit, operation=SP",
+      "rationale": "Accurately discloses all explicit method, basis, electron-state, geometry and operation conditions and their user source.",
+      "quote_model_ids": [
+        "model_2c5a3f0d827d4cb19a16bac93ec5e0a1"
+      ]
+    },
+    "source": {
+      "passed": true,
+      "quote": "source:explicit from user request",
+      "rationale": "Correctly identifies user-specified conditions as the source; no scientific Result or calculated energy is claimed.",
+      "quote_model_ids": [
+        "model_2c5a3f0d827d4cb19a16bac93ec5e0a1"
+      ]
+    },
+    "limits": {
+      "passed": true,
+      "quote": "permission.scientific_execution=false and allowed_tools=[]",
+      "rationale": "Accurately reports disabled execution, ORCA0 and empty tool catalog as the actual barriers.",
+      "quote_model_ids": [
+        "model_2c5a3f0d827d4cb19a16bac93ec5e0a1"
+      ]
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Need user to grant scientific execution permission (enable allowed_tools/ORCA) or confirm an alternative",
+      "rationale": "Accepted first clarification asks for a user decision without granting itself authority or modifying the required goal. Zero calls/Attempts, waiting_user.",
+      "quote_model_ids": [
+        "model_2c5a3f0d827d4cb19a16bac93ec5e0a1"
+      ]
+    }
+  },
+  "behavior": {
+    "normalized.quantity": {
+      "passed": true,
+      "quote": "quantity:electronic_energy",
+      "rationale": "Directly names the unchanged electronic-energy goal.",
+      "quote_model_ids": [
+        "model_2c5a3f0d827d4cb19a16bac93ec5e0a1"
+      ]
+    },
+    "normalized.operation": {
+      "passed": true,
+      "quote": "operation=SP",
+      "rationale": "Recognizes single-point operation, with no optimization request or execution.",
+      "quote_model_ids": [
+        "model_2c5a3f0d827d4cb19a16bac93ec5e0a1"
+      ]
+    }
+  },
+  "protocol_findings": [
+    {
+      "trajectory": "First response accepted; no correction, Plan, Tool Result, ORCA or postprocess. Expected hartree is prospective and explicitly not user-specified; it is not a guessed unit for an existing raw number."
+    }
+  ],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_2c5a3f0d827d4cb19a16bac93ec5e0a1",
+      "request_sha256": "7ed9c7e93e8f1887f141d7fa2cd3ec0e3c75241b4f2c70361e46eb0590ef4797",
+      "response_sha256": "c9dd3a71f432e4cd6ab3f48f1902c2b88cbd2662dbc53aae323dad6367be873c",
+      "accepted": true
+    }
+  ],
+  "reviewed_available_evidence": {},
+  "source_artifact_hashes": {
+    "artifact_5ae2054f274f4b5f97c71ebee11ca130": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_0ba5e2bd346540cba40c277a7877d5cd": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "run_sha256": "8a63a38931a2393049147adfa09ae088f6a7f456f0740cf31c0aba03f5f2fcaa",
+  "first_response_rejected": false,
+  "reviewed_proposals": [
+    {
+      "model_id": "model_2c5a3f0d827d4cb19a16bac93ec5e0a1",
+      "accepted": true,
+      "proposal": {
+        "action": "clarify",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "quantity:electronic_energy (RHF/STO-3G single point on water_sp, charge 0, multiplicity 1);unit:hartree expected but not specified;conditions:method=HF explicit, basis=STO-3G explicit, charge=0 explicit, multiplicity=1 explicit, geometry=water_sp artifact explicit, operation=SP;source:explicit from user request;limits:permission.scientific_execution=false and allowed_tools=[] so no ORCA/quantum-chemistry execution is permitted, orca_starts=0, and TOOL_CATALOG is empty so no tool can produce the required electronic energy;next:cannot execute the requested single point under current permissions. Need user to grant scientific execution permission (enable allowed_tools/ORCA) or confirm an alternative, otherwise the electronic_energy goal cannot be filled.",
+        "parameters": {
+          "questions": [
+            "当前权限禁止科学计算执行（scientific_execution=false、allowed_tools 为空、orca_starts=0），无法运行 RHF/STO-3G 单点。是否授权执行该计算（启用 ORCA/科学执行权限）？",
+            "若无法授权执行，是否希望我停止并说明该 electronic_energy 目标在当前权限下不可完成？"
+          ],
+          "unresolved": [
+            "缺少科学计算执行权限，无法运行 RHF/STO-3G 单点以获取电子能",
+            "无可用工具（TOOL_CATALOG 为空）可产生 electronic_energy 结果"
+          ]
+        }
+      },
+      "response_sha256": "c9dd3a71f432e4cd6ab3f48f1902c2b88cbd2662dbc53aae323dad6367be873c"
+    }
+  ]
+}

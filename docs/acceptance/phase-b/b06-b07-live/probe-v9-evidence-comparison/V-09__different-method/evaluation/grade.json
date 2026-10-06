@@ -1,0 +1,68 @@
+{
+  "variant_id": "V-09/different-method",
+  "repetition": 1,
+  "run_id": "run_626d964afbc24f9fa32da138182cb0b5",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/3/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "energy_comparison.science_passed",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "Therefore ΔE=E(B)-E(A) cannot be produced under the requested conditions.",
+      "rationale": "The model preserves the requested signed electronic difference and publishes none after the compatibility failure."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "(-74.964906308165 Eh)",
+      "rationale": "The stated qualified A energy matches the historical energy and Hartree unit."
+    },
+    "conditions": {
+      "status": "failed",
+      "quote": "was computed with basis 6-31G, which does not match the requested/declared operand condition basis STO-3G",
+      "rationale": "The immutable facts are the opposite: source B is HF/STO-3G and requested operand B declares RHF/6-31G. The initial proposal correctly states this direction, but the final stop reverses it. Conflicting generic user text does not justify assigning a false basis to the archived source."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "Member B's registered energy (result_d89b2e5890ca4164882204c11993c35b)",
+      "rationale": "The referenced original Result and current applicability failure are traceable and exact. Incorrect condition attribution is separately failed."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "ΔE=E(B)-E(A) cannot be produced under the requested conditions",
+      "rationale": "The actual program has no qualified output, and the model does not claim a passed comparison."
+    },
+    "next_action": {
+      "status": "failed",
+      "quote": "provide/register a qualified RHF/STO-3G energy for geometry B",
+      "rationale": "That is already the available B source and would not meet the immutable 6-31G operand. The alternative suggestion to change B to 6-31G also names the already-declared requested basis. A valid next step requires clarification of the contradictory requested conditions or evidence matching the intended operand."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [
+    "real HF/STO-3G B remains unchanged; requested 6-31G B has no applicable evidence, not a fabricated 6-31G calculation"
+  ],
+  "tokens_used": 6552,
+  "tokens_unknown": 0,
+  "model_text_sha256": "0b10f570002acc1df777859b01d1224f2c3468fb834461b66f750eaaffd80744"
+}

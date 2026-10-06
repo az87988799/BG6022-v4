@@ -1,0 +1,58 @@
+{
+  "variant_id": "V-01/explicit-inheritance",
+  "repetition": 1,
+  "run_id": "run_78d06efe00c94226bf289ca598436d3e",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "passed": false,
+      "quote": "The request asks for a single-point calculation on the initial geometry of water_opt",
+      "rationale": "The response identifies the operation but never names electronic energy or another intended output quantity. It does not invent a numeric value; quantity disclosure remains incomplete."
+    },
+    "unit": {
+      "passed": false,
+      "quote": "single-point calculation on the initial geometry of water_opt",
+      "rationale": "Neither an expected energy unit nor explicit unknown/unavailable unit is given in the accepted reason or questions."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "inheriting method/basis/charge/multiplicity from the previous water single point (RHF/STO-3G, charge 0, multiplicity 1)",
+      "rationale": "Correctly distinguishes explicit inheritance of method/basis/charge/multiplicity from the newly selected water_opt initial geometry."
+    },
+    "source": {
+      "passed": true,
+      "quote": "artifact_ccb66289e85a4b4bbe82c4cc37c8a3e8",
+      "rationale": "This exact geometry Artifact is the user-authorized water_opt reference. The reason also names the previous water single-point user message as the inherited settings source."
+    },
+    "limits": {
+      "passed": false,
+      "quote": "no prior single-point result for water_sp is present in results to confirm the inherited conditions",
+      "rationale": "The empty tool catalog is a real execution limit, but a prior scientific Result is not needed to inherit explicit user settings from the preserved history. The response adds an unsupported evidence requirement and treats already authorized inherited settings as unresolved."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Should I stop, or will a tool/permission be provided to run the water_opt initial-geometry single point?",
+      "rationale": "Seeking user direction about the actually missing execution capability is a legitimate next action; no tool or science is executed. The redundant inherited-condition confirmation is recorded under limits."
+    }
+  },
+  "behavior": {},
+  "protocol_findings": [],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_37f226e564c04007b1e1474f12dd2c3f",
+      "request_sha256": "34763442acf796a5bd104010bb9a496bfbbdb2ef09042445ac964440306335e6",
+      "response_sha256": "084c6a5c000f1440ef2d4d10114af4480c57cdb5dca32f8fe7c6befebed4ee61",
+      "accepted": true
+    }
+  ],
+  "reviewed_available_evidence": {},
+  "source_artifact_hashes": {
+    "artifact_d01d64c75d0d4fff8887ed80470e916c": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_ccb66289e85a4b4bbe82c4cc37c8a3e8": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "run_sha256": "32e68dddbbc6d7750ff8ba00edc75bc56fbe2e77b9660ebd72d9b71c6f079f88",
+  "first_response_rejected": false
+}

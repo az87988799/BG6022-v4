@@ -1,0 +1,112 @@
+{
+  "request_hash": "33bb61f1a5d00ad060639673c6ad2bbf372fcc41e9c5847704716ae087406967",
+  "proposal": {
+    "action": "initial_plan",
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0,
+    "related_results": [],
+    "reason": "No plan exists yet and the sampling goal is insufficient_evidence. The request requires finite single-point sampling: first compute the three required_initial geometries (geom_a1fd9c54f540, geom_997a7b6154fa, geom_4551ffe49805) with orca.sp (HF/STO-3G, charge 0, multiplicity 1), then run analysis.finite_sampling binding each sampled energy member to its energy reference. If evidence is insufficient, at most one additional registered candidate may be added later.",
+    "parameters": {
+      "steps": [
+        {
+          "key": "sp_a",
+          "tool": "orca.sp",
+          "system_id": "geom_a1fd9c54f540",
+          "parameters": {
+            "method": "HF",
+            "basis": "STO-3G",
+            "charge": 0,
+            "multiplicity": 1,
+            "cores": 4,
+            "memory_mb": 1024,
+            "maxcore_mb": 192,
+            "scf_maxiter": 300,
+            "opt_maxiter": 200,
+            "timeout_seconds": 900
+          }
+        },
+        {
+          "key": "sp_c",
+          "tool": "orca.sp",
+          "system_id": "geom_997a7b6154fa",
+          "parameters": {
+            "method": "HF",
+            "basis": "STO-3G",
+            "charge": 0,
+            "multiplicity": 1,
+            "cores": 4,
+            "memory_mb": 1024,
+            "maxcore_mb": 192,
+            "scf_maxiter": 300,
+            "opt_maxiter": 200,
+            "timeout_seconds": 900
+          }
+        },
+        {
+          "key": "sp_e",
+          "tool": "orca.sp",
+          "system_id": "geom_4551ffe49805",
+          "parameters": {
+            "method": "HF",
+            "basis": "STO-3G",
+            "charge": 0,
+            "multiplicity": 1,
+            "cores": 4,
+            "memory_mb": 1024,
+            "maxcore_mb": 192,
+            "scf_maxiter": 300,
+            "opt_maxiter": 200,
+            "timeout_seconds": 900
+          }
+        },
+        {
+          "key": "a",
+          "tool": "analysis.finite_sampling",
+          "parameters": {
+            "goal_id": "sampling_goal"
+          },
+          "inputs": {
+            "geom_a1fd9c54f540": {
+              "producer_key": "sp_a",
+              "port": "energy"
+            },
+            "geom_997a7b6154fa": {
+              "producer_key": "sp_c",
+              "port": "energy"
+            },
+            "geom_4551ffe49805": {
+              "producer_key": "sp_e",
+              "port": "energy"
+            }
+          }
+        }
+      ],
+      "goal_map": {
+        "sampling_goal": {
+          "step_key": "a",
+          "port": "sampling"
+        }
+      }
+    }
+  },
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 2817,
+    "completion_tokens": 516,
+    "total_tokens": 3333,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 2817
+  },
+  "response_hash": "3bd46ecf66c551c5f032d2b1f44418bc1693fcb31a4f3e2a6a55bae07751ea3b",
+  "response_bytes": 2351,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "616fc44a-06eb-494d-be56-e2d08247e3df",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 2.6560000000172295
+}

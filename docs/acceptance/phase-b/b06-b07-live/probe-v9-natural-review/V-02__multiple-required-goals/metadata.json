@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "variant_id": "V-02/multiple-required-goals",
+  "repetition": 1,
+  "input_id": "input_7cc63cf6849a4788bc4c80ad3d16d55c",
+  "category": "development",
+  "freeze_label": "probe-v9",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/1/variants/1/expected",
+  "expected": [
+    {
+      "metric": "goal_B.satisfied",
+      "operator": "eq",
+      "value": false
+    },
+    {
+      "metric": "energy_difference.published_as_qualified",
+      "operator": "eq",
+      "value": false
+    },
+    {
+      "metric": "all_required_goals_satisfied",
+      "operator": "eq",
+      "value": false
+    }
+  ],
+  "artifact_ids": [
+    "artifact_839262f02776440f9cdfce4e49605c19",
+    "artifact_70a527a30fb64fd5a9893f98ef9d7fec",
+    "artifact_73814ea3d9824f6ebe0a6274ccaf313c"
+  ],
+  "source_files": [],
+  "references": [
+    {
+      "reference_id": "sampling-left-center",
+      "run_id": "run_cf30441b40ea46418ef4a98762da8643",
+      "result_id": "result_2b37e67a22e8474d92d933ec94eac9e5",
+      "attempt_id": "attempt_9bbc1df0d21e4f4ab39ee88267f292f0",
+      "result_sha256": "9035086c8b3010302c9815e439c2d8ee4dea99c659f24ace15257abd03601b66",
+      "geometry_sha256": "997a7b6154fa44f7f6e2b287042d0445916d34ec8657ee6d38c7fe9403e7050b",
+      "raw_stdout": {
+        "path": "tests/fixtures/phase_b/independent/sampling-left-center/stdout.out",
+        "sha256": "20551d72c54ba51b91d5ee2cf0df6b4e0dee076ebc85e4ee45194b629bf61f1d",
+        "size_bytes": 43900
+      },
+      "independent_energy_eh": -74.964906308165
+    }
+  ],
+  "archive_imports": [],
+  "tested_scope": [],
+  "prepared_inputs": [],
+  "fixture_gaps": [],
+  "runtime_limitations": [],
+  "continuation_messages": [],
+  "evidence_kind": "real_model_with_frozen_evidence",
+  "model_executed": false,
+  "source_directory_files": {},
+  "run_id": "run_a9301b13daec4a1c88561483663a4a3e",
+  "initial_request": {
+    "id": "request_d0812acef1e74d30995c9a61015a76d1",
+    "version": 1,
+    "original_text": "比较这两个水几何在 298.15 K、1 atm、气相下的 Gibbs 自由能，同时给出电子能差；两项都必须有。\n两个几何的电子能和能差都必须给出。",
+    "geometry_artifact_id": null,
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "HF",
+    "basis": "STO-3G",
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "method": "explicit",
+      "basis": "explicit",
+      "geometry": "explicit"
+    },
+    "goals": [
+      {
+        "id": "gibbs_free_energy_difference",
+        "port": "gibbs_free_energy_difference",
+        "required": true,
+        "minimum_check_version": "unresolved-1",
+        "original_text": "gibbs_free_energy_difference",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "gibbs_free_energy_difference",
+          "temperature_k": 298.15,
+          "standard_pressure_atm": 1,
+          "environment": "gas"
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": [
+          "thermal_evidence_missing",
+          "missing:goal_definition"
+        ]
+      },
+      {
+        "id": "electronic_energy_difference",
+        "port": "energy_difference",
+        "required": true,
+        "minimum_check_version": "energy-compare-1",
+        "original_text": "electronic_energy_difference",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "electronic_energy_difference",
+          "comparison": {
+            "member_a": "A",
+            "member_b": "B",
+            "allow_different_geometries": true,
+            "quantity": "electronic_energy_difference"
+          },
+          "members": [
+            {
+              "id": "A",
+              "required": true
+            },
+            {
+              "id": "B",
+              "required": true
+            }
+          ],
+          "formula": "E(B)-E(A)",
+          "unit": "Eh"
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      },
+      {
+        "id": "energy_A",
+        "port": "energy",
+        "required": true,
+        "minimum_check_version": "orca-hf-2",
+        "original_text": "energy_A",
+        "system_ids": [
+          "A"
+        ],
+        "conditions": {
+          "quantity": "energy_A"
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      },
+      {
+        "id": "energy_B",
+        "port": "energy",
+        "required": true,
+        "minimum_check_version": "orca-hf-2",
+        "original_text": "energy_B",
+        "system_ids": [
+          "B"
+        ],
+        "conditions": {
+          "quantity": "energy_B"
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": [
+          "missing:geometry:B"
+        ]
+      }
+    ],
+    "systems": [
+      {
+        "id": "A",
+        "geometry_artifact_id": "artifact_73814ea3d9824f6ebe0a6274ccaf313c",
+        "conditions": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "system": "H2O"
+        },
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": ""
+      },
+      {
+        "id": "B",
+        "geometry_artifact_id": null,
+        "conditions": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "system": "H2O"
+        },
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": ""
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_f9d05e54e3ce49e28d1e0335da6ba65c",
+        "role": "user",
+        "text": "比较这两个水几何在 298.15 K、1 atm、气相下的 Gibbs 自由能，同时给出电子能差；两项都必须有。",
+        "source": "user"
+      },
+      {
+        "id": "message_a064a29fa7ae47bcad331e534a6e0646",
+        "role": "user",
+        "text": "两个几何的电子能和能差都必须给出。",
+        "source": "user"
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "environment": "gas_phase",
+      "available_evidence": {
+        "A": {
+          "binding": {
+            "run_id": "run_cf30441b40ea46418ef4a98762da8643",
+            "result_id": "result_2b37e67a22e8474d92d933ec94eac9e5",
+            "attempt_id": "attempt_9bbc1df0d21e4f4ab39ee88267f292f0",
+            "port": "energy",
+            "rule_version": "orca-hf-2"
+          },
+          "geometry_artifact_id": "artifact_73814ea3d9824f6ebe0a6274ccaf313c",
+          "qualified": {
+            "value": -74.964906308165,
+            "unit": "Eh",
+            "rule_version": "orca-hf-2",
+            "all_checks_passed": true
+          },
+          "conditions": {
+            "method": "HF",
+            "basis": "STO-3G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RHF",
+            "environment": "gas_phase"
+          },
+          "geometry_sha256": "997a7b6154fa44f7f6e2b287042d0445916d34ec8657ee6d38c7fe9403e7050b"
+        }
+      },
+      "declared_operand_conditions": {
+        "A": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "system": "H2O"
+        },
+        "B": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "system": "H2O"
+        }
+      },
+      "explain_results": true
+    },
+    "normalization_status": "clarification"
+  },
+  "permission_sha256": "578213ad6798aefd2007ec3f0c72f7daf64b18a6590c2b82943c6e06380ec04f",
+  "budget_sha256": "4b1d180bc956f6ffa127e14feaec55c47dfb23d29cfdf0367975462ae446b358"
+}

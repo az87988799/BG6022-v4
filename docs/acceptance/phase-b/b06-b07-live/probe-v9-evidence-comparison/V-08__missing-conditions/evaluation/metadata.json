@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "variant_id": "V-08/missing-conditions",
+  "repetition": 1,
+  "input_id": "input_f492b2961c944f859a464f3aad54eeae",
+  "category": "development",
+  "freeze_label": "probe-v9",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/7/variants/1/expected",
+  "expected": [
+    {
+      "metric": "necessary_conditions.status",
+      "operator": "eq",
+      "value": "unknown"
+    },
+    {
+      "metric": "energy_comparison.science_passed",
+      "operator": "eq",
+      "value": false
+    },
+    {
+      "metric": "historical_cost.fabricated",
+      "operator": "eq",
+      "value": false
+    }
+  ],
+  "artifact_ids": [],
+  "source_files": [
+    {
+      "path": "E:\\BG6022-V4\\data\\phase-b\\reference\\evaluation-inputs\\input_f492b2961c944f859a464f3aad54eeae\\stdout_excerpt.out",
+      "sha256": "d95f79b65f03170f2fca06615f6d9d87f808e0af7476b4c76d577c63914d9476"
+    }
+  ],
+  "references": [],
+  "archive_imports": [],
+  "tested_scope": [
+    "V08 receives a hash-bound source locator computed from original LF-separated bytes; the model must read actual text through evidence.search. This does not test independent line discovery."
+  ],
+  "prepared_inputs": [
+    {
+      "path": "E:\\BG6022-V4\\data\\phase-b\\reference\\evaluation-inputs\\input_f492b2961c944f859a464f3aad54eeae\\stdout_excerpt.out",
+      "kind": "exact_archived_excerpt",
+      "original_sha256": "9c3c07310c5e8e8c4462646504bf0597387eb322f53a4ce12380fd5a23f458e1",
+      "selection": "FINAL SINGLE POINT ENERGY lines only; conditions omitted"
+    }
+  ],
+  "fixture_gaps": [],
+  "runtime_limitations": [],
+  "continuation_messages": [],
+  "evidence_kind": "real_model_with_frozen_evidence",
+  "model_executed": false,
+  "query_artifact_id": null,
+  "source_directory_files": {
+    "E:\\BG6022-V4\\data\\phase-b\\reference\\evaluation-inputs\\input_f492b2961c944f859a464f3aad54eeae": [
+      "stdout_excerpt.out"
+    ]
+  },
+  "run_id": "run_ae74b1191b5845a5905aedb60038522b",
+  "initial_request": {
+    "id": "request_02045cca8a10410b9ee9d39fcd09212d",
+    "version": 1,
+    "original_text": "只导入这个登记来源中现有的 ORCA stdout，告诉我能读到什么以及缺少什么，不补算。",
+    "geometry_artifact_id": null,
+    "charge": null,
+    "multiplicity": null,
+    "method": null,
+    "basis": null,
+    "conditions_source": {},
+    "goals": [
+      {
+        "id": "available_external_observations",
+        "port": "imported_evidence",
+        "required": true,
+        "minimum_check_version": "evidence-read-1",
+        "original_text": "available_external_observations",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "available_external_observations",
+          "query": {
+            "source_id": "source_19e34c8cdb03455da579f6eaf2dd2d79"
+          },
+          "accept_partial_observations": true
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      },
+      {
+        "id": "imported_stdout_energy_line",
+        "port": "search_hits",
+        "required": true,
+        "minimum_check_version": "evidence-read-1",
+        "original_text": "imported_stdout_energy_line",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "imported_stdout_energy_line",
+          "imported_source_id": "source_19e34c8cdb03455da579f6eaf2dd2d79",
+          "require_nonempty_matches": true,
+          "query": {
+            "query": "FINAL SINGLE POINT ENERGY"
+          }
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      }
+    ],
+    "systems": [],
+    "messages": [
+      {
+        "id": "message_8e294b2e03574952aa9a3390282c35ca",
+        "role": "user",
+        "text": "只导入这个登记来源中现有的 ORCA stdout，告诉我能读到什么以及缺少什么，不补算。",
+        "source": "user"
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "registered_source_id": "source_19e34c8cdb03455da579f6eaf2dd2d79",
+      "source_manifest": [
+        {
+          "name": "stdout_excerpt.out",
+          "role": "stdout"
+        },
+        {
+          "name": "job.inp",
+          "role": "orca_input"
+        },
+        {
+          "name": "job.property.json",
+          "role": "property_json"
+        }
+      ],
+      "source_read_hint": {
+        "source_id": "source_19e34c8cdb03455da579f6eaf2dd2d79",
+        "role": "stdout",
+        "source_sha256": "d95f79b65f03170f2fca06615f6d9d87f808e0af7476b4c76d577c63914d9476",
+        "query": "FINAL SINGLE POINT ENERGY",
+        "start_line": 1,
+        "max_lines": 1,
+        "total_lines": 1
+      },
+      "explain_results": true
+    },
+    "normalization_status": "normalized"
+  },
+  "permission_sha256": "715257c434d154cfd5b71f1033f40bb3e2167a8f560a937ff1457bbd80ac93ed",
+  "budget_sha256": "19322dd3c1c8e7ffa6122987d68c841577458d813cd981f092b4a2cfd0366bb7"
+}

@@ -1,0 +1,84 @@
+{
+  "variant_id": "V-01/explicit-inheritance",
+  "repetition": 1,
+  "run_id": "run_78d06efe00c94226bf289ca598436d3e",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/3/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "conditions.method.origin",
+      "operator": "eq",
+      "value": "inherited",
+      "status": "passed",
+      "observed": "inherited",
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "conditions.geometry.origin",
+      "operator": "eq",
+      "value": "explicit",
+      "status": "passed",
+      "observed": "explicit",
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "conditions.inherited_source_message_preserved",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "failed",
+      "quote": "The request asks for a single-point calculation on the initial geometry of water_opt",
+      "rationale": "The response identifies the operation but never names electronic energy or another intended output quantity. It does not invent a numeric value; quantity disclosure remains incomplete."
+    },
+    "unit": {
+      "status": "failed",
+      "quote": "single-point calculation on the initial geometry of water_opt",
+      "rationale": "Neither an expected energy unit nor explicit unknown/unavailable unit is given in the accepted reason or questions."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "inheriting method/basis/charge/multiplicity from the previous water single point (RHF/STO-3G, charge 0, multiplicity 1)",
+      "rationale": "Correctly distinguishes explicit inheritance of method/basis/charge/multiplicity from the newly selected water_opt initial geometry."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "artifact_ccb66289e85a4b4bbe82c4cc37c8a3e8",
+      "rationale": "This exact geometry Artifact is the user-authorized water_opt reference. The reason also names the previous water single-point user message as the inherited settings source."
+    },
+    "limits": {
+      "status": "failed",
+      "quote": "no prior single-point result for water_sp is present in results to confirm the inherited conditions",
+      "rationale": "The empty tool catalog is a real execution limit, but a prior scientific Result is not needed to inherit explicit user settings from the preserved history. The response adds an unsupported evidence requirement and treats already authorized inherited settings as unresolved."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "Should I stop, or will a tool/permission be provided to run the water_opt initial-geometry single point?",
+      "rationale": "Seeking user direction about the actually missing execution capability is a legitimate next action; no tool or science is executed. The redundant inherited-condition confirmation is recorded under limits."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "accepted_action": "clarify",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "http_requests": 1,
+  "tested_scope": [],
+  "tokens_used": 1846,
+  "tokens_unknown": 0,
+  "model_text_sha256": "3f54bc79fe02b11a8518207c8afb71bbb09b4cf72efa828f6f34e7940f91801a"
+}

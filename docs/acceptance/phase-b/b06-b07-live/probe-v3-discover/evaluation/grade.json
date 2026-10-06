@@ -1,0 +1,83 @@
+{
+  "variant_id": "V-07/discover-and-read",
+  "repetition": 1,
+  "run_id": "run_ccdd1584a9dc4604a4fb6c4a2ab38daa",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/6/variants/0/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "read.value_equals_raw_field",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "query_goal.satisfied",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "scientific_dipole_port.published",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "the dipole magnitude at path Geometries[0].Dipole_Moment[0].dipoleMagnitude = 0.6788282026678785.",
+      "rationale": "The accepted final explanation identifies the exact requested raw scalar and value. The production value_observation and independently read archived JSON have the same path and scalar; no scientific dipole output was published."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "the unit is unknown/not declared in the observed field.",
+      "rationale": "The saved observation has units=null. The model explicitly preserves unknown units and does not invent Debye or atomic-unit conversion."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "scientific_status = \"unverified\", stage = \"unknown\", conditions = \"unknown\" for both reads",
+      "rationale": "These three statuses match both persisted read Results. No method, basis, electronic state or dipole convention is inferred from the water_sp name."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "raw_field_observation (value_observation, result_bb13b638ecd941d994f05130bc68a487)",
+      "rationale": "The exact existing Result ID, port, Artifact ID and typed JSON location appear in the final reason. The source file hash 71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655 was rechecked and agrees with the frozen archived JSON."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "The value is therefore an unqualified observation, not a verified scientific result.",
+      "rationale": "The model correctly separates passing evidence-read-1 mechanics from scientific qualification; its additional limits describe one observed JSON field and unread provenance. Persisted qualified_outputs are empty and no ORCA Attempt exists."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "a new user decision would be needed to read Calculation_Info/Calculation_Status for provenance and units",
+      "rationale": "This is an optional follow-up after the current two read goals have completed. It proposes another bounded read, does not assume units exist there, and respects the final-stop restriction without launching conversion or science. The named tools are already permitted; the follow-up is a new request decision, not an expansion of tool permission."
+    }
+  },
+  "fixture_gaps": [],
+  "runtime_limitations": [],
+  "http_requests": 4,
+  "tested_scope": [],
+  "tokens_used": 12311,
+  "tokens_unknown": 0,
+  "model_text_sha256": "f13996a30bc1f866b3317827eb863958495e2a9cc562564e057c3f83f3a47110"
+}

@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "identity": "b08-exhaustion-probe-02",
+  "run_id": "run_d91cca10b6e04026a0e20b9999d25b83",
+  "category": "development",
+  "review_kind": "independent developer semantic review of all persisted proposals, with per-axis exact model attribution",
+  "human_expert_approval": false,
+  "model_record_id": "model_9d9cb56905664dc99e4de31fae00315a",
+  "model_response_record_sha256": "64e80a735e11a350621b9a2fa886512c6c5c21605d393ebb4375736d16c13909",
+  "model_reason_sha256": "3113d30e2180c75f7adf377d280acd8592b448c95a08105fe228ce1bb5ec7cb7",
+  "exact_model_reason": "Both permitted SCF attempts are exhausted. The initial run used scf_maxiter=1 (result_8651c93726fc4153b8cabbaf227679bf) and the single allowed repair raised it to 2 (result_de2ac5e1096b4262a097dc143e5cea42); both failed with scf_converged=failed and no normal termination, so no finite total energy was produced. The user's constraint permits only one repair (MaxIter 1 -> 2), and the allowed_repairs set is {scf_maxiter:[2]}, so no further science is authorized. The required goal (result_goal, port energy) remains insufficient_evidence: no electronic energy value exists to deliver, and no source can be cited for it. Stopping as blocked rather than fabricating a result.",
+  "reviewed_proposals": [
+    {
+      "model_id": "model_bb1133ca63ad4a1ca0b966ec908f257f",
+      "proposal": {
+        "action": "initial_plan",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "No plan exists yet. The request is normalized: fixed registered water geometry, RHF/STO-3G single point, charge 0, multiplicity 1, deliver electronic energy with source. Initial SCF MaxIter must be 1 per user instruction; allowed repair is scf_maxiter=2 at most once. Plan a single orca.sp step with scf_maxiter=1 mapping the energy port to result_goal.",
+        "parameters": {
+          "steps": [
+            {
+              "key": "s1",
+              "tool": "orca.sp",
+              "parameters": {
+                "method": "HF",
+                "basis": "STO-3G",
+                "charge": 0,
+                "multiplicity": 1,
+                "scf_maxiter": 1
+              }
+            }
+          ],
+          "goal_map": {
+            "result_goal": {
+              "step_key": "s1",
+              "port": "energy"
+            }
+          }
+        }
+      }
+    },
+    {
+      "model_id": "model_2f67aa3859164f02bfe3bb8611a4d8f6",
+      "proposal": {
+        "action": "revise_plan",
+        "request_version": 1,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [
+          "result_8651c93726fc4153b8cabbaf227679bf"
+        ],
+        "reason": "Initial RHF/STO-3G single point with scf_maxiter=1 failed: SCF did not converge (scf_converged failed, no normal termination, no finite energy). Per user instruction, the only permitted repair is raising MaxIter to 2, allowed once. Revising plan with a new step key that reuses the same logical_id and sets scf_maxiter=2, keeping the same fixed geometry, charge 0, multiplicity 1, HF/STO-3G.",
+        "parameters": {
+          "steps": [
+            {
+              "key": "s2",
+              "tool": "orca.sp",
+              "parameters": {
+                "scf_maxiter": 2
+              },
+              "logical_key": "logical_ab3eb00343a64d7d8e566cf65b5a8309"
+            }
+          ],
+          "goal_map": {
+            "result_goal": {
+              "step_key": "s2",
+              "port": "energy"
+            }
+          }
+        }
+      }
+    },
+    {
+      "model_id": "model_9d9cb56905664dc99e4de31fae00315a",
+      "proposal": {
+        "action": "stop",
+        "request_version": 1,
+        "plan_version": 2,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [
+          "result_de2ac5e1096b4262a097dc143e5cea42"
+        ],
+        "reason": "Both permitted SCF attempts are exhausted. The initial run used scf_maxiter=1 (result_8651c93726fc4153b8cabbaf227679bf) and the single allowed repair raised it to 2 (result_de2ac5e1096b4262a097dc143e5cea42); both failed with scf_converged=failed and no normal termination, so no finite total energy was produced. The user's constraint permits only one repair (MaxIter 1 -> 2), and the allowed_repairs set is {scf_maxiter:[2]}, so no further science is authorized. The required goal (result_goal, port energy) remains insufficient_evidence: no electronic energy value exists to deliver, and no source can be cited for it. Stopping as blocked rather than fabricating a result.",
+        "parameters": {}
+      }
+    }
+  ],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_bb1133ca63ad4a1ca0b966ec908f257f",
+      "request_sha256": "43f9d9e86511a683c812554f55bdb9b2f8b8049b75bef6beb46aaa3966465a5e",
+      "response_sha256": "00f1754cd9dc8a3d6471835ba4bb6ecf199de33a17da4206172cf8d8182ddfa3"
+    },
+    {
+      "model_id": "model_2f67aa3859164f02bfe3bb8611a4d8f6",
+      "request_sha256": "152c232f60bfde6daa8c03ebcf72995c90895ee7447a9a91c8c40bb354c3f37a",
+      "response_sha256": "2cc50b0ffee85a4d5a23fc8c8f737c78fb6d29c5f1f6486d26f6de5a22233d07"
+    },
+    {
+      "model_id": "model_9d9cb56905664dc99e4de31fae00315a",
+      "request_sha256": "16bb4f96193b7d09921085efa3de49dc83a00d54c6113ee84eeb386ca94c2fb1",
+      "response_sha256": "64e80a735e11a350621b9a2fa886512c6c5c21605d393ebb4375736d16c13909"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "no electronic energy value exists to deliver",
+      "quote_model_id": "model_9d9cb56905664dc99e4de31fae00315a",
+      "rationale": "The requested output is a qualified single-point electronic energy. Both actual stdout files explicitly fail SCF convergence and have no final energy; both Results withhold qualified_outputs. The wording is read in this requested-output scope, not as a claim that the logs contain no intermediate SCF values."
+    },
+    "unit": {
+      "passed": false,
+      "quote": "The required goal (result_goal, port energy) remains insufficient_evidence",
+      "quote_model_id": "model_9d9cb56905664dc99e4de31fae00315a",
+      "rationale": "The stop identifies an energy port but gives no target unit. None of the three actual proposal reasons states Eh, Hartree or another energy unit. The unit rubric cannot be satisfied by importing Eh from the tool schema or deterministic report. No numerical value or wrong conversion was asserted, so this is an explanation omission rather than a scientific numerical error."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "keeping the same fixed geometry, charge 0, multiplicity 1, HF/STO-3G",
+      "quote_model_id": "model_2f67aa3859164f02bfe3bb8611a4d8f6",
+      "rationale": "This is the actual accepted repair explanation, read together with its initial RHF single-point statement. The two immutable inputs confirm RHF/STO-3G, charge 0, multiplicity 1, identical initial geometry and TightSCF. Only scf_maxiter differs (1 then 2). The final stop does not repeat the entire condition list; the axis is supported by the explicitly cited earlier proposal, not by substituted report text."
+    },
+    "source": {
+      "passed": true,
+      "quote": "The initial run used scf_maxiter=1 (result_8651c93726fc4153b8cabbaf227679bf) and the single allowed repair raised it to 2 (result_de2ac5e1096b4262a097dc143e5cea42)",
+      "quote_model_id": "model_9d9cb56905664dc99e4de31fae00315a",
+      "rationale": "Both exact IDs bind to the actual independent Attempts and stdout failure lines. All 102 source Artifacts were hash-checked. The phrase no source can be cited for it concerns a nonexistent qualified energy; the model still cites real failure evidence and does not invent an original source."
+    },
+    "limits": {
+      "passed": true,
+      "quote": "The user's constraint permits only one repair (MaxIter 1 -> 2), and the allowed_repairs set is {scf_maxiter:[2]}, so no further science is authorized.",
+      "quote_model_id": "model_9d9cb56905664dc99e4de31fae00315a",
+      "rationale": "The explanation now cites the actual user repair allowance. Persistent counts confirm attempts_per_step=2, orca_starts=2 and extra_orca_starts=1 are fully used. It does not confuse corrections_per_proposal or HTTP retries with scientific repair budget, and does not imply unused model calls authorize science."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Stopping as blocked rather than fabricating a result.",
+      "quote_model_id": "model_9d9cb56905664dc99e4de31fae00315a",
+      "rationale": "The actual action is stop. The model proposes no third launch, wider MaxIter allowance, changed convergence settings or relaxed TightSCF. Its informal word blocked is not an assigned runtime state: the program correctly persists failed/partial with insufficient evidence. This does not hide any unknown running execution."
+    }
+  },
+  "all_axes_passed": false,
+  "scientific_conclusion_passed": true,
+  "scientific_conclusion": "No qualified energy; two authentic SCF failures at MaxIter 1 and 2; scientific allowance exhausted and no third launch.",
+  "source_evidence": [
+    {
+      "result_id": "result_8651c93726fc4153b8cabbaf227679bf",
+      "attempt_id": "attempt_f96a2f8831aa463d8174e92e9fc0e54c",
+      "result_sha256": "19dfb748e0af98b608204839e197f05bea5cfd78c1875d57ed2fc57de80b45a4",
+      "artifact_count_verified": 51,
+      "artifact_manifest_sha256": "49c57537f7fbb76f453e8b59e2fe41b5b5380ed7bda2cc8a5e31de26f637ceb7",
+      "selected_sources": {
+        "stdout.out": {
+          "artifact_id": "artifact_35e39322164d47b5bc156910111cbbf2",
+          "sha256": "9aab889076e06eb83e79858d33720fbba204d733b079640d3abe6561663e9d7f"
+        },
+        "job.inp": {
+          "artifact_id": "artifact_e6e8e87f47cc414ca5ab6a9b52a933ab",
+          "sha256": "949d30b18d38dd2ffc0c4674f42bf0191efc716a2ffe91c6649e606f37b2d2f1"
+        },
+        "geometry.xyz": {
+          "artifact_id": "artifact_2191d595ec1b4203a60cb3080f5676bb",
+          "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+        }
+      },
+      "raw_facts": [
+        "*        SCF NOT CONVERGED AFTER   0 CYCLES         *"
+      ],
+      "qualified_outputs": {}
+    },
+    {
+      "result_id": "result_de2ac5e1096b4262a097dc143e5cea42",
+      "attempt_id": "attempt_816623d428394b03b2fb0bd7da51568a",
+      "result_sha256": "7687aac00aa49ad02f8c7d8fd53394078df9e84cc4b7a64b82333e98764efdba",
+      "artifact_count_verified": 51,
+      "artifact_manifest_sha256": "b1431f49570ed8f2347b06cc4296f64550e93b45901ca88fabfab9fa045d44d2",
+      "selected_sources": {
+        "stdout.out": {
+          "artifact_id": "artifact_a0fa5560bd65410f846dbda5b8705e4a",
+          "sha256": "91bcc52f04099b3ba89a27e51851281cde301523fcc91cf2507c59e5709600d7"
+        },
+        "job.inp": {
+          "artifact_id": "artifact_6dbe25ebbc704ea49caaa153fa5b1233",
+          "sha256": "f81bfdc59d8f557b55bfddc7e7a7327c291cedbd316c5f3161085bb9a38d6cca"
+        },
+        "geometry.xyz": {
+          "artifact_id": "artifact_01afcbf3a99f4245b9aee219afe2e1dc",
+          "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+        }
+      },
+      "raw_facts": [
+        "*        SCF NOT CONVERGED AFTER   1 CYCLES         *"
+      ],
+      "qualified_outputs": {}
+    }
+  ],
+  "run_sha256": "e098677900259068073f74a1732cada21b2b7c0648080456b7b43c1990923f23",
+  "review_limits": [
+    "Development evidence only; not a formal repetition or user acceptance.",
+    "Conditions cite the accepted repair proposal; other axes cite the actual final stop. All source proposals are retained.",
+    "The deterministic report was not substituted for the missing model unit.",
+    "No HTTP, ORCA or other scientific execution was initiated by this review."
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "variant_id": "V-01/synonym-fixed-geometry",
+  "repetition": 1,
+  "run_id": "run_e376aa4d8422491db72805beae0ffc65",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/1/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "normalized.quantity",
+      "operator": "eq",
+      "value": "electronic_energy",
+      "status": "passed",
+      "quote": "fixed-geometry electronic energy",
+      "rationale": "Recognizes the requested physical quantity as electronic energy.",
+      "kind": "behavior_review"
+    },
+    {
+      "metric": "normalized.operation",
+      "operator": "eq",
+      "value": "SP",
+      "status": "passed",
+      "quote": "fixed-geometry RHF/STO-3G electronic energy",
+      "rationale": "Preserves the user instruction not to optimize; no computation is launched.",
+      "kind": "behavior_review"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "requested RHF/STO-3G fixed-geometry electronic energy",
+      "rationale": "Identifies the original electronic total energy at fixed geometry; neither optimizes nor replaces it with a thermal quantity."
+    },
+    "unit": {
+      "status": "failed",
+      "quote": "requested RHF/STO-3G fixed-geometry electronic energy",
+      "rationale": "No energy value is invented, but neither an expected energy unit nor explicit unknown/unavailable unit is stated in the accepted clarification."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "requested RHF/STO-3G fixed-geometry electronic energy",
+      "rationale": "Retains the stated method, basis and fixed-geometry operation. The question does not silently replace neutral singlet conditions."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "The geometry artifact water_sp is referenced but its coordinates are not provided in the inputs",
+      "rationale": "Names the unique user-provided water_sp geometry reference and correctly distinguishes its referenced coordinates from a claimed observed value."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "scientific_execution is false and allowed_tools is empty",
+      "rationale": "The run has no available execution tool and no science authorization; clarification correctly reports this boundary without claiming a calculated energy."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "The tool catalog is empty and scientific execution is disabled; how should the fixed-geometry RHF/STO-3G electronic energy be obtained?",
+      "rationale": "Accepted clarification asks how to proceed without unauthorized execution; run waits for the user."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "accepted_action": "clarify",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "http_requests": 1,
+  "tested_scope": [],
+  "tokens_used": 1656,
+  "tokens_unknown": 0,
+  "model_text_sha256": "a0d954244e67059320d49a2421422b4c7f7530f6732f019220afa7a636889e92"
+}

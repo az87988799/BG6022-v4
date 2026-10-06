@@ -1,0 +1,84 @@
+{
+  "variant_id": "V-01/multi-turn",
+  "repetition": 1,
+  "run_id": "run_01a39d96444f46a7a66a9538c3f6af0c",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/2/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "clarification.before_complete",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "orca_starts.before_complete",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "request.user_messages_preserved",
+      "operator": "eq",
+      "value": 3,
+      "status": "passed",
+      "observed": 3,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "目标为固定几何电子能",
+      "rationale": "Final accepted clarification preserves the quantity explicitly supplied in the second user turn; the original vague request was not executed."
+    },
+    "unit": {
+      "status": "failed",
+      "quote": "请求已归一化：water_sp 几何、RHF/STO-3G、电荷0、多重度1，目标为固定几何电子能。",
+      "rationale": "The initial rejected proposal requested energy units, but none of the three accepted clarifications states an expected or unknown unit. Rejected text cannot substitute for delivered explanation."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "water_sp 几何、RHF/STO-3G、电荷0、多重度1",
+      "rationale": "The final accepted reply correctly accumulates the geometry and later user-provided method, basis, charge and multiplicity across all three preserved user messages."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "用已登记的 water_sp 几何计算固定几何电子能",
+      "rationale": "The second accepted reply attributes the geometry and requested quantity to the user-provided registered water_sp reference; the final reply carries the later user conditions without pretending there is a scientific Result."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "permission.scientific_execution=false、allowed_tools=[]",
+      "rationale": "No tool or scientific execution is authorized; the final clarification also states orca_starts=0 and does not imply computation occurred."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "请提供/启用用于 RHF/STO-3G 固定几何电子能计算的工具，或确认应如何继续？",
+      "rationale": "The run waits for further user direction after correctly collecting conditions, with zero science starts."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "accepted_action": "clarify",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "http_requests": 4,
+  "tested_scope": [],
+  "tokens_used": 7128,
+  "tokens_unknown": 0,
+  "model_text_sha256": "3b96cbdc7a15380717101d681e1f6f97ca2953d5c0d6d408b999a32814b9663d"
+}

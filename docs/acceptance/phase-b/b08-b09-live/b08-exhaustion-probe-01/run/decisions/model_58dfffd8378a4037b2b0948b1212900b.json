@@ -1,0 +1,96 @@
+{
+  "id": "model_58dfffd8378a4037b2b0948b1212900b",
+  "basis": {
+    "request_version": 1,
+    "plan_version": 1,
+    "permission_version": 1,
+    "control_generation": 0
+  },
+  "request": {
+    "id": "request_d18e469d4ada434aa81288aeece9c5b1",
+    "version": 1,
+    "original_text": "对登记的水分子固定几何做 RHF/STO-3G 单点，电荷0、多重度1，交付电子能及来源。初次SCF MaxIter必须为1；若真实SCF不收敛，只允许把MaxIter提高到2，最多修复一次。",
+    "geometry_artifact_id": "artifact_5032d71960cf4eaa89d05bd204968807",
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "HF",
+    "basis": "STO-3G",
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "method": "explicit",
+      "basis": "explicit",
+      "geometry": "explicit"
+    },
+    "goals": [
+      {
+        "id": "result_goal",
+        "port": "energy",
+        "required": true,
+        "minimum_check_version": "orca-hf-2",
+        "original_text": "对登记的水分子固定几何做 RHF/STO-3G 单点，电荷0、多重度1，交付电子能及来源。",
+        "system_ids": [],
+        "conditions": {
+          "geometry_relation": "fixed_initial"
+        },
+        "minimum_evidence": [],
+        "unresolved": []
+      }
+    ],
+    "systems": [],
+    "messages": [],
+    "unresolved": [],
+    "conditions": {
+      "initial_parameters": {
+        "scf_maxiter": 1
+      },
+      "explain_results": true
+    },
+    "normalization_status": "normalized"
+  },
+  "plan": {
+    "id": "plan_a9a644d4cff848d3abd436939ddbe11b",
+    "version": 2,
+    "request_id": "request_d18e469d4ada434aa81288aeece9c5b1",
+    "request_version": 1,
+    "steps": [
+      {
+        "id": "step_51a3938b7eb549a0ba7131ab45bb957a",
+        "logical_id": "logical_3a23f0e94e974a9db895f219233bdc59",
+        "tool": "orca.sp",
+        "parameters": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "cores": 4,
+          "memory_mb": 1024,
+          "maxcore_mb": 192,
+          "scf_maxiter": 2,
+          "opt_maxiter": 100,
+          "timeout_seconds": 300.0
+        },
+        "geometry": {
+          "artifact_id": "artifact_5032d71960cf4eaa89d05bd204968807",
+          "producer_step_id": null,
+          "port": null
+        },
+        "depends_on": [],
+        "inputs": {},
+        "system_id": null
+      }
+    ],
+    "goal_map": {
+      "result_goal": {
+        "step_id": "step_51a3938b7eb549a0ba7131ab45bb957a",
+        "port": "energy",
+        "evidence": null,
+        "gap": null
+      }
+    }
+  },
+  "related_results": [
+    "result_ecb9b77f953d435297739d370100e74a"
+  ],
+  "user_message_ids": []
+}

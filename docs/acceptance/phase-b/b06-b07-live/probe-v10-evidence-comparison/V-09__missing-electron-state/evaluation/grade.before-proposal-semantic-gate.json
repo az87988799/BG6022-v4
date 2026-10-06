@@ -1,0 +1,68 @@
+{
+  "variant_id": "V-09/missing-electron-state",
+  "repetition": 1,
+  "run_id": "run_281d460489b34ec2a55e925766257ea5",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/2/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "energy_comparison.science_passed",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "quantity:electronic_energy_difference (E(B)-E(A))",
+      "rationale": "The signed electronic-energy goal remains intact and unqualified; no unsupported energy difference is given."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:Eh",
+      "rationale": "The actual qualified A energy and target quantity retain Hartree units."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "B source has multiplicity 1 but requested operand B declares multiplicity null",
+      "rationale": "This correctly places the known singlet state in the historical source and the unknown state in the requested B operand. The final reason also states method, basis, charge and gas phase. It does not replace explicit null with the global singlet default."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "evidence from result_2b37e67a22e8474d92d933ec94eac9e5 (A) and result_d89b2e5890ca4164882204c11993c35b (B)",
+      "rationale": "Both original source Results are exact and their Run/Attempt/Artifact chains were checked. The model does not falsely claim absent source multiplicity."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "energy_compare reports B status=missing with missing_reason=source_not_applicable_to_requested_operand:multiplicity",
+      "rationale": "This is the actual consumer applicability failure. Neither required goal is satisfied, and zero scientific starts/permission is respected."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "Recommend user clarify whether B should inherit multiplicity 1 (matching the available RHF/STO-3G source) or whether a new B calculation at a different multiplicity is intended.",
+      "rationale": "The missing fact is the user's intended state; the final stop now explicitly requests that clarification. It does not automatically inherit or recompute. The phrase that no permitted action can repair the current conditions is read as no automatic scientific repair, not a prohibition on the user clarification it immediately recommends."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [
+    "real source multiplicity stays 1; the requested B electronic state is unspecified, so source applicability must not be assumed"
+  ],
+  "tokens_used": 6716,
+  "tokens_unknown": 0,
+  "model_text_sha256": "e908624cb722ff9bb22cccea166d88beebde64dac0dae13bc0aaa10175204851"
+}

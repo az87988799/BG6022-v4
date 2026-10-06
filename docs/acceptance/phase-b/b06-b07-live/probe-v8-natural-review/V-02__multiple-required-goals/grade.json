@@ -1,0 +1,82 @@
+{
+  "variant_id": "V-02/multiple-required-goals",
+  "repetition": 1,
+  "run_id": "run_d58cf74f6b3f48ee96bdc5b1af8d15eb",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/1/variants/1/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "goal_B.satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "energy_difference.published_as_qualified",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "all_required_goals_satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "energy_B and the electronic energy difference E(B)-E(A) cannot be computed",
+      "rationale": "Distinguishes the individual B energy, electronic difference, and Gibbs difference; A alone is never presented as full delivery."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "Only system A has a qualified energy (-74.964906308165 Eh, HF/STO-3G, gas phase).",
+      "rationale": "The sole reported numeric energy has its source-qualified Eh unit. Missing B/difference/Gibbs values are not invented or converted."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "Gibbs free energy difference at 298.15 K, 1 atm, gas phase",
+      "rationale": "Preserves the requested thermal temperature, pressure and environment; the existing A energy is separately identified as HF/STO-3G gas phase."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "Only system A has a qualified energy (-74.964906308165 Eh, HF/STO-3G, gas phase).",
+      "rationale": "The unique A alias resolves to the qualified immutable source in available_evidence. Original Result and all its source artifact hashes were independently checked; no B source is fabricated."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "System B has no geometry (geometry_artifact_id null, missing:geometry:B)",
+      "rationale": "Accurately identifies the absent B geometry and missing thermal evidence; all required goals remain insufficient_evidence without a qualified energy difference."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "Please provide the second water geometry (system B) as a registered artifact, or confirm which existing artifact corresponds to B.",
+      "rationale": "The accepted clarification requests exactly the missing B geometry and thermal data/user decision, leaving the required goals intact."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "accepted_action": "clarify",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 1,
+  "tested_scope": [],
+  "tokens_used": 2799,
+  "tokens_unknown": 0,
+  "model_text_sha256": "cd2ae3f161853932449be9ec5db3f84b6f2bfd74afe6aedc60d464a9e4d1303b"
+}

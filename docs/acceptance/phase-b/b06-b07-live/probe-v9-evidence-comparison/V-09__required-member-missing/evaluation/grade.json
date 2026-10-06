@@ -1,0 +1,75 @@
+{
+  "variant_id": "V-09/required-member-missing",
+  "repetition": 1,
+  "run_id": "run_fa01d4f131e04807a36e026bdd59adee",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/5/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "complete_comparison.published",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "report.partial",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "quote": "Member A has a qualified energy binding",
+      "rationale": "The accepted initial explanation provides A's exact value/source, acknowledges optional available C and absent required B; final delivery accurately reports the partial analysis instead of a complete comparison.",
+      "kind": "behavior_review"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "Goal electronic_energy_difference requires ΔE=E(B)-E(A)",
+      "rationale": "The signed electronic difference is kept bound to required A/B; optional C is not substituted for B."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "ΔE=E(B)-E(A) in Eh with sources",
+      "rationale": "The initial accepted proposal explicitly states the requested Hartree unit and quotes qualified A in Eh."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "under RHF/STO-3G, neutral singlet, gas phase",
+      "rationale": "The suggested missing B evidence must match the actual requested method, basis, charge/state and environment. No alternate physical condition is silently introduced."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "result_c174035dd62e4ec0b6ead8b3d01ed003",
+      "rationale": "The final explanation names the actual partial analysis. The initial proposal names A's exact qualified source and binds its Run/Result/Attempt, while missing B is explicitly reported without fabricated provenance."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "completed but returned scientific_status=insufficient_evidence with missing_required_member for B",
+      "rationale": "The model distinguishes successful operation from failed scientific comparison and incomplete goals. Optional C is correctly acknowledged as available but unnecessary in the initial explanation."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "the user must supply a registered geometry/energy for member B (or authorize a new calculation for B",
+      "rationale": "The model asks for missing evidence or fresh explicit science authorization; it does not run ORCA under the current zero budget."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [],
+  "tokens_used": 6383,
+  "tokens_unknown": 0,
+  "model_text_sha256": "4a7c95e21c7f3f2cf9827ec1a596a500b65f161e8b9e50e42036c5a1a6ecc64f"
+}

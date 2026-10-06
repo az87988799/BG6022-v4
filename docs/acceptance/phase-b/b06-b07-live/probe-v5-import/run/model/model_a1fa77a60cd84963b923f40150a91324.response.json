@@ -1,0 +1,51 @@
+{
+  "request_hash": "ff4cf6c29e638008f8f6b3dc2f3741d93cf9dd2e406788786a6e85c5d56b2c01",
+  "proposal": {
+    "action": "initial_plan",
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0,
+    "related_results": [],
+    "reason": "No plan exists yet and both goals require evidence from the registered source. The user asked only to import the existing ORCA stdout and report what is readable and what is missing, with no recomputation. A minimal plan imports the registered snapshot, then reads the stdout artifact to satisfy the two evidence goals (available external observations and the FINAL SINGLE POINT ENERGY line).",
+    "parameters": {
+      "steps": [
+        {
+          "key": "import_snapshot",
+          "tool": "evidence.import",
+          "parameters": {
+            "source_id": "source_05aab9e6c7c5460fbd2b51c035668bbb"
+          }
+        }
+      ],
+      "goal_map": {
+        "available_external_observations": {
+          "step_key": "import_snapshot",
+          "port": "imported_evidence"
+        },
+        "imported_stdout_energy_line": {
+          "gap": "await registered Artifact ID after planned import",
+          "port": "search_hits"
+        }
+      }
+    }
+  },
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 2296,
+    "completion_tokens": 213,
+    "total_tokens": 2509,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 2296
+  },
+  "response_hash": "7856c6b41828767a94c953dc20e39edb5dc8e847645f2866349bc6df911e5eed",
+  "response_bytes": 1415,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "c2f18eab-734f-490e-8453-c78caa1a9d18",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 1.125
+}

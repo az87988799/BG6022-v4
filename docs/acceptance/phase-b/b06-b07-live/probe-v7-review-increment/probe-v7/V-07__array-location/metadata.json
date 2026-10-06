@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "variant_id": "V-07/array-location",
+  "repetition": 1,
+  "input_id": "input_8dd1fd7794dd433882f96009ceb4081c",
+  "category": "development",
+  "freeze_label": "probe-v7",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/6/variants/1/expected",
+  "expected": [
+    {
+      "metric": "observation.geometry_index",
+      "operator": "eq",
+      "value": 0
+    },
+    {
+      "metric": "query.typed_key_index_slice",
+      "operator": "eq",
+      "value": true
+    }
+  ],
+  "artifact_ids": [
+    "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf"
+  ],
+  "source_files": [
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\real_water_sp\\job.property.json",
+      "sha256": "71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655"
+    }
+  ],
+  "references": [],
+  "archive_imports": [],
+  "tested_scope": [],
+  "prepared_inputs": [],
+  "fixture_gaps": [],
+  "runtime_limitations": [],
+  "continuation_messages": [],
+  "evidence_kind": "real_model_with_frozen_evidence",
+  "model_executed": false,
+  "query_artifact_id": "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf",
+  "source_directory_files": {
+    "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\real_water_sp": [
+      "geometry.xyz",
+      "input-manifest.json",
+      "job.2jsonout",
+      "job.inp",
+      "job.property.json",
+      "provenance.json",
+      "stdout.out"
+    ]
+  },
+  "run_id": "run_982f39768cd8462a9fe0215fff25493e",
+  "initial_request": {
+    "id": "request_7185a22609554650a395675e3f4f4867",
+    "version": 1,
+    "original_text": "先看看这个真实 water_sp 产物里有哪些字段，再读取第一组几何中的偶极矩模；告诉我原始值、位置、已知单位和验证状态，不重算。",
+    "geometry_artifact_id": null,
+    "charge": null,
+    "multiplicity": null,
+    "method": null,
+    "basis": null,
+    "conditions_source": {},
+    "goals": [
+      {
+        "id": "raw_field_observation",
+        "port": "value_observation",
+        "required": true,
+        "minimum_check_version": "evidence-read-1",
+        "original_text": "raw_field_observation",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "raw_field_observation",
+          "query": {
+            "artifact_id": "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf",
+            "path": [
+              {
+                "kind": "key",
+                "key": "Geometries"
+              },
+              {
+                "kind": "index",
+                "index": 0
+              },
+              {
+                "kind": "key",
+                "key": "Dipole_Moment"
+              },
+              {
+                "kind": "index",
+                "index": 0
+              },
+              {
+                "kind": "key",
+                "key": "dipoleMagnitude"
+              }
+            ]
+          }
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      },
+      {
+        "id": "raw_field_discovery",
+        "port": "content_index",
+        "required": true,
+        "minimum_check_version": "evidence-read-1",
+        "original_text": "raw_field_discovery",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "raw_field_discovery",
+          "query": {
+            "artifact_id": "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf"
+          }
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      },
+      {
+        "id": "raw_geometry_slice",
+        "port": "value_observation",
+        "required": true,
+        "minimum_check_version": "evidence-read-1",
+        "original_text": "raw_geometry_slice",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "raw_geometry_slice",
+          "query": {
+            "artifact_id": "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf",
+            "path": [
+              {
+                "kind": "key",
+                "key": "Geometries"
+              },
+              {
+                "kind": "slice",
+                "start": 0,
+                "stop": 1
+              }
+            ]
+          }
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      }
+    ],
+    "systems": [],
+    "messages": [
+      {
+        "id": "message_0bde9a83dd9247a1a8bc1ca1fa79cd69",
+        "role": "user",
+        "text": "先看看这个真实 water_sp 产物里有哪些字段，再读取第一组几何中的偶极矩模；告诉我原始值、位置、已知单位和验证状态，不重算。",
+        "source": "user"
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "registered_evidence": {
+        "property_json": "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf"
+      },
+      "query_sequence": "Geometries[0:1], bounded then Dipole_Moment[0]",
+      "user_query_sequence": [
+        "raw_field_discovery",
+        "raw_geometry_slice",
+        "raw_field_observation"
+      ],
+      "explain_results": true
+    },
+    "normalization_status": "normalized"
+  },
+  "permission_sha256": "8a26e8187b749e9d1c5122bead489a1361814cf0b1082d5e0ec64de3353e3706",
+  "budget_sha256": "19322dd3c1c8e7ffa6122987d68c841577458d813cd981f092b4a2cfd0366bb7"
+}

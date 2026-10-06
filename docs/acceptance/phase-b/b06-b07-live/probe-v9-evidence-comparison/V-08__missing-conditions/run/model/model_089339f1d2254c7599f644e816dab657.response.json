@@ -1,0 +1,68 @@
+{
+  "request_hash": "063392aec1dd2766d4c8d7ba3cf805200a9f26e0437e7f5b991a8802dd472479",
+  "proposal": {
+    "action": "initial_plan",
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0,
+    "related_results": [],
+    "reason": "User asks to import the registered source's existing ORCA stdout and report what can be read and what is missing, without recomputation. No plan exists yet, so an initial plan is required: import the registered snapshot (evidence.import), then read the imported stdout artifact via evidence.search for the 'FINAL SINGLE POINT ENERGY' line to satisfy the imported_stdout_energy_line goal, and evidence.text to characterize available external observations. Both goals are currently insufficient_evidence and depend on the imported artifact ID, so the search/text steps are gapped until import completes.",
+    "parameters": {
+      "steps": [
+        {
+          "key": "import_snapshot",
+          "tool": "evidence.import",
+          "parameters": {
+            "source_id": "source_19e34c8cdb03455da579f6eaf2dd2d79"
+          }
+        },
+        {
+          "key": "search_energy_line",
+          "tool": "evidence.search",
+          "parameters": {
+            "artifact_id": "import_snapshot",
+            "query": "FINAL SINGLE POINT ENERGY"
+          }
+        },
+        {
+          "key": "read_stdout_window",
+          "tool": "evidence.text",
+          "parameters": {
+            "artifact_id": "import_snapshot",
+            "start_line": 1,
+            "lines": 200
+          }
+        }
+      ],
+      "goal_map": {
+        "available_external_observations": {
+          "step_key": "read_stdout_window",
+          "port": "text_window"
+        },
+        "imported_stdout_energy_line": {
+          "step_key": "search_energy_line",
+          "port": "search_hits"
+        }
+      }
+    }
+  },
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 2265,
+    "completion_tokens": 320,
+    "total_tokens": 2585,
+    "prompt_cache_hit_tokens": 256,
+    "prompt_cache_miss_tokens": 2009
+  },
+  "response_hash": "502833fc67f758c741b5ac79600741b8d1c51fe2b373f5059db8a70432b1c6a7",
+  "response_bytes": 1898,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "e1d65b89-9e03-4fef-90d8-deab16726895",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 2.0310000000172295
+}

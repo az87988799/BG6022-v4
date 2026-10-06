@@ -1,0 +1,64 @@
+{
+  "variant_id": "V-01/allowed-default-origin",
+  "repetition": 1,
+  "run_id": "run_148c8f1e91ad4cb9a087e5b82d328bdd",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "requested single-point electronic energy",
+      "rationale": "Identifies electronic energy and a single-point operation without replacing the user quantity."
+    },
+    "unit": {
+      "passed": false,
+      "quote": "single-point electronic energy for water_sp (charge 0, multiplicity 1, HF/STO-3G)",
+      "rationale": "No expected energy unit or explicit unknown/unavailable unit is stated."
+    },
+    "conditions": {
+      "passed": false,
+      "quote": "single-point electronic energy for water_sp (charge 0, multiplicity 1, HF/STO-3G)",
+      "rationale": "The values are correct, but the accepted explanation never discloses that HF/STO-3G came from defaults explicitly authorized in this request. The required default-versus-explicit origin distinction is omitted."
+    },
+    "source": {
+      "passed": true,
+      "quote": "for water_sp (charge 0, multiplicity 1, HF/STO-3G)",
+      "rationale": "The request uniquely names water_sp, and the reply references that same geometry and normalized condition set without claiming an external computed value."
+    },
+    "limits": {
+      "passed": true,
+      "quote": "scientific_execution is false and allowed_tools is empty",
+      "rationale": "Accurately states the lack of authorized science tools and does not claim that energy was computed."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Should scientific execution be enabled and a tool catalog provided, or should this request be stopped?",
+      "rationale": "Asks the user how to proceed without self-granting permission; Run remains waiting_user."
+    }
+  },
+  "behavior": {
+    "default_disclosed": {
+      "passed": false,
+      "quote": "for water_sp (charge 0, multiplicity 1, HF/STO-3G)",
+      "rationale": "Values alone do not disclose the user-authorized default origin. Neither reason nor question uses or explains default provenance."
+    }
+  },
+  "protocol_findings": [],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_d55db1d1101842b290e850b4110f8b35",
+      "request_sha256": "270850703816d719bde88da8a5ecca2925ac15d1095b9cbf4f1f523a0f2d1b12",
+      "response_sha256": "61904143323e67b776b9cca6033c98851d91559f587e44cae2b287acc403ef0a",
+      "accepted": true
+    }
+  ],
+  "reviewed_available_evidence": {},
+  "source_artifact_hashes": {
+    "artifact_586d272caba04a359360470416150a81": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_d2911e7b61b04692ac793df25cb30fc3": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "run_sha256": "79f5fa2d48846954d5e68085b6fb1ea8696bbbbc203b1e79a351eb49a6e0f77d",
+  "first_response_rejected": false
+}

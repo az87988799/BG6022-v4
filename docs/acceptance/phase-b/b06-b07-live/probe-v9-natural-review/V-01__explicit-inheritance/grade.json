@@ -1,0 +1,84 @@
+{
+  "variant_id": "V-01/explicit-inheritance",
+  "repetition": 1,
+  "run_id": "run_01d4159cd5ef4e3095f743038cf18390",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/3/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "conditions.method.origin",
+      "operator": "eq",
+      "value": "inherited",
+      "status": "passed",
+      "observed": "inherited",
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "conditions.geometry.origin",
+      "operator": "eq",
+      "value": "explicit",
+      "status": "passed",
+      "observed": "explicit",
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "conditions.inherited_source_message_preserved",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "the requested electronic energy cannot be computed",
+      "rationale": "Explicitly identifies the electronic-energy goal, improving on the earlier operation-only response."
+    },
+    "unit": {
+      "status": "failed",
+      "quote": "the requested electronic energy cannot be computed",
+      "rationale": "No expected energy unit or explicit unknown/unavailable unit is stated. No energy number or unit conversion is claimed."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "inheriting method/basis/charge/multiplicity from the previous water single point (RHF/STO-3G, charge 0, multiplicity 1)",
+      "rationale": "Correctly discloses inherited user settings and newly selected water_opt initial geometry; does not require a prior scientific Result to prove user settings."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "artifact_5ee4b9c57649458b9e4b339e4a3eff56",
+      "rationale": "Identifies the actual registered water_opt initial geometry and user-history settings source; source hashes were independently verified."
+    },
+    "limits": {
+      "status": "failed",
+      "quote": "The water_opt geometry artifact (artifact_5ee4b9c57649458b9e4b339e4a3eff56) is not present in the available data.",
+      "rationale": "The Artifact exists and is authorized; only its raw coordinates are absent from the model DATA projection. The response wrongly promotes this projection omission to unavailable geometry, although its separate empty-catalog limit is accurate."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "No computational tools are available in the tool catalog, so the requested single-point energy on water_opt cannot be executed. How would you like to proceed?",
+      "rationale": "Asking how to proceed with unavailable execution tools is legitimate. The unnecessary request to provide an already registered geometry is retained under limits."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "accepted_action": "clarify",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "http_requests": 1,
+  "tested_scope": [],
+  "tokens_used": 1827,
+  "tokens_unknown": 0,
+  "model_text_sha256": "2147348850f9826aa298e051d2641acd1c5221233626cc0bacbf91bad87dd052"
+}

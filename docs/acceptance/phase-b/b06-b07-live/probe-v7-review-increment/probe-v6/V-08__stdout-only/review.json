@@ -1,0 +1,114 @@
+{
+  "variant_id": "V-08/stdout-only",
+  "repetition": 1,
+  "run_id": "run_c2c4b298e11840a5812299c835f51e10",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "instructions": "Review actual accepted model explanations independently; rejected proposals remain separately audited and cannot replace accepted final delivery.",
+  "behavior": {},
+  "explanation": {
+    "quantity": {
+      "passed": false,
+      "quote": "The remaining required goal imported_stdout_energy_line needs a bounded search of the imported stdout artifact for 'FINAL SINGLE POINT ENERGY'.",
+      "rationale": "This accepted explanation identifies the intended read but precedes its successful result. No accepted final explanation delivers the observed value: the attempted final stop was rejected for reason length. Tool completion alone cannot supply the missing accepted model explanation."
+    },
+    "unit": {
+      "passed": false,
+      "quote": "This is a read-only evidence.search on the registered artifact, no recomputation.",
+      "rationale": "Accepted explanations do not state the observation unit. The rejected final text additionally guesses Hartree from ORCA convention despite the actual observation having units=null. That semantic error is retained in rejected_final_proposal_review, not counted as an accepted explanation."
+    },
+    "conditions": {
+      "passed": false,
+      "quote": "job.inp and job.property.json are missing.",
+      "rationale": "The accepted call explanation identifies missing files, but no accepted final explanation states the resulting unknown method, basis, state or geometry. The rejected final stop cannot be substituted for delivered text."
+    },
+    "source": {
+      "passed": true,
+      "quote": "artifact_400f9546335046a3a8faf195b6660933 (stdout.out, 44123 bytes)",
+      "rationale": "The accepted second response identifies the exact imported Artifact, filename and byte count. Its SHA matches the registered original stdout. Subsequent accepted search targets the same Artifact and the 664-668 window; provenance keeps original Attempt/time/cost unknown."
+    },
+    "limits": {
+      "passed": false,
+      "quote": "only read-only evidence tools are used.",
+      "rationale": "This initial explanation describes evidence.import as read-only although its declared effect creates an immutable Artifact. That write was authorized and no science ran, but the effect description is inaccurate. In addition no final disclaimer was accepted because the final reason exceeded the schema limit."
+    },
+    "next_action": {
+      "passed": false,
+      "quote": "I will re-run the bounded search starting at line 664 to check the hinted region for 'FINAL SINGLE POINT ENERGY'.",
+      "rationale": "This was the last accepted action and was appropriate at its time, but it precedes the final successful observation. There is no accepted final stop or post-result next-action explanation. The Run exhausted its four HTTP calls after rejecting the overlong stop."
+    }
+  },
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_41273886a671421489481ec815904ca8",
+      "request_sha256": "02296fadaa30b814ac84256c10a546ba007cc38d572230b5add4c20746b93bda",
+      "response_sha256": "70291c3fa87c6572bbb51fa970797490fc72d375786e158d2e5256bc66689d65"
+    },
+    {
+      "model_id": "model_d8bedec2c07441b7a42196a69e2d1c22",
+      "request_sha256": "e05fb9a3989234ddc06868628ec018abd7e70db444b13f5f28e373e16caafc12",
+      "response_sha256": "36e9cd42cc6ab46bbb03e466ae864802b82414c5dc38a66e0cc99ff396c99593"
+    },
+    {
+      "model_id": "model_9b8788bfe1a9402c9f4db3d809987605",
+      "request_sha256": "2ec966b48d30cf2d85a20bf766ea1789ae7b49f65e566fa32eb9b61b8782df6e",
+      "response_sha256": "385da0a4c8f3e1f233faae48897d2e7ab4c8595b1c3d964dc8afed7282793775"
+    },
+    {
+      "model_id": "model_68243b2824a448d5820fd283e55c55e8",
+      "request_sha256": "d8d66ecb39c8c86df7f39d84361ddf5c883b890768d8c4b077a58f9a93d8b132",
+      "response_sha256": "e9d788d9ddd9fbcd6108bacfe80e0806c933175faabf23e2459e055fdc4ceac0"
+    }
+  ],
+  "source_artifact_hashes": {
+    "artifact_400f9546335046a3a8faf195b6660933": "9c3c07310c5e8e8c4462646504bf0597387eb322f53a4ce12380fd5a23f458e1"
+  },
+  "protocol_findings": [
+    "The first search ignored the available hash-bound locator and scanned lines 1-200; the next search used 664-668. Both are charged and preserved.",
+    "All deterministic observation goals pass, but the final stop is rejected (reason string_too_long) and state=budget_exhausted."
+  ],
+  "first_response_rejected": false,
+  "accepted_after_correction": false,
+  "run_sha256": "d42bca1a16a2c38e0ee95cb4b3b14ea6ec49f9594edac2c602fd1aeda2a0ef19",
+  "rejected_final_proposal_review": {
+    "model_id": "model_68243b2824a448d5820fd283e55c55e8",
+    "accepted": false,
+    "exact_model_reason": "Both required goals are satisfied by the registered source source_6b41409577d842e089ecc6426ce784f2, with no supplementary computation performed (orca_starts=0, postprocess_starts=0, analysis_executions=0).\n\nWhat was read: evidence.import ingested the registered stdout (artifact_400f9546335046a3a8faf195b6660933, 44123 bytes, sha256 9c3c07310c5e8e8c4462646504bf0597387eb322f53a4ce12380fd5a23f458e1). A bounded search for the literal string \"FINAL SINGLE POINT ENERGY\" over lines 664-668 (5 lines, next_line 669) returned exactly one match at line 666: \"FINAL SINGLE POINT ENERGY       -74.962991615317\". Quantity: total electronic energy of the final single point; unit: atomic units (Hartree) as emitted by ORCA; source: the registered stdout only; conditions/stage: unknown (the stdout header/route section was not read in this bounded window).\n\nWhat is missing: the source manifest lists job.inp (orca_input) and job.property.json (property_json), both reported missing by the import; therefore method, basis set, charge, multiplicity, geometry, solvation and any property data cannot be confirmed from this source. The earlier bounded scan (lines 1-200) found no match, so the match is localized to line 666. The energy value is an unverified raw observation, not a scientific qualification: no convergence, geometry, method/basis, or thermochemical validation was performed, and no global minimum, stability, or transition-state claim is made. Sampling was discrete (two bounded windows), not exhaustive over all 849 lines.\n\nBudget/authority: this stop consumes no ORCA starts (quota 0), no postprocess starts, and no analysis executions; permission.scientific_execution=false and allow_additional_science=false, so no further computation is permitted. Remaining model calls after this request: 0. Token usage for this response is unknown until settlement; final costs come from the report.\n\nNext action (requires user decision, not taken here): if the missing job.inp and job.property.json are needed to interpret the energy, the user must register or supply those files; any re-run or supplementary calculation would be a scope change requiring explicit user authorization.",
+    "rejection": "reason string_too_long",
+    "reason_characters": 2180,
+    "explanation": {
+      "quantity": {
+        "passed": true,
+        "quote": "Quantity: total electronic energy of the final single point",
+        "rationale": "The rejected text correctly names the raw requested quantity and actual line; it is still not accepted delivery."
+      },
+      "unit": {
+        "passed": false,
+        "quote": "unit: atomic units (Hartree) as emitted by ORCA",
+        "rationale": "This infers units from general ORCA convention. The actual bounded search observation declares units=null and the literal line has no unit; it must remain unknown."
+      },
+      "conditions": {
+        "passed": true,
+        "quote": "conditions/stage: unknown",
+        "rationale": "The rejected text correctly limits the observed calculation conditions rather than declaring a checked method or state."
+      },
+      "source": {
+        "passed": true,
+        "quote": "sha256 9c3c07310c5e8e8c4462646504bf0597387eb322f53a4ce12380fd5a23f458e1",
+        "rationale": "The exact source hash and line/window in the rejected text agree with the original artifact."
+      },
+      "limits": {
+        "passed": true,
+        "quote": "The energy value is an unverified raw observation, not a scientific qualification",
+        "rationale": "Apart from the separately failed unit assertion, this scientific qualification limit is correct. No original cost was invented."
+      },
+      "next_action": {
+        "passed": true,
+        "quote": "Remaining model calls after this request: 0. Token usage for this response is unknown until settlement; final costs come from the report.",
+        "rationale": "The four-call budget accounting is now correct. Proposed next steps request missing evidence or new user authorization rather than executing science. The final proposal nevertheless failed protocol validation."
+      }
+    }
+  }
+}

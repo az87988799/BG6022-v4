@@ -1,0 +1,82 @@
+{
+  "variant_id": "V-02/multiple-required-goals",
+  "repetition": 1,
+  "run_id": "run_a9301b13daec4a1c88561483663a4a3e",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/1/variants/1/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "goal_B.satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "energy_difference.published_as_qualified",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "all_required_goals_satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "the electronic_energy_difference E(B)-E(A) cannot be formed",
+      "rationale": "Separates B energy, electronic difference and Gibbs difference from the one available A electronic energy. Does not present partial availability as full completion."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "Only system A has a qualified energy (-74.964906308165 Eh, orca-hf-2).",
+      "rationale": "The sole numerical energy is exactly the source-qualified value in Eh; no units/values are invented for missing B or Gibbs quantities."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "298.15 K、1 atm、气相下均使用 HF/STO-3G、charge=0、multiplicity=1",
+      "rationale": "Accepted questions preserve all explicitly requested thermal and electronic conditions. Asking for confirmation does not change these conditions."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "Only system A has a qualified energy (-74.964906308165 Eh, orca-hf-2).",
+      "rationale": "Identifies the unique A available-evidence member and qualification rule. Original Result value/unit and its artifact hashes were rechecked independently; there is no fabricated B source."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "system B has geometry_artifact_id=null and is flagged unresolved (missing:geometry:B)",
+      "rationale": "Accurately states the actual missing B geometry and separately missing thermal evidence, while keeping required goals unsatisfied and noting ORCA0."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "请提供第二个水几何（system B）的几何结构文件/artifact，或确认其来源",
+      "rationale": "Requests the concrete missing geometry and either thermal evidence or a future user scope/permission decision. No new calculation is executed and no goal is silently dropped."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "accepted_action": "clarify",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 1,
+  "tested_scope": [],
+  "tokens_used": 2907,
+  "tokens_unknown": 0,
+  "model_text_sha256": "489758504e8414f1c9b80dc79ae90e2a5977f22d7bc118e14cf87f5ba8e03645"
+}

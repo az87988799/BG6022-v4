@@ -1,0 +1,75 @@
+{
+  "variant_id": "V-07/array-location",
+  "repetition": 1,
+  "run_id": "run_982f39768cd8462a9fe0215fff25493e",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "instructions": "Review actual accepted model explanations independently; rejected proposals remain separately audited and cannot replace accepted final delivery.",
+  "behavior": {},
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "Geometries[0].Dipole_Moment[0].dipoleMagnitude = 0.6788282026678785",
+      "rationale": "This exact path and raw scalar agree with the persisted value_observation and an independent read of the archived JSON. The quantity remains an observation, not a qualified scientific dipole port."
+    },
+    "unit": {
+      "passed": true,
+      "quote": "Known units: none reported (units=null)",
+      "rationale": "The observation has units=null. The model explicitly leaves the unit unestablished; its optional examples of possible conventions are not asserted as this value's unit and no conversion is performed."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "conditions=unknown; stage=unknown.",
+      "rationale": "Both statuses agree with the saved read observations. The model does not infer the calculation method, electronic state or geometry stage from the archive label."
+    },
+    "source": {
+      "passed": true,
+      "quote": "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf (sha256 71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655)",
+      "rationale": "The exact Artifact, complete SHA and typed path identify the original data. Independent JSON checks confirm both the scalar and full Geometries[0:1] slice; all three saved read Results bind to this file."
+    },
+    "limits": {
+      "passed": false,
+      "quote": "the geometry slice content was not retrieved.",
+      "rationale": "The persisted slice Result contains one complete geometry object and status=observed. Only the model-context preview omitted that object. The model correctly says an empty preview is not an empty source, but then incorrectly equates its missing preview with a Tool read that never retrieved the content. Read success, model visibility and scientific qualification must stay distinct."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "No further execution is warranted; the user's request was observation-only and is complete.",
+      "rationale": "All three actual read goals have completed, including the full stored slice, and no science was requested or authorized. Stopping is the correct action despite the separate erroneous description of preview versus read."
+    }
+  },
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_6b0106632a8f4379aa868eeee31b5338",
+      "request_sha256": "88bddbeb32a219fbdbdacc1c5ffd6777ca9451d372abab537d908e8eb8600517",
+      "response_sha256": "8c2fed9ffdb2957889435bace4de5d6bae48f2df2623ed6ebaae591b3968c99b"
+    },
+    {
+      "model_id": "model_5e44e6517bf54d6fbd3d24b8c4af7f1d",
+      "request_sha256": "f0bce011fbf0484356166b85e846794b545f68857ee0a070ad0c64f2d9616837",
+      "response_sha256": "9a2a091c8ac4059d891befba8de6aa463713c2f9b1084d269221fece68b266f2"
+    },
+    {
+      "model_id": "model_ad376bab9dae4db0848d99932c6f7b4a",
+      "request_sha256": "acad037d160c6a4eb413e60362993a00ab2519cd2f3e43acf03b32a87bdd6121",
+      "response_sha256": "6d2dc3c1b6c90c2f62aabb7b415c733ecacfbd62db34cb90383ebf452c8fb90a"
+    },
+    {
+      "model_id": "model_edfe4becbb014d3dbf0040312d0b592d",
+      "request_sha256": "1f29445d199fe79103f77fb24be830ce0b24a8871a56976223f40149d6c6855b",
+      "response_sha256": "d0828b6435acc1b3f8e47d9c8e9d587d7daa4dc1c0271972f78f70bfd436a9e5"
+    }
+  ],
+  "source_artifact_hashes": {
+    "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf": "71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655"
+  },
+  "protocol_findings": [
+    "The second proposal reason described a geometry-slice read but selected the scalar Step ID. The following response correctly identified the remaining slice Step and executed it. No Step ran twice.",
+    "All three typed read operations completed in four HTTP requests. Limits explanation fails independently of those mechanical facts."
+  ],
+  "first_response_rejected": false,
+  "accepted_after_correction": false,
+  "run_sha256": "a58559eee0227a0d615cda01631b28d992fc9778fcea1361f29b4854eaedda16"
+}

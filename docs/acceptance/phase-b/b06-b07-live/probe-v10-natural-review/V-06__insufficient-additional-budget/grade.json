@@ -1,0 +1,83 @@
+{
+  "variant_id": "V-06/insufficient-additional-budget",
+  "repetition": 1,
+  "run_id": "run_49c9673d3b4f428da8188afb547686fc",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/5/variants/4/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "extra_orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "goal.satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "report.budget_limit_disclosed",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "quote": "no additional ORCA starts",
+      "rationale": "Both accepted proposals disclose the actual zero additional-science capacity; no additional scientific call occurs.",
+      "kind": "behavior_review"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "quantity:finite_sample_internal_minimum",
+      "rationale": "Identifies the finite discrete sampling goal; the final reason reports its observed interior electronic-energy minimum and unmet neighbor-span criterion separately."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "the interior minimum is geom_997a7b6154fa at -74.964906308165 Eh",
+      "rationale": "Energy retains its source-qualified Eh unit; the final header explicitly labels the neighbor span Angstrom, and the analysis values/threshold are quoted without incorrect conversion."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "conditions:HF/STO-3G,charge 0,multiplicity 1,RHF,gas_phase,explicit geometry",
+      "rationale": "The accepted final reply states method, basis, electron state and environment, and the accepted initial reason further discloses fixed bond/angle, scanned atoms,0.12Angstrom target and energy threshold."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "result_2b37e67a22e8474d92d933ec94eac9e5",
+      "rationale": "The accepted initial Step binds each actual original Run/Result/Attempt source and the executed analysis consumes those same three qualified members. No optional candidate energy is invented. All source and candidate geometry hashes were rechecked."
+    },
+    "limits": {
+      "status": "failed",
+      "quote": "the optional fourth candidate is not bound to a registered artifact",
+      "rationale": "False: all five candidate geometries, including both optional ones, are registered by Artifact ID/hash in the immutable Request. Optional candidates lack sampled energy Result bindings, not registered geometry artifacts. Correct discrete-only scope, unmet span and zero-science statements do not erase this additional factual error."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "cannot be sampled under the current permission (allow_additional_science=false, no additional ORCA starts)",
+      "rationale": "Stopping is justified by actual disabled additional-science permission and zero ORCA budget, which the response explicitly states. It preserves insufficient_evidence instead of claiming completion; the inaccurate secondary artifact explanation is separately failed under limits."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [],
+  "tokens_used": 8010,
+  "tokens_unknown": 0,
+  "model_text_sha256": "ac32d2353bd28f6cc8868b4ca5894c6286f7fe892fbf31916f8f2c23902a7b02"
+}

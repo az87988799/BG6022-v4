@@ -1,0 +1,117 @@
+{
+  "variant_id": "V-01/synonym-single-point",
+  "repetition": 1,
+  "run_id": "run_b1da37ebba3c47538081c8f41dd46df8",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "electronic energy only",
+      "rationale": "Identifies electronic energy rather than thermal/free energy, with a single-point operation.",
+      "quote_model_ids": [
+        "model_39592072ccbd4f67a554609b5ea8951a"
+      ]
+    },
+    "unit": {
+      "passed": false,
+      "quote": "electronic energy only",
+      "rationale": "Neither accepted reason nor clarification question states an expected energy unit or explicitly unknown unit. No energy value or conversion error is present.",
+      "quote_model_ids": [
+        "model_39592072ccbd4f67a554609b5ea8951a"
+      ]
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "water_sp geometry artifact, RHF/STO-3G, charge 0, multiplicity 1",
+      "rationale": "Preserves every explicitly supplied geometry, method, basis and electron-state condition.",
+      "quote_model_ids": [
+        "model_39592072ccbd4f67a554609b5ea8951a"
+      ]
+    },
+    "source": {
+      "passed": true,
+      "quote": "water_sp geometry artifact",
+      "rationale": "The uniquely named user geometry reference is preserved; it is not presented as a computed energy source.",
+      "quote_model_ids": [
+        "model_39592072ccbd4f67a554609b5ea8951a"
+      ]
+    },
+    "limits": {
+      "passed": true,
+      "quote": "tool catalog is empty and scientific_execution is false with no allowed tools",
+      "rationale": "Accurately describes the actual empty catalog and disabled science permission; does not invent a Tool or result.",
+      "quote_model_ids": [
+        "model_39592072ccbd4f67a554609b5ea8951a"
+      ]
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "How should I proceed to obtain the RHF/STO-3G electronic energy for water_sp?",
+      "rationale": "Accepted clarification asks for user direction about execution capability, and the Run waits with zero science starts.",
+      "quote_model_ids": [
+        "model_39592072ccbd4f67a554609b5ea8951a"
+      ]
+    }
+  },
+  "behavior": {
+    "normalized.quantity": {
+      "passed": true,
+      "quote": "electronic energy only",
+      "rationale": "Recognizes the user electronic-energy goal.",
+      "quote_model_ids": [
+        "model_39592072ccbd4f67a554609b5ea8951a"
+      ]
+    },
+    "normalized.operation": {
+      "passed": true,
+      "quote": "ORCA/HF single-point calculation",
+      "rationale": "Explicitly identifies single-point computation; it neither plans nor launches optimization.",
+      "quote_model_ids": [
+        "model_39592072ccbd4f67a554609b5ea8951a"
+      ]
+    }
+  },
+  "protocol_findings": [],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_39592072ccbd4f67a554609b5ea8951a",
+      "request_sha256": "2825911b68455da3db137b8abe09c9c5e610b02dc52b65564ffd9c29ee773236",
+      "response_sha256": "190c9a2ebb8f8f50338f53686eed615546ca44095aa693e2173299c921b4a7fb",
+      "accepted": true
+    }
+  ],
+  "reviewed_available_evidence": {},
+  "source_artifact_hashes": {
+    "artifact_0286ca39f99a437abdf1679f064062d6": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_bdccc347c2594f3286c7165d2c04c39b": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "run_sha256": "647914b8559e593e3446d8f24361cf2a66a1834c57ba517e127e7746253fddd4",
+  "first_response_rejected": false,
+  "reviewed_proposals": [
+    {
+      "model_id": "model_39592072ccbd4f67a554609b5ea8951a",
+      "accepted": true,
+      "proposal": {
+        "action": "clarify",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "The tool catalog is empty and scientific_execution is false with no allowed tools, so no ORCA/HF single-point calculation can be launched. The request is otherwise fully specified (water_sp geometry artifact, RHF/STO-3G, charge 0, multiplicity 1, electronic energy only), but the required execution capability is unavailable.",
+        "parameters": {
+          "questions": [
+            "No computational tools are available in this session (empty tool catalog, scientific_execution disabled). How should I proceed to obtain the RHF/STO-3G electronic energy for water_sp?"
+          ],
+          "unresolved": [
+            "No tool available to run the requested RHF/STO-3G single-point energy calculation"
+          ]
+        }
+      },
+      "response_sha256": "190c9a2ebb8f8f50338f53686eed615546ca44095aa693e2173299c921b4a7fb"
+    }
+  ]
+}

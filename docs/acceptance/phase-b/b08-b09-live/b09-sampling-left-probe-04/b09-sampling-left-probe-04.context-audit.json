@@ -1,0 +1,717 @@
+{
+  "run_id": "run_097034ea639440ff8543bd012ea606bc",
+  "review_kind": "independent_read_only_context_audit",
+  "prompt_version": "agent-json-v3",
+  "run_sha256": "cb1a63a6004a789281c514f6e5cf341a717b6b51f9a6d2e5f3123d17ddef23e0",
+  "state": "failed",
+  "goal_status": {
+    "sampling_goal": "insufficient_evidence"
+  },
+  "usage": {
+    "http_requests": 7,
+    "tokens": 26229,
+    "orca_starts": 3
+  },
+  "findings": [
+    {
+      "kind": "schema_runtime_mismatch",
+      "turns": [
+        1,
+        2,
+        6,
+        7
+      ],
+      "fact": "orca.sp published timeout_seconds maximum=900; actual runtime limits single-point deadline to 300. The first proposal followed the published maximum and was rejected; correction adopted 300, but later proposals again selected 900 from unchanged schema.",
+      "suggestion": "Generate a Tool-specific scientific parameter schema from the actual single-point validation constraint. Do not patch context with an unrelated second copy of the limit."
+    },
+    {
+      "kind": "invalid_action_shape_diagnostic_is_not_effect_aware",
+      "turns": [
+        6,
+        7
+      ],
+      "fact": "At no-ready-step replan, ACTION_PARAMETERS omits call_tool, while PROPOSAL_SCHEMA still enumerates call_tool. Turn 6 bare inline scientific parameters trigger a generic {tool,parameters}/{step_id} error. Turn 7 follows that shape and is then rejected because scientific execution needs a planned Step. Both validation errors are preserved in full and native.",
+      "suggestion": "Derive action eligibility/parameter alternatives from current ready Steps and Tool effects, and tell a rejected direct-write/execute proposal to revise_plan in its first applicable diagnostic. The implementation must still reject rather than silently converting the action."
+    },
+    {
+      "kind": "incorrect_intermediate_reason",
+      "turns": [
+        4
+      ],
+      "fact": "Reason names pending third single-point Step as analysis and claims three settled energies when only two had settled. Actual selected Step ID is correct and runs the third SP. Full unexecuted Step tool/system_id and two actual Results were present in the wire.",
+      "suggestion": "A compact native ready-ID to tool/system mapping could reduce lookup mistakes; this is a model explanation error, not evidence of an executed wrong Tool."
+    },
+    {
+      "kind": "sampling_data_complete",
+      "turns": [
+        6,
+        7
+      ],
+      "fact": "Decoded context preserves all five candidate coordinates, all three sampled energies and Result IDs, both optional candidates as missing with null energies, false goal_status, .16000000000042536 observed span, .12 target, effective 1e-8 distance tolerance, and one remaining ORCA start. No expected action or unseen energy is supplied. The first candidate choice differs from the frozen behavior expectation; the subsequent candidate changes without new science. Protocol rejection prevents measuring either proposed extra point.",
+      "suggestion": "Keep behavioral assessment separate from missing-context claims. The actual scalar evidence and universal acceptance rule were available; do not inject the expected direction or hidden optional energies."
+    }
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "model_id": "model_a475eef6cff4475da62381a13b783bc7",
+      "request_sha256": "33bb61f1a5d00ad060639673c6ad2bbf372fcc41e9c5847704716ae087406967",
+      "response_sha256": "834c8ba71dad7bf125c490a7eb79d9edba311dfeed0e5be5217d0f8e69808a80",
+      "input_bound": 9348,
+      "control": {},
+      "action_examples": {
+        "initial_plan": {
+          "steps": [
+            {
+              "key": "s",
+              "tool": "<Tool.name>",
+              "parameters": {},
+              "system_id": "<system_id>"
+            },
+            {
+              "key": "a",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "<Goal.id>"
+              },
+              "inputs": {
+                "<member ID>": {
+                  "producer_key": "<Step key>",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "<Goal.id>": {
+              "step_key": "a",
+              "port": "<Goal.port>"
+            }
+          }
+        },
+        "call_tool": {
+          "step_id": "<ready Step.id>"
+        },
+        "clarify": {
+          "questions": [
+            "<1..5 strings, length 1..1000>"
+          ],
+          "unresolved": [
+            "<1..5 strings, length 1..1000>"
+          ]
+        },
+        "stop": {}
+      },
+      "proposal": {
+        "action": "initial_plan",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "No plan exists yet and the sampling goal is insufficient_evidence. The request requires finite single-point sampling: first compute the three required_initial geometries (geom_a1fd9c54f540, geom_997a7b6154fa, geom_4551ffe49805) with orca.sp (HF/STO-3G, charge 0, multiplicity 1), then run analysis.finite_sampling binding each sampled energy member to its energy reference. If evidence is insufficient, at most one additional registered candidate may be added later.",
+        "parameters": {
+          "steps": [
+            {
+              "key": "sp_a",
+              "tool": "orca.sp",
+              "system_id": "geom_a1fd9c54f540",
+              "parameters": {
+                "method": "HF",
+                "basis": "STO-3G",
+                "charge": 0,
+                "multiplicity": 1,
+                "cores": 4,
+                "memory_mb": 1024,
+                "maxcore_mb": 192,
+                "scf_maxiter": 300,
+                "opt_maxiter": 200,
+                "timeout_seconds": 900
+              }
+            },
+            {
+              "key": "sp_c",
+              "tool": "orca.sp",
+              "system_id": "geom_997a7b6154fa",
+              "parameters": {
+                "method": "HF",
+                "basis": "STO-3G",
+                "charge": 0,
+                "multiplicity": 1,
+                "cores": 4,
+                "memory_mb": 1024,
+                "maxcore_mb": 192,
+                "scf_maxiter": 300,
+                "opt_maxiter": 200,
+                "timeout_seconds": 900
+              }
+            },
+            {
+              "key": "sp_e",
+              "tool": "orca.sp",
+              "system_id": "geom_4551ffe49805",
+              "parameters": {
+                "method": "HF",
+                "basis": "STO-3G",
+                "charge": 0,
+                "multiplicity": 1,
+                "cores": 4,
+                "memory_mb": 1024,
+                "maxcore_mb": 192,
+                "scf_maxiter": 300,
+                "opt_maxiter": 200,
+                "timeout_seconds": 900
+              }
+            },
+            {
+              "key": "a",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "sampling_goal"
+              },
+              "inputs": {
+                "geom_a1fd9c54f540": {
+                  "producer_key": "sp_a",
+                  "port": "energy"
+                },
+                "geom_997a7b6154fa": {
+                  "producer_key": "sp_c",
+                  "port": "energy"
+                },
+                "geom_4551ffe49805": {
+                  "producer_key": "sp_e",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "sampling_goal": {
+              "step_key": "a",
+              "port": "sampling"
+            }
+          }
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "model_id": "model_9a81c25762d948c6a1844f441aab2891",
+      "request_sha256": "a8a302c15f33b7153052b553e043d4fefe37081fea5509f1e60032fa46c921c5",
+      "response_sha256": "8a9a0b92895a53f50439fd02c771196462c76ab14f155ea775bf3d65542270f0",
+      "input_bound": 9579,
+      "control": {
+        "validation_error": {
+          "category": "ProposalError",
+          "requirement": {
+            "requirement": "single-point deadline may not exceed 300 seconds",
+            "tool": "orca.sp",
+            "path": [
+              "parameters",
+              "steps",
+              0,
+              "parameters"
+            ]
+          }
+        }
+      },
+      "action_examples": {
+        "initial_plan": {
+          "steps": [
+            {
+              "key": "s",
+              "tool": "<Tool.name>",
+              "parameters": {},
+              "system_id": "<system_id>"
+            },
+            {
+              "key": "a",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "<Goal.id>"
+              },
+              "inputs": {
+                "<member ID>": {
+                  "producer_key": "<Step key>",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "<Goal.id>": {
+              "step_key": "a",
+              "port": "<Goal.port>"
+            }
+          }
+        },
+        "call_tool": {
+          "step_id": "<ready Step.id>"
+        },
+        "clarify": {
+          "questions": [
+            "<1..5 strings, length 1..1000>"
+          ],
+          "unresolved": [
+            "<1..5 strings, length 1..1000>"
+          ]
+        },
+        "stop": {}
+      },
+      "proposal": {
+        "action": "initial_plan",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "No plan exists yet and the sampling goal is insufficient_evidence. The three required_initial candidates (geom_a1fd9c54f540, geom_997a7b6154fa, geom_4551ffe49805) must be sampled first with orca.sp (HF/STO-3G, charge 0, multiplicity 1) on their registered geometries, then analysis.finite_sampling checks the sampled energies against the requested conditions (target_width 0.12 Å, energy_threshold 6.14e-11 Eh). The prior validation error was a single-point deadline >300 s; timeout_seconds is set to 300 to satisfy the orca.sp constraint. Each energy member is bound to its producing step via Step.inputs beside parameters.",
+        "parameters": {
+          "steps": [
+            {
+              "key": "s1",
+              "tool": "orca.sp",
+              "system_id": "geom_a1fd9c54f540",
+              "parameters": {
+                "method": "HF",
+                "basis": "STO-3G",
+                "charge": 0,
+                "multiplicity": 1,
+                "cores": 4,
+                "memory_mb": 1024,
+                "maxcore_mb": 192,
+                "scf_maxiter": 300,
+                "opt_maxiter": 200,
+                "timeout_seconds": 300
+              }
+            },
+            {
+              "key": "s2",
+              "tool": "orca.sp",
+              "system_id": "geom_997a7b6154fa",
+              "parameters": {
+                "method": "HF",
+                "basis": "STO-3G",
+                "charge": 0,
+                "multiplicity": 1,
+                "cores": 4,
+                "memory_mb": 1024,
+                "maxcore_mb": 192,
+                "scf_maxiter": 300,
+                "opt_maxiter": 200,
+                "timeout_seconds": 300
+              }
+            },
+            {
+              "key": "s3",
+              "tool": "orca.sp",
+              "system_id": "geom_4551ffe49805",
+              "parameters": {
+                "method": "HF",
+                "basis": "STO-3G",
+                "charge": 0,
+                "multiplicity": 1,
+                "cores": 4,
+                "memory_mb": 1024,
+                "maxcore_mb": 192,
+                "scf_maxiter": 300,
+                "opt_maxiter": 200,
+                "timeout_seconds": 300
+              }
+            },
+            {
+              "key": "a",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "sampling_goal"
+              },
+              "inputs": {
+                "geom_a1fd9c54f540": {
+                  "producer_key": "s1",
+                  "port": "energy"
+                },
+                "geom_997a7b6154fa": {
+                  "producer_key": "s2",
+                  "port": "energy"
+                },
+                "geom_4551ffe49805": {
+                  "producer_key": "s3",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "sampling_goal": {
+              "step_key": "a",
+              "port": "sampling"
+            }
+          }
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "model_id": "model_7fadabbfb4334778b2f77c534dceda33",
+      "request_sha256": "75e8ceae44e6e04d3390937f86e14ae14b137d44b7b71957aeb11dad996f274a",
+      "response_sha256": "514156e0926ecd248482e9c48036b15cf1e4b60d7b01207626fb36e05ff5b6fc",
+      "input_bound": 10776,
+      "control": {
+        "pending_step_ids": [
+          "step_ccefb59a0832443994c1c71bab77013b",
+          "step_c485ed47cb6d4ba792a20769579d671d"
+        ]
+      },
+      "action_examples": {
+        "revise_plan": {
+          "steps": [
+            {
+              "key": "s",
+              "tool": "<Tool.name>",
+              "parameters": {},
+              "system_id": "<system_id>"
+            },
+            {
+              "key": "a",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "<Goal.id>"
+              },
+              "inputs": {
+                "<member ID>": {
+                  "producer_key": "<Step key>",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "<Goal.id>": {
+              "step_key": "a",
+              "port": "<Goal.port>"
+            }
+          }
+        },
+        "call_tool": {
+          "step_id": "step_ccefb59a0832443994c1c71bab77013b"
+        },
+        "clarify": {
+          "questions": [
+            "<1..5 strings, length 1..1000>"
+          ],
+          "unresolved": [
+            "<1..5 strings, length 1..1000>"
+          ]
+        },
+        "stop": {}
+      },
+      "proposal": {
+        "action": "call_tool",
+        "request_version": 1,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [
+          "result_407eed148991461b812c6429812f07e1"
+        ],
+        "reason": "Plan step step_ccefb59a0832443994c1c71bab77013b (orca.sp on geom_997a7b6154fa, a required initial candidate) is pending and its energy output is needed as input to the finite-sampling analysis step. Executing it now advances the frozen plan toward the sampling_goal, which is currently insufficient_evidence.",
+        "parameters": {
+          "step_id": "step_ccefb59a0832443994c1c71bab77013b"
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "model_id": "model_3523e1b9452c464a8a92c617b084a0d8",
+      "request_sha256": "45084112196ba5a34aea48c4460b15ac966d3501d9da75ecd0caf27b46645e97",
+      "response_sha256": "5efb3b81b80231cfdb272aa8d7b4a636a6da6b11ce19b9a3e60bc7e55610614b",
+      "input_bound": 10774,
+      "control": {
+        "pending_step_ids": [
+          "step_c485ed47cb6d4ba792a20769579d671d"
+        ]
+      },
+      "action_examples": {
+        "revise_plan": {
+          "steps": [
+            {
+              "key": "s",
+              "tool": "<Tool.name>",
+              "parameters": {},
+              "system_id": "<system_id>"
+            },
+            {
+              "key": "a",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "<Goal.id>"
+              },
+              "inputs": {
+                "<member ID>": {
+                  "producer_key": "<Step key>",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "<Goal.id>": {
+              "step_key": "a",
+              "port": "<Goal.port>"
+            }
+          }
+        },
+        "call_tool": {
+          "step_id": "step_c485ed47cb6d4ba792a20769579d671d"
+        },
+        "clarify": {
+          "questions": [
+            "<1..5 strings, length 1..1000>"
+          ],
+          "unresolved": [
+            "<1..5 strings, length 1..1000>"
+          ]
+        },
+        "stop": {}
+      },
+      "proposal": {
+        "action": "call_tool",
+        "request_version": 1,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [
+          "result_1e35c11b13aa493285d45460e748e2e7"
+        ],
+        "reason": "The finite-sampling analysis step (step_c485ed47cb6d4ba792a20769579d671d) is pending and its three required energy inputs are settled: geom_a1fd9c54f540 (-74.96269215823895 Eh), geom_997a7b6154fa (-74.96490630816463 Eh), and geom_4551ffe49805 (result_1e35c11b13aa493285d45460e748e2e7). All three required initial candidates are computed, so the sampling goal can now be evaluated against the finite-sampling-1 contract (target width 0.12 Å, energy threshold 6.14e-11 Eh).",
+        "parameters": {
+          "step_id": "step_c485ed47cb6d4ba792a20769579d671d"
+        }
+      }
+    },
+    {
+      "turn": 5,
+      "model_id": "model_fae6e6692948400f825330e4d5620712",
+      "request_sha256": "6ee354cd53158e8c688dcfc444058b4db1841c271e8a032624e23109b6211fdb",
+      "response_sha256": "80ed83f538e75983ccdedbc390d9046f693a4bbc299e3ddb463c31a41ffe540c",
+      "input_bound": 10777,
+      "control": {
+        "pending_step_ids": [
+          "step_586cad78dc23428eb3399a122665d028"
+        ]
+      },
+      "action_examples": {
+        "revise_plan": {
+          "steps": [
+            {
+              "key": "s",
+              "tool": "<Tool.name>",
+              "parameters": {},
+              "system_id": "<system_id>"
+            },
+            {
+              "key": "a",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "<Goal.id>"
+              },
+              "inputs": {
+                "<member ID>": {
+                  "producer_key": "<Step key>",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "<Goal.id>": {
+              "step_key": "a",
+              "port": "<Goal.port>"
+            }
+          }
+        },
+        "call_tool": {
+          "step_id": "step_586cad78dc23428eb3399a122665d028"
+        },
+        "clarify": {
+          "questions": [
+            "<1..5 strings, length 1..1000>"
+          ],
+          "unresolved": [
+            "<1..5 strings, length 1..1000>"
+          ]
+        },
+        "stop": {}
+      },
+      "proposal": {
+        "action": "call_tool",
+        "request_version": 1,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [
+          "result_c003ca83c60b437c8b1e0e4cf9bc52de"
+        ],
+        "reason": "Three required initial ORCA RHF/STO-3G single points are complete (energies -74.96269215823895, -74.96490630816463, -74.95428796612777 Eh). The pending step is the finite-sampling analysis over these three registered energies; executing it will determine whether the distinguishable interior minimum's nearest sampled neighbors span <= 0.12 Angstrom, or whether one additional registered candidate is needed.",
+        "parameters": {
+          "step_id": "step_586cad78dc23428eb3399a122665d028"
+        }
+      }
+    },
+    {
+      "turn": 6,
+      "model_id": "model_2e89ae868abd45fdb17f418c3ed02e25",
+      "request_sha256": "fc74cf292a9b9fa9be4ed02d72a3e0fa3d7fbd93ff0a148487339f8bd5700e32",
+      "response_sha256": "9f6c085e2f0343fad293e26bc0b4f6af0e2474c99aa1b491349c074110a9deab",
+      "input_bound": 11836,
+      "control": {},
+      "action_examples": {
+        "revise_plan": {
+          "steps": [
+            {
+              "key": "s",
+              "tool": "<Tool.name>",
+              "parameters": {},
+              "system_id": "<system_id>"
+            },
+            {
+              "key": "a",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "<Goal.id>"
+              },
+              "inputs": {
+                "<member ID>": {
+                  "producer_key": "<Step key>",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "<Goal.id>": {
+              "step_key": "a",
+              "port": "<Goal.port>"
+            }
+          }
+        },
+        "clarify": {
+          "questions": [
+            "<1..5 strings, length 1..1000>"
+          ],
+          "unresolved": [
+            "<1..5 strings, length 1..1000>"
+          ]
+        },
+        "stop": {}
+      },
+      "proposal": {
+        "action": "call_tool",
+        "request_version": 1,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [
+          "result_27f1dbb47e964d428e48e08f47047737"
+        ],
+        "reason": "The finite-sampling analysis on the three required points returned insufficient_evidence (span_too_wide, neighbor_span 0.16 Å > 0.12 Å). The user authorized at most one additional registered candidate when evidence is insufficient. The two unbound optional candidates are geom_e98835a38ce7 (r=0.9794) and geom_6b95efc712da (r=1.0594). Adding the interior candidate geom_6b95efc712da (r=1.0594) between the current minimum (geom_997a7b6154fa, r=1.0194) and the right neighbor (geom_4551ffe49805, r=1.0994) is the most informative single addition: it can tighten the nearest-neighbor span around the minimum. Budget allows one extra ORCA start (extra_orca_starts=1, remaining orca_starts=1). Running orca.sp on system geom_6b95efc712da with the frozen HF/STO-3G, charge 0, multiplicity 1 conditions.",
+        "parameters": {
+          "system_id": "geom_6b95efc712da",
+          "cores": 4,
+          "memory_mb": 1024,
+          "maxcore_mb": 192,
+          "scf_maxiter": 300,
+          "opt_maxiter": 200,
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "timeout_seconds": 900
+        }
+      }
+    },
+    {
+      "turn": 7,
+      "model_id": "model_7c53642aa96a473eb36615edf9271964",
+      "request_sha256": "cc5447bc535e21844ff61573bd086c11ff67c30ebb31795380ecfc5a45c1aafb",
+      "response_sha256": "d163ddc8a125817ad665f2e97ee81c06f5ad4388bb063390e10e939053964aa3",
+      "input_bound": 11975,
+      "control": {
+        "validation_error": {
+          "category": "StoreError",
+          "requirement": "call_tool parameters must be {tool,parameters} or {step_id}; no action wrapper"
+        }
+      },
+      "action_examples": {
+        "revise_plan": {
+          "steps": [
+            {
+              "key": "s",
+              "tool": "<Tool.name>",
+              "parameters": {},
+              "system_id": "<system_id>"
+            },
+            {
+              "key": "a",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "<Goal.id>"
+              },
+              "inputs": {
+                "<member ID>": {
+                  "producer_key": "<Step key>",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "<Goal.id>": {
+              "step_key": "a",
+              "port": "<Goal.port>"
+            }
+          }
+        },
+        "clarify": {
+          "questions": [
+            "<1..5 strings, length 1..1000>"
+          ],
+          "unresolved": [
+            "<1..5 strings, length 1..1000>"
+          ]
+        },
+        "stop": {}
+      },
+      "proposal": {
+        "action": "call_tool",
+        "request_version": 1,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [
+          "result_27f1dbb47e964d428e48e08f47047737"
+        ],
+        "reason": "The analysis result shows insufficient evidence: the minimum interior sampled point (geom_997a7b6154fa, r=1.0194 Å) has nearest sampled neighbors at 0.9394 Å and 1.0994 Å, giving a span of 0.1600 Å, which exceeds the 0.12 Å target width. The user authorized at most one additional registered candidate when evidence is insufficient. The two unbound optional candidates are geom_e98835a38ce7 (r=0.9794 Å) and geom_6b95efc712da (r=1.0594 Å). Adding geom_e98835a38ce7 would place a sampled point between the current minimum and its left neighbor, tightening the span. I will run a single-point RHF/STO-3G calculation on that candidate to fill the gap.",
+        "parameters": {
+          "tool": "orca.sp",
+          "parameters": {
+            "system_id": "geom_e98835a38ce7",
+            "method": "HF",
+            "basis": "STO-3G",
+            "charge": 0,
+            "multiplicity": 1,
+            "cores": 4,
+            "memory_mb": 1024,
+            "maxcore_mb": 192,
+            "scf_maxiter": 300,
+            "opt_maxiter": 200,
+            "timeout_seconds": 900
+          }
+        }
+      }
+    }
+  ],
+  "code_modified": false,
+  "additional_http_requests": 0,
+  "additional_science_starts": 0
+}

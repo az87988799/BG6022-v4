@@ -1,0 +1,104 @@
+{
+  "variant_id": "V-01/conflicting-conditions",
+  "repetition": 1,
+  "run_id": "run_00670726c0bb4e4aa3d6937a2f56d0f0",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "charge is a required condition for the electronic_energy goal",
+      "rationale": "Names the original electronic-energy goal and the disputed physical condition, rather than substituting another goal.",
+      "quote_model_ids": [
+        "model_443c4bcd16cd458b97c9588c3603f7c7"
+      ]
+    },
+    "unit": {
+      "passed": false,
+      "quote": "electronic_energy goal",
+      "rationale": "No expected energy unit or explicit unknown unit is stated anywhere in the accepted clarification. No numeric energy or incorrect conversion is generated.",
+      "quote_model_ids": [
+        "model_443c4bcd16cd458b97c9588c3603f7c7"
+      ]
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "the first says charge 0, multiplicity 1, while the second says keep the same neutral singlet water but set total charge to +1 without changing the electronic state",
+      "rationale": "Correctly identifies mutually inconsistent electronic-state requirements; the questions preserve water_sp and RHF/STO-3G instead of silently overriding charge or method.",
+      "quote_model_ids": [
+        "model_443c4bcd16cd458b97c9588c3603f7c7"
+      ]
+    },
+    "source": {
+      "passed": true,
+      "quote": "The two user messages give contradictory total charges",
+      "rationale": "Explicitly attributes the conflict to the two original user messages and preserves their distinct assertions.",
+      "quote_model_ids": [
+        "model_443c4bcd16cd458b97c9588c3603f7c7"
+      ]
+    },
+    "limits": {
+      "passed": true,
+      "quote": "the conflict cannot be resolved from the inputs",
+      "rationale": "Recognizes that no authoritative choice can be inferred from contradictory user conditions.",
+      "quote_model_ids": [
+        "model_443c4bcd16cd458b97c9588c3603f7c7"
+      ]
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Which total charge should be used for the water_sp single-point calculation: 0 or +1?",
+      "rationale": "Requests user disambiguation before any plan or tool, with a separate multiplicity question for the cation. No invalid state is executed.",
+      "quote_model_ids": [
+        "model_443c4bcd16cd458b97c9588c3603f7c7"
+      ]
+    }
+  },
+  "behavior": {},
+  "protocol_findings": [],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_443c4bcd16cd458b97c9588c3603f7c7",
+      "request_sha256": "02ecafebf9e2d2fec919d6c2dd71e6f0e41c481af22bf1ef503dba52bac300cb",
+      "response_sha256": "f076751347b14c98dcba34a196c0ce450b5c5f3114ee7901142b387a5e8526ba",
+      "accepted": true
+    }
+  ],
+  "reviewed_available_evidence": {},
+  "source_artifact_hashes": {
+    "artifact_3ebff6a4a3b849e3b3d4e675425d9a4b": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_390e4d206c804a6594601a47a0903d8f": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "run_sha256": "d1e8bdcaf1b9edb21a10fa3e475f646378b2741884a6821558c9941c82b2b87b",
+  "first_response_rejected": false,
+  "reviewed_proposals": [
+    {
+      "model_id": "model_443c4bcd16cd458b97c9588c3603f7c7",
+      "accepted": true,
+      "proposal": {
+        "action": "clarify",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "The two user messages give contradictory total charges for the same neutral singlet water: the first says charge 0, multiplicity 1, while the second says keep the same neutral singlet water but set total charge to +1 without changing the electronic state. A +1 charge with multiplicity 1 is not the same electronic state as neutral singlet water, and the request records conflicting_user_charge_assertions [0,1] with unresolved condition_conflict and missing:charge. Because charge is a required condition for the electronic_energy goal and the conflict cannot be resolved from the inputs, I must ask the user to disambiguate before any plan or tool call.",
+        "parameters": {
+          "questions": [
+            "Your two messages conflict: the first specifies charge 0, multiplicity 1 for water_sp (RHF/STO-3G), but the second says to keep the same neutral singlet water while setting total charge to +1. Which total charge should be used for the water_sp single-point calculation: 0 or +1?",
+            "If the total charge is +1, what multiplicity should be used? A +1 charge with multiplicity 1 is not the same electronic state as neutral singlet water, so please confirm the intended multiplicity (e.g., 1, 2, or other).",
+            "Should the calculation still be a single-point (SP) energy on the water_sp geometry with RHF/STO-3G, or do you also want any other property/geometry changes?"
+          ],
+          "unresolved": [
+            "condition_conflict: conflicting total charge assertions 0 vs +1 for the same neutral singlet water",
+            "missing:charge for the electronic_energy goal",
+            "whether multiplicity 1 is valid/intended if charge is +1"
+          ]
+        }
+      },
+      "response_sha256": "f076751347b14c98dcba34a196c0ce450b5c5f3114ee7901142b387a5e8526ba"
+    }
+  ]
+}

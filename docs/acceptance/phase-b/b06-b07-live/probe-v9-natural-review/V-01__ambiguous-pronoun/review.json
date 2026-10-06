@@ -1,0 +1,110 @@
+{
+  "variant_id": "V-01/ambiguous-pronoun",
+  "repetition": 1,
+  "run_id": "run_a9532f90c48840ed8bcaf4608ebc8af9",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "The goal electronic_energy requires geometry, method, basis, charge, and multiplicity",
+      "rationale": "Correctly identifies the intended electronic-energy goal without replacing it or fabricating a value.",
+      "quote_model_ids": [
+        "model_72ac649e72494d95ab6be2c0bd281501"
+      ]
+    },
+    "unit": {
+      "passed": false,
+      "quote": "electronic energy calculation",
+      "rationale": "The accepted clarification contains no expected energy unit or explicit unknown-unit statement. This is a disclosure omission, not an incorrect conversion.",
+      "quote_model_ids": [
+        "model_72ac649e72494d95ab6be2c0bd281501"
+      ]
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "the actual method, basis set, charge, and multiplicity from the prior run are not present in the request or authority data",
+      "rationale": "Correctly keeps unknown prior settings and ambiguous geometry unresolved; no invented inheritance or execution occurs.",
+      "quote_model_ids": [
+        "model_72ac649e72494d95ab6be2c0bd281501"
+      ]
+    },
+    "source": {
+      "passed": true,
+      "quote": "referenced artifacts (water_sp, water_opt) are only named geometries",
+      "rationale": "Accurately names the two registered geometry aliases in the preserved user history; neither is arbitrarily selected as prior settings proof.",
+      "quote_model_ids": [
+        "model_72ac649e72494d95ab6be2c0bd281501"
+      ]
+    },
+    "limits": {
+      "passed": true,
+      "quote": "Without the prior settings I cannot construct a valid plan, and no tools are available to retrieve them.",
+      "rationale": "Missing settings and empty tool catalog are real barriers; does not imply unavailable scientific results have been computed.",
+      "quote_model_ids": [
+        "model_72ac649e72494d95ab6be2c0bd281501"
+      ]
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Should the calculation use the water_sp geometry, the water_opt geometry, or both?",
+      "rationale": "Asks the user to resolve the ambiguous reference and separately specify method/basis/electron state. All list lengths are now legal, accepted on the first response and waiting_user.",
+      "quote_model_ids": [
+        "model_72ac649e72494d95ab6be2c0bd281501"
+      ]
+    }
+  },
+  "behavior": {},
+  "protocol_findings": [
+    {
+      "protocol": "First clarify accepted with five unresolved entries. Geometry ambiguity remains in authoritative Request and in the explicit question despite not having a separate unresolved list entry. No SCI/Tool or condition override."
+    }
+  ],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_72ac649e72494d95ab6be2c0bd281501",
+      "request_sha256": "766d0aca33396747c13b0f85e42612d4c943a4e22b58cd638309fa73e3cdc409",
+      "response_sha256": "7f5aa56f2a31579aa2f18d8dc36fb94c8258bc8b766e2c2f9e51b9601d2ed5b3",
+      "accepted": true
+    }
+  ],
+  "reviewed_available_evidence": {},
+  "source_artifact_hashes": {
+    "artifact_e5d5df0b1e4d4e17a362623509c3f16b": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_da4598b2a4d4456ea2385ba28b106abe": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "run_sha256": "a8502e2c9b42366d424d9af49c06060e07212f1101feb301ff89ca43d60c9686",
+  "first_response_rejected": false,
+  "reviewed_proposals": [
+    {
+      "model_id": "model_72ac649e72494d95ab6be2c0bd281501",
+      "accepted": true,
+      "proposal": {
+        "action": "clarify",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "The request says to reuse 'that structure and settings' from earlier, but the referenced artifacts (water_sp, water_opt) are only named geometries; the actual method, basis set, charge, and multiplicity from the prior run are not present in the request or authority data. The goal electronic_energy requires geometry, method, basis, charge, and multiplicity, all currently unresolved. Without the prior settings I cannot construct a valid plan, and no tools are available to retrieve them.",
+        "parameters": {
+          "questions": [
+            "What method and basis set should be used for the electronic energy calculation (the prior run's settings are not available to me)?",
+            "What charge and multiplicity should be used?",
+            "Should the calculation use the water_sp geometry, the water_opt geometry, or both?"
+          ],
+          "unresolved": [
+            "missing:method",
+            "missing:basis",
+            "missing:charge",
+            "missing:multiplicity",
+            "inherited_settings_reference"
+          ]
+        }
+      },
+      "response_sha256": "7f5aa56f2a31579aa2f18d8dc36fb94c8258bc8b766e2c2f9e51b9601d2ed5b3"
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "variant_id": "V-01/ambiguous-pronoun",
+  "repetition": 1,
+  "input_id": "input_450f053fa2d949fc8d83f701a1e76aa1",
+  "category": "development",
+  "freeze_label": "probe-v8",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/4/expected",
+  "expected": [
+    {
+      "metric": "unresolved.geometry_reference",
+      "operator": "eq",
+      "value": true
+    },
+    {
+      "metric": "next_action",
+      "operator": "eq",
+      "value": "clarify"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0
+    }
+  ],
+  "artifact_ids": [
+    "artifact_7a05d708beaf4598b34d3168e8c0c24f",
+    "artifact_d10e611e9a784b159358d9e9c08d5429"
+  ],
+  "source_files": [
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_sp\\geometry.xyz",
+      "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+    },
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_opt\\geometry.xyz",
+      "sha256": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+    }
+  ],
+  "references": [],
+  "archive_imports": [],
+  "tested_scope": [],
+  "prepared_inputs": [],
+  "fixture_gaps": [],
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "continuation_messages": [],
+  "evidence_kind": "real_model_with_frozen_evidence",
+  "model_executed": false,
+  "source_directory_files": {
+    "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_opt": [
+      "geometry.xyz",
+      "reference.inp",
+      "reference.v1.inp",
+      "request.json"
+    ],
+    "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_sp": [
+      "agent-request.json",
+      "geometry.xyz",
+      "reference.inp",
+      "request.json"
+    ]
+  },
+  "run_id": "run_6b85fa44383a4a638f902a91de2dd934",
+  "initial_request": {
+    "id": "request_0478b0c5ce0e46b99db954c8b68b9c5d",
+    "version": 1,
+    "original_text": "沿用刚才那个结构和设置再算一次。",
+    "geometry_artifact_id": null,
+    "charge": null,
+    "multiplicity": null,
+    "method": null,
+    "basis": null,
+    "conditions_source": {},
+    "goals": [
+      {
+        "id": "electronic_energy",
+        "port": "energy",
+        "required": true,
+        "minimum_check_version": "orca-hf-2",
+        "original_text": "electronic_energy",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "electronic_energy"
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": [
+          "missing:geometry",
+          "missing:method",
+          "missing:basis",
+          "missing:charge",
+          "missing:multiplicity"
+        ]
+      }
+    ],
+    "systems": [],
+    "messages": [
+      {
+        "role": "user",
+        "source": "user_history",
+        "text": "A: artifact_7a05d708beaf4598b34d3168e8c0c24f"
+      },
+      {
+        "role": "user",
+        "source": "user_history",
+        "text": "B: artifact_d10e611e9a784b159358d9e9c08d5429"
+      },
+      {
+        "id": "message_18a616e8e5144bdcb6f28db0c77a2ac4",
+        "role": "user",
+        "text": "沿用刚才那个结构和设置再算一次。",
+        "source": "user"
+      }
+    ],
+    "unresolved": [
+      "geometry_reference",
+      "inherited_settings_reference"
+    ],
+    "conditions": {
+      "named_geometries": {
+        "water_sp": "artifact_7a05d708beaf4598b34d3168e8c0c24f",
+        "water_opt": "artifact_d10e611e9a784b159358d9e9c08d5429"
+      },
+      "explain_results": true
+    },
+    "normalization_status": "clarification"
+  },
+  "permission_sha256": "e689a7b6abe6acdb2ab843fd40478e136e2589af9eba595e447e748427dcbf1e",
+  "budget_sha256": "38798f37522ece477b430963bb397e510828808c9d35798b7516074b736a4e30"
+}

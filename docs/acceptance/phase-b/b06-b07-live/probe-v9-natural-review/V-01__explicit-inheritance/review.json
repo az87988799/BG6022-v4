@@ -1,0 +1,102 @@
+{
+  "variant_id": "V-01/explicit-inheritance",
+  "repetition": 1,
+  "run_id": "run_01d4159cd5ef4e3095f743038cf18390",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "the requested electronic energy cannot be computed",
+      "rationale": "Explicitly identifies the electronic-energy goal, improving on the earlier operation-only response.",
+      "quote_model_ids": [
+        "model_0bbf909a5a9d4804b1f8727699b1af43"
+      ]
+    },
+    "unit": {
+      "passed": false,
+      "quote": "the requested electronic energy cannot be computed",
+      "rationale": "No expected energy unit or explicit unknown/unavailable unit is stated. No energy number or unit conversion is claimed.",
+      "quote_model_ids": [
+        "model_0bbf909a5a9d4804b1f8727699b1af43"
+      ]
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "inheriting method/basis/charge/multiplicity from the previous water single point (RHF/STO-3G, charge 0, multiplicity 1)",
+      "rationale": "Correctly discloses inherited user settings and newly selected water_opt initial geometry; does not require a prior scientific Result to prove user settings.",
+      "quote_model_ids": [
+        "model_0bbf909a5a9d4804b1f8727699b1af43"
+      ]
+    },
+    "source": {
+      "passed": true,
+      "quote": "artifact_5ee4b9c57649458b9e4b339e4a3eff56",
+      "rationale": "Identifies the actual registered water_opt initial geometry and user-history settings source; source hashes were independently verified.",
+      "quote_model_ids": [
+        "model_0bbf909a5a9d4804b1f8727699b1af43"
+      ]
+    },
+    "limits": {
+      "passed": false,
+      "quote": "The water_opt geometry artifact (artifact_5ee4b9c57649458b9e4b339e4a3eff56) is not present in the available data.",
+      "rationale": "The Artifact exists and is authorized; only its raw coordinates are absent from the model DATA projection. The response wrongly promotes this projection omission to unavailable geometry, although its separate empty-catalog limit is accurate.",
+      "quote_model_ids": [
+        "model_0bbf909a5a9d4804b1f8727699b1af43"
+      ]
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "No computational tools are available in the tool catalog, so the requested single-point energy on water_opt cannot be executed. How would you like to proceed?",
+      "rationale": "Asking how to proceed with unavailable execution tools is legitimate. The unnecessary request to provide an already registered geometry is retained under limits.",
+      "quote_model_ids": [
+        "model_0bbf909a5a9d4804b1f8727699b1af43"
+      ]
+    }
+  },
+  "behavior": {},
+  "protocol_findings": [],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_0bbf909a5a9d4804b1f8727699b1af43",
+      "request_sha256": "377a1b8a0866ec236650386c0ef57094bcfe7c26a0ddf92013348b0ea8f47763",
+      "response_sha256": "bf5b2597183966dd5e70ffab0d84c535f9d237c368cefd52498e2e1bbaa17db0",
+      "accepted": true
+    }
+  ],
+  "reviewed_available_evidence": {},
+  "source_artifact_hashes": {
+    "artifact_bdbf1c12d60d443a8f00423424b63cf2": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_5ee4b9c57649458b9e4b339e4a3eff56": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "run_sha256": "1f78fc1943986640430427948715d5dbb8528c0cf0748f40d473130100a16fb8",
+  "first_response_rejected": false,
+  "reviewed_proposals": [
+    {
+      "model_id": "model_0bbf909a5a9d4804b1f8727699b1af43",
+      "accepted": true,
+      "proposal": {
+        "action": "clarify",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "The request asks for a single-point calculation on the water_opt initial geometry, inheriting method/basis/charge/multiplicity from the previous water single point (RHF/STO-3G, charge 0, multiplicity 1). However, the tool catalog is empty, so no computational tool is available to execute this single-point calculation. Additionally, the referenced geometry artifact (artifact_5ee4b9c57649458b9e4b339e4a3eff56) is not present in the DATA results, so its contents cannot be verified. Without any available tools, the requested electronic energy cannot be computed. Clarification is needed on how to proceed.",
+        "parameters": {
+          "questions": [
+            "No computational tools are available in the tool catalog, so the requested single-point energy on water_opt cannot be executed. How would you like to proceed?",
+            "The water_opt geometry artifact (artifact_5ee4b9c57649458b9e4b339e4a3eff56) is not present in the available data. Can you provide or confirm the geometry to use?"
+          ],
+          "unresolved": [
+            "No tools available to perform the single-point calculation",
+            "water_opt geometry artifact not accessible in DATA"
+          ]
+        }
+      },
+      "response_sha256": "bf5b2597183966dd5e70ffab0d84c535f9d237c368cefd52498e2e1bbaa17db0"
+    }
+  ]
+}

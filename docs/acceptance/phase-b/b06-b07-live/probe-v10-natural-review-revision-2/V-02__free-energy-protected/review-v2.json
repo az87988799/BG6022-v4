@@ -1,0 +1,229 @@
+{
+  "variant_id": "V-02/free-energy-protected",
+  "repetition": 1,
+  "run_id": "run_140a8765eedc41abbe05cc7f55929ebf",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "quantity:gibbs_free_energy_difference (required) and electronic_energy_difference (required)",
+      "rationale": "Explicitly keeps both required quantities separate. It does not compute or substitute an electronic difference for Gibbs.",
+      "quote_model_ids": [
+        "model_3fed437bf51c495d86e7bf6aecb66903"
+      ]
+    },
+    "unit": {
+      "passed": true,
+      "quote": "unit:Eh for electronic energy difference, Gibbs unit unspecified",
+      "rationale": "Correctly preserves the requested electronic-energy unit and labels missing Gibbs unit unspecified. The quoted A/B existing energies retain exact qualified Eh values.",
+      "quote_model_ids": [
+        "model_3fed437bf51c495d86e7bf6aecb66903"
+      ]
+    },
+    "conditions": {
+      "passed": false,
+      "quote": "conditions:298.15 K, 1 atm, gas phase requested for Gibbs",
+      "rationale": "Now preserves the requested thermal temperature, pressure, environment, differing geometries and (in a question) HF/STO-3G, but omits the explicit charge0/multiplicity1 conditions of both electronic-energy sources. No values are wrong; the explanation remains incomplete against all requested conditions.",
+      "quote_model_ids": [
+        "model_3fed437bf51c495d86e7bf6aecb66903"
+      ]
+    },
+    "source": {
+      "passed": true,
+      "quote": "qualified energies A=-74.964906308165 Eh and B=-74.965782208829 Eh",
+      "rationale": "Names the two unique available-evidence members and exact qualified values. Original Results and artifact hashes were independently checked, while the user is identified as the source of requested comparison conditions.",
+      "quote_model_ids": [
+        "model_3fed437bf51c495d86e7bf6aecb66903"
+      ]
+    },
+    "limits": {
+      "passed": true,
+      "quote": "no thermochemistry/frequency evidence exists and the only permitted tool (analysis.energy_compare) yields electronic energies only",
+      "rationale": "Accurately identifies missing thermal evidence and catalog capability. No model/Tool goal completion is claimed and no required goal is silently removed.",
+      "quote_model_ids": [
+        "model_3fed437bf51c495d86e7bf6aecb66903"
+      ]
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Should I proceed to compute and report only the electronic energy difference E(B)-E(A) from the qualified HF/STO-3G energies, leaving the Gibbs goal unresolved?",
+      "rationale": "The accepted clarification asks for user direction on partial delivery, with both goals retained. No analysis or ORCA is executed; asking a scope question is not a silent goal change.",
+      "quote_model_ids": [
+        "model_3fed437bf51c495d86e7bf6aecb66903"
+      ]
+    }
+  },
+  "behavior": {
+    "report.includes_missing_thermal_evidence": {
+      "passed": true,
+      "quote": "no thermochemistry/frequency evidence exists",
+      "rationale": "The accepted model text itself discloses missing Gibbs evidence, so unlike the previous rejected-only run this behavior is actually delivered.",
+      "quote_model_ids": [
+        "model_3fed437bf51c495d86e7bf6aecb66903"
+      ]
+    }
+  },
+  "protocol_findings": [
+    {
+      "trajectory": "One first-time accepted clarify, waiting_user. No Plan/Tool Result or difference value produced. Goal map correction path was not exercised by this model run, despite offline validation of its diagnostic."
+    }
+  ],
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_3fed437bf51c495d86e7bf6aecb66903",
+      "request_sha256": "432fa1d1ace5adfcc5348c0c732bade61cd8f732412036ce04eae86d66bd1cc2",
+      "response_sha256": "c77bc762d54cb39193980f6a01fe357bff640d171105e94a0efd001838dcbd81",
+      "accepted": true
+    }
+  ],
+  "reviewed_available_evidence": {
+    "A": {
+      "binding": {
+        "run_id": "run_cf30441b40ea46418ef4a98762da8643",
+        "result_id": "result_2b37e67a22e8474d92d933ec94eac9e5",
+        "attempt_id": "attempt_9bbc1df0d21e4f4ab39ee88267f292f0",
+        "port": "energy",
+        "rule_version": "orca-hf-2"
+      },
+      "qualified": {
+        "value": -74.964906308165,
+        "unit": "Eh",
+        "rule_version": "orca-hf-2",
+        "all_checks_passed": true
+      },
+      "artifact_hashes": {
+        "artifact_c682bef174f24e4cb74135d15430b5c0": "6b25eeffd56b62c8c8d3f153ce6feedd7171de6e6361514761072f3adc6b36cb",
+        "artifact_73814ea3d9824f6ebe0a6274ccaf313c": "997a7b6154fa44f7f6e2b287042d0445916d34ec8657ee6d38c7fe9403e7050b",
+        "artifact_70acfcd18f514e6888648fdc58af74c9": "061fdc6ad6f5d04148b2759453007a28b5df58b8ba09ded0d3ac97c699f53bb0",
+        "artifact_98b1617638dc4fd4bf3e0a8752ac337f": "da5a6da68087db8fc3ee01218fba2df3bc0399efad773da252a06ee521fa00b9",
+        "artifact_1464bcbdeb8e4932a00c9f0780e23c69": "e758a502365e0706720fa3dc93c94e43ee2c604e3e8f753f7dff93437c13b13b",
+        "artifact_cf841e63d55747eb9106ad3377cc0bd3": "678a4fb44ebc471e54db9f5384c9a058932f9c49e99b41a1da6f577c9c2c88bd",
+        "artifact_e0285705c7aa415db4376ee1918d14d9": "a364f62c4aa528446135e8ca3dd24ecc727c74377fa4e1e0aa4969caa84b5d50",
+        "artifact_e42c000116004dbf9c464791e8c9836f": "aecd90a959766c59b9304a4174c1a1f32c9f1c9419e14ad3ef487ee12942b9f3",
+        "artifact_70a527a30fb64fd5a9893f98ef9d7fec": "abfc243f3c917ae54077625a5990272b1d5c16ef4ac82ddc4ba26972cc56f4c9",
+        "artifact_ffd83f27085e4ea38ccb9581b41884a5": "1a45b43114d43949cfdbca6a38061b8156b1229968a90fd53aea787382a0f98c",
+        "artifact_8203cdb3ba00460a91ec1fadae2d82fd": "7a846c6a9d36714cbe61a43d4e2ff0b1c9657221cafd416ce99ebdda5ed869b4",
+        "artifact_38ed88a51cd84ce6b998dd6b24575e55": "03d723b910df8478fa78c9d1e2450f610c64132bd6d3828710f558a49007726c",
+        "artifact_a836d7065e9043cb8de2ef707756484e": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_839262f02776440f9cdfce4e49605c19": "20551d72c54ba51b91d5ee2cf0df6b4e0dee076ebc85e4ee45194b629bf61f1d"
+      }
+    },
+    "B": {
+      "binding": {
+        "run_id": "run_d99a65a534c648ada325b512b3965430",
+        "result_id": "result_d89b2e5890ca4164882204c11993c35b",
+        "attempt_id": "attempt_a92e660cfbc44237b83c225125fdd481",
+        "port": "energy",
+        "rule_version": "orca-hf-2"
+      },
+      "qualified": {
+        "value": -74.965782208829,
+        "unit": "Eh",
+        "rule_version": "orca-hf-2",
+        "all_checks_passed": true
+      },
+      "artifact_hashes": {
+        "artifact_f7487ca2e1c84484b541dfb520ca5dec": "93d77d6b6244f21dff79a3c1c2226169c821c3d5063961dcbd8dadd4e1dcfedc",
+        "artifact_6062c95f964745f29ceb56757a85eb53": "e98835a38ce77d77775cd4c4cc32e6d343e9d1566adc63bdece588d1dbc13462",
+        "artifact_ecfba8220b674a60b98f4d0519973e83": "5cbf8add5392f99412297d8592a4d229d518fa45744364a1160b12f27ddf5f05",
+        "artifact_04e0ad032e734481adc466bb8a58189a": "391a98a72c5fa2f6712c81bb3f10381e5a73e33d9c59fd8cc0edb20558566c36",
+        "artifact_2f6e9b895bf442af8ad978aae878f10c": "e758a502365e0706720fa3dc93c94e43ee2c604e3e8f753f7dff93437c13b13b",
+        "artifact_3215fab57242400ebfafc30edf1e18a7": "d235a88754485881899d68a9f3fad99a81c0217fb51656b3bec9344f1b263883",
+        "artifact_a79dc2abd0b142b6a2c6737a0d2579af": "8cea690683023ababafe0671ef96f193f5b4cf4fff7241fb972bc3812e00a4f8",
+        "artifact_04c0f53f8d364e9da76cef2b9a32d894": "593a8c08014606cb9fc5ddee7a1e65586e65a1cb3181bb512e2dad4cb6a37ef1",
+        "artifact_778d8eae38bd4d83afdba45d556ce21f": "abfc243f3c917ae54077625a5990272b1d5c16ef4ac82ddc4ba26972cc56f4c9",
+        "artifact_698e3b90550f4326b7c841579db79895": "102b45f62cc7e964d4b67b38ac2e792cf51b48330fb841e2d1390e1058a1269d",
+        "artifact_eb3c98f26c4641128978a2e233466cda": "d96cd0101ded0e31b06c7088bd67934b8ece640a90a0e6eefea77a847405d3d5",
+        "artifact_4d681b669dee4fc3a16b59900b42dcd3": "8d00efad359180e099d03a42a7130b3c274a0980525b2b573a6d8c12040c05df",
+        "artifact_840adfa2f2954ff487d8dec2fed2a405": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_853d80379a32424aabca81b27003e9ed": "d1ed2e8826d367c55ba8f982fcb3f2664bb31c96427087110894d9375d74d426"
+      }
+    }
+  },
+  "source_artifact_hashes": {
+    "artifact_839262f02776440f9cdfce4e49605c19": "20551d72c54ba51b91d5ee2cf0df6b4e0dee076ebc85e4ee45194b629bf61f1d",
+    "artifact_70a527a30fb64fd5a9893f98ef9d7fec": "abfc243f3c917ae54077625a5990272b1d5c16ef4ac82ddc4ba26972cc56f4c9",
+    "artifact_73814ea3d9824f6ebe0a6274ccaf313c": "997a7b6154fa44f7f6e2b287042d0445916d34ec8657ee6d38c7fe9403e7050b",
+    "artifact_853d80379a32424aabca81b27003e9ed": "d1ed2e8826d367c55ba8f982fcb3f2664bb31c96427087110894d9375d74d426",
+    "artifact_778d8eae38bd4d83afdba45d556ce21f": "abfc243f3c917ae54077625a5990272b1d5c16ef4ac82ddc4ba26972cc56f4c9",
+    "artifact_6062c95f964745f29ceb56757a85eb53": "e98835a38ce77d77775cd4c4cc32e6d343e9d1566adc63bdece588d1dbc13462",
+    "artifact_c682bef174f24e4cb74135d15430b5c0": "6b25eeffd56b62c8c8d3f153ce6feedd7171de6e6361514761072f3adc6b36cb",
+    "artifact_70acfcd18f514e6888648fdc58af74c9": "061fdc6ad6f5d04148b2759453007a28b5df58b8ba09ded0d3ac97c699f53bb0",
+    "artifact_98b1617638dc4fd4bf3e0a8752ac337f": "da5a6da68087db8fc3ee01218fba2df3bc0399efad773da252a06ee521fa00b9",
+    "artifact_1464bcbdeb8e4932a00c9f0780e23c69": "e758a502365e0706720fa3dc93c94e43ee2c604e3e8f753f7dff93437c13b13b",
+    "artifact_cf841e63d55747eb9106ad3377cc0bd3": "678a4fb44ebc471e54db9f5384c9a058932f9c49e99b41a1da6f577c9c2c88bd",
+    "artifact_e0285705c7aa415db4376ee1918d14d9": "a364f62c4aa528446135e8ca3dd24ecc727c74377fa4e1e0aa4969caa84b5d50",
+    "artifact_e42c000116004dbf9c464791e8c9836f": "aecd90a959766c59b9304a4174c1a1f32c9f1c9419e14ad3ef487ee12942b9f3",
+    "artifact_ffd83f27085e4ea38ccb9581b41884a5": "1a45b43114d43949cfdbca6a38061b8156b1229968a90fd53aea787382a0f98c",
+    "artifact_8203cdb3ba00460a91ec1fadae2d82fd": "7a846c6a9d36714cbe61a43d4e2ff0b1c9657221cafd416ce99ebdda5ed869b4",
+    "artifact_38ed88a51cd84ce6b998dd6b24575e55": "03d723b910df8478fa78c9d1e2450f610c64132bd6d3828710f558a49007726c",
+    "artifact_a836d7065e9043cb8de2ef707756484e": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "artifact_f7487ca2e1c84484b541dfb520ca5dec": "93d77d6b6244f21dff79a3c1c2226169c821c3d5063961dcbd8dadd4e1dcfedc",
+    "artifact_ecfba8220b674a60b98f4d0519973e83": "5cbf8add5392f99412297d8592a4d229d518fa45744364a1160b12f27ddf5f05",
+    "artifact_04e0ad032e734481adc466bb8a58189a": "391a98a72c5fa2f6712c81bb3f10381e5a73e33d9c59fd8cc0edb20558566c36",
+    "artifact_2f6e9b895bf442af8ad978aae878f10c": "e758a502365e0706720fa3dc93c94e43ee2c604e3e8f753f7dff93437c13b13b",
+    "artifact_3215fab57242400ebfafc30edf1e18a7": "d235a88754485881899d68a9f3fad99a81c0217fb51656b3bec9344f1b263883",
+    "artifact_a79dc2abd0b142b6a2c6737a0d2579af": "8cea690683023ababafe0671ef96f193f5b4cf4fff7241fb972bc3812e00a4f8",
+    "artifact_04c0f53f8d364e9da76cef2b9a32d894": "593a8c08014606cb9fc5ddee7a1e65586e65a1cb3181bb512e2dad4cb6a37ef1",
+    "artifact_698e3b90550f4326b7c841579db79895": "102b45f62cc7e964d4b67b38ac2e792cf51b48330fb841e2d1390e1058a1269d",
+    "artifact_eb3c98f26c4641128978a2e233466cda": "d96cd0101ded0e31b06c7088bd67934b8ece640a90a0e6eefea77a847405d3d5",
+    "artifact_4d681b669dee4fc3a16b59900b42dcd3": "8d00efad359180e099d03a42a7130b3c274a0980525b2b573a6d8c12040c05df",
+    "artifact_840adfa2f2954ff487d8dec2fed2a405": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "run_sha256": "53a61a57d8b063d7717f506cf7109714c0ef17ba045feebac63e45a7eed00931",
+  "first_response_rejected": false,
+  "reviewed_proposals": [
+    {
+      "model_id": "model_3fed437bf51c495d86e7bf6aecb66903",
+      "accepted": true,
+      "proposal": {
+        "action": "clarify",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "quantity:gibbs_free_energy_difference (required) and electronic_energy_difference (required);unit:Eh for electronic energy difference, Gibbs unit unspecified;conditions:298.15 K, 1 atm, gas phase requested for Gibbs, electronic comparison allows different geometries with formula E(B)-E(A);source:explicit from user request;limits:permission allows only analysis.energy_compare (electronic energy comparison), no thermochemistry/frequency tool available, so Gibbs free energy difference cannot be computed;next:electronic energy difference is computable from qualified energies A=-74.964906308165 Eh and B=-74.965782208829 Eh, but the required Gibbs goal has no available evidence or tool, so clarification is needed on how to proceed with the missing Gibbs free energy difference.",
+        "parameters": {
+          "questions": [
+            "The required Gibbs free energy difference at 298.15 K, 1 atm, gas phase cannot be computed: no thermochemistry/frequency evidence exists and the only permitted tool (analysis.energy_compare) yields electronic energies only. How should the Gibbs goal be handled?",
+            "Should I proceed to compute and report only the electronic energy difference E(B)-E(A) from the qualified HF/STO-3G energies, leaving the Gibbs goal unresolved?"
+          ],
+          "unresolved": [
+            "gibbs_free_energy_difference: no thermal/frequency evidence and no permitted tool to compute Gibbs free energy at 298.15 K, 1 atm, gas phase",
+            "gibbs_free_energy_difference: goal definition/check version unresolved (minimum_check_version unresolved-1)"
+          ]
+        }
+      },
+      "response_sha256": "c77bc762d54cb39193980f6a01fe357bff640d171105e94a0efd001838dcbd81",
+      "independent_review": {
+        "facts_passed": true,
+        "semantic_passed": false,
+        "exact_quotes": [
+          "quantity:gibbs_free_energy_difference (required) and electronic_energy_difference (required)",
+          "conditions:298.15 K, 1 atm, gas phase requested for Gibbs",
+          "qualified energies A=-74.964906308165 Eh and B=-74.965782208829 Eh",
+          "Should I proceed to compute and report only the electronic energy difference E(B)-E(A) from the qualified HF/STO-3G energies, leaving the Gibbs goal unresolved?"
+        ],
+        "rationale": "The two quoted energies and Eh units match original qualified Results. Missing thermal evidence, permitted analysis capability and retained required quantities are accurate; no difference is claimed to have been computed. However the full accepted reason/questions omit charge 0 and multiplicity 1, so the six-axis conditions requirement and overall semantics fail despite true factual statements.",
+        "omitted_request_conditions": {
+          "charge": 0,
+          "multiplicity": 1
+        }
+      }
+    }
+  ],
+  "review_revision": 2,
+  "prior_revision": {
+    "review_path": "review-v1.json",
+    "review_sha256": "35b6aab4e1c89668e01b5306b34807b285a97e6e12a80637a2efe05d9c7031e4",
+    "grade_path": "grade-v1.json",
+    "grade_sha256": "1b10fbd0457c674dab602ce393371d3ba85cdf6c9fc9773a84f5de1a1a3a9013"
+  },
+  "all_proposal_facts_passed": true,
+  "semantic_review_passed": false,
+  "full_trajectory_review_rationale": "The sole accepted clarification contains no identified false factual claim and keeps Gibbs distinct from electronic energy, but it omits the explicit charge 0 and multiplicity 1 of the supplied sources. This is incomplete conditions disclosure, not a numerical or unit error. The existing conditions-axis failure remains; factual accuracy alone does not establish full semantic delivery."
+}

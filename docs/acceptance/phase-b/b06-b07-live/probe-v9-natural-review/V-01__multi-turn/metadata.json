@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "variant_id": "V-01/multi-turn",
+  "repetition": 1,
+  "input_id": "input_7aee8f35ff4b40b29cdcb92cc8e20e1f",
+  "category": "development",
+  "freeze_label": "probe-v9",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/2/expected",
+  "expected": [
+    {
+      "metric": "clarification.before_complete",
+      "operator": "eq",
+      "value": true
+    },
+    {
+      "metric": "orca_starts.before_complete",
+      "operator": "eq",
+      "value": 0
+    },
+    {
+      "metric": "request.user_messages_preserved",
+      "operator": "eq",
+      "value": 3
+    }
+  ],
+  "artifact_ids": [
+    "artifact_2deec4b33a0d450e8d45411d68942b2e",
+    "artifact_09666b4f48014e9987a862ec8e958fa3"
+  ],
+  "source_files": [
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_sp\\geometry.xyz",
+      "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+    },
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_opt\\geometry.xyz",
+      "sha256": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+    }
+  ],
+  "references": [],
+  "archive_imports": [],
+  "tested_scope": [],
+  "prepared_inputs": [],
+  "fixture_gaps": [],
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "continuation_messages": [
+    {
+      "text": "用已登记的 water_sp，算固定几何电子能。",
+      "changes": {
+        "geometry_artifact_id": "artifact_2deec4b33a0d450e8d45411d68942b2e",
+        "unresolved": [
+          "method",
+          "basis",
+          "electron_state"
+        ]
+      }
+    },
+    {
+      "text": "RHF/STO-3G，电荷 0，多重度 1。",
+      "changes": {
+        "method": "HF",
+        "basis": "STO-3G",
+        "charge": 0,
+        "multiplicity": 1,
+        "unresolved": []
+      }
+    }
+  ],
+  "evidence_kind": "real_model_with_frozen_evidence",
+  "model_executed": false,
+  "source_directory_files": {
+    "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_opt": [
+      "geometry.xyz",
+      "reference.inp",
+      "reference.v1.inp",
+      "request.json"
+    ],
+    "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_sp": [
+      "agent-request.json",
+      "geometry.xyz",
+      "reference.inp",
+      "request.json"
+    ]
+  },
+  "run_id": "run_fcf1da1c5d84448a8517d9de6504abd1",
+  "initial_request": {
+    "id": "request_399eae3f7ae74a86a50814d9fc5a3150",
+    "version": 1,
+    "original_text": "给我水的能量。",
+    "geometry_artifact_id": null,
+    "charge": null,
+    "multiplicity": null,
+    "method": null,
+    "basis": null,
+    "conditions_source": {},
+    "goals": [
+      {
+        "id": "electronic_energy",
+        "port": "energy",
+        "required": true,
+        "minimum_check_version": "orca-hf-2",
+        "original_text": "electronic_energy",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "electronic_energy"
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": [
+          "missing:geometry",
+          "missing:method",
+          "missing:basis",
+          "missing:charge",
+          "missing:multiplicity"
+        ]
+      }
+    ],
+    "systems": [],
+    "messages": [
+      {
+        "id": "message_9c29526e93514204bce92580f9daae3f",
+        "role": "user",
+        "text": "给我水的能量。",
+        "source": "user"
+      }
+    ],
+    "unresolved": [
+      "quantity",
+      "geometry_reference",
+      "method",
+      "basis",
+      "electron_state"
+    ],
+    "conditions": {
+      "named_geometries": {
+        "water_sp": "artifact_2deec4b33a0d450e8d45411d68942b2e",
+        "water_opt": "artifact_09666b4f48014e9987a862ec8e958fa3"
+      },
+      "explain_results": true
+    },
+    "normalization_status": "clarification"
+  },
+  "permission_sha256": "8adcb26a3b0356d374a4837ce0af4d7261e0033aebaabfcaf397e93cda718784",
+  "budget_sha256": "38798f37522ece477b430963bb397e510828808c9d35798b7516074b736a4e30"
+}

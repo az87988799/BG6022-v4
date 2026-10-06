@@ -1,0 +1,76 @@
+{
+  "variant_id": "V-01/synonym-single-point",
+  "repetition": 1,
+  "run_id": "run_f8b243d5236248e6b8476ddf3535b4b7",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "instructions": "Review actual accepted model explanations independently; rejected proposals remain separately audited and cannot replace accepted final delivery.",
+  "behavior": {
+    "normalized.quantity": {
+      "passed": true,
+      "quote": "electronic energy only",
+      "rationale": "The accepted clarification names the requested electronic-energy quantity; no numeric output is fabricated."
+    },
+    "normalized.operation": {
+      "passed": true,
+      "quote": "single point",
+      "rationale": "The accepted corrected response explicitly identifies the requested SP operation. This is corrected-response evidence, not first-proposal success."
+    }
+  },
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "single point, electronic energy only",
+      "rationale": "The accepted corrected clarification explicitly identifies single-point electronic energy, without replacing it with free energy, optimization or a thermal quantity. The helper supplied structured conditions; this review does not claim model-only normalization."
+    },
+    "unit": {
+      "passed": false,
+      "quote": "electronic energy only",
+      "rationale": "Neither the rejected first proposal nor the accepted clarification states the expected energy unit or says it is unavailable. No energy value or incorrect unit conversion is supplied; the failure is a missing explanation axis."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "charge 0, multiplicity 1, HF/STO-3G, single point",
+      "rationale": "These explicit conditions match the user Request and remain unchanged in the corrected clarification. RHF is named in its question. No extra default or silent condition override is introduced."
+    },
+    "source": {
+      "passed": true,
+      "quote": "water_sp geometry artifact",
+      "rationale": "This refers to the registered input geometry in the current Request. There is no scientific Result and the model does not invent one. The actual geometry Artifacts were hash-checked; the source claim concerns input only."
+    },
+    "limits": {
+      "passed": true,
+      "quote": "The tool catalog is empty, so no execution step can be planned or called.",
+      "rationale": "The accepted clarification correctly acknowledges the empty permitted catalog and scientific_execution=false. The first rejected placeholder Tool remains a first-response failure; correction does not erase it."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Need to know which tool(s) are available/permitted for this run.",
+      "rationale": "The accepted action is clarify, asking the user to resolve permission/tool availability rather than mutating authorization or executing science. The two explicit questions preserve the requested quantity and conditions."
+    }
+  },
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_5b373fe341cf42ea9f18775427bcb42f",
+      "request_sha256": "1d4967a091569c88acad1934224c314399422dd2fe5c2be7de76366dc0522c6f",
+      "response_sha256": "5f27d438610b57c6a4a30a07a05857422adbf7b2853dbde8d0049596fe523b14"
+    },
+    {
+      "model_id": "model_9971ed406f074e2fb1881321dc96985b",
+      "request_sha256": "bc158761d46771cd9c6d12c53d38861691ee584cf232fcef03972f033d50c81c",
+      "response_sha256": "e5b280df1a305ece7b1fdf230ce14a85ac3d057f8433010115debc04d57c9687"
+    }
+  ],
+  "source_artifact_hashes": {
+    "artifact_793e7580a5ab4e6193cb7289cc2e023d": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331",
+    "artifact_79d698b250e94de79bebbe5a1cb9fdbb": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+  },
+  "protocol_findings": [
+    "The first response invented Orca.single_point despite an empty catalog and was rejected. The second response clarified; zero scientific starts."
+  ],
+  "first_response_rejected": true,
+  "accepted_after_correction": true,
+  "run_sha256": "ccfe6f833846f31b4c29468f42c29fa18af5efc4e686e537804523aa523bd19a"
+}

@@ -1,0 +1,83 @@
+{
+  "variant_id": "V-02/free-energy-protected",
+  "repetition": 1,
+  "run_id": "run_426574b1c5914ede86edf58508a11628",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/1/variants/0/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "goals.gibbs_free_energy_difference.satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "all_required_goals_satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "report.includes_missing_thermal_evidence",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "quote": "No thermal/thermochemistry evidence (frequencies, enthalpy, entropy, or a Gibbs port) exists in the available evidence",
+      "rationale": "Directly discloses the missing evidence preventing Gibbs completion, rather than substituting the electronic difference.",
+      "kind": "behavior_review"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "I cannot fabricate a Gibbs value or substitute the electronic energy difference for it.",
+      "rationale": "Explicitly preserves Gibbs free-energy difference separately from E(B)-E(A); no substituted quantity is published."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "A: -74.964906308165 Eh, B: -74.965782208829 Eh",
+      "rationale": "The two provided qualified electronic energies retain their exact Eh units; missing Gibbs quantities/units are explicitly kept unknown in the reason."
+    },
+    "conditions": {
+      "status": "failed",
+      "quote": "qualified gas-phase HF/STO-3G energies",
+      "rationale": "Correctly identifies the electronic-energy method/basis and gas phase, but the explanation omits the user-required Gibbs temperature 298.15 K and pressure 1 atm. Request data preserves them; the delivered explanation does not disclose them."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "both members A and B have qualified gas-phase HF/STO-3G energies (A: -74.964906308165 Eh, B: -74.965782208829 Eh, rule orca-hf-2, all checks passed)",
+      "rationale": "Identifies the exact two available-evidence members and qualification rule; both aliases bind immutable original Run/Result/Attempt sources in the request. Their qualified values and source artifact hashes were independently re-read for this review."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "No thermal/thermochemistry evidence (frequencies, enthalpy, entropy, or a Gibbs port) exists in the available evidence",
+      "rationale": "Accurately describes the missing thermal evidence and absent Gibbs tool; does not claim that two electronic energies meet both required goals."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "Do you have thermochemistry data (e.g., frequencies/enthalpy/entropy) for geometries A and B, or should this goal be dropped/deferred?",
+      "rationale": "Asks for missing evidence or explicit user scope change; it does not actually drop the immutable Gibbs goal. Waiting_user and zero analysis/science are consistent."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "accepted_action": "clarify",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 1,
+  "tested_scope": [],
+  "tokens_used": 3042,
+  "tokens_unknown": 0,
+  "model_text_sha256": "0dc707af642d5874dffceef3c4dc16a25e7fa91a86f75947e916f3bf1543854e"
+}

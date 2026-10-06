@@ -1,0 +1,83 @@
+{
+  "variant_id": "V-02/free-energy-protected",
+  "repetition": 1,
+  "run_id": "run_140a8765eedc41abbe05cc7f55929ebf",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/1/variants/0/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "goals.gibbs_free_energy_difference.satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "all_required_goals_satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "report.includes_missing_thermal_evidence",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "quote": "no thermochemistry/frequency evidence exists",
+      "rationale": "The accepted model text itself discloses missing Gibbs evidence, so unlike the previous rejected-only run this behavior is actually delivered.",
+      "kind": "behavior_review"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "quantity:gibbs_free_energy_difference (required) and electronic_energy_difference (required)",
+      "rationale": "Explicitly keeps both required quantities separate. It does not compute or substitute an electronic difference for Gibbs."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:Eh for electronic energy difference, Gibbs unit unspecified",
+      "rationale": "Correctly preserves the requested electronic-energy unit and labels missing Gibbs unit unspecified. The quoted A/B existing energies retain exact qualified Eh values."
+    },
+    "conditions": {
+      "status": "failed",
+      "quote": "conditions:298.15 K, 1 atm, gas phase requested for Gibbs",
+      "rationale": "Now preserves the requested thermal temperature, pressure, environment, differing geometries and (in a question) HF/STO-3G, but omits the explicit charge0/multiplicity1 conditions of both electronic-energy sources. No values are wrong; the explanation remains incomplete against all requested conditions."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "qualified energies A=-74.964906308165 Eh and B=-74.965782208829 Eh",
+      "rationale": "Names the two unique available-evidence members and exact qualified values. Original Results and artifact hashes were independently checked, while the user is identified as the source of requested comparison conditions."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "no thermochemistry/frequency evidence exists and the only permitted tool (analysis.energy_compare) yields electronic energies only",
+      "rationale": "Accurately identifies missing thermal evidence and catalog capability. No model/Tool goal completion is claimed and no required goal is silently removed."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "Should I proceed to compute and report only the electronic energy difference E(B)-E(A) from the qualified HF/STO-3G energies, leaving the Gibbs goal unresolved?",
+      "rationale": "The accepted clarification asks for user direction on partial delivery, with both goals retained. No analysis or ORCA is executed; asking a scope question is not a silent goal change."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "accepted_action": "clarify",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 1,
+  "tested_scope": [],
+  "tokens_used": 3011,
+  "tokens_unknown": 0,
+  "model_text_sha256": "d2b80d84f3e66e61870a54dce39ab5766b050c766d7c78413c411fab176913cd"
+}

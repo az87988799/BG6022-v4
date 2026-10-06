@@ -1,0 +1,82 @@
+{
+  "variant_id": "V-06/insufficient-additional-budget",
+  "repetition": 1,
+  "run_id": "run_af04562c9a7442aebfb1ff83793c3f6b",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/5/variants/4/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "extra_orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "goal.satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "report.budget_limit_disclosed",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "quote": "预算中 orca_starts=0、extra_orca_starts=0，且 permission.scientific_execution=false、allow_additional_science=false",
+      "rationale": "These are the actual immutable science permissions and budget caps. They correctly explain why no extra point can be computed; they are not a pre-request model-call snapshot.",
+      "kind": "behavior_review"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "可区分内部最低点为 geom_997a7b6154fa（E=-74.964906308165 Eh，r=1.0194092224084847 Å）",
+      "rationale": "The stated candidate, electronic energy and coordinate agree with the actual partial finite_sampling analysis, independently checked raw energies and XYZ geometry. The model does not assert that the full spacing goal passed."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "邻点间距跨度为 0.16000000000042536 Å，超过目标 0.12 Å",
+      "rationale": "The model uses Eh for electronic energy and angstrom for geometry/span, matching the registered analysis contract and independently calculated distances. It does not mix the energy threshold with the geometric width."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "条件为 RHF/STO-3G、电荷 0、多重度 1、气相",
+      "rationale": "All three source energies carry these same qualified conditions and the registered candidate geometries. There is no method, state or environment mismatch."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "\"result_id\": \"result_2b37e67a22e8474d92d933ec94eac9e5\", \"attempt_id\": \"attempt_9bbc1df0d21e4f4ab39ee88267f292f0\"",
+      "rationale": "The accepted initial Plan provides exact Run/Result/Attempt energy bindings for all three candidates; the final explanation names their stable candidate IDs. All 48 permitted/consumed source Artifact hashes were rechecked. This is analysis of existing references, not three new ORCA starts."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "不涉及连续或全局最小值、振动稳定性、过渡态或完整势能面。",
+      "rationale": "The model restricts the conclusion to sampled discrete points, reports the 0.16 > 0.12 angstrom gap and says the goal is unmet. The actual Result publishes no qualified sampling port."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "在现有权限与预算下无法进一步缩小跨度。",
+      "rationale": "The actual stop respects zero ORCA/additional-start allowance and scientific_execution=false. It does not replace the missing allowed calculation with a guessed energy or claim completion."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "reason": "Result explanation requires an accepted final stop; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [],
+  "tokens_used": 7742,
+  "tokens_unknown": 0,
+  "model_text_sha256": "4d2118841f6cdb526df38d061ccc882601559f2003e7f4e117b3ce433f6c36b9"
+}

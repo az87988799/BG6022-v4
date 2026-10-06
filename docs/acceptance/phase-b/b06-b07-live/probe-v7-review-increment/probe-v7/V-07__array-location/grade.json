@@ -1,0 +1,73 @@
+{
+  "variant_id": "V-07/array-location",
+  "repetition": 1,
+  "run_id": "run_982f39768cd8462a9fe0215fff25493e",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/6/variants/1/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "observation.geometry_index",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "query.typed_key_index_slice",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "Geometries[0].Dipole_Moment[0].dipoleMagnitude = 0.6788282026678785",
+      "rationale": "This exact path and raw scalar agree with the persisted value_observation and an independent read of the archived JSON. The quantity remains an observation, not a qualified scientific dipole port."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "Known units: none reported (units=null)",
+      "rationale": "The observation has units=null. The model explicitly leaves the unit unestablished; its optional examples of possible conventions are not asserted as this value's unit and no conversion is performed."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "conditions=unknown; stage=unknown.",
+      "rationale": "Both statuses agree with the saved read observations. The model does not infer the calculation method, electronic state or geometry stage from the archive label."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "artifact_4c14bf6c0bc04b61b24c6470d1ef32bf (sha256 71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655)",
+      "rationale": "The exact Artifact, complete SHA and typed path identify the original data. Independent JSON checks confirm both the scalar and full Geometries[0:1] slice; all three saved read Results bind to this file."
+    },
+    "limits": {
+      "status": "failed",
+      "quote": "the geometry slice content was not retrieved.",
+      "rationale": "The persisted slice Result contains one complete geometry object and status=observed. Only the model-context preview omitted that object. The model correctly says an empty preview is not an empty source, but then incorrectly equates its missing preview with a Tool read that never retrieved the content. Read success, model visibility and scientific qualification must stay distinct."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "No further execution is warranted; the user's request was observation-only and is complete.",
+      "rationale": "All three actual read goals have completed, including the full stored slice, and no science was requested or authorized. Stopping is the correct action despite the separate erroneous description of preview versus read."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "reason": "Result explanation requires an accepted final stop; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 4,
+  "tested_scope": [],
+  "tokens_used": 13561,
+  "tokens_unknown": 0,
+  "model_text_sha256": "0260f034a17ea2dfbfa13cd8334be08f7cb7c735dbd6730ff5bcc3934c21e690"
+}

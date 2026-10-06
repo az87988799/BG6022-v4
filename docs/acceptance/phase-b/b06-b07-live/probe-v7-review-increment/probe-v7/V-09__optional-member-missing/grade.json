@@ -1,0 +1,74 @@
+{
+  "variant_id": "V-09/optional-member-missing",
+  "repetition": 1,
+  "run_id": "run_86e20a93d67e4dc181f999cbe4943f93",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/6/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "required_AB_comparison.published",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "optional_missing_C.disclosed",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "quote": "optional member C is unbound and was not required.",
+      "rationale": "C is a genuine optional missing row in the saved member table. Both required A/B sources are qualified, and the explanation separately discloses C rather than treating the entire comparison as complete for all members.",
+      "kind": "behavior_review"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "electronic energy difference ΔE = E(B) − E(A) = -0.0008759006639991185 Eh",
+      "rationale": "The signed difference matches the saved qualified analysis and independent subtraction of the two source stdout energies. A/B are not swapped and optional C is not inserted as zero."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "E(A) = -74.964906308165 Eh",
+      "rationale": "Both source energies and the difference are explicitly in Eh, matching their checked output ports and the user request. No conversion or thermodynamic correction is inferred."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "Conditions: RHF/STO-3G, charge 0, multiplicity 1 (singlet), gas phase, H2O for both members; geometries differ as permitted by the request.",
+      "rationale": "The user explicitly allows different geometries and the bound sources match method, basis, charge, multiplicity, system and environment. The optional missing member does not weaken either required source check."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "member_table artifact artifact_c94f3cc79569427e8b291489baba3ec0",
+      "rationale": "The final reason names the exact analysis Result, original A/B Result and geometry IDs, and the member-table Artifact. The Plan separately gives original Run/Attempt bindings. All 29 consumed/output Artifact hashes were rechecked."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "not a free energy, not a geometry relaxation, and not a global minimum or transition-state claim",
+      "rationale": "The model limits its conclusion to electronic energy at the specified fixed geometries, with no invented C energy or broader scientific guarantee."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "stopping, since both required goals are satisfied and no further execution is permitted or needed.",
+      "rationale": "The program requires stop-only explanation after the two goals complete. The actual stop performs no new ORCA calculation and makes no request to expand authority."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "reason": "Result explanation requires an accepted final stop; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [],
+  "tokens_used": 6375,
+  "tokens_unknown": 0,
+  "model_text_sha256": "353a9ba3ef3d3966eac443153b859d276eb5c6d061fad70b2ee9fadfbece2ebf"
+}

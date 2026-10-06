@@ -1,0 +1,84 @@
+{
+  "variant_id": "V-01/ambiguous-pronoun",
+  "repetition": 1,
+  "run_id": "run_a9532f90c48840ed8bcaf4608ebc8af9",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/4/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "unresolved.geometry_reference",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "next_action",
+      "operator": "eq",
+      "value": "clarify",
+      "status": "passed",
+      "observed": "clarify",
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "The goal electronic_energy requires geometry, method, basis, charge, and multiplicity",
+      "rationale": "Correctly identifies the intended electronic-energy goal without replacing it or fabricating a value."
+    },
+    "unit": {
+      "status": "failed",
+      "quote": "electronic energy calculation",
+      "rationale": "The accepted clarification contains no expected energy unit or explicit unknown-unit statement. This is a disclosure omission, not an incorrect conversion."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "the actual method, basis set, charge, and multiplicity from the prior run are not present in the request or authority data",
+      "rationale": "Correctly keeps unknown prior settings and ambiguous geometry unresolved; no invented inheritance or execution occurs."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "referenced artifacts (water_sp, water_opt) are only named geometries",
+      "rationale": "Accurately names the two registered geometry aliases in the preserved user history; neither is arbitrarily selected as prior settings proof."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "Without the prior settings I cannot construct a valid plan, and no tools are available to retrieve them.",
+      "rationale": "Missing settings and empty tool catalog are real barriers; does not imply unavailable scientific results have been computed."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "Should the calculation use the water_sp geometry, the water_opt geometry, or both?",
+      "rationale": "Asks the user to resolve the ambiguous reference and separately specify method/basis/electron state. All list lengths are now legal, accepted on the first response and waiting_user."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "accepted_action": "clarify",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "http_requests": 1,
+  "tested_scope": [],
+  "tokens_used": 1760,
+  "tokens_unknown": 0,
+  "model_text_sha256": "4bb53c1fefb70078f954e330ec1ae877cbbc3d0b6ed2cd4657221ebed9c77a2e"
+}

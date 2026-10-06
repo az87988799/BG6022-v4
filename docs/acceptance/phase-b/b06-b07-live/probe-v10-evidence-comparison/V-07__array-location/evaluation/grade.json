@@ -1,0 +1,80 @@
+{
+  "variant_id": "V-07/array-location",
+  "repetition": 1,
+  "run_id": "run_243041f2b72840d4abd7df29f22871cf",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/6/variants/1/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "observation.geometry_index",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "query.typed_key_index_slice",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "Dipole magnitude at Geometries[0].Dipole_Moment[0].dipoleMagnitude = 0.6788282026678785",
+      "rationale": "Correct four root-key counts, successful one-element slice, and separately queried scalar agree with actual Results and source JSON."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:unknown",
+      "rationale": "The observations have units=null, so no physical unit is inferred. Phrasing that no units field is present is imprecise about the null metadata field, but the reported unknown unit is correct."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "conditions:unknown; stage:unknown; scientific_status:unverified",
+      "rationale": "Does not infer method, basis, state, or scientific qualification from raw structure."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "artifact_5c0560dbb91945d682902c6d5205b1ee (sha256 71e5d502...)",
+      "rationale": "Exact Artifact ID, hash prefix, typed path, and geometry index identify the verified original JSON."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "an omitted preview, not a failed read and not evidence the slice is empty",
+      "rationale": "Intermediate third reason describes a partial preview and requests the distinct exact path; unlike v9 it never says the Tool failed to read the source. Final reason explicitly distinguishes model projection from the successful complete slice read."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "before the dipole magnitude read",
+      "rationale": "The actual trajectory is discovery, slice, scalar, then accepted stop. Every next operation matches its reason; any further provenance read is left to user authorization."
+    }
+  },
+  "fixture_gaps": [],
+  "proposal_review": {
+    "all_proposal_facts_passed": true,
+    "semantic_review_passed": true,
+    "status": "passed",
+    "reason": "Full-trajectory facts and semantics require explicit independent review; final six axes cannot replace it."
+  },
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 4,
+  "tested_scope": [],
+  "tokens_used": 13959,
+  "tokens_unknown": 0,
+  "model_text_sha256": "ef1cfe1d67d1ef32ca17f0e8d1a27782091fc73d1b8e87993e4bc8c362bff88f"
+}

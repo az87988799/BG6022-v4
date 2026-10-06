@@ -1,0 +1,85 @@
+{
+  "variant_id": "V-01/synonym-single-point",
+  "repetition": 1,
+  "run_id": "run_f8b243d5236248e6b8476ddf3535b4b7",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/0/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "normalized.quantity",
+      "operator": "eq",
+      "value": "electronic_energy",
+      "status": "passed",
+      "quote": "electronic energy only",
+      "rationale": "The accepted clarification names the requested electronic-energy quantity; no numeric output is fabricated.",
+      "kind": "behavior_review"
+    },
+    {
+      "metric": "normalized.operation",
+      "operator": "eq",
+      "value": "SP",
+      "status": "passed",
+      "quote": "single point",
+      "rationale": "The accepted corrected response explicitly identifies the requested SP operation. This is corrected-response evidence, not first-proposal success.",
+      "kind": "behavior_review"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "single point, electronic energy only",
+      "rationale": "The accepted corrected clarification explicitly identifies single-point electronic energy, without replacing it with free energy, optimization or a thermal quantity. The helper supplied structured conditions; this review does not claim model-only normalization."
+    },
+    "unit": {
+      "status": "failed",
+      "quote": "electronic energy only",
+      "rationale": "Neither the rejected first proposal nor the accepted clarification states the expected energy unit or says it is unavailable. No energy value or incorrect unit conversion is supplied; the failure is a missing explanation axis."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "charge 0, multiplicity 1, HF/STO-3G, single point",
+      "rationale": "These explicit conditions match the user Request and remain unchanged in the corrected clarification. RHF is named in its question. No extra default or silent condition override is introduced."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "water_sp geometry artifact",
+      "rationale": "This refers to the registered input geometry in the current Request. There is no scientific Result and the model does not invent one. The actual geometry Artifacts were hash-checked; the source claim concerns input only."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "The tool catalog is empty, so no execution step can be planned or called.",
+      "rationale": "The accepted clarification correctly acknowledges the empty permitted catalog and scientific_execution=false. The first rejected placeholder Tool remains a first-response failure; correction does not erase it."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "Need to know which tool(s) are available/permitted for this run.",
+      "rationale": "The accepted action is clarify, asking the user to resolve permission/tool availability rather than mutating authorization or executing science. The two explicit questions preserve the requested quantity and conditions."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": false,
+    "passed": null,
+    "status": "not_applicable",
+    "reason": "Result explanation requires an accepted final stop; rejected proposals do not count."
+  },
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "http_requests": 2,
+  "tested_scope": [],
+  "tokens_used": 3334,
+  "tokens_unknown": 0,
+  "model_text_sha256": "d6f3fb79eeb6171cd4a847ef97045d09fbcd5fb0ae580e4e79d74f3a7748cdce"
+}

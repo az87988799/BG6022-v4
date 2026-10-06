@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "variant_id": "V-01/synonym-single-point",
+  "repetition": 1,
+  "input_id": "input_04f5610982084b118694b037fb4f6dae",
+  "category": "development",
+  "freeze_label": "probe-v10",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/0/expected",
+  "expected": [
+    {
+      "metric": "normalized.quantity",
+      "operator": "eq",
+      "value": "electronic_energy"
+    },
+    {
+      "metric": "normalized.operation",
+      "operator": "eq",
+      "value": "SP"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0
+    }
+  ],
+  "artifact_ids": [
+    "artifact_5ae2054f274f4b5f97c71ebee11ca130",
+    "artifact_0ba5e2bd346540cba40c277a7877d5cd"
+  ],
+  "source_files": [
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_sp\\geometry.xyz",
+      "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+    },
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_opt\\geometry.xyz",
+      "sha256": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+    }
+  ],
+  "references": [],
+  "archive_imports": [],
+  "tested_scope": [],
+  "prepared_inputs": [],
+  "fixture_gaps": [],
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "continuation_messages": [],
+  "evidence_kind": "real_model_with_frozen_evidence",
+  "model_executed": false,
+  "source_directory_files": {
+    "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_sp": [
+      "agent-request.json",
+      "geometry.xyz",
+      "reference.inp",
+      "request.json"
+    ],
+    "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_opt": [
+      "geometry.xyz",
+      "reference.inp",
+      "reference.v1.inp",
+      "request.json"
+    ]
+  },
+  "run_id": "run_6da5a13e58334f61a069ba8bc6fe2f54",
+  "initial_request": {
+    "id": "request_2a188384f6534d4f923bd8ff0d9662bc",
+    "version": 1,
+    "original_text": "请对 water_sp 算一个 RHF/STO-3G 单点；电荷 0、多重度 1，只要电子能。",
+    "geometry_artifact_id": "artifact_5ae2054f274f4b5f97c71ebee11ca130",
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "HF",
+    "basis": "STO-3G",
+    "conditions_source": {
+      "method": "explicit",
+      "basis": "explicit",
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "geometry": "explicit"
+    },
+    "goals": [
+      {
+        "id": "electronic_energy",
+        "port": "energy",
+        "required": true,
+        "minimum_check_version": "orca-hf-2",
+        "original_text": "electronic_energy",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "electronic_energy"
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      }
+    ],
+    "systems": [],
+    "messages": [
+      {
+        "id": "message_1e431798242a4c44bc576c85c0000c0f",
+        "role": "user",
+        "text": "请对 water_sp 算一个 RHF/STO-3G 单点；电荷 0、多重度 1，只要电子能。",
+        "source": "user"
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "named_geometries": {
+        "water_sp": "artifact_5ae2054f274f4b5f97c71ebee11ca130",
+        "water_opt": "artifact_0ba5e2bd346540cba40c277a7877d5cd"
+      },
+      "operation": "SP",
+      "explain_results": true
+    },
+    "normalization_status": "normalized"
+  },
+  "permission_sha256": "17a30f2ea1a62a2ae2f370b46808c29d08d9b9a17a1a398cbbc734a65e632f9f",
+  "budget_sha256": "38798f37522ece477b430963bb397e510828808c9d35798b7516074b736a4e30"
+}

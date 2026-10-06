@@ -1,0 +1,112 @@
+{
+  "request_hash": "a8a302c15f33b7153052b553e043d4fefe37081fea5509f1e60032fa46c921c5",
+  "proposal": {
+    "action": "initial_plan",
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0,
+    "related_results": [],
+    "reason": "No plan exists yet and the sampling goal is insufficient_evidence. The three required_initial candidates (geom_a1fd9c54f540, geom_997a7b6154fa, geom_4551ffe49805) must be sampled first with orca.sp (HF/STO-3G, charge 0, multiplicity 1) on their registered geometries, then analysis.finite_sampling checks the sampled energies against the requested conditions (target_width 0.12 Å, energy_threshold 6.14e-11 Eh). The prior validation error was a single-point deadline >300 s; timeout_seconds is set to 300 to satisfy the orca.sp constraint. Each energy member is bound to its producing step via Step.inputs beside parameters.",
+    "parameters": {
+      "steps": [
+        {
+          "key": "s1",
+          "tool": "orca.sp",
+          "system_id": "geom_a1fd9c54f540",
+          "parameters": {
+            "method": "HF",
+            "basis": "STO-3G",
+            "charge": 0,
+            "multiplicity": 1,
+            "cores": 4,
+            "memory_mb": 1024,
+            "maxcore_mb": 192,
+            "scf_maxiter": 300,
+            "opt_maxiter": 200,
+            "timeout_seconds": 300
+          }
+        },
+        {
+          "key": "s2",
+          "tool": "orca.sp",
+          "system_id": "geom_997a7b6154fa",
+          "parameters": {
+            "method": "HF",
+            "basis": "STO-3G",
+            "charge": 0,
+            "multiplicity": 1,
+            "cores": 4,
+            "memory_mb": 1024,
+            "maxcore_mb": 192,
+            "scf_maxiter": 300,
+            "opt_maxiter": 200,
+            "timeout_seconds": 300
+          }
+        },
+        {
+          "key": "s3",
+          "tool": "orca.sp",
+          "system_id": "geom_4551ffe49805",
+          "parameters": {
+            "method": "HF",
+            "basis": "STO-3G",
+            "charge": 0,
+            "multiplicity": 1,
+            "cores": 4,
+            "memory_mb": 1024,
+            "maxcore_mb": 192,
+            "scf_maxiter": 300,
+            "opt_maxiter": 200,
+            "timeout_seconds": 300
+          }
+        },
+        {
+          "key": "a",
+          "tool": "analysis.finite_sampling",
+          "parameters": {
+            "goal_id": "sampling_goal"
+          },
+          "inputs": {
+            "geom_a1fd9c54f540": {
+              "producer_key": "s1",
+              "port": "energy"
+            },
+            "geom_997a7b6154fa": {
+              "producer_key": "s2",
+              "port": "energy"
+            },
+            "geom_4551ffe49805": {
+              "producer_key": "s3",
+              "port": "energy"
+            }
+          }
+        }
+      ],
+      "goal_map": {
+        "sampling_goal": {
+          "step_key": "a",
+          "port": "sampling"
+        }
+      }
+    }
+  },
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 2873,
+    "completion_tokens": 562,
+    "total_tokens": 3435,
+    "prompt_cache_hit_tokens": 2304,
+    "prompt_cache_miss_tokens": 569
+  },
+  "response_hash": "1396d79f9efd0a9ca9bac0fb92534b7f136f598818526a627b52e3411d711509",
+  "response_bytes": 2503,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "1993eb67-e9e6-4d44-99d8-61b0bfbf5cbb",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 3.5
+}

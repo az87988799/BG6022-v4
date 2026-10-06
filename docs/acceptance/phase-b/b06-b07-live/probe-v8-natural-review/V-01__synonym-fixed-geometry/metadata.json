@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "variant_id": "V-01/synonym-fixed-geometry",
+  "repetition": 1,
+  "input_id": "input_9a403045a769417e9549860282b714ec",
+  "category": "development",
+  "freeze_label": "probe-v8",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/0/variants/1/expected",
+  "expected": [
+    {
+      "metric": "normalized.quantity",
+      "operator": "eq",
+      "value": "electronic_energy"
+    },
+    {
+      "metric": "normalized.operation",
+      "operator": "eq",
+      "value": "SP"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0
+    }
+  ],
+  "artifact_ids": [
+    "artifact_d20ae554357d45fbbdad8d4a4723dd65",
+    "artifact_5606e562d6014c74a13c8761a397961b"
+  ],
+  "source_files": [
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_sp\\geometry.xyz",
+      "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+    },
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_opt\\geometry.xyz",
+      "sha256": "676295418d045dfdb3b3abb8a7c2e9a93a546110c0ef69047b4d6271a4eea85f"
+    }
+  ],
+  "references": [],
+  "archive_imports": [],
+  "tested_scope": [],
+  "prepared_inputs": [],
+  "fixture_gaps": [],
+  "runtime_limitations": [
+    "Request normalization is supplied by trusted fixture fields; the model proposes actions, not Request mutations"
+  ],
+  "continuation_messages": [],
+  "evidence_kind": "real_model_with_frozen_evidence",
+  "model_executed": false,
+  "source_directory_files": {
+    "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_opt": [
+      "geometry.xyz",
+      "reference.inp",
+      "reference.v1.inp",
+      "request.json"
+    ],
+    "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\water_sp": [
+      "agent-request.json",
+      "geometry.xyz",
+      "reference.inp",
+      "request.json"
+    ]
+  },
+  "run_id": "run_e376aa4d8422491db72805beae0ffc65",
+  "initial_request": {
+    "id": "request_a6d0f5bcbe5d4868bbaa4c2b1f05a3cd",
+    "version": 1,
+    "original_text": "水分子用 water_sp 的坐标，不优化结构。按 RHF/STO-3G、中性单重态，求固定几何的电子总能。",
+    "geometry_artifact_id": "artifact_d20ae554357d45fbbdad8d4a4723dd65",
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "HF",
+    "basis": "STO-3G",
+    "conditions_source": {
+      "method": "explicit",
+      "basis": "explicit",
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "geometry": "explicit"
+    },
+    "goals": [
+      {
+        "id": "electronic_energy",
+        "port": "energy",
+        "required": true,
+        "minimum_check_version": "orca-hf-2",
+        "original_text": "electronic_energy",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "electronic_energy"
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      }
+    ],
+    "systems": [],
+    "messages": [
+      {
+        "id": "message_4ad3d48ddc014c848746d8e80df1c1d4",
+        "role": "user",
+        "text": "水分子用 water_sp 的坐标，不优化结构。按 RHF/STO-3G、中性单重态，求固定几何的电子总能。",
+        "source": "user"
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "named_geometries": {
+        "water_sp": "artifact_d20ae554357d45fbbdad8d4a4723dd65",
+        "water_opt": "artifact_5606e562d6014c74a13c8761a397961b"
+      },
+      "operation": "SP",
+      "explain_results": true
+    },
+    "normalization_status": "normalized"
+  },
+  "permission_sha256": "4526c9a380d72ba8cd1f4b5d76062de1a40db6982b194a45875bf17ddfd317cd",
+  "budget_sha256": "38798f37522ece477b430963bb397e510828808c9d35798b7516074b736a4e30"
+}

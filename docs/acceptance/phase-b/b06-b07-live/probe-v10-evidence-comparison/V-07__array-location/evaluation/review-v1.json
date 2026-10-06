@@ -1,0 +1,95 @@
+{
+  "variant_id": "V-07/array-location",
+  "repetition": 1,
+  "run_id": "run_243041f2b72840d4abd7df29f22871cf",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "instructions": "Review actual persisted model text independently; quote exact text. Do not infer a pass from fixture expectations.",
+  "behavior": {},
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "Dipole magnitude at Geometries[0].Dipole_Moment[0].dipoleMagnitude = 0.6788282026678785",
+      "rationale": "Correct four root-key counts, successful one-element slice, and separately queried scalar agree with actual Results and source JSON."
+    },
+    "unit": {
+      "passed": true,
+      "quote": "unit:unknown",
+      "rationale": "The observations have units=null, so no physical unit is inferred. Phrasing that no units field is present is imprecise about the null metadata field, but the reported unknown unit is correct."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "conditions:unknown; stage:unknown; scientific_status:unverified",
+      "rationale": "Does not infer method, basis, state, or scientific qualification from raw structure."
+    },
+    "source": {
+      "passed": true,
+      "quote": "artifact_5c0560dbb91945d682902c6d5205b1ee (sha256 71e5d502...)",
+      "rationale": "Exact Artifact ID, hash prefix, typed path, and geometry index identify the verified original JSON."
+    },
+    "limits": {
+      "passed": true,
+      "quote": "an omitted preview, not a failed read and not evidence the slice is empty",
+      "rationale": "Intermediate third reason describes a partial preview and requests the distinct exact path; unlike v9 it never says the Tool failed to read the source. Final reason explicitly distinguishes model projection from the successful complete slice read."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "before the dipole magnitude read",
+      "rationale": "The actual trajectory is discovery, slice, scalar, then accepted stop. Every next operation matches its reason; any further provenance read is left to user authorization."
+    }
+  },
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "prompt_version": "agent-json-v4",
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_50f5ee9c23d84698873ea245628baf27",
+      "request_sha256": "fc6918d925f82e5a5de20d3846044178d63d65534289168071e0f34caf15bb3c",
+      "response_sha256": "e317a2c1e5ee9c5156febb7bafc1fa6fe53a5ffad8f2305bcc1a98c0e0a35deb"
+    },
+    {
+      "model_id": "model_a6a66196cee246759e0794611a36442c",
+      "request_sha256": "3cb00a0d2c8c8846cb2c6fa18914f549a2b2e2594706f79c103acaed6cad4b0c",
+      "response_sha256": "0a430eb09a4c3b93085bbd1a41e214048f6f8728e79bbf24287b6c9fca10d319"
+    },
+    {
+      "model_id": "model_6c6b5fed22ba4c0da453efbc082735b6",
+      "request_sha256": "b1c9f48cb21a2b918f01b06131d85dc7d258196c42081398d96c561b85231483",
+      "response_sha256": "f1d7fe86a669c9ba1a128a3e9e6d659689ea367c1a8371a2e2b26928d8c3a496"
+    },
+    {
+      "model_id": "model_c744587269a3476da7d1271897b3f3a8",
+      "request_sha256": "8ab86220ef817f4f33d0e977818c47e89027354e95b5b544ceb36cf059bf6f33",
+      "response_sha256": "15fea7f8628f0d8943190563c474bca58fdc615647719be66a2cf9d7676903d7"
+    }
+  ],
+  "source_artifact_hashes": {
+    "artifact_5c0560dbb91945d682902c6d5205b1ee": "71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655"
+  },
+  "source_files_verified": [
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\real_water_sp\\job.property.json",
+      "sha256": "71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655"
+    }
+  ],
+  "run_sha256": "52f12d47f8b259bdfeeda8944a442f4b321551d91c72e41393eb34c9a18c6b26",
+  "previous_failure_files_sha256": {
+    "review.json": "510528bffd584a1921bbe99fb618c141c57c2957bfca874f7a40160aef96dda6",
+    "grade.json": "185eb207f961186422853c869a27b79fb981e4056c7bc1b56ef5d3e3ed9517bf",
+    "execution.json": "f04f704ef6623d446f3c4210336955e567a0c04db7ff0309eb3f7ec78cbb7b92"
+  },
+  "all_proposal_facts_passed": true,
+  "protocol_findings": [
+    {
+      "kind": "nonblocking_wording",
+      "issue": "Observation has a units key with null value, not a physically specified unit; final unknown is correct. The generic sampling disclaimer is irrelevant boilerplate, not a claimed computation."
+    }
+  ],
+  "slice_preview_verification": {
+    "result_id": "result_1eba34f96c3146aca1227e2ff411b6fb",
+    "actual_elements": 1,
+    "scalar_present_in_complete_slice": true,
+    "subsequent_scalar_read_is_separate_goal": true,
+    "model_did_not_claim_failed_tool_read": true
+  }
+}

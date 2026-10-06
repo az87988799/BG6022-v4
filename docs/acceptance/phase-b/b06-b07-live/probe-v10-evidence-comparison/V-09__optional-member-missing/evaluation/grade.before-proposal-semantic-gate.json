@@ -1,0 +1,75 @@
+{
+  "variant_id": "V-09/optional-member-missing",
+  "repetition": 1,
+  "run_id": "run_a5bf8165e85d458da08008bc0c06caae",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/6/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "required_AB_comparison.published",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "optional_missing_C.disclosed",
+      "operator": "eq",
+      "value": true,
+      "status": "failed",
+      "quote": "both required goals (electronic_energy_difference, finite_member_table) are satisfied",
+      "rationale": "Neither actual proposal mentions C. The analysis table records optional C as missing and unbound; completion of the required A/B comparison cannot substitute for its explicit disclosure.",
+      "kind": "behavior_review"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "quantity:electronic_energy_difference ΔE=E(B)-E(A)",
+      "rationale": "The quantity/sign are correct and the independently checked program Result contains the signed difference. The model prose omits the numerical delta and operand energies; this delivery limitation is recorded without adding reviewer-written values to the quoted answer."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:Eh",
+      "rationale": "The reported target unit matches the immutable energy-difference Result."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "method HF, basis STO-3G, charge 0, multiplicity 1 (RHF), gas_phase, geometries A and B allowed to differ",
+      "rationale": "These conditions match both required operands and the authorized geometry difference. No physical conditions are silently changed."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "result_2760ba597ec943e0908f39a3b48c28bd, rule energy-compare-1, all checks passed",
+      "rationale": "This is the exact qualified analysis. The initial reason and Plan additionally cite the original A/B Run/Result/Attempt bindings, which match the verified Artifact chain."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "electronic energy at the specified fixed geometries, not a free energy, no geometry relaxation or ZPE",
+      "rationale": "The stated physical scope is correct. Missing optional C disclosure is separately failed by the frozen behavior assertion; it is not supplied by this review or by the deterministic report."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "both required goals (electronic_energy_difference, finite_member_table) are satisfied, no further execution needed",
+      "rationale": "Actual required A/B difference and finite table ports qualify. Stopping without ORCA is appropriate; optional C is not required to qualify these ports."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [],
+  "tokens_used": 6430,
+  "tokens_unknown": 0,
+  "model_text_sha256": "b55fbe5871d7feb711fa0db59d5d9a4a54129d83b040f70934669bb7035f59dd"
+}

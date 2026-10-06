@@ -1,0 +1,83 @@
+{
+  "variant_id": "V-07/array-location",
+  "repetition": 1,
+  "run_id": "run_192fad86d94142fa91d5c522682adc37",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "instructions": "Review actual persisted model text independently; quote exact text. Do not infer a pass from fixture expectations.",
+  "behavior": {},
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "value:0.6788282026678785",
+      "rationale": "The separately read scalar equals raw JSON. Discovery, slice, and scalar goals are all actually satisfied in requested order."
+    },
+    "unit": {
+      "passed": true,
+      "quote": "unit:unknown (units null)",
+      "rationale": "No conventional dipole unit is inferred."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "no validation of method/basis/charge/multiplicity",
+      "rationale": "Unknown conditions remain unknown and no qualified science port is claimed."
+    },
+    "source": {
+      "passed": true,
+      "quote": "result_cad18c6ef1de4c31a5588828cd4004ea",
+      "rationale": "The final reason separately names all three actual Results and supplies the scalar typed location."
+    },
+    "limits": {
+      "passed": false,
+      "quote": "returned an empty partial preview (omitted=1), so the dipole magnitude was not actually read",
+      "rationale": "Intermediate accepted reason treats model-preview omission as evidence that the Tool did not read the value. The complete successful slice Result contains that scalar. A separate typed scalar read is correctly still needed for its distinct Goal, and the final reason correctly distinguishes empty preview from empty source, but that does not erase the earlier factual misstatement."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "Executing the slice step first is the correct next permitted action",
+      "rationale": "Actual order is discovery, slice, scalar, stop; every selected Tool matches its stated intended next operation."
+    }
+  },
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_be5c58a35873418680bb373a229cbc1d",
+      "request_sha256": "7db36642f853e729c62ae16df3b812dbf6d4f48ba2d213d6ddccd8452f97e3bf",
+      "response_sha256": "d964c9011f198a2452d6fb0e890e3087019be6d6881dd32ec47d7a614fcfa70d"
+    },
+    {
+      "model_id": "model_387d2eaa320a481bb6eeee9852f57b7d",
+      "request_sha256": "73f8e8f83ba49e206bd6e10060799257636e415a21bd56789c4cf74d82803eae",
+      "response_sha256": "9a5bf8cccab615e45a28e1d0b6d5bfd80c1bffc954cdc1ac1934289c1ddeddd3"
+    },
+    {
+      "model_id": "model_d6c9bfa342bd4d579a8e546992a4bd3c",
+      "request_sha256": "4193c7bc1032ecd218d1131bfe9ec7bd2c3ede98c8a91d896e8547df25c57995",
+      "response_sha256": "9566c27b0e099e03cfe3ec476fd045f3fcdd0a73239182afde158ac5cf258c08"
+    },
+    {
+      "model_id": "model_2603c4222b294825b199b551ecd5d92f",
+      "request_sha256": "310f1020ad128bd944ceb4b8809a112dca4efd3c0d7b192e9a5b885f809c21a9",
+      "response_sha256": "c1a3c848b640e5aa95f13419e005a25f98451770e9e527532885ba3f39dbd5ed"
+    }
+  ],
+  "source_artifact_hashes": {
+    "artifact_fe7a3faf6e234d04b89a4dfaeb3ac21a": "71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655"
+  },
+  "source_files_verified": [
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\real_water_sp\\job.property.json",
+      "sha256": "71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655"
+    }
+  ],
+  "run_sha256": "488f6886fc577537b241a4f85b753dbbf8f513987ac09aa550cbfd427014b978",
+  "protocol_findings": [
+    {
+      "model_id": "model_d6c9bfa342bd4d579a8e546992a4bd3c",
+      "issue": "Preview omission was used as a causal claim that the value was not read; complete slice read had succeeded. Final explanation corrects the preview/source distinction."
+    }
+  ],
+  "all_proposal_facts_passed": false,
+  "final_explanation_axes_passed": true
+}

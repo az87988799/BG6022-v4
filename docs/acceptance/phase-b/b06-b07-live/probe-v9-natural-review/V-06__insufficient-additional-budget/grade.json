@@ -1,0 +1,83 @@
+{
+  "variant_id": "V-06/insufficient-additional-budget",
+  "repetition": 1,
+  "run_id": "run_80bcbdfdfc644abbab0e2e844ca9aaef",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/5/variants/4/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "extra_orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "goal.satisfied",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "report.budget_limit_disclosed",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "quote": "No additional ORCA starts are permitted (orca_starts=0)",
+      "rationale": "The first accepted initial-plan reason explicitly states the zero additional-science capacity. This exact accepted text satisfies budget disclosure even though the final stop gives an additional incorrect justification.",
+      "kind": "behavior_review"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "the discrete internal minimum is geom_997a7b6154fa",
+      "rationale": "Identifies the actual observed finite discrete sampled minimum without claiming continuous/global optimality."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "r=1.0194092224084847 Å with E=-74.964906308165 Eh",
+      "rationale": "Radius, electronic energy, neighbor span, target and threshold retain their actual qualified/analysis units; no conversion is performed."
+    },
+    "conditions": {
+      "status": "failed",
+      "quote": "target_width 0.12 Å, energy_threshold 6.14e-11 Eh",
+      "rationale": "The sampling criterion is disclosed, but neither accepted reason names the requested RHF/STO-3G, charge0/multiplicity1 conditions underlying the numerical energies. The original Request preserves them; the model explanation does not."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "result_2b37e67a22e8474d92d933ec94eac9e5",
+      "rationale": "The accepted initial plan binds all three actual source Run/Result/Attempt energy ports; the later executed analysis consumes those same bindings. All source artifact hashes were independently checked, and no planned/optional candidate is treated as an executed energy."
+    },
+    "limits": {
+      "status": "failed",
+      "quote": "adding a single point cannot reduce the span between the existing nearest left and right neighbors of the minimum",
+      "rationale": "This mathematical impossibility claim is false: adding an internal registered point changes the set of nearest sampled neighbors and may reduce the span. Energy at an optional point remains unknown, so goal sufficiency cannot be assumed either way. The real execution barrier is the zero ORCA budget disclosed in the first accepted proposal."
+    },
+    "next_action": {
+      "status": "failed",
+      "quote": "so no permitted action can satisfy the span criterion",
+      "rationale": "The Run must stop because ORCA0/no science permission disallows further sampling. The final reply instead supports stopping with an invalid geometric impossibility argument. Correct insufficient_evidence and discrete-only statements do not repair that explanation error."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [],
+  "tokens_used": 7878,
+  "tokens_unknown": 0,
+  "model_text_sha256": "d79da45bcb44b121f1f3e4cdd5ded79e90d31cb5a2927b81fdf3c6f732b854f5"
+}

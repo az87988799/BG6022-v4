@@ -1,0 +1,68 @@
+{
+  "variant_id": "V-09/unqualified-or-old-rule",
+  "repetition": 1,
+  "run_id": "run_4f57383f3744455e9aa7d833cea7e6aa",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/4/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "energy_comparison.science_passed",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "Therefore ΔE = E(B) - E(A) cannot be computed under the current rule.",
+      "rationale": "The signed electronic difference stays unmet; no old-rule observation becomes qualified output."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "E = -74.964906308165 Eh",
+      "rationale": "The sole quoted numerical qualified energy has the correct Eh unit."
+    },
+    "conditions": {
+      "status": "failed",
+      "quote": "B's energy was produced under orca-hf-1, science_status not_verified_for_current_rule, and explicit_revalidation is false",
+      "rationale": "The qualification facts are correct, but neither accepted proposal states the requested physical method, basis, charge/multiplicity or environment. Rule eligibility is not a substitute for those scientific conditions."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "B's geometry (artifact_d987bb97390d48779531fc150ae51ffd)",
+      "rationale": "The final reason preserves a genuine B geometry Artifact, names the actual analysis Result, and the initial Plan supplies the exact historical B Run/Result/Attempt binding. It no longer claims that B has no traceable source."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "member B is 'missing' because its source checks do not satisfy the consumer rule",
+      "rationale": "The model correctly distinguishes historical provenance from present qualification and retains both required goals as insufficient evidence."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "must be re-evaluated under orca-hf-2 (or the current rule) to obtain a qualified energy",
+      "rationale": "The model describes the needed stronger evidence while explicitly stating that current permission prevents re-running/requalification. It takes no new scientific action and does not auto-upgrade the old Result."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [
+    "original orca-hf-1 Result is ineligible for orca-hf-2; no automatic upgrade"
+  ],
+  "tokens_used": 6579,
+  "tokens_unknown": 0,
+  "model_text_sha256": "7af2bca5b5207f97c54a8113fbcf0b415a0dfaf4303a5fd68e2c28b6edf1f7db"
+}

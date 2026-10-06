@@ -1,0 +1,62 @@
+{
+  "request_hash": "d4d43449293ff0259abe2beddf60abaf55b677248b85df8b3980fbfbf259feb6",
+  "proposal": {
+    "action": "initial_plan",
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 0,
+    "related_results": [],
+    "reason": "quantity:available_external_observations + imported_stdout_energy_line;unit:unknown (no settled results yet);conditions:import registered source source_0c785d293bbe41d2972e426e4ee05605 (stdout role), then search imported artifact for 'FINAL SINGLE POINT ENERGY';source:explicit registered_source_id from request conditions;limits:no ORCA starts, no additional science, read-only evidence tools only;next:import snapshot, then search imported stdout for the energy line and report what is present/missing.",
+    "parameters": {
+      "steps": [
+        {
+          "key": "import_snapshot",
+          "tool": "evidence.import",
+          "parameters": {
+            "source_id": "source_0c785d293bbe41d2972e426e4ee05605"
+          }
+        },
+        {
+          "key": "search_energy_line",
+          "tool": "evidence.search",
+          "parameters": {
+            "artifact_id": "import_snapshot",
+            "query": "FINAL SINGLE POINT ENERGY",
+            "start_line": 1,
+            "max_lines": 200,
+            "max_hits": 50
+          }
+        }
+      ],
+      "goal_map": {
+        "available_external_observations": {
+          "step_key": "import_snapshot",
+          "port": "imported_evidence"
+        },
+        "imported_stdout_energy_line": {
+          "step_key": "search_energy_line",
+          "port": "search_hits"
+        }
+      }
+    }
+  },
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 2242,
+    "completion_tokens": 301,
+    "total_tokens": 2543,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 2242
+  },
+  "response_hash": "aaff927cde6e30e5f437a50480be9425221450cf9768f9302460161f416014b3",
+  "response_bytes": 1707,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "01c086a0-8e76-4920-b65c-3f6e9df75315",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 2.1880000000237487
+}

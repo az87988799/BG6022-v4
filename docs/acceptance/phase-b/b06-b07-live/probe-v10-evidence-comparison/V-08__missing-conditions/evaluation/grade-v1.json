@@ -1,0 +1,84 @@
+{
+  "variant_id": "V-08/missing-conditions",
+  "repetition": 1,
+  "run_id": "run_5dd3f2ecb1424db4acd050fd947761fc",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/7/variants/1/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "necessary_conditions.status",
+      "operator": "eq",
+      "value": "unknown",
+      "status": "passed",
+      "observed": "unknown",
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "energy_comparison.science_passed",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "historical_cost.fabricated",
+      "operator": "eq",
+      "value": false,
+      "status": "passed",
+      "observed": false,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "one stdout line 'FINAL SINGLE POINT ENERGY -74.962991615317'",
+      "rationale": "Exact scalar agrees with the sole actual line in the 50-byte imported excerpt; both inventory and search Goals are actually satisfied."
+    },
+    "unit": {
+      "status": "failed",
+      "quote": "unit:hartree (ORCA default, not explicitly stated in the read text)",
+      "rationale": "Fails: the hash-bound search observation has units=null and only the unlabelled excerpt was read. An acknowledged conventional ORCA unit is still an unsupported assignment here; unknown must remain unknown."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "source conditions reported as 'unknown', stage 'unknown', scientific_status 'unverified'",
+      "rationale": "Unknown method, basis, geometry, charge, multiplicity, and stage are accurately retained; missing input/property JSON are disclosed."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "sha256 d95f79b65f03170f2fca06615f6d9d87f808e0af7476b4c76d577c63914d9476",
+      "rationale": "Full hash and exact Artifact/source identities match the imported snapshot and actual search Result."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "the energy value is an unverified observation, not a scientific qualification",
+      "rationale": "Does not upgrade the raw excerpt to a scientific energy output or fabricate historical cost. Zero ORCA and postprocess starts are confirmed; the explicitly described import did create the permitted snapshot Artifact."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "next:none — both goals satisfied",
+      "rationale": "After the first invalid proposal, the one permitted correction places the future Artifact gap in goal_map. Actual import then search complete the two Goals before accepted stop. No further recomputation is proposed."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 4,
+  "tested_scope": [
+    "V08 receives a hash-bound source locator computed from original LF-separated bytes; the model must read actual text through evidence.search. This does not test independent line discovery."
+  ],
+  "tokens_used": 10937,
+  "tokens_unknown": 0,
+  "model_text_sha256": "1afe0a5a93c1bbada44bcae5540b42cde5ef3173ca3aca89bd73fbd1762c7939"
+}

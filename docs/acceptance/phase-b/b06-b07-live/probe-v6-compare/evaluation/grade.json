@@ -1,0 +1,83 @@
+{
+  "variant_id": "V-09/compatible-water",
+  "repetition": 1,
+  "run_id": "run_02a9aea3cf534f2898fbcbf9ccf647a5",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/0/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "energy_difference.equals_independent_subtraction",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "energy_difference.unit",
+      "operator": "eq",
+      "value": "Eh",
+      "status": "passed",
+      "observed": "Eh",
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "sources.explicit_attempt_result_artifact_hash",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "goal.satisfied",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "E(B) - E(A) = -74.965782208829 Eh - (-74.964906308165 Eh) = -0.0008759006639991185 Eh",
+      "rationale": "The model keeps the requested signed electronic difference E(B)-E(A). The two independently archived stdout energies reproduce the saved analysis value to the specified 1e-12 absolute tolerance. Member A and B are not swapped."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit Eh, matching the requested formula and unit",
+      "rationale": "Both original qualified energy ports and the analysis energy_difference port use Eh. The model uses no unjustified conversion or thermodynamic interpretation."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "Conditions: RHF/STO-3G, charge 0, multiplicity 1, gas phase, geometries allowed to differ",
+      "rationale": "These conditions match the user Request, both archived input/Result bindings and production compatibility checks. The distinct geometry hashes were rechecked. No identical-geometry requirement was silently imposed or method/state condition weakened."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "member_table artifact_b5f94559b95144669095328d0deecad1 lists both members",
+      "rationale": "The stop identifies the exact analysis Result and member-table Artifact plus original A/B Run, Result and geometry IDs. Its geometry hash prefixes agree with complete hashes in saved provenance. The initial Plan supplies exact original Attempt IDs in Step.inputs; all 28 source Artifact hashes were independently rechecked. The model does not claim these read-only sources are new calculations."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "this is the electronic energy difference at the two registered geometries, not a free energy, and not a global minimum or stability claim",
+      "rationale": "The limitation is scientifically appropriate to two qualified single-point electronic energies. Neither the saved checks nor model text assert thermal corrections, vibrational stability or a global minimum."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "No further execution is needed; no ORCA starts were used (orca_starts budget 0).",
+      "rationale": "The model stops after both requested outputs pass. The Run has 1 analysis execution, 0 new ORCA starts, 0 Attempts and 2 model transmissions. No new science or permission expansion is proposed."
+    }
+  },
+  "fixture_gaps": [],
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [],
+  "tokens_used": 6370,
+  "tokens_unknown": 0,
+  "model_text_sha256": "50a72b5f3add7712b073283c75276b2f33897ec3f252d1d96f658a03446bd6f0"
+}

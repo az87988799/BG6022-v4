@@ -1,0 +1,75 @@
+{
+  "variant_id": "V-09/optional-member-missing",
+  "repetition": 1,
+  "run_id": "run_fd0fd1e446584eb5a792779d3be658ef",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/8/variants/6/expected",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "assertions": [
+    {
+      "metric": "required_AB_comparison.published",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "optional_missing_C.disclosed",
+      "operator": "eq",
+      "value": true,
+      "status": "failed",
+      "quote": "next:none, both required goals (electronic_energy_difference, finite_member_table) satisfied",
+      "rationale": "Neither accepted proposal mentions C at all. The actual table records optional C missing; the required disclosure cannot be inferred from a correct A/B completion statement or supplied by the deterministic report.",
+      "kind": "behavior_review"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "quantity:electronic_energy_difference ΔE=E(B)-E(A)",
+      "rationale": "The requested physical quantity/sign and both qualified operand energies are correct. The numerical difference is available in the actual qualified Result but omitted from model prose; this omission is noted rather than filled by the reviewer."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:Eh",
+      "rationale": "The source and difference units are explicitly Hartree."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "requested RHF/STO-3G, neutral singlet, gas phase, geometries A and B allowed to differ",
+      "rationale": "The final explanation accurately matches both required operands and the permitted geometry difference."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "result_4f742bbd351041a1bf54388ed10dd8ca (analysis.energy_compare, rule energy-compare-1, all checks passed)",
+      "rationale": "The cited analysis and original A/B Results are exact. Initial Plan inputs preserve Run/Attempt identities and all consumed Artifact hashes were verified."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "not a free energy, no geometry relaxation or thermochemistry",
+      "rationale": "The scientific claim is limited to fixed-geometry electronic energy. Failure to disclose optional C is separately graded by the frozen behavior assertion."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "next:none, both required goals (electronic_energy_difference, finite_member_table) satisfied",
+      "rationale": "Actual A/B comparison and table ports qualify, so no additional science is necessary. No fabricated C value or new calculation is proposed."
+    }
+  },
+  "fixture_gaps": [],
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "accepted_action": "stop",
+    "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [],
+  "tokens_used": 6251,
+  "tokens_unknown": 0,
+  "model_text_sha256": "13987a75a08c1f7592553c99fffc46fde12749765399efce378c28eda37a5b92"
+}

@@ -1,0 +1,71 @@
+{
+  "variant_id": "V-07/discover-and-read",
+  "repetition": 1,
+  "run_id": "run_ccdd1584a9dc4604a4fb6c4a2ab38daa",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "instructions": "Review actual persisted model text independently; quote exact text. Do not infer a pass from fixture expectations.",
+  "behavior": {},
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "the dipole magnitude at path Geometries[0].Dipole_Moment[0].dipoleMagnitude = 0.6788282026678785.",
+      "rationale": "The accepted final explanation identifies the exact requested raw scalar and value. The production value_observation and independently read archived JSON have the same path and scalar; no scientific dipole output was published."
+    },
+    "unit": {
+      "passed": true,
+      "quote": "the unit is unknown/not declared in the observed field.",
+      "rationale": "The saved observation has units=null. The model explicitly preserves unknown units and does not invent Debye or atomic-unit conversion."
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "scientific_status = \"unverified\", stage = \"unknown\", conditions = \"unknown\" for both reads",
+      "rationale": "These three statuses match both persisted read Results. No method, basis, electronic state or dipole convention is inferred from the water_sp name."
+    },
+    "source": {
+      "passed": true,
+      "quote": "raw_field_observation (value_observation, result_bb13b638ecd941d994f05130bc68a487)",
+      "rationale": "The exact existing Result ID, port, Artifact ID and typed JSON location appear in the final reason. The source file hash 71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655 was rechecked and agrees with the frozen archived JSON."
+    },
+    "limits": {
+      "passed": true,
+      "quote": "The value is therefore an unqualified observation, not a verified scientific result.",
+      "rationale": "The model correctly separates passing evidence-read-1 mechanics from scientific qualification; its additional limits describe one observed JSON field and unread provenance. Persisted qualified_outputs are empty and no ORCA Attempt exists."
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "a new user decision would be needed to read Calculation_Info/Calculation_Status for provenance and units",
+      "rationale": "This is an optional follow-up after the current two read goals have completed. It proposes another bounded read, does not assume units exist there, and respects the final-stop restriction without launching conversion or science. The named tools are already permitted; the follow-up is a new request decision, not an expansion of tool permission."
+    }
+  },
+  "review_kind": "independent_manual_evidence_review",
+  "human_expert_approval": false,
+  "evidence_category": "development_real_model_no_orca",
+  "reviewed_model_receipts": [
+    {
+      "model_id": "model_6c08b0a632134953b2d58698b4aec426",
+      "request_sha256": "17fedd493e77fedd9485a95a8b22edd8e3920d444537c4bc756cd99a37518c09",
+      "response_sha256": "8114a955b30035f1608891b0fe22c6c8e2ff08dd8ad435265614e399f58eaad5"
+    },
+    {
+      "model_id": "model_4eed25a58b1648509a331f624337dbe9",
+      "request_sha256": "cbc8cda8d33bf12435522f2e2dc80c17065a2141f192b5965873a68a60879afa",
+      "response_sha256": "3c9f4c0c3e8f44a73c5a37562252be56834cb963af652aaa1cb0b1e312079789"
+    },
+    {
+      "model_id": "model_05fe301d816141aba9a07020f422f306",
+      "request_sha256": "941461f58da48dd8d61333243eac8d52bd2bfa21b0a7af45bdf1dffc1830fa1b",
+      "response_sha256": "f2f90e6250594f8ce50024355f22596eb1e6fc7fdafd43bc2a345ade1b3559db"
+    },
+    {
+      "model_id": "model_7442315781af43c1abbc6d8d4936b920",
+      "request_sha256": "e56a3c5dced6e86ef719b1fef1ef3b05da3096c9a72d80767b8df9ce5047adbc",
+      "response_sha256": "c83ccd63f8931f110560aa4f51329c05ab2c566eb558f62b50ebd76e9179b623"
+    }
+  ],
+  "source_artifact_hashes": {
+    "artifact_818fe7c22e3a4a239ee86b3829459862": "71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655"
+  },
+  "protocol_findings": [
+    "One malformed parameters.call_tool envelope was rejected and corrected; all four HTTP requests remain counted."
+  ]
+}

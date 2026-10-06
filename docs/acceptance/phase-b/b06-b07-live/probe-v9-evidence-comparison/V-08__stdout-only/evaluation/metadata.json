@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "variant_id": "V-08/stdout-only",
+  "repetition": 1,
+  "input_id": "input_87761b21d9f549baabfecde94a0116d4",
+  "category": "development",
+  "freeze_label": "probe-v9",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "expected_ref": "tests/fixtures/phase_b/cases.json#/cases/7/variants/0/expected",
+  "expected": [
+    {
+      "metric": "available_observations.returned",
+      "operator": "eq",
+      "value": true
+    },
+    {
+      "metric": "missing_files.includes_input_json",
+      "operator": "eq",
+      "value": true
+    },
+    {
+      "metric": "original_run.fabricated",
+      "operator": "eq",
+      "value": false
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0
+    }
+  ],
+  "artifact_ids": [],
+  "source_files": [
+    {
+      "path": "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\real_water_sp\\stdout.out",
+      "sha256": "9c3c07310c5e8e8c4462646504bf0597387eb322f53a4ce12380fd5a23f458e1"
+    }
+  ],
+  "references": [],
+  "archive_imports": [],
+  "tested_scope": [
+    "V08 receives a hash-bound source locator computed from original LF-separated bytes; the model must read actual text through evidence.search. This does not test independent line discovery."
+  ],
+  "prepared_inputs": [],
+  "fixture_gaps": [],
+  "runtime_limitations": [],
+  "continuation_messages": [],
+  "evidence_kind": "real_model_with_frozen_evidence",
+  "model_executed": false,
+  "query_artifact_id": null,
+  "source_directory_files": {
+    "E:\\BG6022-V4\\tests\\fixtures\\phase_a\\real_water_sp": [
+      "geometry.xyz",
+      "input-manifest.json",
+      "job.2jsonout",
+      "job.inp",
+      "job.property.json",
+      "provenance.json",
+      "stdout.out"
+    ]
+  },
+  "run_id": "run_f0ea9de734074bb3830603c1121bc780",
+  "initial_request": {
+    "id": "request_19ffff163d394698835fbfce24fcf930",
+    "version": 1,
+    "original_text": "只导入这个登记来源中现有的 ORCA stdout，告诉我能读到什么以及缺少什么，不补算。",
+    "geometry_artifact_id": null,
+    "charge": null,
+    "multiplicity": null,
+    "method": null,
+    "basis": null,
+    "conditions_source": {},
+    "goals": [
+      {
+        "id": "available_external_observations",
+        "port": "imported_evidence",
+        "required": true,
+        "minimum_check_version": "evidence-read-1",
+        "original_text": "available_external_observations",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "available_external_observations",
+          "query": {
+            "source_id": "source_ba0ee5ecf91c46ba8b72dd730ba672a5"
+          },
+          "accept_partial_observations": true
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      },
+      {
+        "id": "imported_stdout_energy_line",
+        "port": "search_hits",
+        "required": true,
+        "minimum_check_version": "evidence-read-1",
+        "original_text": "imported_stdout_energy_line",
+        "system_ids": [],
+        "conditions": {
+          "quantity": "imported_stdout_energy_line",
+          "imported_source_id": "source_ba0ee5ecf91c46ba8b72dd730ba672a5",
+          "require_nonempty_matches": true,
+          "query": {
+            "query": "FINAL SINGLE POINT ENERGY"
+          }
+        },
+        "minimum_evidence": [
+          "original purpose and conditions must be preserved"
+        ],
+        "unresolved": []
+      }
+    ],
+    "systems": [],
+    "messages": [
+      {
+        "id": "message_ccecdd71c3f34eaeb7f5447d5910bedb",
+        "role": "user",
+        "text": "只导入这个登记来源中现有的 ORCA stdout，告诉我能读到什么以及缺少什么，不补算。",
+        "source": "user"
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "registered_source_id": "source_ba0ee5ecf91c46ba8b72dd730ba672a5",
+      "source_manifest": [
+        {
+          "name": "stdout.out",
+          "role": "stdout"
+        },
+        {
+          "name": "job.inp",
+          "role": "orca_input"
+        },
+        {
+          "name": "job.property.json",
+          "role": "property_json"
+        }
+      ],
+      "source_read_hint": {
+        "source_id": "source_ba0ee5ecf91c46ba8b72dd730ba672a5",
+        "role": "stdout",
+        "source_sha256": "9c3c07310c5e8e8c4462646504bf0597387eb322f53a4ce12380fd5a23f458e1",
+        "query": "FINAL SINGLE POINT ENERGY",
+        "start_line": 664,
+        "max_lines": 5,
+        "total_lines": 849
+      },
+      "explain_results": true
+    },
+    "normalization_status": "normalized"
+  },
+  "permission_sha256": "53239c709f136d1e3c92d667804a5b5d0f88350b9de709c64e1bc2ceecebbd88",
+  "budget_sha256": "19322dd3c1c8e7ffa6122987d68c841577458d813cd981f092b4a2cfd0366bb7"
+}
