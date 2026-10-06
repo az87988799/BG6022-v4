@@ -313,15 +313,28 @@ def test_unknown_termination_archives_evidence_and_preserves_previous_result(
         assert repeated.attempts[0].result_id == current.id
 
 
-def test_recovery_result_saved_before_run_reference_is_reattached(stored_attempt, monkeypatch):
+@pytest.mark.parametrize("already_finished", [False, True])
+def test_recovery_result_saved_before_run_reference_is_reattached(
+    stored_attempt, monkeypatch, already_finished
+):
     store, config, run, step, attempt = stored_attempt
     directory = store.path(attempt.directory)
     (directory / "stdout.out").write_text("Synthetic stopped evidence")
-    outcome = {"state": "unknown", "handle": attempt.execution_handle, "resource_usage": {"wall_seconds": 2}}
+    outcome = {"state": "unknown", "handle": attempt.execution_handle,
+               "resource_usage": {"wall_seconds": 2, "user_cpu_seconds": 1}}
     atomic_write(directory / "execution.json", json.dumps(outcome).encode(), immutable=True)
     old = Result(run_id=run.id, step_id=step.id, attempt_id=attempt.id, operation_status="unknown")
     store.save_result(old)
     runner._settle(store, run, attempt, old, outcome)
+    if already_finished:
+        store.finish_attempt(run, attempt.id, state="failed", result_id=old.id,
+                             elapsed_seconds=2, cpu_seconds=1, termination_confirmed=True)
+        assert attempt.finished_at is not None
+        assert store.environment_lease() is None
+        monkeypatch.setattr(store, "finish_attempt", lambda *args, **kwargs: pytest.fail("duplicate settlement"))
+    original_usage = run.usage.model_copy(deep=True)
+    original_attempt = attempt.model_dump(exclude={"result_id"})
+    original_receipt = (directory / "execution.json").read_bytes()
     monkeypatch.setattr(local, "reconcile", lambda handle: {"state": "terminated", "reason": "synthetic stopped"})
     monkeypatch.setattr(calculation, "read_outputs", lambda *args, **kwargs: {
         "checks": {}, "qualified_outputs": {}, "observations": {}, "diagnostics": []})
@@ -340,17 +353,33 @@ def test_recovery_result_saved_before_run_reference_is_reattached(stored_attempt
     paths = list(store.path(f"runs/{run.id}/results").glob("*.json"))
     assert len(paths) == 2
     before = {path.name: path.read_bytes() for path in paths}
+    replacement = store.result_chain(intermediate, intermediate.attempts[0])[-1]
+    assert replacement.supersedes_result_id == old.id
+    assert replacement.artifact_ids
+    assert not replacement.qualified_outputs
+    assert intermediate.usage == original_usage
+    if already_finished:
+        assert intermediate.attempts[0].model_dump(exclude={"result_id"}) == original_attempt
+        assert store.environment_lease() is None
+        monkeypatch.setattr(local, "reconcile", lambda *args: pytest.fail("durable termination proof ignored"))
     monkeypatch.setattr(store, "save_result", original_save)
     monkeypatch.setattr(calculation, "collect_result", lambda *args: pytest.fail("duplicate recovery collection"))
     for _ in range(2):
         recovered = runner.execute(store, config, run.id, resume=True)
         assert recovered.state == "failed"
-        assert len(recovered.result_ids) == 2
-        assert recovered.attempts[0].result_id != old.id
+        assert recovered.result_ids == [old.id, replacement.id]
+        assert recovered.attempts[0].result_id == replacement.id
+        assert recovered.usage == original_usage
         assert recovered.usage.orca_starts_actual == 1
         assert recovered.usage.elapsed_seconds == 2
+        assert recovered.usage.cpu_seconds == 1
+        if already_finished:
+            assert recovered.attempts[0].model_dump(exclude={"result_id"}) == original_attempt
+        assert runner._step_results(store, recovered)[step.id].id == replacement.id
         assert store.environment_lease() is None
-    assert {path.name: path.read_bytes() for path in paths} == before
+    assert {path.name: path.read_bytes()
+            for path in store.path(f"runs/{run.id}/results").glob("*.json")} == before
+    assert (directory / "execution.json").read_bytes() == original_receipt
 
 
 @pytest.mark.parametrize("invalid", ["unrelated", "branch", "cycle", "cross_attempt", "wrong_step"])

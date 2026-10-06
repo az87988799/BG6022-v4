@@ -1,0 +1,140 @@
+{
+  "date": "2026-10-06",
+  "status": "awaiting_user_acceptance",
+  "baseline_commit": "856cada3a1fd592ea86055f840c46042d94616a5",
+  "scope": "R-03 settled historical attempt: durable replacement Result published before Run reference, crash, repeated resume",
+  "production_change": "Only skip a settled, collected, lease-free attempt if its current Result reference matches the validated chain terminal.",
+  "red": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/integration/test_recovery_edges.py -k recovery_result_saved_before_run_reference_is_reattached -q --tb=short",
+    "passed": 1,
+    "failed": 1,
+    "deselected": 18,
+    "elapsed_seconds": 23.74,
+    "expected_failure": "unbound replacement result requires explicit resume"
+  },
+  "targeted": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/integration/test_recovery_edges.py -q",
+    "passed": 20,
+    "failed": 0,
+    "elapsed_seconds": 57.48
+  },
+  "offline": {
+    "command": ".venv/Scripts/python.exe -m pytest -q --junitxml=data/repair-validation/r03-followup-offline.xml",
+    "passed": 304,
+    "skipped": 14,
+    "failed": 0,
+    "elapsed_seconds": 203.3,
+    "net_new_cases": 1,
+    "skip_details": [
+      {
+        "class": "tests.live.test_lifecycle",
+        "name": "test_real_mpi_ranks_are_managed_and_cleaned[cancel]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_lifecycle",
+        "name": "test_real_mpi_ranks_are_managed_and_cleaned[kill_coordinator]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_reference",
+        "name": "test_independent_frozen_reference[water_sp]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_reference",
+        "name": "test_independent_frozen_reference[methane_sp]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_reference",
+        "name": "test_independent_frozen_reference[water_opt]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_reference",
+        "name": "test_independent_frozen_reference[methane_opt]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[water_sp-expected0]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[methane_sp-expected1]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[water_opt-expected2]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[methane_opt-expected3]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[water_scf_limit-expected4]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[water_opt_limit-expected5]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_static_opt_to_sp",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.unit.test_store",
+        "name": "test_symlink_cannot_escape_controlled_root",
+        "reason": "creating test symlinks requires Windows developer mode/privilege"
+      }
+    ],
+    "junit_path": "E:\\BG6022-V4\\data\\repair-validation\\r03-followup-offline.xml",
+    "junit_sha256": "9fc90e0cd73c5d5e9ee0e630278363af6064603ed69f9440a00f1dba10208d4f"
+  },
+  "lint": {
+    "command": ".venv/Scripts/ruff.exe check .",
+    "result": "passed"
+  },
+  "scientific_execution": {
+    "new_orca_starts": 0,
+    "real_live_tests": "not run",
+    "historical_replay": "not rerun; scientific parser/checks unchanged"
+  },
+  "historical_integrity": {
+    "files_verified_against_previous_delivery": 1500,
+    "changed_files": [],
+    "basis": "data/repair-validation/history-before.json plus the previously recorded report-link-append.json final report hash"
+  },
+  "unchanged_contract": "docs/decisions/0003-check-version-and-recovery-results.md",
+  "source_hashes": {
+    "src/orca_agent/runner.py": "663940986f01093b567bbdd47798313fcf34f66b2f5564d902082ea24797ead9",
+    "tests/integration/test_recovery_edges.py": "4ec9c26c89a86a79894293c95ae77dbc22b03277715a7e0dc7d730412b2d7f6e"
+  },
+  "logs": [
+    {
+      "path": "logs/r03-followup-red.txt",
+      "sha256": "2c03b0ea822d93e42724a1f2016905ef158b8493ebe79b0e2f1f21784982aa72",
+      "size_bytes": 1052
+    },
+    {
+      "path": "logs/r03-followup-green.txt",
+      "sha256": "661ac51e34d14ef684afec603590f33c11ee953720cf8d3a0a7a8ab2047cf2de",
+      "size_bytes": 102
+    },
+    {
+      "path": "logs/r03-followup-offline.txt",
+      "sha256": "08fe4d9392534bb65dc078f18d45f0ef74ccfe9fe35f60dd2bbd8c8925593df5",
+      "size_bytes": 952
+    }
+  ],
+  "github_actions": "Checked separately after push; no remote result inferred from local tests."
+}

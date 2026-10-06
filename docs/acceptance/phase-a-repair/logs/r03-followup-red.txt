@@ -1,0 +1,15 @@
+.F                                                                       [100%]
+================================== FAILURES ===================================
+_____ test_recovery_result_saved_before_run_reference_is_reattached[True] _____
+tests\integration\test_recovery_edges.py:368: in test_recovery_result_saved_before_run_reference_is_reattached
+    recovered = runner.execute(store, config, run.id, resume=True)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\runner.py:226: in execute
+    results = _step_results(store, run)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\runner.py:46: in _step_results
+    raise ValueError("unbound replacement result requires explicit resume")
+E   ValueError: unbound replacement result requires explicit resume
+=========================== short test summary info ===========================
+FAILED tests/integration/test_recovery_edges.py::test_recovery_result_saved_before_run_reference_is_reattached[True]
+1 failed, 1 passed, 18 deselected in 23.74s

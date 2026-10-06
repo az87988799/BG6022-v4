@@ -130,7 +130,9 @@ def _recover(store, config, run, plan):
         lease = store.environment_lease()
         owns_lease = bool(lease and (lease["run_id"], lease["attempt_id"]) == (run.id, attempt.id))
         needs_collection = current is None or current.operation_status == "unknown"
-        if attempt.finished_at and not needs_collection and not owns_lease:
+        # A settled attempt can still have a replacement saved before its Run reference.
+        if (attempt.finished_at and not needs_collection and not owns_lease
+                and current.id == attempt.result_id):
             continue
         if not attempt.finished_at and attempt.state not in ("intent", "running", "unknown"):
             continue
