@@ -2,7 +2,7 @@
 
 阶段 A 提供不依赖 LLM 的本地计算底座：结构化 Request/Plan → 注册 Tool → OPI 输入 → Windows 受管 ORCA → 逐输出科学检查 → 不可变证据及结果。阶段 A 已于 2026-10-06 获得[用户验收通过](docs/acceptance/phase-a/user-acceptance.md)，接受的代码基线为 `236376e`；历史真实证据见[验收报告](docs/acceptance/phase-a/report.md)。
 
-阶段 B 已进入方案准备，实施尚未开始。任务、依赖和退出条件见[阶段 B 实施方案](docs/PHASE-B-IMPLEMENTATION-PLAN.md)，建议首批执行 B-01 的契约与用例冻结。
+阶段 B 实施尚未开始，具体任务、范围和退出条件以用户逐次提供的方案为准。
 
 R-01～R-05 的后续修复见 [修复验收记录](docs/acceptance/phase-a-repair/report.md)。新请求采用 `orca-hf-2`；旧 Request/Result 保留原规则和原字节。旧 Run 仍可查看、取消、恢复对账及补收，但未完成的旧规则 Run 不会直接继续计算，需另行明确复验；本轮未实现自动规则迁移。
 
