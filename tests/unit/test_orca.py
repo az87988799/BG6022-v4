@@ -2,6 +2,8 @@
 
 import hashlib
 import json
+import re
+import shutil
 from pathlib import Path
 
 import pytest
@@ -245,3 +247,176 @@ def test_real_opt_iteration_limit_retains_energy_without_qualified_structure():
     assert "optimization_not_converged" in {item["category"] for item in result["diagnostics"]}
     assert (directory / "job.xyz").exists()
     assert snapshot(directory) == before
+
+
+@pytest.mark.parametrize("json_mode", ["consistent", "missing", "conflict"])
+@pytest.mark.parametrize("final_scf,expected", [("missing", "unverified"), ("failed", "failed")])
+def test_final_opt_energy_cannot_borrow_prior_scf(tmp_path, json_mode, final_scf, expected):
+    """Fault injection into a real multicyle output; this never runs ORCA."""
+    source = FIXTURES / "real_water_opt_early_stop"
+    original = snapshot(source)
+    shutil.copytree(source, tmp_path, dirs_exist_ok=True)
+    output = tmp_path / "stdout.out"
+    lines = output.read_bytes().decode().split("\n")
+    markers = [i for i, line in enumerate(lines) if re.match(
+        r"\s*\**\s*SCF CONVERGED AFTER\s+\d+\s+CYCLES", line
+    )]
+    assert len(markers) > 1
+    lines[markers[-1]] = "" if final_scf == "missing" else "SCF NOT CONVERGED AFTER 2 CYCLES"
+    output.write_bytes("\n".join(lines).encode())
+    prop = tmp_path / "job.property.json"
+    if json_mode == "missing":
+        prop.unlink()
+    else:
+        payload = json.loads(prop.read_text())
+        final_data = payload["Geometries"][-1]["Single_Point_Data"]
+        final_data["Converged"] = final_scf != "failed"
+        if json_mode == "conflict":
+            final_data["FinalEnergy"] += 0.5
+        prop.write_text(json.dumps(payload))
+    before = snapshot(tmp_path)
+    manifest = json.loads((tmp_path / "input-manifest.json").read_text())
+    result = read_outputs(tmp_path, manifest["parameters"], manifest["tool"])
+    assert result["qualified_outputs"] == {}
+    check = next(c for c in result["checks"]["energy"] if c.name == "scf_converged")
+    assert check.status == expected
+    evidence = check.source
+    assert evidence["geometry_line"] > markers[-2] + 1
+    assert evidence["segment_start_line"] <= evidence["geometry_line"]
+    assert evidence["geometry_line"] < evidence["energy_line"] <= evidence["segment_end_line"]
+    assert evidence["converged_lines"] == []
+    categories = {item["category"] for item in result["diagnostics"]}
+    if final_scf == "missing":
+        assert "scf_convergence_unverified" in categories
+        assert "scf_not_converged" not in categories
+    else:
+        assert "scf_not_converged" in categories
+        assert evidence["failure_lines"] == [markers[-1] + 1]
+    assert result["observations"]["parser_consistent"] == (json_mode != "conflict")
+    assert snapshot(tmp_path) == before
+    assert snapshot(source) == original
+
+
+def test_opt_partial_energy_has_same_fragment_sources():
+    directory = FIXTURES / "real_water_opt_limit"
+    manifest = json.loads((directory / "input-manifest.json").read_text())
+    result = read_outputs(directory, manifest["parameters"], manifest["tool"])
+    assert set(result["qualified_outputs"]) == {"energy"}
+    evidence = result["observations"]["evidence"]
+    binding = evidence["energy_geometry_binding"]
+    assert binding["geometry_line"] == evidence["scf_converged"]["geometry_line"]
+    assert binding["energy_line"] == evidence["finite_total_energy"]["line"]
+    assert binding["geometry_line"] < binding["converged_lines"][0] < binding["energy_line"]
+    assert binding["geometry"]
+
+
+def test_version_check_binds_frozen_environment(tmp_path):
+    params, tool = prepare_case(tmp_path)
+    (tmp_path / "stdout.out").write_text(synthetic_output(tmp_path / "geometry.xyz"))
+    result = read_outputs(tmp_path, params, tool, expected_orca_version="6.1.2")
+    assert not result["qualified_outputs"]
+    assert result["observations"]["version_supported"] is False
+    assert result["observations"]["evidence"]["orca_version"]["expected"] == "6.1.2"
+
+
+def test_new_scientific_checks_use_current_explicit_version(tmp_path):
+    params, tool = prepare_case(tmp_path)
+    (tmp_path / "stdout.out").write_text(synthetic_output(tmp_path / "geometry.xyz"))
+    result = read_outputs(tmp_path, params, tool)
+    assert {c.rule_version for checks in result["checks"].values() for c in checks} == {"orca-hf-2"}
+
+
+@pytest.mark.parametrize("damage", ["missing_geometry", "malformed_geometry", "invalid_energy"])
+def test_current_segment_damage_does_not_select_previous_geometry_or_energy(tmp_path, damage):
+    params, tool = prepare_case(tmp_path, "water_opt")
+    text = synthetic_output(tmp_path / "geometry.xyz", normal=False)
+    if damage == "missing_geometry":
+        text += "GEOMETRY OPTIMIZATION CYCLE 2\n"
+    elif damage == "malformed_geometry":
+        text += "CARTESIAN COORDINATES (ANGSTROEM)\n--\ninvalid atoms\n"
+    else:
+        geometry_section = synthetic_output(tmp_path / "geometry.xyz", normal=False).split(
+            "CARTESIAN COORDINATES (ANGSTROEM)", 1
+        )[1]
+        text += ("CARTESIAN COORDINATES (ANGSTROEM)" + geometry_section).replace(
+            "FINAL SINGLE POINT ENERGY -75.123456789000", "FINAL SINGLE POINT ENERGY nan"
+        )
+    if damage != "invalid_energy":
+        text += "SCF CONVERGED AFTER 3 CYCLES\nFINAL SINGLE POINT ENERGY -75.2\n"
+    text += "ORCA TERMINATED NORMALLY\n"
+    (tmp_path / "stdout.out").write_text(text)
+    result = read_outputs(tmp_path, params, tool)
+    assert not result["qualified_outputs"]
+    if damage == "invalid_energy":
+        assert result["observations"]["energy_eh"] is None
+    else:
+        assert result["observations"]["energy_geometry"] is None
+
+
+def test_multiple_energy_candidates_in_one_segment_are_ambiguous(tmp_path):
+    params, tool = prepare_case(tmp_path)
+    text = synthetic_output(tmp_path / "geometry.xyz").replace(
+        "ORCA TERMINATED NORMALLY",
+        "FINAL SINGLE POINT ENERGY -75.2\nORCA TERMINATED NORMALLY",
+    )
+    (tmp_path / "stdout.out").write_text(text)
+    result = read_outputs(tmp_path, params, tool)
+    assert not result["qualified_outputs"]
+    assert result["observations"]["scf_converged"] is None
+    assert result["observations"]["parser_consistent"] is False
+
+
+@pytest.mark.parametrize("tail_scf,expected", [
+    ("SCF NOT CONVERGED AFTER 2 CYCLES", "failed"), ("", "unverified"),
+])
+def test_final_opt_cycle_without_energy_cannot_publish_previous_cycle(tmp_path, tail_scf, expected):
+    params, tool = prepare_case(tmp_path, "water_opt")
+    first = synthetic_output(tmp_path / "geometry.xyz", normal=False)
+    coords = "\n".join((tmp_path / "geometry.xyz").read_text().splitlines()[2:])
+    second = (
+        "GEOMETRY OPTIMIZATION CYCLE 2\n"
+        "CARTESIAN COORDINATES (ANGSTROEM)\n--\n" + coords
+        + "\n\n" + tail_scf + "\nORCA TERMINATED NORMALLY\n"
+    )
+    (tmp_path / "stdout.out").write_text(first + second)
+    result = read_outputs(tmp_path, params, tool)
+    assert result["qualified_outputs"] == {}
+    assert result["observations"]["energy_eh"] is None
+    assert result["observations"]["previous_energy_observation"]["value"] == -75.123456789
+    check = next(c for c in result["checks"]["energy"] if c.name == "scf_converged")
+    assert check.status == expected
+    assert check.source["energy_line"] is None
+    assert check.source["geometry_line"] > first.count("\n")
+
+
+def test_trailing_coordinate_report_alone_does_not_create_a_calculation(tmp_path):
+    params, tool = prepare_case(tmp_path, "water_opt")
+    text = synthetic_output(tmp_path / "geometry.xyz", normal=False)
+    coords = "\n".join((tmp_path / "geometry.xyz").read_text().splitlines()[2:])
+    text += "CARTESIAN COORDINATES (ANGSTROEM)\n--\n" + coords
+    text += "\n\nORCA TERMINATED NORMALLY\n"
+    (tmp_path / "stdout.out").write_text(text)
+    result = read_outputs(tmp_path, params, tool)
+    assert set(result["qualified_outputs"]) == {"energy"}
+
+
+@pytest.mark.parametrize("version,observed,status", [
+    ("6.1.1 RELEASE", "6.1.1", "passed"),
+    ("6.1.0", "6.1.0", "failed"),
+    ("6.1.2", "6.1.2", "failed"),
+    ("6.2.0", "6.2.0", "failed"),
+    ("6.1.1-f.1", "6.1.1-f.1", "failed"),
+    ("6.1.1\nProgram Version 6.1.1", None, "unverified"),
+    ("", None, "unverified"),
+])
+def test_output_version_tokens_are_exact_and_unique(tmp_path, version, observed, status):
+    params, tool = prepare_case(tmp_path)
+    text = synthetic_output(tmp_path / "geometry.xyz").replace(
+        "Program Version 6.1.1", "Program Version " + version
+    )
+    (tmp_path / "stdout.out").write_text(text)
+    result = read_outputs(tmp_path, params, tool)
+    assert result["observations"]["orca_version"] == observed
+    check = next(c for c in result["checks"]["energy"] if c.name == "orca_version")
+    assert check.status == status
+    assert bool(result["qualified_outputs"]) == (status == "passed")

@@ -55,13 +55,18 @@ def test_real_science(case_id, expected):
     assert run.attempts[0].result_id is not None, run.model_dump()
     result = store.load_result(run.id, run.attempts[0].result_id)
     outputs = set(result.qualified_outputs)
+    assert outputs == expected, result.model_dump()
     if case_id == "water_opt_limit":
         # A converged intermediate SCF energy may be qualified only with its own geometry.
         assert "optimized_geometry" not in outputs
         assert any(c.name == "optimization_converged" and c.status == "failed"
                    for c in result.checks["optimized_geometry"])
-    else:
-        assert outputs == expected, result.model_dump()
+        assert all(c.status == "passed" for c in result.checks["energy"])
+        binding = result.observations["evidence"]["energy_geometry_binding"]
+        scf = result.observations["evidence"]["scf_converged"]
+        assert binding["geometry_line"] == scf["geometry_line"]
+        assert binding["geometry_line"] < binding["converged_lines"][0] < binding["energy_line"]
+        assert binding["geometry"]
     if case_id == "water_scf_limit":
         assert any(c.name == "scf_converged" and c.status == "failed"
                    for c in result.checks["energy"])

@@ -27,6 +27,7 @@ from orca_agent.store import (
     atomic_write,
     controlled_path,
 )
+from orca_agent.versions import CURRENT_CHECK_VERSION
 
 WATER = "3\nWater coordinates, angstrom\nO 0 0 0\nH 0 0.757 0.587\nH 0 -0.757 0.587\n"
 
@@ -37,7 +38,7 @@ def setup_run(tmp_path):
     geometry = tmp_path / "water.xyz"
     geometry.write_text(WATER)
     artifact = store.import_artifact(geometry, "initial_geometry")
-    request = Request(geometry_artifact_id=artifact.id, goals=[Goal(id="e", port="energy")])
+    request = Request(geometry_artifact_id=artifact.id, goals=[Goal(id="e", port="energy", minimum_check_version=CURRENT_CHECK_VERSION)])
     step = Step(id="sp", logical_id="energy", tool="orca.sp", geometry=InputRef(artifact_id=artifact.id))
     plan = Plan(request_id=request.id, steps=[step],
                 goal_map={"e": OutputBinding(step_id=step.id, port="energy")})
@@ -91,7 +92,7 @@ def test_unknown_lease_survives_new_store_and_other_data_root(setup_run, tmp_pat
     assert reopened.environment_lease()["attempt_id"] == attempt.id
     other = Store(tmp_path / "other_data", environment_root=store.environment_root)
     other_geometry = other.import_artifact(store.artifact_path(artifact.id), "initial_geometry")
-    request = Request(geometry_artifact_id=other_geometry.id, goals=[Goal(id="e", port="energy")])
+    request = Request(geometry_artifact_id=other_geometry.id, goals=[Goal(id="e", port="energy", minimum_check_version=CURRENT_CHECK_VERSION)])
     other_step = step.model_copy(update={"geometry": InputRef(artifact_id=other_geometry.id)})
     plan = Plan(request_id=request.id, steps=[other_step],
                 goal_map={"e": OutputBinding(step_id=step.id, port="energy")})
@@ -229,9 +230,10 @@ def test_result_cannot_claim_another_attempt_artifact(setup_run):
         store.save_result(result)
 
 
-def test_derived_geometry_requires_concrete_qualified_producer(setup_run, tmp_path):
+@pytest.mark.parametrize("rule", [None, "orca-hf-1", CURRENT_CHECK_VERSION])
+def test_derived_geometry_requires_concrete_qualified_producer(setup_run, tmp_path, rule):
     store, _, _, artifact = setup_run
-    request = Request(geometry_artifact_id=artifact.id, goals=[Goal(id="e", port="energy")])
+    request = Request(geometry_artifact_id=artifact.id, goals=[Goal(id="e", port="energy", minimum_check_version=CURRENT_CHECK_VERSION)])
     opt = Step(id="opt", logical_id="optimization", tool="orca.opt",
                geometry=InputRef(artifact_id=artifact.id))
     sp = Step(id="sp", logical_id="energy", tool="orca.sp", depends_on=["opt"],
@@ -245,22 +247,22 @@ def test_derived_geometry_requires_concrete_qualified_producer(setup_run, tmp_pa
     final.write_text(WATER)
     geometry = store.import_artifact(final, "optimized_geometry", run_id=run.id, attempt_id=attempt.id)
     result = Result(run_id=run.id, step_id=opt.id, attempt_id=attempt.id,
-                    operation_status="completed", artifact_ids=[geometry.id])
+                    operation_status="completed", artifact_ids=[geometry.id],
+                    qualified_outputs={"optimized_geometry": QualifiedOutput(
+                        artifact_id=geometry.id, checks=[Check(
+                            name="optimization", status="passed", rule_version=rule)])} if rule else {})
     store.save_result(result)
     store.finish_attempt(run, attempt.id, state="completed", result_id=result.id,
                          termination_confirmed=True)
-    with pytest.raises(StoreError, match="qualified producer"):
-        store.reserve_attempt(run, sp, geometry.id)
-    # A separate immutable checked result is a new fact, never a rewrite of the old one.
-    checked = Result(run_id=run.id, step_id=opt.id, attempt_id=attempt.id,
-                     operation_status="completed", artifact_ids=[geometry.id], qualified_outputs={
-                         "optimized_geometry": QualifiedOutput(artifact_id=geometry.id,
-                             checks=[Check(name="optimization", status="passed")]),
-                     })
-    store.save_result(checked)
-    run.attempts[0].result_id = checked.id
-    run.result_ids.append(checked.id)
-    store.save_run(run)
+    if rule is None:
+        with pytest.raises(StoreError, match="qualified producer"):
+            store.reserve_attempt(run, sp, geometry.id)
+        return
+    if rule != CURRENT_CHECK_VERSION:
+        with pytest.raises(StoreError, match="rule|version"):
+            store.reserve_attempt(run, sp, geometry.id)
+        assert len(run.attempts) == 1
+        return
     downstream = store.reserve_attempt(run, sp, geometry.id)
     assert downstream.geometry_artifact_id == geometry.id
 

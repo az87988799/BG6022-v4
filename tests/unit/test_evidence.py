@@ -19,6 +19,7 @@ from orca_agent.models import (
 from orca_agent.store import Store, StoreError, sha256_file
 from orca_agent.tools import evidence
 from orca_agent.tools.registry import dispatch_evidence
+from orca_agent.versions import CURRENT_CHECK_VERSION
 
 WATER = "3\nSynthetic fixture\nO 0 0 0\nH 0 0.757 0.587\nH 0 -0.757 0.587\n"
 
@@ -29,7 +30,7 @@ def records(tmp_path):
     geometry = tmp_path / "geometry.xyz"
     geometry.write_text(WATER)
     initial = store.import_artifact(geometry, "initial_geometry")
-    request = Request(geometry_artifact_id=initial.id, goals=[Goal(id="e", port="energy")])
+    request = Request(geometry_artifact_id=initial.id, goals=[Goal(id="e", port="energy", minimum_check_version=CURRENT_CHECK_VERSION)])
     step = Step(id="sp", logical_id="energy", tool="orca.sp",
                 geometry=InputRef(artifact_id=initial.id))
     plan = Plan(request_id=request.id, steps=[step],

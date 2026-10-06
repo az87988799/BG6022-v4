@@ -1,0 +1,74 @@
+....FFFF.F.FF............................FF............................. [ 82%]
+..............F                                                          [100%]
+================================== FAILURES ===================================
+_ test_probe_only_enables_exact_project_version_and_preserves_token[6.1.2-False] _
+tests\unit\test_doctor.py:52: in test_probe_only_enables_exact_project_version_and_preserves_token
+    assert report["orca"]["compatible"] is accepted
+E   assert True is False
+_ test_probe_only_enables_exact_project_version_and_preserves_token[6.2.0-False] _
+tests\unit\test_doctor.py:52: in test_probe_only_enables_exact_project_version_and_preserves_token
+    assert report["orca"]["compatible"] is accepted
+E   assert True is False
+_ test_probe_only_enables_exact_project_version_and_preserves_token[6.1.1-f.1-False] _
+tests\unit\test_doctor.py:51: in test_probe_only_enables_exact_project_version_and_preserves_token
+    assert report["orca"]["version"] == token
+E   AssertionError: assert '6.1.1' == '6.1.1-f.1'
+E     
+E     - 6.1.1-f.1
+E     + 6.1.1
+_ test_probe_only_enables_exact_project_version_and_preserves_token[6.1.1+unknown-False] _
+tests\unit\test_doctor.py:51: in test_probe_only_enables_exact_project_version_and_preserves_token
+    assert report["orca"]["version"] == token
+E   AssertionError: assert '6.1.1' == '6.1.1+unknown'
+E     
+E     - 6.1.1+unknown
+E     + 6.1.1
+_ test_missing_ambiguous_or_incomplete_banner_never_enables_execution[Program Version\n6.1.1\n] _
+tests\unit\test_doctor.py:67: in test_missing_ambiguous_or_incomplete_banner_never_enables_execution
+    assert report["orca"]["compatible"] is not True
+E   assert True is not True
+_ test_missing_ambiguous_or_incomplete_banner_never_enables_execution[Program Version 6.1.1\nProgram Version 6.1.1\n] _
+tests\unit\test_doctor.py:67: in test_missing_ambiguous_or_incomplete_banner_never_enables_execution
+    assert report["orca"]["compatible"] is not True
+E   assert True is not True
+_ test_missing_ambiguous_or_incomplete_banner_never_enables_execution[Program Version 6.1.1\nProgram Version 6.2.0\n] _
+tests\unit\test_doctor.py:67: in test_missing_ambiguous_or_incomplete_banner_never_enables_execution
+    assert report["orca"]["compatible"] is not True
+E   assert True is not True
+_ test_explicit_current_rule_is_readable_and_missing_legacy_fields_stay_legacy _
+tests\unit\test_models.py:116: in test_explicit_current_rule_is_readable_and_missing_legacy_fields_stay_legacy
+    current = Goal(id="e", port="energy", minimum_check_version="orca-hf-2")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 1 validation error for Goal
+E   minimum_check_version
+E     Input should be 'orca-hf-1' [type=literal_error, input_value='orca-hf-2', input_type=str]
+E       For further information visit https://errors.pydantic.dev/2.13/v/literal_error
+_____ test_result_can_explicitly_supersede_without_mutating_legacy_bytes ______
+tests\unit\test_models.py:128: in test_result_can_explicitly_supersede_without_mutating_legacy_bytes
+    assert old.supersedes_result_id is None
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pydantic\main.py:1042: in __getattr__
+    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+E   AttributeError: 'Result' object has no attribute 'supersedes_result_id'
+______ test_new_request_and_registered_scientific_tools_use_current_rule ______
+tests\unit\test_structured.py:181: in test_new_request_and_registered_scientific_tools_use_current_rule
+    assert {goal.minimum_check_version for goal in request.goals} == {"orca-hf-2"}
+E   AssertionError: assert {'orca-hf-1'} == {'orca-hf-2'}
+E     
+E     Extra items in the left set:
+E     'orca-hf-1'
+E     Extra items in the right set:
+E     'orca-hf-2'
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED tests/unit/test_doctor.py::test_probe_only_enables_exact_project_version_and_preserves_token[6.1.2-False]
+FAILED tests/unit/test_doctor.py::test_probe_only_enables_exact_project_version_and_preserves_token[6.2.0-False]
+FAILED tests/unit/test_doctor.py::test_probe_only_enables_exact_project_version_and_preserves_token[6.1.1-f.1-False]
+FAILED tests/unit/test_doctor.py::test_probe_only_enables_exact_project_version_and_preserves_token[6.1.1+unknown-False]
+FAILED tests/unit/test_doctor.py::test_missing_ambiguous_or_incomplete_banner_never_enables_execution[Program Version\n6.1.1\n]
+FAILED tests/unit/test_doctor.py::test_missing_ambiguous_or_incomplete_banner_never_enables_execution[Program Version 6.1.1\nProgram Version 6.1.1\n]
+FAILED tests/unit/test_doctor.py::test_missing_ambiguous_or_incomplete_banner_never_enables_execution[Program Version 6.1.1\nProgram Version 6.2.0\n]
+FAILED tests/unit/test_models.py::test_explicit_current_rule_is_readable_and_missing_legacy_fields_stay_legacy
+FAILED tests/unit/test_models.py::test_result_can_explicitly_supersede_without_mutating_legacy_bytes
+FAILED tests/unit/test_structured.py::test_new_request_and_registered_scientific_tools_use_current_rule
+10 failed, 77 passed in 4.21s

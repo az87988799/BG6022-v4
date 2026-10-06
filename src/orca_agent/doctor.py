@@ -4,7 +4,6 @@ import ctypes
 import hashlib
 import importlib.metadata
 import platform
-import re
 import subprocess
 import sys
 import tempfile
@@ -13,6 +12,13 @@ from pathlib import Path
 import psutil
 
 from orca_agent.config import Config
+from orca_agent.versions import (
+    OPI_MINIMUM_ORCA_VERSION,
+    SUPPORTED_ORCA_VERSIONS,
+    extract_orca_version,
+    is_supported_orca_version,
+    orca_version_tokens,
+)
 
 
 def file_version(path: Path) -> str | None:
@@ -48,22 +54,26 @@ def diagnose(config: Config) -> dict:
             packages[name] = None
     issues = []
     orca = {"path": str(config.orca_path) if config.orca_path else None, "version": None,
-            "probe": "not_run", "compatible": None}
+            "probe": "not_run", "compatible": None,
+            "opi_minimum_version": OPI_MINIMUM_ORCA_VERSION,
+            "enabled_versions": list(SUPPORTED_ORCA_VERSIONS), "observed_version_tokens": []}
     if config.orca_path and config.orca_path.is_file():
         try:
             with tempfile.TemporaryDirectory(prefix="orca-agent-doctor-") as temporary:
                 proc = subprocess.run([str(config.orca_path), "--version"], capture_output=True,
                                       timeout=5, text=True, errors="replace", shell=False,
                                       cwd=temporary)
-            match = re.search(r"Program Version\s+(\d+)\.(\d+)\.(\d+)", proc.stdout)
+            token = extract_orca_version(proc.stdout)
             orca.update(probe="version_banner_only_no_input", returncode=proc.returncode)
-            if match:
-                orca["version"] = ".".join(match.groups())
-                orca["compatible"] = tuple(map(int, match.groups())) >= (6, 1, 1)
+            orca["observed_version_tokens"] = list(orca_version_tokens(proc.stdout))
+            if token is not None:
+                orca["version"] = token
+                orca["compatible"] = is_supported_orca_version(token)
         except (OSError, subprocess.SubprocessError) as exc:
             orca["probe"] = f"failed: {type(exc).__name__}"
     if orca["compatible"] is not True:
-        issues.append("ORCA >= 6.1.1 is missing, incompatible or unverified")
+        issues.append("ORCA version is missing, ambiguous or not enabled; project enables only "
+                      + ", ".join(SUPPORTED_ORCA_VERSIONS))
     mpi = {"path": str(config.mpi_path) if config.mpi_path else None, "file_version": None,
            "parallel_execution": "unverified"}
     if config.mpi_path and config.mpi_path.is_file():

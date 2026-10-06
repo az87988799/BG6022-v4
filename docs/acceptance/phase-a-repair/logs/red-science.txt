@@ -1,0 +1,307 @@
+FFFFFFFFF                                                                [100%]
+================================== FAILURES ===================================
+_ test_final_opt_energy_cannot_borrow_prior_scf[missing-unverified-consistent] _
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-456/test_final_opt_energy_cannot_b0')
+json_mode = 'consistent', final_scf = 'missing', expected = 'unverified'
+
+    @pytest.mark.parametrize("json_mode", ["consistent", "missing", "conflict"])
+    @pytest.mark.parametrize("final_scf,expected", [("missing", "unverified"), ("failed", "failed")])
+    def test_final_opt_energy_cannot_borrow_prior_scf(tmp_path, json_mode, final_scf, expected):
+        """Fault injection into a real multicyle output; this never runs ORCA."""
+        source = FIXTURES / "real_water_opt_early_stop"
+        original = snapshot(source)
+        shutil.copytree(source, tmp_path, dirs_exist_ok=True)
+        output = tmp_path / "stdout.out"
+        lines = output.read_bytes().decode().split("\n")
+        markers = [i for i, line in enumerate(lines) if re.match(
+            r"\s*\**\s*SCF CONVERGED AFTER\s+\d+\s+CYCLES", line
+        )]
+        assert len(markers) > 1
+        lines[markers[-1]] = "" if final_scf == "missing" else "SCF NOT CONVERGED AFTER 2 CYCLES"
+        output.write_bytes("\n".join(lines).encode())
+        prop = tmp_path / "job.property.json"
+        if json_mode == "missing":
+            prop.unlink()
+        else:
+            payload = json.loads(prop.read_text())
+            final_data = payload["Geometries"][-1]["Single_Point_Data"]
+            final_data["Converged"] = final_scf != "failed"
+            if json_mode == "conflict":
+                final_data["FinalEnergy"] += 0.5
+            prop.write_text(json.dumps(payload))
+        before = snapshot(tmp_path)
+        manifest = json.loads((tmp_path / "input-manifest.json").read_text())
+        result = read_outputs(tmp_path, manifest["parameters"], manifest["tool"])
+>       assert result["qualified_outputs"] == {}
+E       AssertionError: assert {'energy': {'...'unit': 'Eh'}} == {}
+E         
+E         Left contains 1 more item:
+E         {'energy': {'unit': 'Eh', 'value': -74.96590119219174}}
+E         Use -v to get more diff
+
+tests\unit\test_orca.py:280: AssertionError
+__ test_final_opt_energy_cannot_borrow_prior_scf[missing-unverified-missing] __
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-456/test_final_opt_energy_cannot_b1')
+json_mode = 'missing', final_scf = 'missing', expected = 'unverified'
+
+    @pytest.mark.parametrize("json_mode", ["consistent", "missing", "conflict"])
+    @pytest.mark.parametrize("final_scf,expected", [("missing", "unverified"), ("failed", "failed")])
+    def test_final_opt_energy_cannot_borrow_prior_scf(tmp_path, json_mode, final_scf, expected):
+        """Fault injection into a real multicyle output; this never runs ORCA."""
+        source = FIXTURES / "real_water_opt_early_stop"
+        original = snapshot(source)
+        shutil.copytree(source, tmp_path, dirs_exist_ok=True)
+        output = tmp_path / "stdout.out"
+        lines = output.read_bytes().decode().split("\n")
+        markers = [i for i, line in enumerate(lines) if re.match(
+            r"\s*\**\s*SCF CONVERGED AFTER\s+\d+\s+CYCLES", line
+        )]
+        assert len(markers) > 1
+        lines[markers[-1]] = "" if final_scf == "missing" else "SCF NOT CONVERGED AFTER 2 CYCLES"
+        output.write_bytes("\n".join(lines).encode())
+        prop = tmp_path / "job.property.json"
+        if json_mode == "missing":
+            prop.unlink()
+        else:
+            payload = json.loads(prop.read_text())
+            final_data = payload["Geometries"][-1]["Single_Point_Data"]
+            final_data["Converged"] = final_scf != "failed"
+            if json_mode == "conflict":
+                final_data["FinalEnergy"] += 0.5
+            prop.write_text(json.dumps(payload))
+        before = snapshot(tmp_path)
+        manifest = json.loads((tmp_path / "input-manifest.json").read_text())
+        result = read_outputs(tmp_path, manifest["parameters"], manifest["tool"])
+>       assert result["qualified_outputs"] == {}
+E       AssertionError: assert {'energy': {'...'unit': 'Eh'}} == {}
+E         
+E         Left contains 1 more item:
+E         {'energy': {'unit': 'Eh', 'value': -74.965901192192}}
+E         Use -v to get more diff
+
+tests\unit\test_orca.py:280: AssertionError
+_ test_final_opt_energy_cannot_borrow_prior_scf[missing-unverified-conflict] __
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-456/test_final_opt_energy_cannot_b2')
+json_mode = 'conflict', final_scf = 'missing', expected = 'unverified'
+
+    @pytest.mark.parametrize("json_mode", ["consistent", "missing", "conflict"])
+    @pytest.mark.parametrize("final_scf,expected", [("missing", "unverified"), ("failed", "failed")])
+    def test_final_opt_energy_cannot_borrow_prior_scf(tmp_path, json_mode, final_scf, expected):
+        """Fault injection into a real multicyle output; this never runs ORCA."""
+        source = FIXTURES / "real_water_opt_early_stop"
+        original = snapshot(source)
+        shutil.copytree(source, tmp_path, dirs_exist_ok=True)
+        output = tmp_path / "stdout.out"
+        lines = output.read_bytes().decode().split("\n")
+        markers = [i for i, line in enumerate(lines) if re.match(
+            r"\s*\**\s*SCF CONVERGED AFTER\s+\d+\s+CYCLES", line
+        )]
+        assert len(markers) > 1
+        lines[markers[-1]] = "" if final_scf == "missing" else "SCF NOT CONVERGED AFTER 2 CYCLES"
+        output.write_bytes("\n".join(lines).encode())
+        prop = tmp_path / "job.property.json"
+        if json_mode == "missing":
+            prop.unlink()
+        else:
+            payload = json.loads(prop.read_text())
+            final_data = payload["Geometries"][-1]["Single_Point_Data"]
+            final_data["Converged"] = final_scf != "failed"
+            if json_mode == "conflict":
+                final_data["FinalEnergy"] += 0.5
+            prop.write_text(json.dumps(payload))
+        before = snapshot(tmp_path)
+        manifest = json.loads((tmp_path / "input-manifest.json").read_text())
+        result = read_outputs(tmp_path, manifest["parameters"], manifest["tool"])
+        assert result["qualified_outputs"] == {}
+        check = next(c for c in result["checks"]["energy"] if c.name == "scf_converged")
+>       assert check.status == expected
+E       AssertionError: assert 'passed' == 'unverified'
+E         
+E         - unverified
+E         + passed
+
+tests\unit\test_orca.py:282: AssertionError
+___ test_final_opt_energy_cannot_borrow_prior_scf[failed-failed-consistent] ___
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-456/test_final_opt_energy_cannot_b3')
+json_mode = 'consistent', final_scf = 'failed', expected = 'failed'
+
+    @pytest.mark.parametrize("json_mode", ["consistent", "missing", "conflict"])
+    @pytest.mark.parametrize("final_scf,expected", [("missing", "unverified"), ("failed", "failed")])
+    def test_final_opt_energy_cannot_borrow_prior_scf(tmp_path, json_mode, final_scf, expected):
+        """Fault injection into a real multicyle output; this never runs ORCA."""
+        source = FIXTURES / "real_water_opt_early_stop"
+        original = snapshot(source)
+        shutil.copytree(source, tmp_path, dirs_exist_ok=True)
+        output = tmp_path / "stdout.out"
+        lines = output.read_bytes().decode().split("\n")
+        markers = [i for i, line in enumerate(lines) if re.match(
+            r"\s*\**\s*SCF CONVERGED AFTER\s+\d+\s+CYCLES", line
+        )]
+        assert len(markers) > 1
+        lines[markers[-1]] = "" if final_scf == "missing" else "SCF NOT CONVERGED AFTER 2 CYCLES"
+        output.write_bytes("\n".join(lines).encode())
+        prop = tmp_path / "job.property.json"
+        if json_mode == "missing":
+            prop.unlink()
+        else:
+            payload = json.loads(prop.read_text())
+            final_data = payload["Geometries"][-1]["Single_Point_Data"]
+            final_data["Converged"] = final_scf != "failed"
+            if json_mode == "conflict":
+                final_data["FinalEnergy"] += 0.5
+            prop.write_text(json.dumps(payload))
+        before = snapshot(tmp_path)
+        manifest = json.loads((tmp_path / "input-manifest.json").read_text())
+        result = read_outputs(tmp_path, manifest["parameters"], manifest["tool"])
+        assert result["qualified_outputs"] == {}
+        check = next(c for c in result["checks"]["energy"] if c.name == "scf_converged")
+        assert check.status == expected
+        evidence = check.source
+>       assert evidence["geometry_line"] > markers[-2] + 1
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'geometry_line'
+
+tests\unit\test_orca.py:284: KeyError
+____ test_final_opt_energy_cannot_borrow_prior_scf[failed-failed-missing] _____
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-456/test_final_opt_energy_cannot_b4')
+json_mode = 'missing', final_scf = 'failed', expected = 'failed'
+
+    @pytest.mark.parametrize("json_mode", ["consistent", "missing", "conflict"])
+    @pytest.mark.parametrize("final_scf,expected", [("missing", "unverified"), ("failed", "failed")])
+    def test_final_opt_energy_cannot_borrow_prior_scf(tmp_path, json_mode, final_scf, expected):
+        """Fault injection into a real multicyle output; this never runs ORCA."""
+        source = FIXTURES / "real_water_opt_early_stop"
+        original = snapshot(source)
+        shutil.copytree(source, tmp_path, dirs_exist_ok=True)
+        output = tmp_path / "stdout.out"
+        lines = output.read_bytes().decode().split("\n")
+        markers = [i for i, line in enumerate(lines) if re.match(
+            r"\s*\**\s*SCF CONVERGED AFTER\s+\d+\s+CYCLES", line
+        )]
+        assert len(markers) > 1
+        lines[markers[-1]] = "" if final_scf == "missing" else "SCF NOT CONVERGED AFTER 2 CYCLES"
+        output.write_bytes("\n".join(lines).encode())
+        prop = tmp_path / "job.property.json"
+        if json_mode == "missing":
+            prop.unlink()
+        else:
+            payload = json.loads(prop.read_text())
+            final_data = payload["Geometries"][-1]["Single_Point_Data"]
+            final_data["Converged"] = final_scf != "failed"
+            if json_mode == "conflict":
+                final_data["FinalEnergy"] += 0.5
+            prop.write_text(json.dumps(payload))
+        before = snapshot(tmp_path)
+        manifest = json.loads((tmp_path / "input-manifest.json").read_text())
+        result = read_outputs(tmp_path, manifest["parameters"], manifest["tool"])
+        assert result["qualified_outputs"] == {}
+        check = next(c for c in result["checks"]["energy"] if c.name == "scf_converged")
+        assert check.status == expected
+        evidence = check.source
+>       assert evidence["geometry_line"] > markers[-2] + 1
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'geometry_line'
+
+tests\unit\test_orca.py:284: KeyError
+____ test_final_opt_energy_cannot_borrow_prior_scf[failed-failed-conflict] ____
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-456/test_final_opt_energy_cannot_b5')
+json_mode = 'conflict', final_scf = 'failed', expected = 'failed'
+
+    @pytest.mark.parametrize("json_mode", ["consistent", "missing", "conflict"])
+    @pytest.mark.parametrize("final_scf,expected", [("missing", "unverified"), ("failed", "failed")])
+    def test_final_opt_energy_cannot_borrow_prior_scf(tmp_path, json_mode, final_scf, expected):
+        """Fault injection into a real multicyle output; this never runs ORCA."""
+        source = FIXTURES / "real_water_opt_early_stop"
+        original = snapshot(source)
+        shutil.copytree(source, tmp_path, dirs_exist_ok=True)
+        output = tmp_path / "stdout.out"
+        lines = output.read_bytes().decode().split("\n")
+        markers = [i for i, line in enumerate(lines) if re.match(
+            r"\s*\**\s*SCF CONVERGED AFTER\s+\d+\s+CYCLES", line
+        )]
+        assert len(markers) > 1
+        lines[markers[-1]] = "" if final_scf == "missing" else "SCF NOT CONVERGED AFTER 2 CYCLES"
+        output.write_bytes("\n".join(lines).encode())
+        prop = tmp_path / "job.property.json"
+        if json_mode == "missing":
+            prop.unlink()
+        else:
+            payload = json.loads(prop.read_text())
+            final_data = payload["Geometries"][-1]["Single_Point_Data"]
+            final_data["Converged"] = final_scf != "failed"
+            if json_mode == "conflict":
+                final_data["FinalEnergy"] += 0.5
+            prop.write_text(json.dumps(payload))
+        before = snapshot(tmp_path)
+        manifest = json.loads((tmp_path / "input-manifest.json").read_text())
+        result = read_outputs(tmp_path, manifest["parameters"], manifest["tool"])
+        assert result["qualified_outputs"] == {}
+        check = next(c for c in result["checks"]["energy"] if c.name == "scf_converged")
+        assert check.status == expected
+        evidence = check.source
+>       assert evidence["geometry_line"] > markers[-2] + 1
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'geometry_line'
+
+tests\unit\test_orca.py:284: KeyError
+______________ test_opt_partial_energy_has_same_fragment_sources ______________
+
+    def test_opt_partial_energy_has_same_fragment_sources():
+        directory = FIXTURES / "real_water_opt_limit"
+        manifest = json.loads((directory / "input-manifest.json").read_text())
+        result = read_outputs(directory, manifest["parameters"], manifest["tool"])
+        assert set(result["qualified_outputs"]) == {"energy"}
+        evidence = result["observations"]["evidence"]
+        binding = evidence["energy_geometry_binding"]
+>       assert binding["geometry_line"] == evidence["scf_converged"]["geometry_line"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'geometry_line'
+
+tests\unit\test_orca.py:307: KeyError
+_________________ test_version_check_binds_frozen_environment _________________
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-456/test_version_check_binds_froze0')
+
+    def test_version_check_binds_frozen_environment(tmp_path):
+        params, tool = prepare_case(tmp_path)
+        (tmp_path / "stdout.out").write_text(synthetic_output(tmp_path / "geometry.xyz"))
+>       result = read_outputs(tmp_path, params, tool, expected_orca_version="6.1.2")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: read_outputs() got an unexpected keyword argument 'expected_orca_version'
+
+tests\unit\test_orca.py:316: TypeError
+___________ test_new_scientific_checks_use_current_explicit_version ___________
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-456/test_new_scientific_checks_use0')
+
+    def test_new_scientific_checks_use_current_explicit_version(tmp_path):
+        params, tool = prepare_case(tmp_path)
+        (tmp_path / "stdout.out").write_text(synthetic_output(tmp_path / "geometry.xyz"))
+        result = read_outputs(tmp_path, params, tool)
+>       assert {c.rule_version for checks in result["checks"].values() for c in checks} == {"orca-hf-2"}
+E       AssertionError: assert {'orca-hf-1'} == {'orca-hf-2'}
+E         
+E         Extra items in the left set:
+E         'orca-hf-1'
+E         Extra items in the right set:
+E         'orca-hf-2'
+E         Use -v to get more diff
+
+tests\unit\test_orca.py:326: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/unit/test_orca.py::test_final_opt_energy_cannot_borrow_prior_scf[missing-unverified-consistent]
+FAILED tests/unit/test_orca.py::test_final_opt_energy_cannot_borrow_prior_scf[missing-unverified-missing]
+FAILED tests/unit/test_orca.py::test_final_opt_energy_cannot_borrow_prior_scf[missing-unverified-conflict]
+FAILED tests/unit/test_orca.py::test_final_opt_energy_cannot_borrow_prior_scf[failed-failed-consistent]
+FAILED tests/unit/test_orca.py::test_final_opt_energy_cannot_borrow_prior_scf[failed-failed-missing]
+FAILED tests/unit/test_orca.py::test_final_opt_energy_cannot_borrow_prior_scf[failed-failed-conflict]
+FAILED tests/unit/test_orca.py::test_opt_partial_energy_has_same_fragment_sources
+FAILED tests/unit/test_orca.py::test_version_check_binds_frozen_environment
+FAILED tests/unit/test_orca.py::test_new_scientific_checks_use_current_explicit_version
+9 failed, 21 deselected in 9.00s

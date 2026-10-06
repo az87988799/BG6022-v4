@@ -9,6 +9,8 @@ from pathlib import Path
 
 import psutil
 
+from orca_agent.versions import CURRENT_CHECK_VERSION
+
 
 def prepare_fixture(workdir, geometry, parameters, tool):
     """Deterministic synthetic input, deliberately unrelated to ORCA syntax."""
@@ -19,11 +21,11 @@ def prepare_fixture(workdir, geometry, parameters, tool):
     return {"input_path": str(input_path), "fixture": "no scientific calculation"}
 
 
-def read_fixture(workdir, parameters, tool):
+def read_fixture(workdir, parameters, tool, **kwargs):
     """Synthetic result only verifies coordinator control flow, never science."""
     exists = (Path(workdir) / "fixture-success.txt").exists()
     checks = [{"name": "synthetic_fixture", "status": "passed" if exists else "failed",
-               "rule_version": "orca-hf-1", "detail": "Synthetic fixture; not scientific evidence"}]
+               "rule_version": CURRENT_CHECK_VERSION, "detail": "Synthetic fixture; not scientific evidence"}]
     return {"checks": {"energy": checks}, "qualified_outputs": {
         "energy": {"value": -1.0, "unit": "Eh", "source": {"synthetic_fixture": True}},
     } if exists else {}, "observations": {"synthetic_fixture": True}, "diagnostics": []}

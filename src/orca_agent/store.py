@@ -447,6 +447,15 @@ class Store:
         attempt = next((a for a in run.attempts if a.id == result.attempt_id), None)
         if attempt is None or attempt.step_id != result.step_id:
             raise StoreError("result does not belong to a stored attempt")
+        if result.supersedes_result_id:
+            previous = self.load_result(run.id, result.supersedes_result_id)
+            if (previous.attempt_id, previous.step_id) != (result.attempt_id, result.step_id):
+                raise StoreError("replacement result refers to another attempt")
+            if previous.id == result.id or previous.operation_status != "unknown":
+                raise StoreError("only an earlier unknown result can be replaced during recovery")
+            if (result.operation_status == "unknown" or result.qualified_outputs
+                    or result.source.get("execution", {}).get("reconciliation", {}).get("state") != "terminated"):
+                raise StoreError("recovery replacement requires termination evidence without scientific outputs")
         if set(result.qualified_outputs) - set(get_tool(attempt.tool).output_ports):
             raise StoreError("result publishes a port not declared by its tool")
         for artifact_id in result.artifact_ids:
@@ -466,6 +475,60 @@ class Store:
         if result.id != result_id or result.run_id != run_id:
             raise StoreError("result identity/location mismatch")
         return result
+
+    def result_chain(self, run: Run, attempt: Attempt) -> list[Result]:
+        """Select only one explicit, identity-consistent result chain, never by time."""
+        directory = self.path(f"runs/{_id(run.id)}/results")
+        candidates = {}
+        if directory.exists():
+            paths = list(directory.glob("*.json"))
+            if len(paths) > 128:
+                raise StoreError("result reconciliation exceeds its bounded record limit")
+            for path in paths:
+                result = self.load_result(run.id, path.stem)
+                if result.attempt_id == attempt.id:
+                    if result.step_id != attempt.step_id:
+                        raise StoreError("result step identity mismatch")
+                    candidates[result.id] = result
+        if attempt.result_id and attempt.result_id not in candidates:
+            raise StoreError("current result is missing from its attempt")
+        if not candidates:
+            return []
+        children = {}
+        roots = []
+        for result in candidates.values():
+            parent = result.supersedes_result_id
+            if parent is None:
+                roots.append(result.id)
+                continue
+            if parent not in candidates:
+                raise StoreError("replacement parent is missing or belongs to another attempt")
+            if parent in children:
+                raise StoreError("result replacement chain has multiple terminal branches")
+            previous = candidates[parent]
+            if (previous.operation_status != "unknown" or result.operation_status == "unknown"
+                    or result.qualified_outputs
+                    or result.source.get("execution", {}).get("reconciliation", {}).get("state") != "terminated"):
+                raise StoreError("invalid recovery result replacement relation")
+            children[parent] = result.id
+        if len(roots) != 1:
+            raise StoreError("multiple unrelated results or cyclic replacement chain")
+        chain = []
+        current = roots[0]
+        while current is not None:
+            if current in {item.id for item in chain}:
+                raise StoreError("cyclic result replacement chain")
+            chain.append(candidates[current])
+            current = children.get(current)
+        if len(chain) != len(candidates):
+            raise StoreError("disconnected result replacement chain")
+        for result in chain:
+            for artifact_id in result.artifact_ids:
+                artifact = self.load_artifact(artifact_id)
+                if (artifact.run_id, artifact.attempt_id) != (run.id, attempt.id):
+                    raise StoreError("recovery artifact provenance mismatch")
+                self.artifact_path(artifact_id)
+        return chain
 
     def finish_attempt(
         self, run: Run, attempt_id: str, *, state: str, result_id: str | None = None,

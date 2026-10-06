@@ -11,6 +11,7 @@ from typing import Annotated, Any
 from pydantic import Field, field_validator
 
 from orca_agent.models import CalculationParameters, Identifier, Record, Tool
+from orca_agent.versions import CURRENT_CHECK_VERSION
 
 
 class EvidenceListParameters(Record):
@@ -54,6 +55,7 @@ TOOLS: dict[str, _Registration] = {
     "orca.sp": _register(
         CalculationParameters,
         name="orca.sp",
+        check_version=CURRENT_CHECK_VERSION,
         description="H2O/CH4 HF/STO-3G neutral singlet single-point electronic energy in Eh.",
         output_ports=["energy"],
         implementation="orca_agent.tools.electronic.execute",
@@ -61,6 +63,7 @@ TOOLS: dict[str, _Registration] = {
     "orca.opt": _register(
         CalculationParameters,
         name="orca.opt",
+        check_version=CURRENT_CHECK_VERSION,
         description=(
             "H2O/CH4 unconstrained HF/STO-3G geometry optimization in angstrom. Convergence does not "
             "establish a minimum or its vibrational stability."

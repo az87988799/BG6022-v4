@@ -1,0 +1,177 @@
+FFFF.F                                                                   [100%]
+================================== FAILURES ===================================
+_________ test_preparation_failure_is_settled_without_retry[geometry] _________
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-455/test_preparation_failure_is_se0')
+synthetic = []
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D34DA1B790>
+location = 'geometry'
+
+    @pytest.mark.parametrize("location", ["geometry", "input", "prepared"])
+    def test_preparation_failure_is_settled_without_retry(tmp_path, synthetic, monkeypatch, location):
+        store, config, run = make_run(tmp_path)
+        original_artifact = store.artifact_path
+        original_save = calculation._save_json
+    
+        def fail(*args, **kwargs):
+            raise OSError(f"injected {location} failure")
+    
+        def after_intent(point):
+            if point != "after_intent_saved":
+                return
+            if location == "geometry":
+                monkeypatch.setattr(store, "artifact_path", fail)
+            elif location == "input":
+                monkeypatch.setattr(calculation, "prepare_input", fail)
+            else:
+                monkeypatch.setattr(calculation, "_save_json", lambda path, value: (
+                    fail() if path.name == "prepared.json" else original_save(path, value)))
+    
+        failed = runner.execute(store, config, run.id, fault=after_intent)
+        monkeypatch.setattr(store, "artifact_path", original_artifact)
+>       assert failed.state == "failed"
+E       AssertionError: assert 'unknown' == 'failed'
+E         
+E         - failed
+E         + unknown
+
+tests\integration\test_runner.py:414: AssertionError
+__________ test_preparation_failure_is_settled_without_retry[input] ___________
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-455/test_preparation_failure_is_se1')
+synthetic = []
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D34DA1A1D0>
+location = 'input'
+
+    @pytest.mark.parametrize("location", ["geometry", "input", "prepared"])
+    def test_preparation_failure_is_settled_without_retry(tmp_path, synthetic, monkeypatch, location):
+        store, config, run = make_run(tmp_path)
+        original_artifact = store.artifact_path
+        original_save = calculation._save_json
+    
+        def fail(*args, **kwargs):
+            raise OSError(f"injected {location} failure")
+    
+        def after_intent(point):
+            if point != "after_intent_saved":
+                return
+            if location == "geometry":
+                monkeypatch.setattr(store, "artifact_path", fail)
+            elif location == "input":
+                monkeypatch.setattr(calculation, "prepare_input", fail)
+            else:
+                monkeypatch.setattr(calculation, "_save_json", lambda path, value: (
+                    fail() if path.name == "prepared.json" else original_save(path, value)))
+    
+        failed = runner.execute(store, config, run.id, fault=after_intent)
+        monkeypatch.setattr(store, "artifact_path", original_artifact)
+>       assert failed.state == "failed"
+E       AssertionError: assert 'unknown' == 'failed'
+E         
+E         - failed
+E         + unknown
+
+tests\integration\test_runner.py:414: AssertionError
+_________ test_preparation_failure_is_settled_without_retry[prepared] _________
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-455/test_preparation_failure_is_se2')
+synthetic = []
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D34DA38150>
+location = 'prepared'
+
+    @pytest.mark.parametrize("location", ["geometry", "input", "prepared"])
+    def test_preparation_failure_is_settled_without_retry(tmp_path, synthetic, monkeypatch, location):
+        store, config, run = make_run(tmp_path)
+        original_artifact = store.artifact_path
+        original_save = calculation._save_json
+    
+        def fail(*args, **kwargs):
+            raise OSError(f"injected {location} failure")
+    
+        def after_intent(point):
+            if point != "after_intent_saved":
+                return
+            if location == "geometry":
+                monkeypatch.setattr(store, "artifact_path", fail)
+            elif location == "input":
+                monkeypatch.setattr(calculation, "prepare_input", fail)
+            else:
+                monkeypatch.setattr(calculation, "_save_json", lambda path, value: (
+                    fail() if path.name == "prepared.json" else original_save(path, value)))
+    
+        failed = runner.execute(store, config, run.id, fault=after_intent)
+        monkeypatch.setattr(store, "artifact_path", original_artifact)
+>       assert failed.state == "failed"
+E       AssertionError: assert 'unknown' == 'failed'
+E         
+E         - failed
+E         + unknown
+
+tests\integration\test_runner.py:414: AssertionError
+________ test_offline_cancel_after_pause_is_retained_without_next_step ________
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-455/test_offline_cancel_after_paus0')
+synthetic = ['C:\\WINDOWS��TEMP\\pytest-of-��ױ\\pytest-455\\test_offline_cancel_after_paus0\\data\\runs\\run_4a9d1a6238cc4da183d76c3...ytest-455\\test_offline_cancel_after_paus0\\data\\runs\\run_4a9d1a6238cc4da183d76c3d83e8371a\\steps\\sp1\\attempt-001']
+
+    def test_offline_cancel_after_pause_is_retained_without_next_step(tmp_path, synthetic):
+        store, config, run = make_run(tmp_path, steps=2)
+        paused = runner.execute(store, config, run.id, fault=lambda point: (
+            store.signal(run.id, "pause") if point == "after_resumed" else None))
+        assert paused.state == "paused"
+        original = paused.attempts[0].result_id
+        store.signal(run.id, "cancel")
+        for _ in range(2):
+            cancelled = runner.execute(store, config, run.id, resume=True)
+>           assert cancelled.state == "cancelled"
+E           AssertionError: assert 'completed' == 'cancelled'
+E             
+E             - cancelled
+E             + completed
+
+tests\integration\test_runner.py:447: AssertionError
+_ test_unknown_termination_archives_evidence_and_preserves_previous_result[True] _
+
+stored_attempt = (<orca_agent.store.Store object at 0x000001D34DA556D0>, Config(orca_path=WindowsPath('E:/BG6022-V4/.venv/Scripts/pytho...thetic_fixture'}, started=True, result_id='result_ee1c16bbb1e74178ae840b4ebf7a7756', elapsed_seconds=3, cpu_seconds=1))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D34DA54E90>
+saved = True
+
+    @pytest.mark.parametrize("saved", [False, True])
+    def test_unknown_termination_archives_evidence_and_preserves_previous_result(
+        stored_attempt, monkeypatch, saved
+    ):
+        store, config, run, step, attempt = stored_attempt
+        directory = store.path(attempt.directory)
+        (directory / "stdout.out").write_text("Raw synthetic stdout from stopped attempt")
+        (directory / "stderr.txt").write_text("Raw synthetic stderr")
+        receipt = {"state": "unknown", "handle": attempt.execution_handle,
+                   "resource_usage": {"wall_seconds": 3, "user_cpu_seconds": 1}}
+        atomic_write(directory / "execution.json", json.dumps(receipt).encode(), immutable=True)
+        original_receipt = (directory / "execution.json").read_bytes()
+        old = None
+        if saved:
+            old = Result(run_id=run.id, step_id=step.id, attempt_id=attempt.id,
+                         operation_status="unknown", source={"execution": receipt})
+            store.save_result(old)
+            old_bytes = store.path(f"runs/{run.id}/results/{old.id}.json").read_bytes()
+            runner._settle(store, run, attempt, old, receipt)
+        monkeypatch.setattr(local, "reconcile", lambda handle: {
+            "state": "terminated", "reason": "synthetic confirmed absent tree"})
+        monkeypatch.setattr(calculation, "read_outputs", lambda *args: {
+            "checks": {}, "qualified_outputs": {}, "observations": {"synthetic_fixture": True},
+            "diagnostics": []})
+        recovered = runner.execute(store, config, run.id, resume=True)
+        current = store.load_result(run.id, recovered.attempts[0].result_id)
+>       assert current.operation_status == "failed"
+E       AssertionError: assert 'unknown' == 'failed'
+E         
+E         - failed
+E         + unknown
+
+tests\integration\test_recovery_edges.py:287: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/integration/test_runner.py::test_preparation_failure_is_settled_without_retry[geometry]
+FAILED tests/integration/test_runner.py::test_preparation_failure_is_settled_without_retry[input]
+FAILED tests/integration/test_runner.py::test_preparation_failure_is_settled_without_retry[prepared]
+FAILED tests/integration/test_runner.py::test_offline_cancel_after_pause_is_retained_without_next_step
+FAILED tests/integration/test_recovery_edges.py::test_unknown_termination_archives_evidence_and_preserves_previous_result[True]
+5 failed, 1 passed, 25 deselected in 37.53s

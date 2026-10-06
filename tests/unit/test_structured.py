@@ -171,3 +171,12 @@ def test_valid_opt_sp_binds_generated_producer_id(task_files):
     assert consumer.geometry.producer_step_id == producer.id
     assert consumer.depends_on == [producer.id]
     assert consumer.geometry.port == "optimized_geometry"
+
+
+def test_new_request_and_registered_scientific_tools_use_current_rule(task_files):
+    from orca_agent.tools.registry import get_tool
+
+    source, spec, store = task_files
+    request, plan, _ = prepare(source, spec, store)
+    assert {goal.minimum_check_version for goal in request.goals} == {"orca-hf-2"}
+    assert {get_tool(step.tool).check_version for step in plan.steps} == {"orca-hf-2"}

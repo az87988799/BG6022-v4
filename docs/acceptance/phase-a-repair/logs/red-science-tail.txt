@@ -1,0 +1,60 @@
+FF.                                                                      [100%]
+================================== FAILURES ===================================
+_ test_final_opt_cycle_without_energy_cannot_publish_previous_cycle[SCF NOT CONVERGED AFTER 2 CYCLES-failed] _
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-465/test_final_opt_cycle_without_e0')
+tail_scf = 'SCF NOT CONVERGED AFTER 2 CYCLES', expected = 'failed'
+
+    @pytest.mark.parametrize("tail_scf,expected", [
+        ("SCF NOT CONVERGED AFTER 2 CYCLES", "failed"), ("", "unverified"),
+    ])
+    def test_final_opt_cycle_without_energy_cannot_publish_previous_cycle(tmp_path, tail_scf, expected):
+        params, tool = prepare_case(tmp_path, "water_opt")
+        first = synthetic_output(tmp_path / "geometry.xyz", normal=False)
+        coords = "\n".join((tmp_path / "geometry.xyz").read_text().splitlines()[2:])
+        second = (
+            "GEOMETRY OPTIMIZATION CYCLE 2\n"
+            "CARTESIAN COORDINATES (ANGSTROEM)\n--\n" + coords
+            + "\n\n" + tail_scf + "\nORCA TERMINATED NORMALLY\n"
+        )
+        (tmp_path / "stdout.out").write_text(first + second)
+        result = read_outputs(tmp_path, params, tool)
+>       assert result["qualified_outputs"] == {}
+E       AssertionError: assert {'energy': {'...'unit': 'Eh'}} == {}
+E         
+E         Left contains 1 more item:
+E         {'energy': {'unit': 'Eh', 'value': -75.123456789}}
+E         Use -v to get more diff
+
+tests\unit\test_orca.py:383: AssertionError
+_ test_final_opt_cycle_without_energy_cannot_publish_previous_cycle[-unverified] _
+
+tmp_path = WindowsPath('C:/WINDOWS��TEMP/pytest-of-��ױ/pytest-465/test_final_opt_cycle_without_e1')
+tail_scf = '', expected = 'unverified'
+
+    @pytest.mark.parametrize("tail_scf,expected", [
+        ("SCF NOT CONVERGED AFTER 2 CYCLES", "failed"), ("", "unverified"),
+    ])
+    def test_final_opt_cycle_without_energy_cannot_publish_previous_cycle(tmp_path, tail_scf, expected):
+        params, tool = prepare_case(tmp_path, "water_opt")
+        first = synthetic_output(tmp_path / "geometry.xyz", normal=False)
+        coords = "\n".join((tmp_path / "geometry.xyz").read_text().splitlines()[2:])
+        second = (
+            "GEOMETRY OPTIMIZATION CYCLE 2\n"
+            "CARTESIAN COORDINATES (ANGSTROEM)\n--\n" + coords
+            + "\n\n" + tail_scf + "\nORCA TERMINATED NORMALLY\n"
+        )
+        (tmp_path / "stdout.out").write_text(first + second)
+        result = read_outputs(tmp_path, params, tool)
+>       assert result["qualified_outputs"] == {}
+E       AssertionError: assert {'energy': {'...'unit': 'Eh'}} == {}
+E         
+E         Left contains 1 more item:
+E         {'energy': {'unit': 'Eh', 'value': -75.123456789}}
+E         Use -v to get more diff
+
+tests\unit\test_orca.py:383: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/unit/test_orca.py::test_final_opt_cycle_without_energy_cannot_publish_previous_cycle[SCF NOT CONVERGED AFTER 2 CYCLES-failed]
+FAILED tests/unit/test_orca.py::test_final_opt_cycle_without_energy_cannot_publish_previous_cycle[-unverified]
+2 failed, 1 passed, 41 deselected in 4.28s

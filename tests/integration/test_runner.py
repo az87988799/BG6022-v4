@@ -27,6 +27,7 @@ from orca_agent.models import (
 )
 from orca_agent.store import Store, atomic_write, sha256_file
 from orca_agent.tools import calculation
+from orca_agent.versions import CURRENT_CHECK_VERSION
 
 HELPER = Path(__file__).resolve().parents[1] / "helpers" / "runner_worker.py"
 SPEC = importlib.util.spec_from_file_location("runner_test_fixture", HELPER)
@@ -35,12 +36,12 @@ SPEC.loader.exec_module(FIXTURE)
 WATER = "3\nWater in angstrom\nO 0 0 0\nH 0 .757 .587\nH 0 -.757 .587\n"
 
 
-def make_run(tmp_path, steps=1):
+def make_run(tmp_path, steps=1, check_version=CURRENT_CHECK_VERSION):
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
     source = tmp_path / "water.xyz"
     source.write_text(WATER)
     artifact = store.import_artifact(source, "initial_geometry")
-    request = Request(geometry_artifact_id=artifact.id, goals=[Goal(id="e", port="energy")])
+    request = Request(geometry_artifact_id=artifact.id, goals=[Goal(id="e", port="energy", minimum_check_version=check_version)])
     plan_steps = [Step(
         id=f"sp{number}", logical_id=f"energy{number}", tool="orca.sp",
         geometry=InputRef(artifact_id=artifact.id),
@@ -54,7 +55,7 @@ def make_run(tmp_path, steps=1):
     executable = Path(sys.executable).resolve()
     config = Config(data_root=store.root, orca_path=executable)
     atomic_write(store.path(f"runs/{run.id}/environment.json"), json.dumps({
-        "orca": {"path": str(executable), "sha256": sha256_file(executable)},
+        "orca": {"version": "6.1.1", "path": str(executable), "sha256": sha256_file(executable)},
         "synthetic_fixture": True,
     }).encode(), immutable=True)
     return store, config, run
@@ -235,21 +236,22 @@ def test_runner_control_before_process_creation_is_known_not_started(tmp_path, s
         assert recovered.usage.orca_starts_reserved >= 1
 
 
-def test_runner_resume_does_not_clear_new_control_signal(tmp_path, synthetic, monkeypatch):
+@pytest.mark.parametrize("new_action", ["pause", "cancel"])
+def test_runner_resume_does_not_clear_new_control_signal(tmp_path, synthetic, monkeypatch, new_action):
     store, config, run = make_run(tmp_path)
     store.signal(run.id, "pause")
     original = runner._recover
 
     def recover_then_new_cancel(*args):
         result = original(*args)
-        store.signal(run.id, "cancel")
+        store.signal(run.id, new_action)
         return result
 
     monkeypatch.setattr(runner, "_recover", recover_then_new_cancel)
     result = runner.execute(store, config, run.id, resume=True)
-    assert result.state == "cancelled"
+    assert result.state == ("cancelled" if new_action == "cancel" else "paused")
     assert not synthetic
-    assert store.read_signal(run.id) == "cancel"
+    assert store.read_signal(run.id) == new_action
 
 
 def test_cli_status_is_read_only_for_unfinished_run(tmp_path, synthetic, monkeypatch, capsys):
@@ -388,3 +390,166 @@ def test_runner_control_signal_is_serialized_with_actual_resume(tmp_path):
     assert result.state == "cancelled"
     assert result.usage.orca_starts_actual == 1
     assert store.environment_lease() is None
+
+@pytest.mark.parametrize("location", ["geometry", "input", "prepared", "input_type_error"])
+def test_preparation_failure_is_settled_without_retry(tmp_path, synthetic, monkeypatch, location):
+    store, config, run = make_run(tmp_path)
+    original_artifact = store.artifact_path
+    original_save = calculation._save_json
+
+    def fail(*args, **kwargs):
+        exception = TypeError if location == "input_type_error" else OSError
+        raise exception(f"injected {location} failure")
+
+    def after_intent(point):
+        if point != "after_intent_saved":
+            return
+        if location == "geometry":
+            monkeypatch.setattr(store, "artifact_path", lambda artifact_id, **kwargs: (
+                fail() if artifact_id == run.permission.artifact_ids[0]
+                else original_artifact(artifact_id, **kwargs)))
+        elif location.startswith("input"):
+            monkeypatch.setattr(calculation, "prepare_input", fail)
+        else:
+            monkeypatch.setattr(calculation, "_save_json", lambda path, value: (
+                fail() if path.name == "prepared.json" else original_save(path, value)))
+
+    failed = runner.execute(store, config, run.id, fault=after_intent)
+    monkeypatch.setattr(store, "artifact_path", original_artifact)
+    assert failed.state == "failed"
+    assert failed.attempts[0].state == "failed"
+    assert failed.attempts[0].started is False
+    assert failed.usage.orca_starts_actual == len(synthetic) == 0
+    assert failed.usage.orca_starts_reserved == 1
+    assert store.environment_lease() is None
+    result = store.load_result(run.id, failed.attempts[0].result_id)
+    assert result.source["execution"]["not_started"] is True
+    assert result.source["execution"]["handle"] is None
+    assert any("injected" in str(item) for item in result.diagnostics)
+    for _ in range(2):
+        repeated = runner.execute(store, config, run.id, resume=True)
+        assert repeated.state == "failed"
+        assert repeated.usage == failed.usage
+        assert len(repeated.attempts) == 1
+    assert len(synthetic) == 0
+    # The same execution environment is reusable by another independent Run.
+    monkeypatch.setattr(calculation, "prepare_input", FIXTURE.prepare_fixture)
+    monkeypatch.setattr(calculation, "_save_json", original_save)
+    _, _, second = make_run(tmp_path)
+    assert runner.execute(store, config, second.id).state == "completed"
+    assert len(synthetic) == 1
+
+
+def test_offline_cancel_after_pause_is_retained_without_next_step(tmp_path, synthetic):
+    store, config, run = make_run(tmp_path, steps=2)
+    paused = runner.execute(store, config, run.id, fault=lambda point: (
+        store.signal(run.id, "pause") if point == "after_resumed" else None))
+    assert paused.state == "paused"
+    original = paused.attempts[0].result_id
+    store.signal(run.id, "cancel")
+    for _ in range(2):
+        cancelled = runner.execute(store, config, run.id, resume=True)
+        assert cancelled.state == "cancelled"
+        assert len(cancelled.attempts) == len(synthetic) == 1
+        assert cancelled.usage == paused.usage
+        assert cancelled.attempts[0].result_id == original
+        assert store.read_signal(run.id) == "cancel"
+
+
+def test_preparation_partial_collection_failure_keeps_known_not_started(tmp_path, synthetic, monkeypatch):
+    store, config, run = make_run(tmp_path)
+
+    def prepare(workdir, *args):
+        (workdir / "partial.inp").write_text("Synthetic partial file")
+        raise ValueError("injected partial preparation failure")
+
+    def cannot_collect(*args, **kwargs):
+        raise OSError("injected artifact collection failure")
+
+    monkeypatch.setattr(calculation, "prepare_input", prepare)
+    monkeypatch.setattr(store, "import_artifact", cannot_collect)
+    failed = runner.execute(store, config, run.id)
+    assert failed.state == "failed"
+    assert failed.attempts[0].state == "failed"
+    assert not failed.attempts[0].started
+    assert failed.usage.orca_starts_actual == len(synthetic) == 0
+    assert failed.usage.orca_starts_reserved == 1
+    assert store.environment_lease() is None
+    result = store.load_result(run.id, failed.attempts[0].result_id)
+    assert result.source["execution"]["not_started"] is True
+    assert result.source["execution"]["handle"] is None
+    assert any(item["category"] == "collection_error" for item in result.diagnostics)
+    assert store.path(f"{failed.attempts[0].directory}/partial.inp").read_text() == "Synthetic partial file"
+    assert not result.qualified_outputs
+
+
+def test_preparation_failure_without_durable_receipt_retains_lease(tmp_path, synthetic, monkeypatch):
+    store, config, run = make_run(tmp_path)
+
+    def fail(*args, **kwargs):
+        raise OSError("injected storage unavailable")
+
+    monkeypatch.setattr(calculation, "prepare_input", fail)
+    monkeypatch.setattr(calculation, "_save_json", fail)
+    unknown = runner.execute(store, config, run.id)
+    assert unknown.state == "unknown"
+    assert store.environment_lease()["attempt_id"] == unknown.attempts[0].id
+    assert unknown.attempts[0].finished_at is None
+    assert unknown.usage.orca_starts_actual == len(synthetic) == 0
+    assert any("storage unavailable" in str(item) for item in unknown.diagnostics)
+
+
+def test_cancel_with_unconfirmed_termination_keeps_request_and_lease(tmp_path, synthetic):
+    store, config, run = make_run(tmp_path)
+    unknown = runner.execute(store, config, run.id, fault=lambda point: (
+        (_ for _ in ()).throw(RuntimeError("unknown launch window"))
+        if point == "after_intent_saved" else None))
+    store.signal(run.id, "cancel")
+    for _ in range(2):
+        recovered = runner.execute(store, config, run.id, resume=True)
+        assert recovered.state == "unknown"
+        assert recovered.usage == unknown.usage
+        assert store.environment_lease() is not None
+        assert store.read_signal(run.id) == "cancel"
+        assert not synthetic
+
+
+def test_late_cancel_does_not_rewrite_completed_facts(tmp_path, synthetic):
+    store, config, run = make_run(tmp_path)
+    completed = runner.execute(store, config, run.id)
+    store.signal(run.id, "cancel")
+    repeated = runner.execute(store, config, run.id, resume=True)
+    assert repeated.state == completed.state == "completed"
+    assert repeated.attempts == completed.attempts
+    assert repeated.usage == completed.usage
+    assert repeated.goal_status == completed.goal_status
+    assert len(synthetic) == 1
+
+
+def test_legacy_rules_stop_before_reservation_but_allow_cancel(tmp_path, synthetic):
+    store, config, run = make_run(tmp_path, check_version="orca-hf-1")
+    request_path = store.path(f"runs/{run.id}/request-revisions/1.json")
+    original = request_path.read_bytes()
+    blocked = runner.execute(store, config, run.id, resume=True)
+    assert blocked.state == "failed"
+    assert blocked.attempts == []
+    assert blocked.usage.orca_starts_reserved == len(synthetic) == 0
+    assert any("check_rule_revalidation_required" in str(item) for item in blocked.diagnostics)
+    assert request_path.read_bytes() == original
+    store.signal(run.id, "cancel")
+    assert runner.execute(store, config, run.id, resume=True).state == "cancelled"
+    assert store.read_signal(run.id) == "cancel"
+
+
+@pytest.mark.parametrize("version", ["6.1.0", "6.1.2", "6.2.0", "6.1.1-f.1", None])
+def test_unenabled_frozen_version_rejected_before_reservation(tmp_path, synthetic, version):
+    store, config, run = make_run(tmp_path)
+    path = store.path(f"runs/{run.id}/environment.json")
+    environment = json.loads(path.read_text())
+    environment["orca"]["version"] = version
+    path.write_text(json.dumps(environment))  # Test-only unsupported frozen environment.
+    blocked = runner.execute(store, config, run.id)
+    assert blocked.state == "failed"
+    assert not blocked.attempts
+    assert blocked.usage.orca_starts_reserved == len(synthetic) == 0
+    assert any("version is not enabled" in str(item) for item in blocked.diagnostics)

@@ -13,6 +13,7 @@ from orca_agent.models import (
 )
 from orca_agent.store import Store
 from orca_agent.tools import calculation
+from orca_agent.versions import CURRENT_CHECK_VERSION
 
 
 @pytest.fixture
@@ -21,7 +22,7 @@ def collection_attempt(tmp_path):
     geometry = tmp_path / "initial.xyz"
     geometry.write_text("3\nSynthetic fixture\nO 0 0 0\nH 0 .757 .587\nH 0 -.757 .587\n")
     initial = store.import_artifact(geometry, "initial_geometry")
-    request = Request(geometry_artifact_id=initial.id, goals=[Goal(id="e", port="energy")])
+    request = Request(geometry_artifact_id=initial.id, goals=[Goal(id="e", port="energy", minimum_check_version=CURRENT_CHECK_VERSION)])
     step = Step(id="sp", logical_id="energy", tool="orca.sp", geometry=InputRef(artifact_id=initial.id))
     plan = Plan(request_id=request.id, steps=[step],
                 goal_map={"e": OutputBinding(step_id="sp", port="energy")})
@@ -35,7 +36,7 @@ def collection_attempt(tmp_path):
 
 def parsed_fixture():
     return {
-        "checks": {"energy": [{"name": "synthetic_fixture", "status": "passed",
+        "checks": {"energy": [{"name": "synthetic_fixture", "status": "passed", "rule_version": CURRENT_CHECK_VERSION,
                                "detail": "Synthetic parser fixture, not scientific evidence"}]},
         "qualified_outputs": {"energy": {"value": -1.0, "unit": "Eh",
                                          "source": {"synthetic_fixture": True}}},
@@ -54,7 +55,7 @@ def test_archive_parse_conflict_preserves_evidence_without_publishing_port(
 ):
     store, run, step, attempt, workdir = collection_attempt
 
-    def read_and_mutate(*args):
+    def read_and_mutate(*args, **kwargs):
         if mutation == "modified":
             (workdir / "stdout.out").write_bytes(b"Different evidence after archival.\n")
         elif mutation == "added":
@@ -80,7 +81,7 @@ def test_archive_parse_conflict_preserves_evidence_without_publishing_port(
 
 def test_unchanged_archive_and_parser_can_publish_only_checked_fixture(collection_attempt, monkeypatch):
     store, run, step, attempt, _ = collection_attempt
-    monkeypatch.setattr(calculation, "read_outputs", lambda *args: parsed_fixture())
+    monkeypatch.setattr(calculation, "read_outputs", lambda *args, **kwargs: parsed_fixture())
     result = calculation.collect_result(store, run, step, attempt, completed_fixture())
     assert result.qualified_outputs["energy"].value == -1.0
     assert result.qualified_outputs["energy"].source["synthetic_fixture"] is True
@@ -90,7 +91,7 @@ def test_unchanged_archive_and_parser_can_publish_only_checked_fixture(collectio
 def test_parse_failure_keeps_already_archived_raw_files(collection_attempt, monkeypatch):
     store, run, step, attempt, _ = collection_attempt
 
-    def broken_parser(*args):
+    def broken_parser(*args, **kwargs):
         raise ValueError("synthetic malformed JSON")
 
     monkeypatch.setattr(calculation, "read_outputs", broken_parser)

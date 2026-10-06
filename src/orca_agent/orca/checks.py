@@ -6,6 +6,7 @@ import math
 from typing import Any
 
 from orca_agent.models import Check
+from orca_agent.versions import CURRENT_CHECK_VERSION
 
 
 def check_outputs(observations: dict[str, Any], tool_name: str) -> dict[str, list[Check]]:
@@ -15,6 +16,7 @@ def check_outputs(observations: dict[str, Any], tool_name: str) -> dict[str, lis
         status = "unverified" if passed is None else ("passed" if passed else "failed")
         return Check(
             name=name, status=status, detail=detail,
+            rule_version=CURRENT_CHECK_VERSION,
             source=facts.get("evidence", {}).get(name, {}),
         )
 

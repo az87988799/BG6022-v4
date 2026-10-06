@@ -2,6 +2,8 @@
 
 版本：0.1.0；日期：2026-10-06。状态：阶段 A 工程交付，等待用户验收。详细验证与失败历史见 [阶段报告](acceptance/phase-a/report.md) 和 [证据索引](acceptance/phase-a/evidence-index.json)。
 
+本轮 R-01～R-05 修复使用 `orca-hf-2`，见 [修复验收记录](acceptance/phase-a-repair/report.md) 与 [真实历史产物只读回放](acceptance/phase-a-repair/replay.json)。既有真实执行证据保持原样；本轮新增科学启动 0 次。当前 ORCA 准入精确限定 `6.1.1`，不因满足 OPI 最低版本就自动启用其他版本。旧规则结果可查看、取消、对账及补收；继续执行或复用于新版目标需要明确的规则复验，本次没有自动迁移流程。
+
 ## 科学范围
 
 固定环境为 Windows、ORCA 6.1.1、OPI 2.0.0、MS-MPI 10.1.12498.18；固定 RHF/STO-3G、NORI、TightSCF、NoAutoStart、中性单重态，优化另启用 TightOpt 和 EnforceStrictConvergence。四核指 4 个受 CPU affinity 约束的逻辑 CPU / 4 个 MPI ranks；进程树总提交内存 1024 MiB。

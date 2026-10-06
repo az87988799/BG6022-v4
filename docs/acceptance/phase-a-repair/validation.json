@@ -1,0 +1,236 @@
+{
+  "date": "2026-10-06",
+  "timezone": "Asia/Hong_Kong",
+  "status": "awaiting_user_acceptance",
+  "baseline_commit": "62a457b",
+  "baseline_test_result": {
+    "passed": 232,
+    "skipped": 14
+  },
+  "offline": {
+    "command": ".venv\\Scripts\\python.exe -m pytest -q --junitxml=data/repair-validation/offline-final.xml",
+    "passed": 303,
+    "skipped": 14,
+    "failed": 0,
+    "errors": 0,
+    "net_added_passing_cases": 71,
+    "elapsed_seconds": 162.47,
+    "junit_path": "E:\\BG6022-V4\\data\\repair-validation\\offline-final.xml",
+    "junit_sha256": "3d4c3cabbc06aa411cfec3c84f99f061482a9185ef3886e98eb55b69ca518683",
+    "skip_details": [
+      {
+        "class": "tests.live.test_lifecycle",
+        "name": "test_real_mpi_ranks_are_managed_and_cleaned[cancel]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_lifecycle",
+        "name": "test_real_mpi_ranks_are_managed_and_cleaned[kill_coordinator]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_reference",
+        "name": "test_independent_frozen_reference[water_sp]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_reference",
+        "name": "test_independent_frozen_reference[methane_sp]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_reference",
+        "name": "test_independent_frozen_reference[water_opt]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_reference",
+        "name": "test_independent_frozen_reference[methane_opt]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[water_sp-expected0]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[methane_sp-expected1]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[water_opt-expected2]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[methane_opt-expected3]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[water_scf_limit-expected4]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_science[water_opt_limit-expected5]",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.live.test_science",
+        "name": "test_real_static_opt_to_sp",
+        "reason": "real ORCA not enabled; unverified"
+      },
+      {
+        "class": "tests.unit.test_store",
+        "name": "test_symlink_cannot_escape_controlled_root",
+        "reason": "creating test symlinks requires Windows developer mode/privilege"
+      }
+    ]
+  },
+  "lint": {
+    "command": ".venv\\Scripts\\ruff.exe check .",
+    "result": "passed"
+  },
+  "build": {
+    "command": "py -3.11 -m uv build --offline",
+    "result": "passed",
+    "wheel_modules_byte_verified": 20,
+    "artifacts": [
+      {
+        "path": "E:\\BG6022-V4\\dist\\orca_agent-0.1.0-py3-none-any.whl",
+        "sha256": "4b91bca86ed4b7cdc587f36f1c1678ea5b6247293ec90a61b1434af0abb19203",
+        "size_bytes": 51033
+      },
+      {
+        "path": "E:\\BG6022-V4\\dist\\orca_agent-0.1.0.tar.gz",
+        "sha256": "dd482b0803892b169c7a7129f4ad1f84d0c3a364466747ded8bef3eb57b2e995",
+        "size_bytes": 387445
+      }
+    ]
+  },
+  "scientific_execution": {
+    "new_orca_starts": 0,
+    "real_live_tests": "not run in this repair",
+    "version_probes": "mocked in tests; no other ORCA version installed or executed",
+    "historical_replay_attempts": 15,
+    "replay_path": "replay.json",
+    "replay_sha256": "5833f931c2860b554c1a81a8490995bf47a631cc169ad9f4474120a408002d45",
+    "external_action_attempts_in_replay": 0
+  },
+  "red_regressions": [
+    {
+      "scope": "R01/R03/R04",
+      "failed": 5,
+      "passed": 1,
+      "log": "logs/red-execution.txt"
+    },
+    {
+      "scope": "R02 and parsing rule/environment binding",
+      "failed": 9,
+      "log": "logs/red-science.txt"
+    },
+    {
+      "scope": "R05 and rule/schema compatibility",
+      "failed": 10,
+      "passed": 77,
+      "log": "logs/red-version.txt"
+    },
+    {
+      "scope": "R05 complete/incomplete duplicate banners",
+      "failed": 2,
+      "passed": 13,
+      "log": "logs/red-version-ambiguous.txt"
+    },
+    {
+      "scope": "R02 missing final energy in later computation",
+      "failed": 2,
+      "passed": 1,
+      "log": "logs/red-science-tail.txt"
+    }
+  ],
+  "logs": [
+    {
+      "path": "logs/red-execution.txt",
+      "sha256": "c3b562b97b27040d838434984c9bf32e73d716ec7bbcde4e92edd2a8525b0b3f",
+      "size_bytes": 9297
+    },
+    {
+      "path": "logs/red-science.txt",
+      "sha256": "188c94ea36a0488b39efaeb89a02fa95ecb741413f2698c0fd619774c0d4a2fd",
+      "size_bytes": 16838
+    },
+    {
+      "path": "logs/red-version.txt",
+      "sha256": "7af4f3d19614812ea0edc3952dead051f62096f6a0e0f36400064656d7a5a3a6",
+      "size_bytes": 5272
+    },
+    {
+      "path": "logs/red-version-ambiguous.txt",
+      "sha256": "3d13ae116f803e65111f0d656165a34f068e74db44774d5044d6abd8d70e6818",
+      "size_bytes": 1161
+    },
+    {
+      "path": "logs/red-science-tail.txt",
+      "sha256": "7e79101974fe080045b2dc6a24d975d2d6670dc07cd4d98a05d279d534b16fdc",
+      "size_bytes": 3277
+    },
+    {
+      "path": "logs/green-execution.txt",
+      "sha256": "3c45c92b4cd7cb77934754c1f7253160655da15ed71e1362e4ecdaa42e9ba7a1",
+      "size_bytes": 113
+    },
+    {
+      "path": "logs/green-execution-final-targeted.txt",
+      "sha256": "65dcd6b9de940f3f567ab3155f87b45697d21bc7928cd45d1491aef098dc7a0c",
+      "size_bytes": 117
+    },
+    {
+      "path": "logs/green-execution-no-false-success.txt",
+      "sha256": "0ee710a36964ea22b4cd124cc5f72a35d3b027a9c4154fd1b397191f08f971f8",
+      "size_bytes": 115
+    },
+    {
+      "path": "logs/green-schema.txt",
+      "sha256": "33b9840ce4a4b7ad5ad6fa436fb10f38a67be734ae02d71ee4fcd8282edb09cf",
+      "size_bytes": 465
+    },
+    {
+      "path": "logs/green-science-tail.txt",
+      "sha256": "5fc0bb4e435a47b38197068d803bab821440366e1e3946937eed216f91157ea5",
+      "size_bytes": 102
+    },
+    {
+      "path": "logs/offline-final.txt",
+      "sha256": "4468f926db802efb7667f46b19f69ad26112b94ad1e072e87bbfde8d0a8b0f9f",
+      "size_bytes": 952
+    }
+  ],
+  "source_hashes": {
+    "orca_agent\\__init__.py": "f6fb8f836fa1fb349bede92a71a35ec56577a041abea6e74f3ff6ecf33fbec18",
+    "orca_agent\\backends\\__init__.py": "ce008a8dddddef86c1922c4939805f6414bccab2f6ac567ffb041b8864b99d2c",
+    "orca_agent\\backends\\_windows.py": "ce012b628c97d8026fc739c587a3539a748012aa355e57c2caca424da79ce823",
+    "orca_agent\\backends\\local.py": "eeee1dc09ec5ad0218a106bdce55a3207021977959a7ac01a41d804bdb56758c",
+    "orca_agent\\cli.py": "718d1972902de746e45fbac8a166c62e4055bc6a3ec32ca26ebe8847df3799aa",
+    "orca_agent\\config.py": "25a44e259bdd69f9f74e33b124246a11cf88bdf4ab42dab0df7890f39f791e19",
+    "orca_agent\\doctor.py": "d10ac4bbd61a6df8cf9fbbb138db23b84e867d07a55e0b7834b4d747377ff361",
+    "orca_agent\\models.py": "ca46aa68e56c05b795b1dadac0d61401f382a9d00f6aa88ffbb5bb9b5450cac3",
+    "orca_agent\\orca\\adapter.py": "e1f9a31b87becabe2bd5f2bc454d586c6271947d7cfd615465ca32aeb8b921a6",
+    "orca_agent\\orca\\checks.py": "a702ba397fa8cb886487950e1bd2b7e45558ffb20961fc04c6fe54df504e78f5",
+    "orca_agent\\orca\\diagnostics.py": "f66f95c5cde5b7cd4a2ad04069dcb2564c2bb109a0129b09aff1295c8008e9ad",
+    "orca_agent\\runner.py": "2b2d2408ae749ccd996a500490ea9fb5e604179bf0872abbbecfc28bb29afbbc",
+    "orca_agent\\store.py": "5194827b340b4c609fe843abcee64c6a2f68006ac5cebe7f474820a9f885bd89",
+    "orca_agent\\structured.py": "60e5b78229f905a6bbd0223ce9d4dd83a5636c2f0b28c9bfb43945852a661365",
+    "orca_agent\\tools\\calculation.py": "000abbecd505818c35ad82f4a498de3c4fc70f4b9e58c33323d0d9bc3672805c",
+    "orca_agent\\tools\\electronic.py": "fa0e1872804f46d1271b790d9e095f524d0a48ce932e0a5f3437fdd65488867b",
+    "orca_agent\\tools\\evidence.py": "1e7e034f2684cac8c7ec206d66ad802fb525541e35c85bc9cc57c553e17c6f20",
+    "orca_agent\\tools\\geometry.py": "62826a427b2714b4ac13cdeeb5bd226963056884bc7651dba3ad5242474fdeed",
+    "orca_agent\\tools\\registry.py": "84d9d551babb3aef578edea659ba62ab941dbecc63dbb3900bea2aeb78984b40",
+    "orca_agent\\versions.py": "5ebf4dd2391c8ef78ba4e41d63b477549b21c315c17cb31769dae5b34a67eb9c"
+  },
+  "historical_integrity": "integrity.json checked 1500 prior files before the authorized report-link append; report-link-append.json records the preserved original prefix",
+  "unchanged_environment_reference": "../phase-a/environment.json",
+  "github_actions": "Remote status is checked separately after pushing; local success does not imply remote success."
+}

@@ -18,6 +18,7 @@ from orca_agent.models import (
     new_id,
 )
 from orca_agent.tools.registry import validate_geometry, validate_parameters
+from orca_agent.versions import CURRENT_CHECK_VERSION
 
 
 class StepInput(Record):
@@ -74,7 +75,8 @@ def prepare_task(spec_path: Path, store):
         conditions_source={name: ("explicit" if name in settings.model_fields_set else "default")
                            for name in ("charge", "multiplicity", "method", "basis")}
         | {"geometry": "explicit"},
-        goals=[Goal(id=goal.name, port=goal.port, required=goal.required) for goal in task.goals],
+        goals=[Goal(id=goal.name, port=goal.port, required=goal.required,
+                    minimum_check_version=CURRENT_CHECK_VERSION) for goal in task.goals],
     )
     step_ids = {item.name: new_id("step") for item in task.steps}
     steps = []

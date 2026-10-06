@@ -27,6 +27,11 @@ from orca_agent.models import CalculationParameters
 from orca_agent.orca.checks import check_outputs
 from orca_agent.orca.diagnostics import diagnostic, scientific_diagnostics
 from orca_agent.tools.registry import validate_geometry, validate_parameters
+from orca_agent.versions import (
+    extract_orca_version,
+    is_supported_orca_version,
+    orca_version_tokens,
+)
 
 MAX_EVIDENCE_BYTES = 10 * 1024 * 1024
 NUMBER = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[EeDd][-+]?\d+)?"
@@ -104,7 +109,7 @@ def _coordinates(lines: list[str]) -> list[dict[str, Any]]:
     blocks = []
     pattern = re.compile(rf"^\s*([A-Z][a-z]?)\s+({NUMBER})\s+({NUMBER})\s+({NUMBER})\s*$")
     for index, line in enumerate(lines):
-        if "CARTESIAN COORDINATES (ANGSTROEM)" not in line:
+        if line.strip() != "CARTESIAN COORDINATES (ANGSTROEM)":
             continue
         atoms = []
         for row in lines[index + 1:]:
@@ -158,19 +163,91 @@ def _thresholds(lines: list[str], converged_line: int) -> tuple[bool, dict]:
     return len(found) == len(required) and all(x["passed"] for x in found.values()), found
 
 
+def _energy_fragment(lines: list[str], blocks: list[dict], energies: list[dict],
+                     converged: list[int], failures: list[int]) -> dict:
+    """Bind one final energy to one coordinate/SCF segment of the admitted format.
+
+    A new coordinate block or an explicit optimization stage ends a segment.
+    The latter also prevents a damaged stage with no coordinates from borrowing
+    the previous stage's geometry. Multiple energies or SCF success markers in
+    one segment are ambiguous; the supported RHF profile needs neither.
+    """
+    stages = [i for i, line in enumerate(lines, 1) if re.match(
+        r"\s*\**\s*(?:GEOMETRY OPTIMIZATION CYCLE\s+\d+\b|"
+        r"FINAL ENERGY EVALUATION AT THE STATIONARY POINT\b)", line
+    )]
+    coordinate_headers = [i for i, line in enumerate(lines, 1)
+                          if line.strip() == "CARTESIAN COORDINATES (ANGSTROEM)"]
+    boundaries = sorted(set(stages + coordinate_headers))
+    energy = energies[-1] if energies else None
+    # A later actual calculation may have stopped before printing any energy.
+    # A trailing coordinate report alone is not evidence of a new calculation.
+    later_stages = [line for line in stages if energy and line > energy["line"]]
+    later_scf = [line for line in converged + failures if energy and line > energy["line"]]
+    previous_energy = energy if later_stages or later_scf else None
+    if previous_energy:
+        energy = None
+    if energy:
+        target = energy["line"]
+    else:
+        last_stage = stages[-1] if stages else 0
+        current_scf = [line for line in converged + failures if line >= last_stage]
+        target = max(current_scf) if current_scf else len(lines)
+    prior_boundaries = [line for line in boundaries if line <= target]
+    start = prior_boundaries[-1] if prior_boundaries else 1
+    if previous_energy:
+        start = max(start, previous_energy["line"] + 1)
+    end = next((line - 1 for line in boundaries if line > start), len(lines))
+    geometry = next((block for block in blocks if block["line"] == start), None)
+    local_energies = [item for item in energies if start <= item["line"] <= end]
+    successes = [line for line in converged if start <= line <= end]
+    failed = [line for line in failures if start <= line <= end]
+    unique = bool(energy and geometry and len(local_energies) == 1)
+    conflict = len(successes) > 1 or bool(successes and failed) or len(local_energies) > 1
+    scf = None
+    reason = "No SCF convergence marker in the energy's coordinate segment."
+    if conflict:
+        reason = "Conflicting or multiple SCF/energy candidates in one coordinate segment."
+    elif failed:
+        scf = False
+        reason = "SCF explicitly failed in this coordinate segment."
+    elif successes and unique and successes[0] < energy["line"]:
+        scf = True
+        reason = "One converged SCF precedes the energy in the same coordinate segment."
+    elif not unique:
+        reason = "No unique coordinate/energy segment can be established."
+    return {
+        "file": "stdout.out", "segment_start_line": start, "segment_end_line": end,
+        "geometry_line": geometry["line"] if geometry else None,
+        "energy_line": energy["line"] if energy else None,
+        "converged_lines": successes, "failure_lines": failed,
+        "stage_line": next((line for line in reversed(stages) if line <= start), None),
+        "unique_binding": unique, "conflict": conflict, "scf_converged": scf,
+        "detail": reason, "geometry": geometry, "energy": energy,
+        "previous_energy_observation": {
+            **previous_energy, "file": "stdout.out", "unit": "Eh",
+            "qualification": "observation_only; not the current calculation fragment",
+        } if previous_energy else None,
+    }
+
+
 def _text_observations(text: str, params: CalculationParameters, tool_name: str) -> dict:
     lines = [line.rstrip("\r") for line in text.split("\n")]
     energies = []
     for line_no, line in enumerate(lines, 1):
-        match = re.match(rf"\s*FINAL SINGLE POINT ENERGY\s+({NUMBER})\s*$", line)
-        if match:
-            energies.append({"line": line_no, "value": float(match[1].replace("D", "E"))})
-    last = energies[-1] if energies else None
+        label = re.match(r"\s*FINAL SINGLE POINT ENERGY\b(.*)$", line)
+        if label:
+            match = re.fullmatch(rf"\s*({NUMBER})\s*", label[1])
+            energies.append({
+                "line": line_no,
+                "value": float(match[1].replace("D", "E")) if match else None,
+            })
     converged = [i for i, line in enumerate(lines, 1) if re.match(
         r"\s*\**\s*SCF CONVERGED AFTER\s+\d+\s+CYCLES", line
     )]
-    failures = [i for i, line in enumerate(lines, 1) if re.search(
-        r"SCF (?:NOT CONVERGED|DID NOT CONVERGE)|SCF CONVERGENCE FAILURE", line, re.I
+    failures = [i for i, line in enumerate(lines, 1) if re.match(
+        r"\s*\**\s*(?:SCF (?:NOT CONVERGED|DID NOT CONVERGE)|SCF CONVERGENCE FAILURE)",
+        line, re.I
     )]
     opt = [i for i, line in enumerate(lines, 1) if re.match(
         r"\s*\**\s*THE OPTIMIZATION HAS CONVERGED\s*\**\s*$", line
@@ -179,44 +256,54 @@ def _text_observations(text: str, params: CalculationParameters, tool_name: str)
         r"\s*\**\s*ORCA TERMINATED NORMALLY\s*\**\s*$", line
     )]
     blocks = _coordinates(lines)
-    energy_blocks = [block for block in blocks if last and block["line"] < last["line"]]
-    versions = re.findall(r"^\s*Program Version\s+(\S+)", text, re.M)
+    fragment = _energy_fragment(lines, blocks, energies, converged, failures)
+    last = fragment["energy"]
+    fragment_source = {key: value for key, value in fragment.items()
+                       if key not in {"geometry", "energy", "previous_energy_observation"}}
+    version = extract_orca_version(text)
     # Echo alone is insufficient: also require runtime RHF and electronic state.
     hftypes = re.findall(r"^\s*Hartree-Fock type\s+HFTyp\s*\.{2,}\s*(\S+)", text, re.M | re.I)
     charges = re.findall(r"^\s*Total Charge\s+Charge\s*\.{2,}\s*(-?\d+)", text, re.M)
     mults = re.findall(r"^\s*Multiplicity\s+Mult\s*\.{2,}\s*(\d+)", text, re.M)
     bases = re.findall(r"^\s*Your calculation utilizes the basis\s*:\s*(\S+)", text, re.M | re.I)
     thresholds, threshold_evidence = _thresholds(lines, opt[-1] if opt else 0)
-    scf_ok = bool(last and converged and converged[-1] < last["line"]
-                  and (not failures or failures[-1] < converged[-1]))
     return {
         "energy_eh": last["value"] if last else None,
         "energy_unit": "Eh", "energy_source": "stdout.out",
         "normal_termination": bool(normal and (not last or normal[-1] > last["line"])),
-        "orca_version": versions[0] if versions else None,
-        "version_supported": versions == ["6.1.1"],
+        "orca_version": version,
+        "version_supported": is_supported_orca_version(version) if version else None,
         "conditions_match": bool(hftypes and bases and charges and mults
                                  and all(value.upper() == "RHF" for value in hftypes)
                                  and all(value.upper() == "STO-3G" for value in bases)
                                  and all(int(value) == params.charge for value in charges)
                                  and all(int(value) == params.multiplicity for value in mults)),
-        "scf_converged": scf_ok,
+        "scf_converged": fragment["scf_converged"],
+        "parser_consistent": not fragment["conflict"],
         "optimization_converged": bool(opt),
         "optimization_thresholds_passed": thresholds,
         "geometry_blocks": blocks,
-        "energy_geometry": energy_blocks[-1] if energy_blocks else None,
+        "energy_geometry": fragment["geometry"],
+        "energy_fragment": fragment_source,
+        "previous_energy_observation": fragment["previous_energy_observation"],
         "evidence": {
-            "orca_version": {"file": "stdout.out", "lines": [
-                i for i, row in enumerate(lines, 1) if re.match(r"\s*Program Version\s+", row)
-            ]},
+            "orca_version": {
+                "file": "stdout.out", "tokens": list(orca_version_tokens(text)),
+                "lines": [i for i, row in enumerate(lines, 1)
+                          if re.match(r"\s*Program Version\s+", row)],
+            },
             "method_and_electronic_state": {"file": "stdout.out", "lines": [
                 i for i, row in enumerate(lines, 1) if re.match(
                     r"\s*(?:Hartree-Fock type\s+HFTyp|Total Charge\s+Charge|"
                     r"Multiplicity\s+Mult|Your calculation utilizes the basis\s*:)", row
                 )
             ]},
-            "finite_total_energy": {"file": "stdout.out", **(last or {})},
-            "scf_converged": {"file": "stdout.out", "line": converged[-1] if converged else None},
+            "finite_total_energy": {**fragment_source, **(last or {})},
+            "scf_converged": {
+                **fragment_source,
+                "line": fragment["converged_lines"][0] if fragment["scf_converged"] is True
+                else (fragment["failure_lines"][0] if fragment["failure_lines"] else None),
+            },
             "normal_termination": {"file": "stdout.out", "line": normal[-1] if normal else None},
             "optimization_converged": {"file": "stdout.out", "line": opt[-1] if opt else None},
             "optimization_thresholds": {"file": "stdout.out", "rows": threshold_evidence},
@@ -226,6 +313,7 @@ def _text_observations(text: str, params: CalculationParameters, tool_name: str)
 
 def read_outputs(
     workdir: str | Path, parameters: CalculationParameters | dict, tool_name: str,
+    *, expected_orca_version: str | None = None,
 ) -> dict[str, Any]:
     """Read existing bounded evidence, then check every proposed scientific port."""
     params = _parameters(parameters, tool_name)
@@ -236,6 +324,14 @@ def read_outputs(
         facts.update(_text_observations(_read(directory / "stdout.out"), params, tool_name))
     except (OSError, ValueError) as error:
         diagnostics.append(diagnostic("missing_or_invalid_output", str(error)))
+    if expected_orca_version is not None:
+        facts["version_supported"] = bool(
+            facts.get("version_supported")
+            and facts.get("orca_version") == expected_orca_version
+        )
+    facts["evidence"].setdefault("orca_version", {}).update({
+        "observed": facts.get("orca_version"), "expected": expected_orca_version,
+    })
     try:
         manifest = json.loads(_read(directory / "input-manifest.json"))
         facts["input_integrity"] = (
@@ -248,7 +344,8 @@ def read_outputs(
         facts["initial_geometry_matches"] = bool(blocks and _same_geometry(initial, blocks[0]["atoms"]))
         energy_geometry = facts.get("energy_geometry")
         facts["energy_geometry_bound"] = bool(
-            energy_geometry and [a[0] for a in initial] == [a[0] for a in energy_geometry["atoms"]]
+            facts.get("energy_fragment", {}).get("unique_binding") and energy_geometry
+            and [a[0] for a in initial] == [a[0] for a in energy_geometry["atoms"]]
         )
         if tool_name == "orca.sp":
             facts["energy_geometry_bound"] = bool(
@@ -270,6 +367,7 @@ def read_outputs(
             "compared_with": "stdout.out", "line": blocks[0]["line"] if blocks else None,
         }
         facts["evidence"]["energy_geometry_binding"] = {
+            **facts.get("energy_fragment", {}),
             "file": "stdout.out", "line": energy_geometry["line"] if energy_geometry else None,
             "geometry": energy_geometry["atoms"] if energy_geometry else None,
         }
@@ -300,7 +398,11 @@ def read_outputs(
                 raise ValueError("JSON multiplicity disagrees with the requested state")
             if parsed.results_properties and parsed.results_properties.geometries:
                 data = parsed.results_properties.geometries[-1].single_point_data
-                if data and data.converged is not None and data.converged != facts.get("scf_converged"):
+                if data:
+                    facts["property_json_scf_converged"] = data.converged
+                if (data and data.converged is not None
+                        and facts.get("scf_converged") is not None
+                        and data.converged != facts["scf_converged"]):
                     raise ValueError("JSON and text SCF convergence disagree")
             json_structure = parsed.get_structure(with_fragments=False)
             if json_structure is not None:

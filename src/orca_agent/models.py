@@ -14,6 +14,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from orca_agent.versions import LEGACY_CHECK_VERSION
+
 Identifier = Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$")]
 Port = Literal["energy", "optimized_geometry"]
 CheckStatus = Literal["passed", "failed", "unverified", "not_applicable"]
@@ -70,7 +72,8 @@ class Goal(Record):
     id: Identifier
     port: Port
     required: bool = True
-    minimum_check_version: Literal["orca-hf-1"] = "orca-hf-1"
+    # Missing fields in historical files mean the old rule, never the current rule.
+    minimum_check_version: Literal["orca-hf-1", "orca-hf-2"] = LEGACY_CHECK_VERSION
 
 
 class OutputBinding(Record):
@@ -194,7 +197,7 @@ class Tool(Record):
     )
     max_cores: int = 4
     max_memory_mb: int = 1024
-    check_version: str = "orca-hf-1"
+    check_version: str = LEGACY_CHECK_VERSION
     implementation: str
 
 
@@ -282,7 +285,7 @@ class Check(Record):
     status: CheckStatus
     detail: str = ""
     source: dict[str, Any] = Field(default_factory=dict)
-    rule_version: str = "orca-hf-1"
+    rule_version: str = LEGACY_CHECK_VERSION
 
 
 class QualifiedOutput(Record):
@@ -308,6 +311,7 @@ class Result(Record):
     run_id: Identifier
     step_id: Identifier
     attempt_id: Identifier
+    supersedes_result_id: Identifier | None = None
     operation_status: Literal["completed", "failed", "cancelled", "timed_out", "unknown"]
     checks: dict[str, list[Check]] = Field(default_factory=dict)
     qualified_outputs: dict[Port, QualifiedOutput] = Field(default_factory=dict)

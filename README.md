@@ -2,6 +2,8 @@
 
 阶段 A 提供不依赖 LLM 的本地计算底座：结构化 Request/Plan → 注册 Tool → OPI 输入 → Windows 受管 ORCA → 逐输出科学检查 → 不可变证据及结果。阶段交付状态与真实证据见 [验收报告](docs/acceptance/phase-a/report.md)，用户验收前不记为阶段通过。
 
+R-01～R-05 的后续修复见 [修复验收记录](docs/acceptance/phase-a-repair/report.md)。新请求采用 `orca-hf-2`；旧 Request/Result 保留原规则和原字节。旧 Run 仍可查看、取消、恢复对账及补收，但未完成的旧规则 Run 不会直接继续计算，需另行明确复验；本轮未实现自动规则迁移。
+
 当前科学范围是 **H₂O / CH₄ 组成、中性单重态、RHF/STO-3G、单点与无约束严格优化**。优化收敛只表示五项指定判据通过；未进行 Hessian/频率检查。DFT 泛函、更广体系、自然语言规划、自动修复、远程执行尚未实现。逐项状态见 [能力矩阵](docs/capabilities.md)。
 
 ## 安装与环境
@@ -18,6 +20,8 @@ Copy-Item config.example.toml config.local.toml
 ```
 
 `doctor` 仅执行有期限的无输入版本探测；本机 ORCA 会打印版本后以退出码 2 报告找不到 `--version` 输入文件，该事实保留在报告中，并未提交科学计算。配置中的 MPI 目录实际加入子进程 PATH，核验时冻结可执行文件 hash。
+
+项目仅启用精确的 ORCA `6.1.1`；未知版本后缀、重复或含混版本证据会拒绝准入。第三方要求的最低兼容版本不等于本项目已验证范围。
 
 ## 结构化计算与控制
 
