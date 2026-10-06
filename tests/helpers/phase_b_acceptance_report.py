@@ -118,7 +118,8 @@ def _model_record(metadata_path, model_store):
         row["evidence"].append(_receipt(grade_path))
         if review_path.is_file():
             row["evidence"].append(_receipt(review_path))
-        failed = (not actual["safety_invariants_passed"] or any(
+        row["proposal_review"] = actual.get("proposal_review", {"status": "not_verified"})
+        failed = (not actual["safety_invariants_passed"] or row["proposal_review"]["status"] == "failed" or any(
             a["status"] == "failed" for a in [*actual["assertions"], *actual["explanation"].values()]))
         row["status"] = ("passed" if grade.get("status") == actual["status"] == "passed" and review
                          else "failed" if failed else "unverified" if present else "not_run")
@@ -140,6 +141,8 @@ def _joint_record(metadata_path):
            "category": metadata["category"], "freeze_label": label,
            "freeze_sha256": frozen.get("freeze_sha256"), "repetition": int(suffix) if suffix in {"1", "2", "3"} else None,
            "evidence_type": "joint_real_model_orca", "status": "unverified", "first_success": False,
+           "all_proposal_facts_passed": None, "semantic_review_passed": None,
+           "proposal_review_status": "unverified",
            "correction_or_transport_failure": None, "evidence": [_receipt(metadata_path)]}
     try:
         store = _store(metadata["data_root"])
@@ -175,10 +178,18 @@ def _joint_record(metadata_path):
                     or hashlib.sha256(reason.encode()).hexdigest() != review.get("model_reason_sha256")):
                 raise ValueError("joint explanation hash differs")
             axes = _axes(review, reason)
+            for key in ("all_proposal_facts_passed", "semantic_review_passed"):
+                row[key] = review.get(key) if type(review.get(key)) is bool else None
+            facts = (row["all_proposal_facts_passed"], row["semantic_review_passed"])
+            row["proposal_review_status"] = ("failed" if False in facts else "passed"
+                                             if facts == (True, True) else "unverified")
             row["evidence"].append(_receipt(review_path))
         row["six_axes_passed"] = axes == "passed"
-        row["status"] = ("failed" if not row["mechanical_passed"] or axes == "failed"
-                         else "passed" if axes == "passed" else "unverified")
+        reviews = (axes, row["proposal_review_status"])
+        row["status"] = ("failed" if not row["mechanical_passed"] or "failed" in reviews
+                         else "passed" if reviews == ("passed", "passed") else "unverified")
+        if row["proposal_review_status"] != "passed":
+            row["reason"] = "joint proposal facts/semantic review " + row["proposal_review_status"]
         row["first_success"] = row["status"] == "passed" and not corrected
     except (ValueError, KeyError, TypeError, OSError, RuntimeError) as exc:
         row.update(status="unverified", reason=str(exc))
@@ -362,6 +373,7 @@ def build_report(*, coverage_path=None, freeze_path=None, model_root=None, joint
             "passed": bool(slots) and freeze["verified"] and cost["verified"] and all(s["status"] == "passed" for s in slots),
             "limits": ["Development and earlier freezes never fill current formal slots.",
                        "Mechanical grading never replaces independent six-axis explanation review.",
+                       "Joint success also requires explicit proposal-fact and semantic review passes; missing fields remain unverified.",
                        "Rates include every attempted failed/unverified slot; not_run slots are reported separately.",
                        "Joint water-SP and repair variants may share one trajectory; ledger cost is counted once."]}
 

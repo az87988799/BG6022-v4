@@ -20,6 +20,10 @@ from orca_agent.tools.evidence import (
 from orca_agent.versions import CURRENT_CHECK_VERSION
 
 
+class SinglePointParameters(CalculationParameters):
+    timeout_seconds: Annotated[float, Field(gt=0, le=300)] = 300
+
+
 class EvidenceListParameters(Record):
     run_id: Identifier
     offset: Annotated[int, Field(strict=True, ge=0, le=10000)] = 0
@@ -67,7 +71,7 @@ def _register(parameters: type[Record], **metadata: Any) -> _Registration:
 
 TOOLS: dict[str, _Registration] = {
     "orca.sp": _register(
-        CalculationParameters,
+        SinglePointParameters,
         name="orca.sp",
         check_version=CURRENT_CHECK_VERSION,
         description="H2O/CH4 HF/STO-3G neutral singlet single-point electronic energy in Eh.",
@@ -165,12 +169,9 @@ def catalog() -> list[dict[str, Any]]:
 
 def validate_parameters(name: str, value: Record | dict) -> Record:
     definition = _definition(name)
-    parameters = definition.parameters.model_validate(
+    return definition.parameters.model_validate(
         value.model_dump() if isinstance(value, Record) else value
     )
-    if name == "orca.sp" and parameters.timeout_seconds > 300:
-        raise ValueError("single-point deadline may not exceed 300 seconds")
-    return parameters
 
 
 def dispatch_evidence(store: Any, name: str, parameters: dict[str, Any]) -> dict[str, Any]:

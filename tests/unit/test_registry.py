@@ -1,10 +1,14 @@
+import json
+from pathlib import Path
+
 import pytest
 
-from orca_agent.models import CalculationParameters, InputRef, PermissionSnapshot, Step
+from orca_agent.models import CalculationParameters, InputRef, PermissionSnapshot, Step, fingerprint
 from orca_agent.tools.registry import (
     EvidenceFieldParameters,
     EvidenceListParameters,
     EvidenceTextParameters,
+    SinglePointParameters,
     catalog,
     dispatch_evidence,
     get_tool,
@@ -16,17 +20,73 @@ WATER = "3\nWater coordinates, angstrom\nO 0 0 0\nH 0 0.757 0.587\nH 0 -0.757 0.
 
 
 def test_catalog_schema_and_execution_share_one_model():
+    models = {"orca.sp": SinglePointParameters, "orca.opt": CalculationParameters}
     for tool in catalog():
         if tool["name"].startswith("orca."):
-            assert tool["parameter_schema"] == CalculationParameters.model_json_schema()
+            assert tool["parameter_schema"] == models[tool["name"]].model_json_schema()
             assert "execute_orca" in tool["effects"]
     assert get_tool("orca.sp").output_ports == ["energy"]
     assert get_tool("orca.opt").output_ports == ["energy", "optimized_geometry"]
-    validate_parameters("orca.sp", {})
-    with pytest.raises(ValueError, match="300"):
-        validate_parameters("orca.sp", {"timeout_seconds": 301})
     with pytest.raises(ValueError, match="unregistered"):
         get_tool("shell.run")
+
+
+@pytest.mark.parametrize("name,limit", [("orca.sp", 300), ("orca.opt", 900)])
+def test_calculation_deadline_schema_matches_registered_validation(name, limit):
+    field = get_tool(name).parameter_schema["properties"]["timeout_seconds"]
+    assert field["maximum"] == limit
+    assert field["exclusiveMinimum"] == 0
+    assert field["default"] == 300
+    assert validate_parameters(name, {"timeout_seconds": limit}).timeout_seconds == limit
+    for invalid in (0, limit + 0.001, float("inf")):
+        with pytest.raises(ValueError, match="timeout_seconds"):
+            validate_parameters(name, {"timeout_seconds": invalid})
+
+
+def test_single_point_revalidates_general_calculation_parameter_objects():
+    with pytest.raises(ValueError, match="300"):
+        validate_parameters("orca.sp", CalculationParameters(timeout_seconds=900))
+    # The inherited resource combination check remains active on the subtype.
+    with pytest.raises(ValueError, match="memory"):
+        validate_parameters("orca.sp", {"memory_mb": 512, "cores": 4})
+
+
+@pytest.mark.parametrize("name", ["orca.sp", "orca.opt"])
+def test_calculation_step_defaults_and_serialized_identity_remain_compatible(name):
+    parameters = validate_parameters(name, {})
+    assert isinstance(parameters, CalculationParameters)
+    assert parameters.model_dump() == CalculationParameters().model_dump()
+    assert fingerprint(parameters) == fingerprint(CalculationParameters())
+    step = Step(id="calculation", logical_id="calculation", tool=name,
+                geometry=InputRef(artifact_id="geometry"), parameters=parameters)
+    stored = step.model_dump_json()
+    loaded = Step.model_validate_json(stored)
+    assert loaded.model_dump_json() == stored
+    assert fingerprint(loaded) == fingerprint(step)
+    assert type(loaded.parameters) is type(parameters)
+
+
+_FIXTURES = Path(__file__).parents[1] / "fixtures" / "phase_a"
+
+
+@pytest.mark.parametrize("path", sorted(_FIXTURES.glob("*/request.json")),
+                         ids=lambda path: path.parent.name)
+def test_historical_request_parameters_preserve_serialized_values(path):
+    request = json.loads(path.read_text(encoding="utf-8"))
+    for step in request["steps"]:
+        actual = validate_parameters(step["tool"], step["parameters"])
+        legacy = CalculationParameters.model_validate(step["parameters"])
+        assert actual.model_dump(mode="json") == legacy.model_dump(mode="json")
+        assert fingerprint(actual) == fingerprint(legacy)
+
+
+@pytest.mark.parametrize("path", sorted(_FIXTURES.glob("*/input-manifest.json")),
+                         ids=lambda path: path.parent.name)
+def test_historical_input_manifest_parameters_preserve_serialized_values(path):
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    actual = validate_parameters(manifest["tool"], manifest["parameters"])
+    assert actual.model_dump(mode="json") == manifest["parameters"]
+    assert fingerprint(actual) == fingerprint(manifest["parameters"])
 
 
 def test_catalog_copy_cannot_mutate_the_runtime_contract():

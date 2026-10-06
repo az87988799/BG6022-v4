@@ -161,8 +161,8 @@ def test_six_axes_never_inferred_from_mechanical_success(failed_axis):
     assert report._axes(review, "observed") == ("passed" if failed_axis is None else "unverified" if failed_axis == "missing" else "failed")
 
 
-@pytest.mark.parametrize("review_state,expected", [("missing", "unverified"), ("failed", "failed"), ("passed", "passed")])
-def test_joint_record_requires_separate_bound_six_axis_review(tmp_path, monkeypatch, review_state, expected):
+@pytest.fixture
+def joint_review(tmp_path, monkeypatch):
     import hashlib
 
     from tests.helpers import phase_b_grade_joint
@@ -177,16 +177,103 @@ def test_joint_record_requires_separate_bound_six_axis_review(tmp_path, monkeypa
     monkeypatch.setattr(report, "_store", lambda _: store)
     monkeypatch.setattr(report, "_trajectory", lambda *_: (True, False))
     monkeypatch.setattr(phase_b_grade_joint, "grade_joint", lambda *_args, **_kwargs: {"passed": True})
-    if review_state != "missing":
-        write(tmp_path / "probe.explanation-review.json", {"run_id": "offline", "category": "development",
-            "model_record_id": "model_stop", "exact_model_reason": "observed",
-            "model_response_record_sha256": sha256_file(response),
-            "model_reason_sha256": hashlib.sha256(b"observed").hexdigest(),
-            "explanation": {axis: {"passed": not (axis == "limits" and review_state == "failed"),
-                                   "quote": "observed", "rationale": "offline review"} for axis in report.AXES}})
+    review_path = write(tmp_path / "probe.explanation-review.json", {
+        "run_id": "offline", "category": "development",
+        "model_record_id": "model_stop", "exact_model_reason": "observed",
+        "model_response_record_sha256": sha256_file(response),
+        "model_reason_sha256": hashlib.sha256(b"observed").hexdigest(),
+        "explanation": {axis: {"passed": True, "quote": "observed", "rationale": "offline review"}
+                        for axis in report.AXES},
+        "all_proposal_facts_passed": True, "semantic_review_passed": True})
+    return metadata_path, review_path, run
+
+
+@pytest.mark.parametrize("review_state,expected", [("missing", "unverified"), ("failed", "failed"), ("passed", "passed")])
+def test_joint_record_requires_separate_bound_six_axis_review(joint_review, review_state, expected):
+    metadata_path, review_path, _ = joint_review
+    if review_state == "missing":
+        review_path.unlink()
+    elif review_state == "failed":
+        review = json.loads(review_path.read_text())
+        review["explanation"]["limits"]["passed"] = False
+        write(review_path, review)
     value = report._joint_record(metadata_path)
     assert value["mechanical_passed"] and value["status"] == expected
     assert value["first_success"] is (expected == "passed")
+
+
+@pytest.mark.parametrize("fields,expected", [
+    ({"all_proposal_facts_passed": True, "semantic_review_passed": True}, "passed"),
+    ({"all_proposal_facts_passed": False, "semantic_review_passed": True}, "failed"),
+    ({"all_proposal_facts_passed": True, "semantic_review_passed": False}, "failed"),
+    ({"all_proposal_facts_passed": False}, "failed"),
+    ({"semantic_review_passed": False}, "failed"),
+    ({}, "unverified"),
+    ({"all_proposal_facts_passed": True}, "unverified"),
+    ({"semantic_review_passed": True}, "unverified"),
+    ({"all_proposal_facts_passed": 1, "semantic_review_passed": "true"}, "unverified"),
+])
+def test_joint_proposal_review_requires_explicit_boolean_passes(joint_review, fields, expected):
+    metadata_path, review_path, _ = joint_review
+    review = json.loads(review_path.read_text())
+    for key in ("all_proposal_facts_passed", "semantic_review_passed"):
+        review.pop(key)
+    review.update(fields)
+    write(review_path, review)
+    value = report._joint_record(metadata_path)
+    assert value["mechanical_passed"] and value["six_axes_passed"]
+    assert value["status"] == value["proposal_review_status"] == expected
+    assert value["first_success"] is (expected == "passed")
+    for key in ("all_proposal_facts_passed", "semantic_review_passed"):
+        assert value[key] is (fields.get(key) if type(fields.get(key)) is bool else None)
+
+
+def test_joint_final_six_axes_cannot_hide_false_intermediate_claim(joint_review):
+    # Offline reproduction of the stop-probe-03 mismatch: two Results existed
+    # when the model claimed three completed SPs, although its final stop was correct.
+    metadata_path, review_path, run = joint_review
+    claim = "Three required initial geometries have been sampled."
+    run.decisions.insert(0, {"action": "call_tool", "id": "model_intermediate", "reason": claim})
+    review = json.loads(review_path.read_text())
+    review.update(all_proposal_facts_passed=False, semantic_review_passed=False,
+                  intermediate_mismatch={"visible_result_count": 2, "claimed_result_count": 3},
+                  behavior={"every_new_result_correctly_described": {
+                      "passed": False, "quote": claim, "quote_model_id": "model_intermediate",
+                      "rationale": "Two completed Results cannot support the claim of three."}})
+    write(review_path, review)
+    value = report._joint_record(metadata_path)
+    assert value["mechanical_passed"] and value["six_axes_passed"]
+    assert value["all_proposal_facts_passed"] is value["semantic_review_passed"] is False
+    assert value["status"] == "failed" and value["first_success"] is False
+    rates = report._rates([value])
+    assert rates["attempted_slots"] == rates["rate_denominator"] == 1
+    assert rates["final_successes"] == rates["first_successes"] == 0
+
+
+@pytest.mark.parametrize("semantic,expected", [("failed", "failed"), ("not_verified", "unverified"), ("passed", "passed")])
+def test_model_aggregate_preserves_semantic_gate_independently_of_six_axes(tmp_path, monkeypatch, semantic, expected):
+    from tests.helpers import phase_b_model_cases
+
+    identity = {"variant_id": "V-01/allowed-default-origin", "repetition": 1,
+                "run_id": "offline", "spec_sha256": "offline-spec"}
+    metadata_path = write(tmp_path / "metadata.json", {**identity, "category": "development"})
+    write(tmp_path / "ready.json", {"run_id": "offline", "metadata_sha256": sha256_file(metadata_path)})
+    # An old stored pass cannot override a failed current independent review.
+    write(tmp_path / "grade.json", {**identity, "status": "passed", "model_text_sha256": "offline-text"})
+    write(tmp_path / "review.json", identity)
+    actual = {**identity, "status": "passed" if semantic == "passed" else "incomplete_or_failed",
+              "model_text_sha256": "offline-text", "safety_invariants_passed": True,
+              "assertions": [{"status": "passed"}],
+              "explanation": {axis: {"status": "passed"} for axis in report.AXES},
+              "proposal_review": {"status": semantic}}
+    monkeypatch.setattr(phase_b_model_cases, "evaluate_response", lambda *_args, **_kwargs: actual)
+    monkeypatch.setattr(report, "_trajectory", lambda *_: (True, False))
+    store = SimpleNamespace(load_run=lambda _: SimpleNamespace(batch_category="development"))
+    row = report._model_record(metadata_path, store)
+    assert row["six_axes_passed"] is True
+    assert row["proposal_review"]["status"] == semantic
+    assert row["status"] == expected
+    assert row["first_success"] is (expected == "passed")
 
 
 def test_first_success_excludes_actual_rejected_proposal_and_transport_receipts(tmp_path):

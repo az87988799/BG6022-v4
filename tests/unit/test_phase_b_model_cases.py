@@ -409,6 +409,43 @@ def test_review_can_grade_explanation_but_never_fabricate_live_evidence(store):
     assert grade["status"] == "not_verified" and not grade["real_model_evidence_present"]
 
 
+@pytest.mark.parametrize("fields,expected", [
+    ({"all_proposal_facts_passed": True, "semantic_review_passed": True}, "passed"),
+    ({"all_proposal_facts_passed": False, "semantic_review_passed": True}, "failed"),
+    ({"all_proposal_facts_passed": True, "semantic_review_passed": False}, "failed"),
+    ({"all_proposal_facts_passed": False, "semantic_review_passed": False}, "failed"),
+    ({"all_proposal_facts_passed": False}, "failed"),
+    ({"semantic_review_passed": False}, "failed"),
+    ({}, "not_verified"),
+    ({"all_proposal_facts_passed": True}, "not_verified"),
+    ({"semantic_review_passed": True}, "not_verified"),
+    ({"all_proposal_facts_passed": 1, "semantic_review_passed": "true"}, "not_verified"),
+])
+def test_six_axes_cannot_override_failed_or_missing_proposal_review(store, monkeypatch, fields, expected):
+    run, metadata = CASES.create_request(store, "V-01/allowed-default-origin", 1)
+    reason = "Explicit defaults; offline final explanation fixture."
+    # Isolated synthetic metadata exercises the overall success branch without
+    # sending a request or presenting this test as real-model evidence. Original
+    # proposal reads are stubbed explicitly; the live driver is never invoked.
+    run.model_records = [{"id": "offline-grader-boundary", "status": "known", "model": "deepseek-flash",
+                          "sdk_version": "2.28.0", "response_model": "synthetic-unit-grader-branch"}]
+    store.save_run(run)
+    monkeypatch.setattr(CASES, "_actions", lambda *_: [{"action": "stop", "reason": reason, "parameters": {}}])
+    entry = {"passed": True, "quote": "Explicit defaults", "rationale": "Synthetic final-axis fixture only."}
+    review = {"explanation": dict.fromkeys(CASES.EXPLANATION_AXES, entry),
+              "behavior": {"default_disclosed": entry}, **fields,
+              "all_proposal_review": [{"model_id": "offline-intermediate", "quote": "Three SPs completed",
+                  "rationale": "Synthetic intermediate claim exceeded the two actually observed Results."}]}
+    grade = CASES.evaluate_response(store, run, metadata, review=review)
+    assert all(axis["status"] == "passed" for axis in grade["explanation"].values())
+    assert all(item["status"] == "passed" for item in grade["assertions"])
+    assert grade["proposal_review"]["status"] == expected
+    assert grade["status"] == ("passed" if expected == "passed" else "incomplete_or_failed")
+    for key in ("all_proposal_facts_passed", "semantic_review_passed"):
+        assert grade["proposal_review"][key] is (fields.get(key) if type(fields.get(key)) is bool else None)
+    assert run.usage.model_calls == 0 and not run.attempts
+
+
 @pytest.mark.parametrize("final_action,expected", [(None, False), ("rejected", False), ("stop", True)])
 def test_result_explanation_gate_rejects_unaccepted_stop_despite_read_success(store, final_action, expected):
     run, metadata = CASES.create_request(store, "V-07/discover-and-read", 1)

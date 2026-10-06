@@ -179,6 +179,7 @@ def review_template(metadata):
     entry = {"passed": None, "quote": "", "rationale": ""}
     return {"variant_id": metadata["variant_id"], "repetition": metadata["repetition"],
             "run_id": metadata["run_id"], "spec_sha256": metadata["spec_sha256"],
+            "all_proposal_facts_passed": None, "semantic_review_passed": None,
             "instructions": "Review actual persisted model text independently; quote exact text. Do not infer a pass from fixture expectations.",
             "behavior": {item["metric"]: dict(entry) for item in metadata["expected"]
                          if item["metric"] in cases.BEHAVIOR_METRICS},

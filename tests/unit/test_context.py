@@ -95,7 +95,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v3"
+    assert context.prompt_version == "agent-json-v4"
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
     assert set(data["PROPOSAL_SCHEMA"]["required"]) == set(Proposal.model_fields)
@@ -107,7 +107,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     assert authority["run_id"] == run.id
     assert authority["request"]["goals"][0]["minimum_evidence"] == ["converged SCF"]
     assert authority["user_originals"][0]["text"] == request.original_text
-    assert len(data["PARAMETER_SCHEMAS"]) == 1  # Identical registered schemas deduplicate.
+    assert len(data["PARAMETER_SCHEMAS"]) == 2  # SP/Opt have distinct actual timeout limits.
     assert "implementation" not in str(data["TOOL_CATALOG"])
 
 
@@ -157,6 +157,42 @@ def test_native_envelope_and_step_examples_have_no_action_wrapper_or_input_alias
     assert all(isinstance(reference, dict) for reference in steps[1]["inputs"].values())
     assert "analysis_inputs" not in prepared.canonical_body
     assert all(isinstance(parameters, dict) for parameters in data["ACTION_PARAMETERS"].values())
+
+
+@pytest.mark.parametrize("state", ["initial", "ready", "needs_revision", "empty_catalog", "final"])
+def test_action_enum_comes_from_current_native_examples_and_reason_template(state):
+    request, run = objects()
+    run.permission.allowed_tools = ["orca.sp"] if state != "empty_catalog" else []
+    plan, feedback = None, {}
+    if state in {"ready", "needs_revision"}:
+        step = Step(id="science", logical_id="logical", tool="orca.sp", geometry=InputRef(artifact_id="geometry1"))
+        plan = Plan(request_id=request.id, steps=[step],
+                    goal_map={"energy": OutputBinding(step_id=step.id, port="energy")})
+        run.plan_id, run.plan_version = plan.id, plan.version
+        if state == "ready":
+            feedback = {"pending_step_ids": [step.id]}
+    if state == "final":
+        request.conditions["explain_results"] = True
+        run.goal_status = {"energy": "satisfied"}
+    context = build_context(request, run, plan, feedback=feedback)
+    data = payload(context)
+    actions = list(data["ACTION_PARAMETERS"])
+    assert data["PROPOSAL_SCHEMA"]["properties"]["action"] == {"enum": actions}
+    if state == "needs_revision":
+        assert actions == ["revise_plan", "clarify", "stop"]
+    elif state == "initial":
+        assert actions == ["initial_plan", "clarify", "stop"]
+    elif state == "ready":
+        assert data["ACTION_PARAMETERS"]["call_tool"] == {"step_id": "science"}
+    elif state == "empty_catalog":
+        assert actions == ["clarify", "stop"]
+    elif state == "final":
+        assert actions == ["stop"]
+    reason = data["RESPONSE_ENVELOPE"]["reason"]
+    assert [segment.split(":", 1)[0] for segment in reason.split(";")] == [
+        "quantity", "unit", "conditions", "source", "limits", "next"]
+    assert "unknown if absent" in reason and "requested/observed/unknown" in reason
+    assert "quantity:" not in context.body()["messages"][0]["content"]
 
 
 def test_only_currently_permitted_tools_and_requested_schemas_are_visible():
@@ -584,6 +620,37 @@ def test_sampling_analysis_projection_keeps_every_actual_coordinate_energy_and_g
             assert row.get("energy_eh") == original["energy_eh"]
             assert row["r_angstrom"] == observation["geometry_facts"][row["member_id"]]["r_angstrom"]
         assert not projected["goal_satisfied"]
+
+
+def test_comparison_projection_preserves_recorded_requested_source_and_unknown_conditions():
+    from test_analysis import energy
+
+    from orca_agent.context import _analysis_observation, _compact_result_facts
+    from orca_agent.tools.analysis import AnalysisMember, EnergyCompareParameters, energy_compare
+
+    source = energy("B").model_dump(mode="json", exclude={"energy_eh", "unit"})
+    source["expected_conditions"] = {**source["conditions"], "basis": "6-31G", "multiplicity": None}
+    source["mismatched_fields"] = ["basis", "multiplicity"]
+    observation = energy_compare([
+        AnalysisMember(id="A", evidence=energy("A")),
+        AnalysisMember(id="B", unavailable_source=source,
+                       missing_reason="source_not_applicable_to_requested_operand:basis,multiplicity")],
+        EnergyCompareParameters(member_a="A", member_b="B"))
+    before = json.dumps(observation, sort_keys=True)
+    projected = _analysis_observation(observation)
+    rows = projected["members"]
+    assert rows[0]["source"] == {"conditions": observation["members"][0]["source"]["conditions"]}
+    assert "expected_conditions" not in rows[0]["source"]
+    assert rows[1]["source"]["conditions"]["basis"] == "STO-3G"
+    assert rows[1]["source"]["expected_conditions"]["basis"] == "6-31G"
+    assert rows[1]["source"]["expected_conditions"]["multiplicity"] is None
+    assert rows[1]["source"]["mismatched_fields"] == ["basis", "multiplicity"]
+    wrapped = {"unqualified_observations": {"analysis": projected}}
+    _compact_result_facts([wrapped])
+    table = wrapped["unqualified_observations"]["analysis"]["member_table"]
+    compact_rows = [dict(zip(table["columns"], row, strict=True)) for row in table["rows"]]
+    assert [row["source"] for row in compact_rows] == [row["source"] for row in rows]
+    assert json.dumps(observation, sort_keys=True) == before
 
 
 @pytest.mark.parametrize("phase", ["final", "replan", "pending_analysis"])

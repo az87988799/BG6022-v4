@@ -212,8 +212,8 @@ def _decision(store, run, plan, results, transport, batch, fault):
                 return run, "plan", None
             if proposal.action == "call_tool":
                 values = proposal.parameters
+                ready = _ready(plan, results)
                 if set(values) == {"step_id"}:
-                    ready = _ready(plan, results)
                     step = next((s for s in ready if s.id == values["step_id"]), None)
                     if step is None:
                         from orca_agent.proposals import ProposalError
@@ -224,6 +224,15 @@ def _decision(store, run, plan, results, transport, batch, fault):
                     _mark_decision(store, run, ticket, proposal, basis)
                     return run, "step", (step, ticket)
                 if set(values) != {"tool", "parameters"}:
+                    readonly = [name for name in run.permission.allowed_tools
+                                if get_tool(name).effects == ["read_registered_artifact"]
+                                and run.usage.evidence_reads < run.budget.evidence_reads]
+                    if not ready and not readonly:
+                        from orca_agent.proposals import ProposalError
+                        plan_action = "revise_plan" if plan else "initial_plan"
+                        raise ProposalError(
+                            f"No ready Step/read Tool; only {plan_action} (new Steps), clarify, or stop.",
+                            path=["action"])
                     raise StoreError("call_tool parameters must be {tool,parameters} or {step_id}; no action wrapper")
                 if get_tool(values["tool"]).effects != ["read_registered_artifact"]:
                     raise StoreError("this Tool imports/writes/executes and requires a planned Step: "

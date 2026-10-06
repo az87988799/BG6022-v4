@@ -52,6 +52,15 @@ def materialize_plan(store, run, parameters):
         raise _schema_error(exc, path=["parameters"]) from None
     prior = store.load_plan(run)
     request = store.load_request(run)
+    missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]
+    if missing:
+        raise ProposalError(
+            "Map every required Request goal. When evidence or capability is unavailable, retain the goal "
+            "with its exact port and an explicit gap; a gap records unmet evidence, not goal completion.",
+            path=["parameters", "goal_map"],
+            missing_goals=[{"goal_id": goal.id, "port": goal.port} for goal in missing],
+            gap_bindings={goal.id: {"port": goal.port, "gap": "<describe missing evidence or capability>"}
+                          for goal in missing})
     existing = {s.id: s for s in prior.steps} if prior else {}
     history = {a.frozen_step.id: a.frozen_step for a in run.attempts if a.frozen_step}
     history.update({c.frozen_step.id: c.frozen_step for c in run.calls if c.frozen_step})
@@ -78,6 +87,17 @@ def materialize_plan(store, run, parameters):
         except ValueError:
             raise ProposalError("Choose a Tool from the current permitted catalog.",
                                 path=["parameters", "steps", index, "tool"]) from None
+        artifact = item.parameters.get("artifact_id")
+        future_artifact = (isinstance(artifact, str) and artifact not in run.permission.artifact_ids
+                           and (artifact in ids or artifact in ids.values()))
+        if future_artifact or isinstance(artifact, dict) and "gap" in artifact:
+            raise ProposalError(
+                "artifact_id needs an existing registered ID, not a Step key or gap. "
+                "Put {gap,port} only in parameters.goal_map[Goal.id]; omit Steps needing a future Artifact "
+                "until the import Result returns its ID, then revise_plan.", tool=definition.name,
+                path=["parameters", "steps", index, "parameters", "artifact_id"],
+                goal_gap_shape={"parameters": {"goal_map": {
+                    "<Goal.id>": {"port": "<unchanged Goal.port>", "gap": "<missing evidence>"}}}})
         try:
             validate_parameters(item.tool, item.parameters)
         except ValidationError as exc:
@@ -86,13 +106,6 @@ def materialize_plan(store, run, parameters):
         except ValueError as exc:
             raise ProposalError(str(exc), tool=definition.name,
                                 path=["parameters", "steps", index, "parameters"]) from None
-        artifact = item.parameters.get("artifact_id")
-        if (artifact is not None and artifact not in run.permission.artifact_ids
-                and (artifact in ids or artifact in ids.values())):
-            raise ProposalError("artifact_id requires an existing registered Artifact ID, not a Step key. "
-                "Plan the import first, keep the later query Goal as {gap,port}, then use the Artifact ID "
-                "returned by the import Result.", tool=definition.name,
-                path=["parameters", "steps", index, "parameters", "artifact_id"])
         geometry = item.geometry
         if geometry and "producer_key" in geometry:
             if set(geometry) != {"producer_key", "port"}:

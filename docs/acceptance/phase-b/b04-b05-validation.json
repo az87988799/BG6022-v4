@@ -82,6 +82,29 @@
       "command": ".venv/Scripts/python.exe -m ruff check src tests",
       "status": "passed",
       "checkpoint": "v3 implementation checkpoint"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_agent.py tests/unit/test_agent_diagnostics.py tests/unit/test_proposals.py tests/unit/test_context.py tests/unit/test_context_actual.py tests/unit/test_registry.py tests/unit/test_models.py tests/unit/test_planning.py tests/unit/test_llm.py tests/unit/test_phase_b_model_cases.py tests/unit/test_phase_b_acceptance_report.py -q --junitxml=data/phase-b/targeted-v4.xml",
+      "passed": 375,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 50.83,
+      "prompt_version": "agent-json-v4"
+    },
+    {
+      "command": "py -3.11 -m uv build --offline",
+      "status": "passed",
+      "checkpoint": "v4 runtime implementation",
+      "artifacts": [
+        "dist/orca_agent-0.1.0.tar.gz",
+        "dist/orca_agent-0.1.0-py3-none-any.whl"
+      ]
+    },
+    {
+      "command": "model_cases + model_evaluation + acceptance_report targeted tests",
+      "passed": 123,
+      "failed": 0,
+      "checkpoint": "v4 evaluation semantic gates; overlapping tests, do not sum with earlier runs"
     }
   ],
   "first_joint_run": "run_18ebf62f5f9c487590b9126f77cabd13",
@@ -116,5 +139,25 @@
       "path": "data/phase-b/regression-v3-stable.log",
       "sha256": "9f8e71ed486ab6fddbaddbd6ff8d42901829ac762438d35c5de9ed0977e74566"
     }
+  },
+  "v4_targeted_receipts": {
+    "targeted-v4.xml": {
+      "path": "data/phase-b/targeted-v4.xml",
+      "sha256": "ca4fa0c27e248885d75bc94c4fe90117ce8150b5797a392b064e96b948acfba3"
+    },
+    "targeted-v4.log": {
+      "path": "data/phase-b/targeted-v4.log",
+      "sha256": "3f1bb47fe7cb9a63752c4435c155d02d0a917ef13fe2a06f53b3d8a8ec81e645"
+    },
+    "collection-v4.txt": {
+      "path": "data/phase-b/collection-v4.txt",
+      "sha256": "cf69f736f0bca6b72cb9aac20a0cc99fae929dc4ce0b544f40b9dc45af761fb4"
+    }
+  },
+  "final_collection": {
+    "count": 1278,
+    "all_mapped_nodes_exist": true,
+    "path": "data/phase-b/collection-v4-final.txt",
+    "sha256": "d404c102c52834f1a10435d9d9d08d897f46006a30a20d881d9165e5f7ad894d"
   }
 }

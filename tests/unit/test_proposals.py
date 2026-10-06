@@ -81,7 +81,31 @@ def test_future_import_step_key_is_rejected_as_artifact_with_actionable_gap_inst
     assert caught.value.detail["tool"] == "evidence.search"
     assert caught.value.detail["path"] == ["parameters", "steps", 1, "parameters", "artifact_id"]
     assert "not a Step key" in str(caught.value) and "{gap,port}" in str(caught.value)
+    assert "parameters.goal_map[Goal.id]" in str(caught.value)
     assert not store.load_run(run.id).calls
+
+
+@pytest.mark.parametrize("tool,values", [
+    ("evidence.search", {"query": "FINAL SINGLE POINT ENERGY"}),
+    ("evidence.value", {"path": []}),
+])
+def test_gap_cannot_be_an_artifact_parameter_and_diagnostic_does_not_echo_values(tmp_path, tool, values):
+    store, run, _, _, _ = source(tmp_path)
+    secret_shaped = "untrusted-gap-reason-with-arbitrary-path"
+    proposed = {"steps": [{"key": "read", "tool": tool, "parameters": {**values,
+        "artifact_id": {"gap": secret_shaped, "port": "untrusted-port"}}}],
+        "goal_map": {"energy": {"gap": "await evidence", "port": "energy"}}}
+    with pytest.raises(ProposalError) as caught:
+        materialize_plan(store, run, proposed)
+    detail = caught.value.detail
+    assert detail["tool"] == tool
+    assert detail["path"] == ["parameters", "steps", 0, "parameters", "artifact_id"]
+    assert "parameters.goal_map[Goal.id]" in detail["requirement"]
+    assert "omit Steps" in detail["requirement"] and "revise_plan" in detail["requirement"]
+    assert detail["goal_gap_shape"] == {"parameters": {"goal_map": {
+        "<Goal.id>": {"port": "<unchanged Goal.port>", "gap": "<missing evidence>"}}}}
+    assert secret_shaped not in str(detail) and "untrusted-port" not in str(detail)
+    assert store.load_plan(run) is None and not run.calls and not run.attempts
 
 
 def test_wrong_goal_port_diagnostic_preserves_exact_requested_port(tmp_path):
@@ -93,6 +117,35 @@ def test_wrong_goal_port_diagnostic_preserves_exact_requested_port(tmp_path):
     assert caught.value.detail["expected"] == "energy"
     assert caught.value.detail["path"] == ["parameters", "goal_map", "energy", "port"]
     assert store.load_plan(run) is None
+
+
+@pytest.mark.parametrize("goal_id,port", [
+    ("gibbs_free_energy_difference", "gibbs_free_energy_difference"),
+    ("imported_stdout_energy_line", "search_hits"),
+])
+def test_missing_required_goal_diagnostic_lists_exact_gap_without_mutating_request(tmp_path, goal_id, port):
+    store, original, request, _, _ = source(tmp_path)
+    request = request.model_copy(deep=True, update={"goals": [*request.goals,
+        Goal(id=goal_id, port=port, minimum_check_version="unresolved-1"),
+        Goal(id="optional", port="other", required=False, minimum_check_version="unresolved-1")]})
+    run = store.create_run(request, None, original.permission, original.budget)
+    proposal = single()
+    proposal["steps"][0]["logical_key"] = "untrusted-value-must-not-be-echoed"
+    with pytest.raises(ProposalError) as caught:
+        materialize_plan(store, run, proposal)
+    detail = caught.value.detail
+    assert detail["path"] == ["parameters", "goal_map"]
+    assert detail["missing_goals"] == [{"goal_id": goal_id, "port": port}]
+    assert detail["gap_bindings"] == {
+        goal_id: {"port": port, "gap": "<describe missing evidence or capability>"}}
+    assert "optional" not in str(detail) and "untrusted-value" not in str(detail)
+    proposal["goal_map"].update(detail["gap_bindings"])
+    candidate = materialize_plan(store, run, proposal)
+    validate_revision(request, None, request, candidate, run)
+    assert candidate.goal_map[goal_id].gap is not None
+    assert candidate.goal_map[goal_id].port == port
+    assert store.load_request(run) == request and store.load_plan(run) is None
+    assert not run.attempts and not run.calls and run.goal_status.get(goal_id) != "satisfied"
 
 
 def test_symbolic_geometry_reference_adds_exact_dependency_and_port(tmp_path):

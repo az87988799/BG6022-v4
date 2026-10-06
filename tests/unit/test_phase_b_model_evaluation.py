@@ -213,6 +213,8 @@ def test_finished_trajectory_regrades_without_reexecuting(driver, monkeypatch):
 def test_tampered_metadata_and_wrong_review_are_rejected(driver, tmp_path):
     _, _, metadata, directory = driver.prepare("V-01/synonym-single-point", 1)
     review = driver.review_template(metadata)
+    assert review["all_proposal_facts_passed"] is None
+    assert review["semantic_review_passed"] is None
     review["run_id"] = "wrong_run"
     review_path = tmp_path / "review.json"
     review_path.write_text(json.dumps(review), encoding="utf-8")

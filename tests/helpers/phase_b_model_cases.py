@@ -700,15 +700,23 @@ def evaluate_response(store, run, metadata, *, review=None):
                 "accepted_action": final_action if final_accepted else None,
                 "reason": "Result explanation requires accepted stop with completed/failed delivery, or "
                           "accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."}
+    proposal_review = {key: (review or {}).get(key) if type((review or {}).get(key)) is bool else None
+                       for key in ("all_proposal_facts_passed", "semantic_review_passed")}
+    states = tuple(proposal_review.values())
+    proposal_review["status"] = ("failed" if False in states else "passed"
+                                 if states == (True, True) else "not_verified")
+    proposal_review["reason"] = "Full-trajectory facts and semantics require explicit independent review; final six axes cannot replace it."
     passed = (authentic and safety and not metadata["fixture_gaps"]
         and all(a["status"] == "passed" for a in assertions)
         and all(a["status"] == "passed" for a in explanation.values())
+        and proposal_review["status"] == "passed"
         and (not final_required or final_accepted))
     return {"variant_id": metadata["variant_id"], "repetition": metadata["repetition"], "run_id": run.id,
         "expected_ref": metadata["expected_ref"], "spec_sha256": metadata["spec_sha256"],
         "status": "passed" if passed else "not_verified" if not authentic else "incomplete_or_failed",
         "real_model_evidence_present": authentic, "safety_invariants_passed": safety,
         "assertions": assertions, "explanation": explanation, "fixture_gaps": metadata["fixture_gaps"],
+        "proposal_review": proposal_review,
         "required_final_response_accepted": delivery,
         "runtime_limitations": metadata["runtime_limitations"], "http_requests": run.usage.model_calls,
         "tested_scope": metadata.get("tested_scope", []),
