@@ -1,10 +1,10 @@
 # 能力与证据
 
-版本：0.1.0；日期：2026-10-06。状态：阶段 A 工程交付，等待用户验收。详细验证与失败历史见 [阶段报告](acceptance/phase-a/report.md) 和 [证据索引](acceptance/phase-a/evidence-index.json)。
+版本：0.1.0；日期：2026-10-06。状态：**阶段 A 已由用户验收通过**，接受代码基线 `236376e`，见[用户验收记录](acceptance/phase-a/user-acceptance.md)。详细验证与失败历史见 [阶段报告](acceptance/phase-a/report.md) 和 [证据索引](acceptance/phase-a/evidence-index.json)。
 
 本轮 R-01～R-05 修复使用 `orca-hf-2`，见 [修复验收记录](acceptance/phase-a-repair/report.md) 与 [真实历史产物只读回放](acceptance/phase-a-repair/replay.json)。既有真实执行证据保持原样；本轮新增科学启动 0 次。当前 ORCA 准入精确限定 `6.1.1`，不因满足 OPI 最低版本就自动启用其他版本。旧规则结果可查看、取消、对账及补收；继续执行或复用于新版目标需要明确的规则复验，本次没有自动迁移流程。
 
-R-03 已结算历史尝试在补收 Result 保存后再次崩溃的引用恢复，另见 [后续修复与回归](acceptance/phase-a-repair/r03-followup.md)。阶段 A 仍等待用户验收，尚未进入阶段 B。
+R-03 已结算历史尝试在补收 Result 保存后再次崩溃的引用恢复，另见 [后续修复与回归](acceptance/phase-a-repair/r03-followup.md)。阶段 B 的[实施方案](PHASE-B-IMPLEMENTATION-PLAN.md)已建立，实施尚未开始；下列能力范围仍为阶段 A 的实际交付。
 
 ## 科学范围
 
