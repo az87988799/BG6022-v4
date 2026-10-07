@@ -180,4 +180,16 @@ v16 静态证据归档见 [归档回执](repair-checkpoint-v16.json)：8344 个�
 
 v16 已批准操作入口的离线集成 **28 passed**，Ruff 通过；后续将未固定源码的拒绝测试改为显式隔离设置，单项复核通过。测试使用临时 Store、实际 prepare 和生产请求/响应/模式绑定，传输及聚合账本为明确模拟，没有真实 HTTP。覆盖共享锁冲突、准备失败占槽、删除/篡改状态、完整余额、固定新五项全提案/六轴及当前重评门槛、原八槽跨 label 唯一性。初次审查入口 SHA256 `baaa5ee29aaaf33b475d9a7a7bf93a5e3ade28949b197965e515753214ad3739`，该字节版本尚未启用；实际启动前只固定最终提交及启用标志，并对最终字节重新运行集成检查。入口默认预览已在真实账本上只读通过，没有新增分配。
 
+第三预算源码 `59ee92d7dc8174fbf96ad16f9fa6b094cbd9ff43` 的独立新 C 盘检出、新锁定离线环境完整验证已通过：**1839 passed、193 skipped、0 failed/error**，Ruff 通过，见 [批准后完整回执](repair-v16-approved-offline-clean.json)，SHA256 `967f50cff7842bf2ec5893c5b8d161bb8bbbd8c8907fc902d4ec5398a58b2fad`。193 项跳过仍为 130 真实模型/联合、13 ORCA、49 缺历史归档及 1 Windows symlink 权限；不计通过。根任务核对 9 个记录/JUnit 和该 C 检出的 5 个绑定文件 hash。实际执行提交 `32ceb119e75c21ff106194be3af5b40c394f58b8` 相比它仅增加迁移文档，源码、测试和依赖未变。
+
+最终启用入口 SHA256 `2dd24f62f0bd564ce3a4912de73f05ac2f3f01275ba3922b862b6f4e5779057b` 已由两方各自通过同一 28 项离线集成；第二次为独立核验，不重复累计节点。它只固定启用标志及 `32ceb119`，其余字节与已审入口一致。真实 N06 仅分配一次，Run 为 `run_442df8ae443640cbbd64bd1baf608e60`；见 [v16 完整真实评审](repair-thinking-v16-review.json)。首发和原允许的一次协议纠正都返回 HTTP 200、`finish_reason=length`、completion_tokens=2000，最终 raw_content 均为空、proposal 均为 null；没有接受的规范化或最终回答。第二次请求明确携带 truncated 纠正反馈，传输重试为 0。
+
+这是单次输出限制下的交付失败：thinking_low 的完整 completion 含推理，但该测试仍保持 2000 上限。没有模型正文可核对，事实、语义和六轴均保持未验证/null；不能称作科学错误、语义改善或零真实请求。grade 的 `real_model_evidence_present=false` 仅说明缺少接受的成功 Proposal；已知规范化断言失败使聚合分类为 failed，原始 grade.status=not_verified 和原评分备份均保留。独立审查核对两份实际 enabled+low 请求和全部响应 hash，6892 个既有文件字节未变。
+
+本次新增 **2 HTTP/9911 tokens/USD 0.0065733/0 ORCA**。累计 **318 HTTP/993584 已知 tokens/未知 0/USD 0.3941835**，ORCA 参考 16/开发 26/正式 0；最新账本 SHA256 `e8ecff9891321d32bd7ee02208e12f4fedf96c8fe9f30c3426e27b65f1d524d9`。累计额度并未用尽。按批准包的共同协议/配置失败停止条件，N06 一次机会已消费，另外四项、原八项、C 和正式均未启动。入口已关闭新执行，停止版 SHA256 `3ad0b2e5065b9bbed276732400b945a30b79193a7b95fbce03fbcea1fc39cef5`；历史实际执行 hash 和全部分配不回写。当前批准不包含提高单次输出上限或再次分配 N06，单纯继续增加累计额度无法修复本次截断。
+
+C 仅做只读准备：7 个历史 disabled 通过槽经当前内存重评仍通过；两份已知旧 review 格式仅内存兼容并核对原 request/response/raw hash，原评审不改、不重跑、不改称 low。该只读草案 15 项离线通过、真实执行禁用；新五项和原八项未通过前，C 的 48 HTTP/288000 tokens/16 ORCA 仍不启动。这不是 C 交付或科学通过证据。
+
+本次停止后的静态归档见 [v16 批准后归档回执](repair-checkpoint-v16-approved.json)：8378 个文件、156872018 原始 bytes，ZIP SHA256 `67ea845c8eca9f5fd527e9031b38b135c707a265262a67125bf540ba27a29a45`，索引 SHA256 `15dbe127730ed86bad8c8dd61328627d9d005f41309bb23b7238da6bf6f316b5`。全部成员 hash/字节数、ZIP CRC、来源前后一致性、旧归档不变及凭据扫描通过。截点包含第三批准、迁移回执、最新独立全量回执及 N06 两次截断的原始证据和完整评审；归档回执本身和本段后写文字不在 ZIP 内。仅用于隔离静态复核，不是活跃 Store 恢复或阶段 B 正式验收。
+
 交付只按实际证据声明能力，保留首次失败和所有成本；等待用户验收。

@@ -39,7 +39,7 @@ v16 的可选模型配置默认仍为 `disabled`。产品本地 TOML 可显式�
 
 新 Run 的模式在第一次模型预约前保存为不可变配置快照；既有评测槽不得改模式，旧缺字段记录仅按已保存、hash核验的 disabled 请求读取。产品 resume 先只核对、收集已经发生的科学或模型调用，再拒绝新配置的模式切换；评测入口仍先要求其槽配置一致。恢复或更换标签不产生新额度或机会。
 
-thinking_low 的 reasoning 文本不保存、展示或回传，完整 completion（含推理）仍受 2000 上限并一次计费，可能因截断失败。最终 JSON 仍由原严格 schema 校验。当前低推理只有离线边界验证；使用这个参数不产生新分配。用户已批准 [v16 固定范围](repair-v16-thinking-diagnostic-proposal.md)，以[第三批准记录](budget-approval-thinking-v16-20261007.json)、实际已应用账本和一次性槽分配共同约束执行。
+thinking_low 的 reasoning 文本不保存、展示或回传，完整 completion（含推理）仍受 2000 上限并一次计费。首项真实 N06 的两次响应均因该上限截断、最终正文为空，见[独立评审](repair-thinking-v16-review.json)，其余诊断已停止；低推理可靠性未通过。最终 JSON 仍由原严格 schema 校验。使用这个参数不产生新分配；[已批准固定范围](repair-v16-thinking-diagnostic-proposal.md)、[第三批准记录](budget-approval-thinking-v16-20261007.json)、实际账本和一次性槽身份共同约束执行。当前范围不含提高单次上限或再次分配 N06。
 
 每个槽的身份持久化。再次执行同一正式槽不会新建 Run 或重新计算；中断须先查看原始状态，再显式恢复相同身份。真实模型节点若缺独立行为/六轴 review 会显示 skip/未验证；联合节点的通过只表示机械检查通过。人工或开发者独立复核需引用真实持久化模型原文，不能使用确定性报告补齐模型遗漏，也不能只检查 JSON 格式。
 
