@@ -6,7 +6,7 @@ from test_natural import bundle_at, store_at
 from test_semantic_control import candidate
 
 from orca_agent.config import Config
-from orca_agent.context import build_context
+from orca_agent.context import _schema, build_context
 from orca_agent.model_usage import current_basis
 from orca_agent.models import Goal, Request, SystemInput
 from orca_agent.natural import apply_user_update, initialize_bundle
@@ -31,7 +31,7 @@ from tests.helpers.phase_b_model_cases import (
 
 def test_query_schemas_come_from_registry_and_only_permitted_read_tools():
     contract = action_parameters(["evidence.text", "orca.sp"])["normalize_request"]
-    assert contract["query_schemas"] == {"text_window": get_tool("evidence.text").parameter_schema}
+    assert contract["query_schemas"] == {"text_window": _schema(get_tool("evidence.text").parameter_schema)}
     assert all(port in contract["instruction"] for port in RULES)
     assert not action_parameters()["normalize_request"]["query_schemas"]
     query = contract["query_schemas"]["text_window"]

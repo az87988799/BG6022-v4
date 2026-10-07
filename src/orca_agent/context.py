@@ -18,7 +18,7 @@ from orca_agent.llm import PreparedRequest, prepare_request
 from orca_agent.models import Plan, Proposal, Request, Result, Run, utc_now
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v5"
+PROMPT_VERSION = "agent-json-v6"
 REASON_TEMPLATE = (
     "quantity:...;unit:unknown if absent;conditions:all requested/observed/unknown;"
     "source:explicit/default/inherited/evidence;limits:...;next:...")

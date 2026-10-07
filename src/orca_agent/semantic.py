@@ -5,19 +5,25 @@ These local schemas never grant permission or certify scientific success.
 """
 
 import re
-from typing import Any, Literal
+from typing import Any, Literal, get_args
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
+from orca_agent.context import _schema
+from orca_agent.minimum_evidence import LEGACY_NAMES, REQUIREMENTS
+from orca_agent.minimum_evidence import RULE_VERSION as MINIMUM_EVIDENCE_VERSION
 from orca_agent.model_usage import current_basis
 from orca_agent.models import Goal, Identifier, Record, Request
 from orca_agent.natural import _authorized_geometry, _missing_information
+from orca_agent.proposals import ProposalError, _schema_error
 from orca_agent.store import StoreError
 from orca_agent.tools.registry import catalog, get_tool, validate_parameters
 
 VERSION = "request-semantics-1"
-PHYSICAL = {"method", "basis", "charge", "multiplicity", "electronic_state", "environment"}
-CONDITIONS = PHYSICAL | {"temperature_K", "standard_state"}
+ConditionName = Literal["method", "basis", "charge", "multiplicity", "electronic_state", "environment",
+                        "temperature_K", "standard_state"]
+CONDITIONS = frozenset(get_args(ConditionName))
+PHYSICAL = CONDITIONS - {"temperature_K", "standard_state"}
 READ_TOOLS = {port: tool["name"] for tool in catalog()
               if tool["effects"] == ["read_registered_artifact"] for port in tool["observation_outputs"]}
 RULES = {port: tool["check_version"] for tool in catalog()
@@ -48,7 +54,7 @@ class SemanticGoal(Record):
     required: bool = Field(default=True, strict=True)
     geometry_relation: Literal["fixed_initial", "optimized"] | None = None
     minimum_evidence: list[str] = Field(default_factory=list, max_length=8)
-    conditions: dict[str, FieldEvidence] = Field(default_factory=dict, max_length=8)
+    conditions: dict[ConditionName, FieldEvidence] = Field(default_factory=dict, max_length=8)
     query: dict | None = None
     unresolved: list[str] = Field(default_factory=list, max_length=8)
 
@@ -58,8 +64,8 @@ class SemanticCandidate(Record):
     message_ids: list[Identifier] = Field(min_length=1, max_length=24)
     kind: Literal["normalize", "amend", "replace_goals", "clarify", "continue", "status"]
     text_basis: str = Field(min_length=1, max_length=1000)
-    conditions: dict[str, FieldEvidence] = Field(default_factory=dict, max_length=8)
-    system_conditions: dict[Identifier, dict[str, FieldEvidence]] = Field(default_factory=dict, max_length=5)
+    conditions: dict[ConditionName, FieldEvidence] = Field(default_factory=dict, max_length=8)
+    system_conditions: dict[Identifier, dict[ConditionName, FieldEvidence]] = Field(default_factory=dict, max_length=5)
     goals: list[SemanticGoal] | None = Field(default=None, min_length=1, max_length=8)
     replaces: list[Identifier] = Field(default_factory=list, max_length=8)
     goal_bindings: dict[Identifier, list[Identifier]] = Field(default_factory=dict, max_length=8)
@@ -73,15 +79,16 @@ def pending_messages(store, run):
 
 
 def action_parameters(allowed_tools=()):
-    schema = SemanticCandidate.model_json_schema()
+    schema = _schema(SemanticCandidate.model_json_schema())
     ports = ", ".join(RULES)
-    schema["$defs"]["SemanticGoal"]["properties"]["port"]["description"] = (
-        "Registered ports: " + ports + ". Unsupported quantities must remain unresolved.")
-    schema["$defs"]["SemanticGoal"]["properties"]["geometry_relation"]["description"] = (
-        "Required for energy: fixed_initial for single-point energy, optimized for energy after optimization.")
     return {"normalize_request": {
         "instruction": "Interpret pending trusted user messages using this parameter schema. "
         f"Registered goal ports: {ports}. For observation goals, query follows query_schemas[port]. "
+        f"Condition keys only: {', '.join(get_args(ConditionName))}. Use environment for gas/solvent. "
+        "Geometry is already registered in System.geometry_artifact_id: bind system_refs; never put geometry in conditions. "
+        "explain_results is existing configuration: leave it unchanged, outside candidate conditions. "
+        "minimum_evidence defaults to [] (the port's basic checks still apply). Use minimum_evidence_rules; "
+        "unregistered user requirements must be exact user quotes and remain unresolved; do not invent rule names. "
         "Energy requires geometry_relation=fixed_initial (single point) or optimized (after optimization). "
         "Put unknown/inferred settings in Candidate.conditions/system_conditions; preserve goals.unresolved. "
         "No Plan yet. Preserve unsupported requests. References must already be registered. "
@@ -95,7 +102,9 @@ def action_parameters(allowed_tools=()):
         "resolves must match the actual answered field/binding, not unrelated gaps. "
         "Fields not changed are inherited unchanged.",
         "schema": schema,
-        "query_schemas": {port: get_tool(name).parameter_schema for port, name in READ_TOOLS.items()
+        "minimum_evidence_rules": {"version": MINIMUM_EVIDENCE_VERSION, "registered": REQUIREMENTS,
+                                   "legacy_aliases": LEGACY_NAMES, "port_rules": RULES},
+        "query_schemas": {port: _schema(get_tool(name).parameter_schema) for port, name in READ_TOOLS.items()
                           if name in allowed_tools}}}
 
 
@@ -143,7 +152,9 @@ def _resolution_matches(gap, candidate):
 
 def _field(name, item, request, messages, *, system=None):
     if name not in CONDITIONS:
-        raise StoreError("semantic condition is outside the field whitelist")
+        path = name if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]{0,63}", str(name)) else "[field]"
+        raise StoreError(f"semantic condition {path} is outside the field whitelist; allowed keys: "
+                         + ", ".join(get_args(ConditionName)))
     value = item.value
     if name in {"charge", "multiplicity"} and value is not None:
         if type(value) is not int or (name == "multiplicity" and value < 1):
@@ -240,7 +251,7 @@ def _field(name, item, request, messages, *, system=None):
 def _goals(candidate, request, messages):
     systems = {s.id for s in request.systems}
     goals = []
-    for item in candidate.goals or []:
+    for goal_index, item in enumerate(candidate.goals or []):
         _quote(item.text_basis, messages)
         if len(item.system_refs) != len(set(item.system_refs)) or set(item.system_refs) - systems:
             raise StoreError("semantic goal references unknown/duplicate registered systems")
@@ -265,6 +276,15 @@ def _goals(candidate, request, messages):
         port = item.port if item.port in RULES else "unresolved"
         if port == "unresolved":
             unresolved.append("unsupported_quantity:" + item.port)
+        for requirement_index, requirement in enumerate(item.minimum_evidence):
+            canonical = LEGACY_NAMES.get(requirement, requirement)
+            if canonical not in REQUIREMENTS and canonical not in {port, RULES[port]}:
+                if not requirement.strip() or not any(requirement in message["text"] for message in messages):
+                    raise ProposalError("Use [] for the port's basic checks, registered minimum_evidence_rules, "
+                                        "or exact user quotes for unsupported requirements; never invent rule names.",
+                                        path=["parameters", "goals", goal_index, "minimum_evidence", requirement_index],
+                                        allowed_rules=[*REQUIREMENTS, *LEGACY_NAMES, port, RULES[port]])
+                unresolved.append("unsupported_minimum_evidence:" + requirement)
         # A scalar goal is per system; splitting is explicit and retains text.
         members = item.system_refs if len(item.system_refs) > 1 and port in {
             "energy", "optimized_geometry"} else [None]
@@ -281,7 +301,16 @@ def _goals(candidate, request, messages):
 
 
 def commit_candidate(store, run, parameters, *, decision_id, basis, related_results=None, fault=None):
-    candidate = SemanticCandidate.model_validate(parameters)
+    try:
+        candidate = SemanticCandidate.model_validate(parameters)
+    except ValidationError as exc:
+        if any(error["type"] == "literal_error" and error["loc"][-1] == "[key]"
+               for error in exc.errors(include_input=False, include_context=False, include_url=False)):
+            correction = _schema_error(exc, path=["parameters"])
+            correction.detail.update(requirement="Use only the allowed scientific condition keys at these paths.",
+                                     allowed_condition_keys=list(get_args(ConditionName)))
+            raise correction from None
+        raise
     request = store.load_request(run)
     active_question = store.active_clarification(run)
     pending = pending_messages(store, run)

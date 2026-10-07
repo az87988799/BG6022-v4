@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "category": "real_model_development",
+  "status": "failed",
+  "code_commit": "e8351ec10ec3a9c03f2910e5f40cf981c081f13e",
+  "prompt_version": "agent-json-v5",
+  "freeze_label": "repair-raw-dev-v1",
+  "variant_id": "N-01/raw-water-sp",
+  "run_id": "run_1d81d6ff154343f69c29f37c163ffe25",
+  "http_requests": 2,
+  "tokens": 6745,
+  "orca_starts": 0,
+  "accepted_proposals": 0,
+  "independent_review": {
+    "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v1/N-01__raw-water-sp/1/review.json",
+    "sha256": "1aa82fb663a49bfb66a50f7761983a6de28d4f72a4f0e5fe1594a861af3202a4",
+    "all_proposal_facts_passed": false,
+    "semantic_review_passed": false,
+    "final_explanation": "not_verified_no_accepted_proposal"
+  },
+  "evidence_files": [
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v1/N-01__raw-water-sp/1/metadata.json",
+      "sha256": "c1b7d8c16d1140ebab22a42ddd0bfcc3cf3b7d99fb173b4ba42c96a1ac36e92b"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v1/N-01__raw-water-sp/1/execution.json",
+      "sha256": "06616b26ed8d1a8029d03841e57d9e61ddba22f7408820b6bc05f532be26ca02"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_1d81d6ff154343f69c29f37c163ffe25/run.json",
+      "sha256": "8f113d916e3559f5986d4c4be1f3c506b63fdbca8069545a38d9d49791578bec"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_1d81d6ff154343f69c29f37c163ffe25/request-revisions/1.json",
+      "sha256": "7272b190f64062da451deeb1c4bef53498a75be8c4e98844f8c90048873a34b9"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_1d81d6ff154343f69c29f37c163ffe25/control.json",
+      "sha256": "3b33f2b209065f63f29c646a56fe82ac94b5a814825eeb3ead2469f44e23d5e7"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v1/N-01__raw-water-sp/1/grade-before-independent-review.json",
+      "sha256": "609082b21de2c5ea65f9080084b864a7d77f095172277086e4c30e80171ca6cd"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v1/N-01__raw-water-sp/1/grade.json",
+      "sha256": "5000a155caad06a95e0f097cb15fa12717eb6fe5637e0e475cda72060c8262fa"
+    }
+  ],
+  "findings": [
+    "The semantic schema exposed unrestricted condition keys while runtime accepted a finite whitelist. Both real proposals used phase; configuration and registered geometry were also put in condition objects.",
+    "The model invented single_point_energy as minimum evidence; the prompt did not expose the registered requirements.",
+    "The second rejected proposal described the registered water geometry as unresolved. No normalization or scientific action was accepted."
+  ],
+  "follow_up": "Publish the same allowed keys in schema and validation, expose minimum-evidence rules and distinguish existing System geometry/configuration; preserve this failed slot and all costs. New verification requires a distinct revision/slot."
+}
