@@ -10,6 +10,7 @@ import json
 
 import pytest
 from test_agent import initial_proposal
+from test_context import payload
 from test_dispatch import archived_energy, comparison_run
 from test_natural import scientific_run
 
@@ -42,10 +43,12 @@ class ScriptedHTTP:
     def __init__(self, *scripts):
         self.scripts = list(scripts)
         self.sent = []
+        self.wire_sent = []
 
     def send(self, prepared, *, reserve, settle):
         ticket = reserve(prepared)
-        data = json.loads(prepared.body()["messages"][1]["content"])
+        self.wire_sent.append(json.loads(prepared.body()["messages"][1]["content"]))
+        data = payload(prepared)
         self.sent.append(data)
         assert self.scripts, "unexpected extra model send after a bounded rejection"
         script = self.scripts.pop(0)
@@ -152,6 +155,20 @@ def test_new_feedback_has_its_own_correction_but_keeps_total_model_budget(tmp_pa
     assert completed.state == "completed"
     assert completed.usage.model_calls == len(transport.sent) == 5
     assert completed.usage.evidence_reads == 3 and completed.usage.model_tokens_used == 375
+    assert any("SHARED_STRINGS" in wire for wire in transport.wire_sent)
+    assert all(set(data["AUTHORITY"]["plan"]["goal_map"]) == {"a", "b", "c"}
+               for data in transport.sent if data["AUTHORITY"].get("plan"))
+    records = {record["id"]: record for record in completed.model_records}
+    rejected = [decision for decision in completed.decisions if decision.get("action") == "rejected"]
+    scopes = {records[decision["id"]]["logical_id"].rsplit("_", 1)[0] for decision in rejected}
+    assert len(rejected) == len(scopes) == 2
+    assert all(sum(record["logical_id"].rsplit("_", 1)[0] == scope
+                   for record in records.values()) == 2 for scope in scopes)
+    for _ in range(2):
+        replay = agent.execute(store, Config(), run.id, resume=True, transport=transport)
+        assert replay.usage.model_calls == len(transport.sent) == 5
+        assert replay.usage.evidence_reads == 3 and replay.usage.model_tokens_used == 375
+        assert replay.model_records == completed.model_records
 
 
 def final_explanation(data):
@@ -191,13 +208,20 @@ def test_final_explanation_cannot_request_another_tool_after_all_goals_are_satis
 
 
 def test_explanation_budget_exhaustion_keeps_satisfied_goals_without_fabricating_model_explanation(tmp_path):
-    store, run, _ = query_case(tmp_path, explain=True, model_calls=1)
-    transport = ScriptedHTTP(initial_proposal)
+    # Reserve the required final round, then exhaust its correction capacity.
+    # The separate final-slot guard test covers a one-call Run stopping before
+    # either HTTP or evidence acquisition under the same frozen-budget contract.
+    store, run, _ = query_case(tmp_path, explain=True, model_calls=2)
+    transport = ScriptedHTTP(initial_proposal, BAD_JSON)
     stopped = agent.execute(store, Config(), run.id, transport=transport)
     assert stopped.state == "budget_exhausted" and stopped.goal_status == {"a": "satisfied"}
-    assert stopped.usage.model_calls == len(transport.sent) == 1
+    assert stopped.usage.model_calls == len(transport.sent) == 2
     assert stopped.usage.evidence_reads == 1 and not stopped.processed_feedback
     assert not any(d.get("action") == "stop" for d in stopped.decisions)
+    assert any(d.get("category") == "proposal_rejected" and d.get("error_category") == "invalid_proposal_json"
+               for d in stopped.diagnostics)
+    assert any(d.get("category") == "BudgetExceeded" and d.get("message") == "decision/correction budget exhausted"
+               for d in stopped.diagnostics)
     report = build_report(store, stopped)
     assert report["user_goal_complete"] and report["run_state"] == "budget_exhausted"
 
