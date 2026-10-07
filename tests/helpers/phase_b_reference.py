@@ -39,6 +39,13 @@ LIMITS = {
 LIMIT_APPROVAL_ID = "repair-budget-20261007"
 LIMIT_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-20261007.json"
 LIMIT_APPROVAL_SHA256 = "ba9b02a45989fb9b84338c27171e54988b9bfacb1aece99881204faeb510ae95"
+ACTIVE_LIMITS = {
+    "orca_starts": {"reference": 16, "formal": 48, "development": 48, "total": 112},
+    "model": {"http_requests": 1050, "tokens": 6_530_000, "usd": 10},
+}
+SUPPLEMENT_APPROVAL_ID = "repair-budget-supplement-20261007"
+SUPPLEMENT_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-supplement-20261007.json"
+SUPPLEMENT_APPROVAL_SHA256 = "1b6b7dd295361920b04e913fe8e4d9d87df3ff58e4bc7844b65bae100da885a3"
 
 
 class ReferenceBlocked(ValueError):
@@ -67,6 +74,25 @@ def limit_approval() -> dict:
 def initial_limit_authority() -> dict:
     limit_approval()
     return {"approval_id": LIMIT_APPROVAL_ID, "approval_sha256": LIMIT_APPROVAL_SHA256,
+            "origin": "initial_empty_ledger"}
+
+
+def supplement_approval() -> dict:
+    limit_approval()
+    if not SUPPLEMENT_APPROVAL.is_file() or sha256_file(SUPPLEMENT_APPROVAL) != SUPPLEMENT_APPROVAL_SHA256:
+        raise ReferenceBlocked("approved budget supplement is missing or changed")
+    value = _json(SUPPLEMENT_APPROVAL)
+    if (value.get("approval_id") != SUPPLEMENT_APPROVAL_ID or value.get("status") != "user_approved"
+            or value.get("previous_limits") != LIMITS or value.get("approved_limits") != ACTIVE_LIMITS
+            or value.get("previous_approval_id") != LIMIT_APPROVAL_ID
+            or value.get("previous_approval_sha256") != LIMIT_APPROVAL_SHA256):
+        raise ReferenceBlocked("approved budget supplement differs from the exact authorized limits")
+    return value
+
+
+def active_limit_authority() -> dict:
+    supplement_approval()
+    return {"approval_id": SUPPLEMENT_APPROVAL_ID, "approval_sha256": SUPPLEMENT_APPROVAL_SHA256,
             "origin": "initial_empty_ledger"}
 
 
@@ -129,16 +155,17 @@ class BatchLedger:
     def snapshot(self, *, allow_legacy_limits: bool = False) -> dict:
         self._guard_missing_ledger()
         if not self.path.exists():
-            return {"schema_version": 1, "limits": LIMITS, "entries": {},
-                    "limit_authority": initial_limit_authority(),
+            return {"schema_version": 1, "limits": ACTIVE_LIMITS, "entries": {},
+                    "limit_authority": active_limit_authority(),
                     "model_usage": {"http_requests": 0, "tokens": 0, "usd": 0},
                     "model_accounting": "frozen only; transport and charging implemented in B-04"}
         ledger = _json(self.path)
-        legacy = (allow_legacy_limits and ledger.get("limits") == ORIGINAL_LIMITS
-                  and "limit_authority" not in ledger)
-        if ledger.get("schema_version") != 1 or (ledger.get("limits") != LIMITS and not legacy):
+        legacy = allow_legacy_limits and ledger.get("limits") == LIMITS
+        if ledger.get("schema_version") != 1 or (ledger.get("limits") != ACTIVE_LIMITS and not legacy):
             raise ReferenceBlocked("batch ledger schema/limits differ; explicit approved migration required")
-        if not legacy:
+        if legacy:
+            self._validate_first_limit_authority(ledger)
+        else:
             self._validate_limit_authority(ledger)
         for reference_id, entry in ledger["entries"].items():
             if entry.get("receipt_sha256") is not None:
@@ -148,6 +175,41 @@ class BatchLedger:
         return ledger
 
     def _validate_limit_authority(self, ledger: dict) -> None:
+        initial = active_limit_authority()
+        authority = ledger.get("limit_authority")
+        directory = self.root / "budget-amendments" / SUPPLEMENT_APPROVAL_ID
+        if authority == initial:
+            if ((self.root / "budget-amendments").exists()
+                    or (DELIVERED_SNAPSHOT.exists()
+                        and _json(DELIVERED_SNAPSHOT).get("limits") != ACTIVE_LIMITS)):
+                raise ReferenceBlocked("historical ledger requires its approved migration receipt")
+            return
+        required = {**initial, "origin": "amendment"}
+        if (not isinstance(authority, dict) or set(authority) != {*required, "receipt_sha256"}
+                or any(authority.get(k) != v for k, v in required.items())):
+            raise ReferenceBlocked("ledger has no exact approved supplement authority")
+        path, before_path = directory / "amendment.json", directory / "before.json"
+        if (not path.is_file() or sha256_file(path) != authority["receipt_sha256"]
+                or not before_path.is_file()):
+            raise ReferenceBlocked("budget supplement receipt or previous ledger is missing or changed")
+        receipt = _json(path)
+        if (receipt.get("approval_id") != SUPPLEMENT_APPROVAL_ID
+                or receipt.get("approval_sha256") != SUPPLEMENT_APPROVAL_SHA256
+                or receipt.get("previous_limits") != LIMITS or receipt.get("approved_limits") != ACTIVE_LIMITS
+                or sha256_file(before_path) != receipt.get("before_sha256")):
+            raise ReferenceBlocked("budget supplement binding or previous ledger hash changed")
+        before = _json(before_path)
+        if (before.get("limits") != LIMITS
+                or before.get("limit_authority", {}).get("origin") != "amendment"
+                or receipt.get("previous_limit_authority") != before.get("limit_authority")):
+            raise ReferenceBlocked("budget supplement baseline lacks the first applied approval")
+        self._validate_first_limit_authority(before)
+        self._validate_preserved_costs(before, ledger)
+
+    def _validate_first_limit_authority(self, ledger: dict) -> None:
+        """Audit the first immutable approval without granting current execution."""
+        if ledger.get("limits") != LIMITS:
+            raise ReferenceBlocked("first approved limit profile changed")
         initial = initial_limit_authority()
         authority = ledger.get("limit_authority")
         directory = self.root / "budget-amendments" / LIMIT_APPROVAL_ID
@@ -174,6 +236,10 @@ class BatchLedger:
         before = _json(before_path)
         if before.get("limits") != ORIGINAL_LIMITS or "limit_authority" in before:
             raise ReferenceBlocked("budget amendment baseline is not the original ledger")
+        self._validate_preserved_costs(before, ledger)
+
+    @staticmethod
+    def _validate_preserved_costs(before: dict, ledger: dict) -> None:
         # The baseline remains an append-only audit anchor. Previously settled
         # costs cannot disappear; unknown reservations may settle normally.
         mutable = {"state", "settlements", "orca_starts_actual", "attempt_id", "execution_uncertain",
@@ -275,8 +341,8 @@ class BatchLedger:
             entries = [*ledger["entries"].values(), *agent_entries]
             counts = {name: sum(item["category"] == name for item in entries)
                       for name in ("reference", "formal", "development")}
-            if (counts[category] >= LIMITS["orca_starts"][category]
-                    or len(entries) >= LIMITS["orca_starts"]["total"]):
+            if (counts[category] >= ACTIVE_LIMITS["orca_starts"][category]
+                    or len(entries) >= ACTIVE_LIMITS["orca_starts"]["total"]):
                 raise ReferenceBlocked("frozen batch ORCA reservation limit exhausted")
             entry = {"id": reference_id, "category": category, "fingerprint": fingerprint,
                      "sources": sources, "reserved_at": utc_now().isoformat(),

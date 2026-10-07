@@ -23,6 +23,7 @@ FIXED = {"pyproject.toml", "uv.lock", "config.example.toml", "AGENTS.md",
          "docs/acceptance/phase-b/runtime-profile.json"}
 FIXED.add("docs/acceptance/phase-b/coverage-repair-v2.json")
 FIXED.add("docs/acceptance/phase-b/budget-approval-20261007.json")
+FIXED.add("docs/acceptance/phase-b/budget-approval-supplement-20261007.json")
 
 
 def execution_files():

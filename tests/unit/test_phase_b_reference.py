@@ -33,7 +33,7 @@ def receipt(entry, **extra):
 
 def test_read_only_does_not_create_ledger(ledger, capsys):
     assert reference.main([]) == 0
-    assert json.loads(capsys.readouterr().out)["limits"] == reference.LIMITS
+    assert json.loads(capsys.readouterr().out)["limits"] == reference.ACTIVE_LIMITS
     assert not ledger.root.exists()
 
 

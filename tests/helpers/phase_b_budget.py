@@ -22,7 +22,7 @@ from orca_agent.tools.registry import get_tool
 _SPEC = importlib.util.spec_from_file_location("phase_b_budget_reference", Path(__file__).with_name("phase_b_reference.py"))
 reference = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(reference)
-LIMITS = reference.LIMITS
+LIMITS = reference.ACTIVE_LIMITS
 ReferenceBlocked = reference.ReferenceBlocked
 
 

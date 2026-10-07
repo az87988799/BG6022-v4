@@ -439,7 +439,8 @@ def test_delivered_reference_entries_cannot_disappear_even_with_an_existing_ledg
     old = {"category": "reference", "fingerprint": "original"}
     ledger["entries"] = {"reference-original": old}
     book._save(ledger)
-    budget.reference._save(budget.reference.DELIVERED_SNAPSHOT, {"entries": {"reference-original": old}})
+    budget.reference._save(budget.reference.DELIVERED_SNAPSHOT, {
+        "limits": budget.LIMITS, "entries": {"reference-original": old}})
     ledger["entries"] = {}
     book._save(ledger)
     with pytest.raises(budget.ReferenceBlocked, match="reference reservation changed"):
