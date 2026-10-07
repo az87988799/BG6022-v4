@@ -17,6 +17,7 @@ from orca_agent.proposals import ProposalError
 from orca_agent.semantic import RULES, action_parameters, commit_candidate
 from orca_agent.store import Store, StoreError, sha256_file
 from tests.helpers.phase_b_model_cases import create_request
+from tests.helpers.semantic_replay import current_candidate
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/phase_b/semantic-proposal-v3.json"
 V3 = json.loads(FIXTURE.read_text(encoding="utf-8"))
@@ -27,6 +28,7 @@ def test_placeholder_resolution_rejection_explains_automatic_normalization_witho
     run, _ = create_request(store, "N-01/raw-water-sp", 1, category="development", freeze_label="offline-marker")
     proposed = copy.deepcopy(V3["proposal"]["parameters"])
     proposed["message_ids"] = [store.read_control(run.id)["messages"][0]["id"]]
+    proposed = current_candidate(proposed)
     proposed["goals"] = proposed["goals"][:1]
     proposed["resolves"] = ["missing:goal_definition"]
     before = store.load_run(run.id).model_dump_json(), store.load_request(run).model_dump_json()
@@ -49,6 +51,7 @@ def test_actual_v3_placeholder_shape_still_rejects_and_only_test_authored_correc
     proposed = copy.deepcopy(V3["proposal"]["parameters"])
     messages = store.read_control(run.id)["messages"]
     proposed["message_ids"] = [messages[0]["id"]]
+    proposed = current_candidate(proposed)
     before = store.load_run(run.id).model_dump_json()
     with pytest.raises(ProposalError, match="visible question") as caught:
         commit_candidate(store, run, proposed, decision_id="offline_v3_placeholder", basis=current_basis(store, run))
@@ -61,13 +64,13 @@ def test_actual_v3_placeholder_shape_still_rejects_and_only_test_authored_correc
     contract = data["ACTION_PARAMETERS"]["normalize_request"]
     assert prepared.input_token_bound <= 12000
     assert "PLAN_RULES" not in data and "PLAN_REFERENCES" not in data
-    assert "normalize replaces raw_request/missing:goal_definition with requested Goals" in contract[
+    assert "normalize retires raw_request/missing:goal_definition" in contract[
         "instruction"]
     assert "Registration/no-execution is not a Goal" in contract["instruction"]
-    assert "actual user unsupported/unknown requirements" in contract["instruction"]
+    assert "Preserve unsupported/unknown requirements" in contract["instruction"]
     assert "preserve goals.unresolved" not in contract["instruction"]
     assert "normalize defines raw_request" not in contract["instruction"]
-    assert "Goal ports are minimum_evidence_rules.port_rules keys" in contract["instruction"]
+    assert "Ports:minimum_evidence_rules.port_rules" in contract["instruction"]
     assert set(contract["minimum_evidence_rules"]["port_rules"]) == set(RULES) - {"unresolved"}
     # Removing the unjustified extra Goal is a developer-authored correction;
     # production must neither silently remove it nor count this as a live pass.
@@ -114,6 +117,9 @@ def test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_repla
     proposed = candidate(store, run, kind="normalize", goals=goals, conditions=conditions,
         unresolved=["missing:goal_definition"],
         questions=["请确认待定电荷或保留未支持的用户要求。"])
+    if uncertainty != "missing_condition":
+        proposed["questions"] = []
+        proposed["notices"] = ["已登记未支持的用户要求，科学目标仍未满足。"]
     updated = commit_candidate(store, run, proposed, decision_id="offline_actual_gap", basis=current_basis(store, run))
     request = store.load_request(updated)
     assert request.normalization_status == "clarification"
@@ -136,6 +142,7 @@ def _water_candidate(tmp_path):
     run, _ = create_request(store, "N-01/raw-water-sp", 1, category="development", freeze_label="offline-sentinel")
     proposed = copy.deepcopy(V3["proposal"]["parameters"])
     proposed["message_ids"] = [store.read_control(run.id)["messages"][0]["id"]]
+    proposed = current_candidate(proposed)
     proposed["goals"] = proposed["goals"][:1]
     return store, run, proposed
 
@@ -147,10 +154,10 @@ def test_successful_normalization_retires_only_exact_sentinel_and_preserves_cand
     marker = "missing:goal_definition"
     if location in {"request", "both"}:
         proposed["unresolved"] = [marker, "missing:goal_definition:user_qualification"]
-        proposed["questions"] = ["保留用户补充限定的未决项。"]
+        proposed["notices"] = ["保留用户补充限定的未决项。"]
     if location in {"goal", "both"}:
         proposed["goals"][0]["unresolved"] = [marker, "unsupported:user_requirement"]
-        proposed["questions"] = ["保留未支持的用户要求。"]
+        proposed["notices"] = ["保留未支持的用户要求。"]
     before = copy.deepcopy(proposed)
     updated = commit_candidate(store, run, proposed, decision_id="retire_sentinel", basis=current_basis(store, run))
     request = store.load_request(updated)
@@ -176,7 +183,8 @@ def test_raw_clarification_resume_retires_sentinel_atomically_but_keeps_unanswer
     store, run, proposed = _water_candidate(tmp_path)
     gaps = ["missing:goal_definition", *([extra_gap] if extra_gap else [])]
     waiting = commit_candidate(store, run, candidate(store, run, kind="clarify",
-        unresolved=gaps, questions=["请明确目标及仍未确定的条件。"]),
+        unresolved=gaps, questions=["请明确目标及仍未确定的条件。"],
+        question_gaps={"请明确目标及仍未确定的条件。": gaps}),
         decision_id="raw_clarification", basis=current_basis(store, run))
     assert "missing:goal_definition" in store.load_request(waiting).unresolved
     # A durable ordinary clarification can coexist with the unresolved raw
@@ -262,6 +270,7 @@ def test_actual_n06_sentinel_replay_keeps_bad_questions_and_original_failed_revi
                               category="development", freeze_label="offline-n06-sentinel")
     parameters = copy.deepcopy(reply.proposal["parameters"])
     parameters["message_ids"] = [store.read_control(fresh.id)["messages"][0]["id"]]
+    parameters = current_candidate(parameters)
     updated = commit_candidate(store, fresh, parameters, decision_id="replay_n06_sentinel",
                                basis=current_basis(store, fresh))
     request = store.load_request(updated)

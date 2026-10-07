@@ -14,9 +14,10 @@ from orca_agent.applicability import PROFILE, canonical_condition
 from orca_agent.context import build_context
 from orca_agent.model_usage import current_basis
 from orca_agent.proposals import ProposalError
-from orca_agent.semantic import action_parameters, commit_candidate
+from orca_agent.semantic import SemanticCandidate, action_parameters, commit_candidate
 from orca_agent.tools.registry import SCIENCE_COMPOSITIONS, catalog
 from tests.helpers.phase_b_model_cases import create_request
+from tests.helpers.semantic_replay import current_candidate
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/phase_b/semantic-scope-notices-v7.json"
 PROPOSALS = json.loads(FIXTURE.read_text(encoding="utf-8"))["proposals"]
@@ -35,8 +36,9 @@ def raw_run(tmp_path, variant):
 def fresh_parameters(store, run, entry):
     assert hashlib.sha256(entry["raw_content"].encode("utf-8")).hexdigest() == entry["raw_content_sha256"]
     parameters = copy.deepcopy(json.loads(entry["raw_content"])["parameters"])
-    # Only transport identity changes; all original semantic text is retained.
+    # Explicit offline derivation: transport identity and schema change; source bytes remain intact.
     parameters["message_ids"] = [store.read_control(run.id)["messages"][0]["id"]]
+    parameters = current_candidate(parameters)
     return parameters
 
 
@@ -77,35 +79,38 @@ def test_v7_original_runtime_dispositions_and_bad_notice_text_are_not_silently_c
     store, run = raw_run(tmp_path, entry["variant_id"])
     parameters = fresh_parameters(store, run, entry)
     before = store.load_run(run.id).model_dump_json()
-    if entry["runtime_disposition"] == "rejected":
-        with pytest.raises(ProposalError) as error:
-            commit_candidate(store, run, parameters, decision_id="original_rejected", basis=current_basis(store, run))
-        assert error.value.detail["path"] == ["parameters", "questions"]
-        assert error.value.detail["new_unresolved"] == ["applicability:unsupported_condition:environment"]
-        assert store.load_run(run.id).model_dump_json() == before
-    else:
-        updated = commit_candidate(store, run, parameters, decision_id="original_accepted", basis=current_basis(store, run))
-        assert store.load_request(updated).normalization_status == "clarification"
-        assert updated.decisions[-1]["semantics"]["questions"] == parameters["questions"]
-        # The v7 runtime accepted these strings. Independent semantic failure
-        # remains in the fixture; the prompt change must not rewrite history.
+    original = json.loads(entry["raw_content"])["parameters"]
+    historical = SemanticCandidate.model_validate(original)
+    assert historical.schema_version == "request-semantics-1"
+    assert historical.questions == original["questions"]
+    # Historical dispositions remain source facts; v1 is now read-only and
+    # cannot be activated under the changed v2 interaction contract.
+    assert entry["runtime_disposition"] in {"accepted", "rejected"}
+    if entry["runtime_disposition"] == "accepted":
         assert entry["independent_semantic_passed"] is False
-        assert not updated.calls and not updated.attempts and not updated.model_records
+    legacy = copy.deepcopy(original)
+    legacy["message_ids"] = parameters["message_ids"]
+    with pytest.raises(ProposalError):
+        commit_candidate(store, run, legacy, decision_id="legacy_read_only", basis=current_basis(store, run))
+    assert store.load_run(run.id).model_dump_json() == before
+
 
 
 @pytest.mark.parametrize("entry", PROPOSALS, ids=[p["model_record_id"] for p in PROPOSALS])
 def test_developer_scope_notices_keep_requested_targets_and_all_unmet_facts(tmp_path, entry):
     store, run = raw_run(tmp_path, entry["variant_id"])
     parameters = fresh_parameters(store, run, entry)
-    parameters["questions"] = [NOTICES[entry["variant_id"]]]
+    parameters["questions"] = []
+    parameters["notices"] = [NOTICES[entry["variant_id"]]]
     if entry["variant_id"] == "N-06/raw-unsupported-system":
         parameters["unresolved"].append("unsupported_system:ethanol")
     updated = commit_candidate(store, run, parameters, decision_id="developer_notice", basis=current_basis(store, run))
     request = store.load_request(updated)
     assert request.normalization_status == "clarification"
     assert request.original_text == parameters["text_basis"]
-    assert updated.decisions[-1]["semantics"]["questions"] == parameters["questions"]
-    assert all("?" not in text and "？" not in text for text in parameters["questions"])
+    assert updated.decisions[-1]["semantics"]["notices"] == parameters["notices"]
+    assert not updated.decisions[-1]["semantics"]["questions"]
+    assert all("?" not in text and "？" not in text for text in parameters["notices"])
     if entry["variant_id"] == "N-05/raw-unsupported-solvent":
         assert request.conditions["environment"] == "water_solvent"
         assert request.conditions_source["environment"] == "explicit"

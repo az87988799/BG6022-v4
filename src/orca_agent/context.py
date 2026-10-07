@@ -21,7 +21,7 @@ from orca_agent.models import Plan, Proposal, Request, Result, Run, utc_now
 from orca_agent.proposals import call_tool_instruction, call_tool_parameters_schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v16"
+PROMPT_VERSION = "agent-json-v17"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SYSTEM_PROMPT = """JSON; reason<=1000. Program gates execution/science/goals.
@@ -841,7 +841,7 @@ def build_context(
         if goal.get("original_text") == request.original_text:
             goal.pop("original_text")
             goal["original_text_ref"] = "AUTHORITY.user_originals[0]"
-        for key in ("unresolved", "minimum_evidence", "system_ids", "original_text"):
+        for key in ("unresolved", "minimum_evidence", "system_ids", "original_text", "identity", "text_evidence"):
             if not goal.get(key):
                 goal.pop(key, None)
     originals = [_original(request.original_text)]
@@ -1000,14 +1000,15 @@ def build_context(
                 template["DATA"]["check_profiles"] = profiles
             if defaults:
                 template["DATA"]["qualified_check_defaults"] = defaults
-            columns = list(dict.fromkeys(key for result in projected_results for key in result))
-            template["DATA"]["results"] = {"columns": columns, "rows": [
-                [result.get(key) for key in columns] for result in projected_results]}
-            template["DATA"]["projection_rules"] = (
-                "Rows zip columns; null=absent. Defaults: operation_status=completed, "
-                "checks=qualified_check_defaults[port]. Full observations=Result.")
-            if profiles:
-                template["DATA"]["projection_rules"] += " profile_ref=check_profiles."
+            if projected_results:
+                columns = list(dict.fromkeys(key for result in projected_results for key in result))
+                template["DATA"]["results"] = {"columns": columns, "rows": [
+                    [result.get(key) for key in columns] for result in projected_results]}
+                template["DATA"]["projection_rules"] = (
+                    "Rows zip columns; null=absent. Defaults: operation_status=completed, "
+                    "checks=qualified_check_defaults[port]. Full observations=Result.")
+                if profiles:
+                    template["DATA"]["projection_rules"] += " profile_ref=check_profiles."
         wire = _share_strings(template) if observation_bytes == 256 else template
         wire = {**wire, "RESPONSE_ENVELOPE": envelope}
         try:

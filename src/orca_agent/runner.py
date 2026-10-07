@@ -65,22 +65,14 @@ def _step_results(store, run):
 
 
 def _goals(store, run, plan, results):
-    from orca_agent.goals import validate_goal_evidence
+    from orca_agent.goals import current_goal_evidence
     request = store.load_request(run)
     for goal in request.goals:
-        binding = plan.goal_map.get(goal.id) if plan else None
-        result = results.get(binding.step_id) if binding else None
-        direct = run.goal_evidence.get(goal.id)
-        reference = direct or (binding.evidence if binding else None)
-        if reference:
-            if reference.run_id != run.id and reference.result_id not in run.permission.result_ids:
-                raise ValueError("goal evidence is outside the permission snapshot")
-            result = store.load_result(reference.run_id, reference.result_id)
-            if reference.attempt_id and result.attempt_id != reference.attempt_id:
-                raise ValueError("goal evidence Attempt differs")
+        selection = current_goal_evidence(store, run, request, goal, plan, results)
+        result = selection["result"]
         output = result.qualified_outputs.get(goal.port) if result else None
-        valid = bool(result and validate_goal_evidence(store, run, request, goal, result)
-                     and not (binding and binding.gap and not direct))
+        valid = bool(selection["assessment"] and not selection["gaps"]
+                     and selection["assessment"]["status"] == "passed")
         if output and not valid:
             mismatch = {"category": "check_rule_mismatch", "goal_id": goal.id,
                         "result_id": result.id, "required_version": goal.minimum_check_version,

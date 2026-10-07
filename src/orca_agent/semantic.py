@@ -19,15 +19,22 @@ from orca_agent.models import Goal, Identifier, Record, Request
 from orca_agent.natural import _authorized_geometry, _missing_information
 from orca_agent.proposals import ProposalError, _schema_error
 from orca_agent.store import StoreError
-from orca_agent.tools.registry import SCIENCE_COMPOSITIONS, catalog, get_tool, validate_parameters
+from orca_agent.tools.registry import (
+    SCIENCE_COMPOSITIONS,
+    SCIENCE_IDENTITIES,
+    catalog,
+    get_tool,
+    validate_parameters,
+)
 
-VERSION = "request-semantics-1"
+VERSION = "request-semantics-2"
+LEGACY_VERSION = "request-semantics-1"
 ConditionName = Literal["method", "basis", "charge", "multiplicity", "electronic_state", "environment",
                         "temperature_K", "standard_state"]
 CONDITIONS = frozenset(get_args(ConditionName))
 PHYSICAL = CONDITIONS - {"temperature_K", "standard_state"}
 LEXICAL_ALIASES = {
-    ("charge", 0): ("中性", "neutral"),
+    ("charge", 0): ("中性", "neutral", "电荷为零", "电荷零"),
     ("multiplicity", 1): ("单重态", "单重", "singlet"),
     ("environment", "gas"): ("气相", "gas", "vacuum"),
     ("environment", "gas_phase"): ("气相", "gas phase", "vacuum"),
@@ -57,6 +64,7 @@ class FieldEvidence(Record):
     request_version: int | None = None
     system_ref: Identifier | None = None
     default_rule: str | None = None
+    message_id: Identifier | None = None
 
 
 class SemanticGoal(Record):
@@ -70,10 +78,12 @@ class SemanticGoal(Record):
     conditions: dict[ConditionName, FieldEvidence] = Field(default_factory=dict, max_length=8)
     query: dict | None = None
     unresolved: list[str] = Field(default_factory=list, max_length=8)
+    message_id: Identifier | None = None
 
 
 class SemanticCandidate(Record):
-    schema_version: Literal["request-semantics-1"]
+    # Historical candidates remain parseable, but never activate under old rules.
+    schema_version: Literal["request-semantics-1", "request-semantics-2"]
     message_ids: list[Identifier] = Field(min_length=1, max_length=24)
     kind: Literal["normalize", "amend", "replace_goals", "clarify", "continue", "status"]
     text_basis: str = Field(min_length=1, max_length=1000)
@@ -85,6 +95,8 @@ class SemanticCandidate(Record):
     resolves: list[str] = Field(default_factory=list, max_length=8)
     unresolved: list[str] = Field(default_factory=list, max_length=8)
     questions: list[str] = Field(default_factory=list, max_length=5)
+    notices: list[str] = Field(default_factory=list, max_length=5)
+    question_gaps: dict[str, list[str]] = Field(default_factory=dict, max_length=5)
 
 
 def pending_messages(store, run):
@@ -103,6 +115,7 @@ def _goal_binding_contract(request, *, defines_goals=False):
 
 def action_parameters(allowed_tools=(), *, request=None):
     schema = _schema(SemanticCandidate.model_json_schema())
+    schema["properties"]["schema_version"] = {"const": VERSION, "type": "string"}
     binding_ids, binding_schema = _goal_binding_contract(request)
     _, new_goal_binding_schema = _goal_binding_contract(request, defines_goals=True)
     bindings = schema["properties"]["goal_bindings"]
@@ -118,25 +131,23 @@ def action_parameters(allowed_tools=(), *, request=None):
                            {"properties": {"goal_bindings": new_goal_binding_schema}}]
     port_rules = {port: rule for port, rule in RULES.items() if port != "unresolved"}
     return {"normalize_request": {
-        "instruction": "Goal ports are minimum_evidence_rules.port_rules keys; query follows query_schemas[port]. "
-        "Use environment for gas/solvent. condition_lexicon[field] rows=[value,explicit aliases], not inference. "
-        "electronic_state means RHF/UHF reference, not ground/excited. "
-        "system_refs -> System.geometry_artifact_id; never put geometry in conditions. "
-        "explain_results is existing configuration; keep. "
-        "minimum_evidence defaults to []; checks apply. "
-        "Keep actual user unsupported/unknown requirements unresolved; no invented rules. "
-        "Energy requires geometry_relation=fixed_initial (SP) or optimized (after Opt). "
+        "instruction": "Ports:minimum_evidence_rules.port_rules; query:query_schemas[port]. "
+        "environment=gas/solvent; condition_lexicon rows=[value,explicit aliases], not inference. "
+        "electronic_state=RHF/UHF, not ground/excited. "
+        "system_refs select geometry; no geometry conditions. Keep explain_results. "
+        "minimum_evidence=[] still requires checks. Preserve unsupported/unknown requirements. "
+        "Energy:geometry_relation=fixed_initial (SP) or optimized (after Opt). "
         "Unknown/inferred:conditions/system_conditions. "
-        "Energy needs temperature_K/standard_state only if requested. Absent display unit:unknown, not a question. "
+        "Energy:temperature_K/standard_state only if requested; absent display unit=unknown, no question. "
         "science_scope: capability limits, not permission/defaults. "
-        "No execution; copy AUTHORITY.pending_user_message_ids. "
-        "Verbatim text_basis: no translation, paraphrase or added parentheses. "
-        "normalize replaces raw_request/missing:goal_definition with requested Goals, "
-        "after clarification too. Never resolves missing:goal_definition. "
-        "Registration/no-execution is not a Goal. amend keeps goals; "
+        "Copy AUTHORITY.pending_user_message_ids; no execution. "
+        "Verbatim unique text_basis; optional message_id; match field/target scope. "
+        "normalize retires raw_request/missing:goal_definition, even after clarification; never resolves it. "
+        "Registration/no-execution is not a Goal. amend keeps goals. "
         "New goals:system_refs; existing Goal.id:goal_bindings, never both. "
         "replace_goals:explicit replacement + all old IDs. "
-        "gaps:field:<field>/system:<goal_id>; resolves=answered gaps.",
+        "gaps:field:<field>/system:<goal_id>; resolves=answered gaps. "
+        "notices=declarations; question_gaps maps questions to current gap IDs.",
         "science_scope": {"systems": list(SCIENCE_COMPOSITIONS), "conditions": dict(PROFILE),
                           "names": {formula: list(SYSTEM_ALIASES.get(formula.casefold(), ()))
                                     for formula in SCIENCE_COMPOSITIONS},
@@ -144,7 +155,7 @@ def action_parameters(allowed_tools=(), *, request=None):
                                            for port in tool["output_ports"]})},
         "questions_policy": (
             "Named identity != registered System/geometry; no geometry != unknown identity. "
-            "Explicit registration-only: known scope/geometry limits get declarative notices in questions; "
+            "Explicit registration-only: known scope/geometry limits get declarative notices in notices; "
             "no reply, confirmation or resource request. Separately disclose science_scope support and "
             "geometry registration; neither implies the other. Preserve explicit choices. "
             "No execution permission alone is not registration-only intent. New gaps need visible questions text. "
@@ -162,6 +173,126 @@ def action_parameters(allowed_tools=(), *, request=None):
 def _quote(text, messages):
     if not text.strip() or not any(text in m["text"] for m in messages):
         raise StoreError("semantic evidence must quote a supplied user message")
+
+
+def _locate(text, messages, message_id=None):
+    """Authenticate one exact occurrence; offsets are derived, never model authority."""
+    matches = []
+    seen = set()
+    for message in messages:
+        key = message.get("id", id(message))
+        if key in seen or (message_id is not None and message.get("id") != message_id):
+            continue
+        seen.add(key)
+        for match in re.finditer(re.escape(text), message["text"]) if text.strip() else []:
+            matches.append((message, match.start(), match.end()))
+    if not matches:
+        raise StoreError("semantic evidence must quote a supplied user message and its exact message ID")
+    if len(matches) != 1:
+        raise StoreError("semantic evidence quote is repeated; supply a unique fuller quote or message ID")
+    return matches[0]
+
+
+IDENTITIES = {"water": ("water", "h2o", "水"), "methane": ("methane", "ch4", "甲烷"),
+              "ethanol": ("ethanol", "乙醇"), "ammonia": ("ammonia", "氨"),
+              "carbon_dioxide": ("carbon dioxide", "二氧化碳")}
+
+
+def _mentions(text, *, targets=False):
+    found = []
+    for identity, aliases in IDENTITIES.items():
+        for alias in aliases:
+            pattern = (r"(?<![a-z0-9_])" + re.escape(alias) + r"(?![a-z0-9_])"
+                       if alias.isascii() else re.escape(alias))
+            for match in re.finditer(pattern, text, re.I):
+                before, after = text[:match.start()], text[match.end():]
+                solvent = (re.match(r"\s*(?:溶剂|溶液|作为溶剂|为溶剂|as\s+(?:(?:the|a)\s+)?solvent)", after, re.I)
+                           or re.search(r"(?:溶剂(?:为|是)|solvent\s*(?:is|=|:)?|\bin)\s*$", before, re.I))
+                if not targets or not solvent:
+                    found.append((match.start(), match.end(), identity, match.group()))
+    return sorted(found)
+
+
+def _registered_identity(system):
+    names = {entry[2] for entry in _mentions(system.id + " " + system.label, targets=True)}
+    return next(iter(names)) if len(names) == 1 else None
+
+
+def _propositions(text):
+    """Small bounded clause splitter retaining question punctuation and offsets."""
+    return [(match.start(), match.end(), match.group()) for match in re.finditer(
+        r"[^，,。.;；\n!?？]+[!?？]?", text)]
+
+
+def _goal_grounding(request, text, system_ids, messages, *, message_id=None, original_identity=None):
+    message, start, end = _locate(text, messages, message_id)
+    # Expand short quotes to their proposition so clipping off the named target
+    # cannot bind the remaining word "energy" to an unrelated registered system.
+    clauses = [part for left, right, part in _propositions(message["text"])
+               if left < end and right > start]
+    proposition = "，".join(clauses)
+    contextual = _mentions(proposition, targets=True)
+    quoted = _mentions(text, targets=True)
+    mentions = (quoted if quoted and {entry[2] for entry in quoted} <= {
+        entry[2] for entry in contextual} else contextual)
+    if not mentions:
+        preceding = _mentions(message["text"][:start], targets=True)
+        preceding_ids = {entry[2] for entry in preceding}
+        if len(preceding_ids) > 1 and system_ids:
+            raise StoreError("ambiguous goal pronoun has multiple named antecedents")
+        mentions = preceding
+    identities = {entry[2] for entry in mentions}
+    prior = set((original_identity or {}).get("canonical_names", []))
+    if prior and identities and identities != prior:
+        raise StoreError("goal binding contradicts the original goal identity")
+    identities = prior or identities
+    registered = {system.id: system for system in request.systems}
+    if len(system_ids) != len(set(system_ids)) or set(system_ids) - set(registered):
+        raise StoreError("semantic goal references unknown/duplicate registered systems")
+    bound = {_registered_identity(registered[system_id]) for system_id in system_ids}
+    if system_ids and identities and (None in bound or bound != identities):
+        raise StoreError("goal system binding contradicts the named target in its original proposition")
+    if system_ids and not identities:
+        named = _grounded_systems(request, [{"text": proposition}])
+        if named and named != set(system_ids):
+            raise StoreError("goal system binding contradicts its quoted proposition")
+        if not named and len(request.systems) > 1:
+            raise StoreError("ambiguous goal pronoun needs one confirmed system context")
+    evidence = {"message_id": message.get("id"), "text_basis": text, "start": start,
+                "end": end, "schema": VERSION}
+    identity = {"canonical_names": sorted(identities),
+                "requested_names": list(dict.fromkeys(entry[3] for entry in mentions)),
+                "support_status": ("supported" if identities and identities <= set(SCIENCE_IDENTITIES)
+                                   else "unsupported" if identities else "unknown")}
+    return identity, evidence
+
+
+def _field_propositions(request, message, start, end, *, system):
+    """Resolve scope from the containing proposition, not every name in a message."""
+    carry = set()
+    selected = []
+    parts = []
+    for left, right, clause in _propositions(message["text"]):
+        boundaries = [match for match in re.finditer(r"\b(?:and|but)\b|但是|但|而", clause, re.I)
+                      if re.search(r"R?HF|UHF|用|方法|电荷|多重度|\b(?:use[sd]?|charge|multiplicity)\b",
+                                   clause[:match.start()], re.I)]
+        position = 0
+        for boundary in boundaries:
+            parts.append((left + position, left + boundary.start(), clause[position:boundary.start()]))
+            position = boundary.end()
+        parts.append((left + position, right, clause[position:]))
+    for left, right, clause in parts:
+        names = _grounded_systems(request, [{"text": clause}])
+        if names:
+            carry = names
+        scope = names or carry
+        if left < end and right > start:
+            selected.append((clause, scope))
+    target = {system.id} if system else None
+    if target:
+        matching = [(clause, scope) for clause, scope in selected if not scope or scope == target]
+        return matching
+    return selected
 
 
 def _grounded_systems(request, messages):
@@ -213,8 +344,27 @@ def _field(name, item, request, messages, *, system=None):
             raise StoreError("temperature requires a positive numeric value")
     elif value is not None and (not isinstance(value, str) or not 0 < len(value) <= 100):
         raise StoreError("condition needs a bounded string value")
+    evidence = item.model_dump(mode="json")
+    labels = {"method": r"方法|\bmethod\b", "basis": r"基组|\bbasis\b",
+              "charge": r"电荷|\bcharge\b", "multiplicity": r"多重度|\bmultiplicity\b",
+              "electronic_state": r"电子态|\breference\b", "environment": r"环境|\benvironment\b"}
+    if item.source in {"explicit", "default", "inherited"}:
+        source_message = _locate(item.text_basis, messages, item.message_id)[0] if item.source == "explicit" else None
+        after_source = source_message is None
+        for message in messages:
+            if message is source_message:
+                after_source = True
+                continue
+            if not after_source or name not in labels:
+                continue
+            for clause, _ in _field_propositions(request, message, 0, len(message["text"]), system=system):
+                if re.search(labels[name], clause, re.I) and re.search(
+                        r"未知|不确定|不知道|尚未确定|\b(?:unknown|uncertain|undecided)\b", clause, re.I):
+                    raise StoreError("later explicit unknown condition cannot be overwritten by an older value")
     if item.source == "explicit":
-        _quote(item.text_basis, messages)
+        message, start, end = _locate(item.text_basis, messages, item.message_id)
+        if item.system_ref is not None and (system is None or item.system_ref != system.id):
+            raise StoreError("explicit condition system_ref must match its target scope")
         # Check literal or a small documented lexical normalization, never use
         # a trustworthy message ID as proof of every proposed field value.
         tokens = {str(value).casefold()}
@@ -230,19 +380,53 @@ def _field(name, item, request, messages, *, system=None):
             raise StoreError("explicit condition lacks a supported lexical value basis")
         # A clipped quote must not discard the negation/uncertainty around the
         # value in its authenticated message. Ambiguous clauses stay unresolved.
-        for message in messages:
-            if item.text_basis not in message["text"]:
-                continue
-            for clause in re.split(r"[，,。.;；\n]", message["text"]):
+        clauses = _field_propositions(request, message, start, end, system=system)
+        pertinent = []
+        for clause, scope in clauses:
+            # Contrasting independent execution instructions cannot negate an
+            # earlier method assertion ("Use RHF but do not execute").
+            for part in re.split(r"\bbut\b|但是|但", clause, flags=re.I):
+                if not any(present(token, part) for token in tokens):
+                    continue
+                if system is None and len(request.systems) > 1 and scope and scope != {
+                        entry.id for entry in request.systems}:
+                    raise StoreError("system-scoped condition cannot become a global condition")
+                pertinent.append(part)
                 # These phrases negate geometric constraints, not the method,
                 # charge or reference state. Keep any surrounding negation.
                 condition_clause = re.sub(r"无约束|\bwithout\s+(?:geometric\s+)?constraints?\b",
-                                          " ", clause, flags=re.I)
-                if any(present(token, clause) for token in tokens) and re.search(
+                                          " ", part, flags=re.I)
+                if re.search(
                         r"不|非|未|无|禁止|拒绝|避免|排除|可能|也许|推断|推测|假设|待确认|尚待|或者|[?？]|"
                         r"\b(?:not|no|never|without|unknown|maybe|perhaps|uncertain|if|either|or)\b|n't\b",
                         condition_clause, re.I):
                     raise StoreError("explicit condition has a negated or uncertain value basis")
+        if not pertinent:
+            raise StoreError("explicit condition lacks a value in its target system proposition")
+        # Other affirmative values of the same field in this same scope are a
+        # conflict, even if a clipped positive quote selected only one of them.
+        labels = {"charge": r"(?:净?电荷(?:数)?|\bcharge\b)",
+                  "multiplicity": r"(?:自旋多重度|多重度|\bmultiplicity\b)"}
+        if name in labels:
+            for clause, scope in _field_propositions(request, message, 0, len(message["text"]), system=system):
+                numbers = re.findall(labels[name] + r"\s*(?:(?:为|是|等于|设为|取|is|=|:|：)\s*)?([+-]?\d+)",
+                                     clause, re.I)
+                if any(int(number) != value for number in numbers):
+                    raise StoreError("explicit condition has conflicting values in the same proposition")
+        if name in {"method", "electronic_state"}:
+            for clause, scope in _field_propositions(request, message, 0, len(message["text"]), system=system):
+                methods = re.findall(r"(?<![a-z0-9_])(?:RHF|UHF|HF|B3LYP|PBE0?|MP2|DFT)(?![a-z0-9_])",
+                                     clause, re.I)
+                if name == "electronic_state":
+                    methods = [method for method in methods if method.upper() in {"RHF", "UHF"}]
+                expected = str(canonical_condition(name, value)).upper()
+                for method in methods:
+                    normalized = "HF" if name == "method" and method.upper() == "RHF" else method.upper()
+                    if normalized != expected and not re.search(
+                            r"不|非|未|无|\b(?:not|no|never|without)\b|n't\b", clause, re.I):
+                        raise StoreError("explicit condition has conflicting values in the same system scope")
+        evidence.update(message_id=message.get("id"), start=start, end=end,
+                        system_ref=system.id if system else None)
         if name in {"charge", "multiplicity"}:
             label = (r"(?:净?电荷(?:数)?|(?<![a-z])charge(?![a-z]))" if name == "charge" else
                      r"(?:自旋多重度|多重度|(?<![a-z])multiplicity(?![a-z]))")
@@ -287,31 +471,45 @@ def _field(name, item, request, messages, *, system=None):
                 prior is not None and canonical_condition(name, prior) != expected):
             raise StoreError("declared or unconfirmed conditions cannot be replaced by a default")
     elif item.source == "inferred":
-        _quote(item.text_basis, messages)
+        message, start, end = _locate(item.text_basis, messages, item.message_id)
+        evidence.update(message_id=message.get("id"), start=start, end=end,
+                        system_ref=system.id if system else None)
     elif item.source == "unknown":
         if value is not None:
             raise StoreError("unknown condition cannot supply a value")
     elif name in PHYSICAL:
         raise StoreError("physical scientific conditions cannot be waived as not_applicable")
-    return value, item.source, item.model_dump(mode="json")
+    return value, item.source, evidence
 
 
 def _goals(candidate, request, messages):
     systems = {s.id for s in request.systems}
     goals = []
     for goal_index, item in enumerate(candidate.goals or []):
-        _quote(item.text_basis, messages)
+        identity, text_evidence = _goal_grounding(request, item.text_basis, item.system_refs,
+                                                 messages, message_id=item.message_id)
         if len(item.system_refs) != len(set(item.system_refs)) or set(item.system_refs) - systems:
             raise StoreError("semantic goal references unknown/duplicate registered systems")
         conditions = {}
         unresolved = list(item.unresolved)
+        if item.port in {"energy", "optimized_geometry"}:
+            unresolved.extend("unsupported_system:" + name for name in identity["canonical_names"]
+                              if name not in SCIENCE_IDENTITIES)
+            if not item.system_refs and request.systems and identity["canonical_names"]:
+                registered_names = {_registered_identity(system) for system in request.systems}
+                if registered_names != set(identity["canonical_names"]):
+                    unresolved.extend("unbound_system:" + name for name in identity["canonical_names"])
+            unresolved = list(dict.fromkeys(unresolved))
         for name, field in item.conditions.items():
             if field.source in {"unknown", "inferred"}:
                 raise StoreError("unknown/inferred Goal conditions must be placed in "
                                  "Candidate.conditions/system_conditions; preserve goals.unresolved "
                                  "so the user can answer without replacing the goal")
-            value, _, _ = _field(name, field, request, messages)
+            scope = next((system for system in request.systems
+                          if item.system_refs == [system.id]), None)
+            value, _, field_evidence = _field(name, field, request, messages, system=scope)
             conditions[name] = value
+            text_evidence.setdefault("conditions", {})[name] = field_evidence
         if item.geometry_relation:
             conditions["geometry_relation"] = item.geometry_relation
         elif item.port == "energy":
@@ -342,10 +540,72 @@ def _goals(candidate, request, messages):
                               minimum_check_version=RULES[port], original_text=item.text_basis,
                               system_ids=[member] if member else item.system_refs,
                               conditions=conditions, minimum_evidence=item.minimum_evidence,
-                              unresolved=unresolved))
+                              unresolved=unresolved,
+                              identity=({**identity, "canonical_names": [_registered_identity(next(
+                                  system for system in request.systems if system.id == member))]}
+                                        if member else identity), text_evidence=text_evidence))
     if not goals or len(goals) > 8:
         raise StoreError("normalization requires one to eight bounded goals")
     return goals
+
+
+def _communication(candidate, request, messages, gaps):
+    """Separate a recorded requirement from a scientific result or required reply."""
+    text = "\n".join(message["text"] for message in messages)
+    registration = r"(?:只|仅)(?:做)?登记|(?:只|仅)记录(?:需求|要求)|\b(?:register|registration)\s+only\b"
+    no_execution = r"不(?:要|再|得)?(?:执行|运行|启动|计算)|\b(?:do\s+not|don't|no)\s+(?:execute|run|compute|calculation)"
+    scope = "science"
+    # Only another explicit delivery instruction replaces a prior restriction;
+    # method amendments, status and resume never create execution intent.
+    for text in [request.original_text, *(entry["text"] for entry in request.messages), text]:
+        if re.search(registration, text, re.I):
+            scope = "registration_only"
+        elif re.search(no_execution, text, re.I) or re.search(r"看看结果|只(?:看|查询|读取)", text):
+            scope = "read_only"
+        elif re.search(r"(?:现在|开始|请)(?:执行|运行|计算)|\b(?:execute|run|compute)\s+now\b", text, re.I):
+            scope = "science"
+    blocking = {gap for gap in gaps if scope != "registration_only" or gap.startswith(
+        ("unconfirmed:", "unknown:", "field:", "ambiguous", "system:", "missing:goal_definition",
+         "missing:charge", "missing:multiplicity", "missing:method", "missing:basis"))}
+    if set(candidate.question_gaps) - set(candidate.questions):
+        raise ProposalError("question_gaps keys must be the exact supplied questions.",
+                            path=["parameters", "question_gaps"])
+    associations = {}
+    for question in candidate.questions:
+        declared = candidate.question_gaps.get(question)
+        if declared is not None and (not declared or set(declared) - gaps):
+            raise ProposalError("Each question must reference existing unresolved facts.",
+                                path=["parameters", "question_gaps"])
+        if not re.search(r"[?？]|请|是否|哪个|多少|什么|需要|\b(?:what|which|whether|please|confirm|provide)\b",
+                         question, re.I):
+            raise ProposalError("Declarative notices belong in notices, not questions.",
+                                path=["parameters", "questions"])
+        if declared is None:
+            labels = {"charge": r"电荷|charge|电子态", "multiplicity": r"多重度|multiplicity|电子态",
+                      "method": r"方法|method|条件", "basis": r"基组|basis|条件",
+                      "environment": r"环境|溶剂|气相|environment|条件",
+                      "geometry": r"几何|结构|geometry", "quantity": r"物理量|性质|quantity|property",
+                      "system": r"体系|分子|对象|system|molecule", "query": r"字段|field|读取"}
+            named = {name for name, pattern in labels.items() if re.search(pattern, question, re.I)}
+            associated = {gap for gap in blocking if any(name in gap for name in named)}
+            if not associated and len(blocking) == 1:
+                associated = set(blocking)
+            if not associated and blocking:
+                raise ProposalError("Ambiguous question requires question_gaps identifying its concrete missing facts.",
+                                    path=["parameters", "question_gaps"])
+        else:
+            associated = set(declared)
+        if not associated or not associated.intersection(blocking):
+            raise ProposalError("Question does not concern a missing fact required by the current delivery scope.",
+                                path=["parameters", "questions"])
+        associations[question] = sorted(associated)
+    for notice in candidate.notices:
+        if re.search(r"[?？]|请(?:提供|确认)|\bplease\s+(?:provide|confirm)\b", notice, re.I):
+            raise ProposalError("Notices cannot ask for a required reply; use a question with its gap.",
+                                path=["parameters", "notices"])
+    return {"questions": candidate.questions, "notices": candidate.notices,
+            "question_gaps": associations, "delivery_scope": scope,
+            "awaiting_reply": bool(blocking)}
 
 
 def commit_candidate(store, run, parameters, *, decision_id, basis, related_results=None, fault=None):
@@ -359,6 +619,9 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
                                      allowed_condition_keys=list(get_args(ConditionName)))
             raise correction from None
         raise _schema_error(exc, path=["parameters"]) from None
+    if candidate.schema_version != VERSION:
+        raise ProposalError("Legacy semantic candidates are read-only; submit request-semantics-2 with current evidence.",
+                            path=["parameters", "schema_version"])
     request = store.load_request(run)
     binding_ids, _ = _goal_binding_contract(request, defines_goals=candidate.goals is not None)
     invalid_binding_ids = set(candidate.goal_bindings) - set(binding_ids)
@@ -445,15 +708,23 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
                 values["unresolved"].append(marker)
     if candidate.goals is not None:
         values["goals"] = [g.model_dump() for g in _goals(candidate, request, grounding)]
-    systems = {system.id for system in request.systems}
-    named_systems = _grounded_systems(request, pending)
     for goal_id, system_ids in candidate.goal_bindings.items():
         goal = next((g for g in values["goals"] if g["id"] == goal_id), None)
         if (goal is None or not system_ids or len(system_ids) != len(set(system_ids))
-                or set(system_ids) - systems or set(system_ids) != named_systems
                 or (goal["system_ids"] and goal["system_ids"] != system_ids)):
             raise StoreError("clarification must bind an unresolved goal to registered systems without replacing its scope")
+        # The answer must respect both the current named answer and the original
+        # proposition. A later mention cannot silently change a named molecule.
+        original_identity = goal.get("identity") or {
+            "canonical_names": sorted({entry[2] for entry in _mentions(goal["original_text"], targets=True)})}
+        identity, evidence = _goal_grounding(request, candidate.text_basis, system_ids,
+            pending, original_identity=original_identity)
+        if not identity["canonical_names"] and not _grounded_systems(request, pending):
+            raise StoreError("clarification must name the registered system for an unresolved goal")
         goal["system_ids"] = system_ids
+        goal["identity"] = identity
+        goal["unresolved"] = [gap for gap in goal["unresolved"] if not gap.startswith("unbound_system:")]
+        goal.setdefault("text_evidence", {}).update(binding=evidence)
     for goal in values["goals"]:
         goal["unresolved"] = [gap for gap in goal["unresolved"] if gap not in candidate.resolves]
     if candidate.kind == "normalize" and candidate.goals is None:
@@ -483,14 +754,19 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
     current_gaps = set(updated.unresolved) | {gap for goal in updated.goals for gap in goal.unresolved}
     new_gaps = current_gaps - prior_gaps
     visible_question = any(any(not char.isspace() and not unicodedata.category(char).startswith("C")
-                              for char in question) for question in candidate.questions)
+                              for char in question) for question in candidate.questions + candidate.notices)
     if new_gaps and not visible_question:
         raise ProposalError("New unresolved conditions, including detected unsupported scope, require a visible question "
-                            "or unsupported-scope notice in parameters.questions. Preserve explicit user choices; "
+                            "or unsupported-scope notice in parameters.notices. Preserve explicit user choices; "
                             "do not ask to reconfirm them.",
                             path=["parameters", "questions"], new_unresolved=sorted(new_gaps))
     _authorized_geometry(store, updated, run.permission)
     for goal in updated.goals:
+        if goal.port in {"energy", "optimized_geometry"} and len(goal.system_ids) == 1:
+            system = next(system for system in updated.systems if system.id == goal.system_ids[0])
+            if goal.identity.get("canonical_names") and system.geometry_artifact_id:
+                from orca_agent.applicability import validate_goal_identity
+                validate_goal_identity(store, updated, goal, system.geometry_artifact_id)
         query = goal.conditions.get("query", {})
         if query.get("artifact_id"):
             own = {a for rid in run.result_ids for a in store.load_result(run.id, rid).artifact_ids}
@@ -499,10 +775,11 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
             store.artifact_path(query["artifact_id"])
         if query.get("run_id") and query["run_id"] != run.id:
             raise StoreError("semantic query cannot invent another Run reference")
+    communication = _communication(candidate, updated, pending, current_gaps)
     semantics = {"schema": VERSION, "kind": candidate.kind,
                  "candidate": candidate.model_dump(mode="json"),
                  "replaced_goal_ids": [g.id for g in request.goals] if candidate.goals else [],
-                 "questions": candidate.questions}
+                 **communication}
     if active_question and not unresolved_questions:
         semantics["resolved_clarification_id"] = active_question["id"]
     return store.commit_revision(run, None, request=updated, decision_id=decision_id,

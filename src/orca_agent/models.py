@@ -12,13 +12,23 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from orca_agent.versions import LEGACY_CHECK_VERSION
 
 Identifier = Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$")]
 Port = Annotated[str, Field(pattern=r"^[A-Za-z][A-Za-z0-9_]{0,63}$")]
 CheckStatus = Literal["passed", "failed", "unverified", "not_applicable"]
+
+
+def require_electronic_integer(value: Any) -> int:
+    """Check the incoming scalar before Pydantic can coerce it or compare Literals."""
+    if type(value) is not int:
+        raise ValueError("charge/multiplicity require exact integer values")
+    return value
+
+
+ElectronicInteger = Annotated[int, BeforeValidator(require_electronic_integer)]
 
 
 def new_id(prefix: str) -> str:
@@ -36,8 +46,8 @@ class Record(BaseModel):
 class CalculationParameters(Record):
     method: Literal["HF"] = "HF"
     basis: Literal["STO-3G"] = "STO-3G"
-    charge: Literal[0] = 0
-    multiplicity: Literal[1] = 1
+    charge: Annotated[Literal[0], BeforeValidator(require_electronic_integer)] = 0
+    multiplicity: Annotated[Literal[1], BeforeValidator(require_electronic_integer)] = 1
     cores: Annotated[int, Field(strict=True, ge=1, le=4)] = 4
     memory_mb: Annotated[int, Field(strict=True, ge=256, le=1024)] = 1024
     maxcore_mb: Annotated[int, Field(strict=True, ge=1, le=192)] = 192
@@ -78,6 +88,8 @@ class Goal(Record):
         "finite-sampling-1", "unresolved-1",
     ] = LEGACY_CHECK_VERSION
     original_text: str = ""
+    identity: dict[str, Any] = Field(default_factory=dict)
+    text_evidence: dict[str, Any] = Field(default_factory=dict)
     system_ids: list[Identifier] = Field(default_factory=list)
     conditions: dict[str, Any] = Field(default_factory=dict)
     minimum_evidence: list[str] = Field(default_factory=list)
@@ -133,8 +145,8 @@ class Request(Record):
     version: Annotated[int, Field(ge=1)] = 1
     original_text: str = "Structured local calculation"
     geometry_artifact_id: Identifier | None = None
-    charge: int | None = 0
-    multiplicity: int | None = 1
+    charge: ElectronicInteger | None = 0
+    multiplicity: ElectronicInteger | None = 1
     method: str | None = "HF"
     basis: str | None = "STO-3G"
     conditions_source: dict[str, Literal["explicit", "default", "inherited", "inferred", "unknown", "not_applicable"]] = Field(

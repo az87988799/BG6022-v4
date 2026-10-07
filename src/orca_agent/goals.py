@@ -2,6 +2,96 @@
 
 from orca_agent.applicability import direct_applicability, purpose_snapshot
 from orca_agent.minimum_evidence import assess_minimum_evidence
+from orca_agent.models import OutputBinding
+
+
+def _bound_goal_evidence(store, run, request, goal, binding, results):
+    """Resolve one declared binding and assess its present purpose, without writes."""
+    selected = None
+    gaps = []
+    try:
+        if binding.port != goal.port:
+            gaps.append("goal_physical_quantity_binding_mismatch")
+        elif binding.gap:
+            gaps.append(binding.gap)
+        elif binding.evidence:
+            reference = binding.evidence
+            if (reference.run_id != run.id
+                    and reference.result_id not in run.permission.result_ids):
+                gaps.append("goal_evidence_outside_permission_snapshot")
+            elif reference.port != goal.port:
+                gaps.append("goal_physical_quantity_binding_mismatch")
+            elif reference.rule_version not in {None, goal.minimum_check_version}:
+                gaps.append("goal_evidence_check_version_mismatch")
+            elif reference.sha256 and not reference.artifact_id:
+                gaps.append("explicit_artifact_hash_without_identity")
+            elif reference.run_id == run.id and reference.result_id not in run.result_ids:
+                gaps.append("selected_result_not_bound_to_run")
+            else:
+                selected = store.load_result(reference.run_id, reference.result_id)
+                if reference.attempt_id and selected.attempt_id != reference.attempt_id:
+                    gaps.append("explicit_attempt_binding_mismatch")
+                if reference.artifact_id:
+                    artifact = store.load_artifact(reference.artifact_id)
+                    store.artifact_path(artifact.id)
+                    if (artifact.id not in selected.artifact_ids
+                            or reference.sha256 not in {None, artifact.sha256}):
+                        gaps.append("explicit_artifact_binding_mismatch")
+        elif binding.step_id:
+            selected_id = run.selected_results.get(binding.step_id)
+            if selected_id:
+                if selected_id not in run.result_ids:
+                    gaps.append("selected_result_not_bound_to_run")
+                else:
+                    selected = store.load_result(run.id, selected_id)
+            elif results is not None:
+                selected = results.get(binding.step_id)
+            elif len(run.result_ids) > 128:
+                gaps.append("result_count_exceeds_selection_bound")
+            else:
+                # Legacy records have no selected_results. Only a unique result
+                # for the declared Step is admissible; timestamps have no role.
+                candidates = [store.load_result(run.id, identifier) for identifier in run.result_ids]
+                candidates = [item for item in candidates if item.step_id == binding.step_id]
+                if len(candidates) == 1:
+                    selected = candidates[0]
+                elif len(candidates) > 1:
+                    gaps.append("ambiguous_result_binding")
+            if selected and selected.step_id != binding.step_id:
+                gaps.append("selected_result_step_mismatch")
+            if selected and (selected.run_id != run.id or selected.id not in run.result_ids):
+                gaps.append("selected_result_not_bound_to_run")
+    except (KeyError, ValueError, OSError, RuntimeError, TypeError):
+        selected = None
+        gaps.append("goal_evidence_unavailable")
+    assessment = goal_evidence_assessment(store, run, request, goal, selected) if selected else None
+    return {"binding": binding, "result": selected, "assessment": assessment, "gaps": gaps}
+
+
+def current_goal_evidence(store, run, request, goal, plan=None, results=None):
+    """Select applicable explicit direct/Plan evidence, never the newest Result.
+
+    Legacy stale direct selections remain readable, but cannot hide an applicable
+    active Plan binding. A failed selection is returned for honest diagnostics.
+    """
+    bindings = []
+    direct = run.goal_evidence.get(goal.id)
+    if direct:
+        bindings.append(OutputBinding(port=direct.port, evidence=direct))
+    binding = plan.goal_map.get(goal.id) if plan else None
+    if binding:
+        bindings.append(binding)
+    candidates = []
+    for binding in bindings:
+        selected = _bound_goal_evidence(store, run, request, goal, binding, results)
+        if (not selected["gaps"] and selected["assessment"]
+                and selected["assessment"]["status"] == "passed"):
+            return selected
+        candidates.append(selected)
+    return next((item for item in candidates if item["result"] is not None),
+                candidates[-1] if candidates else {
+                    "binding": None, "result": None, "assessment": None,
+                    "gaps": ["goal_has_no_evidence_binding"]})
 
 
 def _validate_goal_evidence(store, run, request, goal, result):

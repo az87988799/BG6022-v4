@@ -20,6 +20,7 @@ from orca_agent.tools.evidence import (
 from orca_agent.versions import CURRENT_CHECK_VERSION
 
 SCIENCE_COMPOSITIONS = {"H2O": {"H": 2, "O": 1}, "CH4": {"C": 1, "H": 4}}
+SCIENCE_IDENTITIES = {"water": "H2O", "methane": "CH4"}
 
 
 class SinglePointParameters(CalculationParameters):

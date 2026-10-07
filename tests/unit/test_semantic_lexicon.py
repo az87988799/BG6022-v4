@@ -1,6 +1,5 @@
 """Meaning/provenance examples and new-question gates, without live execution."""
 
-import copy
 import json
 from pathlib import Path
 
@@ -21,6 +20,7 @@ from orca_agent.semantic import (
 )
 from orca_agent.store import StoreError
 from tests.helpers.phase_b_model_cases import create_request
+from tests.helpers.semantic_replay import current_candidate
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/phase_b/semantic-proposals-v2.json"
 V2 = json.loads(FIXTURE.read_text(encoding="utf-8"))["proposals"]
@@ -43,7 +43,7 @@ def test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_corr
     run, _ = create_request(store, "N-01/raw-water-sp", 1, category="development", freeze_label="offline-v2-replay")
     messages = store.read_control(run.id)["messages"]
     before = store.load_run(run.id).model_dump_json()
-    first, second = [copy.deepcopy(item["parameters"]) for item in V2]
+    first, second = [current_candidate(item["parameters"]) for item in V2]
     for parameters in (first, second):
         parameters["message_ids"] = [messages[0]["id"]]
     with pytest.raises(StoreError, match="quote a supplied user message"):
@@ -59,11 +59,12 @@ def test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_corr
         feedback={"validation_error": {"category": "ProposalError", "requirement": caught.value.detail}})
     contract = payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
     assert prepared.input_token_bound <= 12000
-    assert "electronic_state means RHF/UHF reference" in contract["instruction"]
-    assert "no translation, paraphrase or added parentheses" in contract["instruction"]
-    assert "Energy needs temperature_K/standard_state only if requested" in contract["instruction"]
-    assert "Absent display unit:unknown" in contract["instruction"]
-    assert [0, ["中性", "neutral"]] in contract["condition_lexicon"]["charge"]
+    assert "electronic_state=RHF/UHF" in contract["instruction"]
+    assert "Verbatim unique text_basis" in contract["instruction"]
+    assert "Energy:temperature_K/standard_state only if requested" in contract["instruction"]
+    assert "absent display unit=unknown" in contract["instruction"]
+    assert any(value == 0 and {"中性", "neutral", "电荷为零"}.issubset(aliases)
+               for value, aliases in contract["condition_lexicon"]["charge"])
     # This correction is authored by the test, not another model trajectory.
     second["conditions"]["electronic_state"] = {"value": "RHF", "source": "explicit", "text_basis": "RHF"}
     updated = commit_candidate(store, run, second, decision_id="offline_correct_reference", basis=current_basis(store, run))

@@ -162,21 +162,17 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                     "pending_step_ids": [s.id for s in _ready(plan, results)],
                     "allowed_repairs": run.permission.allowed_repairs}
             selected = [store.load_result(run.id, rid) for rid in run.result_ids]
-            from orca_agent.goals import goal_evidence_assessment
+            from orca_agent.goals import current_goal_evidence
             request = store.load_request(run)
             current_use = []
             for goal in request.goals:
-                binding = plan.goal_map.get(goal.id) if plan else None
-                source = results.get(binding.step_id) if binding else None
-                reference = run.goal_evidence.get(goal.id) or (binding.evidence if binding else None)
-                if reference:
-                    if reference.run_id != run.id and reference.result_id not in run.permission.result_ids:
-                        raise StoreError("goal evidence is outside the permission snapshot")
-                    source = store.load_result(reference.run_id, reference.result_id)
-                    if reference.attempt_id and source.attempt_id != reference.attempt_id:
-                        raise StoreError("goal evidence Attempt differs")
+                selection = current_goal_evidence(store, run, request, goal, plan, results)
+                source = selection["result"]
                 if source is not None:
-                    assessment = goal_evidence_assessment(store, run, request, goal, source)
+                    assessment = dict(selection["assessment"])
+                    if selection["gaps"]:
+                        assessment["status"] = "unresolved"
+                        assessment["reasons"] = assessment["reasons"] + selection["gaps"]
                     current_use.append({"goal_id": goal.id, "result_id": source.id, **assessment})
             if current_use:
                 data["current_goal_use"] = current_use
@@ -234,6 +230,13 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                 run = commit_candidate(store, run, proposal.parameters, decision_id=ticket,
                                        basis=basis, related_results=feedback, fault=fault)
                 request = store.load_request(run)
+                communication = run.decisions[-1].get("semantics", {})
+                from orca_agent.semantic import READ_TOOLS
+                if communication.get("delivery_scope") == "registration_only" or (
+                        communication.get("delivery_scope") == "read_only"
+                        and not any(goal.port in READ_TOOLS for goal in request.goals)):
+                    run.state = "waiting_user" if communication.get("awaiting_reply") else "paused"
+                    return run, "stop", None
                 return run, ("stop" if request.normalization_status == "clarification"
                              else "normalized"), None
             if proposal.action in {"initial_plan", "revise_plan"}:
@@ -463,6 +466,16 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     if message_action:
                         continue
                 signal = store.read_signal(run.id)
+                communication = next((d["semantics"] for d in reversed(run.decisions)
+                    if d.get("request_version") == run.request_version
+                    and "delivery_scope" in d.get("semantics", {})), {})
+                from orca_agent.semantic import READ_TOOLS
+                if not pending_messages and not signal and (
+                        communication.get("delivery_scope") == "registration_only" or (
+                        communication.get("delivery_scope") == "read_only" and not any(
+                            goal.port in READ_TOOLS for goal in store.load_request(run).goals))):
+                    run.state = "waiting_user" if communication.get("awaiting_reply") else "paused"
+                    break
                 persisted_questions = (store.load_request(run).normalization_status == "clarification"
                     and any(d.get("request_version") == run.request_version and d.get("semantics")
                             for d in run.decisions))
@@ -548,6 +561,12 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                 step = step or (ready[0] if ready else None)
                 if step is None:
                     run.state = "failed"
+                    break
+                if (communication.get("delivery_scope") == "read_only"
+                        and get_tool(step.tool).effects != ["read_registered_artifact"]):
+                    run.state = "paused"
+                    run.diagnostics.append({"category": "current_scope_restriction",
+                                            "message": "Current user scope permits only registered evidence reads."})
                     break
                 run.state = "running"
                 store.save_run(run)

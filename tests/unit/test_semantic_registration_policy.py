@@ -17,6 +17,7 @@ from orca_agent.natural import initialize_bundle
 from orca_agent.semantic import action_parameters, commit_candidate
 from orca_agent.store import Store, sha256_file
 from tests.helpers.phase_b_model_cases import create_request
+from tests.helpers.semantic_replay import current_candidate
 
 PROJECT = Path(__file__).resolve().parents[2]
 
@@ -94,6 +95,7 @@ def test_actual_n06_request_rebuilt_with_separate_scope_and_registration_without
         category="development", freeze_label="offline-registration-policy")
     parameters = copy.deepcopy(reply.proposal["parameters"])
     parameters["message_ids"] = [isolated.read_control(fresh.id)["messages"][0]["id"]]
+    parameters = current_candidate(parameters)
     updated = commit_candidate(isolated, fresh, parameters, decision_id="unchanged_bad_notice",
                                basis=current_basis(isolated, fresh))
     assert updated.decisions[-1]["semantics"]["questions"] == [original_question]

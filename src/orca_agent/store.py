@@ -933,7 +933,25 @@ class Store:
                 elif semantic_record.get("kind") in {"pause", "cancel"}:
                     updated.state = "paused" if semantic_record["kind"] == "pause" else "cancelled"
             if next_request != prior_request:
+                from orca_agent.goals import current_goal_evidence
+                from orca_agent.models import EvidenceRef
+
+                # Carry forward only explicitly selected evidence that still
+                # answers the revised purpose. This also preserves unaffected
+                # Plan outputs when the old Plan is suspended by a user update.
+                # Results, Artifacts, attempts and usage remain historical facts.
+                updated.goal_evidence = {}
                 updated.goal_status = {goal.id: "insufficient_evidence" for goal in next_request.goals}
+                for goal in next_request.goals:
+                    selection = current_goal_evidence(self, run, next_request, goal, prior_plan)
+                    if (selection["gaps"] or not selection["assessment"]
+                            or selection["assessment"]["status"] != "passed"):
+                        continue
+                    result = selection["result"]
+                    updated.goal_evidence[goal.id] = selection["binding"].evidence or EvidenceRef(
+                        run_id=result.run_id, result_id=result.id, attempt_id=result.attempt_id,
+                        port=goal.port, rule_version=goal.minimum_check_version)
+                    updated.goal_status[goal.id] = "satisfied"
                 updated.delivery_status = "pending"
             # All protected-field changes occur only here, after contract validation.
             self._write_json(f"runs/{run.id}/run.json", updated)

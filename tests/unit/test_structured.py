@@ -76,6 +76,26 @@ def test_execution_instructions_and_unapproved_profile_never_reach_run(task_file
     assert not (store.root / "artifacts").exists()
 
 
+@pytest.mark.parametrize("name", ["charge", "multiplicity"])
+@pytest.mark.parametrize("value", [False, True, 0.0, 1.0, "0", "1"])
+def test_electronic_state_types_fail_before_structured_input_creates_artifacts(task_files, name, value):
+    source, spec, store = task_files
+    spec["steps"][0]["parameters"][name] = value
+    with pytest.raises(ValidationError, match="exact integer"):
+        prepare(source, spec, store)
+    assert not (store.root / "artifacts").exists()
+    assert not (store.root / "runs").exists()
+
+
+def test_structured_explicit_integers_keep_their_values_and_provenance(task_files):
+    source, spec, store = task_files
+    spec["steps"][0]["parameters"].update(charge=0, multiplicity=1)
+    request, plan, _ = prepare(source, spec, store)
+    assert request.charge == plan.steps[0].parameters.charge == 0
+    assert request.multiplicity == plan.steps[0].parameters.multiplicity == 1
+    assert request.conditions_source["charge"] == request.conditions_source["multiplicity"] == "explicit"
+
+
 def test_unknown_tool_is_refused_before_import(task_files):
     source, spec, store = task_files
     spec["steps"][0]["tool"] = "os.system"

@@ -17,6 +17,7 @@ from orca_agent.natural import initialize_bundle
 from orca_agent.proposals import ProposalError
 from orca_agent.semantic import CONDITIONS, action_parameters, commit_candidate
 from tests.helpers.phase_b_model_cases import create_request
+from tests.helpers.semantic_replay import current_candidate
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/phase_b/semantic-rejections-v1.json"
 REJECTED = json.loads(FIXTURE.read_text(encoding="utf-8"))["proposals"]
@@ -36,6 +37,7 @@ def test_real_rejected_shapes_get_specific_key_errors_and_bounded_correction_con
     run, _ = create_request(store, "N-01/raw-water-sp", 1, category="development", freeze_label="offline-replay")
     proposed = copy.deepcopy(entry["parameters"])
     proposed["message_ids"] = [store.read_control(run.id)["messages"][0]["id"]]
+    proposed = current_candidate(proposed)
     before = store.load_run(run.id).model_dump_json()
     with pytest.raises(ProposalError) as caught:
         commit_candidate(store, run, proposed, decision_id="rejected_shape", basis=current_basis(store, run))
@@ -55,10 +57,10 @@ def test_real_rejected_shapes_get_specific_key_errors_and_bounded_correction_con
     contract = data["ACTION_PARAMETERS"]["normalize_request"]
     assert "schema" not in contract
     assert all(keys == CONDITIONS for keys in condition_key_sets(data["PROPOSAL_SCHEMA"]))
-    assert "Use environment for gas/solvent" in contract["instruction"]
-    assert "never put geometry in conditions" in contract["instruction"]
-    assert "explain_results is existing configuration" in contract["instruction"]
-    assert "minimum_evidence defaults to []" in contract["instruction"]
+    assert "environment=gas/solvent" in contract["instruction"]
+    assert "no geometry conditions" in contract["instruction"]
+    assert "Keep explain_results" in contract["instruction"]
+    assert "minimum_evidence=[] still requires checks" in contract["instruction"]
     assert contract["minimum_evidence_rules"]["version"] == RULE_VERSION
     assert contract["minimum_evidence_rules"]["registered"] == json.loads(json.dumps(REQUIREMENTS))
     assert contract["minimum_evidence_rules"]["legacy_aliases"] == LEGACY_NAMES

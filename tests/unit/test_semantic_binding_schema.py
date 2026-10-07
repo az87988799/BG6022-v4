@@ -19,6 +19,7 @@ from orca_agent.proposals import ProposalError
 from orca_agent.semantic import _goal_binding_contract, action_parameters, commit_candidate
 from orca_agent.store import StoreError
 from tests.helpers.phase_b_model_cases import create_request
+from tests.helpers.semantic_replay import current_candidate
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/phase_b/semantic-proposals-v4.json"
 V4 = json.loads(FIXTURE.read_text(encoding="utf-8"))["proposals"]
@@ -89,6 +90,7 @@ def test_actual_v4_raw_shapes_reject_before_developer_authored_correction(tmp_pa
         assert parsed == entry["proposal"]
         proposed = copy.deepcopy(parsed["parameters"])
         proposed["message_ids"] = [store.read_control(run.id)["messages"][0]["id"]]
+        proposed = current_candidate(proposed)
         with pytest.raises(ProposalError) as bad_reference:
             commit_candidate(store, run, proposed, decision_id="offline_new_key_binding",
                              basis=current_basis(store, run))
@@ -97,6 +99,7 @@ def test_actual_v4_raw_shapes_reject_before_developer_authored_correction(tmp_pa
         proposed.pop("goal_bindings")
     assert store.load_run(run.id).model_dump_json() == before
     proposed["message_ids"] = [store.read_control(run.id)["messages"][0]["id"]]
+    proposed = current_candidate(proposed)
     updated = commit_candidate(store, run, proposed, decision_id="offline_corrected_shape",
                                basis=current_basis(store, run))
     request = store.load_request(updated)
@@ -151,7 +154,7 @@ def test_binding_key_modes_and_original_system_guards_are_all_enforced(tmp_path,
                                        {"properties": {"goal_bindings": mode_schema}}]
             assert mode_schema == {"maxProperties": 0}
     else:
-        with pytest.raises(StoreError, match="registered systems"):
+        with pytest.raises(StoreError, match="registered systems|contradicts the named target"):
             commit_candidate(store, run, proposed, decision_id=failure, basis=current_basis(store, run))
     assert store.load_run(run.id).model_dump_json() == before
 

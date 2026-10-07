@@ -14,6 +14,7 @@ from orca_agent.model_usage import current_basis
 from orca_agent.proposals import ProposalError
 from orca_agent.semantic import action_parameters, commit_candidate
 from tests.helpers.phase_b_model_cases import create_request
+from tests.helpers.semantic_replay import current_candidate
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/phase_b/semantic-unsupported-v6.json"
 REJECTED = json.loads(FIXTURE.read_text(encoding="utf-8"))["proposals"]
@@ -22,20 +23,21 @@ NOTICE = "已保留您明确要求的水溶剂环境；当前科学能力仅支�
 
 
 @pytest.mark.parametrize("entry", REJECTED, ids=[entry["model_record_id"] for entry in REJECTED])
-def test_real_n05_proposals_require_notice_in_questions_without_changing_requested_solvent(tmp_path, entry):
+def test_derived_n05_proposals_require_separate_notice_without_changing_requested_solvent(tmp_path, entry):
     store = store_at(tmp_path)
     run, _ = create_request(store, "N-05/raw-unsupported-solvent", 1,
                             category="development", freeze_label="offline-unsupported-notice")
     assert hashlib.sha256(entry["raw_content"].encode("utf-8")).hexdigest() == entry["raw_content_sha256"]
     proposed = copy.deepcopy(json.loads(entry["raw_content"])["parameters"])
     messages = store.read_control(run.id)["messages"]
-    # This only rebinds the transport identity to the fresh offline Run. The
-    # original scientific fields, quotations and missing questions are unchanged.
+    # Explicit test derivation updates transport identity and schema only.
+    # Original scientific fields, quotations and missing notice stay unchanged.
     proposed["message_ids"] = [messages[0]["id"]]
+    proposed = current_candidate(proposed)
     assert proposed["questions"] == [] and proposed["unresolved"] == []
     assert proposed["conditions"]["environment"]["value"] == "water_solvent"
     before = store.load_run(run.id).model_dump_json()
-    with pytest.raises(ProposalError, match="parameters.questions") as rejected:
+    with pytest.raises(ProposalError, match="parameters.notices") as rejected:
         commit_candidate(store, run, proposed, decision_id="original_shape", basis=current_basis(store, run))
     error = rejected.value.detail
     assert error["path"] == ["parameters", "questions"]
@@ -53,7 +55,7 @@ def test_real_n05_proposals_require_notice_in_questions_without_changing_request
     policy = prepared.body()["messages"][0]["content"]
     assert "science_scope: capability limits, not permission/defaults" in instruction
     assert "New gaps need visible questions text" in policy
-    assert "declarative notices in questions" in policy and "neither implies the other" in policy
+    assert "declarative notices in notices" in policy and "neither implies the other" in policy
     assert "no reply, confirmation or resource request" in policy
     assert data["CONTROL"]["validation_error"]["requirement"] == error
     assert prepared.input_token_bound <= run.budget.input_tokens == 12000
@@ -61,7 +63,8 @@ def test_real_n05_proposals_require_notice_in_questions_without_changing_request
     # No punctuation/question-mark requirement is introduced. This is an
     # explicit developer correction, not an accepted live model response.
     original_science = copy.deepcopy(proposed)
-    proposed["questions"] = [NOTICE]
+    proposed["questions"] = []
+    proposed["notices"] = [NOTICE]
     assert "?" not in NOTICE and "？" not in NOTICE
     updated = commit_candidate(store, run, proposed, decision_id="developer_notice", basis=current_basis(store, run))
     normalized = store.load_request(updated)
@@ -78,7 +81,8 @@ def test_real_n05_proposals_require_notice_in_questions_without_changing_request
     for name in original_science["conditions"]:
         assert saved["conditions"][name]["value"] == original_science["conditions"][name]["value"]
         assert saved["conditions"][name]["source"] == original_science["conditions"][name]["source"]
-    assert saved["questions"] == [NOTICE]
+    assert saved["notices"] == [NOTICE]
+    assert saved["questions"] == []
     assert not updated.permission.scientific_execution
     assert not updated.calls and not updated.attempts and not updated.model_records
     assert updated.usage.model_calls == updated.usage.orca_starts_actual == 0
@@ -91,6 +95,7 @@ def test_unsupported_notice_must_contain_visible_text(tmp_path, questions):
                             category="development", freeze_label="offline-empty-notice")
     proposed = json.loads(REJECTED[0]["raw_content"])["parameters"]
     proposed["message_ids"] = [store.read_control(run.id)["messages"][0]["id"]]
+    proposed = current_candidate(proposed)
     proposed["questions"] = questions
     before = store.load_run(run.id).model_dump_json()
     with pytest.raises(ProposalError) as rejected:

@@ -12,6 +12,7 @@ CONDITION_FIELDS = ("method", "basis", "charge", "multiplicity", "electronic_sta
 PROFILE = dict(method="HF", basis="STO-3G", charge=0, multiplicity=1,
                electronic_state="RHF", environment="gas_phase")
 PURPOSE_VERSION = "current-purpose-1"
+IDENTITY_RULE_VERSION = "named-target-1"
 
 
 def canonical_condition(name, value):
@@ -104,6 +105,57 @@ def scientific_goal_system(request, goal):
     identifier = goal.system_ids[0] if goal.system_ids else (
         request.systems[0].id if len(request.systems) == 1 else None)
     return next((s for s in request.systems if s.id == identifier), None)
+
+
+def _goal_identity_names(goal):
+    """Only canonical identity constraints affect use; provenance is not a condition."""
+    names = goal.identity.get("canonical_names", [])
+    if (not isinstance(names, list) or any(not isinstance(name, str) for name in names)
+            or len(set(names)) != len(names)):
+        raise ValueError("invalid_goal_identity_constraint")
+    return sorted(names)
+
+
+def validate_goal_identity(store, request, goal, artifact_id=None):
+    """Check new named scalar targets against the existing bounded geometry reader.
+
+    This is the finite water/methane contract, not a general molecular identity
+    algorithm. Historical Goals without canonical identity retain their rules.
+    """
+    names = _goal_identity_names(goal)
+    if not names:
+        return
+    from collections import Counter
+
+    from orca_agent.models import CalculationParameters
+    from orca_agent.tools.registry import (
+        SCIENCE_COMPOSITIONS,
+        SCIENCE_IDENTITIES,
+        validate_geometry,
+    )
+
+    if len(names) != 1 or names[0] not in SCIENCE_IDENTITIES:
+        raise ValueError("unsupported_goal_identity_constraint")
+    system = scientific_goal_system(request, goal)
+    wanted = artifact_id or (system.geometry_artifact_id if system else request.geometry_artifact_id)
+    if not wanted:
+        raise ValueError("named_target_geometry_missing")
+    path = store.artifact_path(wanted)
+    if path.stat().st_size > 65536:
+        raise ValueError("named_target_geometry_exceeds_bound")
+    atoms = validate_geometry(path.read_text(encoding="utf-8"), CalculationParameters())
+    if Counter(atom[0] for atom in atoms) != SCIENCE_COMPOSITIONS[SCIENCE_IDENTITIES[names[0]]]:
+        raise ValueError("named_target_geometry_identity_mismatch")
+
+
+def _validate_step_identities(store, request, step, artifact_id):
+    system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
+    for goal in request.goals:
+        if (goal.port not in {"energy", "optimized_geometry"}
+                or (goal.system_ids and system_id not in goal.system_ids)):
+            continue
+        validate_goal_identity(store, request, goal)
+        validate_goal_identity(store, request, goal, artifact_id)
 
 
 def validate_scientific_plan(request, plan):
@@ -271,12 +323,14 @@ def geometry_lineage(store, result, *, seen=None):
 
 def direct_applicability(store, request, goal, result):
     system = scientific_goal_system(request, goal)
+    validate_goal_identity(store, request, goal)
     actual, recovery = source_conditions(store, result, port=goal.port)
     assessment = current_conditions(request, goal, actual, system.id if system else None)
     assessment["source_conditions"] = actual
     assessment["source_condition_evidence"] = recovery
     root, producer = geometry_lineage(store, result)
     _, attempt, _ = verified_source(store, result)
+    validate_goal_identity(store, request, goal, attempt.geometry_artifact_id)
     wanted = system.geometry_artifact_id if system else request.geometry_artifact_id
     requested_input = False
     if not wanted:
@@ -320,6 +374,7 @@ def validate_geometry_consumption(store, run, step, artifact_id):
     wanted = system.geometry_artifact_id if system else request.geometry_artifact_id
     producer = _geometry_producer(store, artifact_id)
     if step.geometry.producer_step_id:
+        _validate_step_identities(store, request, step, artifact_id)
         if not producer or producer.run_id != run.id or producer.step_id != step.geometry.producer_step_id:
             raise ValueError("future_geometry_producer_binding_mismatch")
         source_run, attempt, _ = verified_source(store, producer)
@@ -339,6 +394,7 @@ def validate_direct_geometry(store, request, step):
     """Concrete registered Opt artifacts may originate in another Run."""
     if not step.geometry or not step.geometry.artifact_id:
         return
+    _validate_step_identities(store, request, step, step.geometry.artifact_id)
     system = next((s for s in request.systems if s.id == step.system_id), None)
     if system is None and len(request.systems) == 1:
         system = request.systems[0]
@@ -375,4 +431,6 @@ def purpose_snapshot(request, goal, *, include_requirements=True):
             "system_ids": goal.system_ids}
     if not include_requirements:
         snapshot.pop("minimum_evidence")
+    if names := _goal_identity_names(goal):
+        snapshot["goal_identity"] = {"rule_version": IDENTITY_RULE_VERSION, "canonical_names": names}
     return snapshot

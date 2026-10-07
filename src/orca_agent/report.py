@@ -12,8 +12,8 @@ import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-from orca_agent.goals import goal_evidence_assessment
-from orca_agent.models import OutputBinding, Run
+from orca_agent.goals import current_goal_evidence
+from orca_agent.models import Run
 
 _SECRET_KEYS = {"authorization", "api_key", "apikey", "api-key", "access_token", "password",
                 "secret", "credential", "credentials", "headers"}
@@ -147,7 +147,7 @@ def _money(records):
 def build_report(store, run: Run | str) -> dict[str, Any]:
     """Build a reproducible report without changing any source or calling a model."""
     run = store.load_run(run) if isinstance(run, str) else run
-    gaps, results, raw_results = [], {}, {}
+    gaps, results = [], {}
     request = plan = None
     try:
         request = store.load_request(run)
@@ -166,7 +166,6 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                 value = store.load_result(run_id, result_id)
                 if value.run_id != run_id or value.id != result_id:
                     raise ValueError("result identity differs")
-                raw_results[key] = value
                 results[key] = _result_report(store, value)
             except (ValueError, OSError, RuntimeError):
                 gaps.append(f"result_unavailable:{result_id}")
@@ -182,42 +181,13 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
     goals = []
     for goal in request.goals if request else []:
         goal_gaps = list(goal.unresolved)
-        binding = plan.goal_map.get(goal.id) if plan else None
-        direct = getattr(run, "goal_evidence", {}).get(goal.id)
-        if direct is not None:
-            binding = OutputBinding(port=direct.port, evidence=direct)
+        selection = current_goal_evidence(store, run, request, goal, plan)
+        binding = selection["binding"]
+        goal_gaps.extend(selection["gaps"])
         selected = None
-        if binding and binding.port != goal.port:
-            goal_gaps.append("goal_physical_quantity_binding_mismatch")
-        if binding and binding.gap:
-            goal_gaps.append(binding.gap)
-        elif binding and binding.evidence:
-            reference = binding.evidence
-            selected = read_result(reference.run_id, reference.result_id)
-            raw = raw_results.get((reference.run_id, reference.result_id))
-            if raw and reference.attempt_id and raw.attempt_id != reference.attempt_id:
-                goal_gaps.append("explicit_attempt_binding_mismatch")
-        elif binding and binding.step_id:
-            selected_id = run.selected_results.get(binding.step_id)
-            if selected_id:
-                if selected_id not in run.result_ids:
-                    goal_gaps.append("selected_result_not_bound_to_run")
-                else:
-                    selected = read_result(run.id, selected_id)
-                    if selected.get("step_id") != binding.step_id:
-                        goal_gaps.append("selected_result_step_mismatch")
-            else:
-                # Legacy fixed plans contain one result per step. More than one
-                # requires a concrete binding even if one is chronologically newer.
-                candidates = [value for value in results.values()
-                              if value.get("run_id") == run.id
-                              and value.get("step_id") == binding.step_id]
-                if len(candidates) == 1:
-                    selected = candidates[0]
-                elif len(candidates) > 1:
-                    goal_gaps.append("ambiguous_result_binding")
-        else:
-            goal_gaps.append("goal_has_no_evidence_binding")
+        if selection["result"]:
+            raw = selection["result"]
+            selected = read_result(raw.run_id, raw.id)
         output = selected.get("qualified_outputs", {}).get(goal.port) if selected else None
         support = "insufficient_evidence"
         if output and all(c["rule_version"] == goal.minimum_check_version for c in output["checks"]):
@@ -232,12 +202,8 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
             support = "insufficient_evidence"
         applicability = None
         if selected:
-            raw = raw_results.get((selected["run_id"], selected["result_id"]))
-            try:
-                applicability = goal_evidence_assessment(store, run, request, goal, raw) if raw else None
-                purpose_valid = applicability is not None and applicability["status"] == "passed"
-            except (KeyError, ValueError, OSError, RuntimeError):
-                purpose_valid = False
+            applicability = selection["assessment"]
+            purpose_valid = applicability is not None and applicability["status"] == "passed"
             if not purpose_valid:
                 support = "insufficient_evidence"
                 goal_gaps.append("source_not_applicable_to_current_goal")
@@ -277,7 +243,7 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                          "parameters": _safe(parameters), "parameter_changes": _safe(changes)})
         if parameters is not None:
             previous[attempt.logical_id] = parameters
-    return {
+    report = {
         "schema_version": 1, "run_id": run.id, "run_state": run.state,
         "request_id": run.request_id, "request_version": run.request_version,
         "plan_id": run.plan_id, "plan_version": run.plan_version,
@@ -303,6 +269,16 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                         "Finite sampling describes only the sampled discrete geometries.",
                         "An optimized geometry alone does not establish vibrational stability or a global minimum."],
     }
+    communication = next((item["semantics"] for item in reversed(run.decisions)
+        if item.get("request_version") == run.request_version
+        and "delivery_scope" in item.get("semantics", {})), None)
+    if communication is not None:
+        report["communication"] = _safe({key: communication.get(key) for key in (
+            "notices", "questions", "question_gaps", "delivery_scope", "awaiting_reply")})
+        report["communication"]["registration_complete"] = (
+            communication.get("delivery_scope") == "registration_only"
+            and communication.get("awaiting_reply") is False)
+    return report
 
 
 def _cell(value):
@@ -322,6 +298,14 @@ def render_report(report: dict[str, Any]) -> str:
     for goal in report["goals"]:
         if goal["gaps"]:
             lines.append(f"\n目标 `{_cell(goal['goal_id'])}` 缺口：{_cell('; '.join(goal['gaps']))}。\n")
+    communication = report.get("communication", {})
+    if communication.get("registration_complete"):
+        lines.append("\n需求登记已完成；科学目标状态见上表。")
+    for notice in communication.get("notices") or []:
+        lines.append("告知：" + _cell(notice))
+    if communication.get("awaiting_reply"):
+        for question in communication.get("questions") or []:
+            lines.append("待答问题：" + _cell(question))
     request = report.get("request")
     if request:
         lines.extend(["", "用户目标：" + _cell(request["original_text"]),

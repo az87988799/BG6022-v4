@@ -67,7 +67,7 @@ def named_parameters(store, run, target, notice):
         for name, (value, quote) in fields.items()}, goals=[{
             "key": "energy", "port": "energy", "text_basis": f"{target}的单点电子能",
             "geometry_relation": "fixed_initial"}],
-        unresolved=["missing:geometry"], questions=[notice])
+        unresolved=["missing:geometry"], notices=[notice])
 
 
 @pytest.mark.parametrize("target", ["水", "methane", "氨", "carbon dioxide"])
@@ -102,7 +102,7 @@ def test_named_targets_without_geometry_keep_identity_and_registration_notice(tm
     assert normalized.goals[0].original_text == f"{target}的单点电子能"
     assert not normalized.systems and normalized.geometry_artifact_id is None
     assert "missing:geometry" in normalized.goals[0].unresolved
-    assert updated.decisions[-1]["semantics"]["questions"] == [notice]
+    assert updated.decisions[-1]["semantics"]["notices"] == [notice]
     assert not updated.permission.scientific_execution and not updated.permission.allowed_tools
     assert not updated.calls and not updated.attempts and not updated.model_records
 

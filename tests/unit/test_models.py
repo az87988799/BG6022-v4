@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -44,6 +45,61 @@ def request_plan():
 def test_parameters_reject_unsupported_and_unbounded(values):
     with pytest.raises(ValidationError):
         CalculationParameters(**values)
+
+
+@pytest.mark.parametrize("name", ["charge", "multiplicity"])
+@pytest.mark.parametrize("value", [False, True, 0.0, 1.0, "0", "1"])
+def test_electronic_state_scalars_are_rejected_before_literal_or_integer_conversion(name, value):
+    from orca_agent.tools.registry import validate_parameters
+
+    values = {name: value}
+    for tool in ("orca.sp", "orca.opt"):
+        with pytest.raises(ValidationError, match="exact integer"):
+            validate_parameters(tool, values)
+    with pytest.raises(ValidationError, match="exact integer"):
+        CalculationParameters.model_validate_json(json.dumps(values))
+    request = {"goals": [{"id": "energy", "port": "energy"}], **values}
+    with pytest.raises(ValidationError, match="exact integer"):
+        Request.model_validate(request)
+    with pytest.raises(ValidationError, match="exact integer"):
+        Request.model_validate_json(json.dumps(request))
+
+
+def test_normalized_historical_integer_json_and_explicit_unknown_remain_readable():
+    historical = '{"id":"old_request","charge":0,"multiplicity":1,' \
+                 '"goals":[{"id":"energy","port":"energy"}]}'
+    request = Request.model_validate_json(historical)
+    assert type(request.charge) is type(request.multiplicity) is int
+    assert request.goals[0].minimum_check_version == "orca-hf-1"
+    assert request.goals[0].identity == request.goals[0].text_evidence == {}
+    unknown = Request.model_validate({**request.model_dump(), "charge": None, "multiplicity": None,
+                                      "conditions_source": {"charge": "unknown", "multiplicity": "unknown"}})
+    assert Request.model_validate_json(unknown.model_dump_json()) == unknown
+    assert unknown.charge is unknown.multiplicity is None
+    # Request records unsupported integer requirements; the Tool retains its
+    # independent, fixed neutral-singlet scientific range.
+    unsupported = Request.model_validate({**request.model_dump(), "charge": -1, "multiplicity": 2})
+    assert unsupported.charge == -1 and unsupported.multiplicity == 2
+    assert CalculationParameters.model_validate_json('{"charge":0,"multiplicity":1}').charge == 0
+
+
+@pytest.mark.parametrize("name", ["charge", "multiplicity"])
+@pytest.mark.parametrize("value", [False, True, 0.0, 1.0, "0", "1"])
+def test_model_plan_with_coercible_electron_state_is_rejected_without_side_effects(tmp_path, name, value):
+    from orca_agent.proposals import ProposalError, materialize_plan
+    from tests.unit.test_proposals import single, source
+
+    store, run, request, _, _ = source(tmp_path)
+    before = store.load_run(run.id).model_dump_json()
+    proposed = single()
+    proposed["steps"][0]["parameters"] = {name: value}
+    with pytest.raises(ProposalError) as caught:
+        materialize_plan(store, run, proposed)
+    assert caught.value.detail["errors"][0]["loc"] == ["parameters", "steps", 0, "parameters", name]
+    assert store.load_run(run.id).model_dump_json() == before
+    assert store.load_request(run) == request
+    assert store.load_plan(run) is None
+    assert run.usage.orca_starts_actual == run.usage.orca_starts_reserved == 0
 
 
 @pytest.mark.parametrize("values", [

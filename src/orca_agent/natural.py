@@ -17,12 +17,21 @@ from orca_agent.models import (
     Record,
     Request,
     SystemInput,
+    require_electronic_integer,
 )
 from orca_agent.store import StoreError, _is_link, atomic_write, sha256_file
 from orca_agent.tools.registry import get_tool
 
 _PHYSICAL = ("method", "basis", "charge", "multiplicity")
 _SCIENTIFIC_RULES = {"orca-hf-1", "orca-hf-2"}
+
+
+def _validate_new_electronic_conditions(conditions):
+    """Reject coercible new scalars while historical raw dictionaries remain readable."""
+    for name in ("charge", "multiplicity"):
+        value = conditions.get(name)
+        if value is not None and value != "unknown":
+            require_electronic_integer(value)
 
 
 def agent_budget(**overrides):
@@ -200,6 +209,10 @@ class RequestBundle(Record):
             raise ValueError("geometry identities must be unique")
         if not self.text.strip():
             raise ValueError("natural request text cannot be blank")
+        for conditions in (self.conditions, self.semantic_defaults,
+                           *(item.conditions for item in self.geometries),
+                           *(goal.conditions for goal in self.goals or [])):
+            _validate_new_electronic_conditions(conditions)
         return self
 
 
@@ -282,6 +295,10 @@ def apply_user_update(store, run_id, message_id, changes):
         changed_conditions = changes.get("conditions", {})
         if not isinstance(changed_conditions, dict):
             raise StoreError("updated conditions must be an object")
+        # Validate both copies before merging: False == 0 and True == 1 must not
+        # let a valid top-level integer hide an invalid nested user scalar.
+        _validate_new_electronic_conditions(changes)
+        _validate_new_electronic_conditions(changed_conditions)
         physical = {name: changed_conditions[name] for name in _PHYSICAL if name in changed_conditions}
         for name in _PHYSICAL:
             if name in changes:
@@ -297,6 +314,7 @@ def apply_user_update(store, run_id, message_id, changes):
             systems = [SystemInput.model_validate(item) for item in changes["systems"]]
             prior_systems = {item.id: item for item in request.systems}
             for system in systems:
+                _validate_new_electronic_conditions(system.conditions)
                 old = prior_systems.get(system.id)
                 for name, value in system.conditions.items():
                     if old is None or old.conditions.get(name) != value:
@@ -324,6 +342,9 @@ def apply_user_update(store, run_id, message_id, changes):
         values.update(version=request.version + 1, messages=request.messages + [message],
                       conditions_source=provenance)
         updated = _missing_information(Request.model_validate(values))
+        if "goals" in changes:
+            for goal in updated.goals:
+                _validate_new_electronic_conditions(goal.conditions)
         _authorized_geometry(store, updated, run.permission)
         # Neither a same-version Plan nor a copied Plan may execute under new
         # user conditions. Historical Steps remain recoverable from launch snapshots.

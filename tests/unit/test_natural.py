@@ -229,6 +229,73 @@ def test_conflicting_or_inferred_relabelled_user_conditions_are_rejected(tmp_pat
         apply_user_update(store, run.id, message, {"charge": 0, "conditions_source": {"charge": "inferred"}})
 
 
+@pytest.mark.parametrize("name", ["charge", "multiplicity"])
+@pytest.mark.parametrize("value", [False, True, 0.0, 1.0, "0", "1"])
+@pytest.mark.parametrize("scope", ["top", "nested", "shadowed", "system", "goal"])
+def test_rejected_user_integer_update_preserves_request_plan_permission_and_cost(tmp_path, name, value, scope):
+    store, run, _, plan = query_run(tmp_path)
+    old_request = store.load_request(run)
+    if scope == "top":
+        changes = {name: value}
+    elif scope in {"nested", "shadowed"}:
+        changes = {"conditions": {name: value}}
+        if scope == "shadowed":
+            changes[name] = 0 if name == "charge" else 1
+    elif scope == "system":
+        changes = {"systems": [{"id": "water", "conditions": {name: value}}]}
+    else:
+        goal = old_request.goals[0].model_dump()
+        goal["conditions"][name] = value
+        changes = {"goals": [goal]}
+    message = store.enqueue_message(run.id, "Set the electron-state condition")
+    before = store.load_run(run.id).model_dump_json()
+    with pytest.raises(ValueError, match="exact integer"):
+        apply_user_update(store, run.id, message, changes)
+    # Reopen the durable records: a rejected update never commits a revision or
+    # consumes the trusted message, and cannot reserve/start scientific work.
+    restored = store.load_run(run.id)
+    assert restored.model_dump_json() == before
+    assert store.load_request(restored) == old_request
+    assert store.load_plan(restored) == plan
+    assert message not in restored.processed_messages
+    assert restored.usage.orca_starts_actual == restored.usage.orca_starts_reserved == 0
+    assert not restored.attempts
+
+
+@pytest.mark.parametrize("scope", ["conditions", "semantic_defaults", "system", "goal"])
+@pytest.mark.parametrize("name,value", [("charge", False), ("charge", 0.0), ("charge", "0"),
+                                       ("multiplicity", True), ("multiplicity", 1.0), ("multiplicity", "1")])
+def test_new_bundle_rejects_coercible_integer_conditions_before_import(tmp_path, scope, name, value):
+    store = store_at(tmp_path)
+    if scope == "system":
+        changes = {"geometries": [{"id": "water", "file": "not-read.xyz", "conditions": {name: value}}]}
+    elif scope == "goal":
+        changes = {"goals": [{"id": "energy", "port": "energy", "conditions": {name: value}}]}
+    else:
+        changes = {scope: {name: value}}
+    with pytest.raises(ValueError, match="exact integer"):
+        initialize_bundle(store, Config(), bundle_at(tmp_path, **changes))
+    assert not (store.root / "artifacts").exists()
+    assert not (store.root / "runs").exists()
+
+
+def test_user_integer_and_explicit_unknown_updates_survive_repeated_reload(tmp_path):
+    store, run, _, _ = query_run(tmp_path)
+    original = store.load_request(run)
+    confirmed = store.enqueue_message(run.id, "Charge zero and singlet")
+    first = apply_user_update(store, run.id, confirmed, {"charge": 0, "multiplicity": 1})
+    unknown = store.enqueue_message(run.id, "Charge and multiplicity are unknown")
+    second = apply_user_update(store, run.id, unknown, {"charge": None, "multiplicity": None})
+    for _ in range(2):
+        restored = store.load_run(second.id)
+        request = store.load_request(restored)
+        assert request.charge is request.multiplicity is None
+        assert restored.permission == run.permission and restored.usage == run.usage
+        assert store.load_request_revision(restored, 1) == original
+        assert store.load_request_revision(restored, first.request_version).charge == 0
+        assert store.load_request_revision(restored, first.request_version).multiplicity == 1
+
+
 def test_unauthorized_geometry_cannot_enter_a_request_revision(tmp_path):
     store, run, _, _ = query_run(tmp_path)
     path = tmp_path / "outside.xyz"
