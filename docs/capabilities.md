@@ -28,6 +28,8 @@ R-03 已结算历史尝试在补收 Result 保存后再次崩溃的引用恢复�
 
 2026-10-08 后续批次增加 `optimization-final-stage-1` 末次优化阶段约束、共用逐目标交付事实和严格停止/澄清协议（新候选 `agent-json-v18`，历史记录保留原版本）。纯文本入口经显式本地 profile 获取水/甲烷输入，`structure.resolve` 和 `structure.prepare` 的 Run 局部来源绑定、恢复、资源和目的校验已有离线生产链验证，见[输入链报告](acceptance/bounded-gap-batches-4-5/report.md)。准备几何只表示合格初始 XYZ，不具有优化资格。真实分层验证的[固定包及限额](reviews/2026-10-08-bounded-real-validation-package.md)已获[明确批准](acceptance/phase-b/budget-approval-bounded-20261008.json)，批准本身不是实际执行或验收通过证据。
 
+候选 `8a2dad5` 的干净全量离线验证为 2288 通过、193 跳过、零失败。随后 N06 单槽真实模型复核通过；V06 在一次本地分析后因反馈上下文超过冻结上限停止，最终解释缺失，首轮单位与预算限制说明亦未通过独立审查。该真实包未完成，后续身份查询、OPI 生成及七次 ORCA 均未执行；详见[实际交付与失败记录](acceptance/bounded-gap-final/report.md)。历史消耗完整保留，等待用户验收。
+
 | 操作 | 实际状态 | 限制 |
 | --- | --- | --- |
 | Windows 受管执行 | 原子 Job 绑定、CPU/提交内存、期限、完整树清理已实测 | 仅本地 Windows；其他平台直接拒绝 |
