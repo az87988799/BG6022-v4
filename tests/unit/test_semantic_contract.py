@@ -47,7 +47,7 @@ def test_raw_driver_intake_context_fits_and_exposes_the_parameter_contract(tmp_p
     run, _ = create_request(store, variant, 1, category="development", freeze_label="offline-schema-contract")
     prepared = build_context(store.load_request(run), run, relevant_tools=[],
         user_messages=store.read_control(run.id)["messages"],
-        action_parameters=action_parameters(run.permission.allowed_tools),
+        action_parameters=action_parameters(run.permission.allowed_tools, request=store.load_request(run)),
         feedback={"new_result_ids": [], "pending_step_ids": [], "allowed_repairs": run.permission.allowed_repairs})
     data = payload(prepared)
     assert prepared.input_token_bound <= run.budget.input_tokens == 12000
@@ -57,8 +57,8 @@ def test_raw_driver_intake_context_fits_and_exposes_the_parameter_contract(tmp_p
     assert "query follows query_schemas[port]" in contract["instruction"]
     assert set(contract["query_schemas"]) == ({"artifact_metadata", "text_window"}
         if variant == "N-07/raw-read-only-window" else set())
-    assert {tool["name"] for tool in data["TOOL_CATALOG"]} == set(run.permission.allowed_tools)
-    assert all(tool["effects"] == ["read_registered_artifact"] for tool in data["TOOL_CATALOG"])
+    assert data["TOOL_CATALOG"] == [] and data["PARAMETER_SCHEMAS"] == {}
+    assert data["AUTHORITY"]["permission"]["allowed_tools"] == run.permission.allowed_tools
     assert data["AUTHORITY"]["pending_user_message_ids"]
 
 

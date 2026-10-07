@@ -131,7 +131,7 @@ def sampling_check_contract(parameters: SamplingParameters | None = None) -> dic
     tolerance = (parameters.distance_tolerance_angstrom if parameters is not None else
                  SamplingParameters.model_fields["distance_tolerance_angstrom"].default)
     return {
-        "rule": "min interior; each other sampled E-Emin>energy_threshold_eh; nearest sampled left/right: span<=target_width_angstrom+distance_tolerance_angstrom",
+        "rule": "Current samples: interior min; each other sampled E-Emin>energy_threshold_eh; nearest left/right span<=target_width_angstrom+distance_tolerance_angstrom. New samples may change minimum and neighbors.",
         "distance_tolerance_angstrom" if parameters is not None else "default_distance_tolerance_angstrom": tolerance,
     }
 

@@ -1,14 +1,16 @@
 """Offline regressions for geometry wording and unchanged condition inheritance."""
 
 import pytest
+from test_context import payload
 from test_natural import store_at
 from test_semantic_control import candidate
 
 from orca_agent.config import Config
+from orca_agent.context import build_context
 from orca_agent.model_usage import current_basis
 from orca_agent.models import Goal, PermissionSnapshot, Request, SystemInput
 from orca_agent.natural import initialize_agent
-from orca_agent.semantic import FieldEvidence, _field, commit_candidate
+from orca_agent.semantic import FieldEvidence, _field, action_parameters, commit_candidate
 from orca_agent.store import StoreError
 from tests.helpers.phase_b_joint import prepare_case
 
@@ -25,6 +27,10 @@ def test_joint_methane_raw_text_normalizes_all_conditions_without_execution(tmp_
     store = store_at(tmp_path)
     run, metadata = prepare_case(store, Config(), "methane_opt_control", "development")
     initial = store.load_request(run)
+    intake = payload(build_context(initial, run, relevant_tools=run.permission.allowed_tools,
+                                    action_parameters=action_parameters(run.permission.allowed_tools, request=initial)))
+    assert not intake["TOOL_CATALOG"] and not intake["PARAMETER_SCHEMAS"]
+    assert intake["AUTHORITY"]["permission"]["allowed_tools"] == ["orca.opt"]
     text = initial.original_text
     assert "气相 RHF/STO-3G 中性单重态无约束优化" in text
     fields = {"method": ("HF", "RHF"), "basis": ("STO-3G", "STO-3G"),
@@ -52,6 +58,9 @@ def test_joint_methane_raw_text_normalizes_all_conditions_without_execution(tmp_
     assert request.goals[1].conditions["geometry_relation"] == "optimized"
     assert updated.plan_id is None and not updated.calls and not updated.attempts and not updated.model_records
     assert updated.usage.model_calls == updated.usage.orca_starts_actual == 0
+    planning = payload(build_context(request, updated, relevant_tools=updated.permission.allowed_tools))
+    assert [tool["name"] for tool in planning["TOOL_CATALOG"]] == ["orca.opt"]
+    assert planning["PARAMETER_SCHEMAS"]
 
 
 @pytest.mark.parametrize("phrase", ["without constraints", "without geometric constraints", "unconstrained"])

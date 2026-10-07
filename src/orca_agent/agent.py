@@ -190,7 +190,8 @@ def _decision(store, run, plan, results, transport, batch, fault):
                                      feedback=data, relevant_tools=[] if has_pending_messages else relevant_tools,
                                      control_generation=basis["control_generation"],
                                      user_messages=control["messages"],
-                                     action_parameters=action_parameters(relevant_tools) if has_pending_messages else None)
+                                     action_parameters=action_parameters(relevant_tools, request=request)
+                                     if has_pending_messages else None)
             if run.batch_category and not batch:
                 raise StoreError("acceptance model calls require shared batch accounting")
             response = send_model(store, run, prepared, transport, basis=basis,

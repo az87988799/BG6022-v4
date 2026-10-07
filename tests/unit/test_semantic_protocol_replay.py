@@ -22,11 +22,11 @@ FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/phase_b/semantic-rejec
 REJECTED = json.loads(FIXTURE.read_text(encoding="utf-8"))["proposals"]
 
 
-def condition_key_sets(contract):
-    schema = contract["schema"]
-    return [set(schema["properties"]["conditions"]["propertyNames"]["enum"]),
-            set(schema["$defs"]["SemanticGoal"]["properties"]["conditions"]["propertyNames"]["enum"]),
-            set(next(iter(schema["properties"]["system_conditions"]["patternProperties"].values()))[
+def condition_key_sets(schema):
+    parameters = schema["properties"]["parameters"]
+    return [set(parameters["properties"]["conditions"]["propertyNames"]["enum"]),
+            set(schema["$defs"]["semantic_SemanticGoal"]["properties"]["conditions"]["propertyNames"]["enum"]),
+            set(next(iter(parameters["properties"]["system_conditions"]["patternProperties"].values()))[
                 "propertyNames"]["enum"])]
 
 
@@ -53,7 +53,8 @@ def test_real_rejected_shapes_get_specific_key_errors_and_bounded_correction_con
     assert context.input_token_bound <= 12000
     data = payload(context)
     contract = data["ACTION_PARAMETERS"]["normalize_request"]
-    assert all(keys == CONDITIONS for keys in condition_key_sets(contract))
+    assert "schema" not in contract
+    assert all(keys == CONDITIONS for keys in condition_key_sets(data["PROPOSAL_SCHEMA"]))
     assert "Use environment for gas/solvent" in contract["instruction"]
     assert "never put geometry in conditions" in contract["instruction"]
     assert "explain_results is existing configuration" in contract["instruction"]

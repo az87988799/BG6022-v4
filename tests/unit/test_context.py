@@ -97,7 +97,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v8"
+    assert context.prompt_version == "agent-json-v9"
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
     assert set(data["PROPOSAL_SCHEMA"]["required"]) == set(Proposal.model_fields)
@@ -193,7 +193,9 @@ def test_action_enum_comes_from_current_native_examples_and_reason_template(stat
     reason = data["RESPONSE_ENVELOPE"]["reason"]
     assert [segment.split(":", 1)[0] for segment in reason.split(";")] == [
         "quantity", "unit", "conditions", "source", "limits", "next"]
-    assert "unknown if absent" in reason and "requested/observed/unknown" in reason
+    segments = dict(segment.split(":", 1) for segment in reason.split(";"))
+    assert all(word in segments["unit"] for word in ("stated", "unknown"))
+    assert all(word in segments["conditions"] for word in ("values", "gaps"))
     assert "quantity:" not in context.body()["messages"][0]["content"]
 
 
@@ -233,7 +235,8 @@ def test_basis_and_queued_user_message_generation_remain_explicit():
     assert authority["basis"]["control_generation"] == 3
     assert authority["basis"]["request_version"] == 1
     assert authority["user_messages"][0]["message"]["text"] == "Pause"
-    assert "Stale proposals" in context.body()["messages"][0]["content"]
+    system = context.body()["messages"][0]["content"].lower()
+    assert "stale" in system and "fails" in system
     with pytest.raises(ValueError, match="backwards"):
         build_context(request, run, control_generation=1)
 

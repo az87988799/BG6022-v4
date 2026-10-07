@@ -1,0 +1,621 @@
+{
+  "schema_version": 1,
+  "category": "real_model_development",
+  "status": "failed",
+  "code_commit": "af48cfedc436cead1b2a078ffc847f53e7adb114",
+  "prompt_version": "agent-json-v8",
+  "freeze_label": "repair-fixed-dev-v1",
+  "entries": [
+    {
+      "variant_id": "V-01/synonym-single-point",
+      "run_id": "run_1072ed8ac3074fc29db75cd71e8eea49",
+      "status": "passed",
+      "http_requests": 1,
+      "tokens": 1632,
+      "mechanical_assertions": "passed",
+      "review": {
+        "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-01__synonym-single-point/1/review.json",
+        "sha256": "a81d5bcb1070a5a2c9abc38a4cabab6c8b0b1ddad3029890d94388b7b8e1ca5a",
+        "all_proposal_facts_passed": true,
+        "semantic_review_passed": true,
+        "explanation": {
+          "quantity": {
+            "passed": true,
+            "quote": "quantity:electronic_energy (RHF/STO-3G single point on water_sp, charge 0, multiplicity 1)",
+            "rationale": "Correctly identifies electronic energy for a single-point request; no numeric result is available or claimed."
+          },
+          "unit": {
+            "passed": true,
+            "quote": "unit:hartree expected but not explicitly stated",
+            "rationale": "Hartree is explicitly described as expected and not stated, not as a unit observed in a nonexistent Result. This is adequate uncertainty disclosure for a requested, uncomputed energy."
+          },
+          "conditions": {
+            "passed": true,
+            "quote": "conditions:method=HF explicit, basis=STO-3G explicit, charge=0 explicit, multiplicity=1 explicit, geometry=water_sp explicit",
+            "rationale": "HF/STO-3G, charge 0, multiplicity 1 and water_sp match the trusted normalized Request and original user text. This fixed-evidence slot does not prove raw-text normalization."
+          },
+          "source": {
+            "passed": true,
+            "quote": "source:explicit from user request",
+            "rationale": "Names the user request as the source of requested conditions. Both registered XYZ source hashes match metadata; no external scientific evidence is claimed."
+          },
+          "limits": {
+            "passed": true,
+            "quote": "limits:scientific_execution=false and allowed_tools=[] in permission v1, so no ORCA/quantum-chemistry tool is currently authorized to compute the requested energy",
+            "rationale": "The actual request permission has scientific_execution=false and allowed_tools=[]; the Run has no calls, Results or ORCA starts."
+          },
+          "next_action": {
+            "passed": true,
+            "quote": "next:need user authorization to enable scientific execution (and the required tool) before any RHF/STO-3G single-point calculation can be run.",
+            "rationale": "The accepted clarify asks for the execution/tool authorization needed for the original calculation, without granting it or substituting a new goal."
+          }
+        }
+      },
+      "evidence_files": [
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-01__synonym-single-point/1/metadata.json",
+          "sha256": "06baea65a088a024e9f688aa0ea3bd06476a86279ac998c694675410d9b9b2b1"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-01__synonym-single-point/1/execution.json",
+          "sha256": "6577f9e68e80c4ae4da859afafcd70c45af47d547d2b8b83f569221c4517e752"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-01__synonym-single-point/1/grade-before-independent-review.json",
+          "sha256": "61bd0a78e66dd9b8bf6d4613f1eacc30f5f450b841ef62a667386bf7cdb73fd8"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-01__synonym-single-point/1/grade.json",
+          "sha256": "d36c87ffb09d9615b4e3ffea70e51b2d09047f4fcb67094537515174178af4d3"
+        }
+      ]
+    },
+    {
+      "variant_id": "V-02/free-energy-protected",
+      "run_id": "run_54bef5ecafe54dc78c169a61b0c2dcf5",
+      "status": "failed",
+      "http_requests": 3,
+      "tokens": 10342,
+      "mechanical_assertions": "passed",
+      "review": {
+        "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-02__free-energy-protected/1/review.json",
+        "sha256": "7174c29794952df1e6820adfffdc2d2ed6f83be163c091c1bba229673fe9fbcb",
+        "all_proposal_facts_passed": false,
+        "semantic_review_passed": false,
+        "explanation": {
+          "quantity": {
+            "passed": true,
+            "quote": "electronic_energy_difference is satisfied (E(B)-E(A) = -0.0008759006639991185 Eh, qualified, all checks passed)",
+            "rationale": "Both electronic difference and required Gibbs are retained and explicitly distinguished; the program publishes only the electronic difference.",
+            "quote_model_ids": [
+              "model_c707ea3dbe4e4782b3b64a9442b284e9"
+            ]
+          },
+          "unit": {
+            "passed": false,
+            "quote": "quantity:gibbs_free_energy_difference;unit:Eh (requested)",
+            "rationale": "Eh is a correct energy unit and the electronic target explicitly requests it, but the Gibbs Goal and original text contain no requested unit. The claim of requested provenance is unsupported; earlier proposals correctly called the Gibbs unit unresolved.",
+            "quote_model_ids": [
+              "model_c707ea3dbe4e4782b3b64a9442b284e9"
+            ]
+          },
+          "conditions": {
+            "passed": false,
+            "quote": "conditions:temperature_k=298.15,standard_pressure_atm=1,environment=gas_phase (requested, explicit)",
+            "rationale": "Thermal conditions are correct, but this final response also delivers an electronic difference and omits its actual RHF/HF, STO-3G, charge 0 and multiplicity 1 conditions for A/B. Earlier initial-plan prose is not substituted for the final six-axis explanation.",
+            "quote_model_ids": [
+              "model_c707ea3dbe4e4782b3b64a9442b284e9"
+            ]
+          },
+          "source": {
+            "passed": true,
+            "quote": "source:request explicit, but no thermal/frequency evidence exists",
+            "rationale": "The request is correctly identified as the origin of the thermal conditions and the missing thermal evidence is explicit. The final proposal related_results binds the actual checked electronic comparison Result; no absent Gibbs Result is invented. Operand source identities are preserved in that Result and the initial accepted bindings, although not repeated in final prose.",
+            "quote_model_ids": [
+              "model_c707ea3dbe4e4782b3b64a9442b284e9"
+            ]
+          },
+          "limits": {
+            "passed": true,
+            "quote": "the required Gibbs goal cannot be computed from electronic energies alone and allow_additional_science=false forbids adding the needed frequency/thermal science",
+            "rationale": "Accurately separates electronic evidence from missing thermal evidence and respects the actual permission boundary.",
+            "quote_model_ids": [
+              "model_c707ea3dbe4e4782b3b64a9442b284e9"
+            ]
+          },
+          "next_action": {
+            "passed": true,
+            "quote": "next:stop — the required Gibbs free energy difference goal is unreachable under current permissions, so the request cannot be fully satisfied.",
+            "rationale": "Stopping with partial electronic delivery and an unmet required Gibbs goal is consistent with allowed_tools and zero ORCA; it does not silently relax the target.",
+            "quote_model_ids": [
+              "model_c707ea3dbe4e4782b3b64a9442b284e9"
+            ]
+          }
+        }
+      },
+      "evidence_files": [
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-02__free-energy-protected/1/metadata.json",
+          "sha256": "9d58bfe7aeaef4446d28e7380821a8b8383086b17cb1e50cb0a0ca46412a2984"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-02__free-energy-protected/1/execution.json",
+          "sha256": "207a7af9a99e4d7421be976dd506bc8cfb57f8a6b490852474e58b07cdd4bcb5"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-02__free-energy-protected/1/grade-before-independent-review.json",
+          "sha256": "db648cecd99aa07ad98bd9a0a9555867a18d7461b24664f3ddf3a7e21dc5118e"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-02__free-energy-protected/1/grade.json",
+          "sha256": "2ab010f63d64b367d3af84b8ac12189a8abde84b9607a9bad2e11be83e1a66e6"
+        }
+      ]
+    },
+    {
+      "variant_id": "V-06/insufficient-additional-budget",
+      "run_id": "run_948b0669e22449978a263b2e3f329ab8",
+      "status": "failed",
+      "http_requests": 2,
+      "tokens": 7933,
+      "mechanical_assertions": "passed",
+      "review": {
+        "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-06__insufficient-additional-budget/1/review.json",
+        "sha256": "21d817a4a56abaeee2e44a87062552c43b0fee38e73fea63b9b2056abb5e6059",
+        "all_proposal_facts_passed": false,
+        "semantic_review_passed": false,
+        "explanation": {
+          "quantity": {
+            "passed": true,
+            "quote": "goal finite_sample_internal_minimum is resolved as insufficient_evidence (span_too_wide)",
+            "rationale": "Identifies the requested finite sampled minimum and correctly reports the unmet nearest-neighbor span criterion, without claiming a global minimum.",
+            "quote_model_ids": [
+              "model_496fa1eeb50245b5bccce2ff14ab18c6"
+            ]
+          },
+          "unit": {
+            "passed": true,
+            "quote": "r=1.0194092224084847 A, E=-74.964906308165 Eh",
+            "rationale": "The reported center uses the correct energy unit and distance magnitude; the final header explicitly names Angstrom for the span.",
+            "quote_model_ids": [
+              "model_496fa1eeb50245b5bccce2ff14ab18c6"
+            ]
+          },
+          "conditions": {
+            "passed": false,
+            "quote": "conditions:all requested/observed/unknown",
+            "rationale": "This placeholder supplies no actual method, basis, charge, multiplicity or gas-phase condition and omits fixed bond/angle constraints. These facts are available, but the reviewer cannot fill them into the model final response.",
+            "quote_model_ids": [
+              "model_496fa1eeb50245b5bccce2ff14ab18c6"
+            ]
+          },
+          "source": {
+            "passed": true,
+            "quote": "The analysis result reports the distinguishable interior minimum at geom_997a7b6154fa",
+            "rationale": "The final proposal links the actual analysis Result and identifies its minimum, sampled neighbors by their exact distances, and both optional IDs. The Result is traced to three independently hash-checked original energies and all five registered geometry Artifacts. No optional energy is invented.",
+            "quote_model_ids": [
+              "model_496fa1eeb50245b5bccce2ff14ab18c6"
+            ]
+          },
+          "limits": {
+            "passed": false,
+            "quote": "the optional points lie strictly inside that interval and would not become the nearest left/right neighbors",
+            "rationale": "False under the actual nearest-sampled-neighbor rule. An interior newly qualified point can become the nearest neighbor, or itself become the minimum. Discrete-only scope elsewhere does not make this additional geometric claim true.",
+            "quote_model_ids": [
+              "model_496fa1eeb50245b5bccce2ff14ab18c6"
+            ]
+          },
+          "next_action": {
+            "passed": false,
+            "quote": "Therefore no permitted action can fill the evidence gap",
+            "rationale": "The correct operational decision is to stop, but the final causal explanation derives impossibility from false geometry rather than stating exhausted analysis capacity and zero ORCA permission/budget. An initial budget mention cannot repair the final reasoning.",
+            "quote_model_ids": [
+              "model_496fa1eeb50245b5bccce2ff14ab18c6"
+            ]
+          }
+        }
+      },
+      "evidence_files": [
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-06__insufficient-additional-budget/1/metadata.json",
+          "sha256": "13915b9af0a595c50d0b97989c25b5ff2870ab8a0b812831237bf6dfee288850"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-06__insufficient-additional-budget/1/execution.json",
+          "sha256": "f557ed45f32056a858bc4d0f296899c88e44ce2dab2a08a5ce83ee36f6ce0652"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-06__insufficient-additional-budget/1/grade-before-independent-review.json",
+          "sha256": "1e7833fd5b83fd0298b3dbec22aab47a65cc88014199f313e70d0695d080b5b6"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-06__insufficient-additional-budget/1/grade.json",
+          "sha256": "9daf9b2c4e51b0a5511cbd54def5b7dcba70944ce1f6332de752958cc17bb970"
+        }
+      ]
+    },
+    {
+      "variant_id": "V-07/array-location",
+      "run_id": "run_48b16a03263e4542b843705122ab7004",
+      "status": "failed",
+      "http_requests": 4,
+      "tokens": 13222,
+      "mechanical_assertions": "passed",
+      "review": {
+        "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-07__array-location/1/review.json",
+        "sha256": "6082c42ed6775d4e91b78ba1125f278283862a96e712b4edc8742577ed35a3bb",
+        "all_proposal_facts_passed": false,
+        "semantic_review_passed": false,
+        "explanation": {
+          "quantity": {
+            "passed": true,
+            "quote": "quantity:dipole moment magnitude (dipoleMagnitude) of first geometry, plus raw field discovery and geometry slice",
+            "rationale": "The final explanation identifies dipole magnitude, field discovery and the slice, and reports 0.6788282026678785 at the exact scalar path; the source property JSON independently matches."
+          },
+          "unit": {
+            "passed": true,
+            "quote": "unit:unknown (units field null in observation)",
+            "rationale": "The scalar Result and actual final model request have units=null. The response correctly reports unknown and does not transfer geometry-coordinate units to dipole magnitude."
+          },
+          "conditions": {
+            "passed": true,
+            "quote": "conditions:all requested/observed/unknown — artifact conditions 'unknown', stage 'unknown', scientific_status 'unverified'",
+            "rationale": "The observation metadata says conditions/stage unknown and scientific_status unverified. The final response preserves these limits instead of inventing method or electron-state facts."
+          },
+          "source": {
+            "passed": true,
+            "quote": "source:evidence (artifact_b6c1e780d2b7474c97a0f5bd0676b44b, sha256 71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655)",
+            "rationale": "Artifact ID and full SHA256 identify the exact registered property JSON; the source file and copied artifact match 71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655."
+          },
+          "limits": {
+            "passed": true,
+            "quote": "limits:no recomputation, no ORCA starts, artifact_writes false, scientific_execution false",
+            "rationale": "All three executed calls are evidence.discover/evidence.value, with zero ORCA starts and no artifact writes. The final response explicitly distinguishes raw observations from scientific success."
+          },
+          "next_action": {
+            "passed": true,
+            "quote": "next:none — all three goals (raw_field_discovery, raw_geometry_slice, raw_field_observation) satisfied and passed minimum evidence. Raw field discovery found top-level keys Calculation_Info, Calculation_Status, Calculation_Timings, Geometries (array, length 1). Dipole magnitude raw value 0.6788282026678785 at path Geometries[0].Dipole_Moment[0].dipoleMagnitude, geometry index 0, status observed, unverified. Geometry slice Geometries[0:1] returned a partial preview (omitted 1 of 1, empty preview does not mean empty source). No scientific success claimed; values are raw unverified observations.",
+            "rationale": "By this final turn all requested reads have evidence and the accepted stop is justified. This final-axis pass does not erase the second proposal selecting a different Step from its stated next action."
+          }
+        }
+      },
+      "evidence_files": [
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-07__array-location/1/metadata.json",
+          "sha256": "f90f04f33925b606be1cc287f386cdefbfb773ac14ee71fade0cd0d0d665d5ae"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-07__array-location/1/execution.json",
+          "sha256": "48dd1947e4439049787d2262cf9648270393834df4b8137edbd16091d016d559"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-07__array-location/1/grade-before-independent-review.json",
+          "sha256": "6a27c20c82e2f5620b78055e0f1ae9eef36a3189bb06600901c543b5d8c75ec8"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-07__array-location/1/grade.json",
+          "sha256": "3eacb2f8f7b56abab61fa7a77b13d6aa5256f82f695347b6d1e1ae6ad11516b6"
+        }
+      ]
+    },
+    {
+      "variant_id": "V-08/missing-conditions",
+      "run_id": "run_5f48def585ff48faa87f603e74b47677",
+      "status": "failed",
+      "http_requests": 3,
+      "tokens": 8483,
+      "mechanical_assertions": "passed",
+      "review": {
+        "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-08__missing-conditions/1/review.json",
+        "sha256": "5c5e144f0daf869c370973a2db1097715e770ab8b0e3b62e78d1b837ddcaaede",
+        "all_proposal_facts_passed": false,
+        "semantic_review_passed": false,
+        "explanation": {
+          "quantity": {
+            "passed": true,
+            "quote": "quantity:imported_stdout_energy_line (FINAL SINGLE POINT ENERGY) and available_external_observations",
+            "rationale": "Correctly identifies the available energy-line observation and partial imported evidence; the reported numeric string equals the exact source line."
+          },
+          "unit": {
+            "passed": false,
+            "quote": "unit:energy in Hartree as printed by ORCA (value -74.962991615317), units not independently verified",
+            "rationale": "Fails: the source line has no unit annotation and the actual observation gives units=null. The response nevertheless says Hartree as printed by ORCA. A software convention cannot be presented as explicit source evidence."
+          },
+          "conditions": {
+            "passed": true,
+            "quote": "conditions:unknown (stage/geometry/method/basis/charge/multiplicity not present in the imported excerpt)",
+            "rationale": "Correctly keeps stage, geometry, method, basis, charge and multiplicity unknown for this excerpt. Missing job.inp/property JSON are acknowledged; no comparison is claimed qualified."
+          },
+          "source": {
+            "passed": true,
+            "quote": "source:explicit registered source source_c9c7729e0a524441ae399dd51f42ad58, stdout role, artifact_9c65b68c77db440eaf7efcc0d53cbb63, sha256 d95f79b65f03170f2fca06615f6d9d87f808e0af7476b4c76d577c63914d9476",
+            "rationale": "The registered source ID, imported artifact ID and full d95f79b65f03170f2fca06615f6d9d87f808e0af7476b4c76d577c63914d9476 SHA identify the exact excerpt actually imported and read."
+          },
+          "limits": {
+            "passed": true,
+            "quote": "limits:only 1 line / 50 bytes imported, coverage complete for the requested query, no ORCA starts, no additional science, no repairs",
+            "rationale": "The file contains one LF-separated line and 50 bytes. The bounded search covers that complete available excerpt; no ORCA starts, repair or additional science occurred. This is not a complete original calculation archive."
+          },
+          "next_action": {
+            "passed": true,
+            "quote": "next:readable = one FINAL SINGLE POINT ENERGY line; missing = job.inp and job.property.json (both reported missing), plus any geometry/method/basis/charge/multiplicity/conditions and provenance needed to qualify the number; the value is an unverified observation, not a scientific result.",
+            "rationale": "Accurately reports the readable line and missing input/property files plus the conditions/provenance needed before scientific qualification. The accepted stop is appropriate for the limited import/read request, despite the separate unit and initial side-effect-description errors."
+          }
+        }
+      },
+      "evidence_files": [
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-08__missing-conditions/1/metadata.json",
+          "sha256": "d51d684a77dc913c7826e5ccbd11504064fe700acfb9dffc1caa2558b33c96ac"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-08__missing-conditions/1/execution.json",
+          "sha256": "86bda9f39ffe064436794912264fdf792b75b9cc73fdbefa99fcef8c391aac33"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-08__missing-conditions/1/grade-before-independent-review.json",
+          "sha256": "cb461951ea8e2a95d91baac70042ec71b9e0560df90dbc34f69974e03b46fb67"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-08__missing-conditions/1/grade.json",
+          "sha256": "83af0d257b78091824a9d1ffc1a390534167683d32ef9311510177f0a6075f78"
+        }
+      ]
+    },
+    {
+      "variant_id": "V-09/different-method",
+      "run_id": "run_aafbd031c9194d24a77499f5bd7f9469",
+      "status": "failed",
+      "http_requests": 3,
+      "tokens": 10938,
+      "mechanical_assertions": "passed",
+      "review": {
+        "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__different-method/1/review.json",
+        "sha256": "30568c0fdaa9a944bf0a823dfbe02fa7dc407097f50b07f9b9260ad480b080b1",
+        "all_proposal_facts_passed": false,
+        "semantic_review_passed": false,
+        "explanation": {
+          "quantity": {
+            "passed": true,
+            "quote": "quantity:ΔE=E(B)-E(A)",
+            "rationale": "The signed electronic comparison is preserved and no inapplicable energy difference is published. Both required goals are named later in this final response.",
+            "quote_model_ids": [
+              "model_cd09f8bcfac44fadbfe2711c635efb9e"
+            ]
+          },
+          "unit": {
+            "passed": true,
+            "quote": "unit:Eh",
+            "rationale": "The target unit and quoted qualified A energy are correct.",
+            "quote_model_ids": [
+              "model_cd09f8bcfac44fadbfe2711c635efb9e"
+            ]
+          },
+          "conditions": {
+            "passed": false,
+            "quote": "conditions:requested A=RHF/STO-3G/charge0/mult1/gas_phase, B=RHF/6-31G/charge0/mult1/gas_phase",
+            "rationale": "The requested per-member conditions are correct and B mismatch is named later, but the final explanation never states the actual B source basis STO-3G. It therefore does not fully explain the requested-versus-observed condition conflict; the prior erroneous initial assertion is independently failed.",
+            "quote_model_ids": [
+              "model_cd09f8bcfac44fadbfe2711c635efb9e"
+            ]
+          },
+          "source": {
+            "passed": true,
+            "quote": "source:explicit request conditions, evidence from registered results",
+            "rationale": "The final response separates explicit requested conditions from registered evidence and names A qualified/B currently inapplicable, with related_results bound to the exact mismatch Result. Original A/B Run/Result/Attempt/Artifact chains are intact. The missing actual B basis is assessed under conditions.",
+            "quote_model_ids": [
+              "model_cd09f8bcfac44fadbfe2711c635efb9e"
+            ]
+          },
+          "limits": {
+            "passed": true,
+            "quote": "limits:plan revision budget exhausted (BudgetExceeded), no ORCA starts permitted, allow_additional_science=false",
+            "rationale": "These are the actual persistent gates. Both goals remain insufficient and no qualified comparison exists.",
+            "quote_model_ids": [
+              "model_cd09f8bcfac44fadbfe2711c635efb9e"
+            ]
+          },
+          "next_action": {
+            "passed": true,
+            "quote": "user must supply a B result matching requested conditions or authorize additional science/plan revision.",
+            "rationale": "Requests evidence or explicit authority to address the missing operand rather than silently changing B. Any later different-basis evidence must still pass the common-method comparison rule; this is not a promise of scientific success.",
+            "quote_model_ids": [
+              "model_cd09f8bcfac44fadbfe2711c635efb9e"
+            ]
+          }
+        }
+      },
+      "evidence_files": [
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__different-method/1/metadata.json",
+          "sha256": "d083e2d4bdfdd7e64c00fee0abf31957bcdbaba82478daed1add728a923b3bb0"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__different-method/1/execution.json",
+          "sha256": "4728b877192c62f3073d42f159d205bb7c69b49bb39f8f77ba166dd9a9931806"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__different-method/1/grade-before-independent-review.json",
+          "sha256": "8e0b02741ee59f862b0a8daffe4cc796070574904bf7205af89135dab789fb38"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__different-method/1/grade.json",
+          "sha256": "480ad54e23fe276d69471a58b31cb47b819ede60a5208dc33ebdbc8810400edf"
+        }
+      ]
+    },
+    {
+      "variant_id": "V-09/missing-electron-state",
+      "run_id": "run_f898335c642b4884bfe1b9fe716d3930",
+      "status": "failed",
+      "http_requests": 2,
+      "tokens": 6942,
+      "mechanical_assertions": "passed",
+      "review": {
+        "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__missing-electron-state/1/review.json",
+        "sha256": "3bc3db7364608cc82974514d29bfc7ca0f613d25825d9ffa0856c523bceb756c",
+        "all_proposal_facts_passed": false,
+        "semantic_review_passed": false,
+        "explanation": {
+          "quantity": {
+            "passed": true,
+            "quote": "quantity:electronic_energy_difference ΔE=E(B)-E(A)",
+            "rationale": "The requested electronic difference is retained, with the dependent member-table goal also explicitly unresolved.",
+            "quote_model_ids": [
+              "model_72ba8fdcfc0e46eea75f2133d990940b"
+            ]
+          },
+          "unit": {
+            "passed": true,
+            "quote": "unit:Eh",
+            "rationale": "Correctly retains the requested electronic-energy unit without fabricating an unqualified number.",
+            "quote_model_ids": [
+              "model_72ba8fdcfc0e46eea75f2133d990940b"
+            ]
+          },
+          "conditions": {
+            "passed": true,
+            "quote": "conditions:requested A/B H2O, HF/STO-3G, charge 0, gas_phase, multiplicity explicit 1 for A and null (unspecified) for B;observed A qualified RHF multiplicity 1, B source multiplicity 1 but requested operand multiplicity is null/unknown",
+            "rationale": "Correctly separates all relevant requested physical conditions and B unknown from the actual historical singlet source. No global value silently replaces the local null.",
+            "quote_model_ids": [
+              "model_72ba8fdcfc0e46eea75f2133d990940b"
+            ]
+          },
+          "source": {
+            "passed": true,
+            "quote": "source:explicit request conditions, evidence from registered results",
+            "rationale": "Source origin is distinguished from the unresolved current request. The adjacent observed-source multiplicity statement is correct, and related_results identifies the actual checked analysis; its A/B source chain was independently verified.",
+            "quote_model_ids": [
+              "model_72ba8fdcfc0e46eea75f2133d990940b"
+            ]
+          },
+          "limits": {
+            "passed": true,
+            "quote": "member B is missing due to unknown_condition:multiplicity and source_condition_mismatch:multiplicity",
+            "rationale": "This is the actual current-use failure, not a claim that the historical source lacks multiplicity. The final response also accurately states zero revision and scientific budgets.",
+            "quote_model_ids": [
+              "model_72ba8fdcfc0e46eea75f2133d990940b"
+            ]
+          },
+          "next_action": {
+            "passed": true,
+            "quote": "user must specify B multiplicity (or confirm it should inherit multiplicity 1) before the comparison can be completed.",
+            "rationale": "The next step asks for the missing user intent and does not infer it from the source or trigger forbidden calculation.",
+            "quote_model_ids": [
+              "model_72ba8fdcfc0e46eea75f2133d990940b"
+            ]
+          }
+        }
+      },
+      "evidence_files": [
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__missing-electron-state/1/metadata.json",
+          "sha256": "904b74726fbd8e3a7b2a22dc6ebfd28e4dd02d51206daa6513158e613248513a"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__missing-electron-state/1/execution.json",
+          "sha256": "117ca0146859c919e03a409d801753f6cfabcc169ce78549a838dc3b13d06de7"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__missing-electron-state/1/grade-before-independent-review.json",
+          "sha256": "4ac39b57c3e117fbfb33e9f0978ba6b05fccb908f6fc153257f2ffce540f7632"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__missing-electron-state/1/grade.json",
+          "sha256": "082bfa82d694f53693a0d414f9251691932c84adf8d9974e579d26aac2355d28"
+        }
+      ]
+    },
+    {
+      "variant_id": "V-09/optional-member-missing",
+      "run_id": "run_53dc36a48fcc4ef4951850461d57e279",
+      "status": "passed",
+      "http_requests": 2,
+      "tokens": 6644,
+      "mechanical_assertions": "passed",
+      "review": {
+        "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__optional-member-missing/1/review.json",
+        "sha256": "3f05bebda06df1df34810831e682944681748b5830c109ab1d70d42c0e94f7f0",
+        "all_proposal_facts_passed": true,
+        "semantic_review_passed": true,
+        "explanation": {
+          "quantity": {
+            "passed": true,
+            "quote": "quantity:energy_difference E(B)-E(A) and member_table both satisfied by result_0be405c8fbc04979b5d4a33e2ab9cfb1",
+            "rationale": "Both required outputs and signed formula correspond to the actual qualified analysis Result. The numerical delta and both operands are also given.",
+            "quote_model_ids": [
+              "model_a797f0ad6976420f81f79efcb307cc62"
+            ]
+          },
+          "unit": {
+            "passed": true,
+            "quote": "unit:Eh",
+            "rationale": "Matches the source energies, requested difference and actual qualified difference.",
+            "quote_model_ids": [
+              "model_a797f0ad6976420f81f79efcb307cc62"
+            ]
+          },
+          "conditions": {
+            "passed": true,
+            "quote": "A and B qualified at RHF/STO-3G, charge 0, multiplicity 1, gas_phase, geometries distinct (allow_different_geometries true), C optional and missing",
+            "rationale": "Despite the preceding generic label, the actual values and differing-geometry authorization are explicitly supplied. All A/B/C members are covered; no source or conditions are fabricated for C.",
+            "quote_model_ids": [
+              "model_a797f0ad6976420f81f79efcb307cc62"
+            ]
+          },
+          "source": {
+            "passed": true,
+            "quote": "source:evidence (qualified energies A=-74.964906308165 Eh, B=-74.965782208829 Eh, ΔE=-0.0008759006639991185 Eh, all_checks_passed true, rule_version orca-hf-2)",
+            "rationale": "Names both exact source energies and the independently reproduced signed subtraction. The final named Result/related_results binds the checked comparison. orca-hf-2 is the operand-energy check version; the saved comparison itself uses energy-compare-1.",
+            "quote_model_ids": [
+              "model_a797f0ad6976420f81f79efcb307cc62"
+            ]
+          },
+          "limits": {
+            "passed": true,
+            "quote": "C optional and missing",
+            "rationale": "The stated scope includes only qualified A/B and explicitly leaves optional C missing. Together with the fixed per-member geometry conditions and electronic formula, this appropriately bounds the delivered comparison; no all-members, thermal or relaxed-geometry result is claimed.",
+            "quote_model_ids": [
+              "model_a797f0ad6976420f81f79efcb307cc62"
+            ]
+          },
+          "next_action": {
+            "passed": true,
+            "quote": "next:none — both required goals passed, stop.",
+            "rationale": "Both required ports actually qualify; optional C does not block them. Zero new science and stopping are appropriate.",
+            "quote_model_ids": [
+              "model_a797f0ad6976420f81f79efcb307cc62"
+            ]
+          }
+        }
+      },
+      "evidence_files": [
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__optional-member-missing/1/metadata.json",
+          "sha256": "52bc9ffe5a8e4f27cbee46bae4a6fb6ab03a9644f9c9739a95675200aa06c672"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__optional-member-missing/1/execution.json",
+          "sha256": "94767d3291d791b001827977b330af5416553407b0795597529a1ec85b28f8b0"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__optional-member-missing/1/grade-before-independent-review.json",
+          "sha256": "9b8a3103a8ded0b3f4608f14c36d6974cbef8cdb048c7ac08c2b3bb582a77a41"
+        },
+        {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v1/V-09__optional-member-missing/1/grade.json",
+          "sha256": "8a1bfb13832115ada2621b2f0ddb3f6a38522f81033fa7e9d9fd4c9d208bdac7"
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "slots": 8,
+    "passed": 2,
+    "failed": 6,
+    "http_requests": 20,
+    "tokens": 66136,
+    "orca_starts": 0
+  },
+  "limitation": "Mechanical checks alone passed all eight slots; independent all-proposal and six-axis review determines the failures. This is development, never formal acceptance. Preserve every first response, correction and cost."
+}

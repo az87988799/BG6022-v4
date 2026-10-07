@@ -89,8 +89,31 @@ def pending_messages(store, run):
     return [m for m in store.read_control(run.id)["messages"] if m["id"] not in run.processed_messages]
 
 
-def action_parameters(allowed_tools=()):
+def _goal_binding_contract(request, *, defines_goals=False):
+    """One target set for model schema and activation; new Goals bind themselves."""
+    identifiers = [] if request is None or defines_goals else [
+        goal.id for goal in request.goals if not (
+            goal.id == "raw_request" and goal.port == "unresolved"
+            and goal.original_text == request.original_text)]
+    schema = {"propertyNames": {"enum": identifiers}} if identifiers else {"maxProperties": 0}
+    return identifiers, schema
+
+
+def action_parameters(allowed_tools=(), *, request=None):
     schema = _schema(SemanticCandidate.model_json_schema())
+    binding_ids, binding_schema = _goal_binding_contract(request)
+    _, new_goal_binding_schema = _goal_binding_contract(request, defines_goals=True)
+    bindings = schema["properties"]["goal_bindings"]
+    if binding_ids:
+        # Enumerated Goal IDs already constrain key syntax. Keep the Pydantic
+        # value schema without repeating its now-redundant Identifier regex.
+        bindings["additionalProperties"] = next(iter(bindings.pop("patternProperties").values()))
+        bindings.update(binding_schema)
+    else:
+        schema["properties"]["goal_bindings"] = {"type": "object", **binding_schema}
+    if binding_schema != new_goal_binding_schema:
+        schema["anyOf"] = [{"properties": {"goals": {"type": "null"}}},
+                           {"properties": {"goal_bindings": new_goal_binding_schema}}]
     port_rules = {port: rule for port, rule in RULES.items() if port != "unresolved"}
     ports = ",".join(port_rules)
     return {"normalize_request": {
@@ -110,7 +133,8 @@ def action_parameters(allowed_tools=()):
         "Verbatim text_basis: no translation, paraphrase or added parentheses. "
         "normalize replaces initial raw_request/missing:goal_definition with actual requested Goals, "
         "including after clarification. Registration-only/no-execution limits are not extra Goals. amend retains goals; "
-        "goal_bindings fills system refs; replace_goals requires explicit replacement and all old IDs. "
+        "New Goals use system_refs; goal_bindings uses existing Goal.id only, never together with goals. "
+        "replace_goals requires explicit replacement and all old IDs. "
         "New gaps require questions; gaps:field:<field>/system:<goal_id>; resolves must match answers.",
         "schema": schema,
         "condition_lexicon": {field: [[value, aliases] for (name, value), aliases in LEXICAL_ALIASES.items()
@@ -322,8 +346,14 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
             correction.detail.update(requirement="Use only the allowed scientific condition keys at these paths.",
                                      allowed_condition_keys=list(get_args(ConditionName)))
             raise correction from None
-        raise
+        raise _schema_error(exc, path=["parameters"]) from None
     request = store.load_request(run)
+    binding_ids, _ = _goal_binding_contract(request, defines_goals=candidate.goals is not None)
+    invalid_binding_ids = set(candidate.goal_bindings) - set(binding_ids)
+    if invalid_binding_ids:
+        raise ProposalError("Use existing Goal.id for goal_bindings; new goals bind only through system_refs.",
+                            path=["parameters", "goal_bindings", sorted(invalid_binding_ids)[0]],
+                            allowed_goal_ids=binding_ids)
     active_question = store.active_clarification(run)
     pending = pending_messages(store, run)
     if set(candidate.message_ids) != {m["id"] for m in pending} or len(candidate.message_ids) != len(pending):
