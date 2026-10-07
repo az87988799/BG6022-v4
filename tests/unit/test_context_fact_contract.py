@@ -228,14 +228,25 @@ def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evid
     assert rebuilt["AUTHORITY"]["related_results"] == authority["related_results"]
     assert rebuilt["AUTHORITY"]["permission"] == authority["permission"]
     assert rebuilt["AUTHORITY"]["request"]["goals"] == authority["request"]["goals"]
-    assert rebuilt["CONTROL"] == original["CONTROL"]
+    assert rebuilt.get("CONTROL", {}) == original["CONTROL"]
     assert rebuilt["DATA"].get("current_goal_use") == original["DATA"].get("current_goal_use")
     if case.startswith("v15_"):
         raw_wire = json.loads(prepared.body()["messages"][1]["content"])
-        native = raw_wire["ACTION_PARAMETERS"]["clarify"]
-        assert set(native) == {"questions", "unresolved"}
-        assert all(isinstance(text, str) and text == "<1-5 texts,1-1000 chars>"
-                   for texts in native.values() for text in texts)
+        if "ACTION_PARAMETERS" in raw_wire:
+            native = raw_wire["ACTION_PARAMETERS"]["clarify"]
+            assert set(native) == {"questions", "unresolved"}
+            assert all(isinstance(text, str) and text == "<1-5 texts,1-1000 chars>"
+                       for texts in native.values() for text in texts)
+        else:
+            # Terminal compact contexts omit duplicate examples, retaining the
+            # exact native parameter contract in the exhaustive action schema.
+            branch = next(item["properties"] for item in rebuilt["PROPOSAL_SCHEMA"]["oneOf"]
+                          if item["properties"]["action"] == {"const": "clarify"})
+            assert set(branch["parameters"]["required"]) == {"questions", "unresolved"}
+            assert branch["parameters"]["maxProperties"] == 2
+            assert branch["parameters"]["additionalProperties"] == {
+                "type": "array", "minItems": 1, "maxItems": 5,
+                "items": {"type": "string", "minLength": 1, "maxLength": 1000}}
         assert rebuilt["AUTHORITY"]["request"] == authority["request"]
         assert rebuilt["AUTHORITY"]["system_condition_overrides"] == authority["system_condition_overrides"]
         for old_result, new_result in zip(original["DATA"]["results"], rebuilt["DATA"]["results"], strict=True):

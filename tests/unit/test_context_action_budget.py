@@ -37,8 +37,13 @@ def _plan(request, run, tool="evidence.field"):
 
 
 def _actions(data):
-    actions = set(data["ACTION_PARAMETERS"])
-    assert set(data["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"]) == actions
+    actions = set(data["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"])
+    if "ACTION_PARAMETERS" in data:
+        assert set(data["ACTION_PARAMETERS"]) == actions
+    else:
+        assert actions == {"clarify", "stop"}
+        assert {branch["properties"]["action"]["const"]
+                for branch in data["PROPOSAL_SCHEMA"]["oneOf"]} == actions
     return actions
 
 
@@ -278,7 +283,7 @@ def test_retained_v06_budget_actions_rebuild_without_changing_history(index):
     assert prepared.input_token_bound <= 12000
     for field in ("budget_limits", "permission", "goal_status", "related_results", "request", "cumulative_usage"):
         assert rebuilt["AUTHORITY"][field] == authority[field]
-    assert rebuilt["CONTROL"] == original["CONTROL"]
+    assert rebuilt.get("CONTROL", {}) == original["CONTROL"]
     # v13 additionally projects the actual settled Call's registry effects.
     # Every pre-existing data fact must survive, allowing that truthful addition.
     assert {key: value for key, value in rebuilt["DATA"].items() if key != "tool_effects"} == original["DATA"]

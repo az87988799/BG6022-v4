@@ -26,7 +26,7 @@ from orca_agent.proposals import (
 )
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v18"
+PROMPT_VERSION = "agent-json-v19"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SYSTEM_PROMPT = """JSON; reason<=1000. Program gates execution/science/goals.
@@ -805,6 +805,43 @@ def _relevant_schema_catalog(catalog, schemas, request, run, plan, frozen, pendi
     return projected, {key: schema for key, schema in schemas.items() if key in used}
 
 
+def _compact_terminal_response(wire):
+    """Remove redundant response examples for exactly two exhaustive actions.
+
+    The closed eight-field envelope and both parameter schemas still govern
+    the response. Only mutually exclusive, exhaustive if/then branches can be
+    rewritten as oneOf; authority, observations and Tool contracts are untouched.
+    """
+    schema = wire["PROPOSAL_SCHEMA"]
+    actions = schema["properties"]["action"].get("enum", [])
+    rules = schema.get("allOf", [])
+    if (len(actions) != 2 or set(actions) != {"clarify", "stop"}
+            or len(rules) != 2 or "oneOf" in schema):
+        return wire
+    branches = []
+    for rule in rules:
+        if set(rule) != {"if", "then"}:
+            return wire
+        condition, consequence = rule["if"], rule["then"]
+        if (set(condition) != {"properties"} or set(condition["properties"]) != {"action"}
+                or set(condition["properties"]["action"]) != {"const"}
+                or set(consequence) != {"properties"}
+                or set(consequence["properties"]) != {"parameters"}):
+            return wire
+        branches.append({"properties": {**condition["properties"], **consequence["properties"]}})
+    if {branch["properties"]["action"]["const"] for branch in branches} != set(actions):
+        return wire
+    compact = {key: value for key, value in wire.items()
+               if key not in {"ACTION_PARAMETERS", "RESPONSE_ENVELOPE"}}
+    compact["PROPOSAL_SCHEMA"] = {key: value for key, value in schema.items() if key != "allOf"}
+    compact["PROPOSAL_SCHEMA"]["oneOf"] = branches
+    compact["REASON_TEMPLATE"] = wire["RESPONSE_ENVELOPE"]["reason"]
+    for key in ("CONTROL", "PARAMETER_SCHEMAS"):
+        if compact.get(key) == {}:
+            compact.pop(key)
+    return compact
+
+
 def build_context(
     request: Request,
     run: Run,
@@ -1110,9 +1147,16 @@ def build_context(
                     template["DATA"]["projection_rules"] += " profile_ref=check_profiles."
         wire = _share_strings(template) if compact else template
         wire = {**wire, "RESPONSE_ENVELOPE": envelope}
+        request_prompt = system_prompt
+        if compact:
+            terminal_wire = _compact_terminal_response(wire)
+            if terminal_wire is not wire:
+                wire = terminal_wire
+                request_prompt = system_prompt.replace(
+                    "RESPONSE_ENVELOPE only.", "JSON per PROPOSAL_SCHEMA; reason per REASON_TEMPLATE.")
         try:
             prepared = prepare_request(
-                [{"role": "system", "content": system_prompt},
+                [{"role": "system", "content": request_prompt},
                  {"role": "user", "content": json.dumps(wire, ensure_ascii=False, separators=(",", ":"), allow_nan=False)}],
                 prompt_version=PROMPT_VERSION,
                 max_output_tokens=run.budget.output_tokens,

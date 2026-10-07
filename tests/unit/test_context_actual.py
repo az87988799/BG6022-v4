@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from orca_agent.context import build_context
+from orca_agent.models import PermissionSnapshot
 from orca_agent.store import Store, sha256_file
 from tests.unit.test_context import payload
 
@@ -87,7 +88,7 @@ def test_actual_sampling_three_sp_and_analysis_preserve_facts_within_bound(run_i
     data = payload(prepared)
     assert prepared.input_token_bound <= 12000
     assert data["AUTHORITY"]["request"]["goals"][0]["conditions"] == request.goals[0].conditions
-    assert data["AUTHORITY"]["permission"] == run.permission.model_dump(mode="json")
+    assert PermissionSnapshot.model_validate(data["AUTHORITY"]["permission"]) == run.permission
     assert data["AUTHORITY"]["related_results"] == [results[-1].id]
     for original, projected in zip(results, data["DATA"]["results"], strict=True):
         if "energy" in original.qualified_outputs:
