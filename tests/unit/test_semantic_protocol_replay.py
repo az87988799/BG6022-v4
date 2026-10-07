@@ -58,9 +58,9 @@ def test_real_rejected_shapes_get_specific_key_errors_and_bounded_correction_con
     assert "schema" not in contract
     assert all(keys == CONDITIONS for keys in condition_key_sets(data["PROPOSAL_SCHEMA"]))
     assert "environment=gas/solvent" in contract["instruction"]
-    assert "no geometry conditions" in contract["instruction"]
-    assert "Keep explain_results" in contract["instruction"]
-    assert "minimum_evidence=[] still requires checks" in contract["instruction"]
+    assert "No geometry conditions" in contract["instruction"]
+    assert "Preserve unknown/unsupported requirements and explain_results" in contract["instruction"]
+    assert "[] minimum_evidence retains basic checks" in contract["instruction"]
     assert contract["minimum_evidence_rules"]["version"] == RULE_VERSION
     assert contract["minimum_evidence_rules"]["registered"] == json.loads(json.dumps(REQUIREMENTS))
     assert contract["minimum_evidence_rules"]["legacy_aliases"] == LEGACY_NAMES

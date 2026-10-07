@@ -76,10 +76,10 @@ def test_actual_n06_request_rebuilt_with_separate_scope_and_registration_without
     policy = action_parameters(request=request)["normalize_request"]["questions_policy"]
     assert prepared.body()["messages"][0]["content"].count(policy) == 1
     assert "questions_policy" not in data["ACTION_PARAMETERS"]["normalize_request"]
-    assert "Separately disclose science_scope support and geometry registration" in policy
-    assert "no reply, confirmation or resource request" in policy
+    assert "disclose scope and geometry limits via notices" in policy
+    assert "without asking for resources/confirmation" in policy
     assert "No execution permission alone is not registration-only intent" in policy
-    assert "critical unknowns in conditions/identity/quantity blocking current scope" in policy
+    assert "critical gaps blocking the requested scope" in policy
     assert data["AUTHORITY"]["user_originals"][0]["text"] == request.original_text
     assert "本轮只登记需求，不启动计算" in request.original_text
     assert data["ACTION_PARAMETERS"]["normalize_request"]["science_scope"]["systems"] == ["H2O", "CH4"]

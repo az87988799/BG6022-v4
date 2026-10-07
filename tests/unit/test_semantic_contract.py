@@ -53,7 +53,7 @@ def test_raw_driver_intake_context_fits_and_exposes_the_parameter_contract(tmp_p
     assert prepared.input_token_bound <= run.budget.input_tokens == 12000
     assert data["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"] == ["normalize_request"]
     contract = data["ACTION_PARAMETERS"]["normalize_request"]
-    assert "Energy:geometry_relation=fixed_initial" in contract["instruction"]
+    assert "Energy relation: fixed_initial=SP, optimized=after Opt" in contract["instruction"]
     assert "query:query_schemas[port]" in contract["instruction"]
     assert set(contract["query_schemas"]) == ({"artifact_metadata", "text_window"}
         if variant == "N-07/raw-read-only-window" else set())

@@ -60,9 +60,9 @@ def test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_corr
     contract = payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
     assert prepared.input_token_bound <= 12000
     assert "electronic_state=RHF/UHF" in contract["instruction"]
-    assert "Verbatim unique text_basis" in contract["instruction"]
-    assert "Energy:temperature_K/standard_state only if requested" in contract["instruction"]
-    assert "absent display unit=unknown" in contract["instruction"]
+    assert "quote unique verbatim text_basis with matching field/target scope" in contract["instruction"]
+    assert "temperature/standard_state only if requested" in contract["instruction"]
+    assert "absent display unit stays unknown without a question" in contract["instruction"]
     assert any(value == 0 and {"中性", "neutral", "电荷为零"}.issubset(aliases)
                for value, aliases in contract["condition_lexicon"]["charge"])
     # This correction is authored by the test, not another model trajectory.

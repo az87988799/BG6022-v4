@@ -64,10 +64,10 @@ def test_actual_v3_placeholder_shape_still_rejects_and_only_test_authored_correc
     contract = data["ACTION_PARAMETERS"]["normalize_request"]
     assert prepared.input_token_bound <= 12000
     assert "PLAN_RULES" not in data and "PLAN_REFERENCES" not in data
-    assert "normalize retires raw_request/missing:goal_definition" in contract[
+    assert "normalize defines goals and retires raw_request/missing:goal_definition" in contract[
         "instruction"]
     assert "Registration/no-execution is not a Goal" in contract["instruction"]
-    assert "Preserve unsupported/unknown requirements" in contract["instruction"]
+    assert "Preserve unknown/unsupported requirements" in contract["instruction"]
     assert "preserve goals.unresolved" not in contract["instruction"]
     assert "normalize defines raw_request" not in contract["instruction"]
     assert "Ports:minimum_evidence_rules.port_rules" in contract["instruction"]

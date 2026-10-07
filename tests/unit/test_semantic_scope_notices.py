@@ -13,6 +13,7 @@ from test_semantic_control import candidate
 from orca_agent.applicability import PROFILE, canonical_condition
 from orca_agent.context import build_context
 from orca_agent.model_usage import current_basis
+from orca_agent.models import PermissionSnapshot
 from orca_agent.proposals import ProposalError
 from orca_agent.semantic import SemanticCandidate, action_parameters, commit_candidate
 from orca_agent.tools.registry import SCIENCE_COMPOSITIONS, catalog
@@ -62,8 +63,9 @@ def test_visible_scope_is_registry_profile_data_not_permission_or_registered_sys
     assert visible["science_scope"] == scope
     assert "not permission/defaults" in visible["instruction"]
     assert "notices" in prepared.body()["messages"][0]["content"]
-    assert "critical unknowns in conditions/identity/quantity" in prepared.body()["messages"][0]["content"]
-    assert data["AUTHORITY"]["permission"] == run.permission.model_dump(mode="json")
+    assert "critical gaps blocking the requested scope" in prepared.body()["messages"][0]["content"]
+    # Omitted disabled effects retain the same frozen permission semantics.
+    assert PermissionSnapshot.model_validate(data["AUTHORITY"]["permission"]) == run.permission
     assert data["AUTHORITY"]["permission"]["allowed_tools"] == []
     assert data["TOOL_CATALOG"] == []
     assert [s["id"] for s in data["AUTHORITY"]["request"]["systems"]] == [s.id for s in request.systems]

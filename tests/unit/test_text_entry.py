@@ -46,6 +46,10 @@ def normalize(store, run, config, *, conditions=None, relation="fixed_initial", 
     ("Compute methane in water solvent.", "methane"),
     ("以水为溶剂研究甲烷。", "methane"),
     ("Can you optimize water?", "water"),
+    ("Do not execute water. Registration only.", "water"),
+    ("Do not optimize water; register the energy requirement.", "water"),
+    ("水的计算方法不确定；先登记水的能量需求。", "water"),
+    ("Water molecule charge is unknown; register its energy requirement.", "water"),
 ])
 def test_supported_text_intake_freezes_only_identity_intent(tmp_path, monkeypatch, text, name):
     store, config = text_environment(tmp_path, permission={"model_execution": True,
@@ -73,6 +77,7 @@ def test_supported_text_intake_freezes_only_identity_intent(tmp_path, monkeypatc
 @pytest.mark.parametrize("text", ["优化乙醇", "Compute ammonia energy", "Calculate carbon dioxide.",
     "Calculate water and methane.", "计算那个分子的电子能", "Calculate molecule X.",
     "The molecule is not water. Compute its energy.", "Is that molecule water? Compute its energy.",
+    "The molecule could be water. Compute its energy.",
     "Water is not the target. Compute the target energy.", "The target isn't water. Compute its energy.",
     "分子身份未知，也许是水，先问清楚。", "那个分子是水吗？计算它的电子能。"])
 def test_multiple_unknown_and_unsupported_text_never_selects_a_supported_substitute(tmp_path, text):
@@ -247,7 +252,8 @@ def identity_answer(tmp_path, text="The molecule is water."):
 
 
 @pytest.mark.parametrize("text", ["The molecule is water.", "水", "The target is water. Do not execute.",
-                                  "The target is water; charge unknown."])
+    "The target is water; charge unknown.", "Do not execute water; registration only.",
+    "水的计算方法不确定，目标是水。"])
 def test_confirmed_later_text_identity_registers_a_prepare_intent_only(tmp_path, text):
     _, run, request, message, values = identity_answer(tmp_path, text)
     before = request.model_dump_json(), run.model_dump_json()
@@ -259,7 +265,8 @@ def test_confirmed_later_text_identity_registers_a_prepare_intent_only(tmp_path,
 
 
 @pytest.mark.parametrize("text", ["Is it water?", "Maybe water", "The molecule identity is unknown; water.",
-    "不是水", "Do not select water.", "It is not actually water.", "不要选择水", "water or methane", "ethanol", "水作为溶剂"])
+    "不是水", "Do not select water.", "It is not actually water.", "The molecule might be water.",
+    "不要选择水", "water or methane", "ethanol", "水作为溶剂"])
 def test_later_uncertain_negative_multiple_or_solvent_identity_is_not_registered(tmp_path, text):
     _, run, request, message, values = identity_answer(tmp_path, text)
     assert bind_text_identity(request, run, [message], values) is request
@@ -324,3 +331,24 @@ def test_later_named_answer_registers_prepare_system_in_production_commit(tmp_pa
     assert not request.unresolved and not request.goals[0].unresolved
     assert not run.calls and not run.attempts
     assert run.permission.model_dump() == config.text.permission.model_dump()
+
+
+def test_identity_question_is_not_frozen_as_a_confirmed_original_target(tmp_path):
+    store, config = text_environment(tmp_path)
+    text = "Is that molecule water? Calculate its initial geometry single-point energy."
+    run = initialize_text(store, config, text)
+    assert not store.load_request(run).systems
+    run = commit_candidate(store, run, candidate(store, run, kind="normalize", conditions=defaults(config),
+        goals=[{"key": "energy", "port": "energy", "text_basis": text,
+                "geometry_relation": "fixed_initial", "unresolved": ["ambiguous_system"]}],
+        questions=["Which molecule is the target?"]), decision_id="tentative_identity", basis=current_basis(store, run))
+    request = store.load_request(run)
+    assert not request.goals[0].identity["canonical_names"]
+    message_id = store.enqueue_message(run.id, "It is methane.")
+    run = commit_candidate(store, run, candidate(store, run, kind="amend",
+        goal_bindings={request.goals[0].id: ["methane"]}, resolves=["ambiguous_system"]),
+        decision_id="confirmed_identity", basis=current_basis(store, run))
+    updated = store.load_request(run)
+    assert updated.goals[0].identity["canonical_names"] == ["methane"]
+    assert updated.systems[0].identity["text_evidence"]["message_id"] == message_id
+    assert not updated.unresolved and not updated.goals[0].unresolved
