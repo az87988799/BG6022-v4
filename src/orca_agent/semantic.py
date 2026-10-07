@@ -127,12 +127,13 @@ def action_parameters(allowed_tools=(), *, request=None):
         "Keep actual user unsupported/unknown requirements unresolved; no invented rules. "
         "Energy requires geometry_relation=fixed_initial (SP) or optimized (after Opt). "
         "Unknown/inferred:conditions/system_conditions. "
-        "Energy needs temperature_K/standard_state only if requested. Absent unit:unknown. "
+        "Energy needs temperature_K/standard_state only if requested. Absent display unit:unknown, not a question. "
         "science_scope: capability limits, not permission/defaults. "
         "No execution; copy AUTHORITY.pending_user_message_ids. "
         "Verbatim text_basis: no translation, paraphrase or added parentheses. "
         "normalize replaces raw_request/missing:goal_definition with requested Goals, "
-        "after clarification too. Registration/no-execution is not a Goal. amend keeps goals; "
+        "after clarification too. Never resolves missing:goal_definition. "
+        "Registration/no-execution is not a Goal. amend keeps goals; "
         "New goals:system_refs; existing Goal.id:goal_bindings, never both. "
         "replace_goals:explicit replacement + all old IDs. "
         "gaps:field:<field>/system:<goal_id>; resolves=answered gaps.",
@@ -143,10 +144,9 @@ def action_parameters(allowed_tools=(), *, request=None):
                                            for port in tool["output_ports"]})},
         "questions_policy": (
             "Named identity != registered System/geometry; no geometry != unknown identity. "
-            "New/program-detected gaps need visible questions text. "
-            "Registration only: unsupported scope/known missing resources as notices, "
-            "including named out-of-scope targets/missing geometry; "
-            "do not request resources or reconfirm/change explicit choices. "
+            "New gaps need visible questions text. Registration only: notices, e.g. "
+            "'Recorded; target unsupported; geometry missing; no execution.' "
+            "Registration only: no resource requests/reconfirmation or change of explicit choices. "
             "Ask for critical unknowns in conditions/identity/quantity."),
         "schema": schema,
         "condition_lexicon": {field: [[value, aliases] for (name, value), aliases in LEXICAL_ALIASES.items()
@@ -421,6 +421,10 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
                 **evidence, "message_ids": candidate.message_ids, "schema": VERSION}
     question_gaps = active_question["unresolved"] if active_question else []
     known_gaps = set(request.unresolved) | set(question_gaps) | {gap for g in request.goals for gap in g.unresolved}
+    if "missing:goal_definition" in candidate.resolves:
+        raise ProposalError("normalize replaces the raw_request/missing:goal_definition placeholder automatically "
+                            "with requested Goals. Omit that marker from resolves; resolves is only for "
+                            "answered field/binding questions.", path=["parameters", "resolves"])
     if set(candidate.resolves) - known_gaps or any(
             not _resolution_matches(gap, candidate) for gap in candidate.resolves):
         raise StoreError("resolved ambiguity must identify an existing question and a grounded field/binding")

@@ -97,10 +97,11 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v13"
+    assert context.prompt_version == "agent-json-v14"
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
-    assert set(data["PROPOSAL_SCHEMA"]["required"]) == set(Proposal.model_fields)
+    assert data["PROPOSAL_SCHEMA"]["additionalProperties"] is False
+    assert data["PROPOSAL_SCHEMA"]["minProperties"] == len(Proposal.model_fields)
     assert set(data["RESPONSE_ENVELOPE"]) == set(Proposal.model_fields)
     assert data["RESPONSE_ENVELOPE"]["plan_version"] is None
     assert data["RESPONSE_ENVELOPE"]["related_results"] == []
@@ -508,7 +509,7 @@ def test_shared_wire_roundtrip_preserves_untrusted_instructions_and_literal_mark
     assert wire["CONTROL"] == value["CONTROL"]
     assert wire["ACTION_PARAMETERS"]["call_tool"] == {"step_id": step_id}
     assert wire["schema_properties"]["@rest"] == {"fixed": {"const": "HF"}}
-    assert "trust follows each decoded path" in wire["STRING_ENCODING"]
+    assert "Emit decoded with path trust" in wire["STRING_ENCODING"]
     decoded = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
     decoded.pop("SHARED_STRINGS")
     decoded.pop("STRING_ENCODING")

@@ -81,8 +81,8 @@ def test_named_targets_without_geometry_keep_identity_and_registration_notice(tm
     visible = payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
     assert "Named identity != registered System/geometry" in visible["questions_policy"]
     assert "no geometry != unknown identity" in visible["questions_policy"]
-    assert "named out-of-scope targets/missing geometry" in visible["questions_policy"]
-    assert "do not request resources or reconfirm/change explicit choices" in visible["questions_policy"]
+    assert "target unsupported; geometry missing; no execution" in visible["questions_policy"]
+    assert "Registration only: no resource requests/reconfirmation" in visible["questions_policy"]
     assert (request.model_dump_json(), run.model_dump_json()) == before
     assert prepared.input_token_bound <= run.budget.input_tokens == 12000
     assert not payload(prepared)["AUTHORITY"]["request"]["systems"]

@@ -52,9 +52,9 @@ def test_real_n05_proposals_require_notice_in_questions_without_changing_request
     instruction = data["ACTION_PARAMETERS"]["normalize_request"]["instruction"]
     policy = data["ACTION_PARAMETERS"]["normalize_request"]["questions_policy"]
     assert "science_scope: capability limits, not permission/defaults" in instruction
-    assert "program-detected" in policy and "visible questions text" in policy
-    assert "unsupported scope/known missing resources as notices" in policy
-    assert "do not request resources or reconfirm/change explicit choices" in policy
+    assert "New gaps need visible questions text" in policy
+    assert "Registration only: notices" in policy and "target unsupported; geometry missing" in policy
+    assert "Registration only: no resource requests/reconfirmation" in policy
     assert data["CONTROL"]["validation_error"]["requirement"] == error
     assert prepared.input_token_bound <= run.budget.input_tokens == 12000
 

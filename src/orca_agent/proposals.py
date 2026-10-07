@@ -8,6 +8,25 @@ from pydantic import Field, ValidationError
 from orca_agent.models import EvidenceRef, InputRef, OutputBinding, Plan, Record, Step, new_id
 from orca_agent.tools.registry import get_tool, validate_parameters
 
+_CALL_TOOL_FORMS = ({"step_id": str}, {"tool": str, "parameters": dict})
+
+
+def call_tool_parameters_schema(*, immediate=True):
+    """One structural contract; scientific parameters remain the Tool's job."""
+    types = {str: "string", dict: "object"}
+    forms = _CALL_TOOL_FORMS if immediate else _CALL_TOOL_FORMS[:1]
+    alternatives = [{"required": list(form), "maxProperties": len(form)} for form in forms]
+    return {"type": "object", "properties": {
+        field: {"type": types[kind]} for form in forms for field, kind in form.items()},
+        **(alternatives[0] if len(alternatives) == 1 else {"oneOf": alternatives})}
+
+
+def valid_call_tool_parameters(values):
+    """Exact disjoint forms forbid inline overrides of an existing Step."""
+    return isinstance(values, dict) and any(
+        set(values) == set(form) and all(isinstance(values[field], kind) for field, kind in form.items())
+        for form in _CALL_TOOL_FORMS)
+
 
 class ProposalError(ValueError):
     """Program-authored correction detail; never includes rejected input values."""

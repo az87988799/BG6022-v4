@@ -62,7 +62,7 @@ def test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_corr
     assert "electronic_state means RHF/UHF reference" in contract["instruction"]
     assert "no translation, paraphrase or added parentheses" in contract["instruction"]
     assert "Energy needs temperature_K/standard_state only if requested" in contract["instruction"]
-    assert "Absent unit:unknown" in contract["instruction"]
+    assert "Absent display unit:unknown" in contract["instruction"]
     assert [0, ["中性", "neutral"]] in contract["condition_lexicon"]["charge"]
     # This correction is authored by the test, not another model trajectory.
     second["conditions"]["electronic_state"] = {"value": "RHF", "source": "explicit", "text_basis": "RHF"}

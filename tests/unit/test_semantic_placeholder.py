@@ -21,6 +21,27 @@ FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/phase_b/semantic-propo
 V3 = json.loads(FIXTURE.read_text(encoding="utf-8"))
 
 
+def test_placeholder_resolution_rejection_explains_automatic_normalization_without_mutation(tmp_path):
+    store = store_at(tmp_path)
+    run, _ = create_request(store, "N-01/raw-water-sp", 1, category="development", freeze_label="offline-marker")
+    proposed = copy.deepcopy(V3["proposal"]["parameters"])
+    proposed["message_ids"] = [store.read_control(run.id)["messages"][0]["id"]]
+    proposed["goals"] = proposed["goals"][:1]
+    proposed["resolves"] = ["missing:goal_definition"]
+    before = store.load_run(run.id).model_dump_json(), store.load_request(run).model_dump_json()
+    with pytest.raises(ProposalError, match="automatically") as caught:
+        commit_candidate(store, run, proposed, decision_id="bad_marker", basis=current_basis(store, run))
+    assert caught.value.detail["path"] == ["parameters", "resolves"]
+    assert "Omit that marker" in caught.value.detail["requirement"]
+    assert (store.load_run(run.id).model_dump_json(), store.load_request(run).model_dump_json()) == before
+    proposed["resolves"] = []
+    updated = commit_candidate(store, run, proposed, decision_id="normalize_marker", basis=current_basis(store, run))
+    request = store.load_request(updated)
+    assert [goal.port for goal in request.goals] == ["energy"]
+    assert not request.unresolved and not request.goals[0].unresolved
+    assert not updated.calls and not updated.attempts and not updated.model_records
+
+
 def test_actual_v3_placeholder_shape_still_rejects_and_only_test_authored_correction_normalizes(tmp_path):
     store = store_at(tmp_path)
     run, _ = create_request(store, "N-01/raw-water-sp", 1, category="development", freeze_label="offline-v3-replay")

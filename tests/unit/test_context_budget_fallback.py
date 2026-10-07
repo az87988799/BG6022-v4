@@ -53,7 +53,7 @@ def test_shared_fact_objects_roundtrip_without_promoting_untrusted_content():
     assert any(isinstance(value, dict) for value in wire["SHARED_STRINGS"])
     decoded = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
     assert decoded["DATA"] == original["DATA"]
-    assert "never decode inside pool" in wire["STRING_ENCODING"]
+    assert "literal SHARED_STRINGS[i]; no recursion" in wire["STRING_ENCODING"]
 
 
 def test_sampling_missing_energy_does_not_hide_registered_geometry_or_source_conflict():

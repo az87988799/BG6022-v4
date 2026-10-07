@@ -12,7 +12,7 @@ from orca_agent.context import build_context
 from orca_agent.llm import DeepSeekTransport
 from orca_agent.model_usage import current_basis, send_model
 from orca_agent.models import EvidenceRef, Proposal, fingerprint, utc_now
-from orca_agent.proposals import materialize_plan
+from orca_agent.proposals import materialize_plan, valid_call_tool_parameters
 from orca_agent.store import BudgetExceeded, ControlChanged, EnvironmentBusy, StoreError
 from orca_agent.tools.dispatch import _source_hashes, execute_call
 from orca_agent.tools.registry import get_tool
@@ -246,17 +246,7 @@ def _decision(store, run, plan, results, transport, batch, fault):
             if proposal.action == "call_tool":
                 values = proposal.parameters
                 ready = _ready(plan, results)
-                if set(values) == {"step_id"}:
-                    step = next((s for s in ready if s.id == values["step_id"]), None)
-                    if step is None:
-                        from orca_agent.proposals import ProposalError
-                        raise ProposalError(
-                            "Choose an exact ID from expected_ready_step_ids. A Step with a settled Result "
-                            "cannot be executed again; a Step whose dependencies are not ready cannot execute.",
-                            path=["parameters", "step_id"], expected_ready_step_ids=[s.id for s in ready])
-                    _mark_decision(store, run, ticket, proposal, basis)
-                    return run, "step", (step, ticket)
-                if set(values) != {"tool", "parameters"}:
+                if not valid_call_tool_parameters(values):
                     readonly = [name for name in run.permission.allowed_tools
                                 if get_tool(name).effects == ["read_registered_artifact"]
                                 and run.usage.evidence_reads < run.budget.evidence_reads]
@@ -267,6 +257,16 @@ def _decision(store, run, plan, results, transport, batch, fault):
                             f"No ready Step/read Tool; only {plan_action} (new Steps), clarify, or stop.",
                             path=["action"])
                     raise StoreError("call_tool parameters must be {tool,parameters} or {step_id}; no action wrapper")
+                if "step_id" in values:
+                    step = next((s for s in ready if s.id == values["step_id"]), None)
+                    if step is None:
+                        from orca_agent.proposals import ProposalError
+                        raise ProposalError(
+                            "Choose an exact ID from expected_ready_step_ids. A Step with a settled Result "
+                            "cannot be executed again; a Step whose dependencies are not ready cannot execute.",
+                            path=["parameters", "step_id"], expected_ready_step_ids=[s.id for s in ready])
+                    _mark_decision(store, run, ticket, proposal, basis)
+                    return run, "step", (step, ticket)
                 if get_tool(values["tool"]).effects != ["read_registered_artifact"]:
                     raise StoreError("this Tool imports/writes/executes and requires a planned Step: "
                                      "use initial_plan or revise_plan; only read_registered_artifact is immediate")
