@@ -11,12 +11,14 @@ from orca_agent.llm import (
     MAX_RESPONSE_BYTES,
     ModelReply,
     ModelUsage,
+    _canonical,
     _has_credential,
     _metadata,
+    _recordable_raw_content,
     _strict_json,
 )
 from orca_agent.models import new_id, utc_now
-from orca_agent.store import BudgetExceeded, StoreError, _id, atomic_write
+from orca_agent.store import BudgetExceeded, StoreError, _id, _json_bytes, atomic_write
 
 # Frozen uncached peak prices. Discounts never enlarge reservations.
 INPUT_USD_PER_MILLION = Decimal("0.30")
@@ -28,6 +30,11 @@ _ERRORS = {
     "response_too_large", "timeout", "authentication", "permission", "rate_limit",
     "redirect_rejected", "http_error", "connection", "transport_error", "response_missing",
     "response_encoding_rejected",
+}
+_LEGACY_REPLY_FIELDS = {
+    "request_hash", "proposal", "error_category", "retryable", "usage", "response_hash",
+    "response_bytes", "response_model", "provider_request_id", "completion_id", "finish_reason",
+    "http_status", "retry_after_seconds", "elapsed_seconds",
 }
 
 
@@ -44,7 +51,13 @@ def current_basis(store, run):
 
 def _validate_reply(data, record):
     """Reconstruct bounded, typed and credential-free persisted transport facts."""
-    if not isinstance(data, dict) or set(data) != {field.name for field in fields(ModelReply)}:
+    if not isinstance(data, dict):
+        raise StoreError("invalid model response record shape")
+    if set(data) == _LEGACY_REPLY_FIELDS:
+        # This is the one historical complete shape, not a generic defaults
+        # migration. Never alter the original receipt or its settled hash.
+        data = {**data, "raw_content": None}
+    elif set(data) != {field.name for field in fields(ModelReply)}:
         raise StoreError("invalid model response record shape")
     if data["request_hash"] != record["request_hash"]:
         raise StoreError("model response request identity mismatch")
@@ -82,6 +95,18 @@ def _validate_reply(data, record):
         raise StoreError("invalid model proposal receipt")
     if proposal is None and data["error_category"] is None:
         raise StoreError("model receipt has neither a proposal nor an error")
+    raw_content = data["raw_content"]
+    if raw_content is not None:
+        if not isinstance(raw_content, str) or _recordable_raw_content(raw_content) != raw_content:
+            raise StoreError("invalid model raw content receipt")
+        if proposal is not None:
+            try:
+                parsed = _strict_json(raw_content)
+                consistent = isinstance(parsed, dict) and _canonical(parsed) == _canonical(proposal)
+            except (ValueError, UnicodeError, RecursionError):
+                consistent = False
+            if not consistent:
+                raise StoreError("model raw content differs from its proposal")
     usage = data["usage"]
     if usage is not None:
         if not isinstance(usage, dict) or set(usage) != {field.name for field in fields(ModelUsage)}:
@@ -231,6 +256,8 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
             _validate_reply(data, record)
             if _has_credential(json.dumps(data, ensure_ascii=False)):
                 raise StoreError("credential-like content in model receipt")
+            if len(_json_bytes(data)) > MAX_RESPONSE_BYTES:
+                raise StoreError("model response evidence exceeds its size bound")
             store._write_json(f"runs/{run.id}/model/{ticket}.response.json", data, immutable=True)
             if fault:
                 fault("after_model_response_saved")

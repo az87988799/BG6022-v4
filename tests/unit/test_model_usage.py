@@ -4,8 +4,14 @@ from decimal import Decimal
 
 import pytest
 
-from orca_agent.llm import ModelReply, ModelUsage, prepare_request
-from orca_agent.model_usage import current_basis, recover_models, send_model
+from orca_agent.llm import (
+    MAX_RAW_CONTENT_BYTES,
+    ModelReply,
+    ModelUsage,
+    _parse_response,
+    prepare_request,
+)
+from orca_agent.model_usage import current_basis, read_model_reply, recover_models, send_model
 from orca_agent.models import BudgetLimits, Goal, PermissionSnapshot, Request
 from orca_agent.store import BudgetExceeded, Store, StoreError
 
@@ -324,3 +330,87 @@ def test_batch_reservation_precedes_send_and_settlement_recovery_is_idempotent(s
     assert json.dumps(batch.records, sort_keys=True) == snapshot
     assert len(batch.records) == 1 and transport.sends == 1
     assert Decimal(next(iter(batch.records.values()))["cost_known_usd"]) == Decimal("0.000009")
+
+
+@pytest.mark.parametrize("content,error", [
+    (' \n{"action":"stop"} \n', None),
+    ('{"action": "stop",', "invalid_proposal_json"),
+    ('{"a":1,"a":2}', "invalid_proposal_json"),
+    ('{"action":', "truncated"),
+], ids=["success", "invalid-json", "duplicate", "truncated"])
+def test_raw_content_survives_saved_response_crash_and_replay_without_new_http(setup, content, error):
+    store, run, prepared = setup
+    response = {"choices": [{"message": {"content": content},
+                            "finish_reason": "length" if error == "truncated" else "stop"}],
+                "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}}
+    reply = _parse_response(prepared, json.dumps(response).encode(), 200, None)
+    assert reply.raw_content == content and reply.error_category == error
+    transport = ScriptedTransport(reply)
+    basis = current_basis(store, run)
+
+    def crash(stage):
+        if stage == "after_model_response_saved":
+            raise OSError("receipt saved, settlement interrupted")
+
+    with pytest.raises(OSError, match="settlement interrupted"):
+        invoke(setup, transport, fault=crash)
+    restarted = store.load_run(run.id)
+    ticket = restarted.model_records[0]["id"]
+    path = store.path(f"runs/{run.id}/model/{ticket}.response.json")
+    original = path.read_bytes()
+    assert json.loads(original)["raw_content"] == content
+    assert read_model_reply(store, restarted, restarted.model_records[0])[0] == reply
+    assert recover_models(store, restarted)[ticket] == reply
+    saved = store.path(f"runs/{run.id}/run.json").read_bytes()
+    assert invoke((store, restarted, prepared), transport, basis=basis) == reply
+    assert transport.sends == 1 and restarted.usage.model_calls == 1
+    assert restarted.usage.model_tokens_used == 15 and restarted.usage.model_tokens_unknown == 0
+    assert recover_models(store, restarted)[ticket] == reply
+    assert path.read_bytes() == original and store.path(f"runs/{run.id}/run.json").read_bytes() == saved
+
+
+@pytest.mark.parametrize("raw_content", [
+    42, False, [], {}, "x" * (MAX_RAW_CONTENT_BYTES + 1),
+    "水" * (MAX_RAW_CONTENT_BYTES // 3 + 1), "\x00" * 12000,
+    "Bearer do-not-persist", 'bad JSON "\\u0073k-abcdefghijklmnopqr',
+], ids=["integer", "boolean", "list", "dict", "ascii-over-limit", "utf8-over-limit",
+        "json-expansion", "bearer", "escaped-credential"])
+def test_invalid_or_sensitive_raw_receipt_never_reaches_disk_or_releases_budget(setup, raw_content):
+    store, run, prepared = setup
+    reply = ModelReply(request_hash=prepared.request_hash, raw_content=raw_content,
+                       error_category="invalid_proposal_json", usage=ModelUsage(10, 5, 15))
+    with pytest.raises(StoreError, match="raw content"):
+        invoke(setup, ScriptedTransport(reply))
+    assert not list(store.path(f"runs/{run.id}/model").glob("*.response.json"))
+    assert run.usage.model_tokens_unknown == prepared.reserved_tokens and run.usage.model_tokens_used == 0
+
+
+@pytest.mark.parametrize("raw_content", [
+    '{"action":"clarify"}', '{"action":"stop","action":"stop"}',
+    '```json\n{"action":"stop"}\n```', '{"action":"stop","value":NaN}',
+    "[]", '{"a":' * 26 + '0' + '}' * 26,
+], ids=["different", "duplicate", "fenced", "nan", "array", "deep"])
+def test_raw_text_must_strictly_parse_to_the_same_successful_proposal(setup, raw_content):
+    store, run, prepared = setup
+    reply = ModelReply(request_hash=prepared.request_hash, raw_content=raw_content,
+                       proposal={"action": "stop"}, usage=ModelUsage(10, 5, 15))
+    with pytest.raises(StoreError, match="raw content differs"):
+        invoke(setup, ScriptedTransport(reply))
+    assert not list(store.path(f"runs/{run.id}/model").glob("*.response.json"))
+    assert run.usage.model_tokens_unknown == prepared.reserved_tokens
+
+
+@pytest.mark.parametrize("finish", ["stop", "length"])
+def test_credential_response_settles_usage_without_writing_sensitive_raw_text(setup, monkeypatch, finish):
+    store, run, prepared = setup
+    secret = "test-secret-credential"
+    monkeypatch.setenv("DEEPSEEK_API_KEY", secret)
+    response = {"choices": [{"message": {"content": '{"text":"' + secret}, "finish_reason": finish}],
+                "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}}
+    reply = _parse_response(prepared, json.dumps(response).encode(), 200, None)
+    transport = ScriptedTransport(reply)
+    invoke(setup, transport)
+    assert reply.raw_content is None and reply.proposal is None and reply.error_category
+    assert all(secret.encode() not in path.read_bytes() for path in store.path(f"runs/{run.id}/model").glob("*.json"))
+    assert run.usage.model_tokens_used == 15 and run.usage.model_tokens_unknown == 0
+    assert invoke(setup, transport) == reply and transport.sends == 1

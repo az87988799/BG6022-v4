@@ -18,7 +18,7 @@ import os
 import re
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from typing import Any
 
 BASE_URL = "https://api.deepseek.com"
@@ -29,6 +29,8 @@ MAX_INPUT_TOKENS = 12_000
 MAX_OUTPUT_TOKENS = 2_000
 MAX_RESPONSE_BYTES = 128 * 1024
 MAX_PROPOSAL_BYTES = 32 * 1024
+MAX_RAW_CONTENT_BYTES = MAX_PROPOSAL_BYTES
+MAX_RAW_CONTENT_JSON_BYTES = 2 * MAX_PROPOSAL_BYTES
 MAX_MESSAGES = 64
 TOKEN_BOUND_VERSION = "deepseek-v41-utf8-upper-v2"
 
@@ -49,6 +51,7 @@ _FRAMING_BASE = 512
 _FRAMING_PER_MESSAGE = 64
 _CREDENTIAL = re.compile(r"(?:sk-[A-Za-z0-9_-]{16,}|Bearer\s+\S+)", re.IGNORECASE)
 _SAFE_METADATA = re.compile(r"[A-Za-z0-9_.:/-]{1,160}\Z")
+_JSON_ESCAPE = re.compile(r'\\(?:u[0-9a-fA-F]{4}|["\\/bfnrt])')
 
 
 class ModelConfigurationError(RuntimeError):
@@ -101,6 +104,7 @@ class ModelReply:
 
     request_hash: str
     proposal: dict[str, Any] | None = field(default=None, repr=False)
+    raw_content: str | None = field(default=None, repr=False)
     error_category: str | None = None
     retryable: bool = False
     usage: ModelUsage | None = None
@@ -122,6 +126,32 @@ class ModelReply:
 def _has_credential(text: str) -> bool:
     secret = os.environ.get("DEEPSEEK_API_KEY")
     return bool((secret and secret in text) or _CREDENTIAL.search(text))
+
+
+def _recordable_raw_content(value: Any) -> str | None:
+    """Preserve only bounded, credential-free text, including failed proposals.
+
+    Escape decoding is solely a conservative credential scan. The returned
+    evidence remains byte-for-byte text; proposal parsing never uses this scan.
+    The JSON bound also keeps control-character expansion inside receipt limits.
+    """
+    if not isinstance(value, str):
+        return None
+    try:
+        if (len(value.encode("utf-8")) > MAX_RAW_CONTENT_BYTES
+                or len(json.dumps(value, ensure_ascii=False).encode("utf-8")) > MAX_RAW_CONTENT_JSON_BYTES):
+            return None
+    except UnicodeError:
+        return None
+    scanned = value
+    for _ in range(25):
+        if _has_credential(scanned):
+            return None
+        decoded = _JSON_ESCAPE.sub(lambda match: json.loads('"' + match[0] + '"'), scanned)
+        if decoded == scanned:
+            return value
+        scanned = decoded
+    return None
 
 
 def _canonical(value: Any) -> str:
@@ -166,7 +196,7 @@ def input_token_upper_bound(body: Mapping[str, Any]) -> int:
 def prepare_request(
     messages: Sequence[Mapping[str, str]],
     *,
-    prompt_version: str = "agent-json-v7",
+    prompt_version: str = "agent-json-v8",
     max_output_tokens: int = MAX_OUTPUT_TOKENS,
     timeout_seconds: float = 60,
 ) -> PreparedRequest:
@@ -270,6 +300,11 @@ def _parse_response(request: PreparedRequest, raw: bytes, status: int, request_i
         return ModelReply(**facts, error_category="invalid_response_json")
     if not isinstance(response, dict):
         return ModelReply(**facts, error_category="invalid_response_shape")
+    choices = response.get("choices")
+    choice = choices[0] if isinstance(choices, list) and len(choices) == 1 else None
+    message = choice.get("message") if isinstance(choice, dict) else None
+    content = message.get("content") if isinstance(message, dict) else None
+    facts["raw_content"] = _recordable_raw_content(content)
     usage = _usage(response.get("usage"), request)
     facts.update(usage=usage, response_model=_metadata(response.get("model")),
                  completion_id=_metadata(response.get("id")))
@@ -282,27 +317,27 @@ def _parse_response(request: PreparedRequest, raw: bytes, status: int, request_i
         # Observed excess usage is still real expenditure. Settle it as known,
         # reject the proposal, and let the caller stop further model activity.
         return ModelReply(**facts, error_category="token_bound_exceeded")
-    choices = response.get("choices")
     if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], dict):
         return ModelReply(**facts, error_category="invalid_response_shape")
-    choice = choices[0]
     finish = _metadata(choice.get("finish_reason"))
     facts["finish_reason"] = finish
     if finish == "length":
         return ModelReply(**facts, error_category="truncated")
     if finish != "stop":
         return ModelReply(**facts, error_category="unexpected_finish_reason")
-    message = choice.get("message")
     if not isinstance(message, dict) or message.get("tool_calls") or message.get("function_call"):
         return ModelReply(**facts, error_category="invalid_response_shape")
     if message.get("reasoning_content"):
         return ModelReply(**facts, error_category="unexpected_thinking")
-    content = message.get("content")
     if not isinstance(content, str) or not content.strip():
         return ModelReply(**facts, error_category="empty_content")
-    if len(content.encode("utf-8")) > MAX_PROPOSAL_BYTES:
+    try:
+        content_bytes = len(content.encode("utf-8"))
+    except UnicodeError:
+        return ModelReply(**facts, error_category="invalid_proposal_json")
+    if content_bytes > MAX_PROPOSAL_BYTES:
         return ModelReply(**facts, error_category="proposal_too_large")
-    if _has_credential(content):
+    if facts["raw_content"] is None and _has_credential(content):
         return ModelReply(**facts, error_category="credential_in_response")
     try:
         proposal = _strict_json(content)
@@ -310,6 +345,13 @@ def _parse_response(request: PreparedRequest, raw: bytes, status: int, request_i
         return ModelReply(**facts, error_category="invalid_proposal_json")
     if not isinstance(proposal, dict):
         return ModelReply(**facts, error_category="proposal_not_object")
+    serialized = _canonical(proposal)
+    try:
+        serialized.encode("utf-8")
+    except UnicodeError:
+        return ModelReply(**facts, error_category="invalid_proposal_json")
+    if _has_credential(serialized):
+        return ModelReply(**{**facts, "raw_content": None}, error_category="credential_in_response")
     return ModelReply(**facts, proposal=proposal)
 
 
@@ -472,6 +514,12 @@ class DeepSeekTransport:
         except Exception as exc:
             reply = _exception_reply(request, exc)
         reply = ModelReply(**{**reply.__dict__, "elapsed_seconds": time.monotonic() - started})
+        # Match the Store's actual JSON representation, including indentation:
+        # a small nested proposal may expand substantially when persisted.
+        if len((json.dumps(asdict(reply), ensure_ascii=False, indent=2, allow_nan=False)
+                + "\n").encode("utf-8")) > MAX_RESPONSE_BYTES:
+            reply = replace(reply, proposal=None, raw_content=None,
+                            error_category=reply.error_category or "proposal_too_large")
         settle(ticket, reply)
         return reply
 

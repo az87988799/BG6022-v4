@@ -91,31 +91,32 @@ def pending_messages(store, run):
 
 def action_parameters(allowed_tools=()):
     schema = _schema(SemanticCandidate.model_json_schema())
-    ports = ",".join(RULES)
+    port_rules = {port: rule for port, rule in RULES.items() if port != "unresolved"}
+    ports = ",".join(port_rules)
     return {"normalize_request": {
-        "instruction": "Normalize pending trusted user messages before any Plan. "
-        f"Goal ports:{ports}. For observations, query follows query_schemas[port]. "
+        "instruction": "Normalize user messages before planning. "
+        f"Goal ports:{ports}. Observation query follows query_schemas[port]. "
         "Use environment for gas/solvent. condition_lexicon[field] rows=[value,explicit aliases], not inference. "
         "electronic_state means RHF/UHF reference, not ground/excited; RHF text is explicit RHF. "
         "Use registered System.geometry_artifact_id via system_refs; never put geometry in conditions. "
         "explain_results is existing configuration: leave unchanged. "
         "minimum_evidence defaults to [] (port checks still apply); use minimum_evidence_rules. "
-        "Keep unsupported requirements verbatim/unresolved; never invent rule names. "
+        "Keep only actual user unsupported/unknown requirements verbatim/unresolved; never invent rule names. "
         "Energy requires geometry_relation=fixed_initial (single point) or optimized (after optimization). "
-        "Unknown/inferred settings:Candidate.conditions/system_conditions; preserve goals.unresolved. "
+        "Unknown/inferred settings:Candidate.conditions/system_conditions. "
         "Energy needs no temperature_K/standard_state gap unless the user requires them. Absent unit:unknown. "
-        "Scope:H2O/CH4,RHF/STO-3G,neutral singlet,gas,SP/Opt; keep unsupported/unknown, never default them. "
-        "No execution granted. Copy AUTHORITY.pending_user_message_ids. "
+        "Scope:H2O/CH4,RHF/STO-3G,neutral singlet,gas,SP/Opt; never default unsupported/unknown. "
+        "No execution. Copy AUTHORITY.pending_user_message_ids. "
         "Verbatim text_basis: no translation, paraphrase or added parentheses. "
-        "normalize defines raw_request (also after clarification); amend retains goals; "
+        "normalize replaces initial raw_request/missing:goal_definition with actual requested Goals, "
+        "including after clarification. Registration-only/no-execution limits are not extra Goals. amend retains goals; "
         "goal_bindings fills system refs; replace_goals requires explicit replacement and all old IDs. "
-        "New gaps require questions; gaps:field:<field>/system:<goal_id>; resolves must match answers. "
-        "Omit unchanged fields.",
+        "New gaps require questions; gaps:field:<field>/system:<goal_id>; resolves must match answers.",
         "schema": schema,
         "condition_lexicon": {field: [[value, aliases] for (name, value), aliases in LEXICAL_ALIASES.items()
                                       if name == field] for field in dict.fromkeys(name for name, _ in LEXICAL_ALIASES)},
         "minimum_evidence_rules": {"version": MINIMUM_EVIDENCE_VERSION, "registered": REQUIREMENTS,
-                                   "legacy_aliases": LEGACY_NAMES, "port_rules": RULES},
+                                   "legacy_aliases": LEGACY_NAMES, "port_rules": port_rules},
         "query_schemas": {port: _schema(get_tool(name).parameter_schema) for port, name in READ_TOOLS.items()
                           if name in allowed_tools}}}
 

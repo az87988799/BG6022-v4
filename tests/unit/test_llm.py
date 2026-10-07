@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from orca_agent.llm import (
+    MAX_RAW_CONTENT_BYTES,
     MAX_RESPONSE_BYTES,
     DeepSeekTransport,
     ModelConfigurationError,
@@ -142,6 +143,7 @@ def test_single_transmission_with_frozen_options_and_known_usage(send):
     assert body["response_format"] == {"type": "json_object"}
     assert "tools" not in body
     assert reply.proposal == {"action": "stop"}
+    assert reply.raw_content == '{"action":"stop"}'
     assert reply.usage.total_tokens == 22
     assert reply.provider_request_id == "provider-1"
     assert reply.response_model == "deepseek-flash"
@@ -206,6 +208,85 @@ def test_credentials_cannot_escape_through_exception_or_response(send):
     reply, _ = send(completion('{"text":"test-secret-credential"}'))
     assert reply.error_category == "credential_in_response"
     assert "test-secret-credential" not in json.dumps(asdict(reply))
+
+
+@pytest.mark.parametrize("content,finish,category", [
+    (' \n{"action": "stop", "reason": "水"}\n ', "stop", None),
+    ("not json", "stop", "invalid_proposal_json"),
+    ('```json\n{"action":"stop"}\n```', "stop", "invalid_proposal_json"),
+    ('{"a":1,"a":2}', "stop", "invalid_proposal_json"),
+    ('{"a":NaN}', "stop", "invalid_proposal_json"),
+    ('{"a":1e999}', "stop", "invalid_proposal_json"),
+    ('{"a":' * 26 + '0' + '}' * 26, "stop", "invalid_proposal_json"),
+    ('{"action":', "length", "truncated"),
+    ("[]", "stop", "proposal_not_object"),
+    ("", "stop", "empty_content"),
+    ("{}", "tool_calls", "unexpected_finish_reason"),
+], ids=["exact-success", "plain-text", "fenced", "duplicate", "nan", "infinite", "deep",
+        "truncated", "array", "empty", "unexpected-finish"])
+def test_original_content_survives_success_or_failure_without_repair(send, content, finish, category):
+    reply, _ = send(completion(content, finish=finish))
+    assert reply.error_category == category
+    assert reply.raw_content == content
+    assert content not in repr(reply) if content else "raw_content=" not in repr(reply)
+    assert reply.usage.total_tokens == 22 and reply.response_hash and reply.response_bytes
+    if category is not None:
+        assert reply.proposal is None
+
+
+@pytest.mark.parametrize("content,retained,category", [
+    ("x" * MAX_RAW_CONTENT_BYTES, True, "invalid_proposal_json"),
+    ("x" * (MAX_RAW_CONTENT_BYTES + 1), False, "proposal_too_large"),
+    ("水" * (MAX_RAW_CONTENT_BYTES // 3 + 1), False, "proposal_too_large"),
+    ("\x00" * 12000, False, "invalid_proposal_json"),
+], ids=["at-limit", "ascii-over-limit", "utf8-over-limit", "json-expansion"])
+def test_raw_content_uses_utf8_and_serialized_receipt_bounds(send, content, retained, category):
+    reply, _ = send(completion(content))
+    assert reply.error_category == category and reply.proposal is None
+    assert reply.raw_content == (content if retained else None)
+    assert reply.usage.total_tokens == 22 and reply.response_hash
+
+
+@pytest.mark.parametrize("content,finish", [
+    ('{"text":"test-secret-credential"}', "stop"),
+    ('{"text":"Bearer secret-value"}', "stop"),
+    ('{"text":"sk-abcdefghijklmnopqr"}', "stop"),
+    ('{"text":"' + ''.join(f"\\u{ord(c):04x}" for c in "test-secret-credential") + '"}', "stop"),
+    ('bad JSON "' + ''.join(f"\\u{ord(c):04x}" for c in "test-secret-credential"), "stop"),
+    ('{"text":"test-secret-credential', "length"),
+], ids=["secret", "bearer", "key-pattern", "escaped-secret", "invalid-escaped-secret", "truncated-secret"])
+def test_no_sensitive_raw_text_is_retained_even_when_invalid_or_truncated(send, content, finish):
+    reply, _ = send(completion(content, finish=finish))
+    assert reply.proposal is None and reply.raw_content is None
+    assert reply.error_category is not None and reply.usage.total_tokens == 22
+    assert content not in json.dumps(asdict(reply), ensure_ascii=False)
+    assert "test-secret-credential" not in json.dumps(asdict(reply), ensure_ascii=False)
+
+
+def test_unencodable_provider_content_keeps_diagnostics_without_raw_text(send):
+    raw = json.loads(completion())
+    raw["choices"][0]["message"]["content"] = "\ud800"
+    reply, _ = send(json.dumps(raw, ensure_ascii=True).encode())
+    assert reply.error_category == "invalid_proposal_json" and reply.raw_content is None
+    assert reply.usage.total_tokens == 22
+
+
+def test_complete_receipt_bound_discards_expanded_proposal_but_preserves_usage(send):
+    content = '{"a":' * 20 + '[' + ','.join(['0'] * 3200) + ']' + '}' * 20
+    assert len(content.encode()) < MAX_RAW_CONTENT_BYTES
+    reply, _ = send(completion(content))
+    assert reply.error_category == "proposal_too_large"
+    assert reply.proposal is None and reply.raw_content is None
+    assert reply.usage.total_tokens == 22 and reply.response_hash
+    assert len(json.dumps(asdict(reply), ensure_ascii=False, indent=2).encode()) < MAX_RESPONSE_BYTES
+
+
+def test_escaped_surrogate_is_failed_but_its_safe_original_text_and_usage_survive(send):
+    content = '{"text":"\\ud800"}'
+    reply, _ = send(completion(content))
+    assert reply.error_category == "invalid_proposal_json" and reply.proposal is None
+    assert reply.raw_content == content and reply.usage.total_tokens == 22
+    json.dumps(asdict(reply), ensure_ascii=False).encode("utf-8")
 
 
 @pytest.mark.parametrize(("status", "category", "retryable"), [
