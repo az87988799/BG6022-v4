@@ -69,7 +69,8 @@ def test_no_tool_context_keeps_stop_and_clarify_without_changing_user_scope(tmp_
     assert set(data["ACTION_PARAMETERS"]) == {"clarify", "stop"}
     assert data["TOOL_CATALOG"] == []
     assert data["AUTHORITY"]["user_originals"][0]["text"] == request.original_text
-    assert data["AUTHORITY"]["request"]["goals"] == [goal.model_dump(mode="json", exclude={"unresolved"})
+    assert data["AUTHORITY"]["request"]["goals"] == [goal.model_dump(
+        mode="json", exclude={"unresolved", "identity", "text_evidence"})
         for goal in request.goals]
     assert data["AUTHORITY"]["request"]["conditions_source"] == request.conditions_source
     assert data["AUTHORITY"]["request"]["condition_evidence"] == request.condition_evidence
