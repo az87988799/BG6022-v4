@@ -81,7 +81,7 @@ def test_uncertain_conditions_persist_with_provenance_and_blocking_fact(tmp_path
     store, run, _, _ = query_run(tmp_path)
     store.enqueue_message(run.id, "可能用HF，尚待确认")
     parameters = candidate(store, run, kind="amend", conditions={"method": {
-        "value": value, "source": source, "text_basis": "可能用HF，尚待确认"}})
+        "value": value, "source": source, "text_basis": "可能用HF，尚待确认"}}, questions=["是否确认采用HF？"])
     updated = commit_candidate(store, run, parameters, decision_id="uncertain", basis=current_basis(store, run))
     request = store.load_request(updated)
     assert request.method == value and request.conditions_source["method"] == source
@@ -114,7 +114,7 @@ def test_raw_multi_system_energy_is_split_without_pretyped_goals_or_conditions(t
         {"id": "water", "file": "water.xyz"}, {"id": "methane", "file": "methane.xyz"}]))
     updated = commit_candidate(store, run, candidate(store, run, kind="normalize", goals=[{
         "key": "both", "port": "energy", "text_basis": text, "system_refs": ["water", "methane"],
-        "geometry_relation": "fixed_initial"}]),
+        "geometry_relation": "fixed_initial"}], questions=["请确认各体系的方法、基组、电荷与多重度。"]),
         decision_id="split", basis=current_basis(store, run))
     goals = store.load_request(updated).goals
     assert [(g.id, g.system_ids, g.required) for g in goals] == [

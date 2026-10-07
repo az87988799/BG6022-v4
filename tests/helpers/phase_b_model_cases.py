@@ -24,6 +24,8 @@ from orca_agent.tools.analysis import bind_energy
 PROJECT = Path(__file__).resolve().parents[2]
 CASES = PROJECT / "tests/fixtures/phase_b/cases.json"
 RAW_CASES = PROJECT / "tests/fixtures/phase_b/raw-text-cases.json"
+RAW_CASES_V1 = PROJECT / "tests/fixtures/phase_b/raw-text-cases-v1.json"
+RAW_CASES_V1_SHA256 = "5166cb94d11904d5f590f2393be52aa7fdfb498407dd5990f3ae0ef6492ca78d"
 INDEX = PROJECT / "docs/acceptance/phase-b/evidence-index.json"
 MANIFEST = PROJECT / "tests/fixtures/phase_b/sampling-candidates.json"
 RAW = PROJECT / "tests/fixtures/phase_a/real_water_sp"
@@ -49,20 +51,29 @@ def evaluation_variant_ids():
                                    for variant in case["variants"]))
 
 
-def variant_spec(variant_id):
+def variant_spec(variant_id, *, recorded_sha256=None):
     """Return the frozen inherited specification without turning it into permission."""
     if variant_id not in evaluation_variant_ids():
         raise ValueError("variant is outside the declared fixed-evidence allocation")
     case_id, local_id = variant_id.split("/")
     source = CASES if variant_id in fixed_variant_ids() else RAW_CASES
-    document = _read(source)
+    contents = source
+    if recorded_sha256 is not None and recorded_sha256 != sha256_file(source):
+        # Only already-recorded metadata can select this exact historical spec.
+        # Keep its original canonical expected_ref; new Runs always use current.
+        if source != RAW_CASES or recorded_sha256 != RAW_CASES_V1_SHA256:
+            raise ValueError("evaluation identity or frozen expected assertions changed")
+        if sha256_file(RAW_CASES_V1) != RAW_CASES_V1_SHA256:
+            raise ValueError("historical raw specification hash differs")
+        contents = RAW_CASES_V1
+    document = _read(contents)
     ci, case = next((i, c) for i, c in enumerate(document["cases"]) if c["id"] == case_id)
     vi, variant = next((i, v) for i, v in enumerate(case["variants"]) if v["id"] == local_id)
     return {"case": copy.deepcopy(case), "variant": copy.deepcopy(variant),
             "input": {**copy.deepcopy(case["input"]), **copy.deepcopy(variant.get("input", {}))},
             "budget": {**case["budget"], **variant.get("budget_override", {})},
             "expected_ref": f"{source.relative_to(PROJECT).as_posix()}#/cases/{ci}/variants/{vi}/expected",
-            "spec_sha256": sha256_file(source)}
+            "spec_sha256": sha256_file(contents)}
 
 
 def _raw_intake(store, spec, metadata):
@@ -645,7 +656,7 @@ def evaluate_response(store, run, metadata, *, review=None):
     disclosure/action/interpretation, but cannot turn absent scientific evidence
     or an unexecuted HTTP trajectory into a passed scientific result.
     """
-    spec = variant_spec(metadata["variant_id"])
+    spec = variant_spec(metadata["variant_id"], recorded_sha256=metadata["spec_sha256"])
     if (metadata["spec_sha256"] != spec["spec_sha256"] or metadata["expected"] != spec["variant"]["expected"]
             or metadata["expected_ref"] != spec["expected_ref"] or metadata["run_id"] != run.id):
         raise ValueError("evaluation identity or frozen expected assertions changed")
@@ -682,6 +693,7 @@ def evaluate_response(store, run, metadata, *, review=None):
     complete = bool(request.goals) and all(run.goal_status.get(g.id) == "satisfied" for g in request.goals if g.required)
     facts = {
         "raw_request.accepted_normalization": any(a["action"] == "normalize_request" for a in actions),
+        "raw_request.normalization_status": request.normalization_status,
         "raw_request.goal_ports": sorted({g.port for g in request.goals}),
         "raw_request.geometry_relations": sorted({g.conditions["geometry_relation"] for g in request.goals
                                                   if g.conditions.get("geometry_relation")}),

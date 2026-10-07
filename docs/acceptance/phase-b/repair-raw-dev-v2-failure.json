@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "category": "real_model_development",
+  "status": "failed",
+  "code_commit": "f63adb5742722ab620d7302edf772dc3307b1b21",
+  "prompt_version": "agent-json-v6",
+  "freeze_label": "repair-raw-dev-v2",
+  "variant_id": "N-01/raw-water-sp",
+  "run_id": "run_e26a63bfcdfd4e3bbd9523f24dcb5a25",
+  "http_requests": 2,
+  "tokens": 7249,
+  "orca_starts": 0,
+  "accepted_proposals": 1,
+  "independent_review": {
+    "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v2/N-01__raw-water-sp/1/review.json",
+    "sha256": "2e8476ef08a2a1df69fa48cd4ca648a583b7a3592fd7482bf1fc050277df82d5",
+    "all_proposal_facts_passed": false,
+    "semantic_review_passed": false,
+    "explanation": {
+      "quantity": {
+        "status": "passed",
+        "quote": "quantity:single-point electronic energy",
+        "rationale": "最后已采纳提案正确保留单点电子能，Goal为energy且几何关系fixed_initial；未偷换自由能或优化目标。"
+      },
+      "unit": {
+        "status": "passed",
+        "quote": "unit:hartree (default for energy port)",
+        "rationale": "这是拟议energy端口的单位约定，不是已计算数值。Hartree与注册ORCA电子能端口Eh相容；用户未指定其他单位，且limits明确本轮不执行。无实际数值/单位转换需要核验，不把此句当科学Result。"
+      },
+      "conditions": {
+        "status": "failed",
+        "quote": "method=RHF (explicit),basis=STO-3G (explicit),charge=0 (explicit '中性'),multiplicity=1 (explicit '单重态'),environment=gas (explicit '气相'),geometry_relation=fixed_initial (explicit '单点')",
+        "rationale": "列出的明确条件正确，但遗漏候选实际新增electronic_state=ground/inferred。程序当前有效electronic_state为unknown，另有method/electronic_state冲突，最后说明没有披露。"
+      },
+      "source": {
+        "status": "failed",
+        "quote": "source:explicit from user message",
+        "rationale": "原文中的科学字段具有明确依据，但最后说明把来源概括为explicit，遗漏已采纳的inferred electronic_state及其用户未确认状态；不能满足完整来源披露。"
+      },
+      "limits": {
+        "status": "passed",
+        "quote": "limits:registration only, no execution this round (permission.scientific_execution=false, orca_starts=0)",
+        "rationale": "与不可执行权限、0 ORCA、0 Tool、0 Attempt和没有Result的持久证据一致；模型没有声称完成科学计算。"
+      },
+      "next_action": {
+        "status": "failed",
+        "quote": "next:register goal on energy port bound to system water, preserve unresolved raw_request goal.",
+        "rationale": "raw_request已被替换，实际等待原因是模型新增的electronic_state推断/冲突。没有questions也没有向用户给出正确的下一步；当前简单登记未达到无额外歧义的完成状态。"
+      }
+    }
+  },
+  "evidence_files": [
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v2/N-01__raw-water-sp/1/metadata.json",
+      "sha256": "c6ae84023c8e403c1db764a66a4780ed4b88251aec47ab4ab5129d4954e00e93"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v2/N-01__raw-water-sp/1/execution.json",
+      "sha256": "9bbbd586f732d99669be544aa33659fdd96d2b4854e1f6ead709f1426b5ae7c4"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v2/N-01__raw-water-sp/1/grade-before-independent-review.json",
+      "sha256": "fe7e10def0535b67b7d8459d2e9d8a9269f12b7f18a9438ea81ab7e1a0cbd1ca"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v2/N-01__raw-water-sp/1/grade.json",
+      "sha256": "fb8236ead63146dc4cd92a49b8a6021a9a8f855e944d07af4a87c4e2e606fd6f"
+    }
+  ],
+  "findings": [
+    "The first proposal added translated parentheses to verbatim text_basis and falsely described ground state as explicit.",
+    "The accepted candidate added inferred electronic_state=ground although the user specified RHF. This produced unconfirmed:electronic_state and conflicting_condition:method/electronic_state, with no clarification question.",
+    "The accepted explanation omitted the added uncertainty and said to preserve the raw_request placeholder despite proposing its replacement.",
+    "Mechanical assertions passed, but independent all-proposal facts/semantics and three final explanation axes failed. Future assertions must also verify no spurious clarification for complete input."
+  ],
+  "follow_up": "Keep this failure and costs. Expose canonical field meanings from the same validator vocabulary, distinguish RHF reference state from spin/ground-state claims, strengthen normalized-state assertions and rerun only under cumulative limits."
+}

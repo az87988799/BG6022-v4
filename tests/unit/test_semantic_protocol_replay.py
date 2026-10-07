@@ -92,7 +92,7 @@ def test_user_unknown_minimum_requirement_preserved_as_unresolved(tmp_path):
     run = initialize_bundle(store, Config(), bundle_at(tmp_path, goals=None, text=text))
     proposed = candidate(store, run, kind="normalize", goals=[{
         "key": "read", "port": "text_window", "text_basis": text,
-        "minimum_evidence": ["实验独立复测"]}])
+        "minimum_evidence": ["实验独立复测"]}], questions=["实验独立复测不受当前工具支持，是否保留为未满足要求？"])
     updated = commit_candidate(store, run, proposed, decision_id="user_requirement", basis=current_basis(store, run))
     request = store.load_request(updated)
     assert request.goals[0].minimum_evidence == ["实验独立复测"]
@@ -107,7 +107,8 @@ def test_registered_minimum_requirements_are_not_mistaken_for_unknown_user_text(
     text = store.load_request(run).original_text
     proposed = candidate(store, run, kind="normalize", goals=[{
         "key": "energy", "port": "energy", "text_basis": text, "system_refs": ["water"],
-        "geometry_relation": "fixed_initial", "minimum_evidence": [requirement]}])
+        "geometry_relation": "fixed_initial", "minimum_evidence": [requirement]}],
+        questions=["请确认方法、基组、电荷与多重度，当前脚本尚未填写这些条件。"])
     updated = commit_candidate(store, run, proposed, decision_id="registered_rule", basis=current_basis(store, run))
     goal = store.load_request(updated).goals[0]
     assert goal.minimum_evidence == [requirement]

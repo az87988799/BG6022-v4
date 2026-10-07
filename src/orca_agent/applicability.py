@@ -15,6 +15,10 @@ PURPOSE_VERSION = "current-purpose-1"
 
 
 def canonical_condition(name, value):
+    # JSON booleans/floats must not satisfy integer electronic conditions via
+    # Python's False == 0 / True == 1 / 0.0 == 0 equality.
+    if name in {"charge", "multiplicity"} and type(value) is not int:
+        return None
     if isinstance(value, str):
         if value.strip().lower() in {"unknown", "unresolved", "not_applicable", ""}:
             return None

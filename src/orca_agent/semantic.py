@@ -5,10 +5,12 @@ These local schemas never grant permission or certify scientific success.
 """
 
 import re
+import unicodedata
 from typing import Any, Literal, get_args
 
 from pydantic import Field, ValidationError
 
+from orca_agent.applicability import canonical_condition
 from orca_agent.context import _schema
 from orca_agent.minimum_evidence import LEGACY_NAMES, REQUIREMENTS
 from orca_agent.minimum_evidence import RULE_VERSION as MINIMUM_EVIDENCE_VERSION
@@ -24,6 +26,15 @@ ConditionName = Literal["method", "basis", "charge", "multiplicity", "electronic
                         "temperature_K", "standard_state"]
 CONDITIONS = frozenset(get_args(ConditionName))
 PHYSICAL = CONDITIONS - {"temperature_K", "standard_state"}
+LEXICAL_ALIASES = {
+    ("charge", 0): ("中性", "neutral"),
+    ("multiplicity", 1): ("单重态", "单重", "singlet"),
+    ("environment", "gas"): ("气相", "gas", "vacuum"),
+    ("environment", "gas_phase"): ("气相", "gas phase", "vacuum"),
+    ("environment", "water_solvent"): ("水溶剂", "水溶液", "water solvent", "aqueous"),
+    ("electronic_state", "RHF"): ("rhf", "闭壳层"),
+    ("method", "HF"): ("hf", "rhf", "hartree-fock"),
+}
 READ_TOOLS = {port: tool["name"] for tool in catalog()
               if tool["effects"] == ["read_registered_artifact"] for port in tool["observation_outputs"]}
 RULES = {port: tool["check_version"] for tool in catalog()
@@ -80,28 +91,29 @@ def pending_messages(store, run):
 
 def action_parameters(allowed_tools=()):
     schema = _schema(SemanticCandidate.model_json_schema())
-    ports = ", ".join(RULES)
+    ports = ",".join(RULES)
     return {"normalize_request": {
-        "instruction": "Interpret pending trusted user messages using this parameter schema. "
-        f"Registered goal ports: {ports}. For observation goals, query follows query_schemas[port]. "
-        f"Condition keys only: {', '.join(get_args(ConditionName))}. Use environment for gas/solvent. "
-        "Geometry is already registered in System.geometry_artifact_id: bind system_refs; never put geometry in conditions. "
-        "explain_results is existing configuration: leave it unchanged, outside candidate conditions. "
-        "minimum_evidence defaults to [] (the port's basic checks still apply). Use minimum_evidence_rules; "
-        "unregistered user requirements must be exact user quotes and remain unresolved; do not invent rule names. "
+        "instruction": "Normalize pending trusted user messages before any Plan. "
+        f"Goal ports:{ports}. For observations, query follows query_schemas[port]. "
+        "Use environment for gas/solvent. condition_lexicon[field] rows=[value,explicit aliases], not inference. "
+        "electronic_state means RHF/UHF reference, not ground/excited; RHF text is explicit RHF. "
+        "Use registered System.geometry_artifact_id via system_refs; never put geometry in conditions. "
+        "explain_results is existing configuration: leave unchanged. "
+        "minimum_evidence defaults to [] (port checks still apply); use minimum_evidence_rules. "
+        "Keep unsupported requirements verbatim/unresolved; never invent rule names. "
         "Energy requires geometry_relation=fixed_initial (single point) or optimized (after optimization). "
-        "Put unknown/inferred settings in Candidate.conditions/system_conditions; preserve goals.unresolved. "
-        "No Plan yet. Preserve unsupported requests. References must already be registered. "
-        "Current scientific scope: registered H2O/CH4, RHF/STO-3G, neutral singlet, gas phase, SP/Opt; "
-        "recognition never grants execution. Unsupported conditions stay in the Request with unresolved reasons. "
-        "Copy message_ids from AUTHORITY.pending_user_message_ids; use exact quotations; unknown is not a default. "
-        "normalize until the initial raw_request goal is defined, including answers to clarification; "
-        "amend retains goals, goal_bindings fills unresolved system references; replace_goals "
-        "requires explicit user replacement and replaces all current goal IDs. "
-        "Missing critical fields require questions. Name resolvable gaps field:<field> or system:<goal_id>; "
-        "resolves must match the actual answered field/binding, not unrelated gaps. "
-        "Fields not changed are inherited unchanged.",
+        "Unknown/inferred settings:Candidate.conditions/system_conditions; preserve goals.unresolved. "
+        "Energy needs no temperature_K/standard_state gap unless the user requires them. Absent unit:unknown. "
+        "Scope:H2O/CH4,RHF/STO-3G,neutral singlet,gas,SP/Opt; keep unsupported/unknown, never default them. "
+        "No execution granted. Copy AUTHORITY.pending_user_message_ids. "
+        "Verbatim text_basis: no translation, paraphrase or added parentheses. "
+        "normalize defines raw_request (also after clarification); amend retains goals; "
+        "goal_bindings fills system refs; replace_goals requires explicit replacement and all old IDs. "
+        "New gaps require questions; gaps:field:<field>/system:<goal_id>; resolves must match answers. "
+        "Omit unchanged fields.",
         "schema": schema,
+        "condition_lexicon": {field: [[value, aliases] for (name, value), aliases in LEXICAL_ALIASES.items()
+                                      if name == field] for field in dict.fromkeys(name for name, _ in LEXICAL_ALIASES)},
         "minimum_evidence_rules": {"version": MINIMUM_EVIDENCE_VERSION, "registered": REQUIREMENTS,
                                    "legacy_aliases": LEGACY_NAMES, "port_rules": RULES},
         "query_schemas": {port: _schema(get_tool(name).parameter_schema) for port, name in READ_TOOLS.items()
@@ -171,14 +183,7 @@ def _field(name, item, request, messages, *, system=None):
         tokens = {str(value).casefold()}
         if name == "charge" and type(value) is int and value > 0:
             tokens.add(f"+{value}")
-        aliases = {("charge", 0): {"中性", "neutral"},
-                   ("multiplicity", 1): {"单重态", "单重", "singlet"},
-                   ("environment", "gas"): {"气相", "gas", "vacuum"},
-                   ("environment", "gas_phase"): {"气相", "gas phase", "vacuum"},
-                   ("environment", "water_solvent"): {"水溶剂", "水溶液", "water solvent", "aqueous"},
-                   ("electronic_state", "RHF"): {"rhf", "闭壳层"},
-                   ("method", "HF"): {"hf", "rhf", "hartree-fock"}}
-        tokens |= aliases.get((name, value), set())
+        tokens.update(LEXICAL_ALIASES.get((name, value), ()))
         def present(token, text=item.text_basis):
             if re.fullmatch(r"[a-z0-9_.+\-/]+", token):
                 return re.search(r"(?<![a-z0-9_.+\-])" + re.escape(token)
@@ -192,51 +197,57 @@ def _field(name, item, request, messages, *, system=None):
             if item.text_basis not in message["text"]:
                 continue
             for clause in re.split(r"[，,。.;；\n]", message["text"]):
+                # These phrases negate geometric constraints, not the method,
+                # charge or reference state. Keep any surrounding negation.
+                condition_clause = re.sub(r"无约束|\bwithout\s+(?:geometric\s+)?constraints?\b",
+                                          " ", clause, flags=re.I)
                 if any(present(token, clause) for token in tokens) and re.search(
                         r"不|非|未|无|禁止|拒绝|避免|排除|可能|也许|推断|推测|假设|待确认|尚待|或者|[?？]|"
                         r"\b(?:not|no|never|without|unknown|maybe|perhaps|uncertain|if|either|or)\b|n't\b",
-                        clause, re.I):
+                        condition_clause, re.I):
                     raise StoreError("explicit condition has a negated or uncertain value basis")
         if name in {"charge", "multiplicity"}:
             label = (r"(?:净?电荷(?:数)?|(?<![a-z])charge(?![a-z]))" if name == "charge" else
                      r"(?:自旋多重度|多重度|(?<![a-z])multiplicity(?![a-z]))")
             literal = (r"\+?" + str(value)) if value >= 0 else re.escape(str(value))
             association = label + r"\s*(?:(?:为|是|等于|设为|取|is|=|:|：)\s*)?" + literal + r"(?![\d.])"
-            named_alias = any(present(token) for token in aliases.get((name, value), set()))
+            named_alias = any(present(token) for token in LEXICAL_ALIASES.get((name, value), ()))
             if not named_alias and not re.search(association, item.text_basis, re.I):
                 raise StoreError("explicit numeric condition lacks its own field/value association")
     elif item.source == "inherited":
         if item.request_version != request.version:
             raise StoreError("inherited conditions require the exact current Request version")
-        sources = request.conditions
+        def recorded(scope):
+            if scope is not None and name in scope.conditions:
+                return canonical_condition(name, scope.conditions[name]), scope.conditions_source.get(name)
+            return (canonical_condition(name, request.conditions.get(name, getattr(request, name, None))),
+                    request.conditions_source.get(name))
+
+        expected = canonical_condition(name, value)
+        prior, provenance = recorded(system)
+        if expected is None or prior is None or prior != expected or provenance not in {
+                "explicit", "default", "inherited"}:
+            raise StoreError("inherited target scope must retain the same confirmed value "
+                             "from its unique recorded source")
         if item.system_ref:
             source = next((s for s in request.systems if s.id == item.system_ref), None)
             if source is None:
                 raise StoreError("inherited system reference is not registered")
-            if name in source.conditions:
-                prior = source.conditions[name]
-                provenance = source.conditions_source.get(name)
-            else:
-                prior = request.conditions.get(name, getattr(request, name, None))
-                provenance = request.conditions_source.get(name)
-        elif system:
-            prior = system.conditions.get(name, request.conditions.get(name, getattr(request, name, None)))
-            provenance = system.conditions_source.get(name, request.conditions_source.get(name))
-        else:
-            prior = sources.get(name, getattr(request, name, None))
-            provenance = request.conditions_source.get(name)
-        if prior is None or prior != value or provenance not in {"explicit", "default", "inherited"}:
-            raise StoreError("inherited value differs from its unique recorded source")
+            prior, provenance = recorded(source)
+            if prior is None or prior != expected or provenance not in {"explicit", "default", "inherited"}:
+                raise StoreError("inherited value differs from its unique recorded source")
     elif item.source == "default":
+        expected = canonical_condition(name, value)
+        authorized = canonical_condition(name, request.semantic_defaults.get(name))
         if (item.default_rule != "local-hf-1" or name not in request.semantic_defaults
-                or request.semantic_defaults[name] != value):
+                or expected is None or authorized is None or authorized != expected):
             raise StoreError("default rule/value was not authorized in user configuration")
         prior = (system.conditions.get(name) if system and name in system.conditions else
                  request.conditions.get(name, getattr(request, name, None)))
         provenance = (system.conditions_source.get(name) if system and name in system.conditions else
                       request.conditions_source.get(name))
         if provenance in {"unknown", "inferred", "explicit", "inherited", "not_applicable"} or (
-                prior is not None and prior != value):
+                prior is not None and canonical_condition(name, prior) != expected):
             raise StoreError("declared or unconfirmed conditions cannot be replaced by a default")
     elif item.source == "inferred":
         _quote(item.text_basis, messages)
@@ -404,6 +415,14 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
         raise StoreError("clarification must persist its blocking unresolved facts")
     values.update(version=request.version + 1, messages=request.messages + pending)
     updated = _missing_information(Request.model_validate(values))
+    prior_gaps = set(request.unresolved) | set(question_gaps) | {gap for goal in request.goals for gap in goal.unresolved}
+    current_gaps = set(updated.unresolved) | {gap for goal in updated.goals for gap in goal.unresolved}
+    new_gaps = current_gaps - prior_gaps
+    visible_question = any(any(not char.isspace() and not unicodedata.category(char).startswith("C")
+                              for char in question) for question in candidate.questions)
+    if new_gaps and not visible_question:
+        raise ProposalError("New unresolved conditions require a visible question or an explicit unsupported-scope decision.",
+                            path=["parameters", "questions"], new_unresolved=sorted(new_gaps))
     _authorized_geometry(store, updated, run.permission)
     for goal in updated.goals:
         query = goal.conditions.get("query", {})

@@ -501,19 +501,37 @@ def _grade_sampling_decisions(store, run, evidence, decisions, check):
     check("sampling_append_follows_bound_analysis_feedback", valid)
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("case", choices=CASES)
     parser.add_argument("run_id")
     parser.add_argument("--data-root", type=Path, default=PROJECT / "data/phase-b/agent")
-    args = parser.parse_args()
+    parser.add_argument("--metadata", type=Path,
+                        help="immutable joint evaluation metadata; required for the raw methane control")
+    args = parser.parse_args(argv)
+    if args.case == "methane_opt_control" and args.metadata is None:
+        parser.error("methane_opt_control requires --metadata to verify the raw input and optimized-energy target")
+    metadata = _json(args.metadata) if args.metadata is not None else None
+    if args.metadata is not None:
+        if (not isinstance(metadata, dict) or metadata.get("run_id") != args.run_id
+                or metadata.get("case") != args.case):
+            parser.error("metadata Run/case identity differs from the requested evaluation")
+        if args.case == "methane_opt_control" and (
+                metadata.get("input_form") != "raw_text"
+                or not isinstance(metadata.get("raw_bundle_path"), str)
+                or not metadata["raw_bundle_path"]
+                or not isinstance(metadata.get("raw_bundle_sha256"), str)
+                or re.fullmatch(r"[a-f0-9]{64}", metadata["raw_bundle_sha256"]) is None):
+            parser.error("methane_opt_control metadata must identify its raw input bundle and SHA-256")
     # Construction is avoided here: grading must not create absent Store dirs.
     from orca_agent.store import Store
     if not args.data_root.is_dir():
         raise ValueError("existing Store required")
     store = object.__new__(Store)
     store.root = args.data_root.resolve()
-    print(json.dumps(grade_joint(store, args.run_id, args.case), ensure_ascii=False, indent=2))
+    if metadata is not None and metadata.get("category") != store.load_run(args.run_id).batch_category:
+        parser.error("metadata category differs from the persisted Run")
+    print(json.dumps(grade_joint(store, args.run_id, args.case, metadata=metadata), ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

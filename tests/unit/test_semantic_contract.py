@@ -66,9 +66,9 @@ def inherited_request(system=None, **changes):
                    **changes)
 
 
-def inherit_method(request, value="HF", version=None):
+def inherit_method(request, value="HF", version=None, system=None):
     return _field("method", FieldEvidence(value=value, source="inherited", system_ref="water",
-        request_version=version or request.version), request, [{"text": "沿用水的科学条件"}])
+        request_version=version or request.version), request, [{"text": "沿用水的科学条件"}], system=system)
 
 
 def test_system_inheritance_uses_confirmed_request_when_local_field_absent():
@@ -90,7 +90,9 @@ def test_system_override_and_exact_source_version_are_not_bypassed_by_fallback()
                                             conditions_source={"method": "explicit"}))
     with pytest.raises(StoreError, match="unique recorded source"):
         inherit_method(override)
-    assert inherit_method(override, value="UHF")[:2] == ("UHF", "inherited")
+    with pytest.raises(StoreError, match="target scope"):
+        inherit_method(override, value="UHF")
+    assert inherit_method(override, value="UHF", system=override.systems[0])[:2] == ("UHF", "inherited")
     override.systems[0].conditions["method"] = None
     override.systems[0].conditions_source["method"] = "unknown"
     with pytest.raises(StoreError, match="unique recorded source"):
@@ -110,6 +112,7 @@ def test_energy_relation_is_correctable_before_any_request_activation(tmp_path):
     assert store.load_run(run.id).model_dump_json() == before
     assert not store.load_run(run.id).processed_messages
     parameters["goals"][0]["geometry_relation"] = "fixed_initial"
+    parameters["questions"] = ["请提供几何、方法、基组、电荷与多重度。"]
     updated = commit_candidate(store, run, parameters, decision_id="corrected_relation", basis=current_basis(store, run))
     goal = store.load_request(updated).goals[0]
     assert goal.conditions["geometry_relation"] == "fixed_initial"
@@ -137,6 +140,7 @@ def test_uncertain_goal_condition_rejected_then_scoped_answer_can_resolve(tmp_pa
     parameters["goals"][0]["conditions"] = {}
     parameters["system_conditions"] = {"water": {"charge": unknown,
         "multiplicity": {"value": None, "source": "unknown"}}}
+    parameters["questions"] = ["请确认水的电荷与多重度。"]
     initial = commit_candidate(store, run, parameters, decision_id="scoped_uncertainty", basis=current_basis(store, run))
     request = store.load_request(initial)
     assert request.systems[0].conditions_source["charge"] == source
@@ -180,7 +184,8 @@ def test_explicit_answer_resolves_goal_field_marker_without_rebinding(tmp_path, 
         "key": "energy", "port": "energy", "text_basis": text, "system_refs": ["water"],
         "geometry_relation": "fixed_initial", "conditions": {"basis": explicit["basis"]},
         "unresolved": ["field:charge", *other_gaps]}],
-        conditions={**explicit, "charge": {"value": None, "source": "unknown"}})
+        conditions={**explicit, "charge": {"value": None, "source": "unknown"}},
+        questions=["请确认电荷；其他未支持要求继续保留。"])
     initial = commit_candidate(store, run, parameters, decision_id="question", basis=current_basis(store, run))
     assert "field:charge" in store.load_request(initial).goals[0].unresolved
     store.enqueue_message(run.id, "电荷0，其他条件沿用。")

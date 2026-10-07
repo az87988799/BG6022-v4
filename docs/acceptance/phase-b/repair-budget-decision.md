@@ -144,3 +144,5 @@ A + B 共 **92 HTTP / 736000 tokens / 0 ORCA**，冻结价格费用上界 USD 0.
 - `tests/fixtures/phase_b/raw-text-cases.json`：`5166cb94d11904d5f590f2393be52aa7fdfb498407dd5990f3ae0ef6492ca78d`。
 - `docs/acceptance/phase-b/coverage.json`：`23c6b7226bf17aee4128f03fe274f860cf2d1e6fe194e7b722f0062a7a9824f0`。
 - 用例预算按 `phase_b_model_cases.variant_spec` 的 case + variant override 合并；联合执行参数来自 `phase_b_joint.prepare_case` 和 `natural.agent_budget`，正式分配来自原 `cases.json::batch_budget.formal_allocations`。
+
+上述 hash 属于预算批准时的核算快照。后续 v6 真实 N-01 暴露机械检查未识别额外澄清，现行 raw 规范仅新增最终 `normalization_status` 断言；原文、预算、变体数量及原断言均不变。原 `5166cb…` 字节归档为 `raw-text-cases-v1.json`，供旧槽按旧预期复核；新规范 hash 为 `f8665a5d28cddab5ae5da477faf31d58cf6050b27faa806a27f70f67617d0d4c`，当前覆盖文件同步引用。
