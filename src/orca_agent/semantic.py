@@ -118,12 +118,12 @@ def action_parameters(allowed_tools=(), *, request=None):
     ports = ",".join(port_rules)
     return {"normalize_request": {
         "instruction": "Normalize user messages before planning. "
-        f"Goal ports:{ports}. Observation query follows query_schemas[port]. "
+        f"Goal ports:{ports}. query follows query_schemas[port]. "
         "Use environment for gas/solvent. condition_lexicon[field] rows=[value,explicit aliases], not inference. "
-        "electronic_state means RHF/UHF reference, not ground/excited; RHF text is explicit RHF. "
+        "electronic_state means RHF/UHF reference, not ground/excited; RHF is explicit. "
         "Use registered System.geometry_artifact_id via system_refs; never put geometry in conditions. "
-        "explain_results is existing configuration: leave unchanged. "
-        "minimum_evidence defaults to [] (port checks still apply); use minimum_evidence_rules. "
+        "explain_results is existing configuration; keep. "
+        "minimum_evidence defaults to []; port checks apply. See minimum_evidence_rules. "
         "Keep only actual user unsupported/unknown requirements verbatim/unresolved; never invent rule names. "
         "Energy requires geometry_relation=fixed_initial (single point) or optimized (after optimization). "
         "Unknown/inferred settings:Candidate.conditions/system_conditions. "
@@ -132,10 +132,11 @@ def action_parameters(allowed_tools=(), *, request=None):
         "No execution. Copy AUTHORITY.pending_user_message_ids. "
         "Verbatim text_basis: no translation, paraphrase or added parentheses. "
         "normalize replaces initial raw_request/missing:goal_definition with actual requested Goals, "
-        "including after clarification. Registration-only/no-execution limits are not extra Goals. amend retains goals; "
-        "New Goals use system_refs; goal_bindings uses existing Goal.id only, never together with goals. "
+        "also after clarification. Registration-only/no-execution limits are not extra Goals. amend retains goals; "
+        "New Goals use system_refs; goal_bindings uses existing Goal.id, not with goals. "
         "replace_goals requires explicit replacement and all old IDs. "
-        "New gaps require questions; gaps:field:<field>/system:<goal_id>; resolves must match answers.",
+        "New gaps, including detected unsupported scope, need visible text in questions: clarification or scope notice. "
+        "Keep explicit choices; do not reconfirm them. gaps:field:<field>/system:<goal_id>; resolves must match answers.",
         "schema": schema,
         "condition_lexicon": {field: [[value, aliases] for (name, value), aliases in LEXICAL_ALIASES.items()
                                       if name == field] for field in dict.fromkeys(name for name, _ in LEXICAL_ALIASES)},
@@ -452,7 +453,9 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
     visible_question = any(any(not char.isspace() and not unicodedata.category(char).startswith("C")
                               for char in question) for question in candidate.questions)
     if new_gaps and not visible_question:
-        raise ProposalError("New unresolved conditions require a visible question or an explicit unsupported-scope decision.",
+        raise ProposalError("New unresolved conditions, including detected unsupported scope, require a visible question "
+                            "or unsupported-scope notice in parameters.questions. Preserve explicit user choices; "
+                            "do not ask to reconfirm them.",
                             path=["parameters", "questions"], new_unresolved=sorted(new_gaps))
     _authorized_geometry(store, updated, run.permission)
     for goal in updated.goals:
