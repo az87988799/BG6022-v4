@@ -1,4 +1,4 @@
-"""Fixed r2 preparation/approval guards; no live model, network, OPI or ORCA."""
+"""Historical r2 approval and current r3 preparation guards; no live model, network, OPI or ORCA."""
 
 import copy
 import json
@@ -15,6 +15,7 @@ from tests.unit.test_phase_b_budget_amendment import legacy as legacy
 
 OPEN_GUARD = package._assert_open
 R2 = package.RENEWAL_LABEL
+R3 = package.R3_LABEL
 
 
 def test_renewal_proposal_is_unapproved_and_preserves_exact_old_scope(tmp_path, monkeypatch, capsys):
@@ -40,21 +41,23 @@ def test_renewal_proposal_is_unapproved_and_preserves_exact_old_scope(tmp_path, 
 
 
 @pytest.mark.parametrize("operation", ["apply", "freeze", "model", "resolve", "prepare", "reference", "science"])
-def test_old_package_is_closed_despite_original_approval(tmp_path, monkeypatch, operation):
+@pytest.mark.parametrize("label", [package.LABEL, R2])
+def test_old_package_is_closed_despite_original_approval(tmp_path, monkeypatch, operation, label):
     monkeypatch.setattr(package, "ROOT", tmp_path / "old")
+    monkeypatch.setattr(package, "RENEWAL_ROOT", tmp_path / "r2")
     monkeypatch.setattr(package, "_approval", lambda **_: pytest.fail("old package must close before approval"))
     with pytest.raises(package.reference.ReferenceBlocked, match="closed"):
-        package.main([operation, "--package", package.LABEL, "--execute", "--live-model", "--live-orca",
+        package.main([operation, "--package", label, "--execute", "--live-model", "--live-orca",
             "--live-network", "--live-opi", "--variant", package.MODEL_SLOTS[0], "--system", "water", "--repetition", "1"])
     assert not list(tmp_path.iterdir())
 
 
-@pytest.mark.parametrize("label", [package.LABEL, R2])
+@pytest.mark.parametrize("label", [package.LABEL, R2, R3])
 @pytest.mark.parametrize("entry", ["prepare", "evaluate"])
 def test_low_level_entry_cannot_bypass_closed_or_unapproved_package(tmp_path, monkeypatch, label, entry):
     monkeypatch.setattr(models, "ROOT", tmp_path / "models")
-    monkeypatch.setattr(package, "RENEWAL_ROOT", tmp_path / "r2")
-    monkeypatch.setattr(package.reference, "RENEWAL_APPROVAL_SHA256", None)
+    monkeypatch.setattr(package, "R3_ROOT", tmp_path / "r3")
+    monkeypatch.setattr(package.reference, "R3_APPROVAL_SHA256", None)
     monkeypatch.setattr(models.agent, "execute", lambda *_, **__: pytest.fail("no HTTP or Run execution"))
     kwargs = {"allow_live": True} if entry == "evaluate" else {}
     with pytest.raises(package.reference.ReferenceBlocked, match="closed|explicit human approval"):
@@ -65,7 +68,7 @@ def test_low_level_entry_cannot_bypass_closed_or_unapproved_package(tmp_path, mo
 @pytest.mark.parametrize("changed", ["variant", "repetition", "category", "profile", "resume"])
 def test_renewal_rejects_extra_identity_and_resume_before_approval(changed, monkeypatch):
     options = {"variant": package.MODEL_SLOTS[0], "repetition": 1, "category": "development",
-               "package": R2, "model_profile": "disabled", "resume": False}
+               "package": R3, "model_profile": "disabled", "resume": False}
     key, value = {"variant": ("variant", "V-01/success"), "repetition": ("repetition", 2),
         "category": ("category", "formal"), "profile": ("model_profile", "thinking_low"),
         "resume": ("resume", True)}[changed]
@@ -79,7 +82,8 @@ def test_renewal_rejects_extra_identity_and_resume_before_approval(changed, monk
 def renewal_approved(approved, tmp_path, monkeypatch):
     book, *rest = approved
     package.apply_limits(execute=True)  # synthetic fourth amendment baseline
-    monkeypatch.setattr(package, "_assert_open", OPEN_GUARD)
+    # Only this synthetic historical migration can audit the now-closed r2 path.
+    monkeypatch.setattr(package, "_assert_open", lambda label: None if label == R2 else OPEN_GUARD(label))
     path = tmp_path / "synthetic-renewal-approval.json"
     value = {"approval_id": package.reference.RENEWAL_APPROVAL_ID, "status": "user_approved",
         "previous_limits": package.reference.BOUNDED_LIMITS, "approved_limits": package.reference.RENEWAL_LIMITS,
@@ -151,11 +155,11 @@ def test_renewal_approval_cannot_rewrite_history_or_expand_scope(renewal_approve
 
 @pytest.fixture
 def candidate(tmp_path, monkeypatch):
-    root = tmp_path / "r2"
-    monkeypatch.setattr(package, "RENEWAL_ROOT", root)
+    root = tmp_path / "r3"
+    monkeypatch.setattr(package, "R3_ROOT", root)
     monkeypatch.setattr(models, "ROOT", tmp_path / "evaluations")
-    monkeypatch.setattr(package, "_approval", lambda **_: {"development_package": package.scope(package=R2)})
-    monkeypatch.setattr(package.reference, "RENEWAL_APPROVAL_SHA256", "synthetic-approved-pin")
+    monkeypatch.setattr(package, "_approval", lambda **_: {"development_package": package.scope(package=R3)})
+    monkeypatch.setattr(package.reference, "R3_APPROVAL_SHA256", "synthetic-approved-pin")
     monkeypatch.setattr(package.freeze, "runtime_environment", lambda: {"python": "synthetic-runtime"})
     monkeypatch.setattr(package.importlib.metadata, "version", lambda _: "synthetic-rdkit")
     monkeypatch.setattr(package, "_source_files", lambda: {"source.py": "synthetic-source-hash"})
@@ -164,11 +168,11 @@ def candidate(tmp_path, monkeypatch):
     mpi.write_bytes(b"never executed")
     config = Config(orca_path=orca, mpi_path=mpi)
     monkeypatch.setattr(package.freeze, "evaluation_config", lambda **_: config)
-    snapshot = {"limits": copy.deepcopy(package.reference.RENEWAL_LIMITS)}
+    snapshot = {"limits": copy.deepcopy(package.reference.R3_LIMITS)}
     monkeypatch.setattr(package.budget, "AcceptanceBudget", lambda _: SimpleNamespace(snapshot=lambda: snapshot))
     monkeypatch.setattr(package, "Store", lambda _: SimpleNamespace())
     monkeypatch.setattr(package, "_no_unknown_package_cost", lambda **_: None)
-    record = {"scope": package.scope(package=R2), "source_files": package._source_files(),
+    record = {"scope": package.scope(package=R3), "source_files": package._source_files(),
         "runtime": {"python": "synthetic-runtime", "rdkit_version": "synthetic-rdkit"},
         "configuration": config.model_dump(mode="json"), "approval_sha256": "synthetic-approved-pin",
         "binaries": {"orca": {"path": str(orca), "sha256": sha256_file(orca)},
@@ -192,12 +196,12 @@ def test_direct_model_entry_requires_current_candidate_budget_and_prior_pass(can
         Path(record["binaries"]["orca"]["path"]).write_bytes(b"changed")
     monkeypatch.setattr(models, "regrade", lambda *_, **__: {"status": "failed"})
     if change == "previous_failed":
-        prior = models._slot(package.MODEL_SLOTS[0], 1, "development", R2)
+        prior = models._slot(package.MODEL_SLOTS[0], 1, "development", R3)
         package._save(prior / "metadata.json", {"bounded_candidate_sha256": sha256_file(root / "candidate.json")})
     monkeypatch.setattr(models.cases, "create_request", lambda *_, **__: pytest.fail("no Run allocation after failed gate"))
     kwargs = {"allow_live": True} if entry == "evaluate" else {}
     with pytest.raises((package.reference.ReferenceBlocked, FileNotFoundError)):
-        getattr(models, entry)(package.MODEL_SLOTS[1], 1, category="development", freeze_label=R2, **kwargs)
+        getattr(models, entry)(package.MODEL_SLOTS[1], 1, category="development", freeze_label=R3, **kwargs)
 
 
 def test_low_level_guard_uses_only_new_label_previous_evidence(candidate, monkeypatch):
@@ -207,18 +211,18 @@ def test_low_level_guard_uses_only_new_label_previous_evidence(candidate, monkey
         observed.append((variant, rep, options))
         return {"status": "passed"}
     monkeypatch.setattr(models, "regrade", regrade)
-    prior = models._slot(package.MODEL_SLOTS[0], 1, "development", R2)
+    prior = models._slot(package.MODEL_SLOTS[0], 1, "development", R3)
     package._save(prior / "metadata.json", {"bounded_candidate_sha256": sha256_file(root / "candidate.json")})
     digest = package.guard_model_slot(package.MODEL_SLOTS[1], 1, category="development",
-        package=R2, model_profile="disabled")
+        package=R3, model_profile="disabled")
     assert digest == sha256_file(root / "candidate.json")
-    assert observed == [(package.MODEL_SLOTS[0], 1, {"category": "development", "freeze_label": R2})]
+    assert observed == [(package.MODEL_SLOTS[0], 1, {"category": "development", "freeze_label": R3})]
 
 
 def test_unknown_model_cost_in_new_package_stops_other_slots(tmp_path, monkeypatch):
     monkeypatch.setattr(models, "ROOT", tmp_path / "evaluations")
-    monkeypatch.setattr(package, "RENEWAL_ROOT", tmp_path / "r2")
-    slot = models._slot(package.MODEL_SLOTS[0], 1, "development", R2)
+    monkeypatch.setattr(package, "R3_ROOT", tmp_path / "r3")
+    slot = models._slot(package.MODEL_SLOTS[0], 1, "development", R3)
     package._save(slot / "ready.json", {"run_id": "new-unknown-run"})
     observed = []
     def load_run(run_id):
@@ -226,22 +230,23 @@ def test_unknown_model_cost_in_new_package_stops_other_slots(tmp_path, monkeypat
         return SimpleNamespace(state="paused", model_records=[{"status": "unknown"}], attempts=[], calls=[])
     monkeypatch.setattr(package, "Store", lambda _: SimpleNamespace(load_run=load_run))
     with pytest.raises(package.reference.ReferenceBlocked, match="unknown cost/process"):
-        package._no_unknown_package_cost(package=R2)
+        package._no_unknown_package_cost(package=R3)
     assert observed == ["new-unknown-run"]
 
 
-def test_old_regrade_remains_read_only_after_package_closure(tmp_path, monkeypatch):
+@pytest.mark.parametrize("label", [package.LABEL, R2])
+def test_old_regrade_remains_read_only_after_package_closure(tmp_path, monkeypatch, label):
     monkeypatch.setattr(models, "ROOT", tmp_path / "evaluations")
     variant = package.MODEL_SLOTS[1]
-    slot = models._slot(variant, 1, "development", package.LABEL)
+    slot = models._slot(variant, 1, "development", label)
     metadata = {"variant_id": variant, "repetition": 1, "category": "development",
-                "freeze_label": package.LABEL, "run_id": "historical-run"}
+                "freeze_label": label, "run_id": "historical-run"}
     package._save(slot / "metadata.json", metadata)
     package._save(slot / "ready.json", {"run_id": "historical-run", "metadata_sha256": sha256_file(slot / "metadata.json")})
     monkeypatch.setattr(models, "Store", lambda _: SimpleNamespace(load_run=lambda _: SimpleNamespace(batch_category="development")))
     monkeypatch.setattr(models.cases, "evaluate_response", lambda *_, **__: {"status": "incomplete_or_failed"})
     monkeypatch.setattr(package, "_execution_gate", lambda **_: pytest.fail("audit must not need execution gate"))
-    assert models.regrade(variant, 1, category="development", freeze_label=package.LABEL)["status"] == "incomplete_or_failed"
+    assert models.regrade(variant, 1, category="development", freeze_label=label)["status"] == "incomplete_or_failed"
     assert not (slot / "reservation.json").exists()
 
 
@@ -252,30 +257,30 @@ def test_new_model_slot_binds_candidate_and_rejects_replacement(candidate, tmp_p
     monkeypatch.setattr(models, "STORE_ROOT", tmp_path / "store")
     monkeypatch.setattr(models, "Store", lambda path: Store(path, environment_root=tmp_path / "environment"))
     store, run, metadata, slot = models.prepare(package.MODEL_SLOTS[0], 1,
-        category="development", freeze_label=R2)
+        category="development", freeze_label=R3)
     assert metadata["bounded_candidate_sha256"] == sha256_file(root / "candidate.json")
     before = store.path(f"runs/{run.id}/run.json").read_bytes()
     assert not run.model_records and not run.attempts
-    repeated = models.prepare(package.MODEL_SLOTS[0], 1, category="development", freeze_label=R2)
+    repeated = models.prepare(package.MODEL_SLOTS[0], 1, category="development", freeze_label=R3)
     assert repeated[1].id == run.id
     # Even a replacement whose current fields pass the source gate cannot bind
     # an existing Run to new candidate bytes.
     record["commit"] = "another-offline-candidate"
     package.reference._save(root / "candidate.json", record)
     with pytest.raises(StoreError, match="immutable package candidate"):
-        models.prepare(package.MODEL_SLOTS[0], 1, category="development", freeze_label=R2)
+        models.prepare(package.MODEL_SLOTS[0], 1, category="development", freeze_label=R3)
     assert store.path(f"runs/{run.id}/run.json").read_bytes() == before
     assert models._read(slot / "metadata.json") == metadata
 
 
 def test_prior_pass_cannot_come_from_another_candidate(candidate, monkeypatch):
     root, _, _ = candidate
-    prior = models._slot(package.MODEL_SLOTS[0], 1, "development", R2)
+    prior = models._slot(package.MODEL_SLOTS[0], 1, "development", R3)
     package._save(prior / "metadata.json", {"bounded_candidate_sha256": "different-candidate"})
     monkeypatch.setattr(models, "regrade", lambda *_, **__: pytest.fail("mismatched candidate cannot count as prior pass"))
     with pytest.raises(package.reference.ReferenceBlocked, match="another package candidate"):
         package.guard_model_slot(package.MODEL_SLOTS[1], 1, category="development",
-            package=R2, model_profile="disabled")
+            package=R3, model_profile="disabled")
 
 
 def test_recorded_human_renewal_approval_binds_unchanged_proposal_and_scope():

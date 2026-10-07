@@ -40,6 +40,8 @@ ROOT = reference.BATCH_ROOT / "bounded-20261008"
 LABEL = "bounded-20261008"
 RENEWAL_LABEL = "bounded-20261008-r2"
 RENEWAL_ROOT = reference.BATCH_ROOT / RENEWAL_LABEL
+R3_LABEL = "bounded-20261008-r3"
+R3_ROOT = reference.BATCH_ROOT / R3_LABEL
 DIAGNOSTICS = (
     "N-06/raw-unsupported-system", "V-06/insufficient-additional-budget",
     "V-07/array-location", "V-09/different-method", "V-09/missing-electron-state",
@@ -61,30 +63,36 @@ def _root(package):
         return ROOT
     if package == RENEWAL_LABEL:
         return RENEWAL_ROOT
+    if package == R3_LABEL:
+        return R3_ROOT
     raise ValueError("unknown fixed package")
 
 
 def _limits(package):
     _root(package)
+    if package == R3_LABEL:
+        return reference.RENEWAL_LIMITS, reference.R3_LIMITS
     return ((reference.BOUNDED_LIMITS, reference.RENEWAL_LIMITS) if package == RENEWAL_LABEL
             else (reference.ACTIVE_LIMITS, reference.BOUNDED_LIMITS))
 
 
 def _approval_identity(package):
     _root(package)
+    if package == R3_LABEL:
+        return reference.R3_APPROVAL_ID, reference.R3_APPROVAL_SHA256
     return ((reference.RENEWAL_APPROVAL_ID, reference.RENEWAL_APPROVAL_SHA256) if package == RENEWAL_LABEL
             else (reference.BOUNDED_APPROVAL_ID, reference.BOUNDED_APPROVAL_SHA256))
 
 
 def _reference_id(package):
     _root(package)
-    return f"{RENEWAL_LABEL}-methane-prepared-sp" if package == RENEWAL_LABEL else REFERENCE_ID
+    return f"{package}-methane-prepared-sp" if package != LABEL else REFERENCE_ID
 
 
 def _assert_open(package):
     _root(package)
-    if package == LABEL:
-        raise reference.ReferenceBlocked("bounded-20261008 is closed after its recorded failure; audit/regrade only")
+    if package in {LABEL, RENEWAL_LABEL}:
+        raise reference.ReferenceBlocked(f"{package} is closed after its recorded failure; audit/regrade only")
 
 
 def scope(*, package=LABEL):
@@ -120,12 +128,25 @@ def scope(*, package=LABEL):
             "retained_usage": {"http_requests": 2, "tokens": 7967, "orca_starts": 0},
             "reuse_prior_runs_or_passes": False,
         }
+    elif package == R3_LABEL:
+        value["supersedes_package"] = RENEWAL_LABEL
+        value["prior_package_disposition"] = {
+            "retained_model_slots": {DIAGNOSTICS[0]: "failed"},
+            "cancelled_model_slots": list(MODEL_SLOTS[1:]),
+            "cancelled_structure_queries": 2, "cancelled_structure_preparations": 2,
+            "cancelled_reference_starts": 1, "cancelled_development_starts": 6,
+            "retained_usage": {"http_requests": 1, "tokens": 4256, "orca_starts": 0},
+            "reuse_prior_runs_or_passes": False,
+        }
     return value
 
 
 def _approval(*, package=LABEL):
     _root(package)
-    value = reference.renewal_approval() if package == RENEWAL_LABEL else reference.bounded_approval()
+    if package == R3_LABEL:
+        value = reference.r3_approval()
+    else:
+        value = reference.renewal_approval() if package == RENEWAL_LABEL else reference.bounded_approval()
     if value.get("development_package") != scope(package=package):
         raise reference.ReferenceBlocked("approved package scope differs from this exact operator")
     return value
@@ -157,7 +178,7 @@ def apply_limits(*, execute=False, fault=None, package=LABEL):
                 or before.get("limit_authority", {}).get("origin") != "amendment"):
             raise reference.ReferenceBlocked("source is not the preceding approved batch")
         baseline = approval.get("approval_baseline", {}).get("ledger_sha256")
-        if package == RENEWAL_LABEL and not baseline:
+        if package in {RENEWAL_LABEL, R3_LABEL} and not baseline:
             raise reference.ReferenceBlocked("renewal approval requires its exact existing ledger baseline")
         if baseline and sha256_file(ledger.path) != baseline:
             raise reference.ReferenceBlocked("approved spend baseline changed; recheck preserved scope before migration")
@@ -277,7 +298,7 @@ def _no_unknown_package_cost(*, package=LABEL):
 def _require_model_passes(variants, *, package=LABEL):
     from tests.helpers import phase_b_model_evaluation as models
     for variant in variants:
-        if package == RENEWAL_LABEL:
+        if package in {RENEWAL_LABEL, R3_LABEL}:
             metadata = reference._json(models._slot(variant, 1, "development", package) / "metadata.json")
             if metadata.get("bounded_candidate_sha256") != sha256_file(_root(package) / "candidate.json"):
                 raise reference.ReferenceBlocked("previous model gate targets another package candidate")
@@ -608,7 +629,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operation", nargs="?", default="proposal",
                         choices=("proposal", "apply", "freeze", "model", "resolve", "prepare", "reference", "science", "grade"))
-    parser.add_argument("--package", choices=(LABEL, RENEWAL_LABEL), default=LABEL)
+    parser.add_argument("--package", choices=(LABEL, RENEWAL_LABEL, R3_LABEL), default=LABEL)
     parser.add_argument("--variant", choices=MODEL_SLOTS)
     parser.add_argument("--system", choices=("water", "methane"))
     parser.add_argument("--repetition", type=int, choices=(1, 2, 3))
@@ -619,7 +640,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.operation == "proposal":
         result = {"status": "proposal_only", "approval_pinned": bool(_approval_identity(args.package)[1]),
-                  "execution_closed": args.package == LABEL, "scope": scope(package=args.package)}
+                  "execution_closed": args.package in {LABEL, RENEWAL_LABEL}, "scope": scope(package=args.package)}
     elif args.operation == "apply":
         result = apply_limits(execute=args.execute, package=args.package)
     elif args.operation == "freeze":

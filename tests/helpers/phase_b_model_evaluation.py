@@ -131,10 +131,10 @@ def _formal_anchor(freeze_label, frozen):
 
 
 def _bounded_slot_guard(variant_id, repetition, *, category, freeze_label, model_profile, resume=False):
-    # These two fixed packages cannot bypass their approval/operator by calling
+    # These fixed packages cannot bypass their approval/operator by calling
     # this lower-level helper. Other historical evaluation labels are unchanged.
     from tests.helpers import phase_b_bounded_package as package
-    if freeze_label in {package.LABEL, package.RENEWAL_LABEL}:
+    if freeze_label in {package.LABEL, package.RENEWAL_LABEL, package.R3_LABEL}:
         return package.guard_model_slot(variant_id, repetition, category=category,
             package=freeze_label, model_profile=model_profile, resume=resume)
     return None
