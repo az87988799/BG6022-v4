@@ -10,7 +10,8 @@ import pytest
 from orca_agent.applicability import effective_conditions
 from orca_agent.config import Config
 from orca_agent.context import build_context
-from orca_agent.models import Result, SystemInput
+from orca_agent.models import Goal, Result, SystemInput
+from orca_agent.proposals import call_tool_instruction, call_tool_parameters_schema
 from orca_agent.semantic import action_parameters
 from orca_agent.store import Store, sha256_file
 from orca_agent.tools.registry import get_tool
@@ -48,6 +49,9 @@ def test_scoped_condition_difference_uses_scientific_resolver_without_rewriting_
     assert resolved["sources"][field] == "system:B"
     if effective is None:
         assert "unknown_condition:" + field in resolved["reasons"]
+        prompt = prepared.body()["messages"][0]["content"]
+        assert "If unknown conditions block the goal, clarify" in prompt
+        assert "source evidence or execution permission cannot supply unknown user conditions" in prompt
     assert (request.model_dump_json(), run.model_dump_json(), result.model_dump_json()) == before
 
 
@@ -63,17 +67,45 @@ def test_unconfirmed_system_origin_is_unknown_and_canonical_equivalence_is_not_a
     assert effective_conditions(request, system_id="B")["conditions"]["multiplicity"] is None
 
 
+@pytest.mark.parametrize("port", ["raw_fields", "content_index"])
+def test_completed_observation_goal_does_not_request_irrelevant_unknown_condition(port):
+    request, run = objects(scientific=False)
+    request.conditions["explain_results"] = True
+    request.systems = [SystemInput(id="B", conditions={"multiplicity": None})]
+    request.goals = [Goal(id="read", port=port, minimum_check_version="evidence-read-1")]
+    result = Result(run_id=run.id, operation_status="completed", observations={port: {
+        "units": None, "conditions": "unknown", "scientific_status": "unverified"}})
+    run.result_ids = [result.id]
+    run.goal_status = {"read": "satisfied"}
+    before = request.model_dump_json(), run.model_dump_json(), result.model_dump_json()
+    prepared = build_context(request, run, results=[result])
+    data = payload(prepared)
+    assert list(data["ACTION_PARAMETERS"]) == ["stop"]
+    assert data["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"] == ["stop"]
+    assert "clarify" not in prepared.body()["messages"][0]["content"].lower()
+    row = data["AUTHORITY"]["system_condition_overrides"]["rows"][0]
+    assert row["conditions"]["multiplicity"]["effective"] is None
+    assert data["DATA"]["results"][0]["unqualified_observations"][port]["units"] is None
+    assert (request.model_dump_json(), run.model_dump_json(), result.model_dump_json()) == before
+
+
 def test_semantic_intake_retains_user_scoped_values_without_premature_effective_projection():
     request, run = objects(scientific=False)
     request.normalization_status = "pending"
     request.systems = [SystemInput(id="B", conditions={"basis": "6-31G", "multiplicity": None})]
     before = request.model_dump_json(), run.model_dump_json()
-    prepared = build_context(request, run, action_parameters=action_parameters(request=request))
+    parameters = action_parameters(request=request)
+    before_parameters = json.dumps(parameters, sort_keys=True)
+    policy = parameters["normalize_request"]["questions_policy"]
+    prepared = build_context(request, run, action_parameters=parameters)
     data = payload(prepared)
     assert data["AUTHORITY"]["request"]["systems"][0]["conditions"] == {
         "basis": "6-31G", "multiplicity": None}
     assert "system_condition_overrides" not in data["AUTHORITY"]
     assert list(data["ACTION_PARAMETERS"]) == ["normalize_request"]
+    assert prepared.body()["messages"][0]["content"].count(policy) == 1
+    assert "questions_policy" not in data["ACTION_PARAMETERS"]["normalize_request"]
+    assert json.dumps(parameters, sort_keys=True) == before_parameters
     assert (request.model_dump_json(), run.model_dump_json()) == before
 
 
@@ -143,6 +175,9 @@ _REPLAYS = [
     ("import_final", "run_5f48def585ff48faa87f603e74b47677", -1),
     ("comparison_basis", "run_aafbd031c9194d24a77499f5bd7f9469", -1),
     ("comparison_unknown", "run_f898335c642b4884bfe1b9fe716d3930", -1),
+    ("v14_array_initial", "run_47e3358053464d4b889e7cc93cd5edc9", 0),
+    ("v14_array_first_rejection", "run_47e3358053464d4b889e7cc93cd5edc9", 1),
+    ("v14_array_second_rejection", "run_47e3358053464d4b889e7cc93cd5edc9", 2),
 ]
 
 
@@ -160,7 +195,7 @@ def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evid
     store = Store(_REAL_ROOT)
     persisted = store.load_run(run_id)
     record = persisted.model_records[index]
-    assert record["prompt_version"] == "agent-json-v8"
+    assert record["prompt_version"] == ("agent-json-v14" if case.startswith("v14_") else "agent-json-v8")
     original_body = json.loads((directory / "model" / (record["id"] + ".request.json")).read_text(encoding="utf-8"))
     original = payload(SimpleNamespace(body=lambda: original_body))
     authority = original["AUTHORITY"]
@@ -189,6 +224,18 @@ def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evid
     assert rebuilt["AUTHORITY"]["request"]["goals"] == authority["request"]["goals"]
     assert rebuilt["CONTROL"] == original["CONTROL"]
     assert rebuilt["DATA"].get("current_goal_use") == original["DATA"].get("current_goal_use")
+    if case.startswith("v14_"):
+        assert call_tool_instruction() in prepared.body()["messages"][0]["content"]
+        # The original rejected inputs already received the structured forms.
+        # The new ordinary-language reminder does not establish model success.
+        for source in (original, rebuilt):
+            assert source["PROPOSAL_SCHEMA"]["then"]["properties"]["parameters"] == call_tool_parameters_schema()
+        if ready := rebuilt["CONTROL"].get("pending_step_ids"):
+            assert rebuilt["ACTION_PARAMETERS"]["call_tool"] == {"step_id": ready[0]}
+            for step_id in ready:
+                old = next(step for step in authority["plan"]["steps"] if step["id"] == step_id)
+                new = next(step for step in rebuilt["AUTHORITY"]["plan"]["steps"] if step["id"] == step_id)
+                assert new["parameters"] == old["parameters"]
     for old, new in zip(original["DATA"]["results"], rebuilt["DATA"]["results"], strict=True):
         assert new["result_id"] == old["result_id"]
         for key in ("source_record_sha256", "source_sha256"):

@@ -59,8 +59,8 @@ def test_visible_scope_is_registry_profile_data_not_permission_or_registered_sys
     visible = data["ACTION_PARAMETERS"]["normalize_request"]
     assert visible["science_scope"] == scope
     assert "not permission/defaults" in visible["instruction"]
-    assert "notices" in visible["questions_policy"]
-    assert "critical unknowns in conditions/identity/quantity" in visible["questions_policy"]
+    assert "notices" in prepared.body()["messages"][0]["content"]
+    assert "critical unknowns in conditions/identity/quantity" in prepared.body()["messages"][0]["content"]
     assert data["AUTHORITY"]["permission"] == run.permission.model_dump(mode="json")
     assert data["AUTHORITY"]["permission"]["allowed_tools"] == []
     assert data["TOOL_CATALOG"] == []

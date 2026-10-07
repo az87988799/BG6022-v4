@@ -12,7 +12,12 @@ from orca_agent.context import build_context
 from orca_agent.llm import DeepSeekTransport
 from orca_agent.model_usage import current_basis, send_model
 from orca_agent.models import EvidenceRef, Proposal, fingerprint, utc_now
-from orca_agent.proposals import materialize_plan, valid_call_tool_parameters
+from orca_agent.proposals import (
+    call_tool_instruction,
+    call_tool_parameter_shapes,
+    materialize_plan,
+    valid_call_tool_parameters,
+)
 from orca_agent.store import BudgetExceeded, ControlChanged, EnvironmentBusy, StoreError
 from orca_agent.tools.dispatch import _source_hashes, execute_call
 from orca_agent.tools.registry import get_tool
@@ -247,16 +252,18 @@ def _decision(store, run, plan, results, transport, batch, fault):
                 values = proposal.parameters
                 ready = _ready(plan, results)
                 if not valid_call_tool_parameters(values):
+                    from orca_agent.proposals import ProposalError
                     readonly = [name for name in run.permission.allowed_tools
                                 if get_tool(name).effects == ["read_registered_artifact"]
                                 and run.usage.evidence_reads < run.budget.evidence_reads]
                     if not ready and not readonly:
-                        from orca_agent.proposals import ProposalError
                         plan_action = "revise_plan" if plan else "initial_plan"
                         raise ProposalError(
                             f"No ready Step/read Tool; only {plan_action} (new Steps), clarify, or stop.",
                             path=["action"])
-                    raise StoreError("call_tool parameters must be {tool,parameters} or {step_id}; no action wrapper")
+                    raise ProposalError(call_tool_instruction(immediate=bool(readonly)),
+                                        path=["parameters"],
+                                        allowed_shapes=call_tool_parameter_shapes(immediate=bool(readonly)))
                 if "step_id" in values:
                     step = next((s for s in ready if s.id == values["step_id"]), None)
                     if step is None:

@@ -144,10 +144,12 @@ def action_parameters(allowed_tools=(), *, request=None):
                                            for port in tool["output_ports"]})},
         "questions_policy": (
             "Named identity != registered System/geometry; no geometry != unknown identity. "
-            "New gaps need visible questions text. Registration only: notices, e.g. "
-            "'Recorded; target unsupported; geometry missing; no execution.' "
-            "Registration only: no resource requests/reconfirmation or change of explicit choices. "
-            "Ask for critical unknowns in conditions/identity/quantity."),
+            "Explicit registration-only: known scope/geometry limits get declarative notices in questions; "
+            "no reply, confirmation or resource request. Separately disclose science_scope support and "
+            "geometry registration; neither implies the other. Preserve explicit choices. "
+            "No execution permission alone is not registration-only intent. New gaps need visible questions text. "
+            "Ask for critical unknowns in conditions/identity/quantity blocking current scope; "
+            "execution intent may need resources/authorization."),
         "schema": schema,
         "condition_lexicon": {field: [[value, aliases] for (name, value), aliases in LEXICAL_ALIASES.items()
                                       if name == field] for field in dict.fromkeys(name for name, _ in LEXICAL_ALIASES)},

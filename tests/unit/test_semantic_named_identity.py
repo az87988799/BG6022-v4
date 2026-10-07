@@ -79,10 +79,10 @@ def test_named_targets_without_geometry_keep_identity_and_registration_notice(tm
     prepared = build_context(request, run, relevant_tools=[], action_parameters=contract,
         user_messages=store.read_control(run.id)["messages"])
     visible = payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
-    assert "Named identity != registered System/geometry" in visible["questions_policy"]
-    assert "no geometry != unknown identity" in visible["questions_policy"]
-    assert "target unsupported; geometry missing; no execution" in visible["questions_policy"]
-    assert "Registration only: no resource requests/reconfirmation" in visible["questions_policy"]
+    assert "Named identity != registered System/geometry" in prepared.body()["messages"][0]["content"]
+    assert "no geometry != unknown identity" in prepared.body()["messages"][0]["content"]
+    assert "Separately disclose science_scope support and geometry registration" in prepared.body()["messages"][0]["content"]
+    assert "no reply, confirmation or resource request" in prepared.body()["messages"][0]["content"]
     assert (request.model_dump_json(), run.model_dump_json()) == before
     assert prepared.input_token_bound <= run.budget.input_tokens == 12000
     assert not payload(prepared)["AUTHORITY"]["request"]["systems"]
@@ -90,7 +90,8 @@ def test_named_targets_without_geometry_keep_identity_and_registration_notice(tm
 
     known_names = {name for aliases in visible["science_scope"]["names"].values() for name in aliases}
     outside_scope = target not in known_names
-    scope_notice = "该已命名体系超出当前H2O/CH4支持范围；" if outside_scope else ""
+    scope_notice = ("该已命名体系超出当前H2O/CH4支持范围；" if outside_scope
+                    else "该体系属于当前H2O/CH4支持范围；")
     notice = f"已登记{target}需求；{scope_notice}几何未登记，本轮不执行。"
     parameters = named_parameters(store, run, target, notice)
     if outside_scope:
@@ -154,6 +155,6 @@ def test_retained_v12_failure_stays_exact_while_new_context_explains_named_ident
         action_parameters=action_parameters(request=request))
     visible = payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
     assert visible["science_scope"]["names"] == {"H2O": ["水", "water"], "CH4": ["甲烷", "methane"]}
-    assert "no geometry != unknown identity" in visible["questions_policy"]
+    assert "no geometry != unknown identity" in prepared.body()["messages"][0]["content"]
     assert prepared.input_token_bound <= 12000
     assert {path: digest(path) for path in before} == before

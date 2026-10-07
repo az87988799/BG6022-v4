@@ -11,7 +11,12 @@ from test_context import objects, payload
 from orca_agent import agent
 from orca_agent.context import _share_strings, build_context
 from orca_agent.models import Proposal
-from orca_agent.proposals import call_tool_parameters_schema, valid_call_tool_parameters
+from orca_agent.proposals import (
+    call_tool_instruction,
+    call_tool_parameter_shapes,
+    call_tool_parameters_schema,
+    valid_call_tool_parameters,
+)
 
 
 @pytest.mark.parametrize("values,valid", [
@@ -49,9 +54,23 @@ def test_schema_alternatives_and_runtime_agree_for_all_field_combinations():
             assert (sum(matches) == 1) is valid_call_tool_parameters(values)
 
 
+@pytest.mark.parametrize("immediate", [False, True])
+def test_plain_instruction_and_schema_share_exact_field_sets(immediate):
+    shapes = call_tool_parameter_shapes(immediate=immediate)
+    schema = call_tool_parameters_schema(immediate=immediate)
+    alternatives = schema.get("oneOf", [schema])
+    assert [branch["required"] for branch in alternatives] == shapes
+    instruction = call_tool_instruction(immediate=immediate)
+    assert all("{" + ",".join(fields) + "}" in instruction for fields in shapes)
+    assert "no inline params" in instruction and "match reason" in instruction
+    assert ("catalog.name, never effects" in instruction) is immediate
+
+
 def test_actual_response_schema_binds_contract_only_to_call_action():
     request, run = objects(scientific=False)
-    data = payload(build_context(request, run))
+    prepared = build_context(request, run)
+    data = payload(prepared)
+    assert call_tool_instruction() in prepared.body()["messages"][0]["content"]
     schema = data["PROPOSAL_SCHEMA"]
     assert schema["if"] == {"properties": {"action": {"const": "call_tool"}}}
     assert schema["then"] == {"properties": {"parameters": call_tool_parameters_schema()}}
@@ -101,8 +120,10 @@ def test_hybrid_correction_cannot_override_or_reserve_a_ready_step(tmp_path):
     assert store.load_plan(updated).model_dump_json() == before
     assert len(transport.sent) == updated.usage.model_calls == 2
     error = transport.sent[1]["CONTROL"]["validation_error"]
-    assert error["category"] == "StoreError"
-    assert "{tool,parameters} or {step_id}" in str(error)
+    assert error["category"] == "ProposalError"
+    assert error["requirement"]["path"] == ["parameters"]
+    assert error["requirement"]["allowed_shapes"] == call_tool_parameter_shapes()
+    assert error["requirement"]["requirement"] == call_tool_instruction()
     assert [decision["action"] for decision in updated.decisions] == ["rejected", "call_tool"]
     assert not updated.calls and not updated.attempts and updated.usage.evidence_reads == 0
 

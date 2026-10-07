@@ -11,6 +11,19 @@ from orca_agent.tools.registry import get_tool, validate_parameters
 _CALL_TOOL_FORMS = ({"step_id": str}, {"tool": str, "parameters": dict})
 
 
+def call_tool_parameter_shapes(*, immediate=True):
+    """Exact field sets shared by schema, prose and correction diagnostics."""
+    return [list(form) for form in (_CALL_TOOL_FORMS if immediate else _CALL_TOOL_FORMS[:1])]
+
+
+def call_tool_instruction(*, immediate=True):
+    shapes = ["{" + ",".join(keys) + "}" for keys in call_tool_parameter_shapes(immediate=immediate)]
+    text = f"call_tool Plan Step={shapes[0]} only; no inline params; match reason."
+    if immediate:
+        text += f" Or {shapes[1]} for an immediate reader; tool=catalog.name, never effects."
+    return text
+
+
 def call_tool_parameters_schema(*, immediate=True):
     """One structural contract; scientific parameters remain the Tool's job."""
     types = {str: "string", dict: "object"}

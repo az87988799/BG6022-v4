@@ -17,10 +17,10 @@ from typing import Any
 from orca_agent.applicability import effective_conditions
 from orca_agent.llm import PreparedRequest, prepare_request
 from orca_agent.models import Plan, Proposal, Request, Result, Run, utc_now
-from orca_agent.proposals import call_tool_parameters_schema
+from orca_agent.proposals import call_tool_instruction, call_tool_parameters_schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v14"
+PROMPT_VERSION = "agent-json-v15"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SYSTEM_PROMPT = """JSON; reason<=1000. Program gates execution/science/goals.
@@ -49,7 +49,7 @@ Keep permission/MaxIter-only/TightSCF/checks; scope changes need user decision.
 This response's tokens are unknown until settlement; final costs come from the report.
 """
 
-_PLAN_RULES = "Keep key=id;unique;map required Goals (Goal.port or gap);artifact_id!=Step key."
+_PLAN_RULES = "Unique key=id; map required Goal.port/gap; artifact_id!=key."
 
 _PATH = re.compile(
     r"(?i)(?:[a-z]:[\\/]|\\\\)[^\s\"<>|]*|(?:file://)[^\s\"<>]*"
@@ -821,7 +821,7 @@ def build_context(
     if not final_only and any("import_artifact" in tool["effects"] for tool in catalog):
         system_prompt += _IMPORT_PROMPT
     elif not final_only and any("write_analysis" in tool["effects"] for tool in catalog):
-        system_prompt += "Plan write_analysis; immediate:read_registered_artifact."
+        system_prompt += "Plan write_analysis."
     basis = {"request_version": request.version, "plan_version": run.plan_version,
              "permission_version": run.permission.version, "control_generation": generation}
     normalized = _conditions(request.model_dump(mode="json", exclude={"original_text", "messages"}))
@@ -892,8 +892,9 @@ def build_context(
         "related_results": (feedback.get("new_result_ids", []) if feedback is not None
                             and "new_result_ids" in feedback else [result.id for result in results]),
     }
+    unknown_scoped_condition = False
     if normalized["systems"]:
-        authority["system_condition_inheritance"] = "System values, including null, override Request; absent fields inherit."
+        authority["system_condition_inheritance"] = "System fields override Request, even null; absent inherit."
         overrides = _system_condition_overrides(request) if not semantic_intake else []
         if overrides:
             authority["system_condition_overrides"] = {
@@ -901,6 +902,8 @@ def build_context(
                 "rows": overrides,
             }
             system_prompt += " Source qualification!=current applicability; scoped null overrides stay unknown."
+            unknown_scoped_condition = any(
+                value["effective"] is None for row in overrides for value in row["conditions"].values())
     if pending_ids:
         authority["pending_user_message_ids"] = pending_ids
     if set(request.conditions_source.values()) & {"default", "inherited"}:
@@ -922,17 +925,23 @@ def build_context(
         proposal_schema["properties"][key] = {"const": value}
     examples, references = _action_examples(request, run, plan, catalog, final_only, control)
     examples = action_parameters if action_parameters is not None else examples
+    if unknown_scoped_condition and not final_only and "clarify" in examples:
+        system_prompt += (" If unknown conditions block the goal, clarify; source evidence or execution permission "
+                          "cannot supply unknown user conditions.")
     if semantic_intake:
         parameters = examples["normalize_request"]
         _compose_semantic_parameters(proposal_schema, parameters["schema"])
+        if policy := parameters.get("questions_policy"):
+            system_prompt += " " + policy
         examples = {**examples, "normalize_request": {
-            key: value for key, value in parameters.items() if key != "schema"}}
+            key: value for key, value in parameters.items() if key not in {"schema", "questions_policy"}}}
     proposal_schema["properties"]["action"] = {"enum": list(examples)}
     if "call_tool" in examples:
         proposal_schema["if"] = {"properties": {"action": {"const": "call_tool"}}}
         immediate = (run.usage.evidence_reads < run.budget.evidence_reads and
                      any(tool["effects"] == ["read_registered_artifact"] for tool in catalog))
         proposal_schema["then"] = {"properties": {"parameters": call_tool_parameters_schema(immediate=immediate)}}
+        system_prompt += " " + call_tool_instruction(immediate=immediate)
     template = {
         "PROPOSAL_SCHEMA": proposal_schema,
         "ACTION_PARAMETERS": examples,
