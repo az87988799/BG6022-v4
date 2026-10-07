@@ -8,6 +8,8 @@ from typing import Any
 from orca_agent.models import Check
 from orca_agent.versions import CURRENT_CHECK_VERSION
 
+OPTIMIZATION_STAGE_RULE = "optimization-final-stage-1"
+
 
 def check_outputs(observations: dict[str, Any], tool_name: str) -> dict[str, list[Check]]:
     facts = observations
@@ -39,6 +41,8 @@ def check_outputs(observations: dict[str, Any], tool_name: str) -> dict[str, lis
         result["optimized_geometry"] = energy_checks + [
             check("optimization_converged", facts.get("optimization_converged")),
             check("optimization_thresholds", facts.get("optimization_thresholds_passed")),
+            check("optimization_stage_binding", facts.get("optimization_stage_bound"),
+                  "; ".join(facts.get("optimization_stage", {}).get("reasons", []))),
             check("final_geometry", facts.get("final_geometry_matches")),
         ]
     return result

@@ -24,7 +24,7 @@ from opi.output.core import Output
 from opi.utils.orca_version import OrcaVersion
 
 from orca_agent.models import CalculationParameters
-from orca_agent.orca.checks import check_outputs
+from orca_agent.orca.checks import OPTIMIZATION_STAGE_RULE, check_outputs
 from orca_agent.orca.diagnostics import diagnostic, scientific_diagnostics
 from orca_agent.tools.registry import validate_geometry, validate_parameters
 from orca_agent.versions import (
@@ -138,7 +138,7 @@ def _same_geometry(first: list, second: list, tolerance: float = 3e-6) -> bool:
     return True
 
 
-def _thresholds(lines: list[str], converged_line: int) -> tuple[bool, dict]:
+def _thresholds(lines: list[str], converged_line: int, start_line: int = 1) -> tuple[bool, dict]:
     """Require the final TightOpt table, its actual thresholds and all five values."""
     required = {
         "Energy change": 1e-6, "RMS gradient": 3e-5, "MAX gradient": 1e-4,
@@ -146,6 +146,7 @@ def _thresholds(lines: list[str], converged_line: int) -> tuple[bool, dict]:
     }
     found = {}
     headers = [index for index, line in enumerate(lines[:converged_line])
+               if index + 1 >= start_line
                if "geometry convergence" in line.lower()]
     if not headers:
         return False, found
@@ -154,13 +155,29 @@ def _thresholds(lines: list[str], converged_line: int) -> tuple[bool, dict]:
         for label, expected in required.items():
             match = re.search(rf"{label}\s+({NUMBER})\s+({NUMBER})\s+(YES|NO)", line, re.I)
             if match:
-                value, threshold = float(match[1]), float(match[2])
+                value, threshold = (float(match[i].replace("D", "E")) for i in (1, 2))
+                if label in found:
+                    return False, found  # Duplicate rows cannot repair an earlier failed value.
                 found[label] = {
                     "line": line_no, "value": value, "threshold": threshold,
                     "passed": match[3].upper() == "YES" and abs(value) <= expected * 1.00001
                     and abs(threshold - expected) <= expected * 1e-5,
                 }
     return len(found) == len(required) and all(x["passed"] for x in found.values()), found
+
+
+def _calculation_stages(lines):
+    stages = []
+    for number, line in enumerate(lines, 1):
+        cycle = re.match(r"\s*\**\s*GEOMETRY OPTIMIZATION CYCLE\b(?:\s+(\d+)\b)?", line)
+        final = re.match(r"\s*\**\s*FINAL ENERGY EVALUATION\b", line)
+        if cycle or final:
+            stages.append({"line": number, "kind": "cycle" if cycle else "final_energy",
+                           "cycle": int(cycle[1]) if cycle and cycle[1] else None,
+                           "complete_header": bool(cycle[1]) if cycle else bool(re.match(
+                               r"\s*\**\s*FINAL ENERGY EVALUATION AT THE STATIONARY POINT\b",
+                               line))})
+    return stages
 
 
 def _energy_fragment(lines: list[str], blocks: list[dict], energies: list[dict],
@@ -172,10 +189,7 @@ def _energy_fragment(lines: list[str], blocks: list[dict], energies: list[dict],
     the previous stage's geometry. Multiple energies or SCF success markers in
     one segment are ambiguous; the supported RHF profile needs neither.
     """
-    stages = [i for i, line in enumerate(lines, 1) if re.match(
-        r"\s*\**\s*(?:GEOMETRY OPTIMIZATION CYCLE\s+\d+\b|"
-        r"FINAL ENERGY EVALUATION AT THE STATIONARY POINT\b)", line
-    )]
+    stages = [stage["line"] for stage in _calculation_stages(lines)]
     coordinate_headers = [i for i, line in enumerate(lines, 1)
                           if line.strip() == "CARTESIAN COORDINATES (ANGSTROEM)"]
     boundaries = sorted(set(stages + coordinate_headers))
@@ -231,6 +245,95 @@ def _energy_fragment(lines: list[str], blocks: list[dict], energies: list[dict],
     }
 
 
+def _optimization_stage(lines, blocks, energies, scf_successes, scf_failures,
+                        successes, normal, final_fragment):
+    """Bind final optimization evidence; a final stationary-point SP is allowed.
+
+    Only the last declared cycle can qualify. The single-stage text form without
+    a cycle heading remains readable when its coordinate/energy/table/terminal
+    ordering is complete and unambiguous.
+    """
+    stages = _calculation_stages(lines)
+    cycles = [stage for stage in stages if stage["kind"] == "cycle"]
+    stage = cycles[-1] if cycles else {"line": 1, "cycle": None}
+    start = stage["line"]
+    evaluations = [s["line"] for s in stages if s["kind"] == "final_energy" and s["line"] >= start]
+    end = evaluations[0] - 1 if evaluations else len(lines)
+    local_success = [line for line in successes if start <= line <= end]
+    failures = [i for i, line in enumerate(lines, 1) if i >= start and re.match(
+        r"\s*\**\s*(?:THE\s+)?OPTIMIZATION\s+(?:(?:HAS\s+)?NOT\s+CONVERGED|"
+        r"DID\s+NOT\s+CONVERGE|FAILED|ABORTED)\b", line, re.I)]
+    headers = [i for i, line in enumerate(lines, 1)
+               if i >= start and "geometry convergence" in line.lower()]
+    success = local_success[0] if len(local_success) == 1 else None
+    thresholds, rows = _thresholds(lines, success or 0, start)
+    reasons = []
+    if any(not item["complete_header"] for item in stages if item["line"] >= start):
+        reasons.append("final_optimization_stage_header_incomplete")
+    if not success:
+        reasons.append("final_cycle_has_no_unique_success_marker")
+    if failures:
+        reasons.append("final_optimization_stage_has_failure_marker")
+    if success and any(line > success for line in successes):
+        reasons.append("optimization_success_after_final_cycle_terminal")
+    if success and any(line > success for line in headers):
+        reasons.append("convergence_table_after_success_marker")
+    if not thresholds:
+        reasons.append("final_cycle_strict_threshold_table_not_passed")
+    cycle_fragment = _energy_fragment(
+        lines[:success], [b for b in blocks if success and b["line"] <= success],
+        [e for e in energies if success and e["line"] <= success],
+        [line for line in scf_successes if success and line <= success],
+        [line for line in scf_failures if success and line <= success],
+    ) if success else None
+    geometry = cycle_fragment["geometry"] if cycle_fragment else None
+    energy = cycle_fragment["energy"] if cycle_fragment else None
+    before_success = [line for line in headers if success and line < success]
+    table_line = before_success[-1] if before_success else None
+    if (not cycle_fragment or not cycle_fragment["unique_binding"]
+            or cycle_fragment["scf_converged"] is not True or not geometry or not energy
+            or not table_line or not (start <= geometry["line"] < energy["line"] < table_line < success)
+            or (cycles and cycle_fragment["stage_line"] != start)):
+        reasons.append("final_cycle_geometry_energy_table_binding_missing")
+    if evaluations:
+        if (len(evaluations) != 1 or not success or evaluations[0] <= success
+                or final_fragment["stage_line"] != evaluations[0]):
+            reasons.append("stationary_point_evaluation_not_bound_to_final_cycle")
+    elif (not cycle_fragment or final_fragment["energy_line"] != cycle_fragment["energy_line"]
+          or final_fragment["geometry_line"] != cycle_fragment["geometry_line"]):
+        reasons.append("later_energy_fragment_without_stationary_point_evaluation")
+    if (not final_fragment["unique_binding"] or not geometry or not final_fragment["geometry"]
+            or not _same_geometry(geometry["atoms"], final_fragment["geometry"]["atoms"])):
+        reasons.append("final_energy_geometry_differs_from_converged_cycle")
+    if geometry and success and any(not _same_geometry(geometry["atoms"], block["atoms"])
+                                   for block in blocks if block["line"] > success):
+        reasons.append("later_coordinate_report_differs_from_converged_cycle")
+    coordinate_headers = [i for i, line in enumerate(lines, 1)
+                          if i >= start and line.strip() == "CARTESIAN COORDINATES (ANGSTROEM)"]
+    readable_coordinates = {block["line"] for block in blocks}
+    if any(line not in readable_coordinates for line in coordinate_headers):
+        reasons.append("final_optimization_stage_has_unreadable_coordinates")
+    if (len(normal) != 1 or not success or normal[0] <= max(
+            [success, *evaluations, *headers, *coordinate_headers,
+             final_fragment["energy_line"] or 0])):
+        reasons.append("normal_termination_not_after_final_optimization_stage")
+    evidence = {
+        "file": "stdout.out", "rule_version": OPTIMIZATION_STAGE_RULE,
+        "stage_start_line": start, "stage_end_line": end, "cycle_number": stage["cycle"],
+        "success_lines": local_success, "failure_lines": failures,
+        "threshold_header_line": table_line, "threshold_rows": rows,
+        "converged_geometry_line": geometry["line"] if geometry else None,
+        "converged_energy_line": energy["line"] if energy else None,
+        "final_evaluation_lines": evaluations,
+        "final_geometry_line": final_fragment["geometry_line"],
+        "final_energy_line": final_fragment["energy_line"],
+        "normal_termination_lines": normal, "reasons": reasons,
+    }
+    return {"optimization_converged": bool(success and not failures),
+            "optimization_thresholds_passed": thresholds,
+            "optimization_stage_bound": not reasons, "optimization_stage": evidence}
+
+
 def _text_observations(text: str, params: CalculationParameters, tool_name: str) -> dict:
     lines = [line.rstrip("\r") for line in text.split("\n")]
     energies = []
@@ -266,7 +369,9 @@ def _text_observations(text: str, params: CalculationParameters, tool_name: str)
     charges = re.findall(r"^\s*Total Charge\s+Charge\s*\.{2,}\s*(-?\d+)", text, re.M)
     mults = re.findall(r"^\s*Multiplicity\s+Mult\s*\.{2,}\s*(\d+)", text, re.M)
     bases = re.findall(r"^\s*Your calculation utilizes the basis\s*:\s*(\S+)", text, re.M | re.I)
-    thresholds, threshold_evidence = _thresholds(lines, opt[-1] if opt else 0)
+    optimization = _optimization_stage(lines, blocks, energies, converged, failures, opt, normal,
+                                        fragment) if tool_name == "orca.opt" else {}
+    threshold_evidence = optimization.get("optimization_stage", {}).get("threshold_rows", {})
     return {
         "energy_eh": last["value"] if last else None,
         "energy_unit": "Eh", "energy_source": "stdout.out",
@@ -280,8 +385,7 @@ def _text_observations(text: str, params: CalculationParameters, tool_name: str)
                                  and all(int(value) == params.multiplicity for value in mults)),
         "scf_converged": fragment["scf_converged"],
         "parser_consistent": not fragment["conflict"],
-        "optimization_converged": bool(opt),
-        "optimization_thresholds_passed": thresholds,
+        **optimization,
         "geometry_blocks": blocks,
         "energy_geometry": fragment["geometry"],
         "energy_fragment": fragment_source,
@@ -305,8 +409,10 @@ def _text_observations(text: str, params: CalculationParameters, tool_name: str)
                 else (fragment["failure_lines"][0] if fragment["failure_lines"] else None),
             },
             "normal_termination": {"file": "stdout.out", "line": normal[-1] if normal else None},
-            "optimization_converged": {"file": "stdout.out", "line": opt[-1] if opt else None},
+            "optimization_converged": {"file": "stdout.out", "lines": optimization.get(
+                "optimization_stage", {}).get("success_lines", [])},
             "optimization_thresholds": {"file": "stdout.out", "rows": threshold_evidence},
+            "optimization_stage_binding": optimization.get("optimization_stage", {}),
         },
     }
 
@@ -430,5 +536,9 @@ def read_outputs(
     ):
         qualified["optimized_geometry"] = {"geometry_file": "job.xyz"}
     diagnostics.extend(scientific_diagnostics(facts, tool_name))
+    if tool_name == "orca.opt" and not facts.get("optimization_stage_bound"):
+        diagnostics.append(diagnostic(
+            "optimization_stage_unverified", "Final optimized structure lacks consistent stage evidence.",
+            facts.get("optimization_stage", {})))
     return {"observations": facts, "checks": checks,
             "qualified_outputs": qualified, "diagnostics": diagnostics}

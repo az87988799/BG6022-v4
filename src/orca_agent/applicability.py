@@ -190,7 +190,7 @@ def validate_scientific_plan(request, plan):
 
 
 def _qualified(result, port):
-    from orca_agent.orca.checks import check_outputs
+    from orca_agent.orca.checks import OPTIMIZATION_STAGE_RULE, check_outputs
 
     output = result.qualified_outputs.get(port)
     required = {c.name for c in check_outputs({}, "orca.opt")[port]}
@@ -198,6 +198,10 @@ def _qualified(result, port):
             or not required.issubset({c.name for c in output.checks})
             or any(c.status != "passed" or c.rule_version != CURRENT_CHECK_VERSION for c in output.checks)):
         raise ValueError("qualified_" + port + "_checks_missing_or_failed")
+    if port == "optimized_geometry" and not any(
+            c.name == "optimization_stage_binding" and c.source.get("rule_version") == OPTIMIZATION_STAGE_RULE
+            for c in output.checks):
+        raise ValueError("qualified_optimized_geometry_final_stage_rule_missing")
     return output
 
 
