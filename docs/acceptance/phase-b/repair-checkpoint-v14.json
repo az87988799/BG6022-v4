@@ -1,0 +1,59 @@
+{
+  "created_at": "2026-10-07T07:38:56.157879+00:00",
+  "kind": "static read-only Phase B acceptance checkpoint; no formal acceptance or active Store recovery claimed",
+  "code_commit": "5f7d49431627def4ad2abd944cb29ac28a9d9dc9",
+  "archive": "E:\\BG6022-V4\\data\\phase-b-delivery\\checkpoint-repair-v14-20261007.zip",
+  "archive_sha256": "ed46394929b91b3a8396be69d6b2336f6a12c979c30b6bad9ddeafa1033ec7f3",
+  "archive_bytes": 24205503,
+  "file_count": 8101,
+  "uncompressed_bytes": 154064734,
+  "file_index": {
+    "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\checkpoint-repair-v14-20261007.files.json",
+    "sha256": "153cdb083da7c2a82449dd9aed0e8a22ebf52ac083214db92c4bf19ae97d4732",
+    "bytes": 1949266
+  },
+  "source_roots": [
+    "data/phase-b",
+    "docs/acceptance/phase-b"
+  ],
+  "source_file_index_sha256": "9e391c12c646f7e46343861c4d05a0324b56124b7ec16a4346fe6783ac58c92a",
+  "exclusion_rules": [
+    "Include raw bytes beneath data/phase-b and existing docs/acceptance/phase-b only; preserve workspace-relative ZIP member paths.",
+    "Exclude repair-science.toml and credential/private-configuration filenames; no local runtime configuration is archived.",
+    "Exclude local operational scripts (.py/.ps1/.cmd/.bat/.sh), bytecode, environment/cache directories, lock files and operational/atomic temporary remnants.",
+    "Preserve registered Artifact scientific .tmp payloads and matching original ORCA .tmp evidence; each preserved scientific temporary file matches its recorded Artifact SHA-256 and byte count.",
+    "Exclude data/phase-b-delivery, source checkout, credentials, venvs and the newly generated receipt/index/archive from the source snapshot."
+  ],
+  "excluded_entries": 11,
+  "verification": {
+    "zip_member_path_constraints_checked": true,
+    "zip_crc_verified": true,
+    "every_zip_member_sha256_and_bytes_verified": true,
+    "source_sha256_and_bytes_unchanged_before_after": true,
+    "source_tree_membership_unchanged_before_after": true,
+    "credential_scan": {
+      "included_files_scanned": 8101,
+      "suspected_credentials": 0,
+      "methods": [
+        "repository credential-token pattern",
+        "private-key header pattern",
+        "current secret environment values without disclosure",
+        "UTF-16 byte decoding where applicable"
+      ]
+    },
+    "scientific_tmp_files_verified": {
+      "registered_artifact": 175,
+      "original_scientific_evidence": 175
+    }
+  },
+  "ledger_checkpoint": {
+    "path": "data/phase-b/batch-ledger.json",
+    "sha256": "656ad8aaee4abc8a037f7f5b86973d167a12158999cd05c082fc03401ed64392",
+    "http_requests": 298,
+    "known_tokens": 921735,
+    "unknown_tokens": 0,
+    "known_usd": "0.3631788"
+  },
+  "cutoff": "Snapshot taken after the recorded v14 source commit with ledger fixed at 298 HTTP / 921735 known tokens. Later test receipts, new calls and later evidence are outside this archive; future checkpoints must use new filenames.",
+  "use": "Static read-only inspection only. Extract only into an empty isolated directory while preserving these relative paths. Original absolute evidence references and budgets remain unchanged. Do not mix with, overwrite, or treat this archive as an active Store resume; no budget reset or credential/configuration restoration is provided."
+}
