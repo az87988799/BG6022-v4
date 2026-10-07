@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "category": "real_model_development",
+  "status": "failed",
+  "code_commit": "a5f159a3c01334c631b6fb37d264a4fba2429ced",
+  "prompt_version": "agent-json-v9",
+  "freeze_label": "repair-raw-dev-v5",
+  "variant_id": "N-01/raw-water-sp",
+  "run_id": "run_6ff5f4f011cc4027bae5ef0aefdfeb39",
+  "http_requests": 2,
+  "tokens": 5664,
+  "orca_starts": 0,
+  "accepted_proposals": 2,
+  "independent_review": {
+    "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v5/N-01__raw-water-sp/1/review.json",
+    "sha256": "45ca0102695380f7c8c5d5ac83817da4a8224c725648460f189ccbd6b6cefe13",
+    "all_proposal_facts_passed": false,
+    "semantic_review_passed": false,
+    "explanation": {
+      "quantity": {
+        "passed": true,
+        "quote": "quantity:single-point electronic energy of water",
+        "rationale": "最终accepted clarify精确识别水的单点电子能；不存在实际能量数值，未把科学计算宣称为完成。"
+      },
+      "unit": {
+        "passed": false,
+        "quote": "unit:unknown (Hartree expected but not stated)",
+        "rationale": "unknown/no stated部分符合缺少用户单位要求和无Result的事实；但Hartree expected无来源且与never inferred提示冲突，随后将单位/输出格式列为本轮必须澄清项。未知本身可以合格披露，本案失败不在于缺少真实单位，而在于新增无据预期和阻断。"
+      },
+      "conditions": {
+        "passed": true,
+        "quote": "conditions:method HF, basis STO-3G, charge 0, multiplicity 1, gas phase, RHF, fixed initial geometry — all explicit",
+        "rationale": "全部有效条件和fixed_initial均由本轮原文与注册初始几何支持；条件源explicit与激活Request一致，没有默认/继承/推断被提升。"
+      },
+      "source": {
+        "passed": true,
+        "quote": "source:user message message_020cfc262bcd4150a1ca9518b3bf0970",
+        "rationale": "真实消息ID与AUTHORITY/control及Request条件证据相同；此来源仅证明需求，不作为不存在的计算Result来源。首轮另准确引用注册geometry artifact。"
+      },
+      "limits": {
+        "passed": true,
+        "quote": "limits:no tool catalog available, scientific_execution=false, orca_starts=0, and user explicitly requested registration only (no computation this round)",
+        "rationale": "全部限制均由实际发送上下文、许可、预算与用户原文核实；0Tool/0ORCA/0Result，无伪造科学保证。限制描述正确不能抵消其被错误重复询问的问题。"
+      },
+      "next_action": {
+        "passed": false,
+        "quote": "next:confirm scope/registration intent before any execution.",
+        "rationale": "说明与实际clarify动作一致，但下一步缺乏必要性：用户本轮只登记不计算已明确，Request已normalized且无未决科学字段。将已知范围重设为疑问并等待用户，不符合只询问关键缺项的契约。"
+      }
+    }
+  },
+  "evidence_files": [
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v5/N-01__raw-water-sp/1/metadata.json",
+      "sha256": "fe6a0278a59da550f9a769c077a6fa7ce8a1a07f4f95f532bd5beee3dffa923f"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v5/N-01__raw-water-sp/1/execution.json",
+      "sha256": "39b76fc0889fdc68dd0e00bbaee97aec7b2eeb1b340fca7e4ef51537d90b9865"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v5/N-01__raw-water-sp/1/grade-before-independent-review.json",
+      "sha256": "f6f0a4c1281e0e5a5a316fcd53f5b9fe949f590098966c849682fdc2402736fe"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v5/N-01__raw-water-sp/1/grade.json",
+      "sha256": "034b2be76002f69056004c6ecdfc40398fcd65f74a8eb8e1d74c321f067350da"
+    }
+  ],
+  "findings": [
+    "Both original raw response contents and receipts are preserved and verified. Both proposals are valid JSON and were accepted; no wrapper, binding-ID or schema rejection occurred.",
+    "The first real proposal correctly normalized the water fixed-initial single-point energy Goal, all six physical fields and explicit sources. Request v2 remains normalized with no Request or Goal unresolved items; all six mechanical assertions pass.",
+    "The second accepted clarify explicitly acknowledges registration-only/no-computation intent, then lists that already stated intent as unresolved and asks the user to confirm it again. It also promotes unspecified unit/output preferences to a registration blocker.",
+    "Final quantity, conditions, source and limits axes pass; unit fails for unsupported Hartree expectation plus an unnecessary blocker, and next_action fails for spurious clarification. Unknown unit itself is permitted and is not the reason for failure.",
+    "The spurious clarification is persisted in the Run, not as a new Request revision. State is waiting_user with an active clarification; 0 Tool/ORCA/Result, 2 HTTP and 5664 tokens ($0.0024381) are retained. Independent regrade classifies this development slot as failed."
+  ],
+  "follow_up": "Clarify the general choice between stop and clarify after successful registration: preserve unknown units, report no computation/no result, and ask only actual critical missing questions. Do not silently discard this accepted clarification, mark science goals satisfied, alter this failure, enlarge budgets or lower review standards. Any later prompt version or live attempt has separate evidence."
+}

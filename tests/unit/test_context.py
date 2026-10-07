@@ -97,7 +97,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v9"
+    assert context.prompt_version == "agent-json-v10"
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
     assert set(data["PROPOSAL_SCHEMA"]["required"]) == set(Proposal.model_fields)
