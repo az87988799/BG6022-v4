@@ -49,6 +49,7 @@ def test_visible_scope_is_registry_profile_data_not_permission_or_registered_sys
     scope = contract["normalize_request"]["science_scope"]
     assert scope == {
         "systems": list(SCIENCE_COMPOSITIONS), "conditions": PROFILE,
+        "names": {"H2O": ["水", "water"], "CH4": ["甲烷", "methane"]},
         "ports": sorted({port for tool in catalog() if "execute_orca" in tool["effects"]
                          for port in tool["output_ports"]}),
     }

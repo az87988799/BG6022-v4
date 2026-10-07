@@ -35,6 +35,8 @@ LEXICAL_ALIASES = {
     ("electronic_state", "RHF"): ("rhf", "闭壳层"),
     ("method", "HF"): ("hf", "rhf", "hartree-fock"),
 }
+SYSTEM_ALIASES = {"water": ("水", "h2o"), "methane": ("甲烷", "ch4"),
+                  "h2o": ("水", "water"), "ch4": ("甲烷", "methane")}
 READ_TOOLS = {port: tool["name"] for tool in catalog()
               if tool["effects"] == ["read_registered_artifact"] for port in tool["observation_outputs"]}
 RULES = {port: tool["check_version"] for tool in catalog()
@@ -116,31 +118,34 @@ def action_parameters(allowed_tools=(), *, request=None):
                            {"properties": {"goal_bindings": new_goal_binding_schema}}]
     port_rules = {port: rule for port, rule in RULES.items() if port != "unresolved"}
     return {"normalize_request": {
-        "instruction": "Normalize user messages before planning. "
-        "Goal ports are minimum_evidence_rules.port_rules keys; query follows query_schemas[port]. "
+        "instruction": "Goal ports are minimum_evidence_rules.port_rules keys; query follows query_schemas[port]. "
         "Use environment for gas/solvent. condition_lexicon[field] rows=[value,explicit aliases], not inference. "
         "electronic_state means RHF/UHF reference, not ground/excited. "
-        "Use System.geometry_artifact_id via system_refs; never put geometry in conditions. "
+        "system_refs -> System.geometry_artifact_id; never put geometry in conditions. "
         "explain_results is existing configuration; keep. "
-        "minimum_evidence defaults to []; checks apply. See minimum_evidence_rules. "
-        "Keep actual user unsupported/unknown requirements verbatim/unresolved; never invent rule names. "
-        "Energy requires geometry_relation=fixed_initial (single point) or optimized (after optimization). "
-        "Unknown/inferred settings:Candidate.conditions/system_conditions. "
+        "minimum_evidence defaults to []; checks apply. "
+        "Keep actual user unsupported/unknown requirements unresolved; no invented rules. "
+        "Energy requires geometry_relation=fixed_initial (SP) or optimized (after Opt). "
+        "Unknown/inferred:conditions/system_conditions. "
         "Energy needs temperature_K/standard_state only if requested. Absent unit:unknown. "
-        "science_scope: capability limits, not permission/defaults; keep unsupported/unknown. "
-        "No execution. Copy AUTHORITY.pending_user_message_ids. "
+        "science_scope: capability limits, not permission/defaults. "
+        "No execution; copy AUTHORITY.pending_user_message_ids. "
         "Verbatim text_basis: no translation, paraphrase or added parentheses. "
         "normalize replaces raw_request/missing:goal_definition with requested Goals, "
-        "even after clarification. Registration/no-execution is not a Goal. amend retains goals; "
-        "New Goals use system_refs; goal_bindings uses existing Goal.id, not with goals. "
-        "replace_goals requires explicit replacement and all old IDs. "
-        "gaps:field:<field>/system:<goal_id>; resolves must match answers.",
+        "after clarification too. Registration/no-execution is not a Goal. amend keeps goals; "
+        "New goals:system_refs; existing Goal.id:goal_bindings, never both. "
+        "replace_goals:explicit replacement + all old IDs. "
+        "gaps:field:<field>/system:<goal_id>; resolves=answered gaps.",
         "science_scope": {"systems": list(SCIENCE_COMPOSITIONS), "conditions": dict(PROFILE),
+                          "names": {formula: list(SYSTEM_ALIASES.get(formula.casefold(), ()))
+                                    for formula in SCIENCE_COMPOSITIONS},
                           "ports": sorted({port for tool in catalog() if "execute_orca" in tool["effects"]
                                            for port in tool["output_ports"]})},
         "questions_policy": (
-            "New gaps, even program-detected, need visible questions text. "
-            "For registration only, state unsupported scope/known missing resources as notices; "
+            "Named identity != registered System/geometry; no geometry != unknown identity. "
+            "New/program-detected gaps need visible questions text. "
+            "Registration only: unsupported scope/known missing resources as notices, "
+            "including named out-of-scope targets/missing geometry; "
             "do not request resources or reconfirm/change explicit choices. "
             "Ask for critical unknowns in conditions/identity/quantity."),
         "schema": schema,
@@ -160,11 +165,9 @@ def _quote(text, messages):
 def _grounded_systems(request, messages):
     """Only explicit registered names/known molecular aliases disambiguate a binding."""
     text = "\n".join(message["text"] for message in messages).casefold()
-    aliases = {"water": ["水", "h2o"], "methane": ["甲烷", "ch4"],
-               "h2o": ["水", "water"], "ch4": ["甲烷", "methane"]}
     found = set()
     for system in request.systems:
-        names = [system.id.casefold(), *aliases.get(system.id.casefold(), [])]
+        names = [system.id.casefold(), *SYSTEM_ALIASES.get(system.id.casefold(), ())]
         for name in names:
             if (re.search(r"(?<![a-z0-9_])" + re.escape(name) + r"(?![a-z0-9_])", text)
                     if name.isascii() else name in text):

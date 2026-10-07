@@ -1,0 +1,345 @@
+{
+  "schema_version": 1,
+  "category": "real_model_development",
+  "status": "failed",
+  "code_commit": "730085828cfe2dbd3d0c71a00b5b0775d0ee7552",
+  "prompt_version": "agent-json-v12",
+  "freeze_label": "repair-raw-dev-v8",
+  "entries": [
+    {
+      "variant_id": "N-05/raw-unsupported-solvent",
+      "run_id": "run_cc47dc55c8fe4fe0b373ed2eccd97a73",
+      "status": "passed",
+      "grade_api_status": "passed",
+      "http_requests": 2,
+      "tokens": 7477,
+      "tokens_unknown": 0,
+      "known_usd": "0.0034689",
+      "accepted_proposals": 1,
+      "rejected_proposals": 1,
+      "final_accepted_model_id": "model_20fd138e7b794b8b863bb3817765e5ea",
+      "all_proposal_facts_passed": true,
+      "semantic_review_passed": true,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "passed",
+        "source": "passed",
+        "limits": "passed",
+        "next_action": "passed"
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": true,
+          "quote": "quantity:single-point electronic energy of registered water",
+          "rationale": "This matches the original single-point electronic energy for the registered water; the accepted goal binds water and fixed_initial geometry.",
+          "quote_model_ids": [
+            "model_20fd138e7b794b8b863bb3817765e5ea"
+          ]
+        },
+        "unit": {
+          "passed": true,
+          "quote": "unit:unknown (not stated)",
+          "rationale": "The user did not specify an output unit. Unknown is an accurate statement and no unit or numerical value is fabricated.",
+          "quote_model_ids": [
+            "model_20fd138e7b794b8b863bb3817765e5ea"
+          ]
+        },
+        "conditions": {
+          "passed": true,
+          "quote": "conditions:method HF, basis STO-3G, charge 0, multiplicity 1, electronic_state RHF, environment water_solvent (explicit, preserved)",
+          "rationale": "All six values and their explicit sources match the authenticated original. Water solvent is preserved in Request and Goal despite the gas-only supported profile.",
+          "quote_model_ids": [
+            "model_20fd138e7b794b8b863bb3817765e5ea"
+          ]
+        },
+        "source": {
+          "passed": true,
+          "quote": "source:AUTHORITY.user_originals[0], message_d6ffee168a334d0386f73337cd6ecf83",
+          "rationale": "Both references exist in the frozen request and contain the original user instruction. The registered water geometry is independently hash-verified; no computed Result is claimed.",
+          "quote_model_ids": [
+            "model_20fd138e7b794b8b863bb3817765e5ea"
+          ]
+        },
+        "limits": {
+          "passed": true,
+          "quote": "当前登记的科学范围仅支持气相（gas_phase）环境；水溶剂（water_solvent）环境不在已登记支持范围内，本轮仅登记该需求，不启动计算。",
+          "rationale": "The accepted visible notice explicitly discloses gas-phase-only support, the unsupported water-solvent environment, and registration without execution. It does not imply scientific completion.",
+          "quote_model_ids": [
+            "model_20fd138e7b794b8b863bb3817765e5ea"
+          ]
+        },
+        "next_action": {
+          "passed": true,
+          "quote": "本轮仅登记该需求，不启动计算。",
+          "rationale": "This is a declarative current-round outcome consistent with the explicit registration-only request. The candidate requests no resource, reconfirmation or gas substitution; the scientific goal remains unresolved.",
+          "quote_model_ids": [
+            "model_20fd138e7b794b8b863bb3817765e5ea"
+          ]
+        }
+      },
+      "final_response_verified": true,
+      "required_final_response": {
+        "required": false,
+        "passed": null,
+        "status": "not_applicable",
+        "accepted_action": null,
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 6
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "waiting_user",
+        "normalization_status": "clarification",
+        "goal_status": {
+          "goal_water_single_point_energy": "insufficient_evidence"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 0,
+        "results": 0,
+        "qualified_ports": []
+      },
+      "scope": "保留explicit water_solvent及固定初始几何电子能。第一案因缺可见notice被拒，修正案声明气相能力边界、保留水溶剂要求且不重问/改选；开发语义及六轴通过，不代表支持该环境或完成科学计算。",
+      "proposal_records": [
+        {
+          "model_id": "model_d247410f3e6846049f6fd25ade582747",
+          "action": "normalize_request",
+          "accepted": false,
+          "response_record_sha256": "5d613b98b9737f841ca6ec458db226236d9b6b8c684f76cb05f4b118ca418186"
+        },
+        {
+          "model_id": "model_20fd138e7b794b8b863bb3817765e5ea",
+          "action": "normalize_request",
+          "accepted": true,
+          "response_record_sha256": "a9d9c328095849d13379ee6d1e6894348026dafa1f74f1e717cb301c3934949b"
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v8/N-05__raw-unsupported-solvent/1/review.json",
+          "sha256": "0ba97622e0c091b670a92e16ac9cace62cf513cdeb671f51ac721a372d6c2848"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v8/N-05__raw-unsupported-solvent/1/metadata.json",
+          "sha256": "4f4d985f5e74aaf019992e67d827244059451228ef050c84545dea80eca46cdb"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v8/N-05__raw-unsupported-solvent/1/execution.json",
+          "sha256": "01de8cea21c8410d731b697ee6516b91486132b615c40d7e40541cc6fb71468d"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v8/N-05__raw-unsupported-solvent/1/grade.json",
+          "sha256": "af97815c8f1c46c9831b62bef2a4c23a3a3ef0e0a3c768d91a8e3522cf514d86"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v8/N-05__raw-unsupported-solvent/1/grade.before-independent-review.json",
+          "sha256": "d171321e84737315eedbd8fa482f1a555d80e66172676ca682d844feba1b852c"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_cc47dc55c8fe4fe0b373ed2eccd97a73/run.json",
+          "sha256": "bf9f063f87d5e82179a7c17682347ca4ad34456eecb7097c4270740de207ad7f"
+        }
+      }
+    },
+    {
+      "variant_id": "N-06/raw-unsupported-system",
+      "run_id": "run_746719fe131148d9a24493283418f5ee",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 1,
+      "tokens": 3442,
+      "tokens_unknown": 0,
+      "known_usd": "0.0015204",
+      "accepted_proposals": 1,
+      "rejected_proposals": 0,
+      "final_accepted_model_id": "model_508dc2747b314114a02c0f00531e92e3",
+      "all_proposal_facts_passed": true,
+      "semantic_review_passed": false,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "passed",
+        "source": "passed",
+        "limits": "failed",
+        "next_action": "failed"
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": true,
+          "quote": "quantity:optimized geometry + electronic energy of ethanol",
+          "rationale": "Both requested outputs for ethanol remain required; electronic energy is explicitly related to optimized geometry, with no registered-molecule substitution.",
+          "quote_model_ids": [
+            "model_508dc2747b314114a02c0f00531e92e3"
+          ]
+        },
+        "unit": {
+          "passed": true,
+          "quote": "unit:unknown (energy unit not stated)",
+          "rationale": "The original specifies no output unit, so unknown is appropriate and no numerical output is invented.",
+          "quote_model_ids": [
+            "model_508dc2747b314114a02c0f00531e92e3"
+          ]
+        },
+        "conditions": {
+          "passed": true,
+          "quote": "conditions:method HF, basis STO-3G, charge 0, multiplicity 1, electronic_state RHF, environment gas_phase (all explicit)",
+          "rationale": "All six fields are explicitly supported by RHF/STO-3G, neutral singlet and gas phase in the original text; their authentic text_basis values are preserved.",
+          "quote_model_ids": [
+            "model_508dc2747b314114a02c0f00531e92e3"
+          ]
+        },
+        "source": {
+          "passed": true,
+          "quote": "source:AUTHORITY.user_messages[0]",
+          "rationale": "This field exists in the exact frozen request and its first authenticated message is the original ethanol request. The system list is empty and no Artifact or Result is invented.",
+          "quote_model_ids": [
+            "model_508dc2747b314114a02c0f00531e92e3"
+          ]
+        },
+        "limits": {
+          "passed": false,
+          "quote": "limits:registration only, no execution, no geometry artifact registered",
+          "rationale": "These statements are true but omit the independent capability limit: the same frozen prompt supplies H2O/CH4 as the supported composition scope, which excludes ethanol. Missing geometry alone is not a complete explanation of the execution limitation.",
+          "quote_model_ids": [
+            "model_508dc2747b314114a02c0f00531e92e3"
+          ]
+        },
+        "next_action": {
+          "passed": false,
+          "quote": "乙醇的初始几何结构（原子坐标或几何文件）尚未登记，请提供以完成登记。",
+          "rationale": "The user explicitly limits this round to registering requirements and already discloses no ethanol geometry. Asking for geometry to complete this registration goes beyond the current task; it also leaves the ethanol capability limit undisclosed. The review does not rewrite this question as an unsupported-scope notice.",
+          "quote_model_ids": [
+            "model_508dc2747b314114a02c0f00531e92e3"
+          ]
+        }
+      },
+      "final_response_verified": true,
+      "required_final_response": {
+        "required": false,
+        "passed": null,
+        "status": "not_applicable",
+        "accepted_action": null,
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 7
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "waiting_user",
+        "normalization_status": "clarification",
+        "goal_status": {
+          "goal_optimized_geometry": "insufficient_evidence",
+          "goal_energy": "insufficient_evidence"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 0,
+        "results": 0,
+        "qualified_ports": []
+      },
+      "scope": "乙醇优化及优化后电子能和显式条件保留，但已接受说明仅说未登记geometry，漏报H2O/CH4体系能力限制，并在本轮仅登记要求下索取geometry；limits及next_action失败。",
+      "proposal_records": [
+        {
+          "model_id": "model_508dc2747b314114a02c0f00531e92e3",
+          "action": "normalize_request",
+          "accepted": true,
+          "response_record_sha256": "dd8235c45d46535ae389e9f244f3eab362e3dfa102bcf392ad0bc6afd58a92fb"
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v8/N-06__raw-unsupported-system/1/review.json",
+          "sha256": "6cecc7beb7b1f7d2c0da985bd5dbc4926ecd08cb9c426181544a13d048ce2585"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v8/N-06__raw-unsupported-system/1/metadata.json",
+          "sha256": "0899672a4f7e822e5bc8542f10e24471cbcd07ce2bf4ae67bb7d492a7006f8a4"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v8/N-06__raw-unsupported-system/1/execution.json",
+          "sha256": "83028d662fd04cfffb8fa84ad6673c85bd7955b06e9fecd1e16b9c9cde59f470"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v8/N-06__raw-unsupported-system/1/grade.json",
+          "sha256": "b546f9eee7ef74951788bddeccabd46d8c31ca4bb8d501dfa74bcc3755406af2"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v8/N-06__raw-unsupported-system/1/grade.before-independent-review.json",
+          "sha256": "83e506df674351664dea8775623ef7a755fd0fe72d7a7c53d6f5e39542422f12"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_746719fe131148d9a24493283418f5ee/run.json",
+          "sha256": "0f99eb58a2a847ae8d93a293ff111a14a4d5f189abe042329b32611a2fcf79c8"
+        }
+      }
+    }
+  ],
+  "totals": {
+    "completed_slots": 2,
+    "passed": 1,
+    "failed": 1,
+    "http_requests": 3,
+    "tokens": 10919,
+    "tokens_unknown": 0,
+    "known_usd": "0.0049893",
+    "orca_starts": 0
+  },
+  "cumulative_budget_snapshot": {
+    "observed_at_utc": "2026-10-07T07:03:52.427585+00:00",
+    "path": "data/phase-b/batch-ledger.json",
+    "sha256": "4d383b46c05a66ae474fc02911a790f54b392d8dc32b5d59d547f44f6e87e207",
+    "read_only_verified": true,
+    "model_usage": {
+      "http_requests": 283,
+      "tokens": 870500,
+      "usd": "0.3422508",
+      "known_tokens": 870500,
+      "unknown_tokens": 0,
+      "known_usd": "0.3422508",
+      "unknown_usd": "0"
+    },
+    "science_counts": {
+      "reference": {
+        "reserved": 16,
+        "actual": 16,
+        "unknown": 0
+      },
+      "development": {
+        "reserved": 26,
+        "actual": 26,
+        "unknown": 0
+      },
+      "formal": {
+        "reserved": 0,
+        "actual": 0,
+        "unknown": 0
+      }
+    },
+    "science_total_reserved": 42,
+    "science_total_actual": 42,
+    "limits": {
+      "orca_starts": {
+        "reference": 16,
+        "formal": 48,
+        "development": 48,
+        "total": 112
+      },
+      "model": {
+        "http_requests": 1004,
+        "tokens": 6500000,
+        "usd": 10
+      }
+    }
+  },
+  "limitation": "仅汇集本批真实模型开发槽的独立评审，未新增HTTP/ORCA；不等于正式重复验收或用户验收。原始提案、拒绝、修正及成本全部保留，旧失败未覆盖。程序接受、机械通过、科学检查与语义通过分别记录。没有accepted最终说明时六轴为null且未验证，不用初始计划或被拒文本凑最终解释。未修改槽文件、Run、账本或生产源码。"
+}

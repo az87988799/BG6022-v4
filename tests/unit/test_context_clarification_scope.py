@@ -94,6 +94,7 @@ def test_no_tool_clarification_guidance_does_not_replace_other_phase_contracts(t
         run.goal_status = {"water_energy": "satisfied"}
     else:
         run.permission.allowed_tools = ["evidence.value"]
+        run.budget.evidence_reads = 1
         options["relevant_tools"] = ["evidence.value"]
     prepared = build_context(request, run, **options)
     data = payload(prepared)

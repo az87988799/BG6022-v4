@@ -1,0 +1,878 @@
+{
+  "schema_version": 1,
+  "category": "real_model_development",
+  "status": "failed",
+  "code_commit": "730085828cfe2dbd3d0c71a00b5b0775d0ee7552",
+  "prompt_version": "agent-json-v12",
+  "freeze_label": "repair-fixed-dev-v2",
+  "entries": [
+    {
+      "variant_id": "V-02/free-energy-protected",
+      "run_id": "run_c58739ae8ac34de39e1971938174d51f",
+      "status": "passed",
+      "grade_api_status": "passed",
+      "http_requests": 1,
+      "tokens": 2974,
+      "tokens_unknown": 0,
+      "known_usd": "0.0011919",
+      "accepted_proposals": 1,
+      "rejected_proposals": 0,
+      "final_accepted_model_id": "model_a29b62f8f9d84b85a6a699ef49387616",
+      "all_proposal_facts_passed": true,
+      "semantic_review_passed": true,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "passed",
+        "source": "passed",
+        "limits": "passed",
+        "next_action": "passed"
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": true,
+          "quote": "quantity:gibbs_free_energy_difference,electronic_energy_difference",
+          "rationale": "同时保留Gibbs自由能差和电子能差；两个required Goal保持，未以电子能替换Gibbs。"
+        },
+        "unit": {
+          "passed": true,
+          "quote": "unit:Eh for electronic (stated), Gibbs unit unknown",
+          "rationale": "电子能Goal的单位明确Eh，Gibbs没有指定，unknown准确。通过的是未知披露，不是验证实际Gibbs值的单位。"
+        },
+        "conditions": {
+          "passed": true,
+          "quote": "conditions:298.15 K,1 atm,gas phase,HF/STO-3G,charge 0,multiplicity 1",
+          "rationale": "温度298.15 K、压力1 atm及气相来自Gibbs Goal；HF/STO-3G、电荷0、多重度1来自Request及历史电子能来源，没有把电子能当热校正。"
+        },
+        "source": {
+          "passed": true,
+          "quote": "source:A/B energy bindings present (run_cf30441b..., run_d99a65a5...), but no thermal/frequency evidence for Gibbs",
+          "rationale": "A/B前缀对应两份登记历史Result；它们只有电子能，没有频率或热化学来源，模型准确披露缺失。"
+        },
+        "limits": {
+          "passed": true,
+          "quote": "limits:no permitted tool computes Gibbs (only analysis.energy_compare for electronic energy), goal gibbs_free_energy_difference marked insufficient_evidence with missing:goal_definition and thermal_evidence_missing",
+          "rationale": "许可仅analysis.energy_compare，没有Gibbs工具；insufficient_evidence和两个未决marker真实存在。"
+        },
+        "next_action": {
+          "passed": true,
+          "quote": "next:clarify how to obtain Gibbs free energy difference since no thermal evidence or Gibbs-capable tool is available.",
+          "rationale": "实际clarify并waiting_user，围绕真实缺少的热证据和工具范围询问。仅报告电子能是需用户决定的建议，未被激活为目标缩减；新计算也未被当成已有授权。电子能差仍未计算，未冒称部分科学完成。"
+        }
+      },
+      "final_response_verified": true,
+      "required_final_response": {
+        "required": false,
+        "passed": null,
+        "status": "not_applicable",
+        "accepted_action": "clarify",
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 2
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "waiting_user",
+        "normalization_status": "clarification",
+        "goal_status": {
+          "gibbs_free_energy_difference": "insufficient_evidence",
+          "electronic_energy_difference": "insufficient_evidence"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 0,
+        "results": 0,
+        "qualified_ports": []
+      },
+      "scope": "准确披露缺热化学证据和Gibbs工具，保留两个必需Goal，有据clarify且六轴通过；未产出Gibbs或电子能差。",
+      "proposal_records": [
+        {
+          "model_id": "model_a29b62f8f9d84b85a6a699ef49387616",
+          "action": "clarify",
+          "accepted": true,
+          "response_record_sha256": "8da32a4b50b1cf61e6c13c6674bb9a9fc8d1db4fa1cce59e577bfe429949caa4"
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-02__free-energy-protected/1/review.json",
+          "sha256": "233d685d72c29ec0379ff2b8bf5b2387be7d3b21fb6c7881b102875053b66e84"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-02__free-energy-protected/1/metadata.json",
+          "sha256": "c7b819811cbbdfe54367ef085f87165fdd1df4e5740b12a15eb2e4803390cf16"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-02__free-energy-protected/1/execution.json",
+          "sha256": "c12d219a89af90fb41d19007a2319712d2899598b2c4093e5f8b91a185b278a2"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-02__free-energy-protected/1/grade.json",
+          "sha256": "cc0b2f02c34f3b4ffb93a1c9bc9c288e7c0c4d6b9294bc3d7bbf98edc64928be"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-02__free-energy-protected/1/grade-before-independent-review.json",
+          "sha256": "b918f0dec413d8eacc805d350d1496fe296fab3c3d34f95f537b85bfcc464406"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_c58739ae8ac34de39e1971938174d51f/run.json",
+          "sha256": "86c95463a1fbf25807c28520c960228be14fa481f33cd042a20745317db95305"
+        }
+      }
+    },
+    {
+      "variant_id": "V-06/insufficient-additional-budget",
+      "run_id": "run_333aae7833ab445493ec77a72f6ee991",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 3,
+      "tokens": 12238,
+      "tokens_unknown": 0,
+      "known_usd": "0.0048243",
+      "accepted_proposals": 1,
+      "rejected_proposals": 2,
+      "final_accepted_model_id": null,
+      "all_proposal_facts_passed": false,
+      "semantic_review_passed": false,
+      "final_six_axes": {
+        "quantity": null,
+        "unit": null,
+        "conditions": null,
+        "source": null,
+        "limits": null,
+        "next_action": null
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": null,
+          "quote": "",
+          "rationale": "No accepted final stop or clarify exists. The accepted initial_plan precedes the analysis result and cannot be substituted for a final explanation; both subsequent proposals were rejected."
+        },
+        "unit": {
+          "passed": null,
+          "quote": "",
+          "rationale": "No accepted final stop or clarify exists. The accepted initial_plan precedes the analysis result and cannot be substituted for a final explanation; both subsequent proposals were rejected."
+        },
+        "conditions": {
+          "passed": null,
+          "quote": "",
+          "rationale": "No accepted final stop or clarify exists. The accepted initial_plan precedes the analysis result and cannot be substituted for a final explanation; both subsequent proposals were rejected."
+        },
+        "source": {
+          "passed": null,
+          "quote": "",
+          "rationale": "No accepted final stop or clarify exists. The accepted initial_plan precedes the analysis result and cannot be substituted for a final explanation; both subsequent proposals were rejected."
+        },
+        "limits": {
+          "passed": null,
+          "quote": "",
+          "rationale": "No accepted final stop or clarify exists. The accepted initial_plan precedes the analysis result and cannot be substituted for a final explanation; both subsequent proposals were rejected."
+        },
+        "next_action": {
+          "passed": null,
+          "quote": "",
+          "rationale": "No accepted final stop or clarify exists. The accepted initial_plan precedes the analysis result and cannot be substituted for a final explanation; both subsequent proposals were rejected."
+        }
+      },
+      "final_response_verified": false,
+      "required_final_response": {
+        "required": true,
+        "passed": false,
+        "status": "failed",
+        "accepted_action": null,
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 2
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "failed",
+        "normalization_status": "normalized",
+        "goal_status": {
+          "finite_sample_internal_minimum": "insufficient_evidence"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 1,
+        "results": 1,
+        "qualified_ports": []
+      },
+      "scope": "初次有限采样分析有效，跨度0.16000000000042536 Angstrom仍大于0.12。两次后续提案使用check版本冒充Tool并拼错Result/Run/Attempt，违反既有预算/权限，均被拒。没有accepted最终stop/clarify，六轴为null、not_verified，不借初始或拒绝文本填最终解释。",
+      "proposal_records": [
+        {
+          "model_id": "model_0709d092dbdc4e42be390cbbb25fbc9e",
+          "action": "initial_plan",
+          "accepted": true,
+          "response_record_sha256": "3f9620ee35322f1dec5f14908dd59bb975ab9e168207458f09170705f1467896"
+        },
+        {
+          "model_id": "model_6060351e00a34cecb7b063379cad37ab",
+          "action": "revise_plan",
+          "accepted": false,
+          "response_record_sha256": "8e8c6b138543a3e284387e1956269a37ec225685fecf8c6f80de8d68bc41d988"
+        },
+        {
+          "model_id": "model_6ef1b41920234826a35008e9af4099c6",
+          "action": "revise_plan",
+          "accepted": false,
+          "response_record_sha256": "f2b38920ff6a836d813f1bd087497af618ed1af21cc300118267c3e818cb4a84"
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-06__insufficient-additional-budget/1/review.json",
+          "sha256": "f15e9e6c8a4718e64ae667a89900bfcbfaacce7da43760a459e32e24118a3749"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-06__insufficient-additional-budget/1/metadata.json",
+          "sha256": "7f82433b73e079b39285783596f756f8bed160b9f085b963bd7e110b7d13d117"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-06__insufficient-additional-budget/1/execution.json",
+          "sha256": "3fb9243679882c0e85bfb118c6a90a5eb61695e3d6164e975680259269340bbc"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-06__insufficient-additional-budget/1/grade.json",
+          "sha256": "e2eaea34d8d17b82784122cb2119bee913b7b4610841f1e6dcf174ec5dbcf09a"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-06__insufficient-additional-budget/1/grade.before-independent-review.json",
+          "sha256": "ca7bcfb24245e811daad0aa686327a2b0b7fb14afa66451d2d31b09175e6bced"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_333aae7833ab445493ec77a72f6ee991/run.json",
+          "sha256": "3be370e361fc70224e1927f92a54b48eb3ba3ef29c1993b2136fdb74584250db"
+        }
+      }
+    },
+    {
+      "variant_id": "V-07/array-location",
+      "run_id": "run_0c4467ae0dce499694f154c8b08dbc50",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 4,
+      "tokens": 13333,
+      "tokens_unknown": 0,
+      "known_usd": "0.0050223",
+      "accepted_proposals": 4,
+      "rejected_proposals": 0,
+      "final_accepted_model_id": "model_62b1380c231b434fbdce8ef32a54ca37",
+      "all_proposal_facts_passed": false,
+      "semantic_review_passed": false,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "passed",
+        "source": "passed",
+        "limits": "passed",
+        "next_action": "passed"
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": true,
+          "quote": "quantity:Geometries[0].Dipole_Moment[0].dipoleMagnitude (first geometry dipole moment magnitude)",
+          "rationale": "Correctly identifies the exact requested first-geometry raw property. The independently opened source and bound scalar Result both contain value 0.6788282026678785 at that path.",
+          "quote_model_ids": [
+            "model_62b1380c231b434fbdce8ef32a54ca37"
+          ]
+        },
+        "unit": {
+          "passed": true,
+          "quote": "unit:unknown (units=null in observation, not inferred from labels)",
+          "rationale": "The actual scalar observation has units=null and the raw Dipole_Moment object has no unit field. Coordinate units elsewhere in the JSON do not establish dipole units.",
+          "quote_model_ids": [
+            "model_62b1380c231b434fbdce8ef32a54ca37"
+          ]
+        },
+        "conditions": {
+          "passed": true,
+          "quote": "conditions:unknown (conditions/stage unverified, raw_json view v1)",
+          "rationale": "The query Result reports unknown conditions and stage and uses raw_json version 1. The model does not promote source metadata or a raw JSON read into validated scientific conditions.",
+          "quote_model_ids": [
+            "model_62b1380c231b434fbdce8ef32a54ca37"
+          ]
+        },
+        "source": {
+          "passed": true,
+          "quote": "source:artifact_462a5c4ae52c4c2ea83413a66f955ee0 sha256 71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655, path [Geometries][0][Dipole_Moment][0][dipoleMagnitude], value 0.6788282026678785, scientific_status=unverified, coverage complete",
+          "rationale": "This final source binding, hash, path and value are correct and were verified against source bytes and Result f8b453.... Complete refers to the scalar query; the prior empty slice preview was explicitly partial and did not mean an empty source.",
+          "quote_model_ids": [
+            "model_62b1380c231b434fbdce8ef32a54ca37"
+          ]
+        },
+        "limits": {
+          "passed": true,
+          "quote": "limits:no execution performed, no ORCA starts, evidence reads within budget, all three goals passed minimum evidence",
+          "rationale": "Only three registered-artifact reads occurred, within evidence_reads=8; no ORCA or effect-bearing import/conversion occurred. All three evidence-read goals passed while scientific_status remains unverified.",
+          "quote_model_ids": [
+            "model_62b1380c231b434fbdce8ef32a54ca37"
+          ]
+        },
+        "next_action": {
+          "passed": true,
+          "quote": "next:stop, no further action requested (no recompute).",
+          "rationale": "All requested reads are complete, so the accepted stop is appropriate and honors no recomputation.",
+          "quote_model_ids": [
+            "model_62b1380c231b434fbdce8ef32a54ca37"
+          ]
+        }
+      },
+      "final_response_verified": true,
+      "required_final_response": {
+        "required": true,
+        "passed": true,
+        "status": "passed",
+        "accepted_action": "stop",
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 2
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "completed",
+        "normalization_status": "normalized",
+        "goal_status": {
+          "raw_field_observation": "satisfied",
+          "raw_field_discovery": "satisfied",
+          "raw_geometry_slice": "satisfied"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 3,
+        "results": 3,
+        "qualified_ports": []
+      },
+      "scope": "读取顺序、最终路径/值/未知单位及六轴正确；第三份accepted提案混淆discovery与slice的Result身份，全轨迹事实/语义失败。最终正确不抹去中间来源错误。",
+      "proposal_records": [
+        {
+          "model_id": "model_a38da630d08c470987003eb0a4670783",
+          "action": "initial_plan",
+          "accepted": true,
+          "response_record_sha256": "33c33b4ee2c4c80ef551f9c5ad350170e558e894f1cbc46dbeaf1462bfa4c218"
+        },
+        {
+          "model_id": "model_57c102d488854232a94898ac70bbda21",
+          "action": "call_tool",
+          "accepted": true,
+          "response_record_sha256": "a497d32423ce6ddc05a4c9cc67fac12fe61b287fa15fc4176bf22aea58676b6e"
+        },
+        {
+          "model_id": "model_0f2bb9f4d1ec48d49f9d4c0642a06985",
+          "action": "call_tool",
+          "accepted": true,
+          "response_record_sha256": "812c3ee80d72d27585494d4e3c5654a60470bafadf866714c44825bc6836b156"
+        },
+        {
+          "model_id": "model_62b1380c231b434fbdce8ef32a54ca37",
+          "action": "stop",
+          "accepted": true,
+          "response_record_sha256": "6a1d7e6b770233525f0fb9e54508e400bd92a98671c67f70026fd5667b9de6c7"
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-07__array-location/1/review.json",
+          "sha256": "327f50d3cb0da2a95198127a48532dd46a3e1152046871d24c4d3d159577fc85"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-07__array-location/1/metadata.json",
+          "sha256": "80d525a7a00f40c65ec71d2de2d97873fe99be2193b74977e426ff38ef0f9812"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-07__array-location/1/execution.json",
+          "sha256": "28286a37f6b902f7a11aef26060698854912bb025914cfba6d95156667b2a16c"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-07__array-location/1/grade.json",
+          "sha256": "dffaa8c58b5203bdb2751f3c36ab5dd7dc426554343bac5bac36790a15075f6c"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-07__array-location/1/grade-before-independent-review.json",
+          "sha256": "575933e17f508bb90af00f24c8c5092c57c3f3bb40389eedc31fa77fba2bd9e7"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_0c4467ae0dce499694f154c8b08dbc50/run.json",
+          "sha256": "cd45ff0190dad98322decf9df2b661d225d8f459c63dad474f19cf95fa5b0d4f"
+        }
+      }
+    },
+    {
+      "variant_id": "V-08/missing-conditions",
+      "run_id": "run_d00837758b9e4da48933f6a4d57a2402",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 3,
+      "tokens": 8464,
+      "tokens_unknown": 0,
+      "known_usd": "0.0032457",
+      "accepted_proposals": 3,
+      "rejected_proposals": 0,
+      "final_accepted_model_id": "model_e5415f0d2c1846c78dfa6e78aa72158e",
+      "all_proposal_facts_passed": false,
+      "semantic_review_passed": false,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "passed",
+        "source": "passed",
+        "limits": "failed",
+        "next_action": "passed"
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": true,
+          "quote": "quantity:imported ORCA stdout observations (available_external_observations, imported_stdout_energy_line)",
+          "rationale": "Both required import/read Goals are named. The sole observed energy-label line and number -74.962991615317 are in the actual 50-byte excerpt; no validated scientific energy is claimed.",
+          "quote_model_ids": [
+            "model_e5415f0d2c1846c78dfa6e78aa72158e"
+          ]
+        },
+        "unit": {
+          "passed": true,
+          "quote": "unit:unknown (no units stated in source or observations)",
+          "rationale": "The exact imported one-line bytes contain no unit, and the search Result has units=null. The response correctly avoids inferring Hartree from ORCA or the energy label.",
+          "quote_model_ids": [
+            "model_e5415f0d2c1846c78dfa6e78aa72158e"
+          ]
+        },
+        "conditions": {
+          "passed": true,
+          "quote": "conditions:unknown (conditions field reported as unknown; source manifest lists stdout_excerpt.out, job.inp, job.property.json but job.inp and job.property.json are missing)",
+          "rationale": "The import Result explicitly reports those two missing files and unknown conditions. The source excerpt cannot establish method, basis, charge, multiplicity or geometry; those are correctly left unconfirmed.",
+          "quote_model_ids": [
+            "model_e5415f0d2c1846c78dfa6e78aa72158e"
+          ]
+        },
+        "source": {
+          "passed": true,
+          "quote": "source:source_afcd59ddb393489888bd803f857dc059, artifact_381bbb28df044643aa66bf4103e4b4d1, sha256 d95f79b65f03170f2fca06615f6d9d87f808e0af7476b4c76d577c63914d9476",
+          "rationale": "Registered source, new snapshot Artifact and hash all match the immutable import/source bytes. The final quoted line normalizes internal whitespace but preserves its label and exact numeric content. No historical attempt or cost is invented.",
+          "quote_model_ids": [
+            "model_e5415f0d2c1846c78dfa6e78aa72158e"
+          ]
+        },
+        "limits": {
+          "passed": false,
+          "quote": "read-only import complete",
+          "rationale": "The final explanation labels the entire import read-only, but the import Tool declares import_artifact and the settled Result declares create_artifact. It should distinguish preservation of the external source from creation of a registered snapshot. Other limitations are accurate: zero ORCA, bounded read, missing files and no scientific qualification. This local effect mismatch is the reason for failing this axis.",
+          "quote_model_ids": [
+            "model_e5415f0d2c1846c78dfa6e78aa72158e"
+          ]
+        },
+        "next_action": {
+          "passed": true,
+          "quote": "next:stop",
+          "rationale": "Both bounded import/read goals are actually satisfied, including permitted partial observations; no additional calculation is requested. Stopping is correct. The inaccurate read-only characterization attached to this sentence is evaluated separately under limits and full-proposal facts.",
+          "quote_model_ids": [
+            "model_e5415f0d2c1846c78dfa6e78aa72158e"
+          ]
+        }
+      },
+      "final_response_verified": true,
+      "required_final_response": {
+        "required": true,
+        "passed": true,
+        "status": "passed",
+        "accepted_action": "stop",
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 3
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "completed",
+        "normalization_status": "normalized",
+        "goal_status": {
+          "available_external_observations": "satisfied",
+          "imported_stdout_energy_line": "satisfied"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 2,
+        "results": 2,
+        "qualified_ports": []
+      },
+      "scope": "最终准确披露未知单位/条件和缺文件，但将创建注册快照Artifact的import整体称read-only；执行影响说明失真，limits及全轨迹失败。不是越权执行或科学单位伪造。",
+      "proposal_records": [
+        {
+          "model_id": "model_a08c3410449a4421958d748921dfdf9f",
+          "action": "initial_plan",
+          "accepted": true,
+          "response_record_sha256": "7bca64c6a120de6768a6d746e8b18396af5e49c0603af080924e41b727702452"
+        },
+        {
+          "model_id": "model_b4a6f706266c4d9594075ba38067d7c4",
+          "action": "call_tool",
+          "accepted": true,
+          "response_record_sha256": "81ec6c888875bb564ed9bb2479d8c56eb19c98e8ab111f66c94a091a8d6db28e"
+        },
+        {
+          "model_id": "model_e5415f0d2c1846c78dfa6e78aa72158e",
+          "action": "stop",
+          "accepted": true,
+          "response_record_sha256": "b80f69614169a455223db40debcf5056e68b80fab7034969ddaf79b338d8139c"
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-08__missing-conditions/1/review.json",
+          "sha256": "fb7e23afeb0018ae8beef906b03c884b65142c12d331dc686a31ff58e7be766e"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-08__missing-conditions/1/metadata.json",
+          "sha256": "bc385cca31a10aeb44b47ad33cc749ed907c67078a5baa8e9ee09ddbdf38d40d"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-08__missing-conditions/1/execution.json",
+          "sha256": "dee8ea3001e9cd3f9b03a47b458b396f377bdb7f291449b8d5f30cfad66fa743"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-08__missing-conditions/1/grade.json",
+          "sha256": "c5987815c13c72f502e0f6e8d9dc604d1e3849ca33ed54661c951c119094b3ee"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-08__missing-conditions/1/grade-before-independent-review.json",
+          "sha256": "6e0d7d1b720e18c485f02a255ba40f130c9eb6785ce5bcf3c185f4ceada1420a"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_d00837758b9e4da48933f6a4d57a2402/run.json",
+          "sha256": "c586674da806f52f223ae7ed681d2725573a897edc90807a771a5ffa64c74d28"
+        }
+      }
+    },
+    {
+      "variant_id": "V-09/different-method",
+      "run_id": "run_981da44f5b8a40cd8e5e6013c8a92c28",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 3,
+      "tokens": 11186,
+      "tokens_unknown": 0,
+      "known_usd": "0.0045087",
+      "accepted_proposals": 2,
+      "rejected_proposals": 1,
+      "final_accepted_model_id": "model_30875b41b8b543309526db6a8abc68e2",
+      "all_proposal_facts_passed": false,
+      "semantic_review_passed": false,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "failed",
+        "source": "passed",
+        "limits": "passed",
+        "next_action": "passed"
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": true,
+          "quote": "quantity:electronic_energy_difference,finite_member_table",
+          "rationale": "明确电子能差和成员表，与必需Goal相符；未替换物理量或冒称完整比较通过。"
+        },
+        "unit": {
+          "passed": true,
+          "quote": "unit:Eh",
+          "rationale": "Goal及分析观察单位均Eh；无合格DeltaE数值，本轴只确认已知报告约定。"
+        },
+        "conditions": {
+          "passed": false,
+          "quote": "conditions:A qualified (RHF/STO-3G,H2O,gas_phase),B missing (source_not_applicable_to_requested_operand:unsupported_condition:basis,source_condition_mismatch:basis",
+          "rationale": "失败：最终误报B历史来源为RHF/6-31G；实际原来源HF/STO-3G，6-31G只属当前要求。context明确source.conditions与expected_conditions，非裁剪丢失。"
+        },
+        "source": {
+          "passed": true,
+          "quote": "source:result_4b1fab53d82b4e5284f9d30daa08fe9e",
+          "rationale": "引用的analysis Result真实存在且可追溯A/B历史Result；未虚构新ORCA来源或已通过科学检查。"
+        },
+        "limits": {
+          "passed": true,
+          "quote": "limits:plan revision budget exhausted (BudgetExceeded), no permitted action to repair B within frozen plan",
+          "rationale": "计划修订预算确为0，第二案以BudgetExceeded拒绝；现有冻结Plan和来源不能自行修好B。clarify可以索取确认，不能替用户决定物理条件。"
+        },
+        "next_action": {
+          "passed": true,
+          "quote": "next:stop and report unresolved goals",
+          "rationale": "实际stop与reason一致；现有来源不适用且无ORCA/修订预算时，保留未解决目标正确。失败来自条件误报及中途错误重规划，不是安全停止。"
+        }
+      },
+      "final_response_verified": true,
+      "required_final_response": {
+        "required": true,
+        "passed": true,
+        "status": "passed",
+        "accepted_action": "stop",
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 1
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "failed",
+        "normalization_status": "normalized",
+        "goal_status": {
+          "electronic_energy_difference": "insufficient_evidence",
+          "finite_member_table": "insufficient_evidence"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 1,
+        "results": 1,
+        "qualified_ports": []
+      },
+      "scope": "程序正确阻止基组不匹配比较。最终将历史B的STO-3G误写成当前要求6-31G，conditions失败；零预算修订与无新证据重跑另计，不能只归为协议纠正。",
+      "proposal_records": [
+        {
+          "model_id": "model_886ac3b61144461c8d52653311323556",
+          "action": "initial_plan",
+          "accepted": true,
+          "response_record_sha256": "2a85963834fd12e6d1b39e54c0e920d9a3e3f5e2c0ec8e97a5047632cecb1f87"
+        },
+        {
+          "model_id": "model_06b7ba67cd0247aeb471800ae6237819",
+          "action": "revise_plan",
+          "accepted": false,
+          "response_record_sha256": "124f1299b89309cb7aa624d4c2ce5ccb4302d8e91b2d0f2cf09068c066823ab2"
+        },
+        {
+          "model_id": "model_30875b41b8b543309526db6a8abc68e2",
+          "action": "stop",
+          "accepted": true,
+          "response_record_sha256": "462d15c22d2095029bcc1d05b6250f0b5d1899017159a6ecd0b2845ca95b74ae"
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-09__different-method/1/review.json",
+          "sha256": "e442b1ff2d34f512bc655421f8c748159997db608e81fa7c313a05de5ae50e49"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-09__different-method/1/metadata.json",
+          "sha256": "6816f892ae1a7aca91801f7b5eef374637a4fbf89d30485f918441ad15c3be55"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-09__different-method/1/execution.json",
+          "sha256": "cacc93c103dd6a99f728b672712ba8ef9b80a9967e24fe02c0e80c646b46d9f1"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-09__different-method/1/grade.json",
+          "sha256": "ba6469f38c2670f668d601b6fae843b1abf3b44b1a05e936765412b833e8042c"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-09__different-method/1/grade-before-independent-review.json",
+          "sha256": "fe6b5b247f46493e2e2c0f0437bbea118fb1789407cd8fb50ff30319a560875d"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_981da44f5b8a40cd8e5e6013c8a92c28/run.json",
+          "sha256": "66385a2c74a135f9ba2c5bf0fd4e477b291cb5b863b46969c4f38ec6277289ec"
+        }
+      }
+    },
+    {
+      "variant_id": "V-09/missing-electron-state",
+      "run_id": "run_eef653a54ba44c929617477af45b95f8",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 3,
+      "tokens": 10981,
+      "tokens_unknown": 0,
+      "known_usd": "0.0043329",
+      "accepted_proposals": 2,
+      "rejected_proposals": 1,
+      "final_accepted_model_id": "model_d47a95c6856742be9ca3007568adb21e",
+      "all_proposal_facts_passed": false,
+      "semantic_review_passed": false,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "passed",
+        "source": "passed",
+        "limits": "passed",
+        "next_action": "failed"
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": true,
+          "quote": "quantity:ΔE=E(B)-E(A) and member table",
+          "rationale": "明确电子能差和成员表，与必需Goal相符；未替换物理量或冒称完整比较通过。"
+        },
+        "unit": {
+          "passed": true,
+          "quote": "unit:Eh",
+          "rationale": "Goal及分析观察单位均Eh；无合格DeltaE数值，本轴只确认已知报告约定。"
+        },
+        "conditions": {
+          "passed": true,
+          "quote": "conditions:A qualified (HF/STO-3G, charge 0, mult 1, gas_phase), B missing because system B multiplicity is null (unknown_condition:multiplicity) so source result is not applicable",
+          "rationale": "最终准确说明A合格，当前System B multiplicity=null使来源不适用；没有把目标未知误报成历史来源缺多重度。"
+        },
+        "source": {
+          "passed": true,
+          "quote": "source:result_a5abd9bc1cc349c1a7c742bd1939e830 (analysis, insufficient_evidence), result_2b37e67a22e8474d92d933ec94eac9e5 (A energy), result_d89b2e5890ca4164882204c11993c35b (B energy)",
+          "rationale": "引用的analysis Result真实存在且可追溯A/B历史Result；未虚构新ORCA来源或已通过科学检查。"
+        },
+        "limits": {
+          "passed": true,
+          "quote": "limits:plan revision budget exhausted (BudgetExceeded), no permitted action can resolve the missing multiplicity",
+          "rationale": "计划修订预算确为0，第二案以BudgetExceeded拒绝；现有冻结Plan和来源不能自行修好B。clarify可以索取确认，不能替用户决定物理条件。"
+        },
+        "next_action": {
+          "passed": false,
+          "quote": "next:stop and report unresolved goals — user must supply B multiplicity (or authorize a new plan) to proceed.",
+          "rationale": "失败：实际stop和要求补B多重度合理，但“or authorize a new plan”不能替代物理条件确认。新Plan不填null、不自动改Request；全轨迹第二案的错误修复也不能因最终安全阻断而略去。"
+        }
+      },
+      "final_response_verified": true,
+      "required_final_response": {
+        "required": true,
+        "passed": true,
+        "status": "passed",
+        "accepted_action": "stop",
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 1
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "failed",
+        "normalization_status": "normalized",
+        "goal_status": {
+          "electronic_energy_difference": "insufficient_evidence",
+          "finite_member_table": "insufficient_evidence"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 1,
+        "results": 1,
+        "qualified_ports": []
+      },
+      "scope": "当前B multiplicity=null正确阻断。首案忽略局部null，第二案声称原样重跑可补mult1但参数无条件修订；最终新Plan授权被误列成多重度确认替代项。全轨迹及next_action失败，不因Run.failed判失败。",
+      "proposal_records": [
+        {
+          "model_id": "model_500c614b0fb147e3aba071267680eae4",
+          "action": "initial_plan",
+          "accepted": true,
+          "response_record_sha256": "c8112a3f5a0341b2d33ded9e2337df7db9d2a775b077898e48f1e9f638cff821"
+        },
+        {
+          "model_id": "model_294a29a107f24516a24fbdcaa3d23ff3",
+          "action": "revise_plan",
+          "accepted": false,
+          "response_record_sha256": "420f80a6e6f3e5cb00ae38367f851ef1ed617ebedbd70160fcb2e8d3d89d2af8"
+        },
+        {
+          "model_id": "model_d47a95c6856742be9ca3007568adb21e",
+          "action": "stop",
+          "accepted": true,
+          "response_record_sha256": "943697284a3b339eaf2f35fbec48aa664973d375c91c04b0bb5e9ddc6b6c61c2"
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-09__missing-electron-state/1/review.json",
+          "sha256": "fbb00d1be48f0bcba6164e037ce595fa1642965382487e700624b55a87b03313"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-09__missing-electron-state/1/metadata.json",
+          "sha256": "06dd8e6c500c82cef004b029ed38ffef356aa9d62a09bae4c8d9ca5f23b175d2"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-09__missing-electron-state/1/execution.json",
+          "sha256": "27dcbedc91d12e9231caa7830e48a4cc9191e940e54990582574868a24dff057"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-09__missing-electron-state/1/grade.json",
+          "sha256": "ed411e811482e03e59ecf5477cff22df5fd57f9915fb6346c43af4ace9ce44b8"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-fixed-dev-v2/V-09__missing-electron-state/1/grade-before-independent-review.json",
+          "sha256": "c591d477012ff05ed8a73a35bf91f84b1a9e4677471cf4af52a3b0fbba1de9d6"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_eef653a54ba44c929617477af45b95f8/run.json",
+          "sha256": "7d17b747716aa7594e0d6f334538fa0f00269957e1eb3689977c801675809527"
+        }
+      }
+    }
+  ],
+  "totals": {
+    "completed_slots": 6,
+    "passed": 1,
+    "failed": 5,
+    "http_requests": 17,
+    "tokens": 59176,
+    "tokens_unknown": 0,
+    "known_usd": "0.0231258",
+    "orca_starts": 0
+  },
+  "cumulative_budget_snapshot": {
+    "observed_at_utc": "2026-10-07T07:03:52.427585+00:00",
+    "path": "data/phase-b/batch-ledger.json",
+    "sha256": "4d383b46c05a66ae474fc02911a790f54b392d8dc32b5d59d547f44f6e87e207",
+    "read_only_verified": true,
+    "model_usage": {
+      "http_requests": 283,
+      "tokens": 870500,
+      "usd": "0.3422508",
+      "known_tokens": 870500,
+      "unknown_tokens": 0,
+      "known_usd": "0.3422508",
+      "unknown_usd": "0"
+    },
+    "science_counts": {
+      "reference": {
+        "reserved": 16,
+        "actual": 16,
+        "unknown": 0
+      },
+      "development": {
+        "reserved": 26,
+        "actual": 26,
+        "unknown": 0
+      },
+      "formal": {
+        "reserved": 0,
+        "actual": 0,
+        "unknown": 0
+      }
+    },
+    "science_total_reserved": 42,
+    "science_total_actual": 42,
+    "limits": {
+      "orca_starts": {
+        "reference": 16,
+        "formal": 48,
+        "development": 48,
+        "total": 112
+      },
+      "model": {
+        "http_requests": 1004,
+        "tokens": 6500000,
+        "usd": 10
+      }
+    }
+  },
+  "limitation": "仅汇集本批真实模型开发槽的独立评审，未新增HTTP/ORCA；不等于正式重复验收或用户验收。原始提案、拒绝、修正及成本全部保留，旧失败未覆盖。程序接受、机械通过、科学检查与语义通过分别记录。没有accepted最终说明时六轴为null且未验证，不用初始计划或被拒文本凑最终解释。未修改槽文件、Run、账本或生产源码。"
+}
