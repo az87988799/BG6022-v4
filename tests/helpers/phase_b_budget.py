@@ -121,7 +121,8 @@ class AcceptanceBudget:
 
     def _validate_receipts(self, ledger, kind):
         entries = ledger.get(kind, {})
-        maximum = LIMITS["model"]["http_requests"] if kind == "model_records" else LIMITS["orca_starts"]["total"]
+        limits = ledger["limits"]  # Validated against its immutable applied approval.
+        maximum = limits["model"]["http_requests"] if kind == "model_records" else limits["orca_starts"]["total"]
         if not isinstance(entries, dict) or len(entries) > maximum:
             raise ReferenceBlocked("invalid bounded acceptance entry collection")
         root = self.ledger.root / "agent-budget" / kind
@@ -262,9 +263,10 @@ class AcceptanceBudget:
             trial = {**ledger, "model_records": {**ledger.get("model_records", {}),
                      ticket: {**proposed, "state": "reserved"}}}
             totals = self._model_totals(trial)
-            if (totals["http_requests"] > LIMITS["model"]["http_requests"]
-                    or totals["tokens"] > LIMITS["model"]["tokens"]
-                    or Decimal(totals["usd"]) > Decimal(str(LIMITS["model"]["usd"]))):
+            limits = ledger["limits"]
+            if (totals["http_requests"] > limits["model"]["http_requests"]
+                    or totals["tokens"] > limits["model"]["tokens"]
+                    or Decimal(totals["usd"]) > Decimal(str(limits["model"]["usd"]))):
                 raise ReferenceBlocked("frozen batch model HTTP/token/USD limit exhausted")
             self._reserve(ledger, "model_records", ticket, proposed)
 
@@ -350,9 +352,10 @@ class AcceptanceBudget:
             if ticket in ledger.get("agent_science", {}):
                 raise ReferenceBlocked("scientific identity already reserved; reconcile without relaunch")
             entries = [*ledger["entries"].values(), *ledger.get("agent_science", {}).values()]
-            if (len(entries) >= LIMITS["orca_starts"]["total"]
+            limits = ledger["limits"]
+            if (len(entries) >= limits["orca_starts"]["total"]
                     or sum(e["category"] == owner["category"] for e in entries)
-                    >= LIMITS["orca_starts"][owner["category"]]):
+                    >= limits["orca_starts"][owner["category"]]):
                 raise ReferenceBlocked("frozen batch ORCA reservation limit exhausted")
             self._reserve(ledger, "agent_science", ticket, immutable)
         return ticket

@@ -53,6 +53,30 @@ ACTIVE_LIMITS = {
 THINKING_APPROVAL_ID = "repair-budget-thinking-v16-20261007"
 THINKING_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-thinking-v16-20261007.json"
 THINKING_APPROVAL_SHA256 = "964261ac61181bcfcaf09de32f37ebd11a44dbe812a61bd46529fef9fe85cb0b"
+# Human-approved fourth profile; ACTIVE_LIMITS remains the historical default
+# until an explicit migration. Merely importing helpers grants no new quota.
+BOUNDED_LIMITS = {
+    "orca_starts": {"reference": 17, "formal": 48, "development": 54, "total": 119},
+    "model": {"http_requests": 1118, "tokens": 6_881_584, "usd": 10},
+}
+BOUNDED_APPROVAL_ID = "bounded-gap-budget-20261008"
+BOUNDED_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-bounded-20261008.json"
+BOUNDED_APPROVAL_SHA256 = "9339874fb7f4359782ad7c9128f5dc535f6703b586ad45737748411968e3bc58"
+
+
+def bounded_approval() -> dict:
+    thinking_approval()
+    if (not BOUNDED_APPROVAL_SHA256 or not BOUNDED_APPROVAL.is_file()
+            or sha256_file(BOUNDED_APPROVAL) != BOUNDED_APPROVAL_SHA256):
+        raise ReferenceBlocked("new bounded package requires a pinned explicit human approval")
+    value = _json(BOUNDED_APPROVAL)
+    if (value.get("approval_id") != BOUNDED_APPROVAL_ID or value.get("status") != "user_approved"
+            or value.get("previous_limits") != ACTIVE_LIMITS
+            or value.get("approved_limits") != BOUNDED_LIMITS
+            or value.get("previous_approval_id") != THINKING_APPROVAL_ID
+            or value.get("previous_approval_sha256") != THINKING_APPROVAL_SHA256):
+        raise ReferenceBlocked("bounded approval differs from the exact proposed cumulative limits")
+    return value
 
 
 class ReferenceBlocked(ValueError):
@@ -139,7 +163,7 @@ def reference_input(scf_maxiter: int) -> str:
             "* xyzfile 0 1 geometry.xyz\n")
 
 
-def reviewed_sources(geometry: Path, input_path: Path, scf_maxiter: int) -> dict:
+def reviewed_sources(geometry: Path, input_path: Path, scf_maxiter: int, *, atom_mapping=None) -> dict:
     parameters = CalculationParameters(scf_maxiter=scf_maxiter, timeout_seconds=120)
     geometry, input_path = geometry.resolve(strict=True), input_path.resolve(strict=True)
     if geometry.stat().st_size > 65536 or input_path.stat().st_size > 65536:
@@ -150,11 +174,14 @@ def reviewed_sources(geometry: Path, input_path: Path, scf_maxiter: int) -> dict
             scf_maxiter).upper().split():
         raise ValueError("reference input differs from the frozen SP-only profile")
     atoms = validate_geometry(geometry.read_text(encoding="utf-8"), parameters)
-    if [atom[0] for atom in atoms] != ["O", "H", "H"]:
-        raise ValueError("B-01 reference candidates require the frozen O,H,H atom mapping")
+    mapping = ["O", "H", "H"] if atom_mapping is None else atom_mapping
+    if mapping not in (["O", "H", "H"], ["C", "H", "H", "H", "H"]):
+        raise ValueError("reference candidates require a reviewed water/methane atom mapping")
+    if [atom[0] for atom in atoms] != mapping:
+        raise ValueError("reference geometry differs from its frozen atom mapping")
     return {"input_path": str(input_path), "input_sha256": sha256_file(input_path),
             "geometry_path": str(geometry), "geometry_sha256": sha256_file(geometry),
-            "parameters": parameters.model_dump(mode="json"), "atom_mapping": ["O", "H", "H"],
+            "parameters": parameters.model_dump(mode="json"), "atom_mapping": mapping,
             "coordinate_unit": "angstrom"}
 
 
@@ -187,9 +214,12 @@ class BatchLedger:
                     "model_accounting": "frozen only; transport and charging implemented in B-04"}
         ledger = _json(self.path)
         legacy = allow_legacy_limits and ledger.get("limits") == SUPPLEMENT_LIMITS
-        if ledger.get("schema_version") != 1 or (ledger.get("limits") != ACTIVE_LIMITS and not legacy):
+        bounded = ledger.get("limits") == BOUNDED_LIMITS
+        if ledger.get("schema_version") != 1 or (ledger.get("limits") != ACTIVE_LIMITS and not legacy and not bounded):
             raise ReferenceBlocked("batch ledger schema/limits differ; explicit approved migration required")
-        if legacy:
+        if bounded:
+            self._validate_bounded_limit_authority(ledger)
+        elif legacy:
             self._validate_second_limit_authority(ledger)
         else:
             self._validate_limit_authority(ledger)
@@ -199,6 +229,34 @@ class BatchLedger:
                     raise ReferenceBlocked("receipt reservation identity differs from ledger key")
                 self._validated_receipt(entry)
         return ledger
+
+    def _validate_bounded_limit_authority(self, ledger: dict) -> None:
+        bounded_approval()
+        authority = ledger.get("limit_authority", {})
+        required = {"approval_id": BOUNDED_APPROVAL_ID, "approval_sha256": BOUNDED_APPROVAL_SHA256,
+                    "origin": "amendment"}
+        if (set(authority) != {*required, "receipt_sha256"}
+                or any(authority.get(k) != v for k, v in required.items())):
+            raise ReferenceBlocked("bounded budget lacks its applied approval")
+        directory = self.root / "budget-amendments" / BOUNDED_APPROVAL_ID
+        receipt_path, before_path = directory / "amendment.json", directory / "before.json"
+        if (not receipt_path.is_file() or not before_path.is_file()
+                or sha256_file(receipt_path) != authority["receipt_sha256"]):
+            raise ReferenceBlocked("bounded budget receipt or original ledger missing/changed")
+        receipt, before = _json(receipt_path), _json(before_path)
+        if (receipt.get("approval_id") != BOUNDED_APPROVAL_ID
+                or receipt.get("approval_sha256") != BOUNDED_APPROVAL_SHA256
+                or receipt.get("previous_limits") != ACTIVE_LIMITS
+                or receipt.get("approved_limits") != BOUNDED_LIMITS
+                or receipt.get("before_sha256") != sha256_file(before_path)
+                or before.get("limits") != ACTIVE_LIMITS
+                or receipt.get("previous_limit_authority") != before.get("limit_authority")
+                or receipt.get("preserved_model_usage") != before.get("model_usage")
+                or receipt.get("preserved_entry_counts") != {kind: len(before.get(kind, {}))
+                    for kind in ("entries", "model_records", "agent_science")}):
+            raise ReferenceBlocked("bounded budget approval or baseline accounting differs")
+        self._validate_limit_authority(before)
+        self._validate_preserved_costs(before, ledger)
 
     def _validate_limit_authority(self, ledger: dict) -> None:
         initial = active_limit_authority()
@@ -406,8 +464,8 @@ class BatchLedger:
             entries = [*ledger["entries"].values(), *agent_entries]
             counts = {name: sum(item["category"] == name for item in entries)
                       for name in ("reference", "formal", "development")}
-            if (counts[category] >= ACTIVE_LIMITS["orca_starts"][category]
-                    or len(entries) >= ACTIVE_LIMITS["orca_starts"]["total"]):
+            if (counts[category] >= ledger["limits"]["orca_starts"][category]
+                    or len(entries) >= ledger["limits"]["orca_starts"]["total"]):
                 raise ReferenceBlocked("frozen batch ORCA reservation limit exhausted")
             entry = {"id": reference_id, "category": category, "fingerprint": fingerprint,
                      "sources": sources, "reserved_at": utc_now().isoformat(),
@@ -513,8 +571,8 @@ def _frozen_input(sources: dict):
 
 
 def execute_reference(reference_id: str, category: str, geometry: Path,
-                      input_path: Path, scf_maxiter: int) -> dict:
-    sources = reviewed_sources(geometry, input_path, scf_maxiter)
+                      input_path: Path, scf_maxiter: int, *, atom_mapping=None) -> dict:
+    sources = reviewed_sources(geometry, input_path, scf_maxiter, atom_mapping=atom_mapping)
     ledger = BatchLedger()
     entry, fresh = ledger.reserve(reference_id, category, sources)
     if not fresh:
