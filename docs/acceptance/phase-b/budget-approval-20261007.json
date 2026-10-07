@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "approval_id": "repair-budget-20261007",
+  "status": "user_approved",
+  "approved_date": "2026-10-07",
+  "authority": "Explicit human user approval in the current repair implementation task; recorded by the coordinating agent before any new model or ORCA call.",
+  "previous_limits": {
+    "orca_starts": {"reference": 16, "formal": 48, "development": 32, "total": 96},
+    "model": {"http_requests": 600, "tokens": 6000000, "usd": 10}
+  },
+  "approved_limits": {
+    "orca_starts": {"reference": 16, "formal": 48, "development": 48, "total": 112},
+    "model": {"http_requests": 1004, "tokens": 6500000, "usd": 10}
+  },
+  "scope": {
+    "raw_development": "12 declared raw variants, repetition 1 each",
+    "legacy_development": "8 exact probe-v10 variants, repetition 1 each",
+    "joint_development": "6 declared joint cases once each, at most 16 ORCA starts",
+    "conditional_revalidation": "At most one sampling case (4 starts) and one repair case (2 starts), only if needed",
+    "formal": "210 mapped slots, 18 joint trajectories, 48 ORCA starts; only after development and freeze gates pass"
+  },
+  "constraints": [
+    "Cumulative ceilings, not additional credits or required consumption",
+    "Retain the same ledger, prior reservations, receipts, failures, unknown occupancy and costs",
+    "Reference 16, formal 48 and USD 10 remain unchanged",
+    "No automatic approval of development gates or formal freeze",
+    "No new scientific task classes or unbounded retries"
+  ],
+  "decision_document": "docs/acceptance/phase-b/repair-budget-decision.md"
+}

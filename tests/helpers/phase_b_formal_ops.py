@@ -5,7 +5,6 @@ separately gated tests/evals entry points. This is not a model-callable Tool.
 """
 
 import argparse
-import importlib.metadata
 import json
 import os
 import re
@@ -14,11 +13,19 @@ import sys
 import uuid
 from pathlib import Path
 
-from orca_agent.context import PROMPT_VERSION
-from orca_agent.llm import BASE_URL, MODEL, TOKEN_BOUND_VERSION
 from orca_agent.models import utc_now
 from orca_agent.store import atomic_write, sha256_file
-from tests.helpers.phase_b_freeze import FREEZE, freeze_hash, validate_freeze
+from tests.helpers.phase_b_freeze import (
+    FIXED,
+    FREEZE,
+    evaluation_config,
+    execution_budget_authority,
+    execution_files,
+    freeze_hash,
+    runtime_environment,
+    science_environment,
+    validate_freeze,
+)
 
 PROJECT = Path(__file__).resolve().parents[2]
 
@@ -27,18 +34,13 @@ def git(*args):
     return subprocess.run(["git", *args], cwd=PROJECT, capture_output=True, check=True).stdout
 
 
-def freeze(label):
+def freeze(label, *, config_path=None, with_science=False):
     if not re.fullmatch(r"[a-z][a-z0-9_-]{0,37}", label):
         raise ValueError("freeze label must be a local identifier of at most 38 characters")
     if FREEZE.exists():
         raise ValueError("active freeze already exists; preserve it and its immutable historical anchor before any new batch")
     tracked = [s for s in git("ls-files", "-z").decode().split("\0") if s]
-    fixed = {"pyproject.toml", "uv.lock", "config.example.toml", "AGENTS.md",
-             "docs/ORCA-Agent-Project-Blueprint.md", "docs/acceptance/phase-b/coverage.json",
-             "docs/acceptance/phase-b/profile.json", "docs/acceptance/phase-b/pricing-basis.json",
-             "docs/acceptance/phase-b/pricing-recheck-b04.json", "docs/acceptance/phase-b/environment.json",
-             "docs/acceptance/phase-b/reference-review.json", "docs/acceptance/phase-b/cases.md",
-             "docs/acceptance/phase-b/runtime-profile.json"}
+    fixed = FIXED
     names = sorted(name for name in tracked if name in fixed or name.startswith(("src/", "tests/", "docs/decisions/")))
     if not fixed.issubset(names):
         raise ValueError(f"required freeze files are not committed: {sorted(fixed-set(names))}")
@@ -48,19 +50,37 @@ def freeze(label):
     untracked = git("ls-files", "--others", "--exclude-standard", "--", "src", "tests", "docs/decisions").decode().strip()
     if untracked:
         raise ValueError("uncommitted implementation/test files cannot be omitted: " + untracked)
+    if names != execution_files():
+        raise ValueError("execution inputs differ from committed files; commit or remove local additions first")
     normalized = [name for name in names if name.endswith(".py")
                   or (name.endswith(".md") and not name.startswith("tests/fixtures/"))
                   or name in {"pyproject.toml", "uv.lock", "config.example.toml"}]
-    record = {"schema_version": 1, "freeze_label": label, "code_commit": git("rev-parse", "HEAD").decode().strip(),
+    coverage = json.loads((PROJECT / "docs/acceptance/phase-b/coverage.json").read_text(encoding="utf-8"))
+    revision = json.loads((PROJECT / "docs/acceptance/phase-b/coverage-repair-v2.json").read_text(encoding="utf-8"))
+    if revision.get("final_matrix_complete") is not True:
+        raise ValueError("repair coverage still has unmapped acceptance requirements; final freeze is premature")
+    if (revision.get("development_gates_verified") is not True
+            or revision.get("execution_budget_review_complete") is not True):
+        raise ValueError("formal freeze requires verified development gates and cumulative execution budget review")
+    allocation = {kind: [slot for item in coverage["entries"] if item["evidence_requirement"] == kind
+                         for slot in item["formal_slots"]]
+                  for kind in ("real_model_with_frozen_evidence", "joint_real_model_orca", "offline_fault_injection")}
+    if revision.get("final_slot_count") != sum(len(slots) for slots in allocation.values()):
+        raise ValueError("revised formal slot count differs from executable coverage")
+    science_config = evaluation_config(science=True, config_path=config_path) if with_science else None
+    environment = runtime_environment()
+    record = {"schema_version": 2, "freeze_label": label, "code_commit": git("rev-parse", "HEAD").decode().strip(),
               "created_at": utc_now().isoformat(), "files": {name: freeze_hash(PROJECT/name, source_text=name in normalized) for name in names},
-              "source_lf_normalization": normalized, "prompt_version": PROMPT_VERSION,
-              "model": MODEL, "base_url": BASE_URL, "token_bound_version": TOKEN_BOUND_VERSION,
-              "python_version": sys.version.split()[0],
-              "packages": {name: importlib.metadata.version(name) for name in ("openai", "httpx", "orca-pi", "pydantic", "pytest")},
-              "configuration": {"orca_path": "E:/orca/orca.exe", "mpi_path": "C:/Program Files/Microsoft MPI/Bin/mpiexec.exe",
-                                "cores": 4, "memory_mb": 1024, "maxcore_mb": 192,
-                                "credentials": "process environment only; excluded"},
-              "formal_slots": {"model": 75, "joint_trajectories": 18, "joint_variant_slots": 21, "offline_variant_slots": 78}}
+              "source_lf_normalization": normalized, "execution_files": names,
+              "execution_environment": environment,
+              "budget_authority": execution_budget_authority(),
+              "configuration": {"model": evaluation_config().model_dump(mode="json"),
+                                "science": science_config.model_dump(mode="json") if science_config else None},
+              "science_environment": science_environment(science_config) if science_config else None,
+              "formal_slots": {"model": len(allocation["real_model_with_frozen_evidence"]),
+                  "joint_trajectories": len({(s["joint_case"], s["repetition"]) for s in allocation["joint_real_model_orca"]}),
+                  "joint_variant_slots": len(allocation["joint_real_model_orca"]),
+                  "offline_variant_slots": len(allocation["offline_fault_injection"])}}
     atomic_write(FREEZE, (json.dumps(record, ensure_ascii=False, indent=2)+"\n").encode(), immutable=True)
     print(json.dumps(validate_freeze(label), ensure_ascii=False))
 
@@ -73,7 +93,8 @@ def offline(label, repetition):
     coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
     slots = [slot for entry in coverage["entries"] if entry["evidence_requirement"] == "offline_fault_injection"
              for slot in entry["formal_slots"] if slot["repetition"] == repetition]
-    assert len(slots) == 26
+    if not slots:
+        raise ValueError("frozen coverage has no offline slots for this repetition")
     nodes = sorted({node for slot in slots for node in slot["pytest_nodeids"]})
     assert all(node.startswith(("tests/unit/", "tests/integration/")) for node in nodes)
     directory = PROJECT/"data/phase-b/offline-evaluations"/label/str(repetition)
@@ -103,11 +124,13 @@ if __name__ == "__main__":
     parser.add_argument("--label", default="formal-v1")
     parser.add_argument("--repetition", type=int, choices=(1, 2, 3))
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--config", type=Path, help="actual scientific configuration; no credentials")
+    parser.add_argument("--with-science", action="store_true", help="bind doctor versions and executable hashes")
     args = parser.parse_args()
     if not args.execute:
         parser.error("operator must explicitly choose --execute; nothing changed")
     if args.mode == "freeze":
-        freeze(args.label)
+        freeze(args.label, config_path=args.config, with_science=args.with_science)
     else:
         if args.repetition is None:
             parser.error("offline invocation requires --repetition")

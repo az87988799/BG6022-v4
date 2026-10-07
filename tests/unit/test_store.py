@@ -166,11 +166,16 @@ def test_signal_and_stale_permission_are_rechecked_before_reservation(setup_run)
     with pytest.raises(StoreError, match="pause/cancel"):
         store.reserve_attempt(run, step, artifact.id)
     store.signal(run.id, None)
+    # Model a reconciled explicit resume with no outstanding user messages.
+    run.control_generation = store.read_control(run.id)["generation"]
+    store.save_run(run)
     stale = run.model_copy(deep=True)
     run.state = "paused"
     store.save_run(run)
     with pytest.raises(StoreError, match="stale run"):
         store.reserve_attempt(stale, step, artifact.id)
+    run.state = "ready"
+    store.save_run(run)
     store.path(f"runs/{run.id}/permission.json").write_text(json.dumps({
         **run.permission.model_dump(), "scientific_execution": False,
     }))
@@ -263,8 +268,12 @@ def test_derived_geometry_requires_concrete_qualified_producer(setup_run, tmp_pa
             store.reserve_attempt(run, sp, geometry.id)
         assert len(run.attempts) == 1
         return
-    downstream = store.reserve_attempt(run, sp, geometry.id)
-    assert downstream.geometry_artifact_id == geometry.id
+    # A matching rule label alone is not the complete checked structure or its
+    # frozen Attempt/input/manifest provenance. Full Opt -> SP positive coverage
+    # lives in test_current_applicability with the production parser/checker.
+    with pytest.raises((StoreError, ValueError), match="source_|qualified_"):
+        store.reserve_attempt(run, sp, geometry.id)
+    assert len(run.attempts) == 1
 
 
 def test_default_environment_is_independent_of_store_root(tmp_path, monkeypatch):

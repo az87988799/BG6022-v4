@@ -17,6 +17,7 @@ from pathlib import Path
 from orca_agent.store import Store, atomic_write, sha256_file
 from tests.helpers.phase_b_budget import AcceptanceBudget
 from tests.helpers.phase_b_freeze import freeze_hash
+from tests.helpers.phase_b_grading import classify_grade
 
 PROJECT = Path(__file__).resolve().parents[2]
 AXES = ("quantity", "unit", "conditions", "source", "limits", "next_action")
@@ -93,10 +94,17 @@ def _model_record(metadata_path, model_store):
     row = {k: metadata.get(k) for k in ("variant_id", "repetition", "category", "freeze_label", "freeze_sha256", "run_id")}
     row.update(evidence_type="real_model_with_frozen_evidence", status="unverified", first_success=False,
                correction_or_transport_failure=None, evidence=[_receipt(metadata_path)])
+    known_failure = False
     try:
         ready = _read(directory / "ready.json")
         if ready.get("metadata_sha256") != sha256_file(metadata_path) or ready.get("run_id") != row["run_id"]:
             raise ValueError("model slot metadata binding changed")
+        grade_path, review_path = directory / "grade.json", directory / "review.json"
+        if grade_path.is_file():
+            recorded = _read(grade_path)
+            identity = ("run_id", "variant_id", "repetition", "spec_sha256")
+            if all(recorded.get(key) == metadata.get(key) for key in identity):
+                known_failure = classify_grade(recorded) == "failed"
         run = model_store.load_run(row["run_id"])
         if run.batch_category != row["category"]:
             raise ValueError("model Run category differs")
@@ -104,7 +112,6 @@ def _model_record(metadata_path, model_store):
         row.update(executed=present, correction_or_transport_failure=corrected)
         if not present:
             row["status"] = "not_run"
-        grade_path, review_path = directory / "grade.json", directory / "review.json"
         if not grade_path.is_file():
             row["reason"] = "model grade missing"
             return row
@@ -119,14 +126,13 @@ def _model_record(metadata_path, model_store):
         if review_path.is_file():
             row["evidence"].append(_receipt(review_path))
         row["proposal_review"] = actual.get("proposal_review", {"status": "not_verified"})
-        failed = (not actual["safety_invariants_passed"] or row["proposal_review"]["status"] == "failed" or any(
-            a["status"] == "failed" for a in [*actual["assertions"], *actual["explanation"].values()]))
-        row["status"] = ("passed" if grade.get("status") == actual["status"] == "passed" and review
-                         else "failed" if failed else "unverified" if present else "not_run")
+        row["status"] = classify_grade(actual, executed=present)
+        if row["status"] == "passed" and (grade.get("status") != "passed" or not review):
+            row["status"] = "unverified"
         row["first_success"] = row["status"] == "passed" and not corrected
         row["six_axes_passed"] = all(a["status"] == "passed" for a in actual["explanation"].values())
     except (ValueError, KeyError, TypeError, OSError, RuntimeError) as exc:
-        row.update(status="unverified", reason=str(exc))
+        row.update(status="failed" if known_failure else "unverified", reason=str(exc))
     return row
 
 
@@ -297,14 +303,19 @@ def build_report(*, coverage_path=None, freeze_path=None, model_root=None, joint
     if (len(variant_ids) != len(set(variant_ids)) or any(
             sorted(s["repetition"] for s in e["formal_slots"]) != [1, 2, 3] for e in coverage["entries"])):
         raise ValueError("coverage must contain unique variants and exactly three slots each")
-    if coverage.get("frozen_cases"):
-        source = coverage["frozen_cases"]
+    sources = ([coverage["frozen_cases"]] if coverage.get("frozen_cases") else []) + coverage.get("additional_cases", [])
+    expected = {}
+    for source in sources:
         path = (project / source["path"]).resolve()
         if not path.is_relative_to(project) or sha256_file(path) != source["sha256"]:
             raise ValueError("coverage frozen case source differs")
         cases = _read(path)
-        expected = {f"{case['id']}/{variant['id']}": variant["evidence_requirement"]
-                    for case in cases["cases"] for variant in case["variants"]}
+        additions = {f"{case['id']}/{variant['id']}": variant["evidence_requirement"]
+                     for case in cases["cases"] for variant in case["variants"]}
+        if expected.keys() & additions.keys():
+            raise ValueError("additional coverage cannot replace a frozen variant")
+        expected.update(additions)
+    if sources:
         observed = {e["variant_id"]: e["evidence_requirement"] for e in coverage["entries"]}
         if observed != expected:
             raise ValueError("coverage omits or relabels a frozen variant")

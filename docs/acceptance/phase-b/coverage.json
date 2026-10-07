@@ -1,26 +1,29 @@
 {
   "schema_version": 1,
   "kind": "coverage_mapping_not_acceptance_evidence",
-  "status": "planned_unverified",
+  "status": "mapped_unverified_waiting_development_and_formal_budget_review",
   "frozen_cases": {
     "path": "tests/fixtures/phase_b/cases.json",
     "sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30"
   },
   "collection": {
-    "method": "pytest --collect-only tests/unit tests/integration tests/evals",
-    "collected_node_count": 1278,
+    "method": "uv run --offline --locked pytest --collect-only -q",
+    "current_collection_verified": true,
+    "executed_model_or_orca": false,
+    "collected_node_count": 1465,
     "all_mapped_nodeids_collected": true,
-    "executed_model_or_orca": false
+    "mapped_distinct_formal_nodes": 287,
+    "scope": "Collection only; current executable map has 210 unrun formal slots."
   },
   "totals": {
-    "variants": 58,
+    "variants": 70,
     "offline_variants": 26,
-    "real_model_variants": 25,
+    "real_model_variants": 37,
     "joint_variants": 7,
-    "required_variant_repetition_slots": 174,
+    "required_variant_repetition_slots": 210,
     "distinct_joint_trajectory_slots": 18,
     "joint_variant_slots": 21,
-    "real_model_slots": 75,
+    "real_model_slots": 111,
     "offline_slots": 78,
     "formal_passes_claimed": 0
   },
@@ -33,7 +36,8 @@
   ],
   "known_missing_assertions": [],
   "formal_evidence_gaps": [
-    "No formal receipt or six-axis explanation review is certified by this mapping. All 174 slots remain planned/unverified here."
+    "All 210 formal slots remain unrun. The raw methane trajectory shares entry/optimized-energy coverage without adding science starts.",
+    "Development B-08/B-09 completion and a sufficient cumulative HTTP/science execution plan remain prerequisites; mapped tests and frozen references are not passed acceptance."
   ],
   "entries": [
     {
@@ -1073,7 +1077,7 @@
           "evidence_status": "unverified"
         }
       ],
-      "coverage_basis": "Real model plus real ORCA evaluator; independent persisted-evidence grading compares frozen raw/reference hashes, counts, numerical output, and accepted model decisions. Unit grader fixtures are not joint evidence.",
+      "coverage_basis": "Real model plus real ORCA evaluator; independent persisted-evidence grading compares frozen raw/reference hashes, counts, numerical output, and accepted model decisions. Unit grader fixtures are not joint evidence. The same existing methane trajectory now starts at raw text, retains strict Opt/reference expectations and requires optimized electronic energy; no extra ORCA allocation.",
       "independent_explanation_review_required": true,
       "review_axes": [
         "quantity",
@@ -1082,6 +1086,11 @@
         "source",
         "limits",
         "suggested_next_action_within_authority"
+      ],
+      "input_form": "raw_text_registered_methane_geometry",
+      "shared_coverage": [
+        "N-01/raw-entry",
+        "N-02/optimized-energy-relation"
       ]
     },
     {
@@ -4147,7 +4156,9 @@
             "tests/unit/test_agent.py::test_new_user_message_while_model_waits_prevents_old_plan_activation",
             "tests/unit/test_agent.py::test_control_during_model_wait_prevents_stale_activation[pause-paused]",
             "tests/unit/test_agent.py::test_control_during_model_wait_prevents_stale_activation[cancel-cancelled]",
-            "tests/unit/test_revision_store.py::test_new_user_message_invalidates_old_proposal_without_waiting_for_coordinator"
+            "tests/unit/test_revision_store.py::test_new_user_message_invalidates_old_proposal_without_waiting_for_coordinator",
+            "tests/unit/test_semantic_control.py::test_new_message_after_plan_activation_prevents_ready_read",
+            "tests/integration/test_message_launch_gate.py::test_persisted_condition_message_after_input_blocks_backend_before_creation"
           ],
           "status": "planned",
           "evidence_status": "unverified",
@@ -4161,7 +4172,9 @@
             "tests/unit/test_agent.py::test_new_user_message_while_model_waits_prevents_old_plan_activation",
             "tests/unit/test_agent.py::test_control_during_model_wait_prevents_stale_activation[pause-paused]",
             "tests/unit/test_agent.py::test_control_during_model_wait_prevents_stale_activation[cancel-cancelled]",
-            "tests/unit/test_revision_store.py::test_new_user_message_invalidates_old_proposal_without_waiting_for_coordinator"
+            "tests/unit/test_revision_store.py::test_new_user_message_invalidates_old_proposal_without_waiting_for_coordinator",
+            "tests/unit/test_semantic_control.py::test_new_message_after_plan_activation_prevents_ready_read",
+            "tests/integration/test_message_launch_gate.py::test_persisted_condition_message_after_input_blocks_backend_before_creation"
           ],
           "status": "planned",
           "evidence_status": "unverified",
@@ -4175,14 +4188,21 @@
             "tests/unit/test_agent.py::test_new_user_message_while_model_waits_prevents_old_plan_activation",
             "tests/unit/test_agent.py::test_control_during_model_wait_prevents_stale_activation[pause-paused]",
             "tests/unit/test_agent.py::test_control_during_model_wait_prevents_stale_activation[cancel-cancelled]",
-            "tests/unit/test_revision_store.py::test_new_user_message_invalidates_old_proposal_without_waiting_for_coordinator"
+            "tests/unit/test_revision_store.py::test_new_user_message_invalidates_old_proposal_without_waiting_for_coordinator",
+            "tests/unit/test_semantic_control.py::test_new_message_after_plan_activation_prevents_ready_read",
+            "tests/integration/test_message_launch_gate.py::test_persisted_condition_message_after_input_blocks_backend_before_creation"
           ],
           "status": "planned",
           "evidence_status": "unverified",
           "receipt_requirement": "Record this independent invocation under the formal freeze; local development results do not fill this slot."
         }
       ],
-      "coverage_basis": "Offline runtime fault injection / authority checks. Existing raw files and scripted transport are explicitly synthetic execution evidence; no real model or ORCA claim."
+      "coverage_basis": "Offline runtime fault injection / authority checks. Existing raw files and scripted transport are explicitly synthetic execution evidence; no real model or ORCA claim.",
+      "change": "retained_and_extended_for_repair_v2",
+      "added_boundary_nodes": [
+        "tests/unit/test_semantic_control.py::test_new_message_after_plan_activation_prevents_ready_read",
+        "tests/integration/test_message_launch_gate.py::test_persisted_condition_message_after_input_blocks_backend_before_creation"
+      ]
     },
     {
       "variant_id": "V-11/old-attempt-new-request",
@@ -4296,7 +4316,10 @@
           "pytest_nodeids": [
             "tests/unit/test_revision_store.py::test_revision_saved_before_activation_reconnects_same_decision_once",
             "tests/unit/test_revision_store.py::test_orphan_revision_cannot_reactivate_after_control_generation_changes",
-            "tests/unit/test_phase_b_cross_recovery.py::test_global_model_receipt_and_query_recover_twice_without_new_spend[after_revision_saved-1]"
+            "tests/unit/test_phase_b_cross_recovery.py::test_global_model_receipt_and_query_recover_twice_without_new_spend[after_revision_saved-1]",
+            "tests/unit/test_semantic_control.py::test_request_revision_and_message_consumption_activate_together_after_crash",
+            "tests/unit/test_semantic_edgecases.py::test_answer_to_superseded_question_does_not_consume_or_activate",
+            "tests/unit/test_revision_store.py::test_activated_revision_crash_replay_does_not_increment_revision_budget"
           ],
           "status": "planned",
           "evidence_status": "unverified",
@@ -4309,7 +4332,10 @@
           "pytest_nodeids": [
             "tests/unit/test_revision_store.py::test_revision_saved_before_activation_reconnects_same_decision_once",
             "tests/unit/test_revision_store.py::test_orphan_revision_cannot_reactivate_after_control_generation_changes",
-            "tests/unit/test_phase_b_cross_recovery.py::test_global_model_receipt_and_query_recover_twice_without_new_spend[after_revision_saved-2]"
+            "tests/unit/test_phase_b_cross_recovery.py::test_global_model_receipt_and_query_recover_twice_without_new_spend[after_revision_saved-2]",
+            "tests/unit/test_semantic_control.py::test_request_revision_and_message_consumption_activate_together_after_crash",
+            "tests/unit/test_semantic_edgecases.py::test_answer_to_superseded_question_does_not_consume_or_activate",
+            "tests/unit/test_revision_store.py::test_activated_revision_crash_replay_does_not_increment_revision_budget"
           ],
           "status": "planned",
           "evidence_status": "unverified",
@@ -4322,14 +4348,23 @@
           "pytest_nodeids": [
             "tests/unit/test_revision_store.py::test_revision_saved_before_activation_reconnects_same_decision_once",
             "tests/unit/test_revision_store.py::test_orphan_revision_cannot_reactivate_after_control_generation_changes",
-            "tests/unit/test_phase_b_cross_recovery.py::test_global_model_receipt_and_query_recover_twice_without_new_spend[after_revision_saved-3]"
+            "tests/unit/test_phase_b_cross_recovery.py::test_global_model_receipt_and_query_recover_twice_without_new_spend[after_revision_saved-3]",
+            "tests/unit/test_semantic_control.py::test_request_revision_and_message_consumption_activate_together_after_crash",
+            "tests/unit/test_semantic_edgecases.py::test_answer_to_superseded_question_does_not_consume_or_activate",
+            "tests/unit/test_revision_store.py::test_activated_revision_crash_replay_does_not_increment_revision_budget"
           ],
           "status": "planned",
           "evidence_status": "unverified",
           "receipt_requirement": "Record this independent invocation under the formal freeze; local development results do not fill this slot."
         }
       ],
-      "coverage_basis": "Offline runtime fault injection / authority checks. Existing raw files and scripted transport are explicitly synthetic execution evidence; no real model or ORCA claim."
+      "coverage_basis": "Offline runtime fault injection / authority checks. Existing raw files and scripted transport are explicitly synthetic execution evidence; no real model or ORCA claim.",
+      "change": "retained_and_extended_for_repair_v2",
+      "added_boundary_nodes": [
+        "tests/unit/test_semantic_control.py::test_request_revision_and_message_consumption_activate_together_after_crash",
+        "tests/unit/test_semantic_edgecases.py::test_answer_to_superseded_question_does_not_consume_or_activate",
+        "tests/unit/test_revision_store.py::test_activated_revision_crash_replay_does_not_increment_revision_budget"
+      ]
     },
     {
       "variant_id": "V-11/result-written-run-not-linked",
@@ -4670,7 +4705,8 @@
             "tests/unit/test_phase_b_cross_recovery.py::test_zero_model_budget_relinks_qualified_orphan_and_reports_without_resending[1]",
             "tests/unit/test_agent.py::test_exhausted_model_budget_sends_nothing_and_deterministic_report_still_works",
             "tests/unit/test_phase_b_reliability.py::test_explanation_budget_exhaustion_keeps_satisfied_goals_without_fabricating_model_explanation",
-            "tests/unit/test_report_extended.py::test_model_exhaustion_retains_actual_unknown_and_reserved_costs_without_prompts"
+            "tests/unit/test_report_extended.py::test_model_exhaustion_retains_actual_unknown_and_reserved_costs_without_prompts",
+            "tests/unit/test_semantic_edgecases.py::test_deadline_after_wait_allows_consumption_but_no_new_tool_or_model"
           ],
           "status": "planned",
           "evidence_status": "unverified",
@@ -4684,7 +4720,8 @@
             "tests/unit/test_phase_b_cross_recovery.py::test_zero_model_budget_relinks_qualified_orphan_and_reports_without_resending[2]",
             "tests/unit/test_agent.py::test_exhausted_model_budget_sends_nothing_and_deterministic_report_still_works",
             "tests/unit/test_phase_b_reliability.py::test_explanation_budget_exhaustion_keeps_satisfied_goals_without_fabricating_model_explanation",
-            "tests/unit/test_report_extended.py::test_model_exhaustion_retains_actual_unknown_and_reserved_costs_without_prompts"
+            "tests/unit/test_report_extended.py::test_model_exhaustion_retains_actual_unknown_and_reserved_costs_without_prompts",
+            "tests/unit/test_semantic_edgecases.py::test_deadline_after_wait_allows_consumption_but_no_new_tool_or_model"
           ],
           "status": "planned",
           "evidence_status": "unverified",
@@ -4698,14 +4735,1144 @@
             "tests/unit/test_phase_b_cross_recovery.py::test_zero_model_budget_relinks_qualified_orphan_and_reports_without_resending[3]",
             "tests/unit/test_agent.py::test_exhausted_model_budget_sends_nothing_and_deterministic_report_still_works",
             "tests/unit/test_phase_b_reliability.py::test_explanation_budget_exhaustion_keeps_satisfied_goals_without_fabricating_model_explanation",
-            "tests/unit/test_report_extended.py::test_model_exhaustion_retains_actual_unknown_and_reserved_costs_without_prompts"
+            "tests/unit/test_report_extended.py::test_model_exhaustion_retains_actual_unknown_and_reserved_costs_without_prompts",
+            "tests/unit/test_semantic_edgecases.py::test_deadline_after_wait_allows_consumption_but_no_new_tool_or_model"
           ],
           "status": "planned",
           "evidence_status": "unverified",
           "receipt_requirement": "Record this independent invocation under the formal freeze; local development results do not fill this slot."
         }
       ],
-      "coverage_basis": "Offline runtime fault injection / authority checks. Existing raw files and scripted transport are explicitly synthetic execution evidence; no real model or ORCA claim."
+      "coverage_basis": "Offline runtime fault injection / authority checks. Existing raw files and scripted transport are explicitly synthetic execution evidence; no real model or ORCA claim.",
+      "change": "retained_and_extended_for_repair_v2",
+      "added_boundary_nodes": [
+        "tests/unit/test_semantic_edgecases.py::test_deadline_after_wait_allows_consumption_but_no_new_tool_or_model"
+      ]
+    },
+    {
+      "variant_id": "N-01/raw-water-sp",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.goal_ports",
+          "operator": "eq",
+          "value": [
+            "energy"
+          ]
+        },
+        {
+          "metric": "raw_request.geometry_relations",
+          "operator": "eq",
+          "value": [
+            "fixed_initial"
+          ]
+        }
+      ],
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 4,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-01/raw-water-sp",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-01/raw-water-sp]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-01/raw-water-sp",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-01/raw-water-sp]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-01/raw-water-sp",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-01/raw-water-sp]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-02/raw-optimized-energy",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.geometry_relations",
+          "operator": "eq",
+          "value": [
+            "optimized"
+          ]
+        }
+      ],
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 4,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-02/raw-optimized-energy",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-02/raw-optimized-energy]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-02/raw-optimized-energy",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-02/raw-optimized-energy]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-02/raw-optimized-energy",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-02/raw-optimized-energy]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-03/raw-electron-state-clarification",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.all_user_turns_consumed",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.explicit_electron_state",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.goal_ports",
+          "operator": "eq",
+          "value": [
+            "energy"
+          ]
+        }
+      ],
+      "budget": {
+        "model_http_requests": 6,
+        "model_tokens_total": 48000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-03/raw-electron-state-clarification",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-03/raw-electron-state-clarification]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-03/raw-electron-state-clarification",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-03/raw-electron-state-clarification]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-03/raw-electron-state-clarification",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-03/raw-electron-state-clarification]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-03/raw-ambiguous-reference",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.all_user_turns_consumed",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.goal_ports",
+          "operator": "eq",
+          "value": [
+            "energy"
+          ]
+        },
+        {
+          "metric": "raw_request.resolved_water_reference",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "budget": {
+        "model_http_requests": 6,
+        "model_tokens_total": 48000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-03/raw-ambiguous-reference",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-03/raw-ambiguous-reference]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-03/raw-ambiguous-reference",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-03/raw-ambiguous-reference]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-03/raw-ambiguous-reference",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-03/raw-ambiguous-reference]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-04/raw-authorized-defaults",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.all_user_turns_consumed",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.default_origins",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-04/raw-authorized-defaults",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-04/raw-authorized-defaults]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-04/raw-authorized-defaults",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-04/raw-authorized-defaults]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-04/raw-authorized-defaults",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-04/raw-authorized-defaults]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-04/raw-unique-inheritance",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.all_user_turns_consumed",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.inherited_origins",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.goal_ports",
+          "operator": "eq",
+          "value": [
+            "energy"
+          ]
+        }
+      ],
+      "budget": {
+        "model_http_requests": 6,
+        "model_tokens_total": 48000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-04/raw-unique-inheritance",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-04/raw-unique-inheritance]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-04/raw-unique-inheritance",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-04/raw-unique-inheritance]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-04/raw-unique-inheritance",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-04/raw-unique-inheritance]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-04/raw-unconfirmed-inference",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.all_user_turns_consumed",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.inferred_electron_state",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.unsupported_or_unresolved",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-04/raw-unconfirmed-inference",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-04/raw-unconfirmed-inference]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-04/raw-unconfirmed-inference",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-04/raw-unconfirmed-inference]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-04/raw-unconfirmed-inference",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-04/raw-unconfirmed-inference]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-05/raw-unsupported-solvent",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.unsupported_environment_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.unsupported_or_unresolved",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 4,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-05/raw-unsupported-solvent",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-05/raw-unsupported-solvent]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-05/raw-unsupported-solvent",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-05/raw-unsupported-solvent]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-05/raw-unsupported-solvent",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-05/raw-unsupported-solvent]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-06/raw-unsupported-system",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.geometry_relations",
+          "operator": "eq",
+          "value": [
+            "optimized"
+          ]
+        },
+        {
+          "metric": "raw_request.unsupported_or_unresolved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.no_registered_system_substitution",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 4,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-06/raw-unsupported-system",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-06/raw-unsupported-system]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-06/raw-unsupported-system",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-06/raw-unsupported-system]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-06/raw-unsupported-system",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-06/raw-unsupported-system]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-07/raw-read-only-window",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.all_user_turns_consumed",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "read.succeeded",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "query_goal.satisfied",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.no_nonread_tools",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "budget": {
+        "model_http_requests": 6,
+        "model_tokens_total": 48000,
+        "evidence_reads": 4,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-07/raw-read-only-window",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-07/raw-read-only-window]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-07/raw-read-only-window",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-07/raw-read-only-window]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-07/raw-read-only-window",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-07/raw-read-only-window]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-09/raw-user-goal-replacement",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.all_user_turns_consumed",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.goal_ports",
+          "operator": "eq",
+          "value": [
+            "optimized_geometry"
+          ]
+        },
+        {
+          "metric": "raw_request.geometry_relations",
+          "operator": "eq",
+          "value": [
+            "optimized"
+          ]
+        },
+        {
+          "metric": "raw_request.user_replacement_recorded",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "budget": {
+        "model_http_requests": 6,
+        "model_tokens_total": 48000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-09/raw-user-goal-replacement",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-09/raw-user-goal-replacement]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-09/raw-user-goal-replacement",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-09/raw-user-goal-replacement]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-09/raw-user-goal-replacement",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-09/raw-user-goal-replacement]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
+    },
+    {
+      "variant_id": "N-09/raw-preserve-goal",
+      "change": "added",
+      "input_form": "raw text + registered geometry/evidence + explicit program configuration; followups are raw queued messages",
+      "evidence_requirement": "real_model_with_frozen_evidence",
+      "expected_predicates": [
+        {
+          "metric": "raw_request.accepted_normalization",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.original_text_preserved",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "raw_request.all_user_turns_consumed",
+          "operator": "eq",
+          "value": true
+        },
+        {
+          "metric": "orca_starts",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "metric": "raw_request.goal_ports",
+          "operator": "eq",
+          "value": [
+            "energy"
+          ]
+        },
+        {
+          "metric": "raw_request.geometry_relations",
+          "operator": "eq",
+          "value": [
+            "fixed_initial"
+          ]
+        }
+      ],
+      "budget": {
+        "model_http_requests": 6,
+        "model_tokens_total": 48000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "formal_slots": [
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-09/raw-preserve-goal",
+          "repetition": 1,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[1-N-09/raw-preserve-goal]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-09/raw-preserve-goal",
+          "repetition": 2,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[2-N-09/raw-preserve-goal]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        },
+        {
+          "category": "formal",
+          "freeze_label": "${ORCA_AGENT_EVAL_FREEZE}",
+          "variant_id": "N-09/raw-preserve-goal",
+          "repetition": 3,
+          "pytest_nodeids": [
+            "tests/evals/test_model.py::test_fixed_evidence_model[3-N-09/raw-preserve-goal]"
+          ],
+          "status": "planned",
+          "evidence_status": "unverified"
+        }
+      ],
+      "independent_explanation_review_required": true,
+      "review_axes": [
+        "quantity",
+        "unit",
+        "conditions",
+        "source",
+        "limits",
+        "next_action"
+      ],
+      "coverage_basis": "Production initialize_bundle raw intake; no physical conditions/goals/patches prefilled. Same model/accounting loop; no ORCA permission."
     }
-  ]
+  ],
+  "additional_cases": [
+    {
+      "path": "tests/fixtures/phase_b/raw-text-cases.json",
+      "sha256": "5166cb94d11904d5f590f2393be52aa7fdfb498407dd5990f3ae0ef6492ca78d"
+    }
+  ],
+  "baseline": {
+    "code_commit": "61e85725f084705c22686e1bb7cd798e852ec71d",
+    "coverage_sha256": "03fc08b178bddcd027ed87270afa17140c7606a44cb051afe697b6b043be8bd2",
+    "variants": 58,
+    "slots": 174,
+    "retained_unchanged_entries": 54,
+    "retained_extended_entries": 4
+  }
 }

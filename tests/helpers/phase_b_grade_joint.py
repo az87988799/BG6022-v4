@@ -12,7 +12,7 @@ import json
 import math
 import re
 from decimal import Decimal
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 from orca_agent.models import fingerprint
 from orca_agent.store import sha256_file
@@ -40,7 +40,17 @@ def _json(path, *, limit=16 * 1024 * 1024):
 
 
 def _verified(entry):
-    path = PROJECT / entry["path"]
+    name = entry["path"]
+    if Path(name).is_absolute() or PureWindowsPath(name).is_absolute():
+        mapping = _json(PROJECT / "tests/fixtures/phase_b/independent/reference-copies.json")
+        matches = [item for item in mapping["copies"]
+                   if item["historical_path"] == name and item["sha256"] == entry["sha256"]]
+        if len(matches) != 1:
+            raise ValueError("historical reference has no unique controlled copy")
+        name = matches[0]["repository_path"]
+    path = (PROJECT / name).resolve()
+    if not path.is_relative_to(PROJECT.resolve()):
+        raise ValueError("frozen reference path is outside the repository")
     if sha256_file(path) != entry["sha256"]:
         raise ValueError("frozen reference hash changed")
     return path
@@ -221,7 +231,8 @@ def grade_joint(store, run_or_id, case, *, metadata=None):
 
     def check(name, passed, actual=None, expected=None):
         category = ("integrity" if name in {"frozen_reference_hashes", "evaluation_identity", "evidence_available_and_unchanged"}
-                    else "protocol" if name in {"real_model_initial_plan_receipt", "accepted_final_explanation", "terminal_delivery"}
+                    else "protocol" if name in {"real_model_initial_plan_receipt", "accepted_final_explanation", "terminal_delivery",
+                                                 "raw_intake_and_optimized_energy_target"}
                     else "trajectory" if name in {"exact_attempt_and_launch_count", "no_postprocess_or_unresolved_execution",
                         "one_repair_same_logical_step", "repair_changes_only_scf_maxiter", "initial_three_then_correct_half_or_stop",
                         "initial_sampling_plan_exactly_three_then_analysis", "sampling_append_follows_bound_analysis_feedback"}
@@ -244,6 +255,26 @@ def grade_joint(store, run_or_id, case, *, metadata=None):
               and all(a.finished_at is not None and a.state not in {"intent", "running", "unknown"} for a in run.attempts))
         initial, stops, accepted_plans = _model_evidence(store, run)
         check("real_model_initial_plan_receipt", initial)
+        if metadata and metadata.get("input_form") == "raw_text":
+            path = Path(metadata["raw_bundle_path"]).resolve()
+            if not path.is_relative_to(store.root.resolve()) or sha256_file(path) != metadata["raw_bundle_sha256"]:
+                raise ValueError("raw joint input bundle identity changed")
+            raw_bundle = _json(path)
+            request = store.load_request(run)
+            normalized = [d for d in run.decisions if d.get("semantics", {}).get("kind") == "normalize"]
+            records = {r["id"]: r for r in run.model_records}
+            bound = bool(normalized and all(d["id"] in records for d in normalized))
+            for decision in normalized:
+                response = _json(store.path(f"runs/{run.id}/model/{decision['id']}.response.json"))
+                bound &= response.get("proposal", {}).get("action") == "normalize_request"
+            ports = {goal.port for goal in request.goals if goal.required}
+            check("raw_intake_and_optimized_energy_target", bound and "goals" not in raw_bundle
+                  and not {"method", "basis", "charge", "multiplicity", "environment", "electronic_state"}
+                      & set(raw_bundle.get("conditions", {}))
+                  and request.original_text == raw_bundle["text"]
+                  and {"energy", "optimized_geometry"} <= ports
+                  and all(goal.conditions.get("geometry_relation") == "optimized"
+                          for goal in request.goals if goal.required and goal.port == "energy"))
         check("accepted_final_explanation", bool(stops))
         result["explanation"] = {"status": "pending_independent_rubric_review" if stops else "missing_accepted_final_explanation",
                                  "decision_id": stops[-1]["id"] if stops else None,
@@ -318,10 +349,9 @@ def _grade_single(case, evidence, review, cases, check):
     # remains portable when the complete historical archive is not mounted.
     expected_energy = reference["energy"]["reference_eh"]
     raw_entry = next(e for e in reference["files"] if e["path"].endswith("stdout.out"))
-    if (PROJECT / raw_entry["path"]).is_file():
-        observed = independent_output(_verified(raw_entry))
-        if observed["status"] != "converged" or observed["energy_eh"] != expected_energy:
-            raise ValueError("independent reference review differs from its raw evidence")
+    observed = independent_output(_verified(raw_entry))
+    if observed["status"] != "converged" or observed["energy_eh"] != expected_energy:
+        raise ValueError("independent reference review differs from its raw evidence")
     final = evidence[-1]
     check("energy_matches_independent_reference", final["raw"]["status"] == "converged"
           and abs(final["raw"]["energy_eh"] - expected_energy) <= reference["energy"]["tolerance_eh"],

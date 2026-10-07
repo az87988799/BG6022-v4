@@ -77,10 +77,12 @@ def test_global_model_receipt_and_query_recover_twice_without_new_spend(tmp_path
 def test_initial_sampling_plan_cannot_preplan_an_optional_fourth_point(repetition):
     request = Request(systems=[SystemInput(id=f"candidate{i}", geometry_artifact_id=f"geometry{i}") for i in range(4)],
         conditions={"initial_system_ids": [f"candidate{i}" for i in range(3)]},
-        goals=[Goal(id="g", port="energy", minimum_check_version="orca-hf-2")])
+        goals=[Goal(id=f"energy{i}", port="energy", system_ids=[f"candidate{i}"],
+                    minimum_check_version="orca-hf-2") for i in range(3)])
     steps = [Step(id=f"sp{i}", logical_id=f"logical{i}", system_id=f"candidate{i}", tool="orca.sp",
                   geometry=InputRef(artifact_id=f"geometry{i}")) for i in range(4)]
-    plan = Plan(request_id=request.id, steps=steps[:3], goal_map={"g": OutputBinding(step_id="sp0", port="energy")})
+    plan = Plan(request_id=request.id, steps=steps[:3], goal_map={
+        f"energy{i}": OutputBinding(step_id=f"sp{i}", port="energy") for i in range(3)})
     run = Run(request_id=request.id, request_version=1, permission=PermissionSnapshot(scientific_execution=True,
         allow_additional_science=True, artifact_ids=[f"geometry{i}" for i in range(4)]))
     validate_revision(request, None, request, plan, run)

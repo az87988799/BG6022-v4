@@ -10,7 +10,7 @@
     "provider": "DeepSeek",
     "model": "deepseek-flash",
     "base_url": "https://api.deepseek.com",
-    "prompt_version": "agent-json-v4",
+    "prompt_version": "agent-json-v5",
     "prompt_source": "src/orca_agent/context.py",
     "openai_sdk_version": "2.28.0",
     "httpx_version": "0.28.1",
@@ -61,15 +61,19 @@
   "batch_limits": {
     "orca_starts": {
       "reference": 16,
-      "development": 32,
+      "development": 48,
       "formal": 48,
-      "total": 96
+      "total": 112
     },
-    "model_http_requests": 600,
-    "model_tokens": 6000000,
+    "model_http_requests": 1004,
+    "model_tokens": 6500000,
     "model_usd": "10",
     "ledger": "data/phase-b/batch-ledger.json",
-    "unknown_usage": "keeps conservative occupancy; no resets"
+    "unknown_usage": "keeps conservative occupancy; no resets",
+    "approval": {
+      "path": "docs/acceptance/phase-b/budget-approval-20261007.json",
+      "sha256": "ba9b02a45989fb9b84338c27171e54988b9bfacb1aece99881204faeb510ae95"
+    }
   },
   "pricing": {
     "input_uncached_usd_per_million": "0.30",
@@ -99,5 +103,5 @@
     "pydantic": "2.13.5",
     "pytest": "9.1.1"
   },
-  "provenance": "B-01 design profile remains immutable. Development v1/v2/v3 requests retain exact prompts and hashes; v3 source checkpoint is 4fa1d2017890863fbaafd8d246dcf623ac4bb217. Formal freeze remains pending. This profile describes the v4 development revision."
+  "provenance": "B-01 design profile and original cases remain immutable. Historical requests retain their exact prompts and hashes. This profile describes the Phase-B repair-v2 development revision and the user-approved cumulative budget amendment. Formal freeze remains pending."
 }

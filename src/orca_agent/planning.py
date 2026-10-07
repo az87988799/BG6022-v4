@@ -19,7 +19,8 @@ def _require(condition, message):
         raise PlanningError(message)
 
 
-def _request_revision(prior: Request, proposed: Request, user_update: bool) -> bool:
+def _request_revision(prior: Request, proposed: Request, user_update: bool,
+                      authenticated_user_revision: bool = False) -> bool:
     _require(proposed.id == prior.id, "Request identity cannot change")
     if proposed == prior:
         return False
@@ -38,6 +39,8 @@ def _request_revision(prior: Request, proposed: Request, user_update: bool) -> b
                  and isinstance(message.get("created_at"), str) and bool(message["created_at"]),
                  "Request changes require the trusted control user-message format")
         existing_ids.add(message["id"])
+    if authenticated_user_revision:
+        return True
     old_goals = {goal.id: goal for goal in prior.goals if goal.required}
     new_goals = {goal.id: goal for goal in proposed.goals}
     for identifier, old in old_goals.items():
@@ -184,7 +187,8 @@ def _goal_bindings(request: Request, plan: Plan, run: Run):
 
 def validate_revision(prior_request: Request, prior_plan: Plan | None,
                       next_request: Request, next_plan: Plan | None, run: Run,
-                      *, user_update: bool = False) -> None:
+                      *, user_update: bool = False,
+                      authenticated_user_revision: bool = False) -> None:
     """Validate a candidate against immutable purpose, launch history and permission.
 
     user_update is a caller-authenticated fact, not a model parameter. Even that
@@ -201,9 +205,10 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     prior_plan_identity = (prior_plan.id, prior_plan.version) if prior_plan else (None, None)
     _require(prior_plan_identity == (run.plan_id, run.plan_version),
              "revision is based on a stale Plan")
-    if prior_plan:
+    if prior_plan and not authenticated_user_revision:
         prior_plan.validate_request(prior_request)
-    user_change = _request_revision(prior_request, next_request, user_update)
+    user_change = _request_revision(prior_request, next_request, user_update,
+                                    authenticated_user_revision)
     if next_plan is None:
         _require(prior_plan is None or user_change,
                  "active Plan may only be suspended by a trusted clarification")

@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers.phase_b_grading import classify_grade
+
 PROJECT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location("phase_b_model_evaluation", PROJECT / "tests/helpers/phase_b_model_evaluation.py")
 EVALUATION = importlib.util.module_from_spec(SPEC)
@@ -18,16 +20,12 @@ SPEC.loader.exec_module(EVALUATION)
 
 
 @pytest.mark.model
-@pytest.mark.parametrize("variant", EVALUATION.cases.fixed_variant_ids())
+@pytest.mark.parametrize("variant", EVALUATION.cases.evaluation_variant_ids())
 @pytest.mark.parametrize("repetition", (1, 2, 3))
 def test_fixed_evidence_model(request, variant, repetition):
     report = EVALUATION.evaluate(variant, repetition, allow_live=request.config.getoption("--live-model"),
                                 freeze_label=os.environ.get("ORCA_AGENT_EVAL_FREEZE", "formal-v1"))
-    assert report["safety_invariants_passed"], "purpose, permission, budget or original evidence changed"
-    if report["fixture_gaps"]:
-        pytest.skip("real-source fixture gap; no HTTP sent and evaluation remains unverified")
-    failures = [item["metric"] for item in report["assertions"] if item["status"] == "failed"]
-    assert not failures, f"frozen acceptance assertions failed: {failures}"
-    if report["status"] != "passed":
-        pytest.skip("trajectory archived; independent explanation/behavior review remains required")
-    assert report["real_model_evidence_present"]
+    status = classify_grade(report)
+    assert status != "failed", f"frozen acceptance checks failed: {report}"
+    if status != "passed":
+        pytest.skip(f"evaluation {status}: missing required response, fixture or independent review evidence")

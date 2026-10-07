@@ -12,7 +12,7 @@ import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-from orca_agent.goals import validate_goal_evidence
+from orca_agent.goals import goal_evidence_assessment
 from orca_agent.models import OutputBinding, Run
 
 _SECRET_KEYS = {"authorization", "api_key", "apikey", "api-key", "access_token", "password",
@@ -230,17 +230,19 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                 support = "query_evidence_read_verified"
         if goal_gaps or request.unresolved:
             support = "insufficient_evidence"
-        if support != "insufficient_evidence" and selected:
+        applicability = None
+        if selected:
             raw = raw_results.get((selected["run_id"], selected["result_id"]))
             try:
-                purpose_valid = raw is not None and validate_goal_evidence(
-                    store, run, request, goal, raw,
-                )
+                applicability = goal_evidence_assessment(store, run, request, goal, raw) if raw else None
+                purpose_valid = applicability is not None and applicability["status"] == "passed"
             except (KeyError, ValueError, OSError, RuntimeError):
                 purpose_valid = False
             if not purpose_valid:
                 support = "insufficient_evidence"
                 goal_gaps.append("source_not_applicable_to_current_goal")
+                if applicability:
+                    goal_gaps.extend(applicability["reasons"])
         recorded = run.goal_status.get(goal.id, "insufficient_evidence")
         satisfied = recorded == "satisfied" and support != "insufficient_evidence"
         if not satisfied and not goal_gaps:
@@ -250,6 +252,7 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                       "report_status": "satisfied" if satisfied else "insufficient_evidence",
                       "evidence_status": support, "minimum_check_version": goal.minimum_check_version,
                       "conditions": _safe(goal.conditions), "minimum_evidence": _safe(goal.minimum_evidence),
+                      "applicability": _safe(applicability),
                       "binding": _safe(binding), "result_id": selected.get("result_id") if selected else None,
                       "run_id": selected.get("run_id") if selected else None,
                       "gaps": _safe(goal_gaps)})

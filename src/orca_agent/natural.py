@@ -38,7 +38,7 @@ def _missing_information(request):
     request = request.model_copy(deep=True)
     systems = {system.id: system for system in request.systems}
     for goal in request.goals:
-        goal.unresolved = [item for item in goal.unresolved if not item.startswith("missing:")]
+        goal.unresolved = [item for item in goal.unresolved if not item.startswith(("missing:", "applicability:"))]
         if goal.minimum_check_version == "unresolved-1":
             goal.unresolved.append("missing:goal_definition")
         if goal.minimum_check_version not in _SCIENTIFIC_RULES:
@@ -57,6 +57,12 @@ def _missing_information(request):
                 value = system.conditions.get(name, getattr(request, name)) if system else getattr(request, name)
                 if value is None:
                     goal.unresolved.append(f"missing:{name}{suffix}")
+        goal.unresolved = list(dict.fromkeys(goal.unresolved))
+        from orca_agent.applicability import effective_conditions
+        for system_id in selected:
+            assessed = effective_conditions(request, goal, system_id)
+            goal.unresolved.extend("applicability:" + reason for reason in assessed["reasons"]
+                                   if reason.startswith(("unsupported_condition:", "conflicting_")))
         goal.unresolved = list(dict.fromkeys(goal.unresolved))
     request.normalization_status = ("clarification" if request.unresolved
                                     or any(goal.unresolved for goal in request.goals) else "normalized")
@@ -121,9 +127,12 @@ def _authorized_geometry(store, request, permission):
 
 
 def initialize_agent(store, config, request, permission, budget=None, *, sources=None,
-                     batch_category=None):
+                     batch_category=None, defer_environment=False):
     """Permission and purpose enter here from the user, never from model proposals."""
+    pending = request.normalization_status == "pending"
     request = _missing_information(Request.model_validate(request.model_dump()))
+    if pending:
+        request.normalization_status = "pending"
     permission = PermissionSnapshot.model_validate(permission.model_dump())
     budget = BudgetLimits.model_validate((budget or agent_budget()).model_dump())
     if not permission.model_execution:
@@ -135,7 +144,7 @@ def initialize_agent(store, config, request, permission, budget=None, *, sources
     if batch_category not in {None, "formal", "development"}:
         raise StoreError("invalid acceptance batch category")
     environment = None
-    if permission.scientific_execution:
+    if permission.scientific_execution and not defer_environment:
         from orca_agent.doctor import diagnose
         from orca_agent.versions import is_supported_orca_version
         environment = diagnose(config)
@@ -146,7 +155,7 @@ def initialize_agent(store, config, request, permission, budget=None, *, sources
             raise StoreError("parallel execution requires the explicit MPI executable")
         environment["orca"]["sha256"] = sha256_file(config.orca_path)
         environment["mpi"]["sha256"] = sha256_file(config.mpi_path)
-    else:
+    elif not permission.scientific_execution:
         budget = BudgetLimits.model_validate({**budget.model_dump(),
                                               "orca_starts": 0, "extra_orca_starts": 0})
     run = store.create_run(request, None, permission, budget)
@@ -172,7 +181,8 @@ class RequestBundle(Record):
     geometries: list[GeometryInput] = Field(default_factory=list, max_length=5)
     artifact_ids: list[Identifier] = Field(default_factory=list, max_length=16)
     result_ids: list[Identifier] = Field(default_factory=list, max_length=16)
-    goals: list[Goal] = Field(min_length=1, max_length=8)
+    goals: list[Goal] | None = Field(default=None, min_length=1, max_length=8)
+    semantic_defaults: dict = Field(default_factory=dict)
     conditions: dict = Field(default_factory=dict)
     conditions_source: dict[str, Literal["explicit", "default", "inherited", "inferred"]] = Field(default_factory=dict)
     unresolved: list[str] = Field(default_factory=list, max_length=16)
@@ -231,14 +241,23 @@ def initialize_bundle(store, config, path: Path):
                 provenance[name] = "inherited"
     if systems:
         provenance["geometry"] = "explicit"
+    raw = bundle.goals is None
     request = Request(original_text=bundle.text, systems=systems,
                       geometry_artifact_id=systems[0].geometry_artifact_id if len(systems) == 1 else None,
-                      **conditions, conditions_source=provenance, goals=bundle.goals,
-                      conditions=bundle.conditions, unresolved=bundle.unresolved)
+                      **conditions, conditions_source=provenance,
+                      goals=bundle.goals or [Goal(id="raw_request", port="unresolved",
+                          minimum_check_version="unresolved-1", original_text=bundle.text,
+                          unresolved=["missing:goal_definition"])],
+                      conditions=bundle.conditions, unresolved=bundle.unresolved,
+                      semantic_defaults=bundle.semantic_defaults,
+                      normalization_status="pending" if raw else "structured")
     permission.artifact_ids = list(dict.fromkeys(permission.artifact_ids
                                   + [system.geometry_artifact_id for system in systems]))
-    return initialize_agent(store, config, request, permission, agent_budget(**bundle.budget),
-                            sources=sources)
+    run = initialize_agent(store, config, request, permission, agent_budget(**bundle.budget),
+                           sources=sources, defer_environment=raw)
+    if raw:
+        store.enqueue_message(run.id, bundle.text)
+    return run
 
 
 def apply_user_update(store, run_id, message_id, changes):
@@ -248,7 +267,6 @@ def apply_user_update(store, run_id, message_id, changes):
     model output alone never selects changed conditions or increases permission.
     """
     from orca_agent.model_usage import current_basis
-    from orca_agent.models import new_id
 
     with store.run_lock(run_id):
         run = store.load_run(run_id)
@@ -309,5 +327,37 @@ def apply_user_update(store, run_id, message_id, changes):
         _authorized_geometry(store, updated, run.permission)
         # Neither a same-version Plan nor a copied Plan may execute under new
         # user conditions. Historical Steps remain recoverable from launch snapshots.
-        return store.commit_revision(run, None, request=updated, decision_id=new_id("user"),
-                                     basis=current_basis(store, run), user_message_ids=[message_id])
+        active_question = store.active_clarification(run)
+        clarification_resolved = bool(active_question and (
+            "unresolved" in changes or "goals" in changes or all(
+                gap.removeprefix("field:").removeprefix("missing:").removeprefix("unconfirmed:")
+                in {*physical, *changed_conditions} for gap in active_question["unresolved"])))
+        if active_question and not clarification_resolved:
+            updated.unresolved = list(dict.fromkeys(updated.unresolved + active_question["unresolved"]))
+            updated = _missing_information(updated)
+        return store.commit_revision(run, None, request=updated, decision_id="user_" + message_id,
+                                     basis=current_basis(store, run), user_message_ids=[message_id],
+                                     semantic_record={"schema": "request-semantics-1",
+                                         "kind": "user_update_file", "changed_fields": sorted(changes),
+                                         **({"resolved_clarification_id": active_question["id"]}
+                                            if clarification_resolved else {}),
+                                         "replaced_goal_ids": [g.id for g in request.goals]
+                                         if "goals" in changes else []})
+
+
+def ensure_scientific_environment(store, config, run):
+    """Raw semantic intake does not probe ORCA; first scientific use does."""
+    path = store.path(f"runs/{run.id}/environment.json")
+    if path.exists():
+        return
+    from orca_agent.doctor import diagnose
+    from orca_agent.versions import is_supported_orca_version
+    environment = diagnose(config)
+    if not environment["orca"]["compatible"] or not is_supported_orca_version(
+            environment["orca"].get("version")):
+        raise StoreError("ORCA installation is missing, incompatible or unverified")
+    if not config.mpi_path or not config.mpi_path.is_file():
+        raise StoreError("parallel execution requires the explicit MPI executable")
+    environment["orca"]["sha256"] = sha256_file(config.orca_path)
+    environment["mpi"]["sha256"] = sha256_file(config.mpi_path)
+    store._write_json(f"runs/{run.id}/environment.json", environment, immutable=True)

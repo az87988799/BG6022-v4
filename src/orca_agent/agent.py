@@ -13,7 +13,7 @@ from orca_agent.llm import DeepSeekTransport
 from orca_agent.model_usage import current_basis, send_model
 from orca_agent.models import EvidenceRef, Proposal, fingerprint, utc_now
 from orca_agent.proposals import materialize_plan
-from orca_agent.store import BudgetExceeded, EnvironmentBusy, StoreError
+from orca_agent.store import BudgetExceeded, ControlChanged, EnvironmentBusy, StoreError
 from orca_agent.tools.dispatch import _source_hashes, execute_call
 from orca_agent.tools.registry import get_tool
 
@@ -24,6 +24,8 @@ def _ready(plan, results):
 
 
 def _science(store, config, run, step, results, batch, fault):
+    from orca_agent.natural import ensure_scientific_environment
+    ensure_scientific_environment(store, config, run)
     reference = step.geometry
     if reference.artifact_id:
         geometry_id = reference.artifact_id
@@ -75,7 +77,8 @@ def _mark_decision(store, run, ticket, proposal, basis, *, action=None):
                               "related_results": proposal.related_results,
                               "reason": proposal.reason, "parameters": proposal.parameters})
         run.processed_feedback = list(dict.fromkeys(run.processed_feedback + proposal.related_results))
-        run.control_generation = basis["control_generation"]
+        if not any(m["id"] not in run.processed_messages for m in store.read_control(run.id)["messages"]):
+            run.control_generation = basis["control_generation"]
         store.save_run(run)
 
 
@@ -154,6 +157,24 @@ def _decision(store, run, plan, results, transport, batch, fault):
                     "pending_step_ids": [s.id for s in _ready(plan, results)],
                     "allowed_repairs": run.permission.allowed_repairs}
             selected = [store.load_result(run.id, rid) for rid in run.result_ids]
+            from orca_agent.goals import goal_evidence_assessment
+            request = store.load_request(run)
+            current_use = []
+            for goal in request.goals:
+                binding = plan.goal_map.get(goal.id) if plan else None
+                source = results.get(binding.step_id) if binding else None
+                reference = run.goal_evidence.get(goal.id) or (binding.evidence if binding else None)
+                if reference:
+                    if reference.run_id != run.id and reference.result_id not in run.permission.result_ids:
+                        raise StoreError("goal evidence is outside the permission snapshot")
+                    source = store.load_result(reference.run_id, reference.result_id)
+                    if reference.attempt_id and source.attempt_id != reference.attempt_id:
+                        raise StoreError("goal evidence Attempt differs")
+                if source is not None:
+                    assessment = goal_evidence_assessment(store, run, request, goal, source)
+                    current_use.append({"goal_id": goal.id, "result_id": source.id, **assessment})
+            if current_use:
+                data["current_goal_use"] = current_use
             relevant_tools = []
             for name in run.permission.allowed_tools:
                 effects = set(get_tool(name).effects)
@@ -163,10 +184,13 @@ def _decision(store, run, plan, results, transport, batch, fault):
                                "import_artifact", "write_analysis"} and not run.permission.artifact_writes):
                     continue
                 relevant_tools.append(name)
+            from orca_agent.semantic import action_parameters
+            has_pending_messages = any(m["id"] not in run.processed_messages for m in control["messages"])
             prepared = build_context(store.load_request(run), run, plan, results=selected,
-                                     feedback=data, relevant_tools=relevant_tools,
+                                     feedback=data, relevant_tools=[] if has_pending_messages else relevant_tools,
                                      control_generation=basis["control_generation"],
-                                     user_messages=control["messages"])
+                                     user_messages=control["messages"],
+                                     action_parameters=action_parameters(relevant_tools) if has_pending_messages else None)
             if run.batch_category and not batch:
                 raise StoreError("acceptance model calls require shared batch accounting")
             response = send_model(store, run, prepared, transport, basis=basis,
@@ -191,12 +215,20 @@ def _decision(store, run, plan, results, transport, batch, fault):
                                     "belong in Step.inputs, not related_results.",
                                     path=["related_results"], expected=list(feedback))
             goals_complete = runner._goals(store, run, plan, results)
-            if goals_complete and proposal.action != "stop":
+            if goals_complete and proposal.action != "stop" and not any(
+                    m["id"] not in run.processed_messages for m in store.read_control(run.id)["messages"]):
                 raise StoreError("completed goals permit a final explanation only, not additional execution")
             pending_user = [m for m in store.read_control(run.id)["messages"]
                             if m["id"] not in run.processed_messages]
-            if pending_user and proposal.action not in {"clarify", "stop"}:
+            if pending_user and proposal.action not in {"normalize_request", "clarify", "stop"}:
                 raise StoreError("unprocessed user conditions require clarification before execution")
+            if proposal.action == "normalize_request":
+                from orca_agent.semantic import commit_candidate
+                run = commit_candidate(store, run, proposal.parameters, decision_id=ticket,
+                                       basis=basis, related_results=feedback, fault=fault)
+                request = store.load_request(run)
+                return run, ("stop" if request.normalization_status == "clarification"
+                             else "normalized"), None
             if proposal.action in {"initial_plan", "revise_plan"}:
                 if (proposal.action == "initial_plan") != (plan is None):
                     raise StoreError("plan action does not match the current Plan")
@@ -254,7 +286,17 @@ def _decision(store, run, plan, results, transport, batch, fault):
                         "Combine related unresolved fields when more than five items are needed.",
                         path=["parameters"], required_fields=["questions", "unresolved"],
                         min_items=1, max_items=5, min_string_length=1, max_string_length=1000)
-                _mark_decision(store, run, ticket, proposal, basis)
+                if pending_user:
+                    from orca_agent.semantic import VERSION, commit_candidate
+                    run = commit_candidate(store, run, {
+                        "schema_version": VERSION, "message_ids": [m["id"] for m in pending_user],
+                        "kind": "clarify", "text_basis": pending_user[0]["text"][:1000],
+                        **proposal.parameters}, decision_id=ticket, basis=basis,
+                        related_results=feedback, fault=fault)
+                else:
+                    _mark_decision(store, run, ticket, proposal, basis)
+                    if fault:
+                        fault("after_clarification_saved")
                 run.diagnostics.append({"category": "clarification", **proposal.parameters})
                 run.state = "waiting_user"
                 store.save_run(run)
@@ -368,16 +410,49 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                 store.save_run(run)
                 return run
             with store.control_lock(run.id):
-                if before == store.read_control(run.id) and store.read_signal(run.id) == "pause":
+                unchanged_control = before == store.read_control(run.id)
+                if unchanged_control and store.read_signal(run.id) == "pause":
                     store.signal(run.id, None)
+                control = store.read_control(run.id)
+                if not control["action"]:
+                    if not any(m["id"] not in run.processed_messages for m in control["messages"]):
+                        run.control_generation = control["generation"]
+                    if unchanged_control and run.state == "paused":
+                        run.state = "ready" if plan else "waiting_user"
+                    store.save_run(run)
         elif any(a.state in ("intent", "running", "unknown") for a in run.attempts):
             raise StoreError("unfinished attempts require explicit resume and reconciliation")
         results = runner._step_results(store, run)
         try:
             while True:
                 plan = store.load_plan(run)
+                if run.state in {"paused", "cancelled"}:
+                    if store.read_signal(run.id) == "cancel":
+                        run.state = "cancelled"
+                    elif run.state == "paused":
+                        from orca_agent.semantic import CANCEL, deterministic_message
+                        pending_control = [m for m in store.read_control(run.id)["messages"]
+                                           if m["id"] not in run.processed_messages]
+                        if (len(pending_control) == 1 and "update" not in pending_control[0]
+                                and pending_control[0]["text"].strip().casefold() in CANCEL):
+                            run, _ = deterministic_message(store, run, fault=fault)
+                    break
                 pending_messages = [m for m in store.read_control(run.id)["messages"]
                                     if m["id"] not in run.processed_messages]
+                if pending_messages and not store.read_signal(run.id) and run.state != "cancelled":
+                    from orca_agent.semantic import deterministic_message
+                    run, message_action = deterministic_message(store, run, fault=fault)
+                    if message_action == "status":
+                        break
+                    if message_action:
+                        continue
+                signal = store.read_signal(run.id)
+                persisted_questions = (store.load_request(run).normalization_status == "clarification"
+                    and any(d.get("request_version") == run.request_version and d.get("semantics")
+                            for d in run.decisions))
+                if not pending_messages and not signal and (store.active_clarification(run) or persisted_questions):
+                    run.state = "waiting_user"
+                    break
                 feedback = set(run.result_ids) - set(run.processed_feedback)
                 explanation_pending = (run.agent_enabled and feedback
                     and store.load_request(run).conditions.get("explain_results") is True)
@@ -385,8 +460,7 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                         and not explanation_pending):
                     run.state = "completed"
                     break
-                signal = store.read_signal(run.id)
-                if signal or run.state == "cancelled":
+                if signal:
                     run.state = "paused" if signal == "pause" else "cancelled"
                     break
                 if utc_now() >= run.deadline:
@@ -437,8 +511,8 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                         break
                     if action == "stop":
                         break
-                    if action == "plan":
-                        plan = store.load_plan(run)
+                    if action in {"plan", "normalized"}:
+                        continue
                     elif action == "step":
                         step, decision_id = value
                     elif action == "query":
@@ -465,7 +539,8 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     if not outcome.get("not_started"):
                         results[step.id] = result
                     if outcome["state"] in ("unknown", "cancelled"):
-                        run.state = "paused" if store.read_signal(run.id) == "pause" else outcome["state"]
+                        run.state = ("waiting_user" if outcome.get("control_action") == "message"
+                                     else "paused" if store.read_signal(run.id) == "pause" else outcome["state"])
                         break
                 else:
                     result = execute_call(store, run, step.tool, step.parameters.model_dump(),
@@ -475,10 +550,14 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     run.applied_decisions.append(decision_id)
                     store.save_run(run)
                 # Loop head always reevaluates goals and new feedback before a next Tool.
+        except ControlChanged as exc:
+            run.state = "waiting_user"
+            run.diagnostics.append({"category": "control_changed", "message": str(exc)})
         except KeyboardInterrupt:
             run = store.load_run(run_id)
             results = runner._step_results(store, run)
-            run.state = "unknown"
+            if run.state not in {"paused", "cancelled"}:
+                run.state = "unknown"
             run.diagnostics.append({"category": "interrupted", "message": "Explicit resume required"})
         except (ValueError, OSError, RuntimeError) as exc:
             from pydantic import ValidationError

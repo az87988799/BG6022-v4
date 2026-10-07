@@ -6,6 +6,7 @@ Scientific parsing and qualification remain the adapter's responsibility.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from collections.abc import Mapping
@@ -126,6 +127,52 @@ def _identity(artifact, view, path=None):
     }
 
 
+def _coverage(response, requested, returned, *, complete=True, reason=None, next_start=None):
+    """Coverage is of the explicit query window, not of the entire source file.
+
+    Continuations are source-bound descriptions for the next explicit Tool call;
+    they neither grant file access nor start automatic pagination.
+    """
+    cursor = None
+    if not complete and next_start is not None:
+        cursor = {key: response[key] for key in ("artifact_id", "sha256", "view", "path",
+                                                "run_id", "inventory_sha256")
+                  if key in response}
+        cursor.update(requested=requested, next_start=next_start)
+    return {"version": "evidence-coverage-1", "requested": requested, "returned": returned,
+            "complete": complete, "truncated": not complete and reason not in {
+                "missing", "missing_json"}, "reason": reason, "next_cursor": cursor}
+
+
+def observation_complete(observation):
+    """Older saved observations remain readable; explicit incompleteness wins."""
+    if ("coverage" not in observation and "field" in observation
+            and isinstance(observation.get("value"), list) and len(observation["value"]) >= 32):
+        # Old field readers silently sliced at 32. A retained prefix cannot
+        # prove that the original array ended at that boundary.
+        return False
+    return (observation.get("status") not in {"partial", "missing", "missing_json"}
+            and observation.get("coverage", {}).get("complete") is not False)
+
+
+def _value_coverage(response, parts, value, *, returned_count=None):
+    if parts and parts[-1]["kind"] == "slice":
+        requested = {"kind": "array", "start": parts[-1]["start"], "stop": parts[-1]["stop"]}
+    elif isinstance(value, (list, dict)):
+        requested = {"kind": "array" if isinstance(value, list) else "object",
+                     "start": 0, "stop": len(value)}
+    else:
+        requested = {"kind": "value"}
+    returned = dict(requested)
+    if "start" in returned:
+        count = len(value) if returned_count is None else returned_count
+        returned["stop"] = returned["start"] + count
+    complete = returned_count is None or returned_count == len(value)
+    return _coverage(response, requested, returned, complete=complete,
+                     reason=None if complete else "element_limit",
+                     next_start=None if complete else returned["stop"])
+
+
 def _json_pairs(pairs):
     result = {}
     for key, value in pairs:
@@ -209,6 +256,8 @@ def _kind(data):
 
 def _missing_json(response):
     return _finish({**response, "status": "missing_json", "available_view": "raw_text",
+                    "coverage": _coverage(response, {"kind": "value"}, None,
+                                          complete=False, reason="missing_json"),
                     "requirement": "supply an existing JSON artifact or explicitly plan postprocessing"})
 
 
@@ -223,8 +272,10 @@ def read_value(store, artifact_id, path=None, view="raw_json"):
             return _missing_json(response)
         found, value, parent = _select(_json_data(source, started), parts)
         if not found:
-            return _finish({**response, "status": "missing"})
+            return _finish({**response, "status": "missing", "coverage": _coverage(
+                response, {"kind": "value"}, None, complete=False, reason="missing")})
         return _finish({**response, "status": "observed", "value": _bounded_value(value),
+                        "coverage": _value_coverage(response, parts, value),
                         "units": _units(value, parent)})
 
 
@@ -240,8 +291,12 @@ def discover_content(store, artifact_id, path=None, offset=0, limit=40, view="ra
             return _missing_json(response)
         found, value, parent = _select(_json_data(source, started), parts)
         if not found:
-            return _finish({**response, "status": "missing"})
+            return _finish({**response, "status": "missing", "coverage": _coverage(
+                response, {"kind": "entries", "start": offset, "stop": offset + limit},
+                None, complete=False, reason="missing")})
         total = len(value) if isinstance(value, (dict, list)) else 0
+        requested = {"kind": "entries", "start": offset, "stop": offset + limit}
+        available_stop = max(offset, min(total, offset + limit))
         response.update(status="observed", type=_kind(value), total=total, offset=offset,
                         entries=[], units=_units(value, parent), next_offset=None)
         if isinstance(value, dict):
@@ -271,6 +326,9 @@ def discover_content(store, artifact_id, path=None, offset=0, limit=40, view="ra
             candidate = {**response, "entries": [*response["entries"], entry]}
             # Reserve space for the continuation index when the response becomes full.
             candidate["next_offset"] = offset + len(candidate["entries"])
+            candidate["coverage"] = _coverage(response, requested,
+                {"kind": "entries", "start": offset, "stop": candidate["next_offset"]},
+                complete=False, reason="byte_limit", next_start=candidate["next_offset"])
             if len(_encoded(candidate)) > MAX_RETURN_BYTES:
                 if not response["entries"]:
                     raise ValueError("content descriptor exceeds the 32 KiB evidence window")
@@ -278,6 +336,11 @@ def discover_content(store, artifact_id, path=None, offset=0, limit=40, view="ra
             response["entries"].append(entry)
         next_offset = offset + len(response["entries"])
         response["next_offset"] = next_offset if next_offset < total else None
+        complete = next_offset >= available_stop
+        response["status"] = "observed" if complete else "partial"
+        response["coverage"] = _coverage(response, requested,
+            {"kind": "entries", "start": offset, "stop": next_offset}, complete=complete,
+            reason=None if complete else "byte_limit", next_start=None if complete else next_offset)
         return _finish(response)
 
 
@@ -290,8 +353,11 @@ def search_text(store, artifact_id, query, start_line=1, max_lines=200, max_hits
     needle = params.query if case_sensitive else params.query.casefold()
     with _source(store, artifact_id) as (artifact, path, started):
         response = _identity(artifact, "raw_text")
+        requested = {"kind": "lines", "start": start_line, "stop": start_line + max_lines,
+                     "query": query, "case_sensitive": case_sensitive}
         response.update(status="observed", matches=[], query=query, start_line=start_line,
                         scanned_lines=0, next_line=None)
+        reason = None
         with path.open("rb") as stream:
             for number in range(1, start_line + max_lines):
                 _clock(started)
@@ -302,21 +368,32 @@ def search_text(store, artifact_id, query, start_line=1, max_lines=200, max_hits
                     raise ValueError("line exceeds the 32 KiB evidence window")
                 if number < start_line:
                     continue
-                response["scanned_lines"] += 1
                 text = raw.decode("utf-8", errors="replace").rstrip("\r\n")
                 if needle in (text if case_sensitive else text.casefold()):
                     match = {"line": number, "text": text}
                     candidate = {**response, "matches": [*response["matches"], match],
                                  "next_line": number + 1}
+                    candidate["coverage"] = _coverage(response, requested,
+                        {"kind": "lines", "start": start_line, "stop": number + 1},
+                        complete=False, reason="byte_limit", next_start=number + 1)
                     if len(_encoded(candidate)) > MAX_RETURN_BYTES:
                         if not response["matches"]:
                             raise ValueError("search match exceeds the 32 KiB evidence window")
                         response["next_line"] = number
+                        reason = "byte_limit"
                         break
                     response["matches"].append(match)
+                response["scanned_lines"] += 1
                 if len(response["matches"]) >= max_hits or response["scanned_lines"] >= max_lines:
                     response["next_line"] = number + 1
+                    if response["scanned_lines"] < max_lines and stream.read(1):
+                        reason = "hit_limit"
                     break
+        stop = start_line + response["scanned_lines"]
+        response["status"] = "partial" if reason else "observed"
+        response["coverage"] = _coverage(response, requested,
+            {"kind": "lines", "start": start_line, "stop": stop}, complete=reason is None,
+            reason=reason, next_start=stop if reason else None)
         return _finish(response)
 
 
@@ -328,6 +405,8 @@ def inspect_artifact(store, artifact_id, start_line=1, lines=40):
     with _source(store, artifact_id) as (artifact, path, started):
         output, used = [], 0
         response = _identity(artifact, "raw_text")
+        requested = {"kind": "lines", "start": start_line, "stop": start_line + lines}
+        partial = False
         with path.open("rb") as stream:
             for number in range(1, start_line + lines):
                 _clock(started)
@@ -338,14 +417,26 @@ def inspect_artifact(store, artifact_id, start_line=1, lines=40):
                     raise ValueError("line exceeds the 32 KiB evidence window")
                 if number >= start_line:
                     item = {"line": number,
-                            "text": raw.decode("utf-8", errors="replace").rstrip()}
+                            "text": raw.decode("utf-8", errors="replace").rstrip("\r\n")}
                     candidate = {**response, "lines": [*output, item],
-                                 "returned_bytes": used + len(raw)}
+                                 "returned_bytes": used + len(raw), "status": "partial",
+                                 "coverage": _coverage(response, requested,
+                                     {"kind": "lines", "start": start_line, "stop": number + 1},
+                                     complete=False, reason="byte_limit", next_start=number + 1)}
                     if len(_encoded(candidate)) > MAX_RETURN_BYTES:
+                        if not output:
+                            raise ValueError("text line including metadata exceeds the 32 KiB evidence window")
+                        partial = True
                         break
                     used += len(raw)
                     output.append(item)
-        return _finish({**response, "lines": output, "returned_bytes": used})
+        stop = start_line + len(output)
+        return _finish({**response, "lines": output, "returned_bytes": used,
+                        "status": "partial" if partial else "observed",
+                        "coverage": _coverage(response, requested,
+                            {"kind": "lines", "start": start_line, "stop": stop},
+                            complete=not partial, reason="byte_limit" if partial else None,
+                            next_start=stop if partial else None)})
 
 
 def read_field(store, artifact_id, field):
@@ -359,10 +450,14 @@ def read_field(store, artifact_id, field):
         response = {**_identity(artifact, "raw_json", parts), "field": field}
         found, data, parent = _select(_json_data(path, started), parts)
         if not found:
-            return _finish({**response, "status": "missing"})
+            return _finish({**response, "status": "missing", "coverage": _coverage(
+                response, {"kind": "value"}, None, complete=False, reason="missing")})
+        coverage = _value_coverage(response, parts, data,
+                                   returned_count=min(len(data), 32) if isinstance(data, list) else None)
         if isinstance(data, list):
             data = data[:32]
-        return _finish({**response, "status": "observed", "value": _bounded_value(data),
+        return _finish({**response, "status": "observed" if coverage["complete"] else "partial",
+                        "value": _bounded_value(data), "coverage": coverage,
                         "units": _units(data, parent),
                         "validation": OBSERVATION + "; arrays limited to first 32 members"})
 
@@ -381,14 +476,31 @@ def list_artifacts(store, run_id, offset=0, limit=40):
         _clock(started)
         ids.extend(store.load_result(run.id, result_id).artifact_ids)
     ids = list(dict.fromkeys(ids))
-    response = {"run_id": run_id, "offset": offset, "total": len(ids),
+    requested = {"kind": "artifacts", "start": offset, "stop": offset + limit}
+    available_stop = max(offset, min(len(ids), offset + limit))
+    response = {"run_id": run_id, "inventory_sha256": hashlib.sha256(_encoded(ids)).hexdigest(),
+                "offset": offset, "total": len(ids),
                 "artifacts": [], "next_offset": None, "validation": OBSERVATION}
+    verified_bytes = 0
     for artifact_id in ids[offset:offset + limit]:
-        with _source(store, artifact_id) as (artifact, _, _):
-            item = artifact.model_dump(mode="json")
+        artifact = store.load_artifact(artifact_id)
+        item = artifact.model_dump(mode="json")
+        if verified_bytes + artifact.size > MAX_SOURCE_BYTES:
+            item["integrity"] = {"status": "not_verified", "reason": "content_verification_byte_limit"}
+        else:
+            verified_bytes += artifact.size
+            try:
+                store.artifact_path(artifact_id)
+                item["integrity"] = {"status": "verified"}
+            except (OSError, RuntimeError, ValueError):
+                item["integrity"] = {"status": "not_verified", "reason": "content_unavailable_or_changed"}
         _clock(started)
         candidate = {**response, "artifacts": [*response["artifacts"], item],
-                     "next_offset": offset + len(response["artifacts"]) + 1}
+                     "next_offset": offset + len(response["artifacts"]) + 1,
+                     "status": "partial"}
+        candidate["coverage"] = _coverage(response, requested,
+            {"kind": "artifacts", "start": offset, "stop": candidate["next_offset"]},
+            complete=False, reason="byte_limit", next_start=candidate["next_offset"])
         if len(_encoded(candidate)) > MAX_RETURN_BYTES:
             if not response["artifacts"]:
                 raise ValueError("artifact metadata exceeds the 32 KiB evidence window")
@@ -396,6 +508,11 @@ def list_artifacts(store, run_id, offset=0, limit=40):
         response["artifacts"].append(item)
     next_offset = offset + len(response["artifacts"])
     response["next_offset"] = next_offset if next_offset < len(ids) else None
+    complete = next_offset >= available_stop
+    response["status"] = "observed" if complete else "partial"
+    response["coverage"] = _coverage(response, requested,
+        {"kind": "artifacts", "start": offset, "stop": next_offset}, complete=complete,
+        reason=None if complete else "byte_limit", next_start=None if complete else next_offset)
     return _finish(response)
 
 

@@ -166,7 +166,7 @@ def input_token_upper_bound(body: Mapping[str, Any]) -> int:
 def prepare_request(
     messages: Sequence[Mapping[str, str]],
     *,
-    prompt_version: str = "agent-json-v4",
+    prompt_version: str = "agent-json-v5",
     max_output_tokens: int = MAX_OUTPUT_TOKENS,
     timeout_seconds: float = 60,
 ) -> PreparedRequest:

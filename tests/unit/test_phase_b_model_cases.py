@@ -104,6 +104,7 @@ def test_multi_turn_cannot_skip_clarification_or_clear_original_goals(store):
     # Local synthetic decision tests the user-update protocol only, not a model.
     run.state = "waiting_user"
     run.decisions.append({"id": "offline_first", "action": "clarify", "reason": "need geometry",
+                          "parameters": {"questions": ["Which geometry?"], "unresolved": ["geometry_artifact_id"]},
                           "basis": current_basis(store, run)})
     store.save_run(run)
     run = CASES.advance_user_turn(store, run, metadata)
@@ -115,6 +116,8 @@ def test_multi_turn_cannot_skip_clarification_or_clear_original_goals(store):
     with pytest.raises(StoreError, match="clarification"):
         CASES.advance_user_turn(store, run, metadata)
     run.decisions.append({"id": "offline_second", "action": "clarify", "reason": "need conditions",
+                          "parameters": {"questions": ["Which scientific conditions?"],
+                                         "unresolved": ["method", "basis", "charge", "multiplicity"]},
                           "basis": current_basis(store, run)})
     store.save_run(run)
     run = CASES.advance_user_turn(store, run, metadata)
@@ -422,6 +425,7 @@ def test_review_can_grade_explanation_but_never_fabricate_live_evidence(store):
     ({"all_proposal_facts_passed": 1, "semantic_review_passed": "true"}, "not_verified"),
 ])
 def test_six_axes_cannot_override_failed_or_missing_proposal_review(store, monkeypatch, fields, expected):
+    from tests.helpers import phase_b_grading
     run, metadata = CASES.create_request(store, "V-01/allowed-default-origin", 1)
     reason = "Explicit defaults; offline final explanation fixture."
     # Isolated synthetic metadata exercises the overall success branch without
@@ -431,6 +435,8 @@ def test_six_axes_cannot_override_failed_or_missing_proposal_review(store, monke
                           "sdk_version": "2.28.0", "response_model": "synthetic-unit-grader-branch"}]
     store.save_run(run)
     monkeypatch.setattr(CASES, "_actions", lambda *_: [{"action": "stop", "reason": reason, "parameters": {}}])
+    monkeypatch.setattr(phase_b_grading, "model_response_evidence", lambda *_: {
+        "present": True, "offline_fixture_only": True})
     entry = {"passed": True, "quote": "Explicit defaults", "rationale": "Synthetic final-axis fixture only."}
     review = {"explanation": dict.fromkeys(CASES.EXPLANATION_AXES, entry),
               "behavior": {"default_disclosed": entry}, **fields,
@@ -589,3 +595,25 @@ def test_legacy_archive_restoration_preserves_original_bytes_and_rule(store):
         assert sha256_file(Path(archived["source_root"]) / member["relative_path"]) == member["sha256"]
         assert sha256_file(store.path(member["relative_path"])) == member["sha256"]
     assert not run.attempts and run.usage.orca_starts_actual == 0
+
+
+@pytest.mark.parametrize("case", ["water_sp", "methane_opt"])
+def test_readable_foreign_checkout_archive_is_a_gap_without_consumption(store, tmp_path, monkeypatch, case):
+    checkout, foreign = tmp_path / "relocated-checkout", tmp_path / "other-checkout/data"
+    foreign.mkdir(parents=True)
+    receipt = foreign / "receipt.json"
+    receipt.write_text('{"offline_boundary_test": true}', encoding="utf-8")
+    index = checkout / "docs/acceptance/phase-a/evidence-index.json"
+    index.parent.mkdir(parents=True)
+    index.write_text(json.dumps({"current_cases": {case: {
+        "receipt_path": str(receipt), "receipt_sha256": sha256_file(receipt),
+        "receipt": {"store_root": str(foreign)}}}}), encoding="utf-8")
+    monkeypatch.setattr(CASES, "PROJECT", checkout)
+    monkeypatch.setattr(CASES, "Store", lambda *_: pytest.fail("foreign Store must not be opened"))
+    monkeypatch.setattr(CASES, "sha256_file", lambda *_: pytest.fail("foreign receipt must not be consumed"))
+    metadata = {"fixture_gaps": [], "archive_imports": [], "artifact_ids": []}
+    assert receipt.is_file()
+    assert CASES._legacy_reference(store, case, metadata) is None
+    assert metadata == {"fixture_gaps": [{"kind": "legacy_archive_not_restored_for_checkout", "case": case}],
+                        "archive_imports": [], "artifact_ids": []}
+    assert not list(store.root.rglob("*.json"))

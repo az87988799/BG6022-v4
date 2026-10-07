@@ -262,6 +262,7 @@ def test_model_aggregate_preserves_semantic_gate_independently_of_six_axes(tmp_p
     write(tmp_path / "grade.json", {**identity, "status": "passed", "model_text_sha256": "offline-text"})
     write(tmp_path / "review.json", identity)
     actual = {**identity, "status": "passed" if semantic == "passed" else "incomplete_or_failed",
+              "real_model_evidence_present": True,
               "model_text_sha256": "offline-text", "safety_invariants_passed": True,
               "assertions": [{"status": "passed"}],
               "explanation": {axis: {"status": "passed"} for axis in report.AXES},

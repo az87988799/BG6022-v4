@@ -6,7 +6,7 @@ import json
 from pydantic import Field, TypeAdapter
 
 from orca_agent.models import Check, Identifier, QualifiedOutput, Record, Result, fingerprint
-from orca_agent.store import StoreError, atomic_write
+from orca_agent.store import ControlChanged, StoreError, atomic_write
 from orca_agent.tools import analysis
 from orca_agent.tools.registry import get_tool
 
@@ -141,7 +141,7 @@ def _members(store, call, required, all_ids=()):
     return members
 
 
-def _current_comparison_members(store, request, members):
+def _current_comparison_members(store, request, members, goal=None):
     """A qualified historical energy must also match its requested operand."""
     systems = {system.id: system for system in request.systems}
     for member in members:
@@ -149,24 +149,31 @@ def _current_comparison_members(store, request, members):
             continue
         evidence = member.evidence
         system = systems.get(member.id)
+        from orca_agent.applicability import current_conditions, geometry_lineage
         declared = system.conditions if system else {}
-        expected = {key: declared.get(key, getattr(request, key))
-                    for key in ("method", "basis", "charge", "multiplicity")}
-        for key in ("electronic_state", "environment"):
-            if key in declared or key in request.conditions:
-                expected[key] = declared.get(key, request.conditions.get(key))
-        if expected["method"] == "RHF":
-            expected["method"] = "HF"
-        actual = evidence.conditions.model_dump()
-        mismatch = [key for key, value in expected.items() if value is None or value != actual.get(key)]
+        assessment = current_conditions(request, goal, evidence.conditions.model_dump(),
+                                        system.id if system else None)
+        expected = assessment["conditions"]
+        mismatch = assessment["reasons"]
         if "system" in declared and declared["system"] != "H2O":
             mismatch.append("system")
         if system and system.atom_mapping and system.atom_mapping != list(range(len(evidence.elements))):
             mismatch.append("atom_mapping")
         if system and system.geometry_artifact_id:
             store.artifact_path(system.geometry_artifact_id)
-            if store.load_artifact(system.geometry_artifact_id).sha256 != evidence.geometry_sha256:
+            source = store.load_result(evidence.run_id, evidence.result_id)
+            root, _ = geometry_lineage(store, source)
+            if store.load_artifact(system.geometry_artifact_id).sha256 != root:
                 mismatch.append("geometry")
+        if goal and goal.conditions.get("geometry_relation"):
+            source = store.load_result(evidence.run_id, evidence.result_id)
+            _, producer = geometry_lineage(store, source)
+            if goal.conditions["geometry_relation"] == "fixed_initial" and (
+                    producer or evidence.tool != "orca.sp"):
+                mismatch.append("fixed_initial")
+            if goal.conditions["geometry_relation"] == "optimized" and (
+                    evidence.tool != "orca.opt" and producer is None):
+                mismatch.append("optimized_geometry_evidence_missing")
         if mismatch:
             member.unavailable_source = {key: value for key, value in evidence.model_dump(mode="json").items()
                                          if key not in {"energy_eh", "unit"}}
@@ -190,7 +197,7 @@ def compare(store, run, call):
         raise StoreError("comparison operands cannot be optional")
     required.extend(item.id for item in declared if item.required and item.id not in required)
     members = _members(store, call, required, [item.id for item in declared])
-    members = _current_comparison_members(store, store.load_request(run), members)
+    members = _current_comparison_members(store, store.load_request(run), members, goal)
     return analysis.energy_compare(members, parameters)
 
 
@@ -207,8 +214,9 @@ def sample(store, run, call):
             raise StoreError("sampling candidate is outside the permission snapshot")
         geometry[candidate.artifact_id] = store.artifact_path(candidate.artifact_id).read_bytes()
     required = [c.id for c in candidates if c.required_initial]
-    return analysis.finite_sampling(candidates, _members(
-        store, call, required, [c.id for c in candidates]), geometry, parameters)
+    members = _current_comparison_members(store, store.load_request(run), _members(
+        store, call, required, [c.id for c in candidates]), goal)
+    return analysis.finite_sampling(candidates, members, geometry, parameters)
 
 
 def import_evidence(store, run, call):
@@ -221,6 +229,13 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
                  decision_id=None):
     definition = get_tool(tool_name)
     consumption = bind_inputs(store, run, step, results or {}) if step else {}
+    if "write_analysis" in definition.effects and step is not None:
+        from orca_agent.applicability import purpose_snapshot
+        request = store.load_request(run)
+        goal = next((g for g in request.goals if g.id == parameters.get("goal_id")), None)
+        if goal is None:
+            raise StoreError("analysis has no current requested goal")
+        consumption["_current_purpose"] = purpose_snapshot(request, goal)
     if decision_id is not None:
         consumption["_decision_id"] = TypeAdapter(Identifier).validate_python(decision_id)
     call = store.reserve_call(run, tool_name, parameters, step, consumption=consumption)
@@ -228,11 +243,16 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
         fault("after_call_reserved")
     module, function = definition.implementation.rsplit(".", 1)
     implementation = getattr(importlib.import_module(module), function)
+    control_error = None
     try:
-        if definition.effects == ["read_registered_artifact"]:
-            data = implementation(store, **call.parameters)
-        else:
-            data = implementation(store, run, call)
+        with store.control_lock(run.id):
+            store.check_execution_control(run)
+            if call.control_generation != run.control_generation:
+                raise ControlChanged("reserved Tool basis differs from current control")
+            if definition.effects == ["read_registered_artifact"]:
+                data = implementation(store, **call.parameters)
+            else:
+                data = implementation(store, run, call)
         qualified = {k: QualifiedOutput.model_validate(v)
                      for k, v in data.get("qualified_outputs", {}).items()}
         checks = {k: list(v.checks) for k, v in qualified.items()}
@@ -242,12 +262,13 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
             # Qualification applies only to the bounded reading operation, not
             # to the observed physical quantity. A missing field is still an
             # honest successful operation but lacks the requested extracted value.
-            found = data.get("status") != "missing"
+            found = data.get("status") not in {"missing", "missing_json"}
             checks.update({port: [Check(
                 name="bounded_evidence_read", status="passed" if found else "unverified",
                 rule_version=definition.check_version,
                 detail="read operation only; observed values remain scientifically unverified",
-                source={key: data[key] for key in ("artifact_id", "sha256", "view", "path") if key in data},
+                source={key: data[key] for key in ("artifact_id", "sha256", "view", "path", "coverage")
+                        if key in data},
             )] for port in definition.observation_outputs})
         artifacts = list(data.get("artifact_ids", []))
         if call.parameters.get("artifact_id"):
@@ -283,14 +304,24 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
                         source={"tool": tool_name, "consumption": consumption,
                                 "request_version": run.request_version, "plan_version": run.plan_version})
     except (KeyError, TypeError, ValueError, OSError, RuntimeError) as exc:
+        control_error = exc if isinstance(exc, ControlChanged) else None
+        diagnostic = {"category": type(exc).__name__,
+                      "message": "Tool rejected inputs or unavailable evidence"}
+        if (definition.effects == ["read_registered_artifact"]
+                and "32 KiB evidence window" in str(exc)):
+            diagnostic["reason"] = "evidence_response_byte_limit"
         result = Result(run_id=run.id, step_id=call.step_id, call_id=call.id,
-                        operation_status="failed", diagnostics=[{"category": type(exc).__name__,
-                        "message": "Tool rejected inputs or unavailable evidence"}],
-                        source={"tool": tool_name, "consumption": consumption})
+                        operation_status="cancelled" if control_error else "failed",
+                        diagnostics=[diagnostic],
+                        source={"tool": tool_name, "consumption": consumption,
+                                **({"not_started": True, "control_generation": call.control_generation}
+                                   if control_error else {})})
     store.save_result(result)
     if fault:
         fault("after_result_saved")
     store.finish_call(run, call, result)
     if fault:
         fault("after_run_updated")
+    if control_error:
+        raise control_error
     return result

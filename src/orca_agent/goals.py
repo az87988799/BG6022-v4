@@ -1,11 +1,15 @@
 """Current-purpose checks over previously qualified outputs; no scientific parser."""
 
+from orca_agent.applicability import direct_applicability, purpose_snapshot
+from orca_agent.minimum_evidence import assess_minimum_evidence
 
-def validate_goal_evidence(store, run, request, goal, result):
+
+def _validate_goal_evidence(store, run, request, goal, result):
     if request.unresolved or goal.unresolved or result.operation_status != "completed":
         return False
-    for artifact_id in result.artifact_ids:
-        store.artifact_path(artifact_id)
+    if goal.port != "artifact_metadata":
+        for artifact_id in result.artifact_ids:
+            store.artifact_path(artifact_id)
     if goal.minimum_check_version == "evidence-read-1":
         checks = result.checks.get(goal.port, [])
         observation = result.observations.get(goal.port)
@@ -14,7 +18,8 @@ def validate_goal_evidence(store, run, request, goal, result):
             return False
         if observation.get("status") in {"missing", "missing_json"}:
             return False
-        if (observation.get("status") == "partial"
+        from orca_agent.tools.evidence import observation_complete
+        if (not observation_complete(observation)
                 and goal.conditions.get("accept_partial_observations") is not True):
             return False
         if goal.conditions.get("require_nonempty_matches") is True and not observation.get("matches"):
@@ -33,53 +38,83 @@ def validate_goal_evidence(store, run, request, goal, result):
                                 for k, v in goal.conditions.get("query", {}).items()))
     output = result.qualified_outputs.get(goal.port)
     if not output or output.checks != result.checks.get(goal.port) or any(
-            c.rule_version != goal.minimum_check_version for c in output.checks):
+            c.rule_version != goal.minimum_check_version or c.status != "passed" for c in output.checks):
         return False
     if goal.port in ("energy", "optimized_geometry"):
-        conditions = result.source.get("conditions", {})
-        system = next((s for s in request.systems if s.id in goal.system_ids), None)
-        for name in ("method", "basis", "charge", "multiplicity"):
-            expected = system.conditions.get(name, getattr(request, name)) if system else getattr(request, name)
-            if expected is None or conditions.get(name) != expected:
-                return False
-        attempt = next((a for a in store.load_run(result.run_id).attempts
-                        if a.id == result.attempt_id), None)
-        if not attempt:
-            return False
-        if goal.port == "energy" and goal.conditions.get("geometry_relation") == "fixed_initial":
-            from orca_agent.tools.registry import get_tool
-            if "optimized_geometry" in get_tool(attempt.tool).output_ports:
-                return False
-        wanted = system.geometry_artifact_id if system else request.geometry_artifact_id
-        if wanted and store.load_artifact(wanted).sha256 != store.load_artifact(
-                attempt.geometry_artifact_id).sha256:
-            if goal.conditions.get("geometry_relation") == "fixed_initial":
-                return False
-            # Explicit optimized-geometry dependency belongs to this current Plan.
-            plan = store.load_plan(run)
-            step = next((s for s in plan.steps if s.id == result.step_id), None) if plan else None
-            if not step or not step.geometry or not step.geometry.producer_step_id:
-                return False
+        return direct_applicability(store, request, goal, result)["status"] == "passed"
     else:
-        call = next((c for c in run.calls if c.id == result.call_id), None)
+        current_purpose = purpose_snapshot(request, goal, include_requirements=False)
+        if any(system["effective"]["status"] != "passed" for system in current_purpose["systems"].values()):
+            return False
+        source_run = store.load_run(result.run_id)
+        call = next((c for c in source_run.calls if c.id == result.call_id), None)
         analysis_goal_id = goal.conditions.get("analysis_goal_id") if goal.port == "member_table" else goal.id
         if not call or call.parameters.get("goal_id") != analysis_goal_id:
             return False
-        historical = store.load_request_revision(run, call.request_version)
+        historical = store.load_request_revision(source_run, call.request_version)
         old_goal = next((g for g in historical.goals if g.id == goal.id), None)
-        if old_goal != goal:
+        if old_goal is None or purpose_snapshot(historical, old_goal, include_requirements=False) != current_purpose:
+            return False
+        frozen_purpose = call.consumption.get("_current_purpose")
+        analysis_goal = next((g for g in historical.goals if g.id == analysis_goal_id), None)
+        if (frozen_purpose is not None and (analysis_goal is None
+                or frozen_purpose != purpose_snapshot(historical, analysis_goal))):
             return False
         if goal.port == "member_table":
             old_analysis = next((g for g in historical.goals if g.id == analysis_goal_id), None)
             current_analysis = next((g for g in request.goals if g.id == analysis_goal_id), None)
-            if (old_analysis is None or old_analysis != current_analysis
+            if (old_analysis is None or current_analysis is None
+                    or purpose_snapshot(historical, old_analysis, include_requirements=False) != purpose_snapshot(request, current_analysis, include_requirements=False)
                     or old_analysis.port not in result.qualified_outputs):
                 return False
         for source in call.consumption.values():
             if not isinstance(source, dict):
                 continue
+            if source.get("result_fingerprint"):
+                from orca_agent.models import fingerprint
+                original = store.load_result(source["run_id"], source["result_id"])
+                if fingerprint(original) != source["result_fingerprint"]:
+                    return False
             for artifact_id, digest in source.get("artifact_hashes", {}).items():
                 store.artifact_path(artifact_id)
                 if store.load_artifact(artifact_id).sha256 != digest:
                     return False
     return True
+
+
+def goal_evidence_assessment(store, run, request, goal, result):
+    reasons = []
+    current_use = None
+    try:
+        if goal.port in {"energy", "optimized_geometry"}:
+            output = result.qualified_outputs.get(goal.port)
+            if request.unresolved or goal.unresolved or result.operation_status != "completed":
+                passed = False
+                reasons.append("unresolved_purpose_or_incomplete_source_operation")
+            elif (not output or not output.checks or output.checks != result.checks.get(goal.port)
+                  or any(c.status != "passed" or c.rule_version != goal.minimum_check_version for c in output.checks)):
+                passed = False
+                reasons.append("required_output_checks_missing_failed_or_wrong_version")
+            else:
+                current_use = direct_applicability(store, request, goal, result)
+                passed = current_use["status"] == "passed"
+                reasons.extend(current_use["reasons"])
+        else:
+            passed = _validate_goal_evidence(store, run, request, goal, result)
+            if not passed and goal.port in {"energy_difference", "sampling", "member_table"}:
+                for system in purpose_snapshot(request, goal)["systems"].values():
+                    reasons.extend(system["effective"]["reasons"])
+    except (ValueError, KeyError, OSError, RuntimeError, TypeError) as error:
+        passed = False
+        reasons.append(str(error))
+    requirements = assess_minimum_evidence(goal, result, purpose_passed=passed)
+    reasons.extend(entry["reason"] + ":" + entry["requested"] for entry in requirements if entry["status"] != "passed")
+    if not passed and not reasons:
+        reasons.append("current_goal_evidence_not_applicable")
+    return {"status": "passed" if passed and not reasons else "unresolved",
+            "reasons": list(dict.fromkeys(reasons)), "minimum_evidence": requirements,
+            "current_use": current_use}
+
+
+def validate_goal_evidence(store, run, request, goal, result):
+    return goal_evidence_assessment(store, run, request, goal, result)["status"] == "passed"

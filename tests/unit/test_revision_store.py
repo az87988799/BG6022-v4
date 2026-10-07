@@ -282,7 +282,9 @@ def test_invalidated_orphan_does_not_occupy_next_plan_version(tmp_path):
     obsolete_bytes = store.path(f"runs/{run.id}/decisions/obsolete.json").read_bytes()
     with pytest.raises(StoreError, match="not been activated"):
         store.load_plan_revision(run, 1)
-    store.enqueue_message(run.id, "Please read the inner value")
+    message_id = store.enqueue_message(run.id, "Please read the inner value")
+    from orca_agent.natural import apply_user_update
+    run = apply_user_update(store, run.id, message_id, {})
     replacement = plan_for(store, run, artifact)
     parameters = replacement.steps[0].parameters
     replacement.steps[0].parameters = type(parameters).model_validate({
@@ -294,7 +296,7 @@ def test_invalidated_orphan_does_not_occupy_next_plan_version(tmp_path):
         assert store.load_plan_revision(run, 1) == replacement
     assert not store.path(f"runs/{run.id}/plan-revisions/1.json").exists()
     assert store.path(f"runs/{run.id}/decisions/obsolete.json").read_bytes() == obsolete_bytes
-    assert run.usage.plan_revisions == 0 and len(run.decisions) == 1
+    assert run.usage.plan_revisions == 0 and len(run.decisions) == 2
 
 
 def test_invalidated_orphan_request_allows_another_candidate_at_same_version(tmp_path):

@@ -8,6 +8,30 @@ import pytest
 from tests.helpers import phase_b_freeze, phase_b_joint
 
 
+@pytest.mark.parametrize("case,starts,extra", [
+    ("sampling_left", 4, 1), ("sampling_right", 4, 1), ("sampling_stop", 3, 0),
+])
+def test_sampling_run_budgets_match_frozen_case_allocation(tmp_path, monkeypatch, case, starts, extra):
+    from orca_agent import doctor
+    from orca_agent.config import Config
+    from orca_agent.store import Store
+
+    initialize = phase_b_joint.initialize_agent
+    monkeypatch.setattr(doctor, "diagnose", lambda _: pytest.fail("offline preparation must not probe ORCA"))
+    monkeypatch.setattr(phase_b_joint, "initialize_agent", lambda *args, **kwargs: initialize(
+        *args, **kwargs, defer_environment=True))
+    store = Store(tmp_path / "store", environment_root=tmp_path / "environment")
+    run, _ = phase_b_joint.prepare_case(store, Config(data_root=store.root), case, "development")
+    persisted = store.load_run(run.id)
+    allocations = json.loads((phase_b_joint.PROJECT / "tests/fixtures/phase_b/cases.json").read_text(
+        encoding="utf-8"))["batch_budget"]["formal_allocations"]
+    allocation = next(item for item in allocations if item["id"] == case)
+    assert persisted.budget.orca_starts == starts == allocation["starts_per_repeat"]
+    assert persisted.budget.extra_orca_starts == extra
+    assert persisted.budget.model_calls == 8 and persisted.budget.model_tokens == 48000
+    assert not persisted.attempts and not persisted.model_records
+
+
 @pytest.fixture
 def existing(tmp_path, monkeypatch):
     frozen = {"freeze_label": "formal-v1", "code_commit": "offline-commit", "freeze_sha256": "a" * 64}
@@ -20,7 +44,7 @@ def existing(tmp_path, monkeypatch):
     store = SimpleNamespace(root=tmp_path / "agent", load_run=lambda identity: run)
     monkeypatch.setattr(phase_b_joint, "ROOT", tmp_path)
     monkeypatch.setattr(phase_b_joint, "Store", lambda _: store)
-    monkeypatch.setattr(phase_b_freeze, "validate_freeze", lambda _: frozen.copy())
+    monkeypatch.setattr(phase_b_freeze, "validate_freeze", lambda _, **kwargs: frozen.copy())
     monkeypatch.setattr(phase_b_joint, "prepare_case", lambda *_: pytest.fail("must reuse existing Run"))
     monkeypatch.setattr(phase_b_joint, "execute", lambda *_args, **_kwargs: pytest.fail("must reject before execution"))
     monkeypatch.setattr(phase_b_joint, "AcceptanceBudget", lambda *_: pytest.fail("must not touch a batch ledger"))

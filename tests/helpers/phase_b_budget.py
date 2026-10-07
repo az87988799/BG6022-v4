@@ -113,7 +113,8 @@ class AcceptanceBudget:
 
     def _validate_receipts(self, ledger, kind):
         entries = ledger.get(kind, {})
-        if not isinstance(entries, dict) or len(entries) > 700:
+        maximum = LIMITS["model"]["http_requests"] if kind == "model_records" else LIMITS["orca_starts"]["total"]
+        if not isinstance(entries, dict) or len(entries) > maximum:
             raise ReferenceBlocked("invalid bounded acceptance entry collection")
         root = self.ledger.root / "agent-budget" / kind
         directories = {p.name for p in root.iterdir() if p.is_dir()} if root.exists() else set()
@@ -193,10 +194,11 @@ class AcceptanceBudget:
         with self.ledger._lock():
             return self._snapshot_unlocked()
 
-    def _snapshot_unlocked(self):
+    def _snapshot_unlocked(self, *, allow_legacy_limits=False):
         """Verify the accounting files while the caller holds the batch lock."""
         self._run_cache = {}
-        ledger = self.ledger.snapshot()
+        ledger = (self.ledger.snapshot(allow_legacy_limits=True) if allow_legacy_limits
+                  else self.ledger.snapshot())
         if reference.DELIVERED_SNAPSHOT.exists():
             delivered = reference._json(reference.DELIVERED_SNAPSHOT)
             for ticket, old in delivered.get("entries", {}).items():

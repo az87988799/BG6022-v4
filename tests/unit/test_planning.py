@@ -187,6 +187,7 @@ def test_new_scientific_work_requires_additional_science_permission():
     request, plan, run = records()
     request.systems = [SystemInput(id="system1", geometry_artifact_id="geometry1"),
                        SystemInput(id="system2", geometry_artifact_id="geometry2")]
+    request.goals[0].system_ids = ["system1"]
     plan.steps[0].system_id = "system1"
     additional = Step(id="new_sp", logical_id="new_geometry_energy", tool="orca.sp",
                       geometry=InputRef(artifact_id="geometry2"), system_id="system2")

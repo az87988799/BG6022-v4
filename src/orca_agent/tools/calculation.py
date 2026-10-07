@@ -7,7 +7,7 @@ import time
 from orca_agent.backends import local
 from orca_agent.models import Check, PermissionSnapshot, QualifiedOutput, Result, utc_now
 from orca_agent.orca.adapter import prepare_input, read_outputs
-from orca_agent.store import atomic_write, sha256_file
+from orca_agent.store import ControlChanged, atomic_write, sha256_file
 from orca_agent.versions import CURRENT_CHECK_VERSION, is_supported_orca_version
 
 
@@ -37,6 +37,10 @@ def revalidate(store, run, step, config):
     signal = store.read_signal(run.id)
     if signal:
         raise _PrelaunchControl(signal)
+    try:
+        store.check_execution_control(run)
+    except ControlChanged as exc:
+        raise _PrelaunchControl("message") from exc
     if any(goal.minimum_check_version != CURRENT_CHECK_VERSION
            for goal in store.load_request(run).goals
            if goal.port in ("energy", "optimized_geometry")):
@@ -60,6 +64,7 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
     workdir = store.path(attempt.directory)
     control_lock = store.control_lock(run.id)
     locked = False
+    startup_control = None
 
     def hook(point):
         nonlocal locked
@@ -70,12 +75,19 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
             fault(point)
 
     def on_started(handle):
-        revalidate(store, run, step, config)
+        nonlocal startup_control
         attempt.execution_handle = handle
         attempt.state = "running"
         _save_json(workdir / "started.json", handle)
         store.update_lease_handle(run.id, attempt.id, handle)
         store.save_run(run)
+        # The suspended process exists. Preserve its identity even when the
+        # final check rejects resuming its thread; backend cleanup still applies.
+        try:
+            revalidate(store, run, step, config)
+        except _PrelaunchControl as exc:
+            startup_control = exc.action
+            raise
 
     invoked = False
     try:
@@ -108,6 +120,9 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
             on_started=on_started, job_name=attempt.execution_handle["job_name"], fault=hook,
             environment=child_environment,
         )
+        if startup_control and outcome["state"] != "unknown":
+            outcome.update(state="cancelled", control_action=startup_control,
+                           reason="control_changed_before_suspended_thread_resumed")
     except Exception as exc:
         if invoked:
             raise
@@ -218,5 +233,7 @@ def collect_result(store, run, step, attempt, outcome):
                 "geometry_artifact_id": attempt.geometry_artifact_id,
                 "files": {name: {"artifact_id": a.id, "sha256": a.sha256}
                           for name, a in artifacts.items()}, "execution": outcome,
-                "conditions": step.parameters.model_dump(mode="json")},
+                "conditions": {**step.parameters.model_dump(mode="json"),
+                               "electronic_state": "RHF", "environment": "gas_phase",
+                               "profile": "fixed-rhf-profile-1"}},
     )

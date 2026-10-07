@@ -18,14 +18,19 @@ def prepare_fixture(workdir, geometry, parameters, tool):
     (directory / "geometry.xyz").write_bytes(Path(geometry).read_bytes())
     input_path = directory / "fixture-input.json"
     input_path.write_text(json.dumps({"test_fixture": True}), encoding="utf-8")
+    # Keep the production evidence topology while this backend still executes
+    # only the test Python worker. This file is deliberately not ORCA syntax.
+    (directory / "job.inp").write_text("Synthetic test input; no scientific execution", encoding="utf-8")
     return {"input_path": str(input_path), "fixture": "no scientific calculation"}
 
 
 def read_fixture(workdir, parameters, tool, **kwargs):
     """Synthetic result only verifies coordinator control flow, never science."""
     exists = (Path(workdir) / "fixture-success.txt").exists()
-    checks = [{"name": "synthetic_fixture", "status": "passed" if exists else "failed",
-               "rule_version": CURRENT_CHECK_VERSION, "detail": "Synthetic fixture; not scientific evidence"}]
+    from orca_agent.orca.checks import check_outputs
+    checks = [{"name": check.name, "status": "passed" if exists else "failed",
+               "rule_version": CURRENT_CHECK_VERSION, "detail": "Synthetic fixture; not scientific evidence"}
+              for check in check_outputs({}, tool)["energy"]]
     return {"checks": {"energy": checks}, "qualified_outputs": {
         "energy": {"value": -1.0, "unit": "Eh", "source": {"synthetic_fixture": True}},
     } if exists else {}, "observations": {"synthetic_fixture": True}, "diagnostics": []}

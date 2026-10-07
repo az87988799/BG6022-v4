@@ -1,0 +1,786 @@
+{
+  "schema_version": 1,
+  "status": "executable_development_and_formal_specification_unrun",
+  "input_contract": "Only raw text, registered geometry references and explicit program permission/configuration. No goals, scientific conditions or changes prefilled. Expected assertions never enter the model context.",
+  "repetitions": 3,
+  "review": "Every normalization and later proposal needs independent fact/semantic review; final six axes may state unknown/not_applicable with evidence. No scientific result is expected under 0-ORCA permission.",
+  "budget_meaning": "Per-Run ceilings remain within the existing shared acceptance ledger; this file grants no additional budget.",
+  "cases": [
+    {
+      "id": "N-01",
+      "input": {
+        "text": "算一下这个水的单点电子能。采用气相 RHF/STO-3G，中性单重态。本轮只登记需求，不启动计算。",
+        "geometries": [
+          {
+            "id": "water",
+            "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+            "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+          }
+        ]
+      },
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 4,
+        "orca_starts": 0
+      },
+      "variants": [
+        {
+          "id": "raw-water-sp",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.goal_ports",
+              "operator": "eq",
+              "value": [
+                "energy"
+              ]
+            },
+            {
+              "metric": "raw_request.geometry_relations",
+              "operator": "eq",
+              "value": [
+                "fixed_initial"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "N-02",
+      "input": {
+        "text": "优化登记的水分子，给出优化后的电子能。采用气相 RHF/STO-3G，中性单重态。本轮只登记需求，不启动计算。",
+        "geometries": [
+          {
+            "id": "water",
+            "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+            "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+          }
+        ]
+      },
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 4,
+        "orca_starts": 0
+      },
+      "variants": [
+        {
+          "id": "raw-optimized-energy",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.geometry_relations",
+              "operator": "eq",
+              "value": [
+                "optimized"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "N-03",
+      "input": {},
+      "budget": {
+        "model_http_requests": 6,
+        "model_tokens_total": 48000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "variants": [
+        {
+          "id": "raw-electron-state-clarification",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.all_user_turns_consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.explicit_electron_state",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.goal_ports",
+              "operator": "eq",
+              "value": [
+                "energy"
+              ]
+            }
+          ],
+          "input": {
+            "text": "算登记水的气相 RHF/STO-3G 单点电子能。电荷和多重度还没确定，先问我；本轮不启动计算。",
+            "geometries": [
+              {
+                "id": "water",
+                "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+                "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+              }
+            ],
+            "followups": [
+              "电荷0、多重度1，其他条件沿用。"
+            ]
+          },
+          "budget_override": {
+            "model_http_requests": 6,
+            "model_tokens_total": 48000,
+            "evidence_reads": 0,
+            "analysis_calls": 0,
+            "autonomous_plan_revisions": 0,
+            "decision_rounds": 8,
+            "orca_starts": 0
+          }
+        },
+        {
+          "id": "raw-ambiguous-reference",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.all_user_turns_consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.goal_ports",
+              "operator": "eq",
+              "value": [
+                "energy"
+              ]
+            },
+            {
+              "metric": "raw_request.resolved_water_reference",
+              "operator": "eq",
+              "value": true
+            }
+          ],
+          "input": {
+            "text": "我登记了水和甲烷，算它的气相 RHF/STO-3G 单点电子能，中性单重态；还未指定是哪个，请先确认。本轮不启动计算。",
+            "geometries": [
+              {
+                "id": "water",
+                "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+                "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+              },
+              {
+                "id": "methane",
+                "path": "tests/fixtures/phase_a/methane_opt/geometry.xyz",
+                "sha256": "361b5309e16ab1b85d9662bda414555a45120757e8e2e8f45f1db2c70d28d520"
+              }
+            ],
+            "followups": [
+              "指登记的 water（水）几何，沿用已经说过的科学条件。"
+            ]
+          },
+          "budget_override": {
+            "model_http_requests": 6,
+            "model_tokens_total": 48000,
+            "evidence_reads": 0,
+            "analysis_calls": 0,
+            "autonomous_plan_revisions": 0,
+            "decision_rounds": 8,
+            "orca_starts": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "N-04",
+      "input": {},
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "variants": [
+        {
+          "id": "raw-authorized-defaults",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.all_user_turns_consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.default_origins",
+              "operator": "eq",
+              "value": true
+            }
+          ],
+          "input": {
+            "text": "算登记水的单点电子能。缺少的科学条件使用我在程序配置中授权的 local-hf-1 默认值，明确记录来源为默认；本轮只登记需求，不启动计算。",
+            "geometries": [
+              {
+                "id": "water",
+                "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+                "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+              }
+            ],
+            "followups": [],
+            "semantic_defaults": {
+              "method": "HF",
+              "basis": "STO-3G",
+              "charge": 0,
+              "multiplicity": 1,
+              "environment": "gas",
+              "electronic_state": "RHF"
+            }
+          },
+          "budget_override": {
+            "model_http_requests": 4,
+            "model_tokens_total": 32000,
+            "evidence_reads": 0,
+            "analysis_calls": 0,
+            "autonomous_plan_revisions": 0,
+            "decision_rounds": 8,
+            "orca_starts": 0
+          }
+        },
+        {
+          "id": "raw-unique-inheritance",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.all_user_turns_consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.inherited_origins",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.goal_ports",
+              "operator": "eq",
+              "value": [
+                "energy"
+              ]
+            }
+          ],
+          "input": {
+            "text": "算登记水的单点电子能，采用气相 RHF/STO-3G，中性单重态；本轮只登记需求，不启动计算。",
+            "geometries": [
+              {
+                "id": "water",
+                "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+                "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+              }
+            ],
+            "followups": [
+              "继续保留水的单点电子能目标，所有科学条件唯一沿用上一轮已明确的设置，记录继承来源。本轮仍不启动计算。"
+            ]
+          },
+          "budget_override": {
+            "model_http_requests": 6,
+            "model_tokens_total": 48000,
+            "evidence_reads": 0,
+            "analysis_calls": 0,
+            "autonomous_plan_revisions": 0,
+            "decision_rounds": 8,
+            "orca_starts": 0
+          }
+        },
+        {
+          "id": "raw-unconfirmed-inference",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.all_user_turns_consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.inferred_electron_state",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.unsupported_or_unresolved",
+              "operator": "eq",
+              "value": true
+            }
+          ],
+          "input": {
+            "text": "算登记水的气相 RHF/STO-3G 单点电子能。电荷和多重度还未确认；可提出中性单重态的推断建议，但必须标记为 inferred，保留未确认并向我澄清，不能当明确条件执行。",
+            "geometries": [
+              {
+                "id": "water",
+                "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+                "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+              }
+            ],
+            "followups": []
+          },
+          "budget_override": {
+            "model_http_requests": 4,
+            "model_tokens_total": 32000,
+            "evidence_reads": 0,
+            "analysis_calls": 0,
+            "autonomous_plan_revisions": 0,
+            "decision_rounds": 8,
+            "orca_starts": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "N-05",
+      "input": {
+        "text": "对登记的水做 RHF/STO-3G 单点电子能，电荷0、多重度1，环境为水溶剂。保留水溶剂要求，不改为气相。本轮只登记需求，不启动计算。",
+        "geometries": [
+          {
+            "id": "water",
+            "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+            "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+          }
+        ]
+      },
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 4,
+        "orca_starts": 0
+      },
+      "variants": [
+        {
+          "id": "raw-unsupported-solvent",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.unsupported_environment_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.unsupported_or_unresolved",
+              "operator": "eq",
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "N-06",
+      "input": {
+        "text": "优化乙醇，给出优化后的电子能。采用气相 RHF/STO-3G，中性单重态。没有登记乙醇几何；本轮只登记需求，不启动计算。",
+        "geometries": []
+      },
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 32000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 4,
+        "orca_starts": 0
+      },
+      "variants": [
+        {
+          "id": "raw-unsupported-system",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.geometry_relations",
+              "operator": "eq",
+              "value": [
+                "optimized"
+              ]
+            },
+            {
+              "metric": "raw_request.unsupported_or_unresolved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.no_registered_system_substitution",
+              "operator": "eq",
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "N-07",
+      "input": {},
+      "budget": {
+        "model_http_requests": 6,
+        "model_tokens_total": 48000,
+        "evidence_reads": 4,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "variants": [
+        {
+          "id": "raw-read-only-window",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.all_user_turns_consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "read.succeeded",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "query_goal.satisfied",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.no_nonread_tools",
+              "operator": "eq",
+              "value": true
+            }
+          ],
+          "input": {
+            "text": "只查看已经登记的 geometry.xyz 前5行原文。不要计算、转换、导入、分析，也不要推进其他科学计划。",
+            "geometries": [],
+            "followups": [],
+            "artifacts": [
+              {
+                "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+                "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+              }
+            ],
+            "allowed_tools": [
+              "evidence.list",
+              "evidence.text"
+            ]
+          },
+          "budget_override": {
+            "model_http_requests": 6,
+            "model_tokens_total": 48000,
+            "evidence_reads": 4,
+            "analysis_calls": 0,
+            "autonomous_plan_revisions": 0,
+            "decision_rounds": 8,
+            "orca_starts": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "N-09",
+      "input": {},
+      "budget": {
+        "model_http_requests": 6,
+        "model_tokens_total": 48000,
+        "evidence_reads": 0,
+        "analysis_calls": 0,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 8,
+        "orca_starts": 0
+      },
+      "variants": [
+        {
+          "id": "raw-user-goal-replacement",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.all_user_turns_consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.goal_ports",
+              "operator": "eq",
+              "value": [
+                "optimized_geometry"
+              ]
+            },
+            {
+              "metric": "raw_request.geometry_relations",
+              "operator": "eq",
+              "value": [
+                "optimized"
+              ]
+            },
+            {
+              "metric": "raw_request.user_replacement_recorded",
+              "operator": "eq",
+              "value": true
+            }
+          ],
+          "input": {
+            "text": "算登记水的单点电子能，采用气相 RHF/STO-3G，中性单重态；本轮只登记需求，不启动计算。",
+            "geometries": [
+              {
+                "id": "water",
+                "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+                "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+              }
+            ],
+            "followups": [
+              "不再需要单点电子能，把目标明确替换为优化后的几何结构，沿用原科学条件；本轮不启动计算。"
+            ]
+          },
+          "budget_override": {
+            "model_http_requests": 6,
+            "model_tokens_total": 48000,
+            "evidence_reads": 0,
+            "analysis_calls": 0,
+            "autonomous_plan_revisions": 0,
+            "decision_rounds": 8,
+            "orca_starts": 0
+          }
+        },
+        {
+          "id": "raw-preserve-goal",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "expected": [
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.original_text_preserved",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.all_user_turns_consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            },
+            {
+              "metric": "raw_request.goal_ports",
+              "operator": "eq",
+              "value": [
+                "energy"
+              ]
+            },
+            {
+              "metric": "raw_request.geometry_relations",
+              "operator": "eq",
+              "value": [
+                "fixed_initial"
+              ]
+            }
+          ],
+          "input": {
+            "text": "算登记水的单点电子能，采用气相 RHF/STO-3G，中性单重态；本轮只登记需求，不启动计算。",
+            "geometries": [
+              {
+                "id": "water",
+                "path": "tests/fixtures/phase_a/water_sp/geometry.xyz",
+                "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+              }
+            ],
+            "followups": [
+              "评估是否值得另外优化，但本次目标仍是原固定几何的单点电子能，不能替换或删除目标。本轮不启动计算。"
+            ]
+          },
+          "budget_override": {
+            "model_http_requests": 6,
+            "model_tokens_total": 48000,
+            "evidence_reads": 0,
+            "analysis_calls": 0,
+            "autonomous_plan_revisions": 0,
+            "decision_rounds": 8,
+            "orca_starts": 0
+          }
+        }
+      ]
+    }
+  ]
+}

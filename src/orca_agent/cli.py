@@ -139,13 +139,21 @@ def main(argv=None) -> int:
             from orca_agent.report import build_report, render_report
             print(render_report(build_report(store, args.run_id)))
         elif args.command == "message":
-            message_id = store.enqueue_message(args.run_id, args.text)
+            from orca_agent.semantic import CANCEL, PAUSE, STATUS
+            command = args.text.strip().casefold()
+            if not args.update_file and command in STATUS:
+                emit(store.load_run(args.run_id))
+                return 0
+            if not args.update_file and command in PAUSE | CANCEL:
+                store.signal(args.run_id, "cancel" if command in CANCEL else "pause")
+                emit({"run_id": args.run_id, "requested": command})
+                return 0
+            changes = None
             if args.update_file:
-                from orca_agent.natural import apply_user_update
                 if args.update_file.stat().st_size > 65536:
                     raise ValueError("user update exceeds 64 KiB")
                 changes = json.loads(args.update_file.read_text(encoding="utf-8"))
-                apply_user_update(store, args.run_id, message_id, changes)
+            message_id = store.enqueue_message(args.run_id, args.text, update=changes)
             emit({"run_id": args.run_id, "message_id": message_id, "status": "queued",
                   "execution": "active coordinator observes the new generation; otherwise explicitly resume"})
         elif args.command in ("pause", "cancel"):

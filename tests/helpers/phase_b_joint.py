@@ -4,13 +4,13 @@ import argparse
 import json
 from pathlib import Path
 
-from orca_agent.config import Config
-from orca_agent.models import Goal, PermissionSnapshot, Request, SystemInput
-from orca_agent.natural import agent_budget, initialize_agent
+from orca_agent.models import Goal, PermissionSnapshot, Request, SystemInput, new_id
+from orca_agent.natural import agent_budget, initialize_agent, initialize_bundle
 from orca_agent.report import build_report, render_report
 from orca_agent.runner import execute
 from orca_agent.store import Store, atomic_write, sha256_file
 from tests.helpers.phase_b_budget import AcceptanceBudget
+from tests.helpers.phase_b_freeze import evaluation_config
 
 PROJECT = Path(__file__).resolve().parents[2]
 ROOT = PROJECT / "data" / "phase-b"
@@ -29,6 +29,31 @@ def _write(path, data, *, immutable=False):
 def prepare_case(store, config, case, category):
     if case not in CASES or category not in {"development", "formal"}:
         raise ValueError("unknown fixed evaluation case/category")
+    if case == "methane_opt_control":
+        # Preserve the original independent CH4 Opt expectation, but exercise
+        # the raw entry rather than giving the model a pre-normalized Goal.
+        source = PROJECT / "tests/fixtures/phase_a/methane_opt/geometry.xyz"
+        frozen = _json(PROJECT / "tests/fixtures/phase_b/cases.json")["common"]["fixed_input_files"]["methane_opt"]
+        if sha256_file(source) != frozen["sha256"]:
+            raise ValueError("frozen initial geometry changed")
+        directory = store.path(f"evaluation-inputs/{new_id('input')}")
+        directory.mkdir(parents=True)
+        atomic_write(directory / "methane.xyz", source.read_bytes(), immutable=True)
+        bundle = {"text": "对登记的甲烷初始几何做气相 RHF/STO-3G 中性单重态无约束优化，"
+                          "交付通过严格收敛检查的结构，并给出优化后的电子能及其来源。",
+                  "geometries": [{"id": "methane", "file": "methane.xyz"}],
+                  "scientific_execution": True, "allowed_tools": ["orca.opt"],
+                  "conditions": {"explain_results": True},
+                  "budget": {"orca_starts": 1, "extra_orca_starts": 0}}
+        path = directory / "user-input.json"
+        _write(path, bundle, immutable=True)
+        run = initialize_bundle(store, config, path)
+        run.batch_category = category
+        store.save_run(run)
+        return run, {"case": case, "category": category, "evidence_type": "joint_real_model_orca",
+                     "input_form": "raw_text", "raw_bundle_path": str(path),
+                     "raw_bundle_sha256": sha256_file(path),
+                     "shared_coverage": ["N-01/raw-entry", "N-02/optimized-energy-relation"]}
     settings = {"method": "HF", "basis": "STO-3G", "charge": 0, "multiplicity": 1}
     permission = PermissionSnapshot(model_execution=True, scientific_execution=True,
                                     allowed_tools=["orca.sp"])
@@ -69,7 +94,8 @@ def prepare_case(store, config, case, category):
         permission.artifact_writes = True
         permission.allow_additional_science = True
         permission.artifact_ids = [s.geometry_artifact_id for s in systems]
-        budget = agent_budget(extra_orca_starts=1)
+        budget = (agent_budget(orca_starts=3, extra_orca_starts=0) if label == "stop"
+                  else agent_budget(extra_orca_starts=1))
         metadata.update(candidate_aliases={c["model_candidate_id"]: c["id"] for c in window["candidates"]},
                         reference_window=label)
     else:
@@ -112,14 +138,15 @@ def run_case(case, category, identity, *, live_model=False, live_orca=False, res
     if not identity.replace("_", "").replace("-", "").isalnum() or len(identity) > 60:
         raise ValueError("evaluation identity must be a short stable label")
     frozen = None
+    config = evaluation_config(science=True)
     if category == "formal":
         import os
 
         from tests.helpers.phase_b_freeze import validate_freeze
-        frozen = validate_freeze(os.environ.get("ORCA_AGENT_EVAL_FREEZE", "formal-v1"))
+        frozen = validate_freeze(os.environ.get("ORCA_AGENT_EVAL_FREEZE", "formal-v1"),
+                                 config=config, science=True)
     store = Store(ROOT / "agent")
-    config = Config(data_root=store.root, orca_path=Path("E:/orca/orca.exe"),
-                    mpi_path=Path("C:/Program Files/Microsoft MPI/Bin/mpiexec.exe"))
+    config = config.model_copy(update={"data_root": store.root})
     metadata_path = ROOT / "evaluations" / f"{identity}.json"
     if metadata_path.exists():
         metadata = _json(metadata_path)

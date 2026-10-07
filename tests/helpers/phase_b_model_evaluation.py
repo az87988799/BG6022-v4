@@ -78,7 +78,7 @@ def _formal_anchor(freeze_label, frozen):
     archive = ROOT / "formal-freezes"
     identity = {"schema_version": 1, "freeze_label": freeze_label, "freeze_sha256": digest,
                 "code_commit": frozen["code_commit"], "spec_sha256": sha256_file(cases.CASES),
-                "variant_ids": list(cases.fixed_variant_ids()), "repetitions": [1, 2, 3]}
+                "variant_ids": list(cases.evaluation_variant_ids()), "repetitions": [1, 2, 3]}
     anchor = archive / f"{freeze_label}.anchor.json"
     snapshot = archive / f"{freeze_label}.freeze.json"
     if anchor.exists() and _read(anchor) != identity:
@@ -216,14 +216,14 @@ def evaluate(variant_id, repetition, *, allow_live=False, resume=False, category
             batch.snapshot()  # Fail before HTTP when accounting has changed/missing evidence.
             config = Config(data_root=store.root, orca_path=None, mpi_path=None)
             if resume and run.state == "waiting_user" and metadata["continuation_messages"]:
-                request = store.load_request(run)
-                if len(request.messages) < len(metadata["initial_request"]["messages"]) + len(metadata["continuation_messages"]):
+                if cases.can_advance_user_turn(store, run, metadata):
                     run = cases.advance_user_turn(store, run, metadata)
             run = agent.execute(store, config, run.id, resume=resume, batch=batch)
             while metadata["continuation_messages"] and run.state == "waiting_user":
-                request = store.load_request(run)
-                remaining = len(metadata["initial_request"]["messages"]) + len(metadata["continuation_messages"]) - len(request.messages)
+                remaining = cases.remaining_user_turns(store, run, metadata)
                 if remaining <= 0:
+                    break
+                if not cases.can_advance_user_turn(store, run, metadata):
                     break
                 run = cases.advance_user_turn(store, run, metadata)
                 run = agent.execute(store, config, run.id, batch=batch)
@@ -265,7 +265,7 @@ def regrade(variant_id, repetition, *, category="formal", freeze_label="formal-v
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--variant", choices=cases.fixed_variant_ids())
+    parser.add_argument("--variant", choices=cases.evaluation_variant_ids())
     parser.add_argument("--repetition", type=int, choices=(1, 2, 3), default=1)
     parser.add_argument("--category", choices=("formal", "development"), default="formal")
     parser.add_argument("--freeze-label", default="formal-v1")
@@ -277,7 +277,7 @@ def main(argv=None):
     parser.add_argument("--regrade", action="store_true", help="grade an existing slot without any HTTP or new Run")
     args = parser.parse_args(argv)
     if args.variant is None:
-        print(json.dumps({"variants": list(cases.fixed_variant_ids()), "repetitions": 3,
+        print(json.dumps({"variants": list(cases.evaluation_variant_ids()), "repetitions": 3,
                           "http_executed": False}, ensure_ascii=False, indent=2))
         return 0
     options = {"category": args.category, "freeze_label": args.freeze_label}

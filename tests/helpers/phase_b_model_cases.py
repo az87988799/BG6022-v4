@@ -17,12 +17,13 @@ from pathlib import Path
 from orca_agent.config import Config
 from orca_agent.goals import validate_goal_evidence
 from orca_agent.models import Goal, PermissionSnapshot, Request, SystemInput, fingerprint, new_id
-from orca_agent.natural import agent_budget, apply_user_update, initialize_agent
+from orca_agent.natural import agent_budget, apply_user_update, initialize_agent, initialize_bundle
 from orca_agent.store import Store, StoreError, _is_link, atomic_write, sha256_file
 from orca_agent.tools.analysis import bind_energy
 
 PROJECT = Path(__file__).resolve().parents[2]
 CASES = PROJECT / "tests/fixtures/phase_b/cases.json"
+RAW_CASES = PROJECT / "tests/fixtures/phase_b/raw-text-cases.json"
 INDEX = PROJECT / "docs/acceptance/phase-b/evidence-index.json"
 MANIFEST = PROJECT / "tests/fixtures/phase_b/sampling-candidates.json"
 RAW = PROJECT / "tests/fixtures/phase_a/real_water_sp"
@@ -43,19 +44,67 @@ def fixed_variant_ids():
     return tuple(_read(CASES)["batch_budget"]["model_allocation"]["fixed_evidence"]["variant_ids"])
 
 
+def evaluation_variant_ids():
+    return (*fixed_variant_ids(), *(f"{case['id']}/{variant['id']}" for case in _read(RAW_CASES)["cases"]
+                                   for variant in case["variants"]))
+
+
 def variant_spec(variant_id):
     """Return the frozen inherited specification without turning it into permission."""
-    if variant_id not in fixed_variant_ids():
-        raise ValueError("variant is outside the 25 fixed-evidence allocation")
+    if variant_id not in evaluation_variant_ids():
+        raise ValueError("variant is outside the declared fixed-evidence allocation")
     case_id, local_id = variant_id.split("/")
-    document = _read(CASES)
+    source = CASES if variant_id in fixed_variant_ids() else RAW_CASES
+    document = _read(source)
     ci, case = next((i, c) for i, c in enumerate(document["cases"]) if c["id"] == case_id)
     vi, variant = next((i, v) for i, v in enumerate(case["variants"]) if v["id"] == local_id)
     return {"case": copy.deepcopy(case), "variant": copy.deepcopy(variant),
             "input": {**copy.deepcopy(case["input"]), **copy.deepcopy(variant.get("input", {}))},
             "budget": {**case["budget"], **variant.get("budget_override", {})},
-            "expected_ref": f"tests/fixtures/phase_b/cases.json#/cases/{ci}/variants/{vi}/expected",
-            "spec_sha256": sha256_file(CASES)}
+            "expected_ref": f"{source.relative_to(PROJECT).as_posix()}#/cases/{ci}/variants/{vi}/expected",
+            "spec_sha256": sha256_file(source)}
+
+
+def _raw_intake(store, spec, metadata):
+    """Invoke the actual text bundle entry; no goal/condition/patch is prefilled."""
+    directory = store.path(f"evaluation-inputs/{metadata['input_id']}")
+    directory.mkdir(parents=True)
+    geometries = []
+    for item in spec["input"].get("geometries", []):
+        source = PROJECT / item["path"]
+        digest = sha256_file(source)
+        if digest != item["sha256"]:
+            raise StoreError("raw-input registered geometry changed")
+        target = directory / f"{item['id']}.xyz"
+        atomic_write(target, source.read_bytes(), immutable=True)
+        metadata["source_files"].append({"path": str(source.resolve()), "sha256": digest})
+        geometries.append({"id": item["id"], "file": target.name})
+    b = spec["budget"]
+    artifacts = []
+    for item in spec["input"].get("artifacts", []):
+        artifact = _import(store, PROJECT / item["path"], "raw_evidence", metadata,
+                           expected_sha256=item["sha256"])
+        artifacts.append(artifact.id)
+    metadata["continuation_messages"] = [{"text": text} for text in spec["input"].get("followups", [])]
+    bundle = {"text": spec["input"]["text"], "geometries": geometries,
+              "scientific_execution": False, "allowed_tools": spec["input"].get("allowed_tools", []),
+              "artifact_ids": artifacts,
+              "conditions": {"explain_results": True},
+              "semantic_defaults": spec["input"].get("semantic_defaults", {}),
+              "budget": {"model_calls": b["model_http_requests"], "model_tokens": b["model_tokens_total"],
+                         "decision_rounds": b["decision_rounds"], "evidence_reads": b["evidence_reads"],
+                         "orca_starts": 0, "extra_orca_starts": 0}}
+    path = directory / "user-input.json"
+    atomic_write(path, (json.dumps(bundle, ensure_ascii=False, indent=2) + "\n").encode(), immutable=True)
+    run = initialize_bundle(store, Config(data_root=store.root), path)
+    run.batch_category = metadata["category"]
+    store.save_run(run)
+    metadata["artifact_ids"] = list(run.permission.artifact_ids)
+    metadata["raw_intake"] = {"bundle_path": str(path), "bundle_sha256": sha256_file(path),
+                              "input_form": "raw_text_registered_geometries_and_explicit_configuration"}
+    metadata["tested_scope"] = ["raw user text interpreted by the production semantic candidate path",
+                                "0 ORCA; scientific execution permission remains false"]
+    return run
 
 
 def _import(store, path, role, metadata, *, expected_sha256=None, kind="archived_real_evidence"):
@@ -119,14 +168,17 @@ def _legacy_reference(store, case_name, metadata):
     """
     index = _read(PROJECT / "docs/acceptance/phase-a/evidence-index.json")
     entry = index["current_cases"][case_name]
+    receipt = entry["receipt"]
+    root = Path(receipt["store_root"]).resolve()
+    if root != (PROJECT / "data").resolve():
+        # An absolute archive path can remain readable from another checkout.
+        # Its existence does not authorize consuming that checkout's live Store.
+        metadata["fixture_gaps"].append({"kind": "legacy_archive_not_restored_for_checkout", "case": case_name})
+        return None
     receipt_path = Path(entry["receipt_path"])
     if not receipt_path.is_file() or sha256_file(receipt_path) != entry["receipt_sha256"]:
         metadata["fixture_gaps"].append({"kind": "legacy_receipt_unavailable", "case": case_name})
         return None
-    receipt = entry["receipt"]
-    root = Path(receipt["store_root"]).resolve()
-    if root != (PROJECT / "data").resolve():
-        raise StoreError("legacy archive source root differs from the reviewed phase-A Store")
     source = Store(root)
     old_run = source.load_run(receipt["run_id"])
     result = source.load_result(old_run.id, receipt["result_ids"][0])
@@ -465,6 +517,14 @@ def create_request(store, variant_id, repetition, *, category="formal", freeze_l
         "fixture_gaps": [], "runtime_limitations": [],
         "continuation_messages": [], "evidence_kind": "real_model_with_frozen_evidence", "model_executed": False}
     case = spec["case"]["id"]
+    if case.startswith("N-"):
+        run = _raw_intake(store, spec, metadata)
+        directories = {str(Path(item["path"]).parent) for item in metadata["source_files"]}
+        metadata["source_directory_files"] = {directory: sorted(p.name for p in Path(directory).iterdir())
+                                               for directory in directories}
+        metadata.update(run_id=run.id, initial_request=store.load_request(run).model_dump(mode="json"),
+                        permission_sha256=fingerprint(run.permission), budget_sha256=fingerprint(run.budget))
+        return run, metadata
     builder = (_normalization if case == "V-01" else _comparison if case in {"V-02", "V-09"}
                else _sampling if case == "V-06" else _queries)
     request, tools, writes, sources = builder(store, spec, metadata)
@@ -499,6 +559,17 @@ def create_request(store, variant_id, repetition, *, category="formal", freeze_l
 
 def advance_user_turn(store, run, metadata):
     """Apply the next frozen explicit user turn only after an actual clarification."""
+    if metadata.get("raw_intake"):
+        if run.state != "waiting_user":
+            raise StoreError("raw user continuation requires waiting_user")
+        index = len(store.read_control(run.id)["messages"]) - 1
+        turns = metadata["continuation_messages"]
+        if not 0 <= index < len(turns):
+            raise StoreError("no frozen raw user continuation remains")
+        if any(m["id"] not in run.processed_messages for m in store.read_control(run.id)["messages"]):
+            raise StoreError("prior raw user message remains unconsumed")
+        store.enqueue_message(run.id, turns[index]["text"])
+        return store.load_run(run.id)
     if run.state != "waiting_user" or not any(d.get("action") == "clarify"
             and d.get("basis", {}).get("request_version") == run.request_version for d in run.decisions):
         raise StoreError("multi-turn progression requires a persisted model clarification")
@@ -510,6 +581,23 @@ def advance_user_turn(store, run, metadata):
     turn = turns[index]
     message_id = store.enqueue_message(run.id, turn["text"])
     return apply_user_update(store, run.id, message_id, turn["changes"])
+
+
+def remaining_user_turns(store, run, metadata):
+    if metadata.get("raw_intake"):
+        consumed_turns = len(store.read_control(run.id)["messages"]) - 1
+    else:
+        consumed_turns = len(store.load_request(run).messages) - len(metadata["initial_request"]["messages"])
+    return len(metadata["continuation_messages"]) - consumed_turns
+
+
+def can_advance_user_turn(store, run, metadata):
+    if run.state != "waiting_user" or remaining_user_turns(store, run, metadata) <= 0:
+        return False
+    if metadata.get("raw_intake"):
+        return all(m["id"] in run.processed_messages for m in store.read_control(run.id)["messages"])
+    return any(d.get("action") == "clarify" and d.get("basis", {}).get("request_version") == run.request_version
+               for d in run.decisions)
 
 
 def _observations(results):
@@ -577,6 +665,13 @@ def evaluate_response(store, run, metadata, *, review=None):
     goals_preserved = all(any(goal.id == old["id"] and goal.port == old["port"]
         and goal.required == old["required"] and goal.conditions == old["conditions"] for goal in request.goals)
         for old in originals)
+    if metadata.get("raw_intake"):
+        # A pending placeholder is expected to become a model-proposed Goal.
+        # The raw question and immutable entry bundle remain the purpose basis;
+        # independent semantic review, not this identity check, judges meaning.
+        intake = metadata["raw_intake"]
+        goals_preserved = (request.original_text == metadata["initial_request"]["original_text"]
+                           and sha256_file(Path(intake["bundle_path"])) == intake["bundle_sha256"])
     source_integrity = all(Path(f["path"]).is_file() and sha256_file(Path(f["path"])) == f["sha256"]
                            for f in metadata["source_files"])
     source_integrity = source_integrity and all(
@@ -586,6 +681,28 @@ def evaluate_response(store, run, metadata, *, review=None):
     energy = next((output for port, output in qualified if port == "energy_difference"), None)
     complete = bool(request.goals) and all(run.goal_status.get(g.id) == "satisfied" for g in request.goals if g.required)
     facts = {
+        "raw_request.accepted_normalization": any(a["action"] == "normalize_request" for a in actions),
+        "raw_request.goal_ports": sorted({g.port for g in request.goals}),
+        "raw_request.geometry_relations": sorted({g.conditions["geometry_relation"] for g in request.goals
+                                                  if g.conditions.get("geometry_relation")}),
+        "raw_request.unsupported_or_unresolved": bool(request.unresolved or any(g.unresolved for g in request.goals)),
+        "raw_request.unsupported_environment_preserved": request.conditions.get("environment") not in {
+            None, "gas", "gas_phase", "vacuum"},
+        "raw_request.original_text_preserved": request.original_text == metadata["initial_request"]["original_text"],
+        "raw_request.no_registered_system_substitution": not request.systems and request.geometry_artifact_id is None,
+        "raw_request.resolved_water_reference": any(g.system_ids == ["water"] for g in request.goals)
+            or any(s.id == "water" and s.geometry_artifact_id == request.geometry_artifact_id for s in request.systems),
+        "raw_request.user_replacement_recorded": any(a.get("parameters", {}).get("kind") == "replace_goals"
+                                                     for a in actions),
+        "raw_request.default_origins": all(request.conditions_source.get(k) == "default" for k in PHYSICAL),
+        "raw_request.inherited_origins": all(request.conditions_source.get(k) == "inherited" for k in PHYSICAL),
+        "raw_request.inferred_electron_state": any(request.conditions_source.get(k) == "inferred"
+                                                  for k in ("charge", "multiplicity")),
+        "raw_request.explicit_electron_state": request.charge == 0 and request.multiplicity == 1
+            and all(request.conditions_source.get(k) == "explicit" for k in ("charge", "multiplicity")),
+        "raw_request.all_user_turns_consumed": metadata.get("raw_intake") is not None
+            and len(request.messages) == len(metadata["continuation_messages"]) + 1,
+        "raw_request.no_nonread_tools": all(call.tool in READ_TOOLS for call in run.calls),
         "orca_starts": run.usage.orca_starts_actual,
         "orca_starts.before_complete": run.usage.orca_starts_actual,
         "extra_orca_starts": run.usage.extra_orca_starts_reserved,
@@ -686,9 +803,9 @@ def evaluate_response(store, run, metadata, *, review=None):
             entry = {"status": "not_verified", "kind": "persisted_evidence",
                      "reason": "metric has no implemented deterministic evidence extractor"}
         assertions.append({**expected, **entry})
-    authentic = bool(run.model_records) and all(r.get("status") == "known" and r.get("model") == "deepseek-flash"
-        and r.get("sdk_version") == "2.28.0" and r.get("response_model") not in {None, "offline-fake"}
-        for r in run.model_records)
+    from tests.helpers.phase_b_grading import model_response_evidence
+    response_evidence = model_response_evidence(store, run)
+    authentic = response_evidence["present"]
     safety = permission_intact and budget_intact and goals_preserved and source_integrity and not run.attempts
     final_required = bool(results) and request.conditions.get("explain_results") is True
     final_action = actions[-1].get("action") if actions else None
@@ -715,6 +832,7 @@ def evaluate_response(store, run, metadata, *, review=None):
         "expected_ref": metadata["expected_ref"], "spec_sha256": metadata["spec_sha256"],
         "status": "passed" if passed else "not_verified" if not authentic else "incomplete_or_failed",
         "real_model_evidence_present": authentic, "safety_invariants_passed": safety,
+        "model_response_evidence": response_evidence,
         "assertions": assertions, "explanation": explanation, "fixture_gaps": metadata["fixture_gaps"],
         "proposal_review": proposal_review,
         "required_final_response_accepted": delivery,

@@ -64,7 +64,7 @@ def test_existing_durable_ledger_retains_usage_when_delivered_snapshot_exists(le
     assert ledger.path.read_bytes() == before
 
 
-@pytest.mark.parametrize("category,limit", [("reference", 16), ("development", 32)])
+@pytest.mark.parametrize("category,limit", [("reference", 16), ("development", 48)])
 def test_reservations_include_unknown_and_cannot_exceed_subcap(ledger, category, limit):
     for index in range(limit):
         ledger.reserve(f"r{index}", category, sources(index))
@@ -204,7 +204,7 @@ def test_run_binding_is_immutable(ledger):
 def test_total_limit_counts_all_categories(ledger):
     data = ledger.snapshot()
     data["entries"] = {f"historical-{i}": {
-        "category": "formal", "fingerprint": f"other-{i}"} for i in range(96)}
+        "category": "formal", "fingerprint": f"other-{i}"} for i in range(reference.LIMITS["orca_starts"]["total"])}
     reference._save(ledger.path, data)
     with pytest.raises(reference.ReferenceBlocked, match="limit exhausted"):
         ledger.reserve("new-reference", "reference", sources())

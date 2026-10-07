@@ -22,24 +22,41 @@ from orca_agent.models import (
     Step,
     ToolCall,
 )
+from orca_agent.orca.checks import check_outputs
 from orca_agent.report import build_report, render_report
 
 
 @pytest.fixture
 def source(tmp_path):
     path = tmp_path / "stdout.out"
-    path.write_text("immutable original ORCA output", encoding="utf-8")
+    path.write_text("Synthetic report fixture; not scientific evidence", encoding="utf-8")
     artifact = Artifact(id="artifact_stdout", path=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
                         size=path.stat().st_size, role="stdout", run_id="run_one", attempt_id="attempt_one")
     goal = Goal(id="g_energy", port="energy", minimum_check_version="orca-hf-2")
     request = Request(id="request_one", geometry_artifact_id="geometry", goals=[goal])
-    check = Check(name="fixture_check", status="passed", rule_version="orca-hf-2")
+    checks = check_outputs({}, "orca.sp")["energy"]
+    for check in checks:
+        check.status = "passed"
+        check.detail = "Synthetic report fixture; not scientific evidence"
+    artifacts = {artifact.id: artifact}
+    files = {"stdout.out": {"artifact_id": artifact.id, "sha256": artifact.sha256}}
+    for name, identifier, content in [
+        ("job.inp", "artifact_input", "! RHF STO-3G\n# Synthetic report fixture"),
+        ("geometry.xyz", "artifact_geometry", "3\nSynthetic\nO 0 0 0\nH 0 .7 .6\nH 0 -.7 .6\n"),
+    ]:
+        extra_path = tmp_path / name
+        extra_path.write_text(content, encoding="utf-8")
+        extra = Artifact(id=identifier, path=str(extra_path), sha256=hashlib.sha256(extra_path.read_bytes()).hexdigest(),
+                         size=extra_path.stat().st_size, role="raw_evidence", run_id="run_one", attempt_id="attempt_one")
+        artifacts[identifier] = extra
+        files[name] = {"artifact_id": identifier, "sha256": extra.sha256}
+    artifacts["geometry"] = artifacts["artifact_geometry"].model_copy(update={"id": "geometry", "run_id": None, "attempt_id": None})
     result = Result(id="result_one", run_id="run_one", step_id="step_one", attempt_id="attempt_one",
-                    operation_status="completed", artifact_ids=[artifact.id], checks={"energy": [check]},
-                    qualified_outputs={"energy": QualifiedOutput(value=-74.96299, unit="Eh", checks=[check])},
+                    operation_status="completed", artifact_ids=[entry["artifact_id"] for entry in files.values()], checks={"energy": checks},
+                    qualified_outputs={"energy": QualifiedOutput(value=-74.96299, unit="Eh", checks=checks)},
                     observations={"energy_eh": -99, "unregistered": {"value": 1.234, "unit": None}},
                     source={"conditions": {"method": "HF", "basis": "STO-3G", "charge": 0, "multiplicity": 1},
-                            "files": {"stdout.out": {"artifact_id": artifact.id, "sha256": artifact.sha256}}})
+                            "input_fingerprint": "input1", "geometry_artifact_id": "geometry", "files": files})
     attempt = Attempt(id="attempt_one", step_id="step_one", logical_id="logical_one", number=1,
                       tool="orca.sp", state="completed", started=True, result_id=result.id,
                       geometry_artifact_id="geometry", input_fingerprint="input1", directory="attempt-001")
@@ -49,7 +66,6 @@ def source(tmp_path):
     run.usage.orca_starts_reserved = 1
     run.usage.orca_starts_actual = 1
     plan = SimpleNamespace(goal_map={goal.id: OutputBinding(step_id="step_one", port="energy")})
-    artifacts = {artifact.id: artifact, "geometry": artifact.model_copy(update={"id": "geometry"})}
     results = {(run.id, result.id): result}
     read_artifacts = []
 
@@ -89,7 +105,7 @@ def test_report_is_readonly_deterministic_and_preserves_three_distinct_statuses(
     assert result["observations"]["data"]["energy_eh"] == -99
     assert result["observations"]["scientific_qualification"] is False
     assert first["goals"][0]["evidence_status"] == "scientific_output_verified"
-    assert len(source.read_artifacts) == 4
+    assert set(source.result.artifact_ids).issubset(source.read_artifacts)
     text = render_report(first)
     assert "已验证 energy：-74.96299 Eh" in text
     assert "原始证据" in text and source.artifact.sha256 in text
@@ -136,6 +152,7 @@ def test_two_results_require_explicit_binding_and_bad_selection_never_falls_back
     assert not ambiguous["user_goal_complete"]
     assert "ambiguous_result_binding" in ambiguous["goals"][0]["gaps"]
     source.run.selected_results = {"step_one": "result_two"}
+    source.run.attempts[0].result_id = other.id
     selected = build_report(source.store, source.run)
     assert selected["goals"][0]["result_id"] == "result_two"
     assert selected["user_goal_complete"]

@@ -68,7 +68,9 @@ def payload(prepared):
             return [decode(child) for child in item]
         return item
 
-    value = decode(value)
+    # Pool entries are literal JSON; marker-shaped raw data inside them is not
+    # another encoding layer.
+    value = {key: item if key == "SHARED_STRINGS" else decode(item) for key, item in value.items()}
     plan = value.get("AUTHORITY", {}).get("plan")
     if plan and plan.get("string_steps") == "immutable_frozen":
         plan["steps"] = [{"id": step, "immutable_frozen": True} if isinstance(step, str) else step
@@ -95,7 +97,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v4"
+    assert context.prompt_version == "agent-json-v5"
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
     assert set(data["PROPOSAL_SCHEMA"]["required"]) == set(Proposal.model_fields)

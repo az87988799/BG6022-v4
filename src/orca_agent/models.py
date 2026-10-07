@@ -137,7 +137,7 @@ class Request(Record):
     multiplicity: int | None = 1
     method: str | None = "HF"
     basis: str | None = "STO-3G"
-    conditions_source: dict[str, Literal["explicit", "default", "inherited", "inferred"]] = Field(
+    conditions_source: dict[str, Literal["explicit", "default", "inherited", "inferred", "unknown", "not_applicable"]] = Field(
         default_factory=lambda: {
             "charge": "explicit", "multiplicity": "explicit", "method": "explicit",
             "basis": "explicit", "geometry": "explicit",
@@ -149,6 +149,8 @@ class Request(Record):
     unresolved: list[str] = Field(default_factory=list)
     conditions: dict[str, Any] = Field(default_factory=dict)
     normalization_status: Literal["structured", "pending", "clarification", "normalized"] = "structured"
+    condition_evidence: dict[str, Any] = Field(default_factory=dict)
+    semantic_defaults: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def unique_goals(self) -> Request:
@@ -241,6 +243,7 @@ class Plan(Record):
         return self
 
     def validate_request(self, request: Request) -> None:
+        from orca_agent.applicability import validate_scientific_plan
         from orca_agent.tools.registry import get_tool
         if (self.request_id, self.request_version) != (request.id, request.version):
             raise ValueError("plan is based on a different request revision")
@@ -261,15 +264,9 @@ class Plan(Record):
             system = next((s for s in request.systems if s.id == step.system_id), None)
             if step.system_id and system is None:
                 raise ValueError("step references an unknown requested system")
-            for name in ("charge", "multiplicity", "method", "basis"):
-                required = (system.conditions.get(name, getattr(request, name))
-                            if system else getattr(request, name))
-                if getattr(step.parameters, name) != required:
-                    raise ValueError(f"step changes request condition: {name}")
-            allowed = ({system.geometry_artifact_id} if system else
-                       {request.geometry_artifact_id})
-            if step.geometry.artifact_id and step.geometry.artifact_id not in allowed:
-                raise ValueError("direct geometry must bind the request's initial geometry")
+            # Concrete historical optimized geometry can be outside this Plan.
+            # Store validates its Artifact/Attempt lineage before activation.
+        validate_scientific_plan(request, self)
 
 
 class Tool(Record):
@@ -376,6 +373,7 @@ class Attempt(Record):
     request_version: int | None = None
     plan_version: int | None = None
     permission_version: int | None = None
+    control_generation: int | None = None
     frozen_step: Step | None = None
     consumption: dict[str, Any] = Field(default_factory=dict)
 
@@ -389,13 +387,14 @@ class ToolCall(Record):
     result_id: Identifier | None = None
     request_version: int
     plan_version: int | None = None
+    control_generation: int | None = None
     created_at: datetime = Field(default_factory=utc_now)
     frozen_step: Step | None = None
     consumption: dict[str, Any] = Field(default_factory=dict)
 
 
 class Proposal(Record):
-    action: Literal["clarify", "initial_plan", "revise_plan", "call_tool", "stop"]
+    action: Literal["clarify", "initial_plan", "revise_plan", "call_tool", "stop", "normalize_request"]
     request_version: int
     plan_version: int | None = None
     permission_version: int

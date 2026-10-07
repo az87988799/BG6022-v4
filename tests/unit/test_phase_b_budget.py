@@ -272,7 +272,7 @@ def test_snapshot_rejects_tampered_accounting_without_writing(setup, change):
 def test_model_batch_token_limit_uses_reservations_not_only_successes(setup):
     book, store = setup
     run, _, _ = make_run(store)
-    item = record(prompt=6_000_000, completion=0)
+    item = record(prompt=budget.LIMITS["model"]["tokens"], completion=0)
     book.reserve_model(run, item)
     bind_model(store, run, item)
     with pytest.raises(budget.ReferenceBlocked, match="HTTP/token/USD limit"):
@@ -284,9 +284,10 @@ def test_http_limit_counts_all_runs_before_send(setup):
     book, store = setup
     run, _, _ = make_run(store)
     ledger = book.snapshot()
-    # Compact seeding of 600 legitimate zero-token offline reservations avoids
-    # performing 600 simulated network operations. All immutable receipts exist.
-    for index in range(600):
+    # Seed every allowed zero-token offline reservation, including those above
+    # the old 700-record validation bound. All immutable receipts exist.
+    maximum = budget.LIMITS["model"]["http_requests"]
+    for index in range(maximum):
         item = record(index, prompt=0, completion=0)
         immutable = {**book._run_entry(run, store), "id": item["id"], "record": book._model_basis(item), "reserved_at": "fixture"}
         path = book._directory("model_records", item["id"]) / "reservation.json"
@@ -297,8 +298,8 @@ def test_http_limit_counts_all_runs_before_send(setup):
     store._write_json(f"runs/{run.id}/run.json", run)
     book._save(ledger)
     with pytest.raises(budget.ReferenceBlocked, match="HTTP/token/USD limit"):
-        book.reserve_model(run, record(601))
-    assert book.snapshot()["model_usage"]["http_requests"] == 600
+        book.reserve_model(run, record(maximum + 1))
+    assert book.snapshot()["model_usage"]["http_requests"] == maximum
 
 
 @pytest.mark.parametrize("cost", [0.00009, "NaN", "Infinity", "-1", "0"])
@@ -411,7 +412,8 @@ def test_reference_and_agent_helpers_cannot_allocate_separate_development_quotas
     store.finish_attempt(run, attempt.id, state="not_started", started=False, termination_confirmed=True)
     book.settle_science(run, ticket, attempt)
     ledger = book.snapshot()
-    ledger["entries"] = {f"development-{i}": {"category": "development", "fingerprint": f"other-{i}"} for i in range(31)}
+    ledger["entries"] = {f"development-{i}": {"category": "development", "fingerprint": f"other-{i}"}
+                         for i in range(budget.LIMITS["orca_starts"]["development"] - 1)}
     book._save(ledger)
     with pytest.raises(budget.ReferenceBlocked, match="limit exhausted"):
         book.ledger.reserve("new-old-helper", "development", {
@@ -420,7 +422,7 @@ def test_reference_and_agent_helpers_cannot_allocate_separate_development_quotas
         book.reserve_science(run, step, geometry.id)
 
 
-@pytest.mark.parametrize("category,amount", [("formal", 48), ("development", 32)])
+@pytest.mark.parametrize("category,amount", [("formal", 48), ("development", 48)])
 def test_existing_reference_ledger_counts_against_agent_science_subcaps(setup, category, amount):
     book, store = setup
     ledger = book.snapshot()

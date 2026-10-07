@@ -49,6 +49,7 @@ class EnergyEvidence(Record):
     coordinate_unit: Literal["angstrom"] = "angstrom"
     conditions: EnergyConditions
     checks: Annotated[list[Check], Field(min_length=1)]
+    condition_evidence: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def qualified_source(self):
@@ -183,31 +184,24 @@ checks being reused for changed files. Missing provenance fails closed.
         raise ValueError("source Result has an incomplete artifact manifest")
     geometry_name = "geometry.xyz"
     if attempt.tool == "orca.opt":
-        final = result.qualified_outputs.get("optimized_geometry")
-        if not final or not final.artifact_id or final.artifact_id != files.get(
-            "job.xyz", {}
-        ).get("artifact_id"):
-            raise ValueError("optimized energy requires its qualified final geometry")
+        from orca_agent.applicability import qualified_geometry
+        qualified_geometry(store, result)
         geometry_name = "job.xyz"
     geometry_source = files[geometry_name]
     data = paths[geometry_name].read_bytes()
     if hashlib.sha256(data).hexdigest() != geometry_source["sha256"]:
         raise ValueError("geometry source changed during consumption")
     atoms = _coordinates(data)
-    source_conditions = result.source.get("conditions", {})
-    expected = {"method": "HF", "basis": "STO-3G", "charge": 0, "multiplicity": 1}
-    if any(source_conditions.get(key) != value for key, value in expected.items()):
-        raise ValueError("source conditions are missing or outside the qualified RHF profile")
-    # These two conditions follow from the checked fixed production profile,
-    # which writes RHF without solvent; they are not supplied by file comments.
-    conditions = EnergyConditions(**expected, electronic_state="RHF", environment="gas_phase")
+    from orca_agent.applicability import source_conditions
+    actual, condition_evidence = source_conditions(store, result)
+    conditions = EnergyConditions(**actual)
     return EnergyEvidence(
         run_id=run_id, attempt_id=attempt.id, result_id=result.id, tool=attempt.tool,
         energy_eh=output.value, artifact_hashes=hashes,
         geometry_artifact_id=geometry_source["artifact_id"],
         geometry_sha256=geometry_source["sha256"], elements=[a[0] for a in atoms],
         atom_mapping=[f"{index}:{a[0]}" for index, a in enumerate(atoms)],
-        conditions=conditions, checks=output.checks,
+        conditions=conditions, checks=output.checks, condition_evidence=condition_evidence,
     )
 
 

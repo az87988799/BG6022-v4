@@ -44,6 +44,10 @@ class BudgetExceeded(StoreError):
     """An immutable cumulative budget prevents a new launch."""
 
 
+class ControlChanged(StoreError):
+    """A new user/control fact must be absorbed before another action starts."""
+
+
 class EnvironmentBusy(StoreError):
     """An existing lease has not been demonstrably released."""
 
@@ -202,6 +206,11 @@ class Store:
                 raise StoreError("geometry exceeds the 64 KiB input limit")
         for step in plan.steps if plan else []:
             if "execute_orca" in get_tool(step.tool).effects and step.geometry.artifact_id:
+                from orca_agent.applicability import validate_direct_geometry
+                try:
+                    validate_direct_geometry(self, request, step)
+                except ValueError as exc:
+                    raise StoreError(str(exc)) from exc
                 initial = self.artifact_path(step.geometry.artifact_id)
                 validate_geometry(initial.read_text(encoding="utf-8"), step.parameters)
         permission = permission or PermissionSnapshot(artifact_ids=geometry_ids)
@@ -333,7 +342,7 @@ class Store:
             for old, new in zip(previous.attempts, run.attempts, strict=False):
                 for field in ("id", "step_id", "logical_id", "number", "tool", "geometry_artifact_id",
                               "input_fingerprint", "directory", "created_at", "request_version",
-                              "plan_version", "permission_version", "frozen_step", "consumption"):
+                              "plan_version", "permission_version", "control_generation", "frozen_step", "consumption"):
                     if getattr(old, field) != getattr(new, field):
                         raise StoreError(f"attempt identity/input cannot be rewritten: {field}")
             if not set(previous.result_ids).issubset(run.result_ids):
@@ -350,7 +359,7 @@ class Store:
                 raise StoreError("logical Step history cannot be reset")
             for old, new in zip(previous.calls, run.calls, strict=False):
                 for field in ("id", "tool", "parameters", "step_id", "request_version", "plan_version",
-                              "created_at", "frozen_step", "consumption"):
+                              "created_at", "control_generation", "frozen_step", "consumption"):
                     if getattr(old, field) != getattr(new, field):
                         raise StoreError("Tool call identity/input cannot be rewritten")
                 if old.result_id and (old.result_id != new.result_id or old.state != new.state):
@@ -453,17 +462,19 @@ class Store:
         The callback may reserve an external budget but must not launch work.
         Its fixed Attempt identity precedes all intent/lease/Run publication.
         """
-        with self.run_lock(run.id), self._environment_lock():
+        with self.run_lock(run.id), self.control_lock(run.id), self._environment_lock():
             current = self.load_run(run.id)
             if current.model_dump() != run.model_dump():
                 raise StoreError("stale run snapshot; reload and revalidate")
             if self.read_signal(run.id) in ("pause", "cancel"):
                 raise StoreError("pause/cancel requested before submission")
+            self.check_execution_control(run)
             if run.state not in ("ready", "running", "paused"):
                 raise StoreError(f"run state does not permit a launch: {run.state}")
             plan = self.load_plan(run)
             if plan is None:
                 raise StoreError("scientific execution requires a Plan")
+            plan.validate_request(self.load_request(run))
             actual = next((item for item in plan.steps if item.id == step.id), None)
             if actual is None or actual != step:
                 raise StoreError("step differs from its immutable plan revision")
@@ -492,6 +503,11 @@ class Store:
                     raise StoreError("geometry is not authorized")
             else:
                 self._validate_future_binding(run, step, geometry_artifact_id)
+            from orca_agent.applicability import validate_geometry_consumption
+            try:
+                validate_geometry_consumption(self, run, step, geometry_artifact_id)
+            except ValueError as exc:
+                raise StoreError(str(exc)) from exc
             for dependency in step.depends_on:
                 if not any(a.step_id == dependency and a.result_id for a in run.attempts + run.calls):
                     raise StoreError("dependency has no persisted result")
@@ -524,7 +540,8 @@ class Store:
                 geometry_artifact_id=geometry_artifact_id, input_fingerprint=input_fingerprint,
                 directory=f"runs/{run.id}/steps/{step.id}/attempt-{number:03d}",
                 request_version=run.request_version, plan_version=run.plan_version,
-                permission_version=run.permission.version, frozen_step=step.model_copy(deep=True),
+                permission_version=run.permission.version, control_generation=run.control_generation,
+                frozen_step=step.model_copy(deep=True),
                 consumption={"geometry": {"artifact_id": geometry.id, "sha256": geometry.sha256}},
             )
             if self.path(attempt.directory).exists():
@@ -733,6 +750,7 @@ class Store:
         with self.run_lock(run.id), self.control_lock(run.id):
             if self.load_run(run.id) != run:
                 raise StoreError("stale Run snapshot")
+            self.check_execution_control(run)
             definition = get_tool(tool)
             if "execute_orca" in definition.effects:
                 raise StoreError("scientific calls require a Plan/Step/Attempt")
@@ -769,6 +787,7 @@ class Store:
                 return None
             call = ToolCall(tool=tool, parameters=params, step_id=step.id if step else None,
                             request_version=run.request_version, plan_version=run.plan_version,
+                            control_generation=run.control_generation,
                             frozen_step=step.model_copy(deep=True) if step else None,
                             consumption=consumption or {})
             run.calls.append(call)
@@ -813,7 +832,8 @@ class Store:
     def commit_revision(self, run: Run, plan: Plan | None, *, decision_id: str,
                         basis: dict, request: Request | None = None,
                         user_message_ids: list[str] | None = None,
-                        related_results: list[str] | None = None, fault=None) -> Run:
+                        related_results: list[str] | None = None, fault=None,
+                        semantic_record: dict | None = None) -> Run:
         """Validate, save immutable candidates, then atomically activate one revision."""
         from orca_agent.planning import validate_revision
 
@@ -827,7 +847,8 @@ class Store:
             expected = {"request_version": run.request_version, "plan_version": run.plan_version,
                         "permission_version": run.permission.version,
                         "control_generation": self.read_control(run.id)["generation"]}
-            if basis != expected or self.read_signal(run.id):
+            control_message = semantic_record is not None and semantic_record.get("kind") in {"pause", "cancel"}
+            if basis != expected or (self.read_signal(run.id) and not control_message):
                 raise StoreError("proposal basis is stale or control prevents activation")
             related_results = related_results or []
             if not set(related_results).issubset(run.result_ids):
@@ -837,15 +858,37 @@ class Store:
             if user_message_ids and not set(user_message_ids).issubset(m["id"] for m in messages):
                 raise StoreError("Request revision lacks trusted user messages")
             next_request = request or prior_request
+            if not user_message_ids and any(m["id"] not in run.processed_messages for m in messages):
+                raise ControlChanged("pending user messages prevent Plan activation")
+            if user_message_ids and set(user_message_ids) & set(run.processed_messages):
+                raise StoreError("user message has already been consumed")
             if next_request != prior_request:
                 added = next_request.messages[len(prior_request.messages):]
                 trusted = {m["id"]: m for m in messages}
                 if ({m.get("id") for m in added} != set(user_message_ids or [])
                         or any(m != trusted.get(m.get("id")) for m in added)):
                     raise StoreError("Request revision changed the authenticated user message")
-            validate_revision(prior_request, prior_plan, next_request, plan, run,
-                              user_update=bool(user_message_ids))
-            revising = plan is not None and run.initial_science_steps is not None
+            message_only = (semantic_record is not None and bool(user_message_ids)
+                            and next_request == prior_request and plan == prior_plan)
+            resolved_clarification = (semantic_record or {}).get("resolved_clarification_id")
+            if resolved_clarification is not None:
+                active = self.active_clarification(run)
+                if (not active or resolved_clarification != active["id"] or not user_message_ids
+                        or next_request.version <= prior_request.version
+                        or semantic_record.get("kind") in {"continue", "status", "pause", "cancel"}):
+                    raise StoreError("clarification resolution requires an authenticated new Request")
+            if not message_only:
+                validate_revision(prior_request, prior_plan, next_request, plan, run,
+                                  user_update=bool(user_message_ids),
+                                  authenticated_user_revision=semantic_record is not None)
+            from orca_agent.applicability import validate_direct_geometry
+            for step in plan.steps if plan else []:
+                if "execute_orca" in get_tool(step.tool).effects and step.geometry.artifact_id:
+                    try:
+                        validate_direct_geometry(self, next_request, step)
+                    except ValueError as exc:
+                        raise StoreError(str(exc)) from exc
+            revising = plan is not None and run.initial_science_steps is not None and not message_only
             if revising and run.usage.plan_revisions >= run.budget.plan_revisions:
                 raise BudgetExceeded("plan revision budget exhausted")
             logical = set(run.usage.logical_steps) | {
@@ -855,6 +898,8 @@ class Store:
             record = {"id": decision_id, "basis": basis, "request": next_request.model_dump(mode="json"),
                       "plan": plan.model_dump(mode="json") if plan else None,
                       "related_results": related_results, "user_message_ids": user_message_ids or []}
+            if semantic_record is not None:
+                record["semantics"] = semantic_record
             self._write_json(f"runs/{run.id}/decisions/{decision_id}.json", record, immutable=True)
             if fault:
                 fault("after_revision_saved")
@@ -874,11 +919,19 @@ class Store:
                                       "prior_plan_version": prior_plan.version if prior_plan else None,
                                       "plan_id": updated.plan_id,
                                       "plan_version": updated.plan_version,
-                                      "request_version": updated.request_version})
+                                      "request_version": updated.request_version,
+                                      "user_message_ids": user_message_ids or []})
+            if semantic_record is not None:
+                updated.decisions[-1]["semantics"] = semantic_record
             updated.processed_feedback = list(dict.fromkeys(updated.processed_feedback + related_results))
             updated.processed_messages = list(dict.fromkeys(updated.processed_messages + (user_message_ids or [])))
             updated.control_generation = basis["control_generation"]
             updated.state = "ready" if plan else "waiting_user"
+            if semantic_record:
+                if semantic_record.get("kind") == "status":
+                    updated.state = run.state
+                elif semantic_record.get("kind") in {"pause", "cancel"}:
+                    updated.state = "paused" if semantic_record["kind"] == "pause" else "cancelled"
             if next_request != prior_request:
                 updated.goal_status = {goal.id: "insufficient_evidence" for goal in next_request.goals}
                 updated.delivery_status = "pending"
@@ -989,17 +1042,54 @@ class Store:
         data = self._read_json(relative) if self.path(relative).exists() else {}
         return {"action": None, "generation": 0, "messages": [], **data}
 
-    def enqueue_message(self, run_id: str, text: str) -> str:
+    def active_clarification(self, run: Run) -> dict | None:
+        """Read the durable question until a grounded user revision resolves it."""
+        active = None
+        for decision in run.decisions:
+            if decision.get("action") == "clarify":
+                parameters = decision["parameters"]
+                active = {"id": decision["id"], "basis": decision["basis"],
+                          "questions": list(parameters["questions"]),
+                          "unresolved": list(parameters["unresolved"])}
+            elif active:
+                semantics = decision.get("semantics", {})
+                if (semantics.get("resolved_clarification_id") == active["id"]
+                        and decision.get("user_message_ids")
+                        and decision.get("request_version", 0) > active["basis"]["request_version"]
+                        and semantics.get("kind") not in {"continue", "status", "pause", "cancel"}):
+                    active = None
+        return active
+
+    def check_execution_control(self, run: Run) -> None:
+        """Check under the short control lock; never acknowledge messages here."""
+        with self.control_lock(run.id):
+            control = self.read_control(run.id)
+            if (control["generation"] != run.control_generation
+                    or any(m["id"] not in run.processed_messages for m in control["messages"])):
+                raise ControlChanged("unabsorbed user/control generation prevents a new Tool action")
+            if run.state in {"paused", "cancelled"}:
+                raise ControlChanged("paused or cancelled Run prevents a new Tool action")
+            if self.active_clarification(run):
+                raise ControlChanged("unanswered clarification prevents a new Tool action")
+            if self.load_request(run).unresolved:
+                raise ControlChanged("unresolved user conditions prevent a new Tool action")
+
+    def enqueue_message(self, run_id: str, text: str, *, update: dict | None = None) -> str:
         if not text.strip() or len(text.encode("utf-8")) > 8192:
             raise StoreError("user message must be nonempty and at most 8 KiB")
-        self.load_run(run_id)
         with self.control_lock(run_id):
+            run = self.load_run(run_id)
             control = self.read_control(run_id)
             if len(control["messages"]) >= 24:
                 raise BudgetExceeded("user message limit exhausted")
             message_id = new_id("message")
             control["messages"].append({"id": message_id, "text": text,
                                         "source": "user", "created_at": utc_now().isoformat()})
+            control["messages"][-1]["request_version"] = run.request_version
+            if update is not None:
+                if not isinstance(update, dict) or len(_json_bytes(update)) > 65536:
+                    raise StoreError("user update must be an object of at most 64 KiB")
+                control["messages"][-1]["update"] = update
             control["generation"] += 1
             self._write_json(f"runs/{run_id}/control.json", control)
             return message_id
