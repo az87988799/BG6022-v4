@@ -50,9 +50,11 @@ def test_real_n05_proposals_require_notice_in_questions_without_changing_request
         feedback={"validation_error": {"category": "ProposalError", "requirement": error}})
     data = payload(prepared)
     instruction = data["ACTION_PARAMETERS"]["normalize_request"]["instruction"]
-    assert "including detected unsupported scope" in instruction
-    assert "visible text in questions" in instruction
-    assert "clarification or scope notice" in instruction and "do not reconfirm" in instruction
+    policy = data["ACTION_PARAMETERS"]["normalize_request"]["questions_policy"]
+    assert "science_scope: capability limits, not permission/defaults" in instruction
+    assert "program-detected" in policy and "visible questions text" in policy
+    assert "unsupported scope/known missing resources as notices" in policy
+    assert "do not request resources or reconfirm/change explicit choices" in policy
     assert data["CONTROL"]["validation_error"]["requirement"] == error
     assert prepared.input_token_bound <= run.budget.input_tokens == 12000
 

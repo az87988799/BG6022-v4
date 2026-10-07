@@ -19,6 +19,8 @@ from orca_agent.tools.evidence import (
 )
 from orca_agent.versions import CURRENT_CHECK_VERSION
 
+SCIENCE_COMPOSITIONS = {"H2O": {"H": 2, "O": 1}, "CH4": {"C": 1, "H": 4}}
+
 
 class SinglePointParameters(CalculationParameters):
     timeout_seconds: Annotated[float, Field(gt=0, le=300)] = 300
@@ -228,7 +230,7 @@ def validate_geometry(
     if electrons <= 0 or electrons % 2 != (parameters.multiplicity - 1) % 2:
         raise ValueError("electron count is incompatible with the explicitly supplied multiplicity")
     composition = Counter(atom[0] for atom in atoms)
-    if composition not in ({"H": 2, "O": 1}, {"H": 4, "C": 1}):
+    if composition not in SCIENCE_COMPOSITIONS.values():
         raise ValueError("only the frozen H2O and CH4 compositions are admitted")
     for index, atom in enumerate(atoms):
         for other in atoms[:index]:

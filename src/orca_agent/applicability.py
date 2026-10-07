@@ -291,10 +291,10 @@ def direct_applicability(store, request, goal, result):
             from collections import Counter
 
             from orca_agent.models import CalculationParameters
-            from orca_agent.tools.registry import validate_geometry
+            from orca_agent.tools.registry import SCIENCE_COMPOSITIONS, validate_geometry
             counts = Counter(atom[0] for atom in validate_geometry(
                 store.artifact_path(wanted).read_text(encoding="utf-8"), CalculationParameters()))
-            declared = {"H2O": {"H": 2, "O": 1}, "CH4": {"C": 1, "H": 4}}.get(system.conditions["system"])
+            declared = SCIENCE_COMPOSITIONS.get(system.conditions["system"])
             if declared != counts:
                 assessment["reasons"].append("target_system_composition_mismatch")
     relation = goal.conditions.get("geometry_relation")

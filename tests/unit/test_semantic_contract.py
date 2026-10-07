@@ -32,8 +32,8 @@ from tests.helpers.phase_b_model_cases import (
 def test_query_schemas_come_from_registry_and_only_permitted_read_tools():
     contract = action_parameters(["evidence.text", "orca.sp"])["normalize_request"]
     assert contract["query_schemas"] == {"text_window": _schema(get_tool("evidence.text").parameter_schema)}
-    listed_ports = contract["instruction"].split("Goal ports:", 1)[1].split(".", 1)[0].split(",")
-    assert set(listed_ports) == set(RULES) - {"unresolved"}
+    assert "Goal ports are minimum_evidence_rules.port_rules keys" in contract["instruction"]
+    assert set(contract["minimum_evidence_rules"]["port_rules"]) == set(RULES) - {"unresolved"}
     assert contract["minimum_evidence_rules"]["port_rules"] == {
         port: rule for port, rule in RULES.items() if port != "unresolved"}
     assert not action_parameters()["normalize_request"]["query_schemas"]

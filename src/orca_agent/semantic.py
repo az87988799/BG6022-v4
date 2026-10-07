@@ -10,7 +10,7 @@ from typing import Any, Literal, get_args
 
 from pydantic import Field, ValidationError
 
-from orca_agent.applicability import canonical_condition
+from orca_agent.applicability import PROFILE, canonical_condition
 from orca_agent.context import _schema
 from orca_agent.minimum_evidence import LEGACY_NAMES, REQUIREMENTS
 from orca_agent.minimum_evidence import RULE_VERSION as MINIMUM_EVIDENCE_VERSION
@@ -19,7 +19,7 @@ from orca_agent.models import Goal, Identifier, Record, Request
 from orca_agent.natural import _authorized_geometry, _missing_information
 from orca_agent.proposals import ProposalError, _schema_error
 from orca_agent.store import StoreError
-from orca_agent.tools.registry import catalog, get_tool, validate_parameters
+from orca_agent.tools.registry import SCIENCE_COMPOSITIONS, catalog, get_tool, validate_parameters
 
 VERSION = "request-semantics-1"
 ConditionName = Literal["method", "basis", "charge", "multiplicity", "electronic_state", "environment",
@@ -115,28 +115,34 @@ def action_parameters(allowed_tools=(), *, request=None):
         schema["anyOf"] = [{"properties": {"goals": {"type": "null"}}},
                            {"properties": {"goal_bindings": new_goal_binding_schema}}]
     port_rules = {port: rule for port, rule in RULES.items() if port != "unresolved"}
-    ports = ",".join(port_rules)
     return {"normalize_request": {
         "instruction": "Normalize user messages before planning. "
-        f"Goal ports:{ports}. query follows query_schemas[port]. "
+        "Goal ports are minimum_evidence_rules.port_rules keys; query follows query_schemas[port]. "
         "Use environment for gas/solvent. condition_lexicon[field] rows=[value,explicit aliases], not inference. "
-        "electronic_state means RHF/UHF reference, not ground/excited; RHF is explicit. "
-        "Use registered System.geometry_artifact_id via system_refs; never put geometry in conditions. "
+        "electronic_state means RHF/UHF reference, not ground/excited. "
+        "Use System.geometry_artifact_id via system_refs; never put geometry in conditions. "
         "explain_results is existing configuration; keep. "
-        "minimum_evidence defaults to []; port checks apply. See minimum_evidence_rules. "
-        "Keep only actual user unsupported/unknown requirements verbatim/unresolved; never invent rule names. "
+        "minimum_evidence defaults to []; checks apply. See minimum_evidence_rules. "
+        "Keep actual user unsupported/unknown requirements verbatim/unresolved; never invent rule names. "
         "Energy requires geometry_relation=fixed_initial (single point) or optimized (after optimization). "
         "Unknown/inferred settings:Candidate.conditions/system_conditions. "
-        "Energy needs no temperature_K/standard_state gap unless the user requires them. Absent unit:unknown. "
-        "Scope:H2O/CH4,RHF/STO-3G,neutral singlet,gas,SP/Opt; never default unsupported/unknown. "
+        "Energy needs temperature_K/standard_state only if requested. Absent unit:unknown. "
+        "science_scope: capability limits, not permission/defaults; keep unsupported/unknown. "
         "No execution. Copy AUTHORITY.pending_user_message_ids. "
         "Verbatim text_basis: no translation, paraphrase or added parentheses. "
-        "normalize replaces initial raw_request/missing:goal_definition with actual requested Goals, "
-        "also after clarification. Registration-only/no-execution limits are not extra Goals. amend retains goals; "
+        "normalize replaces raw_request/missing:goal_definition with requested Goals, "
+        "even after clarification. Registration/no-execution is not a Goal. amend retains goals; "
         "New Goals use system_refs; goal_bindings uses existing Goal.id, not with goals. "
         "replace_goals requires explicit replacement and all old IDs. "
-        "New gaps, including detected unsupported scope, need visible text in questions: clarification or scope notice. "
-        "Keep explicit choices; do not reconfirm them. gaps:field:<field>/system:<goal_id>; resolves must match answers.",
+        "gaps:field:<field>/system:<goal_id>; resolves must match answers.",
+        "science_scope": {"systems": list(SCIENCE_COMPOSITIONS), "conditions": dict(PROFILE),
+                          "ports": sorted({port for tool in catalog() if "execute_orca" in tool["effects"]
+                                           for port in tool["output_ports"]})},
+        "questions_policy": (
+            "New gaps, even program-detected, need visible questions text. "
+            "For registration only, state unsupported scope/known missing resources as notices; "
+            "do not request resources or reconfirm/change explicit choices. "
+            "Ask for critical unknowns in conditions/identity/quantity."),
         "schema": schema,
         "condition_lexicon": {field: [[value, aliases] for (name, value), aliases in LEXICAL_ALIASES.items()
                                       if name == field] for field in dict.fromkeys(name for name, _ in LEXICAL_ALIASES)},

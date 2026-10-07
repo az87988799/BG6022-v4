@@ -39,14 +39,14 @@ def test_actual_v3_placeholder_shape_still_rejects_and_only_test_authored_correc
     contract = data["ACTION_PARAMETERS"]["normalize_request"]
     assert prepared.input_token_bound <= 12000
     assert "PLAN_RULES" not in data and "PLAN_REFERENCES" not in data
-    assert "normalize replaces initial raw_request/missing:goal_definition with actual requested Goals" in contract[
+    assert "normalize replaces raw_request/missing:goal_definition with requested Goals" in contract[
         "instruction"]
-    assert "Registration-only/no-execution limits are not extra Goals" in contract["instruction"]
-    assert "only actual user unsupported/unknown requirements" in contract["instruction"]
+    assert "Registration/no-execution is not a Goal" in contract["instruction"]
+    assert "actual user unsupported/unknown requirements" in contract["instruction"]
     assert "preserve goals.unresolved" not in contract["instruction"]
     assert "normalize defines raw_request" not in contract["instruction"]
-    ports = contract["instruction"].split("Goal ports:", 1)[1].split(".", 1)[0].split(",")
-    assert set(ports) == set(contract["minimum_evidence_rules"]["port_rules"]) == set(RULES) - {"unresolved"}
+    assert "Goal ports are minimum_evidence_rules.port_rules keys" in contract["instruction"]
+    assert set(contract["minimum_evidence_rules"]["port_rules"]) == set(RULES) - {"unresolved"}
     # Removing the unjustified extra Goal is a developer-authored correction;
     # production must neither silently remove it nor count this as a live pass.
     proposed["goals"] = proposed["goals"][:1]

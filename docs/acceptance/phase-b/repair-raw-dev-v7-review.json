@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "category": "real_model_development",
+  "status": "failed",
+  "code_commit": "2d9b685aa5f81f32dcdaab7e86fdd8141738a608",
+  "prompt_version": "agent-json-v11",
+  "freeze_label": "repair-raw-dev-v7",
+  "entries": [
+    {
+      "variant_id": "N-05/raw-unsupported-solvent",
+      "run_id": "run_21d13ba4b66b4a9b82d79baeceb4c0a1",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 2,
+      "tokens": 7543,
+      "tokens_unknown": 0,
+      "accepted_proposals": 1,
+      "rejected_proposals": 1,
+      "all_proposal_facts_passed": true,
+      "semantic_review_passed": false,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "passed",
+        "source": "passed",
+        "limits": "passed",
+        "next_action": "failed"
+      },
+      "failed_axis_evidence": {
+        "next_action": {
+          "quote": "请确认是否接受此范围限制，或改为气相（gas）等其他受支持环境。",
+          "rationale": "The user already explicitly said to retain water solvent, not switch to gas, and only register without execution. This question reopens an explicit choice rather than identifying a missing fact needed for the current scope. A truthful unsupported-scope notice does not require this confirmation or alternate-environment request."
+        }
+      },
+      "mechanical_assertions": {
+        "passed": 6
+      },
+      "failed_mechanical_metrics": [],
+      "scientific_facts": {
+        "run_state": "waiting_user",
+        "normalization_status": "clarification",
+        "goal_status": {
+          "goal_energy": "insufficient_evidence"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 0,
+        "results": 0,
+        "scientific_outputs": 0
+      },
+      "scope": "正确登记固定初始几何电子能与explicit water_solvent，未改成气相；首次缺少可见能力限制说明被拒，修正后接受并保留水溶剂不支持的缺口。但已接受说明又请求确认范围或改gas，违背本轮仅登记且明确不改气相的范围，next_action失败。",
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v7/N-05__raw-unsupported-solvent/1/review.json",
+          "sha256": "03faf45f3511c30af02402753a53180640e3e4b45709730ed7974110f80c5f73"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v7/N-05__raw-unsupported-solvent/1/metadata.json",
+          "sha256": "b3192cf37b29e4044e516550e4767c767aa858e598941e4e6eaeeed31d131b4d"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v7/N-05__raw-unsupported-solvent/1/execution.json",
+          "sha256": "f6ef66152cc3069a563396e672bf7f0d7a567aa6cc57f4fb76dee20aea52148f"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v7/N-05__raw-unsupported-solvent/1/grade.json",
+          "sha256": "d35870af9b2e3deb18d996e80ae17dc1744c8f44f78ab832655e6cf86c18ae43"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v7/N-05__raw-unsupported-solvent/1/grade.before-independent-review.json",
+          "sha256": "db94c4a4e00607e12b8a39f4c73ad27382328aac72a23f3a43736741d6eef982"
+        }
+      }
+    },
+    {
+      "variant_id": "N-06/raw-unsupported-system",
+      "run_id": "run_97e8f3c36b804fef918b082b4e8248c5",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 1,
+      "tokens": 3346,
+      "tokens_unknown": 0,
+      "accepted_proposals": 1,
+      "rejected_proposals": 0,
+      "all_proposal_facts_passed": true,
+      "semantic_review_passed": false,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "passed",
+        "source": "passed",
+        "limits": "failed",
+        "next_action": "failed"
+      },
+      "failed_axis_evidence": {
+        "limits": {
+          "quote": "limits:registration-only,no execution,no registered ethanol geometry",
+          "rationale": "These statements are true but incomplete: the product scope supplied to the model is H2O/CH4, so ethanol is unsupported independently of the absent geometry. The explanation does not disclose that capability limitation and cannot be read as a complete account of what blocks execution."
+        },
+        "next_action": {
+          "quote": "未登记乙醇几何结构：请提供乙醇的初始几何（或确认使用何种来源），否则无法进行几何优化。",
+          "rationale": "The current user request explicitly only registers requirements and says no ethanol geometry is registered. Asking for a geometry to optimize is not needed to complete this round, and it does not address the undisclosed ethanol capability limit. The statement is not credited as a claim that geometry alone would suffice; the failure is scope/capability completeness."
+        }
+      },
+      "mechanical_assertions": {
+        "passed": 7
+      },
+      "failed_mechanical_metrics": [],
+      "scientific_facts": {
+        "run_state": "waiting_user",
+        "normalization_status": "clarification",
+        "goal_status": {
+          "goal_optimized_geometry": "insufficient_evidence",
+          "goal_energy": "insufficient_evidence"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 0,
+        "results": 0,
+        "scientific_outputs": 0
+      },
+      "scope": "保留乙醇优化及优化后电子能、正确显式物理条件和未知显示单位，没有虚构或替换几何/体系。已接受说明只提未登记几何，未说明乙醇本身超出H2O/CH4能力范围，且在仅登记本轮追问提供几何，limits及next_action失败。",
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v7/N-06__raw-unsupported-system/1/review.json",
+          "sha256": "edc2dc5f953d56cf4037551f70a32c855ce535e08176c20f57cc4ea7bc6a2c55"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v7/N-06__raw-unsupported-system/1/metadata.json",
+          "sha256": "b6289d15b97c8142b4251e29da354bfd27a52c3aef32301dee7e23c1a23e62b2"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v7/N-06__raw-unsupported-system/1/execution.json",
+          "sha256": "73c26aea956310d283c02986f560efaf370d134c406e0d2537c16174da95dd17"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v7/N-06__raw-unsupported-system/1/grade.json",
+          "sha256": "d6ef9378bc4b218d0746a8751d03e80c76019440fcc69a53e4f5fa77d8d91843"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-raw-dev-v7/N-06__raw-unsupported-system/1/grade.before-independent-review.json",
+          "sha256": "efd5ba9e8b499eaf7ea0fb9fdef864ae7c4eb05c3aaeed2220206339a2b13cd1"
+        }
+      }
+    }
+  ],
+  "totals": {
+    "completed_slots": 2,
+    "passed": 0,
+    "failed": 2,
+    "http_requests": 3,
+    "tokens": 10889,
+    "tokens_unknown": 0,
+    "known_usd": "0.0049911",
+    "orca_starts": 0
+  },
+  "cumulative_budget_snapshot": {
+    "observed_at_utc": "2026-10-07T06:31:28.551787+00:00",
+    "path": "data/phase-b/batch-ledger.json",
+    "sha256": "9d948c46527c6463db6eb5411c03f9ae5684bf79bb96c463319c4cd2cdaa24cc",
+    "read_only_verified": true,
+    "model_usage": {
+      "http_requests": 263,
+      "tokens": 800405,
+      "usd": "0.3141357",
+      "known_tokens": 800405,
+      "unknown_tokens": 0,
+      "known_usd": "0.3141357",
+      "unknown_usd": "0"
+    },
+    "science_counts": {
+      "reference": {
+        "reserved": 16,
+        "actual": 16,
+        "unknown": 0
+      },
+      "development": {
+        "reserved": 26,
+        "actual": 26,
+        "unknown": 0
+      },
+      "formal": {
+        "reserved": 0,
+        "actual": 0,
+        "unknown": 0
+      }
+    },
+    "science_total_reserved": 42,
+    "science_total_actual": 42,
+    "limits": {
+      "orca_starts": {
+        "reference": 16,
+        "formal": 48,
+        "development": 48,
+        "total": 112
+      },
+      "model": {
+        "http_requests": 1004,
+        "tokens": 6500000,
+        "usd": 10
+      }
+    }
+  },
+  "limitation": "仅为本批N05/N06两个开发槽的证据索引和独立评审，不是正式验收或用户验收。机械项全部通过且显式科学事实正确，不能替代语义和最终解释审查：N05下一步失败，N06限制及下一步失败；两槽均未产生科学输出。保存首次被拒提案及修正成本，不把程序接受当作语义通过，也不把拒绝本身判为事实错误。开发门槛尚未通过。本次汇总没有新增HTTP/ORCA，没有改动槽文件、Run、收据或账本。"
+}

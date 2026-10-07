@@ -19,7 +19,7 @@ from orca_agent.llm import PreparedRequest, prepare_request
 from orca_agent.models import Plan, Proposal, Request, Result, Run, utc_now
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v11"
+PROMPT_VERSION = "agent-json-v12"
 REASON_TEMPLATE = (
     "quantity:<targets>;unit:<stated/unknown>;conditions:<values/gaps>;"
     "source:<refs>;limits:<evidence/budget>;next:<action>")
