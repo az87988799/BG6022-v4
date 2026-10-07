@@ -135,7 +135,8 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
         "[] minimum_evidence retains basic checks. "
         "condition_lexicon=[value,explicit aliases]; environment=gas/solvent, electronic_state=RHF/UHF. "
         "Preserve unknown/unsupported requirements and explain_results. Unknown/inferred fields belong "
-        "in conditions/system_conditions. Energy relation: fixed_initial=SP, optimized=after Opt; "
+        "in conditions/system_conditions. Electronic energy needs energy Goals; keys/reasons/geometry Goals cannot substitute. "
+        "Energy relation: fixed_initial=SP, optimized=after Opt; "
         "temperature/standard_state only if requested; absent display unit stays unknown without a question. "
         "Copy pending_user_message_ids; quote unique verbatim text_basis with matching field/target scope. "
         "normalize defines goals and retires raw_request/missing:goal_definition. amend retains goals; "
@@ -547,6 +548,128 @@ def _text_geometry_relation(request, messages, system_ids):
     return next(iter(selected)) if len(selected) == 1 else None
 
 
+_ELECTRONIC_ENERGY = re.compile(
+    r"电子能(?:量)?|单点能|\b(?:electronic|single[- ]point|sp)\s+energ(?:y|ies)\b", re.I)
+_GOAL_REPLACEMENT = (
+    r"(?:改|换)(?:成|为)|替换|撤回.{0,24}目标|取消.{0,24}目标|"
+    r"(?:replace\s+.+\s+with|change\s+.+\s+to|withdraw\s+.+goal)")
+_NEGATED_GOAL_CHANGE = (
+    r"(?:不(?=取消|撤回)|不要|不得|不许|禁止|别|不再|不想|do\s+not|don't|never)"
+    r"[^，。！？,.;\n]{0,20}(?:改|换|替|撤|取消|change|replace|withdraw|cancel)")
+
+
+def _explicit_goal_replacement(text):
+    """A changed condition is not authorization to replace physical goals."""
+    for _, _, clause in _propositions(text):
+        if not re.search(_GOAL_REPLACEMENT, clause, re.I) or re.search(_NEGATED_GOAL_CHANGE, clause, re.I):
+            continue
+        if re.search(r"(?:方法|基组|电荷|多重度|电子态|环境|溶剂|温度|标准态|"
+                     r"\b(?:method|basis|charge|multiplicity|state|environment|solvent|temperature|conditions?)\b)"
+                     r"\s*(?:明确|仅|只)?\s*(?:改|换|替换|change|replace)", clause, re.I):
+            continue
+        if re.search(r"\b(?:change|replace)\s+.{0,40}\b(?:method|basis|charge|multiplicity|state|"
+                     r"environment|solvent|temperature|conditions?)\s+(?:to|with)\b", clause, re.I):
+            continue
+        if re.search(r"目标|物理量|电子能|能量|几何|结构|\b(?:goals?|quantity|energy|geometry|structure)\b",
+                     clause, re.I) or _mentions(clause, targets=True):
+            return True
+    return False
+
+
+def _explicit_energy_requests(request, messages):
+    """Bounded affirmative electronic-energy obligations, not a general parser.
+
+    Use full user propositions and the same identity/solvent and relation
+    lexicons as grounding. A model's Goal key or clipped quote is not input.
+    """
+    obligations = []
+    carry = set()
+    relations = {}
+    for message in messages:
+        for start, end, clause in _propositions(message["text"]):
+            if re.search(r"[?？]|是否|能否|\bwhether\b", clause, re.I):
+                continue
+            # Separate independently requested quantities/targets, retaining
+            # conjunctions inside a shared target list (water and methane).
+            boundaries = [match for match in re.finditer(r"\b(?:and|but)\b|但是|但|而|并且", clause, re.I)
+                          if re.search(r"给出|报告|计算|优化|登记|执行|启动|运行|方法|基组|电荷|多重度|"
+                                       r"几何|结构|\b(?:report|calculate|optimi[sz]e|register|execute|run|start|method|basis|charge|multiplicity|geometry|structure)\b",
+                                       clause[match.end():], re.I)]
+            positions = [0, *(match.end() for match in boundaries)]
+            ends = [*(match.start() for match in boundaries), len(clause)]
+            for left, right in zip(positions, ends, strict=True):
+                part = clause[left:right]
+                names = {item[2] for item in _mentions(part, targets=True)}
+                if names:
+                    carry = names
+                targets = names or carry
+                withdrawn = (re.search(r"(?:取消|撤回).{0,24}目标|\b(?:cancel|withdraw).{0,40}goal\b", part, re.I)
+                             and not re.search(_NEGATED_GOAL_CHANGE, part, re.I))
+                if withdrawn and _ELECTRONIC_ENERGY.search(part):
+                    # Explicit cancellation retires earlier matching quantity
+                    # requests even during first normalization of several messages.
+                    prior_targets = {item["target"] for item in obligations}
+                    all_targets = bool(re.search(r"所有|全部|\ball\b", part, re.I))
+                    retired = names or (prior_targets if all_targets or len(prior_targets) == 1 else set())
+                    obligations = [item for item in obligations if item["target"] not in retired]
+                    continue
+                if _explicit_goal_replacement(part):
+                    obligations = []
+                # Questions, alternatives and negated requests are not positive
+                # obligations. Independent no-execution clauses do not erase a
+                # preceding requested physical quantity.
+                quantity_text = re.sub(
+                    r"不(?:要|再|得)?(?:执行|运行|启动)(?:任何)?(?:计算|程序|任务)|"
+                    r"\bwithout\s+(?:executing|running|starting)\s+(?:any\s+)?(?:calculations?|computations?|orca|jobs?)\b",
+                    " ", part, flags=re.I)
+                if re.search(r"不要|不得|不(?:再|必|需|想)?(?:给出|报告|计算|提供|登记|记录|要求|需要)|"
+                             r"无[须需]|或者|也许|可能需要|\b(?:not|no|never|without|if|either|or|maybe|perhaps)\b|n't\b",
+                             quantity_text, re.I):
+                    continue
+                relation = _text_geometry_relation(request, [{"text": part}], [])
+                if relation:
+                    for target in targets or {None}:
+                        relations[target] = relation
+                if not _ELECTRONIC_ENERGY.search(part):
+                    continue
+                # Only explicit imperatives or compact requested-quantity names
+                # are covered; mentions in explanations are outside this rule.
+                if not re.search(r"给出|报告|计算|算|登记|记录|需要|要求|求|\b(?:report|give|calculate|compute|register|need|want)\b",
+                                 part, re.I) and not re.fullmatch(
+                                     r"\s*(?:[\w -]+的)?(?:单点|优化后的)?电子能(?:量)?\s*", part):
+                    continue
+                for target in targets or {None}:
+                    obligations.append({"target": target, "geometry_relation": relation or relations.get(target),
+                                        "message_id": message.get("id"),
+                                        "start": start + left, "end": start + right})
+    return obligations
+
+
+def _require_energy_coverage(candidate, request, messages, goals):
+    missing = []
+    def goal_targets(goal):
+        known = goal.identity.get("canonical_names", [])
+        # Coverage has independently grounded the target in user text. An
+        # already validated system binding can match that target across messages;
+        # registry uniqueness alone never creates a new target obligation.
+        return set(known) if known else {_registered_identity(system) for system in request.systems
+                                         if system.id in goal.system_ids}
+    for obligation in _explicit_energy_requests(request, messages):
+        if any(goal.port == "energy" and goal.required
+               and (obligation["target"] is None
+                    or goal_targets(goal) == {obligation["target"]})
+               and (obligation["geometry_relation"] is None
+                    or goal.conditions.get("geometry_relation") == obligation["geometry_relation"])
+               for goal in goals):
+            continue
+        missing.append(obligation)
+    if missing:
+        raise ProposalError("Preserve each explicit electronic-energy request as a required energy Goal "
+                            "with its named target and stated geometry relation; a key, reason or "
+                            "optimized_geometry Goal cannot substitute.",
+                            path=["parameters", "goals"], missing_energy_requests=missing)
+
+
 def _goals(candidate, request, messages, *, text_input=False):
     systems = {s.id for s in request.systems}
     goals = []
@@ -621,7 +744,47 @@ def _goals(candidate, request, messages, *, text_input=False):
                                         if member else identity), text_evidence=text_evidence))
     if not goals or len(goals) > 8:
         raise StoreError("normalization requires one to eight bounded goals")
+    _require_energy_coverage(candidate, request, messages, goals)
     return goals
+
+
+def _registration_blocking_gaps(request, gaps):
+    """Known scope/geometry limits remain facts, not a demand for a reply."""
+    blocking = set()
+    for gap in gaps:
+        parts = gap.split(":")
+        if parts[0] in {"missing", "unconfirmed", "unknown", "field", "ambiguous"}:
+            field = next((part for part in parts[1:] if part in PHYSICAL), None)
+            if field:
+                scopes = [system for system in request.systems if system.id in parts[1:]] or [None]
+                for system in scopes:
+                    value = (system.conditions.get(field, getattr(request, field, request.conditions.get(field)))
+                             if system else getattr(request, field, request.conditions.get(field)))
+                    source = (system.conditions_source.get(field, request.conditions_source.get(field))
+                              if system else request.conditions_source.get(field))
+                    if value is None or source in {"unknown", "inferred"}:
+                        blocking.add(gap)
+            elif gap in {"unknown:quantity", "field:quantity"}:
+                if any(goal.port == "unresolved" for goal in request.goals):
+                    blocking.add(gap)
+            elif gap in {"unknown:query", "field:query"}:
+                if any(goal.port == "unresolved" or (goal.port in READ_TOOLS and not goal.conditions.get("query"))
+                       for goal in request.goals):
+                    blocking.add(gap)
+            elif gap == "missing:goal_definition" and any(
+                    goal.port == "unresolved" and not any(
+                        item.startswith("unsupported_quantity:") and item != "unsupported_quantity:unresolved"
+                        for item in goal.unresolved) for goal in request.goals):
+                blocking.add(gap)
+        elif gap in {"ambiguous_system", "ambiguous_pronoun"} or gap.startswith("system:"):
+            goals = [goal for goal in request.goals if not gap.startswith("system:")
+                     or goal.id == gap.removeprefix("system:")]
+            if any(not goal.identity.get("canonical_names") and not goal.system_ids for goal in goals):
+                blocking.add(gap)
+        elif gap == "ambiguous_geometry_relation" and any(
+                goal.port == "energy" and not goal.conditions.get("geometry_relation") for goal in request.goals):
+            blocking.add(gap)
+    return blocking
 
 
 def _communication(candidate, request, messages, gaps):
@@ -639,9 +802,7 @@ def _communication(candidate, request, messages, gaps):
             scope = "read_only"
         elif re.search(r"(?:现在|开始|请)(?:执行|运行|计算)|\b(?:execute|run|compute)\s+now\b", text, re.I):
             scope = "science"
-    blocking = {gap for gap in gaps if scope != "registration_only" or gap.startswith(
-        ("unconfirmed:", "unknown:", "field:", "ambiguous", "system:", "missing:goal_definition",
-         "missing:charge", "missing:multiplicity", "missing:method", "missing:basis"))}
+    blocking = _registration_blocking_gaps(request, gaps) if scope == "registration_only" else gaps
     if set(candidate.question_gaps) - set(candidate.questions):
         raise ProposalError("question_gaps keys must be the exact supplied questions.",
                             path=["parameters", "question_gaps"])
@@ -678,6 +839,10 @@ def _communication(candidate, request, messages, gaps):
         if re.search(r"[?？]|请(?:提供|确认)|\bplease\s+(?:provide|confirm)\b", notice, re.I):
             raise ProposalError("Notices cannot ask for a required reply; use a question with its gap.",
                                 path=["parameters", "notices"])
+    if scope == "registration_only" and blocking and not associations:
+        raise ProposalError("Critical unknowns needed to register the request require an actual question "
+                            "associated with an existing blocking gap; notices alone cannot await a reply.",
+                            path=["parameters", "questions"], blocking_gaps=sorted(blocking))
     return {"questions": candidate.questions, "notices": candidate.notices,
             "question_gaps": associations, "delivery_scope": scope,
             "awaiting_reply": bool(blocking)}
@@ -735,13 +900,8 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
         if set(candidate.replaces) != {g.id for g in request.goals}:
             raise StoreError("user replacement must identify every superseded goal")
         whole_messages = "\n".join(message["text"] for message in pending)
-        negated = re.search(r"(?:不要|不得|不许|禁止|别|不再|不想|do\s+not|don't|never)"
-                            r"[^，。！？,.;\n]{0,20}(?:改|换|替|撤|取消|change|replace|withdraw)",
-                            whole_messages, re.I)
-        explicit_replacement = re.search(
-            r"(?:改|换)(?:成|为)|替换|撤回.{0,24}目标|取消.{0,24}目标|"
-            r"(?:replace\s+.+\s+with|change\s+.+\s+to|withdraw\s+.+goal)",
-            whole_messages, re.I)
+        negated = re.search(_NEGATED_GOAL_CHANGE, whole_messages, re.I)
+        explicit_replacement = _explicit_goal_replacement(whole_messages)
         if negated or not explicit_replacement:
             raise StoreError("goal replacement requires an explicit user replacement phrase")
     from orca_agent.natural import bind_text_identity

@@ -26,7 +26,7 @@ from orca_agent.proposals import (
 )
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v19"
+PROMPT_VERSION = "agent-json-v20"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SYSTEM_PROMPT = """JSON; reason<=1000. Program gates execution/science/goals.

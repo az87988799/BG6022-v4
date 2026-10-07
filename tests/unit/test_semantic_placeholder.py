@@ -271,14 +271,13 @@ def test_actual_n06_sentinel_replay_keeps_bad_questions_and_original_failed_revi
     parameters = copy.deepcopy(reply.proposal["parameters"])
     parameters["message_ids"] = [store.read_control(fresh.id)["messages"][0]["id"]]
     parameters = current_candidate(parameters)
-    updated = commit_candidate(store, fresh, parameters, decision_id="replay_n06_sentinel",
-                               basis=current_basis(store, fresh))
-    request = store.load_request(updated)
-    assert "missing:goal_definition" not in request.unresolved
-    assert "system:ethanol" in request.unresolved and request.normalization_status == "clarification"
-    assert all("missing:geometry" in goal.unresolved for goal in request.goals)
-    assert updated.decisions[-1]["semantics"]["questions"] == reply.proposal["parameters"]["questions"]
-    assert "missing:goal_definition" in updated.decisions[-1]["semantics"]["candidate"]["unresolved"]
-    assert not updated.calls and not updated.attempts and not updated.model_records
-    assert updated.usage.model_calls == updated.usage.orca_starts_actual == 0
+    # The old accepted state is evidence, not permission to reactivate its
+    # unsupported-resource confirmation under the strengthened current rule.
+    current_before = store.load_run(fresh.id).model_dump_json(), store.load_request(fresh).model_dump_json()
+    with pytest.raises(ProposalError, match="current delivery scope"):
+        commit_candidate(store, fresh, parameters, decision_id="replay_n06_sentinel",
+                         basis=current_basis(store, fresh))
+    assert (store.load_run(fresh.id).model_dump_json(), store.load_request(fresh).model_dump_json()) == current_before
+    assert parameters["questions"] == reply.proposal["parameters"]["questions"]
+    assert "missing:goal_definition" in parameters["unresolved"]
     assert {p: sha256_file(p) for p in before} == before

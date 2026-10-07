@@ -14,6 +14,7 @@ from orca_agent.config import Config
 from orca_agent.context import build_context
 from orca_agent.model_usage import current_basis, read_model_reply
 from orca_agent.natural import initialize_bundle
+from orca_agent.proposals import ProposalError
 from orca_agent.semantic import action_parameters, commit_candidate
 from orca_agent.store import Store, sha256_file
 from tests.helpers.phase_b_model_cases import create_request
@@ -88,17 +89,18 @@ def test_actual_n06_request_rebuilt_with_separate_scope_and_registration_without
     assert not data["TOOL_CATALOG"]
     assert prepared.input_token_bound <= 12000
 
-    # The prompt cannot fix arbitrary model prose: identical semantic input is
-    # still recorded verbatim by the existing validator in an isolated Store.
+    # Historical acceptance/review stays immutable. Current activation now
+    # rejects a resource-confirmation question outside registration-only scope.
     isolated = store_at(tmp_path)
     fresh, _ = create_request(isolated, "N-06/raw-unsupported-system", 1,
         category="development", freeze_label="offline-registration-policy")
     parameters = copy.deepcopy(reply.proposal["parameters"])
     parameters["message_ids"] = [isolated.read_control(fresh.id)["messages"][0]["id"]]
     parameters = current_candidate(parameters)
-    updated = commit_candidate(isolated, fresh, parameters, decision_id="unchanged_bad_notice",
-                               basis=current_basis(isolated, fresh))
-    assert updated.decisions[-1]["semantics"]["questions"] == [original_question]
-    assert not updated.calls and not updated.attempts and not updated.model_records
-    assert updated.usage.model_calls == updated.usage.orca_starts_actual == 0
+    current_before = isolated.load_run(fresh.id).model_dump_json(), isolated.load_request(fresh).model_dump_json()
+    with pytest.raises(ProposalError, match="current delivery scope"):
+        commit_candidate(isolated, fresh, parameters, decision_id="unchanged_bad_notice",
+                         basis=current_basis(isolated, fresh))
+    assert (isolated.load_run(fresh.id).model_dump_json(), isolated.load_request(fresh).model_dump_json()) == current_before
+    assert parameters["questions"] == [original_question]
     assert {path: sha256_file(path) for path in before} == before
