@@ -117,6 +117,7 @@ def timeout_then_success(tmp_path):
         send_model(store, run, prepared, ScriptedTransport(reply), basis=current_basis(store, run),
                    logical_id=f"offline_{number}")
         run.decisions.append({"id": run.model_records[-1]["id"],
+                              "basis": current_basis(store, run),
                               **(proposal if number else {"action": "rejected"})})
         store.save_run(run)
     return store, run

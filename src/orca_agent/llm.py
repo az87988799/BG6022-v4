@@ -155,6 +155,24 @@ class ModelReply:
         return self.usage is not None
 
 
+def proposal_recovery_kind(reply: Mapping[str, Any]) -> str:
+    """Classify recovery without changing the frozen transport failure facts.
+
+    No local configuration adjustment is authorized by a truncated reply. With
+    no retained final text there is no candidate to correct under that same
+    profile/output limit; a restart must not convert that failure into a retry.
+    """
+    category = reply.get("error_category")
+    if category == "truncated" and not (reply.get("raw_content") or "").strip():
+        return "fatal"
+    if category in {"authentication", "permission", "token_bound_exceeded", "credential_in_response",
+                    "response_missing", "redirect_rejected", "response_encoding_rejected"}:
+        return "fatal"
+    if category in {"rate_limit", "timeout", "connection", "transport_error", "http_error"}:
+        return "transport" if reply.get("retryable") else "fatal"
+    return "correction"
+
+
 def _has_credential(text: str) -> bool:
     secret = os.environ.get("DEEPSEEK_API_KEY")
     return bool((secret and secret in text) or _CREDENTIAL.search(text))

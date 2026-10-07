@@ -9,7 +9,12 @@ from pathlib import Path
 
 import psutil
 
+from orca_agent.store import atomic_write
 from orca_agent.versions import CURRENT_CHECK_VERSION
+
+
+def publish_json(path, value):
+    atomic_write(path, json.dumps(value).encode("utf-8"))
 
 
 def prepare_fixture(workdir, geometry, parameters, tool):
@@ -38,9 +43,9 @@ def read_fixture(workdir, parameters, tool, **kwargs):
 
 def task(directory, delay, depth):
     current = psutil.Process()
-    (directory / f"task-{current.pid}.json").write_text(json.dumps({
+    publish_json(directory / f"task-{current.pid}.json", {
         "pid": current.pid, "create_time": current.create_time(),
-    }), encoding="utf-8")
+    })
     if depth:
         subprocess.Popen([sys.executable, __file__, "task", str(directory), str(delay),
                           str(depth - 1)])
@@ -61,7 +66,7 @@ def main():
         store = Store(data)
         config = Config(data_root=Path(data), orca_path=Path(executable), mpi_path=Path(mpi))
         result = execute(store, config, run_id)
-        (Path(data) / "worker-result.json").write_text(result.model_dump_json(), encoding="utf-8")
+        publish_json(Path(data) / "worker-result.json", result.model_dump(mode="json"))
         return
     from orca_agent import runner
     from orca_agent.backends import local
@@ -81,8 +86,8 @@ def main():
 
     def fault(point):
         if point == "after_process_created":
-            pids = [p.pid for p in psutil.Process().children()]
-            (Path(data) / "created-pids.json").write_text(json.dumps(pids), encoding="utf-8")
+            identities = [{"pid": p.pid, "create_time": p.create_time()} for p in psutil.Process().children()]
+            publish_json(Path(data) / "created-pids.json", identities)
         if mode == "atomic" and point == "after_handle_saved":
             (Path(data) / "control-held.txt").write_text("held", encoding="utf-8")
             deadline = time.monotonic() + 4
@@ -98,7 +103,7 @@ def main():
     calculation.read_outputs = read_fixture
     local.run_managed = managed_fixture
     result = runner.execute(store, config, run_id, fault=fault)
-    (Path(data) / "worker-result.json").write_text(result.model_dump_json(), encoding="utf-8")
+    publish_json(Path(data) / "worker-result.json", result.model_dump(mode="json"))
 
 
 if __name__ == "__main__":

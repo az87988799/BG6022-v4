@@ -64,7 +64,9 @@ def test_revision_limit_filters_only_exhausted_creation_or_revision_and_plan_gui
         assert _actions(data) == {action, "clarify", "stop"}
         assert "PLAN_RULES" in data and "PLAN_REFERENCES" in data
     authority = data["AUTHORITY"]
-    assert authority["budget_limits"] == run.budget.model_dump(mode="json")
+    assert authority["budget_limits"] == run.budget.model_dump(mode="json", exclude={
+        "identity_queries", "structure_preparations"})
+    assert run.budget.identity_queries == run.budget.structure_preparations == 0
     assert authority["cumulative_usage"]["plan_revisions"] == used
     assert authority["remaining"]["plan_revisions"] == 2 - used
     assert (request.model_dump_json(), run.model_dump_json()) == before
@@ -150,8 +152,12 @@ def test_exhausted_immediate_read_budget_removes_call_without_hiding_authority(h
     assert _actions(data) == {"clarify", "stop"}
     assert "PLAN_RULES" not in data
     authority = data["AUTHORITY"]
-    assert authority["permission"] == run.permission.model_dump(mode="json")
-    assert authority["budget_limits"] == run.budget.model_dump(mode="json")
+    assert authority["permission"] == run.permission.model_dump(mode="json", exclude={
+        "external_identity_queries", "geometry_preparation"})
+    assert not run.permission.external_identity_queries and not run.permission.geometry_preparation
+    assert authority["budget_limits"] == run.budget.model_dump(mode="json", exclude={
+        "identity_queries", "structure_preparations"})
+    assert run.budget.identity_queries == run.budget.structure_preparations == 0
     assert authority["cumulative_usage"]["evidence_reads"] == run.budget.evidence_reads
     assert authority["request"]["conditions_source"] == request.conditions_source
     assert authority["request"]["conditions"] == request.conditions

@@ -51,6 +51,39 @@ def current_basis(store, run):
             "control_generation": store.read_control(run.id)["generation"]}
 
 
+def final_explanation_budget(request, run, *, final_only=False):
+    """Account for required final prose within the existing frozen Run limits.
+
+    The caller has already charged the current decision round. These are
+    call/decision occupancy bounds, not actual tokenizer counts or an
+    additional ledger. Token capacity is checked against each actual prepared
+    request; the unknown size of a future context cannot reserve the maximum.
+    Ordinary queries have no final-prose obligation.
+    """
+    required = request.conditions.get("explain_results") is True
+    calls = max(0, run.budget.model_calls - run.usage.model_calls)
+    rounds = max(0, run.budget.decision_rounds - run.usage.decision_rounds)
+    tokens = max(0, run.budget.model_tokens - run.usage.model_tokens_used - run.usage.model_tokens_unknown)
+    future = 1 if required and not final_only else 0
+    corrections = min(run.budget.corrections_per_proposal, max(0, calls - 1 - future), max(0, rounds - future))
+    return {"required": required, "final_only": final_only,
+            "future_answer_calls": future,
+            "available_future_correction_calls": corrections,
+            "configured_corrections_per_proposal": run.budget.corrections_per_proposal,
+            "remaining_calls_before_this_request": calls,
+            "remaining_decision_rounds_after_this_round": rounds,
+            "remaining_tokens_before_this_request": tokens,
+            "can_send_before_final": calls >= future + 1 and rounds >= future,
+            "token_count_basis": "actual next prepared context is checked before reservation; future final context size is unknown"}
+
+
+def validate_final_explanation_capacity(request, run, *, final_only=False):
+    assessment = final_explanation_budget(request, run, final_only=final_only)
+    if assessment["required"] and not assessment["can_send_before_final"]:
+        raise BudgetExceeded("required final explanation lacks remaining call/decision budget")
+    return assessment
+
+
 def _request_body(store, run, record):
     path = store.path(f"runs/{run.id}/model/{_id(record['id'])}.request.json")
     if not path.is_file() or path.stat().st_size > 128 * 1024:
@@ -283,6 +316,12 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
                 raise BudgetExceeded("control or deadline prevents model transmission")
             if not run.permission.model_execution:
                 raise StoreError("model transmission is not authorized")
+            purpose = store.load_request(run)
+            pending = any(message["id"] not in run.processed_messages
+                          for message in store.read_control(run.id)["messages"])
+            final_only = not pending and all(run.goal_status.get(goal.id) == "satisfied"
+                                             for goal in purpose.goals if goal.required)
+            validate_final_explanation_capacity(purpose, run, final_only=final_only)
             if any(record.get("status") == "reserved" for record in run.model_records):
                 raise StoreError("unknown old model reservation requires reconciliation")
             if any(record.get("error_category") == "token_bound_exceeded"

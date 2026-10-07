@@ -10,12 +10,18 @@ from pathlib import Path
 
 import psutil
 
+from orca_agent.store import atomic_write
+
+
+def publish_json(path, value):
+    atomic_write(path, json.dumps(value).encode("utf-8"))
+
 
 def record(directory):
     current = psutil.Process()
     data = {"pid": current.pid, "create_time": current.create_time(),
             "affinity": current.cpu_affinity()}
-    (directory / f"node-{current.pid}.json").write_text(json.dumps(data), encoding="utf-8")
+    publish_json(directory / f"node-{current.pid}.json", data)
     return data
 
 
@@ -29,17 +35,17 @@ def main():
         def fault(point):
             if point == "after_process_created" and crash == "before_save":
                 children = [child.pid for child in psutil.Process().children()]
-                (directory / "created.json").write_text(json.dumps(children), encoding="utf-8")
+                publish_json(directory / "created.json", children)
                 os._exit(61)
 
         def save(handle):
-            (directory / "handle.json").write_text(json.dumps(handle), encoding="utf-8")
+            publish_json(directory / "handle.json", handle)
 
         result = run_managed(
             Path(sys.executable), [str(Path(__file__).resolve()), "tree", str(directory), "2"],
             directory, timeout_s=30, on_started=save, fault=fault,
         )
-        (directory / "result.json").write_text(json.dumps(result), encoding="utf-8")
+        publish_json(directory / "result.json", result)
         return
     data = record(directory)
     if mode == "affinity":

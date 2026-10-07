@@ -1,7 +1,7 @@
 """Translate symbolic model intentions into program-owned Plan identities."""
 
 import re
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import Field, ValidationError
 
@@ -9,6 +9,49 @@ from orca_agent.models import EvidenceRef, InputRef, OutputBinding, Plan, Record
 from orca_agent.tools.registry import get_tool, validate_parameters
 
 _CALL_TOOL_FORMS = ({"step_id": str}, {"tool": str, "parameters": dict})
+
+
+class StopParameters(Record):
+    reason: str = Field(default="", strict=True, max_length=1000)
+
+
+class ClarifyParameters(Record):
+    questions: list[Annotated[str, Field(strict=True, min_length=1, max_length=1000)]] = Field(min_length=1, max_length=5)
+    unresolved: list[Annotated[str, Field(strict=True, min_length=1, max_length=1000)]] = Field(min_length=1, max_length=5)
+
+
+def action_parameter_schema(action, *, immediate=True):
+    if action == "stop":
+        return StopParameters.model_json_schema()
+    if action == "clarify":
+        return ClarifyParameters.model_json_schema()
+    if action == "call_tool":
+        return call_tool_parameters_schema(immediate=immediate)
+    if action in {"initial_plan", "revise_plan"}:
+        return ProposedPlan.model_json_schema()
+    raise ValueError("action parameters are owned by their specialized contract")
+
+
+def validate_action_parameters(action, values):
+    """Shared structural validation; applicability/permission remain separate."""
+    if action == "call_tool":
+        if not valid_call_tool_parameters(values):
+            raise ProposalError("call_tool needs exactly one declared parameter shape.",
+                                path=["parameters"], shapes=call_tool_parameter_shapes())
+    elif action in {"stop", "clarify"}:
+        model = StopParameters if action == "stop" else ClarifyParameters
+        try:
+            model.model_validate(values)
+        except ValidationError as exc:
+            error = _schema_error(exc, path=["parameters"])
+            if action == "clarify":
+                schema = action_parameter_schema(action)
+                questions = schema["properties"]["questions"]
+                error.detail.update(path=["parameters"], required_fields=schema["required"],
+                    min_items=questions["minItems"], max_items=questions["maxItems"],
+                    min_string_length=questions["items"]["minLength"],
+                    max_string_length=questions["items"]["maxLength"])
+            raise error from None
 
 
 def call_tool_parameter_shapes(*, immediate=True):
@@ -84,6 +127,9 @@ def materialize_plan(store, run, parameters):
         raise _schema_error(exc, path=["parameters"]) from None
     prior = store.load_plan(run)
     request = store.load_request(run)
+    if run.input_bindings:
+        from orca_agent.input_bindings import resolved_request
+        request = resolved_request(store, run, request)
     missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]
     if missing:
         raise ProposalError(

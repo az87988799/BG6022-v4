@@ -74,7 +74,9 @@ def test_no_tool_context_keeps_stop_and_clarify_without_changing_user_scope(tmp_
         for goal in request.goals]
     assert data["AUTHORITY"]["request"]["conditions_source"] == request.conditions_source
     assert data["AUTHORITY"]["request"]["condition_evidence"] == request.condition_evidence
-    assert data["AUTHORITY"]["permission"] == run.permission.model_dump(mode="json")
+    assert data["AUTHORITY"]["permission"] == run.permission.model_dump(mode="json", exclude={
+        "external_identity_queries", "geometry_preparation"})
+    assert not run.permission.external_identity_queries and not run.permission.geometry_preparation
     if scope == "unknown_spin":
         assert data["AUTHORITY"]["request"]["multiplicity"] is None
         assert data["AUTHORITY"]["request"]["unresolved"] == ["field:multiplicity"]

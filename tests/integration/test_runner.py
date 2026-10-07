@@ -287,7 +287,13 @@ def assert_tasks_gone(store):
             return abs(psutil.Process(record["pid"]).create_time() - record["create_time"]) < 1e-5
         except psutil.NoSuchProcess:
             return False
-    wait_until(lambda: not any(active(record) for record in task_records(store)))
+    observed = task_records(store)
+    if not observed:
+        created = store.root / "created-pids.json"
+        assert created.is_file(), "no process identity evidence; empty records do not prove exit"
+        observed = json.loads(created.read_text(encoding="utf-8"))
+    assert observed, "empty identity evidence does not prove all processes exited"
+    wait_until(lambda: not any(active(record) for record in observed))
 
 
 def start_worker(store, run, mode="normal", point="never"):
@@ -309,11 +315,16 @@ def test_runner_hard_crash_recovery_does_not_duplicate_calculation(tmp_path, mon
         if parent.poll() is None:
             parent.kill()
             parent.wait(timeout=5)
-    assert_tasks_gone(store)
+    if point != "after_intent_saved":
+        assert_tasks_gone(store)
+    else:
+        # This injected fault is before process creation. It is not an exit
+        # assertion inferred from the empty task identity list.
+        assert not (store.root / "created-pids.json").exists()
     if point == "after_process_created":
-        pids = json.loads((store.root / "created-pids.json").read_text())
-        assert pids
-        wait_until(lambda: not any(psutil.pid_exists(pid) for pid in pids))
+        identities = json.loads((store.root / "created-pids.json").read_text())
+        assert identities
+        wait_until(lambda: not any(psutil.pid_exists(item["pid"]) for item in identities))
         assert not task_records(store)
     monkeypatch.setattr(calculation, "prepare_input", FIXTURE.prepare_fixture)
     monkeypatch.setattr(calculation, "read_outputs", FIXTURE.read_fixture)

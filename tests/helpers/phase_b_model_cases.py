@@ -834,6 +834,11 @@ def evaluate_response(store, run, metadata, *, review=None):
     states = tuple(proposal_review.values())
     proposal_review["status"] = ("failed" if False in states else "passed"
                                  if states == (True, True) else "not_verified")
+    if not actions and not response_evidence.get("inspectable_proposal_content", False):
+        # Empty/truncated replies expose no accepted content to fact/semantic
+        # review. HTTP failure is recorded on its own protocol axis instead.
+        proposal_review = {"all_proposal_facts_passed": None, "semantic_review_passed": None,
+                           "status": "not_verified"}
     proposal_review["reason"] = "Full-trajectory facts and semantics require explicit independent review; final six axes cannot replace it."
     passed = (authentic and safety and not metadata["fixture_gaps"]
         and all(a["status"] == "passed" for a in assertions)
@@ -844,6 +849,9 @@ def evaluate_response(store, run, metadata, *, review=None):
         "expected_ref": metadata["expected_ref"], "spec_sha256": metadata["spec_sha256"],
         "status": "passed" if passed else "not_verified" if not authentic else "incomplete_or_failed",
         "real_model_evidence_present": authentic, "safety_invariants_passed": safety,
+        "real_model_http_evidence_present": response_evidence.get("http_evidence_present", False),
+        "protocol_delivery": {"status": response_evidence.get("protocol_delivery_status", "unverified"),
+                              "accepted_proposals": response_evidence.get("accepted_proposals", 0)},
         "model_response_evidence": response_evidence,
         "assertions": assertions, "explanation": explanation, "fixture_gaps": metadata["fixture_gaps"],
         "proposal_review": proposal_review,

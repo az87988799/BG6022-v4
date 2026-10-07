@@ -15,6 +15,7 @@ def classify_grade(grade, *, executed=None):
     failed = (grade.get("safety_invariants_passed") is False
               or any(item.get("status") == "failed" for item in checks)
               or proposal.get("status") == "failed"
+              or grade.get("protocol_delivery", {}).get("status") == "failed"
               or any(proposal.get(key) is False for key in (
                   "all_proposal_facts_passed", "semantic_review_passed"))
               or (delivery.get("required") is True
@@ -43,7 +44,9 @@ def model_response_evidence(store, run):
     records = run.model_records
     usage = {"known": sum(r.get("status") == "known" for r in records),
              "unknown": sum(r.get("status") == "unknown" for r in records)}
-    missing = {"present": False, "usage": usage}
+    missing = {"present": False, "http_evidence_present": False, "usage": usage,
+               "http_records": len(records), "accepted_proposals": 0, "rejected_proposals": 0,
+               "accepted_final_responses": 0, "inspectable_proposal_content": False}
     if not records:
         return {**missing, "reason": "no model requests"}
     replies = {}
@@ -67,8 +70,6 @@ def model_response_evidence(store, run):
             replies[record["id"]] = reply
         accepted = [decision for decision in run.decisions
                     if decision.get("id") in replies and decision.get("action") != "rejected"]
-        if not accepted:
-            raise ValueError("no accepted proposal bound to a successful response")
         for decision in accepted:
             reply = replies[decision["id"]]
             proposal = reply.proposal or {}
@@ -100,5 +101,19 @@ def model_response_evidence(store, run):
             raise ValueError("accepted model decision has no response receipt")
     except (StoreError, ValueError, KeyError, OSError) as exc:
         return {**missing, "reason": str(exc)}
-    return {"present": True, "usage": usage, "accepted_proposals": len(accepted),
-            "transport_failures": sum(r.error_category is not None for r in replies.values())}
+    # A failed/truncated HTTP response remains real transport evidence even
+    # when no proposal can be accepted. It cannot establish semantic quality.
+    http = [reply for reply in replies.values() if reply.http_status is not None
+            and reply.response_model == "deepseek-flash" and reply.response_hash]
+    failures = sum(r.error_category is not None for r in replies.values())
+    rejected = sum(d.get("action") == "rejected" and d.get("id") in replies for d in run.decisions)
+    return {"present": bool(accepted), "http_evidence_present": bool(http), "usage": usage,
+            "http_records": len(records), "verified_http_responses": len(http),
+            "accepted_proposals": len(accepted),
+            "rejected_proposals": rejected,
+            "accepted_final_responses": sum(d.get("action") in {"stop", "clarify"} for d in accepted),
+            "transport_failures": failures,
+            "inspectable_proposal_content": any(reply.proposal or (reply.raw_content or "").strip()
+                                                 for reply in replies.values()),
+            "protocol_delivery_status": "failed" if (failures or rejected) and not accepted else "passed" if accepted else "unverified",
+            "reason": None if accepted else "no accepted proposal bound to a successful response"}

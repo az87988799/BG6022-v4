@@ -12,6 +12,7 @@ import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from orca_agent.delivery import goal_fact_rows
 from orca_agent.goals import current_goal_evidence
 from orca_agent.models import Run
 
@@ -178,10 +179,11 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
         read_result(run.id, result_id)
     if len(run.result_ids) > _MAX_RESULTS:
         gaps.append("result_count_exceeds_report_bound")
-    goals = []
+    goals, selections = [], {}
     for goal in request.goals if request else []:
         goal_gaps = list(goal.unresolved)
         selection = current_goal_evidence(store, run, request, goal, plan)
+        selections[goal.id] = selection
         binding = selection["binding"]
         goal_gaps.extend(selection["gaps"])
         selected = None
@@ -258,6 +260,7 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                     "systems": _safe(request.systems), "unresolved": _safe(request.unresolved)}
                    if request else None,
         "goals": goals, "results": list(results.values()), "attempts": attempts,
+        "goal_facts": _safe(goal_fact_rows(request, run, selections)) if request else [],
         "budget": {"limits": run.budget.model_dump(mode="json"),
                    "usage": run.usage.model_dump(mode="json"), "deadline": run.deadline.isoformat(),
                    "unresolved_scientific_attempt_ids": [a.id for a in run.attempts
@@ -298,6 +301,21 @@ def render_report(report: dict[str, Any]) -> str:
     for goal in report["goals"]:
         if goal["gaps"]:
             lines.append(f"\n目标 `{_cell(goal['goal_id'])}` 缺口：{_cell('; '.join(goal['gaps']))}。\n")
+    for row in report.get("goal_facts", []):
+        lines.append(f"\n目标 `{_cell(row['goal_id'])}` 当前条件：{_cell(row['current_conditions'])}。")
+        if row["source_conditions"]:
+            lines.append("来源实际条件：" + _cell(row["source_conditions"]) + "。")
+        if row.get("geometry_relation"):
+            lines.append("请求几何关系：" + _cell(row["geometry_relation"]) + "。")
+        answer = row.get("answer")
+        if answer and answer["kind"] == "qualified_scientific_output":
+            displayed = ("产物 " + _cell(answer["artifact_id"]) if answer.get("artifact_id") and answer["value"] is None
+                         else _cell(answer["value"]) + " " + _cell(answer["unit"] if answer["unit"] is not None else "unknown"))
+            lines.append(f"本目标合格输出：{displayed}；"
+                         f"检查版本：{_cell(answer['check_versions'])}。")
+        elif answer:
+            lines.append("本目标观察（不宣称科学资格）：" + _cell(answer["observation"])
+                         + "；单位：" + _cell(answer["unit"] if answer["unit"] is not None else "unknown") + "。")
     communication = report.get("communication", {})
     if communication.get("registration_complete"):
         lines.append("\n需求登记已完成；科学目标状态见上表。")

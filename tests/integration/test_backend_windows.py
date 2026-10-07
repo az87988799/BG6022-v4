@@ -294,7 +294,15 @@ def test_backend_unconfirmed_cleanup_preserves_unknown(tmp_path, monkeypatch):
     assert result["state"] == "unknown"
     assert result["reason"] == "process_tree_termination_unconfirmed"
     # Closing the job is still a final safety net, but is not proof for quota release.
-    assert_tree_gone(tmp_path)
+    if records(tmp_path):
+        assert_tree_gone(tmp_path)
+    else:
+        # The one-process fixture may hit the deadline while importing, before
+        # publishing a node record. The actual created PID/time still proves
+        # its exit; an empty record collection alone is never sufficient.
+        identity = result["handle"]
+        assert identity["pid"] > 0 and identity["create_time"] > 0
+        wait_until(lambda: not still_same_process(identity))
 
 
 def test_backend_rejects_resources_and_existing_evidence_before_creation(tmp_path):
