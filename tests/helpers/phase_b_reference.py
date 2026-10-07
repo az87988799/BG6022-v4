@@ -64,14 +64,14 @@ BOUNDED_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-bounded-20
 BOUNDED_APPROVAL_SHA256 = "9339874fb7f4359782ad7c9128f5dc535f6703b586ad45737748411968e3bc58"
 
 
-# Proposed renewal only: no approval record/pin is fabricated by preparation.
+# Explicit human-approved renewal; applying it still requires the original ledger amendment.
 RENEWAL_LIMITS = {
     "orca_starts": {"reference": 17, "formal": 48, "development": 54, "total": 119},
     "model": {"http_requests": 1120, "tokens": 6_889_551, "usd": 10},
 }
 RENEWAL_APPROVAL_ID = "bounded-gap-budget-20261008-r2"
 RENEWAL_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-bounded-20261008-r2.json"
-RENEWAL_APPROVAL_SHA256 = None
+RENEWAL_APPROVAL_SHA256 = "97ba032010094862df3854e06e642e42b2872ba833b96f1a89c0f40c3e6b89b9"
 
 
 def renewal_approval() -> dict:

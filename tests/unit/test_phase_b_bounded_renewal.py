@@ -20,6 +20,7 @@ R2 = package.RENEWAL_LABEL
 def test_renewal_proposal_is_unapproved_and_preserves_exact_old_scope(tmp_path, monkeypatch, capsys):
     old = json.loads(package.reference.BOUNDED_APPROVAL.read_text(encoding="utf-8"))
     assert package.scope() == old["development_package"]
+    monkeypatch.setattr(package.reference, "RENEWAL_APPROVAL_SHA256", None)
     assert package.reference.RENEWAL_APPROVAL_SHA256 is None
     monkeypatch.setattr(package, "RENEWAL_ROOT", tmp_path / "r2")
     assert package.main(["proposal", "--package", R2]) == 0
@@ -275,3 +276,16 @@ def test_prior_pass_cannot_come_from_another_candidate(candidate, monkeypatch):
     with pytest.raises(package.reference.ReferenceBlocked, match="another package candidate"):
         package.guard_model_slot(package.MODEL_SLOTS[1], 1, category="development",
             package=R2, model_profile="disabled")
+
+
+def test_recorded_human_renewal_approval_binds_unchanged_proposal_and_scope():
+    value = package.reference.renewal_approval()
+    assert value["user_statement"] == "批准，继续"
+    assert value["response_mode"] == "subsequent free-form user turn; not an option selection"
+    assert value["development_package"] == package.scope(package=R2)
+    assert value["previous_approval_sha256"] == package.reference.BOUNDED_APPROVAL_SHA256
+    assert value["decision_document_sha256"] == sha256_file(package.PROJECT / value["decision_document"])
+    assert value["approval_baseline"]["ledger_sha256"] == "15f07f9cf0f86619c4be382349411e33f32c6d34e83bd195626b5fceb0acbe51"
+    assert value["application_status_at_recording"] == "not_applied"
+    assert value["execution_status_at_recording"] == "not_executed"
+    assert value["acceptance_status"] == "not_verified"
