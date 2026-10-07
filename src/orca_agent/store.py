@@ -941,8 +941,12 @@ class Store:
                         validate_direct_geometry(self, next_request, step, run=run)
                     except ValueError as exc:
                         raise StoreError(str(exc)) from exc
-            had_plan = prior_plan is not None or any(d.get("plan_version") is not None
-                                                    for d in run.decisions)
+            # A Plan created with the Run first enters decision history as the
+            # prior Plan of its suspension. Removing the current pointer cannot
+            # turn its later replacement into an uncharged first Plan.
+            had_plan = prior_plan is not None or any(
+                d.get("plan_version") is not None or d.get("prior_plan_version") is not None
+                for d in run.decisions)
             revising = plan is not None and had_plan and not message_only
             if revising and run.usage.plan_revisions >= run.budget.plan_revisions:
                 raise BudgetExceeded("plan revision budget exhausted")

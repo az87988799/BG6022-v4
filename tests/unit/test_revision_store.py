@@ -371,11 +371,13 @@ def test_recovery_reconnects_later_result_even_if_first_call_stays_unknown(tmp_p
         assert run.usage.evidence_reads == 2
 
 
-def test_suspended_initial_plan_resumes_with_continuous_identity_and_history(tmp_path):
+@pytest.mark.parametrize("policy", ["legacy", "first_science_plan"])
+def test_suspended_initial_plan_resumes_with_continuous_identity_and_history(tmp_path, policy):
     store, original_run, artifact = query_run(tmp_path)
     request = store.load_request(original_run)
     initial = plan_for(store, original_run, artifact)
-    run = store.create_run(request, initial, original_run.permission, original_run.budget)
+    run = store.create_run(request, initial, original_run.permission, original_run.budget,
+                           science_baseline_policy=policy)
     message1 = store.enqueue_message(run.id, "I need to clarify the field")
     pending = request.model_copy(deep=True, update={"version": 2,
         "messages": store.read_control(run.id)["messages"], "unresolved": ["field"]})
@@ -395,3 +397,44 @@ def test_suspended_initial_plan_resumes_with_continuous_identity_and_history(tmp
     assert store.load_request_revision(run, 2) == pending
     assert store.load_request(run) == resolved
     assert run.usage.plan_revisions == 1
+    assert run.initial_science_steps == ([] if policy == "legacy" else None)
+
+
+@pytest.mark.parametrize("policy", ["legacy", "first_science_plan"])
+def test_suspended_query_plan_cannot_bypass_revision_budget(tmp_path, policy):
+    store, original_run, artifact = query_run(tmp_path)
+    request = store.load_request(original_run)
+    initial = plan_for(store, original_run, artifact)
+    run = store.create_run(request, initial, original_run.permission,
+        original_run.budget.model_copy(update={"plan_revisions": 1}), science_baseline_policy=policy)
+    assert run.initial_science_steps == ([] if policy == "legacy" else None)
+    for number in (1, 2):
+        message = store.enqueue_message(run.id, f"Clarify field, round {number}")
+        pending = store.load_request(run).model_copy(deep=True, update={
+            "version": run.request_version + 1, "messages": store.read_control(run.id)["messages"],
+            "unresolved": ["field"]})
+        run = store.commit_revision(run, None, request=pending, decision_id=f"suspend_{number}",
+            user_message_ids=[message], basis=basis(store, run))
+        run = store.load_run(run.id)
+        assert run.usage.plan_revisions == number - 1
+        message = store.enqueue_message(run.id, f"Use the value field, round {number}")
+        resolved = pending.model_copy(deep=True, update={"version": pending.version + 1,
+            "messages": store.read_control(run.id)["messages"], "unresolved": []})
+        resumed = initial.model_copy(deep=True, update={"version": number + 1,
+                                                       "request_version": resolved.version})
+        arguments = {"request": resolved, "decision_id": f"resume_{number}",
+                     "user_message_ids": [message], "basis": basis(store, run)}
+        if number == 1:
+            run = store.commit_revision(run, resumed, **arguments)
+            assert store.commit_revision(run, resumed, **arguments) == run
+            assert run.usage.plan_revisions == 1
+        else:
+            before = store.path(f"runs/{run.id}/run.json").read_bytes()
+            for _ in range(2):
+                with pytest.raises(BudgetExceeded, match="plan revision"):
+                    store.commit_revision(store.load_run(run.id), resumed, **arguments)
+            assert store.path(f"runs/{run.id}/run.json").read_bytes() == before
+            assert not store.path(f"runs/{run.id}/decisions/resume_2.json").exists()
+        assert run.initial_science_steps == ([] if policy == "legacy" else None)
+    assert store.load_run(run.id).usage.plan_revisions == 1
+    assert store.load_plan_revision(run, 1) == initial
