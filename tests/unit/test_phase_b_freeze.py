@@ -120,12 +120,17 @@ def test_budget_approval_or_applied_receipt_drift_blocks_execution_only(executio
     assert gate.validate_freeze("formal-test", execution=False)["freeze_label"] == "formal-test"
 
 
-def test_second_budget_authority_does_not_rewrite_or_reactivate_old_freeze(execution_freeze, monkeypatch):
+@pytest.mark.parametrize("approval,http,tokens", [
+    ("repair-budget-supplement-20261007", 1050, 6530000),
+    ("repair-budget-thinking-v16-20261007", 1068, 6590000),
+])
+def test_later_budget_authority_does_not_rewrite_or_reactivate_old_freeze(
+        execution_freeze, monkeypatch, approval, http, tokens):
     _, path, record, _ = execution_freeze
     old = path.read_bytes()
     latest = {**record["budget_authority"],
-              "limits": {"model": {"http_requests": 1050, "tokens": 6530000, "usd": 10}},
-              "approval_id": "repair-budget-supplement-20261007", "receipt_sha256": "d" * 64}
+              "limits": {"model": {"http_requests": http, "tokens": tokens, "usd": 10}},
+              "approval_id": approval, "receipt_sha256": "d" * 64}
     monkeypatch.setattr(gate, "execution_budget_authority", lambda: latest)
     assert gate.validate_freeze("formal-test", execution=False)["freeze_label"] == "formal-test"
     with pytest.raises(ValueError, match="budget authority differs"):
@@ -133,9 +138,10 @@ def test_second_budget_authority_does_not_rewrite_or_reactivate_old_freeze(execu
     assert path.read_bytes() == old
 
 
-def test_formal_manifest_keeps_both_immutable_budget_approvals():
+def test_formal_manifest_keeps_all_three_immutable_budget_approvals():
     assert {"docs/acceptance/phase-b/budget-approval-20261007.json",
-            "docs/acceptance/phase-b/budget-approval-supplement-20261007.json"} <= gate.FIXED
+            "docs/acceptance/phase-b/budget-approval-supplement-20261007.json",
+            "docs/acceptance/phase-b/budget-approval-thinking-v16-20261007.json"} <= gate.FIXED
 
 
 def test_actual_product_import_cannot_come_from_another_checkout(tmp_path, monkeypatch):

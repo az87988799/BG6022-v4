@@ -39,13 +39,20 @@ LIMITS = {
 LIMIT_APPROVAL_ID = "repair-budget-20261007"
 LIMIT_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-20261007.json"
 LIMIT_APPROVAL_SHA256 = "ba9b02a45989fb9b84338c27171e54988b9bfacb1aece99881204faeb510ae95"
-ACTIVE_LIMITS = {
+SUPPLEMENT_LIMITS = {
     "orca_starts": {"reference": 16, "formal": 48, "development": 48, "total": 112},
     "model": {"http_requests": 1050, "tokens": 6_530_000, "usd": 10},
 }
 SUPPLEMENT_APPROVAL_ID = "repair-budget-supplement-20261007"
 SUPPLEMENT_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-supplement-20261007.json"
 SUPPLEMENT_APPROVAL_SHA256 = "1b6b7dd295361920b04e913fe8e4d9d87df3ff58e4bc7844b65bae100da885a3"
+ACTIVE_LIMITS = {
+    "orca_starts": {"reference": 16, "formal": 48, "development": 48, "total": 112},
+    "model": {"http_requests": 1068, "tokens": 6_590_000, "usd": 10},
+}
+THINKING_APPROVAL_ID = "repair-budget-thinking-v16-20261007"
+THINKING_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-thinking-v16-20261007.json"
+THINKING_APPROVAL_SHA256 = "964261ac61181bcfcaf09de32f37ebd11a44dbe812a61bd46529fef9fe85cb0b"
 
 
 class ReferenceBlocked(ValueError):
@@ -83,16 +90,35 @@ def supplement_approval() -> dict:
         raise ReferenceBlocked("approved budget supplement is missing or changed")
     value = _json(SUPPLEMENT_APPROVAL)
     if (value.get("approval_id") != SUPPLEMENT_APPROVAL_ID or value.get("status") != "user_approved"
-            or value.get("previous_limits") != LIMITS or value.get("approved_limits") != ACTIVE_LIMITS
+            or value.get("previous_limits") != LIMITS or value.get("approved_limits") != SUPPLEMENT_LIMITS
             or value.get("previous_approval_id") != LIMIT_APPROVAL_ID
             or value.get("previous_approval_sha256") != LIMIT_APPROVAL_SHA256):
         raise ReferenceBlocked("approved budget supplement differs from the exact authorized limits")
     return value
 
 
-def active_limit_authority() -> dict:
+def supplement_limit_authority() -> dict:
     supplement_approval()
     return {"approval_id": SUPPLEMENT_APPROVAL_ID, "approval_sha256": SUPPLEMENT_APPROVAL_SHA256,
+            "origin": "initial_empty_ledger"}
+
+
+def thinking_approval() -> dict:
+    supplement_approval()
+    if not THINKING_APPROVAL.is_file() or sha256_file(THINKING_APPROVAL) != THINKING_APPROVAL_SHA256:
+        raise ReferenceBlocked("approved thinking budget record is missing or changed")
+    value = _json(THINKING_APPROVAL)
+    if (value.get("approval_id") != THINKING_APPROVAL_ID or value.get("status") != "user_approved"
+            or value.get("previous_limits") != SUPPLEMENT_LIMITS or value.get("approved_limits") != ACTIVE_LIMITS
+            or value.get("previous_approval_id") != SUPPLEMENT_APPROVAL_ID
+            or value.get("previous_approval_sha256") != SUPPLEMENT_APPROVAL_SHA256):
+        raise ReferenceBlocked("approved thinking budget differs from the exact authorized limits")
+    return value
+
+
+def active_limit_authority() -> dict:
+    thinking_approval()
+    return {"approval_id": THINKING_APPROVAL_ID, "approval_sha256": THINKING_APPROVAL_SHA256,
             "origin": "initial_empty_ledger"}
 
 
@@ -160,11 +186,11 @@ class BatchLedger:
                     "model_usage": {"http_requests": 0, "tokens": 0, "usd": 0},
                     "model_accounting": "frozen only; transport and charging implemented in B-04"}
         ledger = _json(self.path)
-        legacy = allow_legacy_limits and ledger.get("limits") == LIMITS
+        legacy = allow_legacy_limits and ledger.get("limits") == SUPPLEMENT_LIMITS
         if ledger.get("schema_version") != 1 or (ledger.get("limits") != ACTIVE_LIMITS and not legacy):
             raise ReferenceBlocked("batch ledger schema/limits differ; explicit approved migration required")
         if legacy:
-            self._validate_first_limit_authority(ledger)
+            self._validate_second_limit_authority(ledger)
         else:
             self._validate_limit_authority(ledger)
         for reference_id, entry in ledger["entries"].items():
@@ -177,11 +203,50 @@ class BatchLedger:
     def _validate_limit_authority(self, ledger: dict) -> None:
         initial = active_limit_authority()
         authority = ledger.get("limit_authority")
-        directory = self.root / "budget-amendments" / SUPPLEMENT_APPROVAL_ID
+        directory = self.root / "budget-amendments" / THINKING_APPROVAL_ID
         if authority == initial:
             if ((self.root / "budget-amendments").exists()
                     or (DELIVERED_SNAPSHOT.exists()
                         and _json(DELIVERED_SNAPSHOT).get("limits") != ACTIVE_LIMITS)):
+                raise ReferenceBlocked("historical ledger requires its approved migration receipt")
+            return
+        required = {**initial, "origin": "amendment"}
+        if (not isinstance(authority, dict) or set(authority) != {*required, "receipt_sha256"}
+                or any(authority.get(k) != v for k, v in required.items())):
+            raise ReferenceBlocked("ledger has no exact approved thinking budget authority")
+        path, before_path = directory / "amendment.json", directory / "before.json"
+        if (not path.is_file() or sha256_file(path) != authority["receipt_sha256"]
+                or not before_path.is_file()):
+            raise ReferenceBlocked("thinking budget receipt or previous ledger is missing or changed")
+        receipt = _json(path)
+        if (receipt.get("approval_id") != THINKING_APPROVAL_ID
+                or receipt.get("approval_sha256") != THINKING_APPROVAL_SHA256
+                or receipt.get("previous_limits") != SUPPLEMENT_LIMITS or receipt.get("approved_limits") != ACTIVE_LIMITS
+                or sha256_file(before_path) != receipt.get("before_sha256")):
+            raise ReferenceBlocked("thinking budget binding or previous ledger hash changed")
+        before = _json(before_path)
+        if (before.get("limits") != SUPPLEMENT_LIMITS
+                or before.get("limit_authority", {}).get("origin") != "amendment"
+                or receipt.get("previous_limit_authority") != before.get("limit_authority")):
+            raise ReferenceBlocked("thinking budget baseline lacks the second applied approval")
+        if (receipt.get("preserved_model_usage") != before.get("model_usage")
+                or receipt.get("preserved_entry_counts") != {kind: len(before.get(kind, {}))
+                    for kind in ("entries", "model_records", "agent_science")}):
+            raise ReferenceBlocked("thinking budget receipt baseline accounting differs")
+        self._validate_second_limit_authority(before)
+        self._validate_preserved_costs(before, ledger)
+
+    def _validate_second_limit_authority(self, ledger: dict) -> None:
+        """Audit the second immutable approval without granting current execution."""
+        if ledger.get("limits") != SUPPLEMENT_LIMITS:
+            raise ReferenceBlocked("second approved limit profile changed")
+        initial = supplement_limit_authority()
+        authority = ledger.get("limit_authority")
+        directory = self.root / "budget-amendments" / SUPPLEMENT_APPROVAL_ID
+        if authority == initial:
+            if ((self.root / "budget-amendments").exists()
+                    or (DELIVERED_SNAPSHOT.exists()
+                        and _json(DELIVERED_SNAPSHOT).get("limits") != SUPPLEMENT_LIMITS)):
                 raise ReferenceBlocked("historical ledger requires its approved migration receipt")
             return
         required = {**initial, "origin": "amendment"}
@@ -195,7 +260,7 @@ class BatchLedger:
         receipt = _json(path)
         if (receipt.get("approval_id") != SUPPLEMENT_APPROVAL_ID
                 or receipt.get("approval_sha256") != SUPPLEMENT_APPROVAL_SHA256
-                or receipt.get("previous_limits") != LIMITS or receipt.get("approved_limits") != ACTIVE_LIMITS
+                or receipt.get("previous_limits") != LIMITS or receipt.get("approved_limits") != SUPPLEMENT_LIMITS
                 or sha256_file(before_path) != receipt.get("before_sha256")):
             raise ReferenceBlocked("budget supplement binding or previous ledger hash changed")
         before = _json(before_path)
