@@ -233,9 +233,23 @@ def _goal_grounding(request, text, system_ids, messages, *, message_id=None, ori
     proposition = "，".join(clauses)
     contextual = _mentions(proposition, targets=True)
     quoted = _mentions(text, targets=True)
+    # A registered geometry is available evidence, not confirmation of an
+    # explicitly unknown target. Include the pronoun's preceding statement so
+    # clipping the uncertainty out of text_basis cannot restore an old identity.
+    identity_context = proposition if quoted else message["text"][:end]
+    explicitly_unknown = bool(re.search(
+        r"(?:不知道|不确定|未确定)[^，,。.;；\n]{0,16}(?:哪个|什么)[^，,。.;；\n]{0,8}(?:分子|体系|对象)|"
+        r"(?:分子|体系|对象)(?:的)?(?:身份|名称)?(?:目前|仍|尚)?(?:为|是)?(?:未知|不确定|未确认)|"
+        r"\b(?:molecule(?:\s+identity)?|molecular\s+identity|system\s+identity|target\s+identity)\s+"
+        r"(?:(?:is|remains|still|now|currently)\s+)*(?:unknown|uncertain|unconfirmed|undetermined)\b",
+        identity_context, re.I))
+    if explicitly_unknown and system_ids:
+        raise StoreError("explicitly unknown goal identity cannot inherit a registered system")
     mentions = (quoted if quoted and {entry[2] for entry in quoted} <= {
         entry[2] for entry in contextual} else contextual)
-    if not mentions:
+    if explicitly_unknown:
+        mentions = []
+    elif not mentions:
         preceding = _mentions(message["text"][:start], targets=True)
         preceding_ids = {entry[2] for entry in preceding}
         if len(preceding_ids) > 1 and system_ids:
@@ -245,7 +259,7 @@ def _goal_grounding(request, text, system_ids, messages, *, message_id=None, ori
     prior = set((original_identity or {}).get("canonical_names", []))
     if prior and identities and identities != prior:
         raise StoreError("goal binding contradicts the original goal identity")
-    identities = prior or identities
+    identities = set() if explicitly_unknown else prior or identities
     registered = {system.id: system for system in request.systems}
     if len(system_ids) != len(set(system_ids)) or set(system_ids) - set(registered):
         raise StoreError("semantic goal references unknown/duplicate registered systems")
@@ -264,6 +278,8 @@ def _goal_grounding(request, text, system_ids, messages, *, message_id=None, ori
                 "requested_names": list(dict.fromkeys(entry[3] for entry in mentions)),
                 "support_status": ("supported" if identities and identities <= set(SCIENCE_IDENTITIES)
                                    else "unsupported" if identities else "unknown")}
+    if explicitly_unknown:
+        identity["explicitly_unknown"] = True
     return identity, evidence
 
 
@@ -492,6 +508,8 @@ def _goals(candidate, request, messages):
             raise StoreError("semantic goal references unknown/duplicate registered systems")
         conditions = {}
         unresolved = list(item.unresolved)
+        if identity.get("explicitly_unknown"):
+            unresolved.append("ambiguous_system")
         if item.port in {"energy", "optimized_geometry"}:
             unresolved.extend("unsupported_system:" + name for name in identity["canonical_names"]
                               if name not in SCIENCE_IDENTITIES)

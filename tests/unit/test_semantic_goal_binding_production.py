@@ -56,6 +56,42 @@ def test_wrong_initial_target_is_rejected_without_any_activation(tmp_path, text,
     assert not after.attempts and after.usage.orca_starts_actual == 0
 
 
+@pytest.mark.parametrize("text,quote", [
+    ("不知道是哪个分子，计算那个分子的电子能", "计算那个分子的电子能"),
+    ("The molecule identity is unknown; calculate its energy", "calculate its energy"),
+    ("Water is registered; the target molecule identity is unknown; calculate its energy", "calculate its energy"),
+])
+def test_explicit_unknown_identity_cannot_inherit_sole_registered_geometry(tmp_path, text, quote):
+    store = store_at(tmp_path)
+    (tmp_path / "water.xyz").write_text("3\nwater\nO 0 0 0\nH 0 .8 .6\nH 0 -.8 .6\n")
+    run = initialize_bundle(store, Config(), bundle_at(tmp_path, goals=None, text=text,
+        geometries=[{"id": "water", "file": "water.xyz"}], scientific_execution=True,
+        allowed_tools=["orca.sp"],
+        conditions={"method": "HF", "basis": "STO-3G", "charge": 0, "multiplicity": 1}))
+    before = run.model_dump_json(), store.load_request(run).model_dump_json()
+    with pytest.raises(ValueError, match="explicitly unknown"):
+        commit(store, run, goals=[goal(quote, ["water"])])
+    unchanged = store.load_run(run.id)
+    assert (unchanged.model_dump_json(), store.load_request(unchanged).model_dump_json()) == before
+    assert unchanged.permission == run.permission and not unchanged.attempts
+    assert unchanged.usage.orca_starts_actual == unchanged.usage.orca_starts_reserved == 0
+
+    updated = commit(store, run, goals=[goal(quote, [])], questions=["需要计算的分子具体是哪个？"])
+    current = store.load_request(updated)
+    assert "ambiguous_system" in current.goals[0].unresolved
+    assert current.goals[0].identity["support_status"] == "unknown"
+    assert current.normalization_status == "clarification"
+    assert not updated.attempts and updated.usage.orca_starts_actual == 0
+
+
+def test_pronoun_keeps_unique_confirmed_named_context(tmp_path):
+    store, run = molecular_run(tmp_path, "Water is the confirmed target; calculate its energy")
+    updated = commit(store, run, goals=[goal("calculate its energy", ["water"])])
+    current = store.load_request(updated)
+    assert current.goals[0].identity["canonical_names"] == ["water"]
+    assert current.goals[0].system_ids == ["water"] and not current.goals[0].unresolved
+
+
 def test_two_goal_quotes_in_one_sentence_keep_their_own_targets(tmp_path):
     text = "Calculate water energy and methane energy"
     store, run = molecular_run(tmp_path, text)
