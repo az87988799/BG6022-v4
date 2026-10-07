@@ -139,6 +139,8 @@ def validate_goal_identity(store, request, goal, artifact_id=None):
     system = scientific_goal_system(request, goal)
     wanted = artifact_id or (system.geometry_artifact_id if system else request.geometry_artifact_id)
     if not wanted:
+        if system and system.geometry_source == "prepare":
+            return  # Input acquisition intent is not evidence of an available geometry.
         raise ValueError("named_target_geometry_missing")
     path = store.artifact_path(wanted)
     if path.stat().st_size > 65536:
@@ -313,6 +315,19 @@ def geometry_lineage(store, result, *, seen=None):
         if frozen.geometry.artifact_id and frozen.geometry.artifact_id != initial.id:
             raise ValueError("frozen_direct_geometry_mismatch")
         if frozen.geometry.producer_step_id:
+            if frozen.geometry.port == "prepared_geometry":
+                from orca_agent.input_bindings import validate_input_result
+                source_run = store.load_run(result.run_id)
+                call = next((c for c in source_run.calls if c.id == initial.source.get("call_id")), None)
+                if (not call or call.step_id != frozen.geometry.producer_step_id or not call.result_id
+                        or call.parameters.get("system_id") != frozen.system_id):
+                    raise ValueError("frozen_prepared_geometry_producer_mismatch")
+                prepared = store.load_result(source_run.id, call.result_id)
+                historical = store.load_request_revision(source_run, attempt.request_version)
+                binding = validate_input_result(store, source_run, historical, prepared, "prepared_geometry")
+                if binding["artifact_id"] != initial.id:
+                    raise ValueError("frozen_prepared_geometry_artifact_mismatch")
+                return initial.sha256, None
             if not producer or producer.step_id != frozen.geometry.producer_step_id or producer.run_id != result.run_id:
                 raise ValueError("frozen_geometry_producer_mismatch")
             producer_attempt = next(a for a in store.load_run(producer.run_id).attempts
@@ -373,9 +388,17 @@ def direct_applicability(store, request, goal, result):
 
 def validate_geometry_consumption(store, run, step, artifact_id):
     """Final Store boundary, including the producer's frozen original system."""
-    request = store.load_request(run)
+    from orca_agent.input_bindings import resolved_request
+    request = resolved_request(store, run)
     system = next((s for s in request.systems if s.id == step.system_id), None)
     wanted = system.geometry_artifact_id if system else request.geometry_artifact_id
+    if step.geometry.port == "prepared_geometry":
+        _validate_step_identities(store, request, step, artifact_id)
+        binding = run.input_bindings.get(step.system_id, {}).get("prepared_geometry", {})
+        if (wanted != artifact_id or binding.get("artifact_id") != artifact_id
+                or run.selected_results.get(step.geometry.producer_step_id) != binding.get("result_id")):
+            raise ValueError("prepared_geometry_current_consumption_mismatch")
+        return
     producer = _geometry_producer(store, artifact_id)
     if step.geometry.producer_step_id:
         _validate_step_identities(store, request, step, artifact_id)
@@ -389,15 +412,18 @@ def validate_geometry_consumption(store, run, step, artifact_id):
             raise ValueError("cross_system_geometry_consumption")
         root, _ = geometry_lineage(store, producer)
     else:
-        return validate_direct_geometry(store, request, step)
+        return validate_direct_geometry(store, request, step, run=run)
     if not wanted or root != store.load_artifact(wanted).sha256:
         raise ValueError("geometry_root_differs_from_requested_system")
 
 
-def validate_direct_geometry(store, request, step):
+def validate_direct_geometry(store, request, step, *, run=None):
     """Concrete registered Opt artifacts may originate in another Run."""
     if not step.geometry or not step.geometry.artifact_id:
         return
+    if run is not None:
+        from orca_agent.input_bindings import resolved_request
+        request = resolved_request(store, run, request)
     _validate_step_identities(store, request, step, step.geometry.artifact_id)
     system = next((s for s in request.systems if s.id == step.system_id), None)
     if system is None and len(request.systems) == 1:

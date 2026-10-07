@@ -60,7 +60,7 @@ def _missing_information(request):
                 goal.unresolved.append(f"missing:system{suffix}")
                 continue
             geometry = system.geometry_artifact_id if system else request.geometry_artifact_id
-            if geometry is None:
+            if geometry is None and not (system and system.geometry_source == "prepare"):
                 goal.unresolved.append(f"missing:geometry{suffix}")
             for name in _PHYSICAL:
                 value = system.conditions.get(name, getattr(request, name)) if system else getattr(request, name)
@@ -136,7 +136,7 @@ def _authorized_geometry(store, request, permission):
 
 
 def initialize_agent(store, config, request, permission, budget=None, *, sources=None,
-                     batch_category=None, defer_environment=False):
+                     batch_category=None, defer_environment=False, science_baseline_policy="legacy"):
     """Permission and purpose enter here from the user, never from model proposals."""
     pending = request.normalization_status == "pending"
     request = _missing_information(Request.model_validate(request.model_dump()))
@@ -167,7 +167,8 @@ def initialize_agent(store, config, request, permission, budget=None, *, sources
     elif not permission.scientific_execution:
         budget = BudgetLimits.model_validate({**budget.model_dump(),
                                               "orca_starts": 0, "extra_orca_starts": 0})
-    run = store.create_run(request, None, permission, budget)
+    run = store.create_run(request, None, permission, budget,
+                           science_baseline_policy=science_baseline_policy)
     if environment:
         import json
         atomic_write(store.path(f"runs/{run.id}/environment.json"),
@@ -271,6 +272,104 @@ def initialize_bundle(store, config, path: Path):
     if raw:
         store.enqueue_message(run.id, bundle.text)
     return run
+
+
+def _affirmative_text_identity(text, *, answer=False):
+    import re
+
+    if answer and re.search(r"[?？]", text):
+        return False
+    return not re.search(
+        r"(?:不知道|不确定|未确定)[^，,。.;；\n]{0,20}(?:身份|哪个|分子|体系|名称|是水|是甲烷)|"
+        r"(?:身份|名称)(?:目前|仍|尚)?(?:为|是)?(?:未知|不确定|未确定|未确认)|"
+        r"(?:分子|体系)(?:目前|仍|尚)?(?:为|是)?未知|"
+        r"(?:可能|也许|是否|不是|并非)(?:是|为|叫|这个|那个|在说的)?(?:水|甲烷)|"
+        r"\b(?:maybe|perhaps|possibly|probably|whether)\s+(?:(?:it|is|the|molecule)\s+){0,4}"
+        r"(?:water|methane|h2o|ch4)\b|"
+        r"\b(?:identity|molecule|target|system|name)\s+(?:(?:is|remains|still|now|currently)\s+)*"
+        r"\b(?:unknown|uncertain|unconfirmed|undetermined)\b|"
+        r"\b(?:not|never|isn['’]?t)\s+(?:(?:actually|the|a|choose|select|use)\s+){0,3}"
+        r"(?:water|methane|h2o|ch4)\b|"
+        r"\b(?:water|methane|h2o|ch4)\b[^,.;\n]{0,16}\b(?:not|isn['’]?t)\b"
+        r"[^,.;\n]{0,16}\b(?:target|molecule|system)\b|"
+        r"(?:不要|不选|不用)(?:选择|选用|选)?(?:水|甲烷)|"
+        r"\b(?:is|could|might)\s+(?:it|this(?:\s+molecule)?|that(?:\s+molecule)?|"
+        r"the\s+(?:molecule|target))\s+(?:be\s+)?(?:water|methane|h2o|ch4)\b|"
+        r"\b(?:it|molecule|target|system)\s+(?:may|might|could)\s+be\s+(?:water|methane|h2o|ch4)\b|"
+        r"(?:是|为)(?:水|甲烷)(?:分子)?吗", text, re.I)
+
+
+def initialize_text(store, config, text):
+    """Thin user-text intake; local profile owns permissions, never model output."""
+    from orca_agent.semantic import _mentions
+    from orca_agent.tools.registry import SCIENCE_IDENTITIES
+
+    if not config.text.enabled:
+        raise StoreError("pure-text input requires an explicitly enabled local text profile")
+    if not isinstance(text, str) or not text.strip() or len(text) > 8192:
+        raise StoreError("text input must contain 1 to 8192 characters")
+    defaults = dict(config.text.defaults)
+    _validate_new_electronic_conditions(defaults)
+    names = sorted({entry[2] for entry in _mentions(text, targets=True)})
+    systems = []
+    if len(names) == 1 and names[0] in SCIENCE_IDENTITIES and _affirmative_text_identity(text):
+        name = names[0]
+        systems = [SystemInput(id=name, label=name, geometry_source="prepare",
+                               identity={"canonical_names": [name]})]
+    request = Request(original_text=text, charge=None, multiplicity=None, method=None, basis=None,
+        systems=systems, conditions_source={}, semantic_defaults=defaults,
+        conditions={"explain_results": True}, normalization_status="pending",
+        goals=[Goal(id="raw_request", port="unresolved", minimum_check_version="unresolved-1",
+                    original_text=text, unresolved=["missing:goal_definition"])])
+    run = initialize_agent(store, config, request, config.text.permission,
+                           config.text.budget, defer_environment=True,
+                           science_baseline_policy="first_science_plan")
+    store.enqueue_message(run.id, text)
+    return run
+
+
+def bind_text_identity(request, run, pending, candidate):
+    """Register a newly answered text identity without granting another effect.
+
+    This only fulfils the input intent of the new text entry. Ordinary bundles
+    and old Runs cannot gain geometry acquisition by mentioning a molecule.
+    """
+    from orca_agent.semantic import _mentions
+    from orca_agent.tools.registry import SCIENCE_IDENTITIES
+
+    if run.science_baseline_policy != "first_science_plan" or request.systems or not pending:
+        return request
+    values = candidate.model_dump() if hasattr(candidate, "model_dump") else candidate
+    referenced = {name for goal in values.get("goals") or [] for name in goal.get("system_refs", [])}
+    referenced.update(name for names in values.get("goal_bindings", {}).values() for name in names)
+    if len(referenced) != 1 or not referenced <= set(SCIENCE_IDENTITIES):
+        return request
+    message = pending[-1]
+    text = message["text"]
+    names = {entry[2] for entry in _mentions(text, targets=True)}
+    if names != referenced or not message.get("id"):
+        return request
+    # A question, tentative choice or negated identity is not an affirmative
+    # answer. Execution prohibitions alone do not negate the requested identity.
+    if not _affirmative_text_identity(text, answer=True):
+        return request
+    prior_names = set()
+    for goal in request.goals:
+        if goal.identity.get("explicitly_unknown"):
+            continue
+        prior_names.update(goal.identity.get("canonical_names", []))
+        if "canonical_names" not in goal.identity:
+            prior_names.update(entry[2] for entry in _mentions(goal.original_text, targets=True))
+    if prior_names and prior_names != referenced:
+        return request
+    name = next(iter(names))
+    updated = request.model_copy(deep=True)
+    updated.systems = [SystemInput(id=name, label=name, geometry_source="prepare", identity={
+        "canonical_names": [name], "requested_names": list(dict.fromkeys(
+            entry[3] for entry in _mentions(text, targets=True))),
+        "text_evidence": {"message_id": message["id"], "text_basis": text},
+    })]
+    return updated
 
 
 def apply_user_update(store, run_id, message_id, changes):

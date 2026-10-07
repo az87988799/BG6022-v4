@@ -113,7 +113,7 @@ def _goal_binding_contract(request, *, defines_goals=False):
     return identifiers, schema
 
 
-def action_parameters(allowed_tools=(), *, request=None):
+def action_parameters(allowed_tools=(), *, request=None, text_input=False):
     schema = _schema(SemanticCandidate.model_json_schema())
     schema["properties"]["schema_version"] = {"const": VERSION, "type": "string"}
     binding_ids, binding_schema = _goal_binding_contract(request)
@@ -130,37 +130,30 @@ def action_parameters(allowed_tools=(), *, request=None):
         schema["anyOf"] = [{"properties": {"goals": {"type": "null"}}},
                            {"properties": {"goal_bindings": new_goal_binding_schema}}]
     port_rules = {port: rule for port, rule in RULES.items() if port != "unresolved"}
-    return {"normalize_request": {
+    contract = {"normalize_request": {
         "instruction": "Ports:minimum_evidence_rules.port_rules; query:query_schemas[port]. "
-        "environment=gas/solvent; condition_lexicon rows=[value,explicit aliases], not inference. "
-        "electronic_state=RHF/UHF, not ground/excited. "
-        "system_refs select geometry; no geometry conditions. Keep explain_results. "
-        "minimum_evidence=[] still requires checks. Preserve unsupported/unknown requirements. "
-        "Energy:geometry_relation=fixed_initial (SP) or optimized (after Opt). "
-        "Unknown/inferred:conditions/system_conditions. "
-        "Energy:temperature_K/standard_state only if requested; absent display unit=unknown, no question. "
+        "[] minimum_evidence retains basic checks. "
+        "condition_lexicon=[value,explicit aliases]; environment=gas/solvent, electronic_state=RHF/UHF. "
+        "Preserve unknown/unsupported requirements and explain_results. Unknown/inferred fields belong "
+        "in conditions/system_conditions. Energy relation: fixed_initial=SP, optimized=after Opt; "
+        "temperature/standard_state only if requested; absent display unit stays unknown without a question. "
+        "Copy pending_user_message_ids; quote unique verbatim text_basis with matching field/target scope. "
+        "normalize defines goals and retires raw_request/missing:goal_definition. amend retains goals; "
+        "replace_goals needs explicit replacement + all old IDs. New goals bind system_refs; existing "
+        "goals bind Goal.id via goal_bindings. No geometry conditions. Registration/no-execution is not a Goal. "
         "science_scope: capability limits, not permission/defaults. "
-        "Copy AUTHORITY.pending_user_message_ids; no execution. "
-        "Verbatim unique text_basis; optional message_id; match field/target scope. "
-        "normalize retires raw_request/missing:goal_definition, even after clarification; never resolves it. "
-        "Registration/no-execution is not a Goal. amend keeps goals. "
-        "New goals:system_refs; existing Goal.id:goal_bindings, never both. "
-        "replace_goals:explicit replacement + all old IDs. "
-        "gaps:field:<field>/system:<goal_id>; resolves=answered gaps. "
-        "notices=declarations; question_gaps maps questions to current gap IDs.",
+        "resolves=answered gaps (field:<field>/system:<goal_id>); question_gaps maps questions to gap IDs.",
         "science_scope": {"systems": list(SCIENCE_COMPOSITIONS), "conditions": dict(PROFILE),
                           "names": {formula: list(SYSTEM_ALIASES.get(formula.casefold(), ()))
                                     for formula in SCIENCE_COMPOSITIONS},
                           "ports": sorted({port for tool in catalog() if "execute_orca" in tool["effects"]
                                            for port in tool["output_ports"]})},
         "questions_policy": (
-            "Named identity != registered System/geometry; no geometry != unknown identity. "
-            "Explicit registration-only: known scope/geometry limits get declarative notices in notices; "
-            "no reply, confirmation or resource request. Separately disclose science_scope support and "
-            "geometry registration; neither implies the other. Preserve explicit choices. "
-            "No execution permission alone is not registration-only intent. New gaps need visible questions text. "
-            "Ask for critical unknowns in conditions/identity/quantity blocking current scope; "
-            "execution intent may need resources/authorization."),
+            "Identity, registered geometry, capability and permission are separate facts. "
+            "For explicit registration-only, disclose scope and geometry limits via notices, "
+            "without asking for resources/confirmation. Otherwise ask for critical gaps blocking "
+            "the requested scope; new gaps need a question or notice. Preserve explicit choices. "
+            "No execution permission alone is not registration-only intent."),
         "schema": schema,
         "condition_lexicon": {field: [[value, aliases] for (name, value), aliases in LEXICAL_ALIASES.items()
                                       if name == field] for field in dict.fromkeys(name for name, _ in LEXICAL_ALIASES)},
@@ -168,6 +161,15 @@ def action_parameters(allowed_tools=(), *, request=None):
                                    "legacy_aliases": LEGACY_NAMES, "port_rules": port_rules},
         "query_schemas": {port: _schema(get_tool(name).parameter_schema) for port, name in READ_TOOLS.items()
                           if name in allowed_tools}}}
+    if request and request.semantic_defaults:
+        contract["normalize_request"]["authorized_defaults"] = {
+            "source": "default", "default_rule": "local-hf-1", "values": request.semantic_defaults}
+    if request and (text_input or any(system.geometry_source == "prepare" for system in request.systems)):
+        contract["normalize_request"]["input_acquisition"] = (
+            "Confirmed water/methane bind same system_refs; authorized Tools obtain XYZ for prepare intent. "
+            "Unknown/unsupported stay unresolved. Energy relation absent: ask SP vs Opt; "
+            "gap=ambiguous_geometry_relation.")
+    return contract
 
 
 def _quote(text, messages):
@@ -224,7 +226,8 @@ def _propositions(text):
         r"[^，,。.;；\n!?？]+[!?？]?", text)]
 
 
-def _goal_grounding(request, text, system_ids, messages, *, message_id=None, original_identity=None):
+def _goal_grounding(request, text, system_ids, messages, *, message_id=None, original_identity=None,
+                    text_input=False):
     message, start, end = _locate(text, messages, message_id)
     # Expand short quotes to their proposition so clipping off the named target
     # cannot bind the remaining word "energy" to an unrelated registered system.
@@ -243,6 +246,9 @@ def _goal_grounding(request, text, system_ids, messages, *, message_id=None, ori
         r"\b(?:molecule(?:\s+identity)?|molecular\s+identity|system\s+identity|target\s+identity)\s+"
         r"(?:(?:is|remains|still|now|currently)\s+)*(?:unknown|uncertain|unconfirmed|undetermined)\b",
         identity_context, re.I))
+    if text_input:
+        from orca_agent.natural import _affirmative_text_identity
+        explicitly_unknown = explicitly_unknown or not _affirmative_text_identity(identity_context)
     if explicitly_unknown and system_ids:
         raise StoreError("explicitly unknown goal identity cannot inherit a registered system")
     mentions = (quoted if quoted and {entry[2] for entry in quoted} <= {
@@ -486,6 +492,23 @@ def _field(name, item, request, messages, *, system=None):
         if provenance in {"unknown", "inferred", "explicit", "inherited", "not_applicable"} or (
                 prior is not None and canonical_condition(name, prior) != expected):
             raise StoreError("declared or unconfirmed conditions cannot be replaced by a default")
+        # A fresh text Request has no recorded provenance yet. Defaults still
+        # cannot erase a field mentioned in the trusted input, including a
+        # rejected/unknown value. The candidate must preserve that declaration.
+        mentions = {
+            "method": r"方法|\b(?:method|R?HF|UHF|B3LYP|PBE0?|MP2|DFT|Hartree[- ]Fock)\b",
+            "basis": r"基组|\bbasis\b|STO[- ]?3G|\b(?:cc-p|def2|6-31)",
+            "charge": r"电荷|中性|\b(?:charge|neutral|charged|cation|anion)\b",
+            "multiplicity": r"多重度|单重|双重|三重|\b(?:multiplicity|singlet|doublet|triplet)\b",
+            "electronic_state": r"电子态|闭壳层|开壳层|\b(?:reference|RHF|UHF)\b",
+            "environment": r"环境|溶剂|气相|水溶液|\b(?:environment|solvent|aqueous|vacuum|gas)\b|"
+                           r"\bin\s+(?:water|methanol|ethanol|solution)\b",
+            "temperature_K": r"温度|\btemperature\b",
+            "standard_state": r"标准态|\bstandard\s+state\b",
+        }
+        if any(re.search(mentions[name], clause, re.I) for message in messages
+               for clause, _ in _field_propositions(request, message, 0, len(message["text"]), system=system)):
+            raise StoreError("a condition declared in user text cannot be labeled or overwritten as a default")
     elif item.source == "inferred":
         message, start, end = _locate(item.text_basis, messages, item.message_id)
         evidence.update(message_id=message.get("id"), start=start, end=end,
@@ -498,12 +521,38 @@ def _field(name, item, request, messages, *, system=None):
     return value, item.source, evidence
 
 
-def _goals(candidate, request, messages):
+def _text_geometry_relation(request, messages, system_ids):
+    """Finite grounding for new text intake; silence never selects SP or Opt."""
+    scope = next((s for s in request.systems if system_ids == [s.id]), None)
+    selected = set()
+    for message in messages:
+        current = set()
+        uncertain = False
+        clauses = [part for clause, _ in _field_propositions(
+            request, message, 0, len(message["text"]), system=scope)
+            for part in re.split(r"\bbut\b|但是|但", clause, flags=re.I)]
+        for clause in clauses:
+            if re.search(r"不要|不确定|未知|\b(?:not|unknown|uncertain)\b", clause, re.I):
+                if re.search(r"几何|单点|优化|\b(?:geometry|sp|opt|optimization|energy\s+relation)\b", clause, re.I):
+                    uncertain = True
+                continue
+            if re.search(r"优化|\b(?:opt|optimi[sz](?:e|ed|ation))\b", clause, re.I):
+                current.add("optimized")
+            if re.search(r"单点|初始几何|\b(?:sp|single[- ]point|initial\s+geometry)\b", clause, re.I):
+                current.add("fixed_initial")
+        if uncertain:
+            selected = set()
+        elif current:
+            selected = current
+    return next(iter(selected)) if len(selected) == 1 else None
+
+
+def _goals(candidate, request, messages, *, text_input=False):
     systems = {s.id for s in request.systems}
     goals = []
     for goal_index, item in enumerate(candidate.goals or []):
         identity, text_evidence = _goal_grounding(request, item.text_basis, item.system_refs,
-                                                 messages, message_id=item.message_id)
+                                                 messages, message_id=item.message_id, text_input=text_input)
         if len(item.system_refs) != len(set(item.system_refs)) or set(item.system_refs) - systems:
             raise StoreError("semantic goal references unknown/duplicate registered systems")
         conditions = {}
@@ -528,10 +577,18 @@ def _goals(candidate, request, messages):
             value, _, field_evidence = _field(name, field, request, messages, system=scope)
             conditions[name] = value
             text_evidence.setdefault("conditions", {})[name] = field_evidence
+        acquisition = text_input or any(system.geometry_source == "prepare" for system in request.systems)
+        grounded_relation = _text_geometry_relation(request, messages, item.system_refs) if acquisition else None
+        if acquisition and item.port == "energy" and item.geometry_relation != grounded_relation:
+            raise StoreError("text energy geometry relation needs explicit SP/optimization grounding; "
+                             "otherwise preserve ambiguous_geometry_relation and ask")
         if item.geometry_relation:
             conditions["geometry_relation"] = item.geometry_relation
         elif item.port == "energy":
-            raise StoreError("energy goal requires geometry_relation: fixed_initial or optimized")
+            if acquisition:
+                unresolved.append("ambiguous_geometry_relation")
+            else:
+                raise StoreError("energy goal requires geometry_relation: fixed_initial or optimized")
         if item.query is not None:
             if item.port not in READ_TOOLS:
                 raise StoreError("query can only constrain an evidence observation goal")
@@ -687,6 +744,8 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
             whole_messages, re.I)
         if negated or not explicit_replacement:
             raise StoreError("goal replacement requires an explicit user replacement phrase")
+    from orca_agent.natural import bind_text_identity
+    request = bind_text_identity(request, run, pending, candidate)
     values = request.model_dump(mode="json")
     grounding = request.messages + pending if initial else pending
     for scope, fields in [(None, candidate.conditions), *candidate.system_conditions.items()]:
@@ -704,17 +763,34 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
                 **evidence, "message_ids": candidate.message_ids, "schema": VERSION}
     question_gaps = active_question["unresolved"] if active_question else []
     known_gaps = set(request.unresolved) | set(question_gaps) | {gap for g in request.goals for gap in g.unresolved}
+    resolved_relations = set()
+    if run.science_baseline_policy == "first_science_plan":
+        for goal in values["goals"]:
+            if goal["port"] != "energy" or "ambiguous_geometry_relation" not in goal["unresolved"]:
+                continue
+            relation = _text_geometry_relation(request, pending, goal["system_ids"])
+            if relation is not None:
+                goal["conditions"]["geometry_relation"] = relation
+                goal["unresolved"].remove("ambiguous_geometry_relation")
+                goal["text_evidence"]["geometry_relation"] = {
+                    "value": relation, "source": "explicit", "message_ids": candidate.message_ids,
+                    "rule": "text-geometry-relation-1"}
+        if not any("ambiguous_geometry_relation" in goal["unresolved"] for goal in values["goals"]):
+            resolved_relations.add("ambiguous_geometry_relation")
+    def resolution_matches(gap):
+        return gap in resolved_relations or _resolution_matches(gap, candidate)
     if "missing:goal_definition" in candidate.resolves:
         raise ProposalError("normalize replaces the raw_request/missing:goal_definition placeholder automatically "
                             "with requested Goals. Omit that marker from resolves; resolves is only for "
                             "answered field/binding questions.", path=["parameters", "resolves"])
     if set(candidate.resolves) - known_gaps or any(
-            not _resolution_matches(gap, candidate) for gap in candidate.resolves):
+            not resolution_matches(gap) for gap in candidate.resolves):
         raise StoreError("resolved ambiguity must identify an existing question and a grounded field/binding")
     values["unresolved"] = list(dict.fromkeys(
-        ([] if initial else [gap for gap in request.unresolved if gap not in candidate.resolves])
+        ([] if initial else [gap for gap in request.unresolved
+                            if gap not in set(candidate.resolves) | resolved_relations])
         + candidate.unresolved))
-    unresolved_questions = [gap for gap in question_gaps if not _resolution_matches(gap, candidate)]
+    unresolved_questions = [gap for gap in question_gaps if not resolution_matches(gap)]
     if candidate.kind == "replace_goals":
         unresolved_questions = []
     values["unresolved"] = list(dict.fromkeys(values["unresolved"] + unresolved_questions))
@@ -725,7 +801,8 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
             if name in PHYSICAL and field.source in {"unknown", "inferred"}:
                 values["unresolved"].append(marker)
     if candidate.goals is not None:
-        values["goals"] = [g.model_dump() for g in _goals(candidate, request, grounding)]
+        values["goals"] = [g.model_dump() for g in _goals(candidate, request, grounding,
+            text_input=run.science_baseline_policy == "first_science_plan")]
     for goal_id, system_ids in candidate.goal_bindings.items():
         goal = next((g for g in values["goals"] if g["id"] == goal_id), None)
         if (goal is None or not system_ids or len(system_ids) != len(set(system_ids))
@@ -736,7 +813,8 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
         original_identity = goal.get("identity") or {
             "canonical_names": sorted({entry[2] for entry in _mentions(goal["original_text"], targets=True)})}
         identity, evidence = _goal_grounding(request, candidate.text_basis, system_ids,
-            pending, original_identity=original_identity)
+            pending, original_identity=original_identity,
+            text_input=run.science_baseline_policy == "first_science_plan")
         if not identity["canonical_names"] and not _grounded_systems(request, pending):
             raise StoreError("clarification must name the registered system for an unresolved goal")
         goal["system_ids"] = system_ids

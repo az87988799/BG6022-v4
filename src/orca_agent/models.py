@@ -65,7 +65,7 @@ class CalculationParameters(Record):
 class InputRef(Record):
     artifact_id: Identifier | None = None
     producer_step_id: Identifier | None = None
-    port: Literal["optimized_geometry"] | None = None
+    port: Literal["optimized_geometry", "prepared_geometry"] | None = None
 
     @model_validator(mode="after")
     def unambiguous(self) -> InputRef:
@@ -125,6 +125,8 @@ class SystemInput(Record):
     conditions_source: dict[str, str] = Field(default_factory=dict)
     atom_mapping: list[int] = Field(default_factory=list)
     label: str = ""
+    identity: dict[str, Any] = Field(default_factory=dict)
+    geometry_source: Literal["registered", "prepare"] = "registered"
 
 
 class OutputBinding(Record):
@@ -297,6 +299,9 @@ class Tool(Record):
     implementation: str
     required_input_checks: dict[str, str] = Field(default_factory=dict)
     check_contract: dict[str, Any] = Field(default_factory=dict)
+    preflight: str | None = None
+    recovery: str | None = None
+    usage_counter: Literal["identity_queries", "structure_preparations"] | None = None
 
 
 class PermissionSnapshot(Record):
@@ -314,6 +319,8 @@ class PermissionSnapshot(Record):
     artifact_writes: bool = False
     allowed_repairs: dict[str, list[int]] = Field(default_factory=dict)
     allow_additional_science: bool = False
+    external_identity_queries: bool = False
+    geometry_preparation: bool = False
 
     @model_validator(mode="after")
     def registered_tools(self):
@@ -339,6 +346,8 @@ class BudgetLimits(Record):
     analysis_executions: Annotated[int, Field(ge=0, le=8)] = 0
     corrections_per_proposal: Annotated[int, Field(ge=0, le=1)] = 0
     transport_retries: Annotated[int, Field(ge=0, le=1)] = 0
+    identity_queries: Annotated[int, Field(strict=True, ge=0, le=4)] = 0
+    structure_preparations: Annotated[int, Field(strict=True, ge=0, le=4)] = 0
 
 
 class BudgetUsage(Record):
@@ -360,6 +369,8 @@ class BudgetUsage(Record):
     evidence_reads: Annotated[int, Field(ge=0)] = 0
     analysis_executions: Annotated[int, Field(ge=0)] = 0
     logical_steps: list[Identifier] = Field(default_factory=list)
+    identity_queries: Annotated[int, Field(strict=True, ge=0)] = 0
+    structure_preparations: Annotated[int, Field(strict=True, ge=0)] = 0
 
 
 class Attempt(Record):
@@ -451,6 +462,8 @@ class Run(Record):
     applied_decisions: list[Identifier] = Field(default_factory=list)
     agent_enabled: bool = False
     batch_category: Literal["formal", "development"] | None = None
+    input_bindings: dict[Identifier, dict[str, Any]] = Field(default_factory=dict)
+    science_baseline_policy: Literal["legacy", "first_science_plan"] = "legacy"
 
 
 class Check(Record):

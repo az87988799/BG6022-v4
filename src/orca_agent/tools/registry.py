@@ -17,6 +17,15 @@ from orca_agent.tools.evidence import (
     EvidenceSearchParameters,
     EvidenceValueParameters,
 )
+from orca_agent.tools.structure import (
+    IDENTITY_RULE,
+    PREPARATION_RULE,
+    PREPARE_CORES,
+    PREPARE_MEMORY_MB,
+    PREPARE_TIMEOUT_SECONDS,
+    PrepareParameters,
+    ResolveParameters,
+)
 from orca_agent.versions import CURRENT_CHECK_VERSION
 
 SCIENCE_COMPOSITIONS = {"H2O": {"H": 2, "O": 1}, "CH4": {"C": 1, "H": 4}}
@@ -79,7 +88,7 @@ TOOLS: dict[str, _Registration] = {
         check_version=CURRENT_CHECK_VERSION,
         description="H2O/CH4 HF/STO-3G neutral singlet single-point electronic energy in Eh.",
         output_ports=["energy"],
-        required_input_checks={"optimized_geometry": CURRENT_CHECK_VERSION},
+        required_input_checks={"optimized_geometry": CURRENT_CHECK_VERSION, "prepared_geometry": PREPARATION_RULE},
         implementation="orca_agent.tools.electronic.execute",
     ),
     "orca.opt": _register(
@@ -91,7 +100,7 @@ TOOLS: dict[str, _Registration] = {
             "establish a minimum or its vibrational stability."
         ),
         output_ports=["energy", "optimized_geometry"],
-        required_input_checks={"optimized_geometry": CURRENT_CHECK_VERSION},
+        required_input_checks={"optimized_geometry": CURRENT_CHECK_VERSION, "prepared_geometry": PREPARATION_RULE},
         implementation="orca_agent.tools.geometry.execute",
     ),
     "evidence.list": _register(
@@ -137,6 +146,30 @@ TOOLS["evidence.import"] = _register(
     effects=["import_artifact"], max_cores=0, max_memory_mb=0, check_version="evidence-read-1",
     implementation="orca_agent.tools.dispatch.import_evidence",
 )
+for _name, _schema, _port, _version, _effect, _counter, _check in (
+    ("structure.resolve", ResolveParameters, "resolved_identity", IDENTITY_RULE,
+     "query_external_identity", "identity_queries", "supported_identity_graph"),
+    ("structure.prepare", PrepareParameters, "prepared_geometry", PREPARATION_RULE,
+     "prepare_geometry", "structure_preparations", "initial_geometry_identity"),
+):
+    TOOLS[_name] = _register(
+        _schema, name=_name,
+        description=("Resolve one named water/methane identity using bounded official PubChem evidence."
+                     if _effect == "query_external_identity" else
+                     "Prepare one initial XYZ with locked OPI from identity input; not optimized geometry."),
+        input_roles=["requested_identity"] if _effect == "query_external_identity" else ["resolved_identity"],
+        output_ports=[_port], observation_outputs=["input_preparation"],
+        effects=[_effect, "write_input_artifact"], max_cores=PREPARE_CORES if _effect == "prepare_geometry" else 0,
+        max_memory_mb=PREPARE_MEMORY_MB if _effect == "prepare_geometry" else 0,
+        check_version=_version, required_input_checks=({"resolved_identity": IDENTITY_RULE}
+                                                      if _effect == "prepare_geometry" else {}),
+        check_contract={"required_checks": {_port: [_check]},
+                        "max_seconds": PREPARE_TIMEOUT_SECONDS if _effect == "prepare_geometry" else 62,
+                        "max_output_bytes": 65536 if _effect == "prepare_geometry" else 262144},
+        implementation="orca_agent.tools.structure." + ("resolve" if _effect == "query_external_identity" else "prepare"),
+        preflight="orca_agent.tools.structure.validate_call_inputs",
+        recovery="orca_agent.tools.structure.recover_receipt", usage_counter=_counter,
+    )
 for _name, _version, _port, _function in (
     ("analysis.energy_compare", "energy-compare-1", "energy_difference", "compare"),
     ("analysis.finite_sampling", "finite-sampling-1", "sampling", "sample"),

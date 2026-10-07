@@ -82,7 +82,10 @@ def main(argv=None) -> int:
     run_parser = commands.add_parser("run", help="Execute an explicit structured request")
     run_parser.add_argument("request", type=Path)
     ask_parser = commands.add_parser("ask", help="Start an Agent from natural text and independent user constraints")
-    ask_parser.add_argument("request", type=Path, help="User request bundle JSON; no execution Steps")
+    ask_parser.add_argument("request", type=Path, nargs="?", help="User request bundle JSON; no execution Steps")
+    text_inputs = ask_parser.add_mutually_exclusive_group()
+    text_inputs.add_argument("--text", help="Natural-language text using the enabled local text profile")
+    text_inputs.add_argument("--stdin", action="store_true", help="Read at most 8192 text characters from stdin")
     message_parser = commands.add_parser("message", help="Queue a user message without taking coordinator ownership")
     message_parser.add_argument("run_id")
     message_parser.add_argument("text")
@@ -163,8 +166,14 @@ def main(argv=None) -> int:
         else:
             from orca_agent.runner import execute, initialize
             if args.command == "ask":
-                from orca_agent.natural import initialize_bundle
-                run = initialize_bundle(store, config, args.request)
+                from orca_agent.natural import initialize_bundle, initialize_text
+                if bool(args.request) == bool(args.text is not None or args.stdin):
+                    raise ValueError("choose one request bundle, --text or --stdin")
+                if args.request:
+                    run = initialize_bundle(store, config, args.request)
+                else:
+                    text = sys.stdin.read(8193) if args.stdin else args.text
+                    run = initialize_text(store, config, text)
             else:
                 run = (initialize(store, config, args.request) if args.command == "run"
                        else store.load_run(args.run_id))

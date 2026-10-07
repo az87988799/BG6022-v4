@@ -5,9 +5,22 @@ import tomllib
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from orca_agent.models import BudgetLimits, PermissionSnapshot
 
 ModelProfile = Literal["disabled", "thinking_low"]
+
+
+class TextProfile(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = False
+    permission: PermissionSnapshot = Field(default_factory=PermissionSnapshot)
+    budget: BudgetLimits = Field(default_factory=BudgetLimits)
+    defaults: dict = Field(default_factory=lambda: {
+        "method": "HF", "basis": "STO-3G", "charge": 0, "multiplicity": 1,
+        "electronic_state": "RHF", "environment": "gas_phase",
+    })
 
 
 class Config(BaseModel):
@@ -16,6 +29,7 @@ class Config(BaseModel):
     mpi_path: Path | None = None
     data_root: Path = Path("data")
     model_profile: ModelProfile = "disabled"
+    text: TextProfile = Field(default_factory=TextProfile)
 
 
 def load_config(path: Path | None = None) -> Config:

@@ -9,7 +9,7 @@ import psutil
 from orca_agent import runner
 from orca_agent.backends import local
 from orca_agent.context import build_context
-from orca_agent.llm import DeepSeekTransport
+from orca_agent.llm import DeepSeekTransport, proposal_recovery_kind
 from orca_agent.model_usage import current_basis, send_model
 from orca_agent.models import EvidenceRef, Proposal, fingerprint, utc_now
 from orca_agent.proposals import (
@@ -101,14 +101,7 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
     records = [r for r in run.model_records if r.get("logical_id", "").startswith(logical_id + "_")]
     max_requests = 1 + run.budget.corrections_per_proposal + run.budget.transport_retries
 
-    def recovery_kind(reply):
-        category = reply.get("error_category")
-        if category in {"authentication", "permission", "token_bound_exceeded", "credential_in_response",
-                        "response_missing", "redirect_rejected", "response_encoding_rejected"}:
-            return "fatal"
-        if category in {"rate_limit", "timeout", "connection", "transport_error", "http_error"}:
-            return "transport" if reply.get("retryable") else "fatal"
-        return "correction"
+    recovery_kind = proposal_recovery_kind
 
     def rejected_state():
         """Reconstruct independent limits from this logical request's durable receipts."""
@@ -164,6 +157,8 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             selected = [store.load_result(run.id, rid) for rid in run.result_ids]
             from orca_agent.goals import current_goal_evidence
             request = store.load_request(run)
+            from orca_agent.delivery import collect_goal_facts
+            data["goal_facts"] = collect_goal_facts(store, run, request, plan, results)
             current_use = []
             for goal in request.goals:
                 selection = current_goal_evidence(store, run, request, goal, plan, results)
@@ -182,16 +177,27 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                 if "execute_orca" in effects and not run.permission.scientific_execution:
                     continue
                 if (effects & {"create_artifact", "write_artifact", "copy_external_artifact",
-                               "import_artifact", "write_analysis"} and not run.permission.artifact_writes):
+                               "import_artifact", "write_analysis", "write_input_artifact"} and not run.permission.artifact_writes):
+                    continue
+                if "query_external_identity" in effects and not run.permission.external_identity_queries:
+                    continue
+                if "prepare_geometry" in effects and not run.permission.geometry_preparation:
                     continue
                 relevant_tools.append(name)
             from orca_agent.semantic import action_parameters
+            semantic_tools = relevant_tools
+            if not run.permission.artifact_ids and not run.permission.result_ids and not run.result_ids:
+                # Artifact-dependent query schemas become relevant once readable
+                # evidence exists; future queries can remain explicit gaps.
+                semantic_tools = [name for name in relevant_tools
+                                  if get_tool(name).effects != ["read_registered_artifact"]]
             has_pending_messages = any(m["id"] not in run.processed_messages for m in control["messages"])
             prepared = build_context(store.load_request(run), run, plan, results=selected,
                                      feedback=data, relevant_tools=[] if has_pending_messages else relevant_tools,
                                      control_generation=basis["control_generation"],
                                      user_messages=control["messages"],
-                                     action_parameters=action_parameters(relevant_tools, request=request)
+                                     action_parameters=action_parameters(semantic_tools, request=request,
+                                         text_input=run.science_baseline_policy == "first_science_plan")
                                      if has_pending_messages else None,
                                      model_profile=model_profile)
             if run.batch_category and not batch:
@@ -210,6 +216,9 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             if reply.get("error_category") or not reply.get("proposal"):
                 raise ValueError(reply.get("error_category") or "missing_proposal")
             proposal = Proposal.model_validate(reply["proposal"])
+            if proposal.action in {"stop", "clarify"}:
+                from orca_agent.proposals import validate_action_parameters
+                validate_action_parameters(proposal.action, proposal.parameters)
             if {name: getattr(proposal, name) for name in basis} != basis:
                 raise StoreError("proposal version basis differs from the transmitted context")
             if set(proposal.related_results) != set(feedback):
@@ -414,7 +423,7 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
             before = store.read_control(run.id)
             if batch:
                 batch.reconcile_science(run)
-            if not runner._recover(store, config, run, plan) or not store.recover_calls(run):
+            if not store.recover_calls(run) or not runner._recover(store, config, run, plan):
                 return run
             if batch:
                 batch.reconcile_science(run)
@@ -582,6 +591,9 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     result = execute_call(store, run, step.tool, step.parameters.model_dump(),
                                           step=step, results=results, fault=fault, decision_id=decision_id)
                     results[step.id] = result
+                    if result.operation_status == "unknown":
+                        run.state = "unknown"
+                        break
                 if decision_id and decision_id not in run.applied_decisions:
                     run.applied_decisions.append(decision_id)
                     store.save_run(run)

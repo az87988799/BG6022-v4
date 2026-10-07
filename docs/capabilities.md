@@ -26,6 +26,8 @@ R-03 已结算历史尝试在补收 Result 保存后再次崩溃的引用恢复�
 
 缺口闭合批次一补充有限名称的原文/几何一致性、可信消息片段与条件作用域、登记告知和待答问题区分、严格电荷/多重度整数入口，以及修订后的共用当前证据选择，见[本批报告](acceptance/bounded-gap-batch-1/report.md)。新候选使用 `request-semantics-2` / `agent-json-v17`；历史记录保留。该批提供离线程序边界证据，真实模型对新协议的可靠性尚未验证；不新增科学范围或纯文本到真实计算能力，等待用户验收。
 
+2026-10-08 后续批次增加 `optimization-final-stage-1` 末次优化阶段约束、共用逐目标交付事实和严格停止/澄清协议（新候选 `agent-json-v18`，历史记录保留原版本）。纯文本入口经显式本地 profile 获取水/甲烷输入，`structure.resolve` 和 `structure.prepare` 的 Run 局部来源绑定、恢复、资源和目的校验已有离线生产链验证，见[输入链报告](acceptance/bounded-gap-batches-4-5/report.md)。准备几何只表示合格初始 XYZ，不具有优化资格。真实分层验证的[固定包及限额](reviews/2026-10-08-bounded-real-validation-package.md)已获[明确批准](acceptance/phase-b/budget-approval-bounded-20261008.json)，批准本身不是实际执行或验收通过证据。
+
 | 操作 | 实际状态 | 限制 |
 | --- | --- | --- |
 | Windows 受管执行 | 原子 Job 绑定、CPU/提交内存、期限、完整树清理已实测 | 仅本地 Windows；其他平台直接拒绝 |

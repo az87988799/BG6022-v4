@@ -176,6 +176,8 @@ def goal_evidence_assessment(store, run, request, goal, result):
     reasons = []
     current_use = None
     try:
+        from orca_agent.input_bindings import resolved_request
+        request = resolved_request(store, run, request)
         if goal.port in {"energy", "optimized_geometry"}:
             output = result.qualified_outputs.get(goal.port)
             if request.unresolved or goal.unresolved or result.operation_status != "completed":

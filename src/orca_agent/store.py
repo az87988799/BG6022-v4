@@ -194,6 +194,7 @@ class Store:
     def create_run(
         self, request: Request, plan: Plan | None,
         permission: PermissionSnapshot | None = None, budget: BudgetLimits | None = None,
+        *, science_baseline_policy: str = "legacy",
     ) -> Run:
         request = Request.model_validate(request.model_dump())
         if plan is not None:
@@ -219,14 +220,17 @@ class Store:
             raise StoreError("initial geometry is outside the permission snapshot")
         budget = budget or BudgetLimits()
         budget = BudgetLimits.model_validate(budget.model_dump())
+        science_steps = ([s.logical_id for s in plan.steps
+                          if "execute_orca" in get_tool(s.tool).effects] if plan else None)
         run = Run(
             request_id=request.id, request_version=request.version,
             plan_id=plan.id if plan else None, plan_version=plan.version if plan else None,
             permission=permission, budget=budget,
             deadline=utc_now() + timedelta(seconds=budget.run_seconds),
             goal_status={goal.id: "insufficient_evidence" for goal in request.goals},
-            initial_science_steps=([s.logical_id for s in plan.steps
-                                   if "execute_orca" in get_tool(s.tool).effects] if plan else None),
+            science_baseline_policy=science_baseline_policy,
+            initial_science_steps=(science_steps or None
+                                   if science_baseline_policy == "first_science_plan" else science_steps),
         )
         if plan:
             run.usage.logical_steps = [s.logical_id for s in plan.steps]
@@ -321,6 +325,7 @@ class Store:
         with self.run_lock(run.id):
             previous = self.load_run(run.id)
             for field in ("request_id", "request_version", "plan_id", "plan_version", "permission",
+                          "science_baseline_policy",
                           "budget", "created_at", "deadline"):
                 if getattr(run, field) != getattr(previous, field):
                     raise StoreError(f"fixed run field cannot be changed: {field}")
@@ -328,7 +333,7 @@ class Store:
                           "elapsed_seconds", "cpu_seconds", "extra_orca_starts_reserved",
                           "model_calls", "model_tokens_used", "model_tokens_unknown",
                           "plan_revisions", "decision_rounds",
-                          "evidence_reads", "analysis_executions"):
+                          "evidence_reads", "analysis_executions", "identity_queries", "structure_preparations"):
                 if getattr(run.usage, field) < getattr(previous.usage, field):
                     raise StoreError(f"cumulative usage cannot decrease: {field}")
             for field in ("logical_attempts", "fingerprint_attempts"):
@@ -367,6 +372,15 @@ class Store:
             for old, new in zip(previous.model_records, run.model_records, strict=False):
                 if old != new:
                     raise StoreError("model records require dedicated evidence-backed settlement")
+            if run.input_bindings != previous.input_bindings:
+                from orca_agent.input_bindings import validate_input_result
+                request = self.load_request(run)
+                for system_id, ports in run.input_bindings.items():
+                    for port, binding in ports.items():
+                        result = self.load_result(run.id, binding["result_id"])
+                        actual = validate_input_result(self, run, request, result, port)
+                        if actual != binding or actual["system_id"] != system_id:
+                            raise StoreError("input binding must derive from exact current qualified evidence")
             self._write_json(f"runs/{run.id}/run.json", run)
 
     def settle_model(self, run: Run, ticket: str):
@@ -500,7 +514,9 @@ class Store:
                 if geometry_artifact_id != step.geometry.artifact_id:
                     raise StoreError("geometry differs from the plan binding")
                 if geometry_artifact_id not in permission.artifact_ids:
-                    raise StoreError("geometry is not authorized")
+                    from orca_agent.input_bindings import prepared_geometry
+                    if prepared_geometry(self, run, self.load_request(run), step.system_id) != geometry_artifact_id:
+                        raise StoreError("geometry is not authorized")
             else:
                 self._validate_future_binding(run, step, geometry_artifact_id)
             from orca_agent.applicability import validate_geometry_consumption
@@ -654,6 +670,14 @@ class Store:
 
     def _validate_future_binding(self, run: Run, step: Step, artifact_id: str) -> None:
         producer = step.geometry.producer_step_id
+        if step.geometry.port == "prepared_geometry":
+            from orca_agent.input_bindings import prepared_geometry
+            request = self.load_request(run)
+            if (prepared_geometry(self, run, request, step.system_id) != artifact_id
+                    or run.input_bindings[step.system_id]["prepared_geometry"]["result_id"]
+                    != run.selected_results.get(producer)):
+                raise StoreError("future prepared geometry lacks its exact current input binding")
+            return
         candidates = [a for a in run.attempts if a.step_id == producer and a.result_id]
         selected = run.selected_results.get(producer)
         if selected:
@@ -757,6 +781,12 @@ class Store:
             if tool not in run.permission.allowed_tools:
                 raise StoreError("tool is not authorized")
             params = validate_parameters(tool, parameters).model_dump(mode="json")
+            if definition.usage_counter:
+                if run.state == "unknown" or any(c.state in {"reserved", "unknown"} for c in run.calls):
+                    raise StoreError("unfinished input acquisition requires reconciliation before new execution")
+                if any(c.tool == tool and c.request_version == run.request_version
+                       and c.parameters == params for c in run.calls):
+                    raise StoreError("input acquisition already has a durable Call; reuse or explicitly revise the request")
             writes = any(effect.startswith("write") or effect == "import_artifact"
                          for effect in definition.effects)
             if writes and (not run.permission.artifact_writes or step is None):
@@ -779,8 +809,13 @@ class Store:
                 raise StoreError("external source is outside the permission snapshot")
             if params.get("run_id") and params["run_id"] != run.id:
                 raise StoreError("cross-Run listing requires explicit imported evidence")
-            counter = ("analysis_executions" if "write_analysis" in definition.effects
-                       or definition.output_ports else "evidence_reads")
+            if definition.preflight:
+                import importlib
+                module, name = definition.preflight.rsplit(".", 1)
+                getattr(importlib.import_module(module), name)(self, run, params, tool, consumption)
+            counter = definition.usage_counter or (
+                "analysis_executions" if "write_analysis" in definition.effects
+                or definition.output_ports else "evidence_reads")
             if getattr(run.usage, counter) >= getattr(run.budget, counter):
                 raise BudgetExceeded(f"{counter} budget exhausted")
             if validate_only:
@@ -792,20 +827,40 @@ class Store:
                             consumption=consumption or {})
             run.calls.append(call)
             setattr(run.usage, counter, getattr(run.usage, counter) + 1)
-            self.save_run(run)
+            if "prepare_geometry" in definition.effects:
+                with self._environment_lock():
+                    if self.environment_lease() is not None:
+                        run.calls.pop()
+                        setattr(run.usage, counter, getattr(run.usage, counter) - 1)
+                        raise EnvironmentBusy("environment quota is occupied, including unknown preparation")
+                    self.save_run(run)
+                    lease = {"run_id": run.id, "attempt_id": call.id, "kind": "tool_call",
+                             "data_root": str(self.root), "state": "intent",
+                             "created_at": utc_now().isoformat()}
+                    atomic_write(controlled_path(self.environment_root, "lease.json"), _json_bytes(lease))
+            else:
+                self.save_run(run)
             return call
 
     def finish_call(self, run: Run, call: ToolCall, result: Result) -> None:
         if result.call_id != call.id or result.run_id != run.id:
             raise StoreError("result call binding mismatch")
         self.save_result(result)
-        call.state = "completed" if result.operation_status == "completed" else "failed"
+        call.state = ("unknown" if result.operation_status == "unknown" else
+                      "completed" if result.operation_status == "completed" else "failed")
         call.result_id = result.id
         if result.id not in run.result_ids:
             run.result_ids.append(result.id)
         if call.step_id:
             run.selected_results[call.step_id] = result.id
+        from orca_agent.input_bindings import bind_input_result
+        bind_input_result(self, run, result)
         self.save_run(run)
+        if "prepare_geometry" in get_tool(call.tool).effects:
+            execution = result.source.get("execution", {})
+            terminated = execution.get("state") in {"completed", "failed", "cancelled", "timed_out"}
+            if result.source.get("not_started") or terminated:
+                self.release_environment(run.id, call.id, termination_confirmed=True)
 
     def recover_calls(self, run: Run) -> bool:
         directory = self.path(f"runs/{run.id}/results")
@@ -816,10 +871,21 @@ class Store:
         complete = True
         for call in run.calls:
             if call.state not in ("reserved", "unknown"):
+                lease = self.environment_lease()
+                if (lease and lease.get("kind") == "tool_call"
+                        and (lease["run_id"], lease["attempt_id"]) == (run.id, call.id)
+                        and call.result_id):
+                    self.finish_call(run, call, self.load_result(run.id, call.result_id))
                 continue
             candidates = [result for result in results if result.call_id == call.id]
             if len(candidates) > 1:
                 raise StoreError("multiple unrelated Results for one Tool call")
+            if not candidates:
+                from orca_agent.tools.dispatch import recover_call_result
+                recovered = recover_call_result(self, run, call)
+                if recovered is not None:
+                    self.save_result(recovered)
+                    candidates = [recovered]
             if not candidates:
                 call.state = "unknown"
                 run.state = "unknown"
@@ -827,6 +893,10 @@ class Store:
                 complete = False
                 continue
             self.finish_call(run, call, candidates[0])
+            if call.state == "unknown":
+                run.state = "unknown"
+                self.save_run(run)
+                complete = False
         return complete
 
     def commit_revision(self, run: Run, plan: Plan | None, *, decision_id: str,
@@ -885,10 +955,12 @@ class Store:
             for step in plan.steps if plan else []:
                 if "execute_orca" in get_tool(step.tool).effects and step.geometry.artifact_id:
                     try:
-                        validate_direct_geometry(self, next_request, step)
+                        validate_direct_geometry(self, next_request, step, run=run)
                     except ValueError as exc:
                         raise StoreError(str(exc)) from exc
-            revising = plan is not None and run.initial_science_steps is not None and not message_only
+            had_plan = prior_plan is not None or any(d.get("plan_version") is not None
+                                                    for d in run.decisions)
+            revising = plan is not None and had_plan and not message_only
             if revising and run.usage.plan_revisions >= run.budget.plan_revisions:
                 raise BudgetExceeded("plan revision budget exhausted")
             logical = set(run.usage.logical_steps) | {
@@ -907,10 +979,12 @@ class Store:
             updated.request_version = next_request.version
             updated.plan_id = plan.id if plan else None
             updated.plan_version = plan.version if plan else None
-            if plan and updated.initial_science_steps is None:
-                updated.initial_science_steps = [s.logical_id for s in plan.steps
-                                                if "execute_orca" in get_tool(s.tool).effects]
-            elif revising:
+            science_steps = [s.logical_id for s in plan.steps
+                             if "execute_orca" in get_tool(s.tool).effects] if plan else []
+            if (plan and updated.initial_science_steps is None and
+                    (science_steps or updated.science_baseline_policy == "legacy")):
+                updated.initial_science_steps = science_steps
+            if revising:
                 updated.usage.plan_revisions += 1
             updated.usage.logical_steps = sorted(logical)
             updated.decisions.append({"id": decision_id, "basis": basis,
@@ -941,6 +1015,9 @@ class Store:
                 # Plan outputs when the old Plan is suspended by a user update.
                 # Results, Artifacts, attempts and usage remain historical facts.
                 updated.goal_evidence = {}
+                # These are current selections only; all Call/Result/Artifact
+                # histories survive. Reacquisition needs a new validated Plan.
+                updated.input_bindings = {}
                 updated.goal_status = {goal.id: "insufficient_evidence" for goal in next_request.goals}
                 for goal in next_request.goals:
                     selection = current_goal_evidence(self, run, next_request, goal, prior_plan)

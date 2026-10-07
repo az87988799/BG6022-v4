@@ -33,6 +33,8 @@ RDKIT_VERSION = "2025.9.6"
 MAX_RESPONSE_BYTES = 256 * 1024
 MAX_GEOMETRY_BYTES = 65536
 PREPARE_TIMEOUT_SECONDS = 30
+PREPARE_CORES = 1
+PREPARE_MEMORY_MB = 1024
 PUBCHEM_ROOT = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/"
 PROPERTIES = ("MolecularFormula", "SMILES", "Charge", "IsotopeAtomCount", "AtomStereoCount",
               "BondStereoCount", "CovalentUnitCount")
@@ -173,6 +175,8 @@ def validate_call_inputs(store, run, parameters, tool, consumption=None):
     request, system, canonical, evidence = _requirement(store, run, params.system_id)
     if tool == "structure.prepare":
         from orca_agent.applicability import effective_conditions
+        if run.permission.max_cores < PREPARE_CORES or run.permission.max_memory_mb < PREPARE_MEMORY_MB:
+            raise ValueError("preparation resources exceed the frozen permission snapshot")
         conditions = effective_conditions(request, system_id=system.id)
         if (params.charge != 0 or params.multiplicity != 1
                 or conditions["conditions"].get("charge") != params.charge
@@ -427,7 +431,7 @@ def _generate(store, run, call, document, params):
             return outcome
         outcome = run_managed(Path(sys.executable).resolve(),
             ["-m", "orca_agent.tools.structure", "--worker", str(worker_input)], directory,
-            cores=1, total_memory_mb=1024, timeout_s=PREPARE_TIMEOUT_SECONDS,
+            cores=PREPARE_CORES, total_memory_mb=PREPARE_MEMORY_MB, timeout_s=PREPARE_TIMEOUT_SECONDS,
             job_name=new_job_name(), cancel_requested=lambda: store.read_signal(run.id) == "cancel",
             environment=environment, on_started=started, fault=release)
     finally:

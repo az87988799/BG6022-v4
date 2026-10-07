@@ -1,0 +1,45 @@
+# Explicit opt-in profile for named water/methane only. No credentials in this file.
+orca_path = 'E:\orca\orca.exe'
+mpi_path = 'C:\Program Files\Microsoft MPI\Bin\mpiexec.exe'
+data_root = 'data'
+model_profile = 'disabled' # reasoning mode disabled; the permitted model call still runs
+
+[text]
+enabled = true
+
+[text.defaults]
+method = 'HF'
+basis = 'STO-3G'
+charge = 0
+multiplicity = 1
+electronic_state = 'RHF'
+environment = 'gas_phase'
+
+[text.permission]
+model_execution = true
+scientific_execution = true
+artifact_writes = true
+external_identity_queries = true
+geometry_preparation = true
+allowed_tools = ['structure.resolve', 'structure.prepare', 'orca.sp', 'orca.opt', 'evidence.list', 'evidence.value', 'evidence.text']
+max_cores = 4
+max_memory_mb = 1024
+allow_additional_science = false
+
+[text.budget]
+attempts_per_step = 1
+orca_starts = 1
+extra_orca_starts = 0
+run_seconds = 900
+model_calls = 8
+plan_revisions = 2
+model_tokens = 48000
+input_tokens = 12000
+output_tokens = 2000
+decision_rounds = 10
+evidence_reads = 4
+analysis_executions = 0
+corrections_per_proposal = 1
+transport_retries = 0
+identity_queries = 1
+structure_preparations = 1

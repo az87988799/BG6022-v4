@@ -37,6 +37,15 @@ Copy-Item config.example.toml config.local.toml
 
 `message` 的更新文件只能包含用户明确修改的 Request 字段；不会扩大许可或重置预算。`report` 根据已有证据确定性生成报告，不调用模型。
 
+无手工 XYZ 的水/甲烷输入可使用 `ask --text` 或 `ask --stdin`；二者与 JSON bundle 互斥。按 `config.text.example.toml` 在本地配置中显式启用 text profile，并核对 ORCA/MPI 路径、工具许可与各项预算后使用：
+
+```powershell
+.venv\Scripts\orca-agent.exe --config config.local.toml ask --text '优化水分子并给出优化后的电子能'
+'计算甲烷初始几何的单点电子能' | .venv\Scripts\orca-agent.exe --config config.local.toml ask --stdin
+```
+
+该 profile 允许默认 RHF/STO-3G、气相、中性单重态，并记录默认来源；用户明确条件和未知优先。身份查询会联系官方 PubChem，结构准备经 OPI/RDKit 生成初始 XYZ，随后模型可按冻结许可发起 ORCA，所有影响各自计费并保留证据。“算水的能量”会先澄清 SP 或优化后能量；只登记或禁止执行仍按原文处理。准备结构不代表优化通过。输入链的离线与真实证据边界见[本批报告](docs/acceptance/bounded-gap-batches-4-5/report.md)。
+
 ```powershell
 .venv\Scripts\orca-agent.exe --config config.local.toml run tests/fixtures/phase_a/water_sp/request.json
 .venv\Scripts\orca-agent.exe --config config.local.toml run tests/fixtures/phase_a/water_opt_sp/request.json

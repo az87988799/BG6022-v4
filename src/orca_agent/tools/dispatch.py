@@ -229,6 +229,9 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
                  decision_id=None):
     definition = get_tool(tool_name)
     consumption = bind_inputs(store, run, step, results or {}) if step else {}
+    if "write_input_artifact" in definition.effects:
+        from orca_agent.input_bindings import input_purpose
+        consumption["_input_purpose"] = input_purpose(store.load_request(run), parameters["system_id"])
     if "write_analysis" in definition.effects and step is not None:
         from orca_agent.applicability import purpose_snapshot
         request = store.load_request(run)
@@ -251,8 +254,14 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
                 raise ControlChanged("reserved Tool basis differs from current control")
             if definition.effects == ["read_registered_artifact"]:
                 data = implementation(store, **call.parameters)
-            else:
+            elif not definition.usage_counter:
                 data = implementation(store, run, call)
+        if definition.usage_counter:
+            # External bounded work owns its prelaunch check and cancellation;
+            # user messages must not wait behind a long-lived control lock.
+            data = implementation(store, run, call)
+        if fault and "write_input_artifact" in definition.effects:
+            fault("after_input_artifacts_saved")
         qualified = {k: QualifiedOutput.model_validate(v)
                      for k, v in data.get("qualified_outputs", {}).items()}
         checks = {k: list(v.checks) for k, v in qualified.items()}
@@ -299,9 +308,10 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
                 checks["member_table"] = list(comparison.checks)
         observation = {name: data for name in definition.observation_outputs}
         result = Result(run_id=run.id, step_id=call.step_id, call_id=call.id,
-                        operation_status="completed", checks=checks, qualified_outputs=qualified,
+                        operation_status=data.get("operation_status", "completed"), checks=checks, qualified_outputs=qualified,
                         observations=observation, artifact_ids=list(dict.fromkeys(artifacts)),
-                        source={"tool": tool_name, "consumption": consumption,
+                        diagnostics=data.get("diagnostics", []),
+                        source={**data.get("source", {}), "tool": tool_name, "consumption": consumption,
                                 "request_version": run.request_version, "plan_version": run.plan_version})
     except (KeyError, TypeError, ValueError, OSError, RuntimeError) as exc:
         control_error = exc if isinstance(exc, ControlChanged) else None
@@ -325,3 +335,24 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
     if control_error:
         raise control_error
     return result
+
+
+def recover_call_result(store, run, call):
+    """Rebuild only from a registered immutable receipt; never rerun implementation."""
+    definition = get_tool(call.tool)
+    if not definition.recovery:
+        return None
+    module, function = definition.recovery.rsplit(".", 1)
+    data = getattr(importlib.import_module(module), function)(store, run, call)
+    if data is None:
+        return None
+    qualified = {port: QualifiedOutput.model_validate(value)
+                 for port, value in data.get("qualified_outputs", {}).items()}
+    return Result(run_id=run.id, step_id=call.step_id, call_id=call.id,
+                  operation_status=data.get("operation_status", "completed"),
+                  checks={port: output.checks for port, output in qualified.items()},
+                  qualified_outputs=qualified, diagnostics=data.get("diagnostics", []),
+                  observations={name: data for name in definition.observation_outputs},
+                  artifact_ids=list(data.get("artifact_ids", [])),
+                  source={**data.get("source", {}), "tool": call.tool, "consumption": call.consumption,
+                          "request_version": call.request_version, "plan_version": call.plan_version})

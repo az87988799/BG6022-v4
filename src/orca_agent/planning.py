@@ -91,11 +91,19 @@ def _step_permissions(step: Step, run: Run) -> None:
         _require(step.parameters.cores <= permission.max_cores
                  and step.parameters.memory_mb <= permission.max_memory_mb,
                  "scientific resources exceed the permission snapshot")
+    if "query_external_identity" in tool.effects:
+        _require(permission.external_identity_queries, "external identity queries are not authorized")
+    if "prepare_geometry" in tool.effects:
+        _require(permission.geometry_preparation, "geometry preparation is not authorized")
+        _require(tool.max_cores <= permission.max_cores and tool.max_memory_mb <= permission.max_memory_mb,
+                 "geometry preparation resources exceed the permission snapshot")
     if set(tool.effects) & {"create_artifact", "write_artifact", "copy_external_artifact",
-                            "write_analysis", "import_artifact"}:
+                            "write_analysis", "import_artifact", "write_input_artifact"}:
         _require(permission.artifact_writes, "artifact creation is not authorized")
     if step.geometry and step.geometry.artifact_id:
-        _require(step.geometry.artifact_id in permission.artifact_ids,
+        prepared = {binding.get("prepared_geometry", {}).get("artifact_id")
+                    for binding in run.input_bindings.values()}
+        _require(step.geometry.artifact_id in set(permission.artifact_ids) | prepared,
                  "geometry is outside the permission snapshot")
     parameters = step.parameters.model_dump(mode="json")
     if parameters.get("artifact_id") is not None:
@@ -277,7 +285,9 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
                     _require(_shape(previous, logical_by_id, omit_scf=True)
                              != _shape(step, logical_by_id, omit_scf=True),
                              "new logical ID cannot reset an existing scientific intent")
-            if prior_plan is not None or run.initial_science_steps is not None:
+            deferred_initial = (run.science_baseline_policy == "first_science_plan"
+                                and run.initial_science_steps is None)
+            if (prior_plan is not None or run.initial_science_steps is not None) and not deferred_initial:
                 _require(run.permission.allow_additional_science,
                          "additional scientific Steps are not authorized")
         if step.id not in reserved_ids:
@@ -293,3 +303,25 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     _require(extra_science <= run.budget.extra_orca_starts - run.usage.extra_orca_starts_reserved,
              "proposed Plan exceeds the remaining extra scientific startup budget")
     _goal_bindings(next_request, next_plan, run)
+    if (run.science_baseline_policy == "first_science_plan" and run.initial_science_steps is None
+            and any(_science(step) for step in next_plan.steps)):
+        for goal in next_request.goals:
+            if goal.required and goal.port in {"energy", "optimized_geometry"}:
+                binding = next_plan.goal_map.get(goal.id)
+                _require(binding is not None and binding.step_id is not None
+                         and _science(next(s for s in next_plan.steps if s.id == binding.step_id)),
+                         "first scientific Plan must cover the original required scientific goals")
+                step = next(s for s in next_plan.steps if s.id == binding.step_id)
+                if goal.port == "energy":
+                    if "optimized_geometry" in get_tool(step.tool).output_ports:
+                        relation = "optimized"
+                    elif step.geometry.producer_step_id:
+                        relation = ("optimized" if step.geometry.port == "optimized_geometry" else "fixed_initial")
+                    else:
+                        initial = {next_request.geometry_artifact_id,
+                                   *(s.geometry_artifact_id for s in next_request.systems),
+                                   *(b.get("prepared_geometry", {}).get("artifact_id")
+                                     for b in run.input_bindings.values())} - {None}
+                        relation = "fixed_initial" if step.geometry.artifact_id in initial else None
+                    _require(relation is None or relation == goal.conditions.get("geometry_relation"),
+                             "first scientific Plan cannot replace the requested geometry relation")
