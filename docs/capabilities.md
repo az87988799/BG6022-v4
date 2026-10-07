@@ -1,6 +1,6 @@
 # 能力与证据
 
-版本：0.1.0；日期：2026-10-06。状态：**阶段 A 已由用户验收通过**，接受代码基线 `236376e`，见[用户验收记录](acceptance/phase-a/user-acceptance.md)。详细验证与失败历史见 [阶段报告](acceptance/phase-a/report.md) 和 [证据索引](acceptance/phase-a/evidence-index.json)。
+版本：0.1.0；日期：2026-10-07。状态：**阶段 A 已由用户验收通过**，接受代码基线 `236376e`，见[用户验收记录](acceptance/phase-a/user-acceptance.md)。详细验证与失败历史见 [阶段报告](acceptance/phase-a/report.md) 和 [证据索引](acceptance/phase-a/evidence-index.json)。
 
 本轮 R-01～R-05 修复使用 `orca-hf-2`，见 [修复验收记录](acceptance/phase-a-repair/report.md) 与 [真实历史产物只读回放](acceptance/phase-a-repair/replay.json)。既有真实执行证据保持原样；本轮新增科学启动 0 次。当前 ORCA 准入精确限定 `6.1.1`，不因满足 OPI 最低版本就自动启用其他版本。旧规则结果可查看、取消、对账及补收；继续执行或复用于新版目标需要明确的规则复验，本次没有自动迁移流程。
 
@@ -23,6 +23,8 @@ R-03 已结算历史尝试在补收 Result 保存后再次崩溃的引用恢复�
 ## 执行与读取
 
 2026-10-07 修复 v2 补充了科学目标当前用途、最低证据、体系完整性与几何谱系检查，以及查询覆盖、原子消息和启动门禁。原始文字可先形成待校验语义候选，缺项保持未决；该入口的离线控制证据与真实模型理解证据分别记录于 [修复 v2](acceptance/phase-b/repair-v2.md)，不以预填 Goal 的旧轨迹证明新入口已验收。
+
+缺口闭合批次一补充有限名称的原文/几何一致性、可信消息片段与条件作用域、登记告知和待答问题区分、严格电荷/多重度整数入口，以及修订后的共用当前证据选择，见[本批报告](acceptance/bounded-gap-batch-1/report.md)。新候选使用 `request-semantics-2` / `agent-json-v17`；历史记录保留。该批提供离线程序边界证据，真实模型对新协议的可靠性尚未验证；不新增科学范围或纯文本到真实计算能力，等待用户验收。
 
 | 操作 | 实际状态 | 限制 |
 | --- | --- | --- |
