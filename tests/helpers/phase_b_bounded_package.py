@@ -38,6 +38,8 @@ reference = budget.reference
 PROJECT = reference.PROJECT
 ROOT = reference.BATCH_ROOT / "bounded-20261008"
 LABEL = "bounded-20261008"
+RENEWAL_LABEL = "bounded-20261008-r2"
+RENEWAL_ROOT = reference.BATCH_ROOT / RENEWAL_LABEL
 DIAGNOSTICS = (
     "N-06/raw-unsupported-system", "V-06/insufficient-additional-budget",
     "V-07/array-location", "V-09/different-method", "V-09/missing-electron-state",
@@ -54,9 +56,41 @@ WATER_REFERENCE_SHA256 = "01f0124270697f2df3d1509a07fafc8c9cff97eff5849b5d39564c
 REFERENCE_ID = "bounded-20261008-methane-prepared-sp"
 
 
-def scope():
-    return {
-        "schema_version": 1, "package_id": LABEL, "model_profile": "disabled",
+def _root(package):
+    if package == LABEL:
+        return ROOT
+    if package == RENEWAL_LABEL:
+        return RENEWAL_ROOT
+    raise ValueError("unknown fixed package")
+
+
+def _limits(package):
+    _root(package)
+    return ((reference.BOUNDED_LIMITS, reference.RENEWAL_LIMITS) if package == RENEWAL_LABEL
+            else (reference.ACTIVE_LIMITS, reference.BOUNDED_LIMITS))
+
+
+def _approval_identity(package):
+    _root(package)
+    return ((reference.RENEWAL_APPROVAL_ID, reference.RENEWAL_APPROVAL_SHA256) if package == RENEWAL_LABEL
+            else (reference.BOUNDED_APPROVAL_ID, reference.BOUNDED_APPROVAL_SHA256))
+
+
+def _reference_id(package):
+    _root(package)
+    return f"{RENEWAL_LABEL}-methane-prepared-sp" if package == RENEWAL_LABEL else REFERENCE_ID
+
+
+def _assert_open(package):
+    _root(package)
+    if package == LABEL:
+        raise reference.ReferenceBlocked("bounded-20261008 is closed after its recorded failure; audit/regrade only")
+
+
+def scope(*, package=LABEL):
+    previous, proposed = _limits(package)
+    value = {
+        "schema_version": 1, "package_id": package, "model_profile": "disabled",
         "diagnostics": list(DIAGNOSTICS), "raw_gates": list(RAW_GATES),
         "repetitions": {"water_opt": 3, "methane_prepared_sp": 3},
         "new_orca_starts": {"reference": 1, "development": 6},
@@ -66,21 +100,33 @@ def scope():
                       "prepare_seconds": 30, "prepare_cores": 1, "prepare_memory_mb": 1024,
                       "response_bytes": 262144, "response_deadline_seconds": 20,
                       "http_read_timeout_seconds": 10, "http_connect_timeout_seconds": 5},
-        "previous_limits": reference.ACTIVE_LIMITS, "proposed_limits": reference.BOUNDED_LIMITS,
+        "previous_limits": previous, "proposed_limits": proposed,
         "preserved_old_remaining": {"C": {"http_requests": 48, "tokens": 288000, "orca_starts": 16},
             "conditional_D": {"http_requests": 16, "tokens": 96000, "orca_starts": 6},
             "formal": {"http_requests": 624, "tokens": 4704000, "orca_starts": 48}},
         "water_reference_sha256": WATER_REFERENCE_SHA256,
-        "reference_id": REFERENCE_ID,
+        "reference_id": _reference_id(package),
         "limitations": ["prepared XYZ is generated once per system, reused by three independent model/science Runs",
             "input acquisition exercises production Tools without model-selected acquisition",
             "not a formal acceptance freeze; historical Results and quota remain unchanged"],
     }
+    if package == RENEWAL_LABEL:
+        value["supersedes_package"] = LABEL
+        value["prior_package_disposition"] = {
+            "retained_model_slots": {DIAGNOSTICS[0]: "passed", DIAGNOSTICS[1]: "failed"},
+            "cancelled_model_slots": list(MODEL_SLOTS[2:]),
+            "cancelled_structure_queries": 2, "cancelled_structure_preparations": 2,
+            "cancelled_reference_starts": 1, "cancelled_development_starts": 6,
+            "retained_usage": {"http_requests": 2, "tokens": 7967, "orca_starts": 0},
+            "reuse_prior_runs_or_passes": False,
+        }
+    return value
 
 
-def _approval():
-    value = reference.bounded_approval()
-    if value.get("development_package") != scope():
+def _approval(*, package=LABEL):
+    _root(package)
+    value = reference.renewal_approval() if package == RENEWAL_LABEL else reference.bounded_approval()
+    if value.get("development_package") != scope(package=package):
         raise reference.ReferenceBlocked("approved package scope differs from this exact operator")
     return value
 
@@ -89,25 +135,30 @@ def _save(path, value):
     reference._save(path, value, immutable=True)
 
 
-def apply_limits(*, execute=False, fault=None):
-    """Append fourth approval to the existing ledger; preserve every old receipt."""
+def apply_limits(*, execute=False, fault=None, package=LABEL):
+    """Append the approved fixed amendment; preserve every old receipt."""
     if not execute:
         raise reference.ReferenceBlocked("migration requires explicit --execute")
-    approval = _approval()
+    _assert_open(package)
+    approval = _approval(package=package)
+    previous, proposed = _limits(package)
+    approval_id, approval_sha = _approval_identity(package)
     book = budget.AcceptanceBudget(Store(reference.BATCH_ROOT / "reference"))
     ledger = book.ledger
     with ledger._lock():
         if not ledger.path.is_file():
             raise reference.ReferenceBlocked("original ledger is required; no empty replacement")
         before = book._snapshot_unlocked()
-        directory = ledger.root / "budget-amendments" / reference.BOUNDED_APPROVAL_ID
+        directory = ledger.root / "budget-amendments" / approval_id
         receipt_path, before_path = directory / "amendment.json", directory / "before.json"
-        if before["limits"] == reference.BOUNDED_LIMITS:
+        if before["limits"] == proposed:
             return reference._json(receipt_path)
-        if (before["limits"] != reference.ACTIVE_LIMITS
+        if (before["limits"] != previous
                 or before.get("limit_authority", {}).get("origin") != "amendment"):
-            raise reference.ReferenceBlocked("source is not the existing third approved batch")
+            raise reference.ReferenceBlocked("source is not the preceding approved batch")
         baseline = approval.get("approval_baseline", {}).get("ledger_sha256")
+        if package == RENEWAL_LABEL and not baseline:
+            raise reference.ReferenceBlocked("renewal approval requires its exact existing ledger baseline")
         if baseline and sha256_file(ledger.path) != baseline:
             raise reference.ReferenceBlocked("approved spend baseline changed; recheck preserved scope before migration")
         original = ledger.path.read_bytes()
@@ -118,9 +169,9 @@ def apply_limits(*, execute=False, fault=None):
             atomic_write(before_path, original, immutable=True)
         if fault:
             fault("after_original_snapshot")
-        immutable = {"schema_version": 1, "approval_id": reference.BOUNDED_APPROVAL_ID,
-            "approval_sha256": reference.BOUNDED_APPROVAL_SHA256,
-            "previous_limits": reference.ACTIVE_LIMITS, "approved_limits": reference.BOUNDED_LIMITS,
+        immutable = {"schema_version": 1, "approval_id": approval_id,
+            "approval_sha256": approval_sha,
+            "previous_limits": previous, "approved_limits": proposed,
             "previous_limit_authority": before["limit_authority"], "before_sha256": sha256_file(before_path),
             "preserved_model_usage": before["model_usage"],
             "preserved_entry_counts": {kind: len(before.get(kind, {}))
@@ -135,9 +186,9 @@ def apply_limits(*, execute=False, fault=None):
         if fault:
             fault("after_amendment_receipt")
         updated = copy.deepcopy(before)
-        updated["limits"] = copy.deepcopy(reference.BOUNDED_LIMITS)
-        updated["limit_authority"] = {"approval_id": reference.BOUNDED_APPROVAL_ID,
-            "approval_sha256": reference.BOUNDED_APPROVAL_SHA256, "origin": "amendment",
+        updated["limits"] = copy.deepcopy(proposed)
+        updated["limit_authority"] = {"approval_id": approval_id,
+            "approval_sha256": approval_sha, "origin": "amendment",
             "receipt_sha256": sha256_file(receipt_path)}
         reference._save(ledger.path, updated)
         if fault:
@@ -153,9 +204,10 @@ def _source_files():
     return {name: sha256_file(PROJECT / name) for name in freeze.execution_files()}
 
 
-def freeze_candidate():
+def freeze_candidate(*, package=LABEL):
     """Read executable/dependency identities only; never execute ORCA or OPI."""
-    _approval()
+    _assert_open(package)
+    _approval(package=package)
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=PROJECT, text=True).strip():
         raise reference.ReferenceBlocked("candidate freeze requires a clean committed checkout")
     config = freeze.evaluation_config(science=True, model_profile="disabled")
@@ -165,11 +217,11 @@ def freeze_candidate():
                 for name, path in (("orca", config.orca_path), ("mpi", config.mpi_path)) if path is not None}
     if set(binaries) != {"orca", "mpi"}:
         raise reference.ReferenceBlocked("candidate requires configured ORCA and MPI file identities")
-    value = {"scope": scope(), "source_files": _source_files(), "runtime": runtime, "binaries": binaries,
+    value = {"scope": scope(package=package), "source_files": _source_files(), "runtime": runtime, "binaries": binaries,
              "configuration": config.model_dump(mode="json"),
              "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=PROJECT, text=True).strip(),
-             "approval_sha256": reference.BOUNDED_APPROVAL_SHA256}
-    path = ROOT / "candidate.json"
+             "approval_sha256": _approval_identity(package)[1]}
+    path = _root(package) / "candidate.json"
     if path.exists():
         if reference._json(path) != value:
             raise reference.ReferenceBlocked("candidate already frozen; no silent replacement/new identity")
@@ -178,40 +230,41 @@ def freeze_candidate():
     return value
 
 
-def _execution_gate(*, execute, live):
+def _execution_gate(*, execute, live, package=LABEL):
     if not execute or not live:
         raise reference.ReferenceBlocked("operation requires --execute and its explicit live switch")
-    _approval()
-    record = reference._json(ROOT / "candidate.json")
+    _assert_open(package)
+    _approval(package=package)
+    record = reference._json(_root(package) / "candidate.json")
     runtime = freeze.runtime_environment()
     runtime["rdkit_version"] = importlib.metadata.version("rdkit")
     config = freeze.evaluation_config(science=True, model_profile="disabled")
-    if (record.get("scope") != scope() or record.get("source_files") != _source_files()
+    if (record.get("scope") != scope(package=package) or record.get("source_files") != _source_files()
             or record.get("runtime") != runtime or record.get("configuration") != config.model_dump(mode="json")
-            or record.get("approval_sha256") != reference.BOUNDED_APPROVAL_SHA256):
+            or record.get("approval_sha256") != _approval_identity(package)[1]):
         raise reference.ReferenceBlocked("candidate/source/schema/prompt/profile changed; stop this package")
     for item in record["binaries"].values():
         if sha256_file(Path(item["path"])) != item["sha256"]:
             raise reference.ReferenceBlocked("frozen executable changed")
     ledger = budget.AcceptanceBudget(Store(reference.BATCH_ROOT / "reference")).snapshot()
-    if ledger["limits"] != reference.BOUNDED_LIMITS:
-        raise reference.ReferenceBlocked("explicit fourth budget migration has not been applied")
-    _no_unknown_package_cost()
+    if ledger["limits"] != _limits(package)[1]:
+        raise reference.ReferenceBlocked("explicit package budget migration has not been applied")
+    _no_unknown_package_cost(package=package)
     return config
 
 
-def _no_unknown_package_cost():
+def _no_unknown_package_cost(*, package=LABEL):
     """Stop this package without changing the older ledger's unknown-cost policy."""
     from tests.helpers import phase_b_model_evaluation as models
     owners = []
     for variant in MODEL_SLOTS:
-        ready = models._slot(variant, 1, "development", LABEL) / "ready.json"
+        ready = models._slot(variant, 1, "development", package) / "ready.json"
         if ready.exists():
             owners.append((Store(models.STORE_ROOT), reference._json(ready)["run_id"]))
-    for path in ROOT.glob("*-input.json"):
-        owners.append((Store(ROOT / "inputs"), reference._json(path)["run_id"]))
-    for path in (ROOT / "science-slots").glob("*/metadata.json"):
-        owners.append((Store(ROOT / "science"), reference._json(path)["run_id"]))
+    for path in _root(package).glob("*-input.json"):
+        owners.append((Store(_root(package) / "inputs"), reference._json(path)["run_id"]))
+    for path in (_root(package) / "science-slots").glob("*/metadata.json"):
+        owners.append((Store(_root(package) / "science"), reference._json(path)["run_id"]))
     for store, run_id in owners:
         run = store.load_run(run_id)
         if (run.state == "unknown" or any(r.get("status") in {"reserved", "unknown"} for r in run.model_records)
@@ -221,36 +274,51 @@ def _no_unknown_package_cost():
             raise reference.ReferenceBlocked("this package has unknown cost/process or a failed input slot; stop and reconcile")
 
 
-def _require_model_passes(variants):
+def _require_model_passes(variants, *, package=LABEL):
     from tests.helpers import phase_b_model_evaluation as models
     for variant in variants:
+        if package == RENEWAL_LABEL:
+            metadata = reference._json(models._slot(variant, 1, "development", package) / "metadata.json")
+            if metadata.get("bounded_candidate_sha256") != sha256_file(_root(package) / "candidate.json"):
+                raise reference.ReferenceBlocked("previous model gate targets another package candidate")
         # Regrade the exact saved trajectory; never trust a free-standing pass flag.
-        grade = models.regrade(variant, 1, category="development", freeze_label=LABEL)
+        grade = models.regrade(variant, 1, category="development", freeze_label=package)
         if grade.get("status") != "passed":
             raise reference.ReferenceBlocked(f"independent real-model gate not passed: {variant}")
 
 
-def model_slot(variant, *, execute=False, live=False):
+def model_slot(variant, *, execute=False, live=False, package=LABEL):
     if variant not in MODEL_SLOTS:
         raise ValueError("variant outside this fixed package")
-    _execution_gate(execute=execute, live=live)
-    _require_model_passes(MODEL_SLOTS[:MODEL_SLOTS.index(variant)])
+    _execution_gate(execute=execute, live=live, package=package)
+    _require_model_passes(MODEL_SLOTS[:MODEL_SLOTS.index(variant)], package=package)
     from tests.helpers import phase_b_model_evaluation as models
-    return models.evaluate(variant, 1, category="development", freeze_label=LABEL,
+    return models.evaluate(variant, 1, category="development", freeze_label=package,
                            model_profile="disabled", allow_live=True)
 
 
-def _input_slot(system):
+def guard_model_slot(variant, repetition, *, category, package, model_profile, resume=False):
+    """Both evaluator entry points enforce the same fixed package boundaries."""
+    _assert_open(package)
+    if (variant not in MODEL_SLOTS or type(repetition) is not int or repetition != 1
+            or category != "development" or model_profile != "disabled" or resume):
+        raise reference.ReferenceBlocked("model slot is outside this fixed package; no resume or added repetition")
+    _execution_gate(execute=True, live=True, package=package)
+    _require_model_passes(MODEL_SLOTS[:MODEL_SLOTS.index(variant)], package=package)
+    return sha256_file(_root(package) / "candidate.json")
+
+
+def _input_slot(system, *, package=LABEL):
     if system not in {"water", "methane"}:
         raise ValueError("unknown fixed system")
-    store = Store(ROOT / "inputs")
-    metadata_path = ROOT / f"{system}-input.json"
+    store = Store(_root(package) / "inputs")
+    metadata_path = _root(package) / f"{system}-input.json"
     if metadata_path.exists():
         return store, store.load_run(reference._json(metadata_path)["run_id"])
-    reservation = ROOT / f"{system}-input-reserved.json"
+    reservation = _root(package) / f"{system}-input-reserved.json"
     if reservation.exists():
         raise reference.ReferenceBlocked("input preparation interrupted; reconcile existing Run")
-    _save(reservation, {"system": system, "scope": LABEL})
+    _save(reservation, {"system": system, "scope": package})
     quote = f"Prepare the initial geometry of {system}; neutral singlet RHF/STO-3G."
     evidence = {"message_id": "initial_message", "text_basis": quote}
     identity = {"canonical_names": [system], "text_evidence": evidence}
@@ -278,11 +346,11 @@ def _input_slot(system):
     return store, run
 
 
-def _input_result(system, name):
-    if not (ROOT / f"{system}-input.json").is_file():
+def _input_result(system, name, *, package=LABEL):
+    if not (_root(package) / f"{system}-input.json").is_file():
         raise reference.ReferenceBlocked("required input slot has not been executed")
-    store, run = _input_slot(system)
-    path = ROOT / f"{system}-{name}.json"
+    store, run = _input_slot(system, package=package)
+    path = _root(package) / f"{system}-{name}.json"
     record = reference._json(path)
     result = store.load_result(run.id, record["result_id"])
     if (result.run_id != run.id or result.operation_status != "completed"
@@ -295,39 +363,39 @@ def _input_result(system, name):
     return store, run, result, artifact
 
 
-def input_stage(system, stage, *, execute=False, live=False):
-    _execution_gate(execute=execute, live=live)
-    _require_model_passes(MODEL_SLOTS)
+def input_stage(system, stage, *, execute=False, live=False, package=LABEL):
+    _execution_gate(execute=execute, live=live, package=package)
+    _require_model_passes(MODEL_SLOTS, package=package)
     from orca_agent.tools.dispatch import execute_call
     name = "resolved_identity" if stage == "resolve" else "prepared_geometry"
-    record_path = ROOT / f"{system}-{name}.json"
+    record_path = _root(package) / f"{system}-{name}.json"
     if record_path.exists():
-        _input_result(system, name)
+        _input_result(system, name, package=package)
         if stage == "prepare":
-            _freeze_prepared(system)
+            _freeze_prepared(system, package=package)
         return reference._json(record_path)
     if stage == "prepare":
         for expected in ("water", "methane"):
-            _input_result(expected, "resolved_identity")
-    store, run = _input_slot(system)
+            _input_result(expected, "resolved_identity", package=package)
+    store, run = _input_slot(system, package=package)
     plan = store.load_plan(run)
     step = next(s for s in plan.steps if s.id == stage)
     if any(call.tool == step.tool for call in run.calls):
         raise reference.ReferenceBlocked("existing input Call needs reconciliation; no repeat request/generation")
-    results = {} if stage == "resolve" else {"resolve": _input_result(system, "resolved_identity")[2]}
+    results = {} if stage == "resolve" else {"resolve": _input_result(system, "resolved_identity", package=package)[2]}
     result = execute_call(store, run, step.tool, step.parameters.model_dump(), step=step, results=results)
     record = {"run_id": run.id, "result_id": result.id,
               "result_sha256": sha256_file(store.path(f"runs/{run.id}/results/{result.id}.json"))}
     _save(record_path, record)
-    _input_result(system, name)
+    _input_result(system, name, package=package)
     if stage == "prepare":
-        _freeze_prepared(system)
+        _freeze_prepared(system, package=package)
     return record
 
 
-def _freeze_prepared(system):
-    store, _, result, artifact = _input_result(system, "prepared_geometry")
-    target = ROOT / "frozen-inputs" / system / "geometry.xyz"
+def _freeze_prepared(system, *, package=LABEL):
+    store, _, result, artifact = _input_result(system, "prepared_geometry", package=package)
+    target = _root(package) / "frozen-inputs" / system / "geometry.xyz"
     content = store.artifact_path(artifact.id).read_bytes()
     if target.exists():
         if target.read_bytes() != content:
@@ -344,9 +412,9 @@ def _freeze_prepared(system):
         _save(path, record)
 
 
-def _prepared(system):
-    store, _, _, artifact = _input_result(system, "prepared_geometry")
-    path = ROOT / "frozen-inputs" / system / "geometry.xyz"
+def _prepared(system, *, package=LABEL):
+    store, _, _, artifact = _input_result(system, "prepared_geometry", package=package)
+    path = _root(package) / "frozen-inputs" / system / "geometry.xyz"
     if sha256_file(path) != artifact.sha256 or path.read_bytes() != store.artifact_path(artifact.id).read_bytes():
         raise reference.ReferenceBlocked("frozen prepared initial geometry changed")
     return path
@@ -368,11 +436,11 @@ def verify_scientific_reference(receipt, geometry_sha256):
     return energy
 
 
-def methane_reference(*, execute=False, live=False):
-    config = _execution_gate(execute=execute, live=live)
-    _require_model_passes(MODEL_SLOTS)
-    _prepared("water")
-    geometry = _prepared("methane")
+def methane_reference(*, execute=False, live=False, package=LABEL):
+    config = _execution_gate(execute=execute, live=live, package=package)
+    _require_model_passes(MODEL_SLOTS, package=package)
+    _prepared("water", package=package)
+    geometry = _prepared("methane", package=package)
     path = geometry.parent / "reference.inp"
     expected = reference.reference_input(100).encode()
     if path.exists():
@@ -380,31 +448,31 @@ def methane_reference(*, execute=False, live=False):
             raise reference.ReferenceBlocked("prewritten independent reference input changed")
     else:
         atomic_write(path, expected, immutable=True)
-    receipt = reference.execute_reference(REFERENCE_ID, "reference", geometry, path, 100,
+    receipt = reference.execute_reference(_reference_id(package), "reference", geometry, path, 100,
         atom_mapping=["C", "H", "H", "H", "H"], config=config)
     verify_scientific_reference(receipt, sha256_file(geometry))
     return receipt
 
 
-def science_slot(system, repetition, *, execute=False, live_model=False, live_orca=False):
-    config = _execution_gate(execute=execute, live=live_model and live_orca)
+def science_slot(system, repetition, *, execute=False, live_model=False, live_orca=False, package=LABEL):
+    config = _execution_gate(execute=execute, live=live_model and live_orca, package=package)
     if system not in {"water", "methane"} or type(repetition) is not int or repetition not in (1, 2, 3):
         raise ValueError("unknown science slot")
-    _require_model_passes(MODEL_SLOTS)
+    _require_model_passes(MODEL_SLOTS, package=package)
     slots = [(name, number) for name in ("water", "methane") for number in (1, 2, 3)]
     for previous_system, previous_rep in slots[:slots.index((system, repetition))]:
-        if grade_science(previous_system, previous_rep).get("status") != "passed":
+        if grade_science(previous_system, previous_rep, package=package).get("status") != "passed":
             raise reference.ReferenceBlocked("previous scientific/model review gate has not passed")
-    receipt = reference.BatchLedger().read(REFERENCE_ID)["receipt"]
-    verify_scientific_reference(receipt, sha256_file(_prepared("methane")))
+    receipt = reference.BatchLedger().read(_reference_id(package))["receipt"]
+    verify_scientific_reference(receipt, sha256_file(_prepared("methane", package=package)))
     if sha256_file(WATER_REFERENCE) != WATER_REFERENCE_SHA256:
         raise reference.ReferenceBlocked("independent water reference changed")
     from orca_agent.natural import initialize_bundle
     from orca_agent.report import build_report
     from orca_agent.runner import execute as run_agent
-    store = Store(ROOT / "science")
+    store = Store(_root(package) / "science")
     config = config.model_copy(update={"data_root": store.root})
-    path = ROOT / "science-slots" / f"{system}-{repetition}"
+    path = _root(package) / "science-slots" / f"{system}-{repetition}"
     metadata_path = path / "metadata.json"
     if metadata_path.exists():
         metadata = reference._json(metadata_path)
@@ -414,8 +482,8 @@ def science_slot(system, repetition, *, execute=False, live_model=False, live_or
     reservation = path / "reservation.json"
     if reservation.exists():
         raise reference.ReferenceBlocked("science preparation interrupted; reconcile existing slot")
-    _save(reservation, {"system": system, "repetition": repetition, "candidate_sha256": sha256_file(ROOT / "candidate.json")})
-    atomic_write(path / "geometry.xyz", _prepared(system).read_bytes(), immutable=True)
+    _save(reservation, {"system": system, "repetition": repetition, "candidate_sha256": sha256_file(_root(package) / "candidate.json")})
+    atomic_write(path / "geometry.xyz", _prepared(system, package=package).read_bytes(), immutable=True)
     text = ("对登记的水分子初始几何做气相 RHF/STO-3G 中性单重态无约束优化，交付严格收敛结构及优化后的电子能和来源。"
             if system == "water" else
             "对登记的甲烷准备结构做气相 RHF/STO-3G 中性单重态固定几何单点，交付电子能及来源；不得称为优化结构。")
@@ -430,8 +498,8 @@ def science_slot(system, repetition, *, execute=False, live_model=False, live_or
     store.save_run(run)
     _save(metadata_path, {"run_id": run.id, "data_root": str(store.root), "system": system,
         "repetition": repetition, "geometry_sha256": sha256_file(path / "geometry.xyz"),
-        "input_provenance": str(_prepared(system).with_suffix(".provenance.json")),
-        "candidate_sha256": sha256_file(ROOT / "candidate.json"), "model_profile": "disabled"})
+        "input_provenance": str(_prepared(system, package=package).with_suffix(".provenance.json")),
+        "candidate_sha256": sha256_file(_root(package) / "candidate.json"), "model_profile": "disabled"})
     run = run_agent(store, config, run.id, batch=budget.AcceptanceBudget(store))
     report = build_report(store, run)
     _save(path / "report.json", report)
@@ -450,18 +518,18 @@ def _distances(path, mapping):
     return [math.dist(points[i], points[j]) for i in range(len(points)) for j in range(i)]
 
 
-def grade_science(system, repetition, *, review_path=None):
+def grade_science(system, repetition, *, review_path=None, package=LABEL):
     """Read-only independent numerical checks plus quoted real-response review."""
     from tests.helpers import phase_b_grade_joint as joint
     from tests.helpers import phase_b_model_cases as cases
     from tests.helpers.phase_b_grading import model_response_evidence
     if system not in {"water", "methane"} or type(repetition) is not int or repetition not in (1, 2, 3):
         raise ValueError("unknown science review slot")
-    path = ROOT / "science-slots" / f"{system}-{repetition}"
+    path = _root(package) / "science-slots" / f"{system}-{repetition}"
     metadata = reference._json(path / "metadata.json")
-    store = Store(ROOT / "science")
+    store = Store(_root(package) / "science")
     run = store.load_run(metadata["run_id"])
-    if metadata["candidate_sha256"] != sha256_file(ROOT / "candidate.json"):
+    if metadata["candidate_sha256"] != sha256_file(_root(package) / "candidate.json"):
         raise reference.ReferenceBlocked("science slot targets another candidate")
     text = json.dumps(cases._actions(store, run), ensure_ascii=False, sort_keys=True)
     digest = hashlib.sha256(text.encode()).hexdigest()
@@ -488,7 +556,7 @@ def grade_science(system, repetition, *, review_path=None):
         tool = "orca.opt" if system == "water" else "orca.sp"
         energy = result.qualified_outputs.get("energy")
         facts.update(input_profile=joint._input_profile(evidence, tool), resources=joint._resources(evidence),
-            exact_prepared_input=evidence["geometry_sha256"] == sha256_file(_prepared(system)),
+            exact_prepared_input=evidence["geometry_sha256"] == sha256_file(_prepared(system, package=package)),
             independent_scf=raw["status"] == "converged",
             energy_qualified=joint._qualified(result, "energy", joint.ENERGY_CHECKS))
         if system == "water":
@@ -515,8 +583,8 @@ def grade_science(system, repetition, *, review_path=None):
                 _distances(store.artifact_path(output.artifact_id), ["O", "H", "H"]),
                 _distances(Path(files["job.xyz"]["path"]), ["O", "H", "H"]), strict=True)) <= 1e-5)
         else:
-            receipt = reference.BatchLedger().read(REFERENCE_ID)["receipt"]
-            expected_energy = verify_scientific_reference(receipt, sha256_file(_prepared(system)))
+            receipt = reference.BatchLedger().read(_reference_id(package))["receipt"]
+            expected_energy = verify_scientific_reference(receipt, sha256_file(_prepared(system, package=package)))
             facts["reference_exact_geometry"] = True
             facts["not_optimized"] = "optimized_geometry" not in result.qualified_outputs
         facts["independent_energy"] = bool(energy and raw.get("energy_eh") is not None
@@ -525,7 +593,7 @@ def grade_science(system, repetition, *, review_path=None):
     passed = all(facts.values()) and all(v["status"] == "passed" for v in reviewed.values())
     report = {"status": "passed" if passed else "not_verified" if all(facts.values()) else "failed",
         "run_id": run.id, "facts": facts, "model_review": reviewed, "model_text_sha256": digest,
-        "limitations": scope()["limitations"]}
+        "limitations": scope(package=package)["limitations"]}
     if review_path and review:
         saved = path / "review.json"
         if saved.exists() and reference._json(saved) != review:
@@ -540,6 +608,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operation", nargs="?", default="proposal",
                         choices=("proposal", "apply", "freeze", "model", "resolve", "prepare", "reference", "science", "grade"))
+    parser.add_argument("--package", choices=(LABEL, RENEWAL_LABEL), default=LABEL)
     parser.add_argument("--variant", choices=MODEL_SLOTS)
     parser.add_argument("--system", choices=("water", "methane"))
     parser.add_argument("--repetition", type=int, choices=(1, 2, 3))
@@ -549,26 +618,30 @@ def main(argv=None):
         parser.add_argument(f"--live-{name}", action="store_true")
     args = parser.parse_args(argv)
     if args.operation == "proposal":
-        result = {"status": "proposal_only", "approval_pinned": bool(reference.BOUNDED_APPROVAL_SHA256), "scope": scope()}
+        result = {"status": "proposal_only", "approval_pinned": bool(_approval_identity(args.package)[1]),
+                  "execution_closed": args.package == LABEL, "scope": scope(package=args.package)}
     elif args.operation == "apply":
-        result = apply_limits(execute=args.execute)
+        result = apply_limits(execute=args.execute, package=args.package)
     elif args.operation == "freeze":
-        result = freeze_candidate()
+        result = freeze_candidate(package=args.package)
     elif args.operation == "grade":
-        result = grade_science(args.system, args.repetition, review_path=args.review)
+        result = grade_science(args.system, args.repetition, review_path=args.review, package=args.package)
     else:
-        ROOT.mkdir(parents=True, exist_ok=True)
-        with FileLock(str(ROOT / "operator.lock"), timeout=10):
+        _assert_open(args.package)
+        _approval(package=args.package)
+        root = _root(args.package)
+        root.mkdir(parents=True, exist_ok=True)
+        with FileLock(str(root / "operator.lock"), timeout=10):
             if args.operation == "model":
-                result = model_slot(args.variant, execute=args.execute, live=args.live_model)
+                result = model_slot(args.variant, execute=args.execute, live=args.live_model, package=args.package)
             elif args.operation in {"resolve", "prepare"}:
                 result = input_stage(args.system, args.operation, execute=args.execute,
-                                     live=args.live_network if args.operation == "resolve" else args.live_opi)
+                                     live=args.live_network if args.operation == "resolve" else args.live_opi, package=args.package)
             elif args.operation == "reference":
-                result = methane_reference(execute=args.execute, live=args.live_orca)
+                result = methane_reference(execute=args.execute, live=args.live_orca, package=args.package)
             else:
                 result = science_slot(args.system, args.repetition, execute=args.execute,
-                                      live_model=args.live_model, live_orca=args.live_orca)
+                                      live_model=args.live_model, live_orca=args.live_orca, package=args.package)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 

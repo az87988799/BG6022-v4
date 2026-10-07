@@ -64,6 +64,31 @@ BOUNDED_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-bounded-20
 BOUNDED_APPROVAL_SHA256 = "9339874fb7f4359782ad7c9128f5dc535f6703b586ad45737748411968e3bc58"
 
 
+# Proposed renewal only: no approval record/pin is fabricated by preparation.
+RENEWAL_LIMITS = {
+    "orca_starts": {"reference": 17, "formal": 48, "development": 54, "total": 119},
+    "model": {"http_requests": 1120, "tokens": 6_889_551, "usd": 10},
+}
+RENEWAL_APPROVAL_ID = "bounded-gap-budget-20261008-r2"
+RENEWAL_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-bounded-20261008-r2.json"
+RENEWAL_APPROVAL_SHA256 = None
+
+
+def renewal_approval() -> dict:
+    bounded_approval()
+    if (not RENEWAL_APPROVAL_SHA256 or not RENEWAL_APPROVAL.is_file()
+            or sha256_file(RENEWAL_APPROVAL) != RENEWAL_APPROVAL_SHA256):
+        raise ReferenceBlocked("renewal package requires a pinned explicit human approval")
+    value = _json(RENEWAL_APPROVAL)
+    if (value.get("approval_id") != RENEWAL_APPROVAL_ID or value.get("status") != "user_approved"
+            or value.get("previous_limits") != BOUNDED_LIMITS
+            or value.get("approved_limits") != RENEWAL_LIMITS
+            or value.get("previous_approval_id") != BOUNDED_APPROVAL_ID
+            or value.get("previous_approval_sha256") != BOUNDED_APPROVAL_SHA256):
+        raise ReferenceBlocked("renewal approval differs from the exact proposed cumulative limits")
+    return value
+
+
 def bounded_approval() -> dict:
     thinking_approval()
     if (not BOUNDED_APPROVAL_SHA256 or not BOUNDED_APPROVAL.is_file()
@@ -215,9 +240,12 @@ class BatchLedger:
         ledger = _json(self.path)
         legacy = allow_legacy_limits and ledger.get("limits") == SUPPLEMENT_LIMITS
         bounded = ledger.get("limits") == BOUNDED_LIMITS
-        if ledger.get("schema_version") != 1 or (ledger.get("limits") != ACTIVE_LIMITS and not legacy and not bounded):
+        renewal = ledger.get("limits") == RENEWAL_LIMITS
+        if ledger.get("schema_version") != 1 or (ledger.get("limits") != ACTIVE_LIMITS and not legacy and not bounded and not renewal):
             raise ReferenceBlocked("batch ledger schema/limits differ; explicit approved migration required")
-        if bounded:
+        if renewal:
+            self._validate_bounded_limit_authority(ledger, renewal=True)
+        elif bounded:
             self._validate_bounded_limit_authority(ledger)
         elif legacy:
             self._validate_second_limit_authority(ledger)
@@ -230,32 +258,42 @@ class BatchLedger:
                 self._validated_receipt(entry)
         return ledger
 
-    def _validate_bounded_limit_authority(self, ledger: dict) -> None:
-        bounded_approval()
+    def _validate_bounded_limit_authority(self, ledger: dict, *, renewal: bool = False) -> None:
+        if renewal:
+            renewal_approval()
+            approval_id, approval_sha = RENEWAL_APPROVAL_ID, RENEWAL_APPROVAL_SHA256
+            previous, approved = BOUNDED_LIMITS, RENEWAL_LIMITS
+        else:
+            bounded_approval()
+            approval_id, approval_sha = BOUNDED_APPROVAL_ID, BOUNDED_APPROVAL_SHA256
+            previous, approved = ACTIVE_LIMITS, BOUNDED_LIMITS
         authority = ledger.get("limit_authority", {})
-        required = {"approval_id": BOUNDED_APPROVAL_ID, "approval_sha256": BOUNDED_APPROVAL_SHA256,
+        required = {"approval_id": approval_id, "approval_sha256": approval_sha,
                     "origin": "amendment"}
         if (set(authority) != {*required, "receipt_sha256"}
                 or any(authority.get(k) != v for k, v in required.items())):
             raise ReferenceBlocked("bounded budget lacks its applied approval")
-        directory = self.root / "budget-amendments" / BOUNDED_APPROVAL_ID
+        directory = self.root / "budget-amendments" / approval_id
         receipt_path, before_path = directory / "amendment.json", directory / "before.json"
         if (not receipt_path.is_file() or not before_path.is_file()
                 or sha256_file(receipt_path) != authority["receipt_sha256"]):
             raise ReferenceBlocked("bounded budget receipt or original ledger missing/changed")
         receipt, before = _json(receipt_path), _json(before_path)
-        if (receipt.get("approval_id") != BOUNDED_APPROVAL_ID
-                or receipt.get("approval_sha256") != BOUNDED_APPROVAL_SHA256
-                or receipt.get("previous_limits") != ACTIVE_LIMITS
-                or receipt.get("approved_limits") != BOUNDED_LIMITS
+        if (receipt.get("approval_id") != approval_id
+                or receipt.get("approval_sha256") != approval_sha
+                or receipt.get("previous_limits") != previous
+                or receipt.get("approved_limits") != approved
                 or receipt.get("before_sha256") != sha256_file(before_path)
-                or before.get("limits") != ACTIVE_LIMITS
+                or before.get("limits") != previous
                 or receipt.get("previous_limit_authority") != before.get("limit_authority")
                 or receipt.get("preserved_model_usage") != before.get("model_usage")
                 or receipt.get("preserved_entry_counts") != {kind: len(before.get(kind, {}))
                     for kind in ("entries", "model_records", "agent_science")}):
             raise ReferenceBlocked("bounded budget approval or baseline accounting differs")
-        self._validate_limit_authority(before)
+        if renewal:
+            self._validate_bounded_limit_authority(before)
+        else:
+            self._validate_limit_authority(before)
         self._validate_preserved_costs(before, ledger)
 
     def _validate_limit_authority(self, ledger: dict) -> None:

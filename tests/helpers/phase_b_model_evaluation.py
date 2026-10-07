@@ -130,8 +130,20 @@ def _formal_anchor(freeze_label, frozen):
     return digest
 
 
+def _bounded_slot_guard(variant_id, repetition, *, category, freeze_label, model_profile, resume=False):
+    # These two fixed packages cannot bypass their approval/operator by calling
+    # this lower-level helper. Other historical evaluation labels are unchanged.
+    from tests.helpers import phase_b_bounded_package as package
+    if freeze_label in {package.LABEL, package.RENEWAL_LABEL}:
+        return package.guard_model_slot(variant_id, repetition, category=category,
+            package=freeze_label, model_profile=model_profile, resume=resume)
+    return None
+
+
 def prepare(variant_id, repetition, *, category="formal", freeze_label="formal-v1", model_profile="disabled"):
     """Reserve one immutable identity before preparing; never replace a used Run."""
+    candidate_sha = _bounded_slot_guard(variant_id, repetition, category=category,
+        freeze_label=freeze_label, model_profile=model_profile)
     directory = _slot(variant_id, repetition, category, freeze_label)
     config = Config(data_root=STORE_ROOT, orca_path=None, mpi_path=None, model_profile=model_profile)
     frozen = None
@@ -152,6 +164,8 @@ def prepare(variant_id, repetition, *, category="formal", freeze_label="formal-v
             if (metadata["variant_id"] != variant_id or metadata["repetition"] != repetition
                     or metadata["category"] != category or metadata["freeze_label"] != freeze_label):
                 raise StoreError("evaluation slot identity differs from its frozen metadata")
+            if candidate_sha is not None and metadata.get("bounded_candidate_sha256") != candidate_sha:
+                raise StoreError("evaluation slot differs from its immutable package candidate")
             if metadata.get("model_profile", "disabled") != config.model_profile:
                 raise StoreError("evaluation slot model profile cannot change")
             if category == "formal" and metadata.get("freeze_sha256") != frozen_digest:
@@ -171,6 +185,8 @@ def prepare(variant_id, repetition, *, category="formal", freeze_label="formal-v
         run, metadata = cases.create_request(store, variant_id, repetition, category=category,
                                              freeze_label=freeze_label)
         metadata["model_profile"] = config.model_profile
+        if candidate_sha is not None:
+            metadata["bounded_candidate_sha256"] = candidate_sha
         if frozen is not None:
             metadata["formal_freeze"] = frozen
             metadata["code_commit"] = frozen.get("code_commit", frozen.get("commit"))
@@ -206,6 +222,8 @@ def evaluate(variant_id, repetition, *, allow_live=False, resume=False, category
     """Explicit execution gate plus immutable slot reuse; no retries by new Run ID."""
     if not allow_live:
         raise StoreError("real model execution requires the explicit --live-model gate")
+    _bounded_slot_guard(variant_id, repetition, category=category, freeze_label=freeze_label,
+                        model_profile=model_profile, resume=resume)
     store, run, metadata, directory = prepare(variant_id, repetition, category=category,
                                               freeze_label=freeze_label, model_profile=model_profile)
     with FileLock(str(directory / "evaluation.lock"), timeout=30):

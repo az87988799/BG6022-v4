@@ -34,15 +34,19 @@ def test_proposal_is_read_only_and_all_fixed_allocations_add_up(tmp_path, monkey
 @pytest.mark.parametrize("operation", ["apply", "freeze", "model", "resolve", "prepare", "reference", "science"])
 def test_unapproved_package_cannot_execute_even_with_live_switches(tmp_path, monkeypatch, operation):
     monkeypatch.setattr(package, "ROOT", tmp_path / "package")
-    monkeypatch.setattr(package.reference, "BOUNDED_APPROVAL_SHA256", None)
+    monkeypatch.setattr(package, "RENEWAL_ROOT", tmp_path / "renewal")
+    monkeypatch.setattr(package.reference, "RENEWAL_APPROVAL_SHA256", None)
     with pytest.raises(budget.ReferenceBlocked, match="explicit human approval"):
-        package.main([operation, "--execute", "--live-model", "--live-orca", "--live-network", "--live-opi",
+        package.main([operation, "--package", package.RENEWAL_LABEL, "--execute", "--live-model", "--live-orca", "--live-network", "--live-opi",
                       "--system", "water", "--repetition", "1", "--variant", package.DIAGNOSTICS[0]])
     assert not list(tmp_path.rglob("run.json"))
 
 
 @pytest.fixture
 def approved(legacy, tmp_path, monkeypatch):
+    # Audit the historical fourth amendment algorithm only on a synthetic ledger.
+    # Production old-package entry points remain permanently closed.
+    monkeypatch.setattr(package, "_assert_open", lambda _: None)
     book, store, run, known, unknown, _, _ = legacy
     apply_approved_limits(book, execute=True)
     path = tmp_path / "approved.json"
@@ -122,7 +126,7 @@ def inputs(tmp_path, monkeypatch):
     monkeypatch.setattr(package, "ROOT", tmp_path / "package")
     monkeypatch.setattr(package, "Store", lambda root: Store(root, environment_root=tmp_path / "environment"))
     monkeypatch.setattr(package, "_execution_gate", lambda **_: Config())
-    monkeypatch.setattr(package, "_require_model_passes", lambda _: None)
+    monkeypatch.setattr(package, "_require_model_passes", lambda _, **__: None)
     calls = []
     def query(_, url, **kwargs):
         name = "methane" if "/methane/" in url else "water"
@@ -313,8 +317,8 @@ def test_verified_negative_reference_blocks_science_before_slot_reservation(tmp_
     receipt["independent_output"] = {"status": "scf_not_converged", "energy_eh": None}
     monkeypatch.setattr(package, "ROOT", root)
     monkeypatch.setattr(package, "_execution_gate", lambda **_: Config())
-    monkeypatch.setattr(package, "_require_model_passes", lambda _: None)
-    monkeypatch.setattr(package, "_prepared", lambda _: xyz)
+    monkeypatch.setattr(package, "_require_model_passes", lambda _, **__: None)
+    monkeypatch.setattr(package, "_prepared", lambda _, **__: xyz)
     monkeypatch.setattr(package.reference.BatchLedger, "read", lambda *_: {"receipt": receipt})
     monkeypatch.setattr(package, "_save", lambda *_: pytest.fail("must not reserve a science slot"))
     with pytest.raises(budget.ReferenceBlocked, match="positive"):
@@ -332,8 +336,8 @@ def test_methane_reference_forwards_frozen_config_and_requires_positive_result(t
         receipt["execution"]["state"] = "failed"
         receipt["independent_output"] = {"status": "scf_not_converged", "energy_eh": None}
     monkeypatch.setattr(package, "_execution_gate", lambda **_: frozen)
-    monkeypatch.setattr(package, "_require_model_passes", lambda _: None)
-    monkeypatch.setattr(package, "_prepared", lambda _: xyz)
+    monkeypatch.setattr(package, "_require_model_passes", lambda _, **__: None)
+    monkeypatch.setattr(package, "_prepared", lambda _, **__: xyz)
     observed = []
     def capture(*args, **kwargs):
         observed.append(kwargs.get("config"))
