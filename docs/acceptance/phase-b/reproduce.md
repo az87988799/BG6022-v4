@@ -35,6 +35,12 @@ $env:PYTHONIOENCODING = 'utf-8'
 .venv/Scripts/python.exe -m pytest tests/evals/test_agent_e2e.py --live-model --live-orca -q
 ```
 
+v16 的可选模型配置默认仍为 `disabled`。产品本地 TOML 可显式指定 `model_profile = "thinking_low"`；模型评测 CLI、联合 CLI、formal freeze 和 formal offline 命令可显式传 `--model-profile thinking_low`。pytest 的模型与联合节点使用操作员设置的 `ORCA_AGENT_MODEL_PROFILE=thinking_low`；这是评测入口参数，产品 Config 不会隐式读取它。正式冻结及每个入口都必须使用同一个实际模式，错误或不一致的选择会拒绝执行。
+
+新 Run 的模式在第一次模型预约前保存为不可变配置快照；既有评测槽不得改模式，旧缺字段记录仅按已保存、hash核验的 disabled 请求读取。产品 resume 先只核对、收集已经发生的科学或模型调用，再拒绝新配置的模式切换；评测入口仍先要求其槽配置一致。恢复或更换标签不产生新额度或机会。
+
+thinking_low 的 reasoning 文本不保存、展示或回传，完整 completion（含推理）仍受 2000 上限并一次计费，可能因截断失败。最终 JSON 仍由原严格 schema 校验。当前低推理只有离线边界验证；使用这个参数不代表获准启动未分配的诊断，最新待决范围见 [v16 候选包](repair-v16-thinking-diagnostic-proposal.md)。
+
 每个槽的身份持久化。再次执行同一正式槽不会新建 Run 或重新计算；中断须先查看原始状态，再显式恢复相同身份。真实模型节点若缺独立行为/六轴 review 会显示 skip/未验证；联合节点的通过只表示机械检查通过。人工或开发者独立复核需引用真实持久化模型原文，不能使用确定性报告补齐模型遗漏，也不能只检查 JSON 格式。
 
 已知断言、六轴、全提案事实/语义或必需最终协议失败统一记 failed；即使同时缺 review/fixture，也不能变成 skip。仅缺必要依据时才 unverified。允许的 timeout→成功分别保留失败收据、成功提案绑定与未知费用占用，不要求所有请求 usage 都为 known。

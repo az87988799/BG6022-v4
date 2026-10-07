@@ -6,7 +6,7 @@
 
 v15 的三个追加机会已经各用一次，均未通过独立评审，见 [完整评审](repair-revalidation-v15-review.json)。累计 316 HTTP、983673 已知 tokens、未知 0、保守 USD 0.3876102；ORCA 参考 16、开发 26、正式 0。当前账本 SHA256 为 `8170092caf6178e3fac543487375b2d4a8c494fa0b338dbc933a07c26a746afa`。失败原因分别是登记轮多余追问、最终回答的多余字段、首案混淆历史与当前电子态；全部原文、拒绝和费用保留。
 
-本候选采用 v16 的确定性修复（程序占位退场、原生澄清形状及压缩父对象一致性）及一个显式 `thinking_low` 配置。后者沿用同一 DeepSeek 模型、模型预约、SDK、解析及账本；默认 disabled 不变，诊断 Run 明确选择 enabled+low，同一 Run 不能切换模式。详见 [配置决策](../../decisions/0014-explicit-bounded-model-profile.md)。离线验证回执将绑定最终提交；没有真实效果保证。
+本候选采用 v16 的确定性修复（程序占位退场、原生澄清形状及压缩父对象一致性）及一个显式 `thinking_low` 配置。后者沿用同一 DeepSeek 模型、模型预约、SDK、解析及账本；默认 disabled 不变，诊断 Run 明确选择 enabled+low，同一 Run 不能切换模式。详见 [配置决策](../../decisions/0014-explicit-bounded-model-profile.md)。配置及确定性修复已完成，绑定源码提交 `785b9c11ec945c5f47f5c3f0a21ebda00a068a83`。独立 C 盘新检出、新锁定离线环境完整验证为 1829 passed、193 skipped、0 failed/error，Ruff 通过；[完整回执](repair-v16-offline-clean.json) SHA256 为 `84ec72d89c6eecf64cd967232305acee83d9f019d6c4eb5cf5e16e11478677f1`。跳过项不计通过，没有真实效果保证。
 
 启用推理不是自动纠正模型回答。最终 content 仍严格验证，额外字段或无效 JSON 仍失败；reasoning 不保存、不显示、不进入下一轮。完整 completion 用量包含推理并从原 2000 上限计费，可能出现截断；不会增加每 Run 额度。通知与待答问题共用 questions 的结构限制仍如实保留，不用此模式宣称它已解决。
 
