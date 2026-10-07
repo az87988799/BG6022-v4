@@ -197,8 +197,15 @@ def test_prepared_copy_publication_can_recover_without_regeneration(inputs, monk
     assert len(generated) == 1
 
 
-def test_science_raw_entry_has_frozen_prepared_input_and_no_repeat_execution(inputs, monkeypatch):
+def test_science_raw_entry_has_frozen_prepared_input_and_no_repeat_execution(inputs, tmp_path, monkeypatch):
     from orca_agent import runner
+    # This test stops before scientific execution and checks slot identity only.
+    # Its reference placeholder must never depend on a developer's real archive.
+    water_reference = tmp_path / "synthetic-water-reference.json"
+    water_reference.write_text(json.dumps({"evidence_kind": "synthetic_test_placeholder",
+        "scientific_validation": "not_executed"}), encoding="utf-8")
+    monkeypatch.setattr(package, "WATER_REFERENCE", water_reference)
+    monkeypatch.setattr(package, "WATER_REFERENCE_SHA256", sha256_file(water_reference))
     for system in ("water", "methane"):
         package.input_stage(system, "resolve", execute=True, live=True)
     for system in ("water", "methane"):
