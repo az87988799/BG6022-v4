@@ -10,7 +10,7 @@ from pathlib import Path
 
 import psutil
 
-from orca_agent.store import atomic_write
+from orca_agent._atomic import atomic_write
 
 
 def publish_json(path, value):

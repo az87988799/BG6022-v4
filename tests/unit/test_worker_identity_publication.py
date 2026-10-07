@@ -23,9 +23,9 @@ def test_legacy_direct_identity_write_has_a_visible_invalid_window(tmp_path):
 
 
 def test_worker_identity_is_published_only_as_complete_json(tmp_path, monkeypatch):
-    from orca_agent import store
+    from orca_agent import _atomic
 
-    replace = store.os.replace
+    replace = _atomic.os.replace
     observations = []
 
     def inspect_before_publish(source, destination):
@@ -34,7 +34,7 @@ def test_worker_identity_is_published_only_as_complete_json(tmp_path, monkeypatc
             assert json.loads(Path(source).read_text(encoding="utf-8"))["pid"] > 0
         return replace(source, destination)
 
-    monkeypatch.setattr(store.os, "replace", inspect_before_publish)
+    monkeypatch.setattr(_atomic.os, "replace", inspect_before_publish)
     value = backend_worker.record(tmp_path)
     assert observations == [[]]
     assert records(tmp_path) == [value]
