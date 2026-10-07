@@ -571,7 +571,8 @@ def _frozen_input(sources: dict):
 
 
 def execute_reference(reference_id: str, category: str, geometry: Path,
-                      input_path: Path, scf_maxiter: int, *, atom_mapping=None) -> dict:
+                      input_path: Path, scf_maxiter: int, *, atom_mapping=None,
+                      config: Config | None = None) -> dict:
     sources = reviewed_sources(geometry, input_path, scf_maxiter, atom_mapping=atom_mapping)
     ledger = BatchLedger()
     entry, fresh = ledger.reserve(reference_id, category, sources)
@@ -600,7 +601,7 @@ def execute_reference(reference_id: str, category: str, geometry: Path,
         _save(spec_dir / "task.json", spec, immutable=True)
         # No environment_root override: references share the production admission slot.
         store = Store(BATCH_ROOT / "reference")
-        config = Config(
+        config = config.model_copy(update={"data_root": store.root}) if config is not None else Config(
             orca_path=Path(os.environ.get("ORCA_AGENT_ORCA", "E:/orca/orca.exe")).resolve(),
             mpi_path=Path(os.environ.get("ORCA_AGENT_MPI", "C:/Program Files/Microsoft MPI/Bin/mpiexec.exe")).resolve(),
             data_root=store.root,

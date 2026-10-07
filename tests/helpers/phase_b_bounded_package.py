@@ -352,8 +352,24 @@ def _prepared(system):
     return path
 
 
+def verify_scientific_reference(receipt, geometry_sha256):
+    """A verified negative reference is not an energy baseline for this package."""
+    receipt = receipt or {}
+    independent = receipt.get("independent_output", {})
+    energy = independent.get("energy_eh")
+    if (receipt.get("reference_verified") is not True
+            or receipt.get("execution_uncertain") is not False
+            or receipt.get("execution", {}).get("state") != "completed"
+            or independent.get("status") != "converged"
+            or type(energy) not in (int, float) or not math.isfinite(energy)):
+        raise reference.ReferenceBlocked("independent positive scientific reference is not verified")
+    if receipt.get("sources", {}).get("geometry_sha256") != geometry_sha256:
+        raise reference.ReferenceBlocked("reference does not target this prepared geometry")
+    return energy
+
+
 def methane_reference(*, execute=False, live=False):
-    _execution_gate(execute=execute, live=live)
+    config = _execution_gate(execute=execute, live=live)
     _require_model_passes(MODEL_SLOTS)
     _prepared("water")
     geometry = _prepared("methane")
@@ -364,8 +380,10 @@ def methane_reference(*, execute=False, live=False):
             raise reference.ReferenceBlocked("prewritten independent reference input changed")
     else:
         atomic_write(path, expected, immutable=True)
-    return reference.execute_reference(REFERENCE_ID, "reference", geometry, path, 100,
-                                       atom_mapping=["C", "H", "H", "H", "H"])
+    receipt = reference.execute_reference(REFERENCE_ID, "reference", geometry, path, 100,
+        atom_mapping=["C", "H", "H", "H", "H"], config=config)
+    verify_scientific_reference(receipt, sha256_file(geometry))
+    return receipt
 
 
 def science_slot(system, repetition, *, execute=False, live_model=False, live_orca=False):
@@ -378,10 +396,7 @@ def science_slot(system, repetition, *, execute=False, live_model=False, live_or
         if grade_science(previous_system, previous_rep).get("status") != "passed":
             raise reference.ReferenceBlocked("previous scientific/model review gate has not passed")
     receipt = reference.BatchLedger().read(REFERENCE_ID)["receipt"]
-    if not receipt or not receipt.get("reference_verified") or receipt.get("execution_uncertain"):
-        raise reference.ReferenceBlocked("exact prepared methane independent reference not verified")
-    if receipt["sources"]["geometry_sha256"] != sha256_file(_prepared("methane")):
-        raise reference.ReferenceBlocked("reference does not target this prepared geometry")
+    verify_scientific_reference(receipt, sha256_file(_prepared("methane")))
     if sha256_file(WATER_REFERENCE) != WATER_REFERENCE_SHA256:
         raise reference.ReferenceBlocked("independent water reference changed")
     from orca_agent.natural import initialize_bundle
@@ -501,10 +516,8 @@ def grade_science(system, repetition, *, review_path=None):
                 _distances(Path(files["job.xyz"]["path"]), ["O", "H", "H"]), strict=True)) <= 1e-5)
         else:
             receipt = reference.BatchLedger().read(REFERENCE_ID)["receipt"]
-            if not receipt or not receipt.get("reference_verified") or receipt.get("execution_uncertain"):
-                raise reference.ReferenceBlocked("methane independent reference not verified")
-            facts["reference_exact_geometry"] = receipt["sources"]["geometry_sha256"] == sha256_file(_prepared(system))
-            expected_energy = receipt["independent_output"]["energy_eh"]
+            expected_energy = verify_scientific_reference(receipt, sha256_file(_prepared(system)))
+            facts["reference_exact_geometry"] = True
             facts["not_optimized"] = "optimized_geometry" not in result.qualified_outputs
         facts["independent_energy"] = bool(energy and raw.get("energy_eh") is not None
             and abs(raw["energy_eh"] - expected_energy) <= 1e-7

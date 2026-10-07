@@ -2,6 +2,7 @@
 
 import copy
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -203,9 +204,8 @@ def test_science_raw_entry_has_frozen_prepared_input_and_no_repeat_execution(inp
     for system in ("water", "methane"):
         mock_generator(monkeypatch, system)
         package.input_stage(system, "prepare", execute=True, live=True)
-    monkeypatch.setattr(package.reference.BatchLedger, "read", lambda *_, **__: {"receipt": {
-        "reference_verified": True, "execution_uncertain": False,
-        "sources": {"geometry_sha256": sha256_file(package._prepared("methane"))}}})
+    monkeypatch.setattr(package.reference.BatchLedger, "read", lambda *_, **__: {"receipt":
+        positive_reference(sha256_file(package._prepared("methane")))})
     package._save(package.ROOT / "candidate.json", {"offline_fixture": True})
     starts = []
     def no_execute(store, config, run_id, **kwargs):
@@ -254,3 +254,119 @@ def test_methane_reference_mapping_is_explicit_and_does_not_weaken_water_default
     invalid[0] = "N"
     with pytest.raises(ValueError, match="reviewed"):
         package.reference.reviewed_sources(xyz, inp, 100, atom_mapping=invalid)
+
+
+def positive_reference(geometry_hash):
+    return {"reference_verified": True, "execution_uncertain": False,
+            "execution": {"state": "completed"},
+            "independent_output": {"status": "converged", "energy_eh": -39.72},
+            "sources": {"geometry_sha256": geometry_hash}}
+
+
+@pytest.mark.parametrize("change", ["negative_reference", "failed_execution", "unverified_scf",
+    "unknown", "unverified", "null_energy", "bool_energy", "nan_energy", "infinite_energy", "different_geometry"])
+def test_positive_reference_gate_rejects_failures_and_wrong_prepared_input(change):
+    receipt = positive_reference("exact-hash")
+    if change == "negative_reference":
+        receipt["execution"]["state"] = "failed"
+        receipt["independent_output"] = {"status": "scf_not_converged", "energy_eh": None}
+    elif change == "failed_execution":
+        receipt["execution"]["state"] = "failed"
+    elif change == "unverified_scf":
+        receipt["independent_output"]["status"] = "unverified"
+    elif change == "unknown":
+        receipt["execution_uncertain"] = True
+    elif change == "unverified":
+        receipt["reference_verified"] = False
+    elif change == "different_geometry":
+        receipt["sources"]["geometry_sha256"] = "another-hash"
+    else:
+        receipt["independent_output"]["energy_eh"] = {
+            "null_energy": None, "bool_energy": True, "nan_energy": float("nan"),
+            "infinite_energy": float("inf")}[change]
+    original = copy.deepcopy(receipt)
+    with pytest.raises(budget.ReferenceBlocked, match="positive|geometry"):
+        package.verify_scientific_reference(receipt, "exact-hash")
+    assert repr(receipt) == repr(original)
+
+
+def test_positive_reference_gate_returns_only_the_finite_independent_energy():
+    receipt = positive_reference("exact-hash")
+    assert package.verify_scientific_reference(receipt, "exact-hash") == -39.72
+    receipt["independent_output"]["energy_eh"] = 0
+    assert package.verify_scientific_reference(receipt, "exact-hash") == 0
+
+
+def test_verified_negative_reference_blocks_science_before_slot_reservation(tmp_path, monkeypatch):
+    root = tmp_path / "package"
+    xyz = tmp_path / "geometry.xyz"
+    xyz.write_bytes(b"prepared fixture")
+    receipt = positive_reference(sha256_file(xyz))
+    receipt["execution"].update(state="failed", reason="nonzero_exit_code")
+    receipt["independent_output"] = {"status": "scf_not_converged", "energy_eh": None}
+    monkeypatch.setattr(package, "ROOT", root)
+    monkeypatch.setattr(package, "_execution_gate", lambda **_: Config())
+    monkeypatch.setattr(package, "_require_model_passes", lambda _: None)
+    monkeypatch.setattr(package, "_prepared", lambda _: xyz)
+    monkeypatch.setattr(package.reference.BatchLedger, "read", lambda *_: {"receipt": receipt})
+    monkeypatch.setattr(package, "_save", lambda *_: pytest.fail("must not reserve a science slot"))
+    with pytest.raises(budget.ReferenceBlocked, match="positive"):
+        package.science_slot("water", 1, execute=True, live_model=True, live_orca=True)
+    assert not root.exists()
+
+
+@pytest.mark.parametrize("positive", [False, True])
+def test_methane_reference_forwards_frozen_config_and_requires_positive_result(tmp_path, monkeypatch, positive):
+    xyz = tmp_path / "geometry.xyz"
+    xyz.write_bytes(b"prepared fixture")
+    frozen = Config(orca_path=tmp_path / "frozen-orca.exe", mpi_path=tmp_path / "frozen-mpi.exe")
+    receipt = positive_reference(sha256_file(xyz))
+    if not positive:
+        receipt["execution"]["state"] = "failed"
+        receipt["independent_output"] = {"status": "scf_not_converged", "energy_eh": None}
+    monkeypatch.setattr(package, "_execution_gate", lambda **_: frozen)
+    monkeypatch.setattr(package, "_require_model_passes", lambda _: None)
+    monkeypatch.setattr(package, "_prepared", lambda _: xyz)
+    observed = []
+    def capture(*args, **kwargs):
+        observed.append(kwargs.get("config"))
+        return receipt
+    monkeypatch.setattr(package.reference, "execute_reference", capture)
+    if positive:
+        assert package.methane_reference(execute=True, live=True) == receipt
+    else:
+        with pytest.raises(budget.ReferenceBlocked, match="positive"):
+            package.methane_reference(execute=True, live=True)
+    assert observed == [frozen]
+
+
+@pytest.mark.parametrize("use_frozen_config", [False, True])
+def test_reference_actual_launch_config_cannot_override_frozen_binaries(tmp_path, monkeypatch, use_frozen_config):
+    reference = package.reference
+    from tests.unit.test_structure_tools import XYZ
+    xyz, inp = tmp_path / "geometry.xyz", tmp_path / "reference.inp"
+    xyz.write_text(XYZ["methane"], encoding="utf-8")
+    inp.write_text(reference.reference_input(100), encoding="utf-8")
+    frozen = Config(orca_path=tmp_path / "frozen-orca.exe", mpi_path=tmp_path / "frozen-mpi.exe",
+                    data_root=tmp_path / "candidate-data")
+    monkeypatch.setenv("ORCA_AGENT_ORCA", str(tmp_path / "other-orca.exe"))
+    monkeypatch.setenv("ORCA_AGENT_MPI", str(tmp_path / "other-mpi.exe"))
+    monkeypatch.setattr(reference, "BATCH_ROOT", tmp_path / "batch")
+    receipts, configs = [], []
+    ledger = SimpleNamespace(reserve=lambda *_: ({"fingerprint": "offline-fixture"}, True),
+                             finish=lambda _, receipt: receipts.append(receipt))
+    monkeypatch.setattr(reference, "BatchLedger", lambda: ledger)
+    monkeypatch.setattr(reference, "Store", lambda root: SimpleNamespace(root=root))
+    def stop_before_initialization(store, config, path):
+        configs.append(config)
+        raise RuntimeError("offline sentinel before Run initialization or execution")
+    monkeypatch.setattr(reference.runner, "initialize", stop_before_initialization)
+    kwargs = {"config": frozen} if use_frozen_config else {}
+    reference.execute_reference("offline-config", "reference", xyz, inp, 100,
+                                atom_mapping=["C", "H", "H", "H", "H"], **kwargs)
+    assert len(configs) == len(receipts) == 1
+    assert configs[0].orca_path == (frozen.orca_path if use_frozen_config else tmp_path / "other-orca.exe")
+    assert configs[0].mpi_path == (frozen.mpi_path if use_frozen_config else tmp_path / "other-mpi.exe")
+    assert configs[0].data_root == tmp_path / "batch" / "reference"
+    assert frozen.data_root == tmp_path / "candidate-data"
+    assert receipts[0]["usage"]["orca_starts_actual"] == 0
