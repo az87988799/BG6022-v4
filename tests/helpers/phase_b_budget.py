@@ -86,7 +86,15 @@ class AcceptanceBudget:
     def _model_basis(record):
         names = ("id", "logical_id", "request_hash", "basis", "input_reserved", "output_reserved",
                  "cost_reserved_usd", "prompt_version", "sdk_version", "model", "token_bound_version")
-        return {name: record.get(name) for name in names}
+        saved = {name: record.get(name) for name in names}
+        # Keep exact legacy receipt shape. New reservations must also bind the
+        # selected mode; production request validation proves old missing modes
+        # are the original disabled body, without rewriting their receipts.
+        if "model_profile" in record:
+            if type(record["model_profile"]) is not str or record["model_profile"] not in {"disabled", "thinking_low"}:
+                raise ReferenceBlocked("invalid reserved model profile")
+            saved["model_profile"] = record["model_profile"]
+        return saved
 
     def _bound(self, kind, entry):
         try:

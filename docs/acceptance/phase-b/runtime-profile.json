@@ -10,7 +10,7 @@
     "provider": "DeepSeek",
     "model": "deepseek-flash",
     "base_url": "https://api.deepseek.com",
-    "prompt_version": "agent-json-v15",
+    "prompt_version": "agent-json-v16",
     "prompt_source": "src/orca_agent/context.py",
     "openai_sdk_version": "2.28.0",
     "httpx_version": "0.28.1",
@@ -25,6 +25,26 @@
     "sdk_max_retries": 0,
     "weights_pinned": false,
     "credential_environment_variable": "DEEPSEEK_API_KEY"
+  },
+  "optional_model_profile": {
+    "default": "disabled",
+    "select_via": "Config.model_profile",
+    "allowed": [
+      "disabled",
+      "thinking_low"
+    ],
+    "thinking_low": {
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": "low",
+      "temperature_zero_effective": false,
+      "completion_limit_includes_reasoning": true,
+      "reasoning_content_persisted": false,
+      "same_run_switch_allowed": false,
+      "real_validation_status": "unverified"
+    },
+    "decision": "docs/decisions/0014-explicit-bounded-model-profile.md"
   },
   "token_reservation": {
     "version": "deepseek-v41-utf8-upper-v2",
@@ -107,5 +127,5 @@
     "pydantic": "2.13.5",
     "pytest": "9.1.1"
   },
-  "provenance": "B-01 design profile and original cases remain immutable. Historical requests retain their exact prompts and hashes. This profile describes agent-json-v15 and the second user-approved cumulative budget amendment; execution requires its applied ledger authority and applicable bounded development allocation. The earlier approval and all prior consumption remain preserved. Latest real development evidence uses agent-json-v14; v15 real behavior, development gates and formal freeze remain pending."
+  "provenance": "B-01 design profile and original cases remain immutable. Historical requests retain their exact prompts and hashes. This profile describes agent-json-v16 and the second user-approved cumulative budget amendment; execution requires its applied ledger authority and applicable bounded development allocation. The earlier approvals and all prior consumption remain preserved. Latest real development evidence uses agent-json-v15 at 7690f208820dc6e58e28dfb30c41140c27359375: all three additionally approved Runs were consumed and independently failed. v16 is an offline repair only; v16 real behavior, development gates and formal freeze remain unverified. Default disabled and all existing Run modes and limits remain unchanged. Optional thinking_low is available only by explicit program configuration, frozen per Run; its real behavior is unverified and it grants no execution allocation."
 }

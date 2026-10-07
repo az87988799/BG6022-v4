@@ -21,7 +21,7 @@ def test_invalid_label_is_rejected_before_freeze_or_filesystem_access(label, mon
 
 def test_offline_failure_is_recorded_and_returns_nonzero_without_overwriting(tmp_path, monkeypatch):
     monkeypatch.setattr(ops, "PROJECT", tmp_path)
-    monkeypatch.setattr(ops, "validate_freeze", lambda _: {
+    monkeypatch.setattr(ops, "validate_freeze", lambda _, **kwargs: {
         "freeze_sha256": "a" * 64, "code_commit": "b" * 40})
     path = tmp_path / "docs/acceptance/phase-b/coverage.json"
     path.parent.mkdir(parents=True)

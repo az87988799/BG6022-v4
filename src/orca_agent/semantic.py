@@ -460,6 +460,23 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
         raise StoreError("initial normalization must preserve the user's requested goals")
     if candidate.kind == "clarify" and not candidate.unresolved:
         raise StoreError("clarification must persist its blocking unresolved facts")
+    retired_raw_placeholder = any(
+        decision.get("semantics", {}).get("kind") == "normalize"
+        and "raw_request" in decision["semantics"].get("replaced_goal_ids", [])
+        for decision in run.decisions)
+    has_current_goals = bool(values["goals"]) and all(goal["id"] != "raw_request" for goal in values["goals"])
+    if has_current_goals and ((initial and candidate.kind == "normalize") or retired_raw_placeholder):
+        # The raw-intake placeholder is program-owned, not a user ambiguity.
+        # Successful goal construction retires it even if the candidate or an
+        # earlier question repeats it, including on a later answer to that
+        # question's other gaps. Only activated normalization proves retirement.
+        # Keep the candidate/old revision intact;
+        # _missing_information below still derives actual per-goal missing facts.
+        placeholder = "missing:goal_definition"
+        values["unresolved"] = [gap for gap in values["unresolved"] if gap != placeholder]
+        unresolved_questions = [gap for gap in unresolved_questions if gap != placeholder]
+        for goal in values["goals"]:
+            goal["unresolved"] = [gap for gap in goal["unresolved"] if gap != placeholder]
     values.update(version=request.version + 1, messages=request.messages + pending)
     updated = _missing_information(Request.model_validate(values))
     prior_gaps = set(request.unresolved) | set(question_gaps) | {gap for goal in request.goals for gap in goal.unresolved}

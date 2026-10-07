@@ -34,7 +34,7 @@ def git(*args):
     return subprocess.run(["git", *args], cwd=PROJECT, capture_output=True, check=True).stdout
 
 
-def freeze(label, *, config_path=None, with_science=False):
+def freeze(label, *, config_path=None, with_science=False, model_profile=None):
     if not re.fullmatch(r"[a-z][a-z0-9_-]{0,37}", label):
         raise ValueError("freeze label must be a local identifier of at most 38 characters")
     if FREEZE.exists():
@@ -67,14 +67,19 @@ def freeze(label, *, config_path=None, with_science=False):
                   for kind in ("real_model_with_frozen_evidence", "joint_real_model_orca", "offline_fault_injection")}
     if revision.get("final_slot_count") != sum(len(slots) for slots in allocation.values()):
         raise ValueError("revised formal slot count differs from executable coverage")
-    science_config = evaluation_config(science=True, config_path=config_path) if with_science else None
+    science_config = (evaluation_config(science=True, config_path=config_path, model_profile=model_profile)
+                      if with_science else None)
+    # One explicit effective mode covers both scopes, including a mode selected
+    # in the scientific config file when the CLI does not override it.
+    effective_profile = science_config.model_profile if science_config else model_profile
+    model_config = evaluation_config(model_profile=effective_profile)
     environment = runtime_environment()
     record = {"schema_version": 2, "freeze_label": label, "code_commit": git("rev-parse", "HEAD").decode().strip(),
               "created_at": utc_now().isoformat(), "files": {name: freeze_hash(PROJECT/name, source_text=name in normalized) for name in names},
               "source_lf_normalization": normalized, "execution_files": names,
               "execution_environment": environment,
               "budget_authority": execution_budget_authority(),
-              "configuration": {"model": evaluation_config().model_dump(mode="json"),
+              "configuration": {"model": model_config.model_dump(mode="json"),
                                 "science": science_config.model_dump(mode="json") if science_config else None},
               "science_environment": science_environment(science_config) if science_config else None,
               "formal_slots": {"model": len(allocation["real_model_with_frozen_evidence"]),
@@ -82,13 +87,13 @@ def freeze(label, *, config_path=None, with_science=False):
                   "joint_variant_slots": len(allocation["joint_real_model_orca"]),
                   "offline_variant_slots": len(allocation["offline_fault_injection"])}}
     atomic_write(FREEZE, (json.dumps(record, ensure_ascii=False, indent=2)+"\n").encode(), immutable=True)
-    print(json.dumps(validate_freeze(label), ensure_ascii=False))
+    print(json.dumps(validate_freeze(label, config=model_config), ensure_ascii=False))
 
 
-def offline(label, repetition):
+def offline(label, repetition, *, model_profile=None):
     if not re.fullmatch(r"[a-z][a-z0-9_-]{0,37}", label):
         raise ValueError("freeze label must be a local identifier of at most 38 characters")
-    binding = validate_freeze(label)
+    binding = validate_freeze(label, config=evaluation_config(model_profile=model_profile))
     coverage_path = PROJECT/"docs/acceptance/phase-b/coverage.json"
     coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
     slots = [slot for entry in coverage["entries"] if entry["evidence_requirement"] == "offline_fault_injection"
@@ -126,13 +131,15 @@ if __name__ == "__main__":
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--config", type=Path, help="actual scientific configuration; no credentials")
     parser.add_argument("--with-science", action="store_true", help="bind doctor versions and executable hashes")
+    parser.add_argument("--model-profile", choices=("disabled", "thinking_low"),
+                        help="explicit model mode bound into the exact configuration freeze")
     args = parser.parse_args()
     if not args.execute:
         parser.error("operator must explicitly choose --execute; nothing changed")
     if args.mode == "freeze":
-        freeze(args.label, config_path=args.config, with_science=args.with_science)
+        freeze(args.label, config_path=args.config, with_science=args.with_science, model_profile=args.model_profile)
     else:
         if args.repetition is None:
             parser.error("offline invocation requires --repetition")
         os.environ["ORCA_AGENT_EVAL_FREEZE"] = args.label
-        raise SystemExit(offline(args.label, args.repetition))
+        raise SystemExit(offline(args.label, args.repetition, model_profile=args.model_profile))

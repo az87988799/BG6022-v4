@@ -468,7 +468,8 @@ def test_vendor_debug_exception_logs_cannot_leak_credentials(monkeypatch, caplog
 @pytest.mark.parametrize(("status", "category"), [
     (200, None), (401, "authentication"), (429, "rate_limit"), (307, "redirect_rejected"),
 ])
-def test_real_pinned_sdk_serialization_no_hidden_retry_or_redirect(monkeypatch, status, category):
+@pytest.mark.parametrize("model_profile", ["disabled", "thinking_low"])
+def test_real_pinned_sdk_serialization_no_hidden_retry_or_redirect(monkeypatch, status, category, model_profile):
     import httpx
 
     monkeypatch.setenv("DEEPSEEK_API_KEY", "test-secret-credential")
@@ -487,7 +488,7 @@ def test_real_pinned_sdk_serialization_no_hidden_retry_or_redirect(monkeypatch, 
         return httpx.MockTransport(handle)
 
     monkeypatch.setattr(httpx, "AsyncHTTPTransport", transport_factory)
-    request = prepare_request([{"role": "user", "content": "Return JSON"}])
+    request = prepare_request([{"role": "user", "content": "Return JSON"}], model_profile=model_profile)
 
     def reserve(prepared):
         assert prepared.request_hash == request.request_hash
@@ -506,7 +507,11 @@ def test_real_pinned_sdk_serialization_no_hidden_retry_or_redirect(monkeypatch, 
     assert sent.headers["accept-encoding"] == "identity"
     body = json.loads(sent.content)
     assert body == request.body()
-    assert body["thinking"] == {"type": "disabled"}
+    assert body["thinking"] == {"type": "disabled" if model_profile == "disabled" else "enabled"}
+    if model_profile == "thinking_low":
+        assert body["reasoning_effort"] == "low"
+    else:
+        assert "reasoning_effort" not in body
     assert body["response_format"] == {"type": "json_object"}
     assert body["stream"] is False
     assert reply.error_category == category

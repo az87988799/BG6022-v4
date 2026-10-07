@@ -87,7 +87,7 @@ def _mark_decision(store, run, ticket, proposal, basis, *, action=None):
         store.save_run(run)
 
 
-def _decision(store, run, plan, results, transport, batch, fault):
+def _decision(store, run, plan, results, transport, batch, fault, *, model_profile="disabled"):
     from dataclasses import asdict
     from datetime import datetime, timedelta
     from time import sleep
@@ -196,7 +196,8 @@ def _decision(store, run, plan, results, transport, batch, fault):
                                      control_generation=basis["control_generation"],
                                      user_messages=control["messages"],
                                      action_parameters=action_parameters(relevant_tools, request=request)
-                                     if has_pending_messages else None)
+                                     if has_pending_messages else None,
+                                     model_profile=model_profile)
             if run.batch_category and not batch:
                 raise StoreError("acceptance model calls require shared batch accounting")
             response = send_model(store, run, prepared, transport, basis=basis,
@@ -402,6 +403,9 @@ def _bind_query_goals(store, run, result):
 def execute(store, config, run_id, *, resume=False, fault=None, transport=None, batch=None):
     with store.run_lock(run_id):
         run = store.load_run(run_id)
+        from orca_agent.model_usage import validate_model_profile
+        if not resume:
+            validate_model_profile(store, run, config.model_profile)
         plan = store.load_plan(run)
         if resume:
             before = store.read_control(run.id)
@@ -417,6 +421,10 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                 run.state = "unknown"
                 store.save_run(run)
                 return run
+            # Recovery above only settles already-started work using its frozen
+            # configuration. A changed profile cannot clear pause or advance any
+            # message, decision, Tool or model reservation after reconciliation.
+            validate_model_profile(store, run, config.model_profile)
             with store.control_lock(run.id):
                 unchanged_control = before == store.read_control(run.id)
                 if unchanged_control and store.read_signal(run.id) == "pause":
@@ -511,7 +519,8 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                         action, value = recovered_action
                     else:
                         run, action, value = _decision(store, run, plan, results,
-                                                      transport or DeepSeekTransport(), batch, fault)
+                                                      transport or DeepSeekTransport(), batch, fault,
+                                                      model_profile=config.model_profile)
                     if action == "stale":
                         signal = store.read_signal(run.id)
                         run.state = ("paused" if signal == "pause" else "cancelled"

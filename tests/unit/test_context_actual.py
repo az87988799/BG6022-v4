@@ -66,7 +66,8 @@ def test_actual_array_slice_feedback_keeps_pending_scalar_and_fits_bound():
 
 @pytest.mark.parametrize("run_id", SAMPLING_RUNS)
 @pytest.mark.parametrize("phase", ["three_sp", "analysis_feedback"])
-def test_actual_sampling_three_sp_and_analysis_preserve_facts_within_bound(run_id, phase):
+@pytest.mark.parametrize("model_profile", ["disabled", "thinking_low"])
+def test_actual_sampling_three_sp_and_analysis_preserve_facts_within_bound(run_id, phase, model_profile):
     from orca_agent.agent import _ready
 
     store, run, request, plan, results = archived(run_id, REFERENCE.parent / "agent")
@@ -82,7 +83,7 @@ def test_actual_sampling_three_sp_and_analysis_preserve_facts_within_bound(run_i
     prepared = build_context(request, run, plan, results=results,
         feedback={"new_result_ids": [results[-1].id], "pending_step_ids": ready},
         relevant_tools=run.permission.allowed_tools, user_messages=store.read_control(run.id)["messages"],
-        now=run.created_at + timedelta(seconds=30))
+        now=run.created_at + timedelta(seconds=30), model_profile=model_profile)
     data = payload(prepared)
     assert prepared.input_token_bound <= 12000
     assert data["AUTHORITY"]["request"]["goals"][0]["conditions"] == request.goals[0].conditions

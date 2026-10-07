@@ -5,6 +5,7 @@ import json
 from types import SimpleNamespace
 
 import pytest
+from pydantic import ValidationError
 from test_agent import ScriptedTransport, make_run
 from test_context import objects, payload
 
@@ -153,3 +154,73 @@ def test_two_row_compaction_preserves_literal_null_missing_and_trust_paths():
     assert "literal SHARED_STRINGS[i]; no recursion" in wire["STRING_ENCODING"]
     decoded = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
     assert decoded["DATA"] == value["DATA"]
+
+
+def test_copyable_clarify_examples_remain_strings_even_when_data_shares_the_same_literal():
+    text = "<1-5 texts,1-1000 chars>"
+    value = {"ACTION_PARAMETERS": {"clarify": {"questions": [text], "unresolved": [text]}, "stop": {}},
+             "DATA": {"a": text, "b": text, "c": "long repeated evidence " * 8,
+                      "d": "long repeated evidence " * 8, "literal_marker": {"@": 1}}}
+    before = json.dumps(value, sort_keys=True)
+    wire = _share_strings(value)
+    assert "SHARED_STRINGS" in wire
+    assert wire["ACTION_PARAMETERS"]["clarify"] == value["ACTION_PARAMETERS"]["clarify"]
+    assert all(isinstance(item, str) for items in wire["ACTION_PARAMETERS"]["clarify"].values() for item in items)
+    decoded = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
+    assert decoded["DATA"] == value["DATA"]
+    assert json.dumps(value, sort_keys=True) == before
+
+
+@pytest.mark.parametrize("parent,fields,native_keys", [
+    ("ACTION_PARAMETERS", {
+        "clarify": {"questions": ["<1-5 texts,1-1000 chars>"], "unresolved": ["<1-5 texts,1-1000 chars>"]},
+        "call_tool": {"step_id": "step_registered_long_identifier"}, "stop": {},
+    }, ["clarify", "call_tool"]),
+    ("AUTHORITY", {
+        "basis": {"request_version": 1, "plan_version": 1, "permission_version": 1, "control_generation": 0},
+        "related_results": ["result_registered_long_identifier"],
+        "goal_status": {"energy": "insufficient_evidence"},
+    }, ["basis", "related_results", "goal_status"]),
+    ("CONTROL", {"validation_error": {"path": ["parameters"], "requirement": "literal observed diagnostic"}}, None),
+])
+def test_native_paths_survive_shared_parent_objects_in_untrusted_data(parent, fields, native_keys):
+    value = {parent: fields, "DATA": {"copy_one": fields, "copy_two": fields,
+             "energy": {"value": -74.9, "unit": "Eh", "multiplicity": None}, "absent": {}}}
+    before = json.dumps(value, sort_keys=True)
+    wire = _share_strings(value)
+    assert "SHARED_STRINGS" in wire
+    if native_keys is None:
+        assert wire[parent] == fields
+    else:
+        assert set(wire[parent]) == set(fields)
+        assert all(wire[parent][key] == fields[key] for key in native_keys)
+    decoded = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
+    assert decoded[parent] == fields and decoded["DATA"] == value["DATA"]
+    assert json.dumps(value, sort_keys=True) == before
+
+
+def test_native_action_path_survives_dense_sibling_tabulation():
+    plan = {"steps": [{"key": "initial_energy", "tool": "orca.sp", "parameters": {}}],
+            "goal_map": {"energy": {"step_key": "initial_energy", "port": "energy"}}}
+    value = {"ACTION_PARAMETERS": {"initial_plan": plan, "revise_plan": plan,
+             "clarify": {"questions": ["<1-5 texts,1-1000 chars>"], "unresolved": ["<1-5 texts,1-1000 chars>"]},
+             "stop": {}}, "DATA": {"one": "repeated scientific text " * 8, "two": "repeated scientific text " * 8}}
+    wire = _share_strings(value)
+    assert wire["ACTION_PARAMETERS"]["clarify"] == value["ACTION_PARAMETERS"]["clarify"]
+    decoded = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
+    assert decoded["ACTION_PARAMETERS"] == value["ACTION_PARAMETERS"]
+    assert decoded["DATA"] == value["DATA"]
+
+
+def test_rejected_v15_stop_extra_transport_type_is_not_repaired_or_accepted():
+    # Portable shape of the real fourth V07 proposal; offline regression only.
+    value = {"type": "json_object", "action": "stop", "request_version": 1, "plan_version": 1,
+             "permission_version": 1, "control_generation": 0, "related_results": [],
+             "reason": "quantity:dipoleMagnitude;unit:unknown;conditions:unknown;source:raw;limits:unverified;next:stop",
+             "parameters": {}}
+    raw = json.dumps(value)
+    with pytest.raises(ValidationError) as caught:
+        Proposal.model_validate(json.loads(raw))
+    assert [{"type": e["type"], "loc": e["loc"]} for e in caught.value.errors()] == [
+        {"type": "extra_forbidden", "loc": ("type",)}]
+    assert json.loads(raw) == value

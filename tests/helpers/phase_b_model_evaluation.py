@@ -130,13 +130,14 @@ def _formal_anchor(freeze_label, frozen):
     return digest
 
 
-def prepare(variant_id, repetition, *, category="formal", freeze_label="formal-v1"):
+def prepare(variant_id, repetition, *, category="formal", freeze_label="formal-v1", model_profile="disabled"):
     """Reserve one immutable identity before preparing; never replace a used Run."""
     directory = _slot(variant_id, repetition, category, freeze_label)
+    config = Config(data_root=STORE_ROOT, orca_path=None, mpi_path=None, model_profile=model_profile)
     frozen = None
     if category == "formal":
         freeze = _module("phase_b_fixed_model_freeze", "phase_b_freeze.py")
-        frozen = freeze.validate_freeze(freeze_label)
+        frozen = freeze.validate_freeze(freeze_label, config=config)
     ROOT.mkdir(parents=True, exist_ok=True)
     with FileLock(str(ROOT / "slots.lock"), timeout=30):
         if category == "formal":
@@ -151,6 +152,8 @@ def prepare(variant_id, repetition, *, category="formal", freeze_label="formal-v
             if (metadata["variant_id"] != variant_id or metadata["repetition"] != repetition
                     or metadata["category"] != category or metadata["freeze_label"] != freeze_label):
                 raise StoreError("evaluation slot identity differs from its frozen metadata")
+            if metadata.get("model_profile", "disabled") != config.model_profile:
+                raise StoreError("evaluation slot model profile cannot change")
             if category == "formal" and metadata.get("freeze_sha256") != frozen_digest:
                 raise StoreError("evaluation slot differs from the active formal freeze")
             store = Store(STORE_ROOT)
@@ -162,10 +165,12 @@ def prepare(variant_id, repetition, *, category="formal", freeze_label="formal-v
         if reservation.exists():
             raise StoreError("evaluation preparation was interrupted; reconcile its existing Run before retrying")
         _write(reservation, {"variant_id": variant_id, "repetition": repetition, "category": category,
-                             "freeze_label": freeze_label, "spec_sha256": sha256_file(cases.CASES)}, immutable=True)
+                             "freeze_label": freeze_label, "spec_sha256": sha256_file(cases.CASES),
+                             "model_profile": config.model_profile}, immutable=True)
         store = Store(STORE_ROOT)
         run, metadata = cases.create_request(store, variant_id, repetition, category=category,
                                              freeze_label=freeze_label)
+        metadata["model_profile"] = config.model_profile
         if frozen is not None:
             metadata["formal_freeze"] = frozen
             metadata["code_commit"] = frozen.get("code_commit", frozen.get("commit"))
@@ -197,12 +202,12 @@ def _review(directory, metadata, review_path=None):
 
 
 def evaluate(variant_id, repetition, *, allow_live=False, resume=False, category="formal",
-             freeze_label="formal-v1", review_path=None):
+             freeze_label="formal-v1", review_path=None, model_profile="disabled"):
     """Explicit execution gate plus immutable slot reuse; no retries by new Run ID."""
     if not allow_live:
         raise StoreError("real model execution requires the explicit --live-model gate")
     store, run, metadata, directory = prepare(variant_id, repetition, category=category,
-                                              freeze_label=freeze_label)
+                                              freeze_label=freeze_label, model_profile=model_profile)
     with FileLock(str(directory / "evaluation.lock"), timeout=30):
         run = store.load_run(run.id)
         if (run.permission.scientific_execution or run.budget.orca_starts or run.budget.extra_orca_starts
@@ -214,7 +219,7 @@ def evaluate(variant_id, repetition, *, allow_live=False, resume=False, category
                 raise StoreError("existing model trajectory needs explicit --resume; never create another Run")
             batch = budget.AcceptanceBudget(store)
             batch.snapshot()  # Fail before HTTP when accounting has changed/missing evidence.
-            config = Config(data_root=store.root, orca_path=None, mpi_path=None)
+            config = Config(data_root=store.root, orca_path=None, mpi_path=None, model_profile=model_profile)
             if resume and run.state == "waiting_user" and metadata["continuation_messages"]:
                 if cases.can_advance_user_turn(store, run, metadata):
                     run = cases.advance_user_turn(store, run, metadata)
@@ -269,6 +274,8 @@ def main(argv=None):
     parser.add_argument("--repetition", type=int, choices=(1, 2, 3), default=1)
     parser.add_argument("--category", choices=("formal", "development"), default="formal")
     parser.add_argument("--freeze-label", default="formal-v1")
+    parser.add_argument("--model-profile", choices=("disabled", "thinking_low"), default="disabled",
+                        help="explicit bounded model mode; cannot change a prepared slot")
     parser.add_argument("--prepare", action="store_true", help="prepare immutable input only; no HTTP")
     parser.add_argument("--execute", action="store_true", help="execute one slot, requires --live-model")
     parser.add_argument("--live-model", action="store_true", help="explicitly enable bounded DeepSeek HTTPS")
@@ -283,11 +290,12 @@ def main(argv=None):
     options = {"category": args.category, "freeze_label": args.freeze_label}
     if args.execute:
         report = evaluate(args.variant, args.repetition, allow_live=args.live_model, resume=args.resume,
-                          review_path=args.review, **options)
+                          review_path=args.review, model_profile=args.model_profile, **options)
     elif args.review or args.regrade:
         report = regrade(args.variant, args.repetition, review_path=args.review, **options)
     elif args.prepare:
-        _, run, metadata, directory = prepare(args.variant, args.repetition, **options)
+        _, run, metadata, directory = prepare(args.variant, args.repetition,
+                                              model_profile=args.model_profile, **options)
         report = {"run_id": run.id, "metadata_path": str(directory / "metadata.json"),
                   "fixture_gaps": metadata["fixture_gaps"], "http_executed": False}
     else:

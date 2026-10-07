@@ -3,8 +3,11 @@
 import shutil
 import tomllib
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
+
+ModelProfile = Literal["disabled", "thinking_low"]
 
 
 class Config(BaseModel):
@@ -12,6 +15,7 @@ class Config(BaseModel):
     orca_path: Path | None = None
     mpi_path: Path | None = None
     data_root: Path = Path("data")
+    model_profile: ModelProfile = "disabled"
 
 
 def load_config(path: Path | None = None) -> Config:

@@ -223,7 +223,8 @@ def test_reserved_record_also_requires_dedicated_settlement(setup):
     store, run, _ = setup
 
     def crash(point):
-        raise OSError("crash")
+        if point == "after_model_reserved":
+            raise OSError("crash")
 
     with pytest.raises(OSError):
         invoke(setup, ScriptedTransport(), fault=crash)

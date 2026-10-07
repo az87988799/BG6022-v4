@@ -132,13 +132,13 @@ def prepare_case(store, config, case, category):
     return run, metadata
 
 
-def run_case(case, category, identity, *, live_model=False, live_orca=False, resume=False):
+def run_case(case, category, identity, *, live_model=False, live_orca=False, resume=False, model_profile=None):
     if not live_model or not live_orca:
         raise ValueError("joint execution requires both explicit live switches")
     if not identity.replace("_", "").replace("-", "").isalnum() or len(identity) > 60:
         raise ValueError("evaluation identity must be a short stable label")
     frozen = None
-    config = evaluation_config(science=True)
+    config = evaluation_config(science=True, model_profile=model_profile)
     if category == "formal":
         import os
 
@@ -152,6 +152,8 @@ def run_case(case, category, identity, *, live_model=False, live_orca=False, res
         metadata = _json(metadata_path)
         if (metadata["case"], metadata["category"]) != (case, category):
             raise ValueError("evaluation identity cannot be rebound")
+        if metadata.get("model_profile", "disabled") != config.model_profile:
+            raise ValueError("joint evaluation model profile cannot change")
         if category == "formal" and metadata.get("freeze") != frozen:
             raise ValueError("joint evaluation is bound to a different immutable formal freeze")
         run = store.load_run(metadata["run_id"])
@@ -161,7 +163,7 @@ def run_case(case, category, identity, *, live_model=False, live_orca=False, res
             return run, metadata
     else:
         run, metadata = prepare_case(store, config, case, category)
-        metadata.update(run_id=run.id, data_root=str(store.root), freeze=frozen)
+        metadata.update(run_id=run.id, data_root=str(store.root), freeze=frozen, model_profile=config.model_profile)
         _write(metadata_path, metadata, immutable=True)
     budget = AcceptanceBudget(store)
     run = execute(store, config, run.id, resume=resume, batch=budget)
@@ -179,9 +181,12 @@ def main():
     parser.add_argument("--live-model", action="store_true")
     parser.add_argument("--live-orca", action="store_true")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--model-profile", choices=("disabled", "thinking_low"),
+                        help="explicit model mode; otherwise use the scientific configuration")
     args = parser.parse_args()
     run, _ = run_case(args.case, args.category, args.identity,
-                      live_model=args.live_model, live_orca=args.live_orca, resume=args.resume)
+                      live_model=args.live_model, live_orca=args.live_orca, resume=args.resume,
+                      model_profile=args.model_profile)
     print(json.dumps({"run_id": run.id, "state": run.state, "goal_status": run.goal_status,
                       "usage": run.usage.model_dump(mode="json"), "diagnostics": run.diagnostics},
                      ensure_ascii=False, indent=2))

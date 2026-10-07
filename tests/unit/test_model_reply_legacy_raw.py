@@ -36,6 +36,8 @@ def reserved(tmp_path):
     basis = current_basis(store, run)
 
     def crash(stage):
+        if stage == "after_model_profile_frozen":
+            return
         assert stage == "after_model_reserved"
         raise OSError("offline reservation crash")
 

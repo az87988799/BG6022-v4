@@ -24,7 +24,8 @@ SPEC.loader.exec_module(EVALUATION)
 @pytest.mark.parametrize("repetition", (1, 2, 3))
 def test_fixed_evidence_model(request, variant, repetition):
     report = EVALUATION.evaluate(variant, repetition, allow_live=request.config.getoption("--live-model"),
-                                freeze_label=os.environ.get("ORCA_AGENT_EVAL_FREEZE", "formal-v1"))
+                                freeze_label=os.environ.get("ORCA_AGENT_EVAL_FREEZE", "formal-v1"),
+                                model_profile=os.environ.get("ORCA_AGENT_MODEL_PROFILE", "disabled"))
     status = classify_grade(report)
     assert status != "failed", f"frozen acceptance checks failed: {report}"
     if status != "passed":

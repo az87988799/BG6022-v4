@@ -15,12 +15,13 @@ from datetime import datetime
 from typing import Any
 
 from orca_agent.applicability import effective_conditions
+from orca_agent.config import ModelProfile
 from orca_agent.llm import PreparedRequest, prepare_request
 from orca_agent.models import Plan, Proposal, Request, Result, Run, utc_now
 from orca_agent.proposals import call_tool_instruction, call_tool_parameters_schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v15"
+PROMPT_VERSION = "agent-json-v16"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SYSTEM_PROMPT = """JSON; reason<=1000. Program gates execution/science/goals.
@@ -442,19 +443,20 @@ def _share_strings(value):
     counts = {}
     object_counts = {}
     native_paths = {("CONTROL",), ("AUTHORITY", "basis"), ("AUTHORITY", "related_results"),
-                    ("AUTHORITY", "goal_status"), ("ACTION_PARAMETERS", "call_tool")}
+                    ("AUTHORITY", "goal_status"), ("ACTION_PARAMETERS", "call_tool"),
+                    ("ACTION_PARAMETERS", "clarify")}
+    native_ancestors = {path[:depth] for path in native_paths for depth in range(len(path))}
     def count(item, path=()):
         # Actual encoded size decides whether sharing helps; short repeated
-        # scientific labels can save bytes too. Native control fields are
-        # restored below. Counting them as shared occurrences would create pool
-        # entries whose references are immediately replaced with native values.
+        # scientific labels can save bytes too. Native fields and their paths
+        # stay literal; counting them would create unused pool entries.
         if path in native_paths:
             return
         if isinstance(item, str):
             counts[item] = counts.get(item, 0) + 1
         elif isinstance(item, dict):
             literal = _json(item)
-            if len(literal.encode("utf-8")) >= 100:
+            if path not in native_ancestors and len(literal.encode("utf-8")) >= 100:
                 object_counts[literal] = object_counts.get(literal, 0) + 1
             for key, child in item.items():
                 count(child, (*path, key))
@@ -479,18 +481,23 @@ def _share_strings(value):
                 size + 1 + occurrences * len(_json({"@": len(shared)}))) > 32:
             object_indices[item] = len(shared)
             shared.append(json.loads(item))
-    def encode(item):
+    def encode(item, path=()):
+        if path in native_paths:
+            return item
         if isinstance(item, str) and item in indices:
             return {"@": indices[item]}
         if isinstance(item, dict):
-            if (literal := _json(item)) in object_indices:
+            if path not in native_ancestors and (literal := _json(item)) in object_indices:
                 return {"@": object_indices[literal]}
             # Escape raw data that happens to have the reserved marker shape.
             if (set(item) in ({"@"}, {"@literal"})
                     or {"@columns", "@rows"} <= set(item) <= {"@columns", "@rows", "@absent", "@keys", "@rest"}):
-                return {"@literal": [[key, encode(child)] for key, child in item.items()]}
-            encoded = {key: encode(child) for key, child in item.items()}
-            if len(encoded) >= 2 and all(isinstance(child, dict) for child in encoded.values()):
+                return {"@literal": [[key, encode(child, (*path, key))] for key, child in item.items()]}
+            encoded = {key: encode(child, (*path, key)) for key, child in item.items()}
+            # A native child must remain reachable by its literal path, even
+            # when untrusted DATA repeats its complete parent object.
+            if (path not in native_ancestors and len(encoded) >= 2
+                    and all(isinstance(child, dict) for child in encoded.values())):
                 candidates = []
                 groups = {}
                 for key, child in encoded.items():
@@ -511,7 +518,7 @@ def _share_strings(value):
                         return table
             return encoded
         if isinstance(item, list):
-            encoded = [encode(child) for child in item]
+            encoded = [encode(child, (*path, "[]")) for child in item]
             if (table := tabulate(encoded)) is not None:
                 if len(_json(encoded)) > len(_json(table)):
                     return table
@@ -532,17 +539,6 @@ def _share_strings(value):
     if not shared:
         return value
     encoded = encode(value)
-    if "AUTHORITY" in value:
-        # The proposal must copy these directly; keep schema-compatible native
-        # strings even when other identifiers use the explicit wire encoding.
-        for key in ("basis", "related_results", "goal_status"):
-            if key not in value["AUTHORITY"]:
-                continue
-            encoded["AUTHORITY"][key] = value["AUTHORITY"][key]
-    if "CONTROL" in value:
-        encoded["CONTROL"] = value["CONTROL"]
-    if "call_tool" in value.get("ACTION_PARAMETERS", {}):
-        encoded["ACTION_PARAMETERS"]["call_tool"] = value["ACTION_PARAMETERS"]["call_tool"]
     # Sharing a complete conditions object can remove all uses of strings
     # previously counted inside it. Keep only reachable literal pool entries.
     used = set()
@@ -713,8 +709,8 @@ def _action_examples(request, run, plan, catalog, final_only, control):
             "steps": [step], "goal_map": {"<Goal.id>": {"step_key": "s", "port": "<Goal.port>"}}},
         "call_tool": ({"step_id": pending[0] if pending else "<ready Step.id>"} if pending or not readonly else
                       {"tool": "<read-only Tool.name>", "parameters": {}}),
-        "clarify": {"questions": ["<1..5 strings, length 1..1000>"],
-                    "unresolved": ["<1..5 strings, length 1..1000>"]},
+        "clarify": {"questions": ["<1-5 texts,1-1000 chars>"],
+                    "unresolved": ["<1-5 texts,1-1000 chars>"]},
         "stop": {},
     }
     if not catalog:
@@ -772,6 +768,7 @@ def build_context(
     control_generation: int | None = None,
     user_messages: Sequence[Mapping[str, Any]] = (),
     now: datetime | None = None,
+    model_profile: ModelProfile = "disabled",
 ) -> PreparedRequest:
     """Build a bounded request, without running Tools or reading their raw files.
 
@@ -1020,6 +1017,7 @@ def build_context(
                 prompt_version=PROMPT_VERSION,
                 max_output_tokens=run.budget.output_tokens,
                 timeout_seconds=min(60, remaining_seconds),
+                model_profile=model_profile,
             )
         except ValueError as exc:
             if str(exc) != "conservative input token bound exceeds 12000":

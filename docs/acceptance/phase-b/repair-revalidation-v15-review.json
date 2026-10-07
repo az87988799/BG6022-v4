@@ -1,0 +1,599 @@
+{
+  "schema_version": 1,
+  "category": "real_model_development",
+  "status": "failed",
+  "code_commit": "7690f208820dc6e58e28dfb30c41140c27359375",
+  "production_source_commit": "66e528917b56268e44f1fe42ff196293a9a83e09",
+  "prompt_version": "agent-json-v15",
+  "freeze_label": "repair-revalidation-v15",
+  "scope_approval": {
+    "path": "docs/acceptance/phase-b/revalidation-approval-v15-20261007.json",
+    "sha256": "d6b1f5951405d40f8dfcfe2f51c8c9b76ee20f3ec4420bc5a1fcb53ca80864df"
+  },
+  "entries": [
+    {
+      "variant_id": "N-06/raw-unsupported-system",
+      "run_id": "run_bb258f6450294d4ab220ab370ebbd1f2",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 1,
+      "tokens": 3718,
+      "tokens_unknown": 0,
+      "known_usd": "0.0018498",
+      "accepted_proposals": 1,
+      "rejected_proposals": 0,
+      "final_accepted_model_id": "model_f1dae52195be47e4bb9eea0bf70a4a87",
+      "all_proposal_facts_passed": true,
+      "semantic_review_passed": false,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "passed",
+        "source": "passed",
+        "limits": "passed",
+        "next_action": "failed"
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": true,
+          "quote": "quantity:optimized electronic energy",
+          "rationale": "The accepted candidate preserves optimization of ethanol and electronic energy at optimized geometry; its two goals retain optimized geometry_relation, without substituting a single-point-at-initial-geometry task.",
+          "quote_model_ids": [
+            "model_f1dae52195be47e4bb9eea0bf70a4a87"
+          ]
+        },
+        "unit": {
+          "passed": true,
+          "quote": "unit:unknown",
+          "rationale": "The original user specifies no output display unit and no energy is computed. Unknown is faithful; no unit was inferred or demanded.",
+          "quote_model_ids": [
+            "model_f1dae52195be47e4bb9eea0bf70a4a87"
+          ]
+        },
+        "conditions": {
+          "passed": true,
+          "quote": "conditions:method=HF,basis=STO-3G,charge=0,multiplicity=1,electronic_state=RHF,environment=gas_phase",
+          "rationale": "These six conditions match the exact user text and visible canonical lexicon. All candidate condition sources are explicit, all text_basis values are actual user substrings, and both goal conditions preserve them.",
+          "quote_model_ids": [
+            "model_f1dae52195be47e4bb9eea0bf70a4a87"
+          ]
+        },
+        "source": {
+          "passed": true,
+          "quote": "source:AUTHORITY.user_originals[0]",
+          "rationale": "This is the original user message sent in the actual request. There is no scientific Result or geometry source, and the response does not claim one.",
+          "quote_model_ids": [
+            "model_f1dae52195be47e4bb9eea0bf70a4a87"
+          ]
+        },
+        "limits": {
+          "passed": true,
+          "quote": "limits:ethanol not in science_scope systems (H2O,CH4), no registered geometry, registration-only no execution",
+          "rationale": "The response now distinguishes unsupported ethanol from absent registered geometry and states registration-only/no-execution. The Chinese questions repeats both factual limitations. This axis passes unlike the preceding v14 N06; its request for further confirmation/resources is separately assessed under next_action.",
+          "quote_model_ids": [
+            "model_f1dae52195be47e4bb9eea0bf70a4a87"
+          ]
+        },
+        "next_action": {
+          "passed": false,
+          "quote": "乙醇不在当前 science_scope 支持体系（H2O、CH4）内，且未登记乙醇几何；请确认是否仅登记该需求（不启动计算），或提供已登记的乙醇几何/体系标识。",
+          "rationale": "The same accepted delivery asks whether to only register and requests registered ethanol geometry/system identity. Both conflict with the explicit current registration-only scope. The apparently correct next:normalize_request reason cannot override the actual questions or turn a repeated confirmation into a declarative notice.",
+          "quote_model_ids": [
+            "model_f1dae52195be47e4bb9eea0bf70a4a87"
+          ]
+        }
+      },
+      "final_response_verified": true,
+      "required_final_response": {
+        "required": false,
+        "passed": null,
+        "status": "not_applicable",
+        "accepted_action": null,
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 7
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "waiting_user",
+        "normalization_status": "clarification",
+        "goal_status": {
+          "goal_optimized_geometry": "insufficient_evidence",
+          "goal_energy": "insufficient_evidence"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 0,
+        "results": 0,
+        "qualified_ports": []
+      },
+      "scope": "Accepted normalize_request 可交付本轮登记。能力范围与几何缺失已分别通知，物理量/条件/单位/来源事实正确；仍重复确认已明确的登记选择并索取几何或体系标识，next_action及全轨迹语义失败。提供真实Goals后仍重列程序占位 missing:goal_definition 的历史事实保留；后续局部修复不改此评分。",
+      "proposal_records": [
+        {
+          "model_id": "model_f1dae52195be47e4bb9eea0bf70a4a87",
+          "action": "normalize_request",
+          "accepted": true,
+          "facts_passed": true,
+          "semantic_passed": false,
+          "request_file": "data/phase-b/reference/runs/run_bb258f6450294d4ab220ab370ebbd1f2/model/model_f1dae52195be47e4bb9eea0bf70a4a87.request.json",
+          "request_sha256": "5e0774f3a9e084f552920d6057a4dcb1b52a6abcd431e00cb19f2e5bfdb1973e",
+          "response_file": "data/phase-b/reference/runs/run_bb258f6450294d4ab220ab370ebbd1f2/model/model_f1dae52195be47e4bb9eea0bf70a4a87.response.json",
+          "response_record_sha256": "ea122ffb6d3507d3fcb16259e2936995f2cac07e4be4b0983d8583dd91f75c64",
+          "raw_content_sha256": "82b77ba5ce0b6e90a71fa59386e55ad658757344267ccccaf2f85373746fc1dc",
+          "raw_content_utf8_bytes": 2864,
+          "provider_response_hash": "d0dbad3da1c5598ec47387c3fbf79c96b42ca70ff399a6ffba608319a93f0b1b",
+          "error_category": null,
+          "assessment": "Scientific facts are supported: ethanol identity is preserved; capability scope excludes ethanol; no geometry is registered; HF/STO-3G, charge 0, multiplicity 1, RHF and gas_phase are explicit user conditions; no unit or number is invented. The actual questions nevertheless asks the user to confirm the already explicit registration-only choice or supply geometry/identity resources unnecessary for this turn. This is a semantic/action failure despite a correct reason and accepted candidate. Reintroducing missing:goal_definition despite defining both goals is an additional semantic unresolved-state defect, not a fabricated scientific measurement."
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/N-06__raw-unsupported-system/1/review.json",
+          "sha256": "bbbbe93c14a2dfffdbefaacb846ec6d2d35aa7ab6ce37878dbe10d398ad77373"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/N-06__raw-unsupported-system/1/metadata.json",
+          "sha256": "cda95079699913f1d9be3032f5c0b8e42f288277c90407d54f77d6939815a733"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/N-06__raw-unsupported-system/1/execution.json",
+          "sha256": "31454564b7dd04a66167b1aad8e5f72d8dbdf0362a0b155b3a6f182b096fe25c"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/N-06__raw-unsupported-system/1/grade.json",
+          "sha256": "6e06aed8cd0c562b925bc035d8441ce907a9b809de2bc9c8b5693597191e69ef"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/N-06__raw-unsupported-system/1/grade-before-independent-review.json",
+          "sha256": "9443146e7d894e894ce4f306e1f5e3dfc58a8a5c959a49705da3f3a5c95776ed"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_bb258f6450294d4ab220ab370ebbd1f2/run.json",
+          "sha256": "7874dbea248d98e7e5f4149b014a3b8de6f893be48a777f3f9cd975fed40ba01"
+        },
+        "results": []
+      }
+    },
+    {
+      "variant_id": "V-07/array-location",
+      "run_id": "run_87b2ecda560f458f856fcc39142ec7c9",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 4,
+      "tokens": 13319,
+      "tokens_unknown": 0,
+      "known_usd": "0.0049191",
+      "accepted_proposals": 3,
+      "rejected_proposals": 1,
+      "final_accepted_model_id": null,
+      "all_proposal_facts_passed": true,
+      "semantic_review_passed": true,
+      "final_six_axes": {
+        "quantity": null,
+        "unit": null,
+        "conditions": null,
+        "source": null,
+        "limits": null,
+        "next_action": null
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": null,
+          "quote": "",
+          "rationale": "没有accepted最终stop/clarify，故该最终交付轴未验证。被拒stop中的真实内容在rejected_final_content_assessment逐字核验，不计作最终六轴通过。"
+        },
+        "unit": {
+          "passed": null,
+          "quote": "",
+          "rationale": "没有accepted最终stop/clarify，故该最终交付轴未验证。被拒stop中的真实内容在rejected_final_content_assessment逐字核验，不计作最终六轴通过。"
+        },
+        "conditions": {
+          "passed": null,
+          "quote": "",
+          "rationale": "没有accepted最终stop/clarify，故该最终交付轴未验证。被拒stop中的真实内容在rejected_final_content_assessment逐字核验，不计作最终六轴通过。"
+        },
+        "source": {
+          "passed": null,
+          "quote": "",
+          "rationale": "没有accepted最终stop/clarify，故该最终交付轴未验证。被拒stop中的真实内容在rejected_final_content_assessment逐字核验，不计作最终六轴通过。"
+        },
+        "limits": {
+          "passed": null,
+          "quote": "",
+          "rationale": "没有accepted最终stop/clarify，故该最终交付轴未验证。被拒stop中的真实内容在rejected_final_content_assessment逐字核验，不计作最终六轴通过。"
+        },
+        "next_action": {
+          "passed": null,
+          "quote": "",
+          "rationale": "没有accepted最终stop/clarify，故该最终交付轴未验证。被拒stop中的真实内容在rejected_final_content_assessment逐字核验，不计作最终六轴通过。"
+        }
+      },
+      "final_response_verified": false,
+      "required_final_response": {
+        "required": true,
+        "passed": false,
+        "status": "failed",
+        "accepted_action": null,
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 2
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "budget_exhausted",
+        "normalization_status": "normalized",
+        "goal_status": {
+          "raw_field_observation": "satisfied",
+          "raw_field_discovery": "satisfied",
+          "raw_geometry_slice": "satisfied"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 3,
+        "results": 3,
+        "qualified_ports": []
+      },
+      "scope": "三步原始证据发现和读取已完成，真实Step绑定与参数路径一致，物理事实/语义正确。最终stop带额外顶层type，遭严格Proposal校验拒绝，4次HTTP额度耗尽，无被接受的Result最终解释；六轴全部null，不能用被拒最终文本补成交付通过。",
+      "proposal_records": [
+        {
+          "model_id": "model_c63a33c2a74a4164a218541c3805ca74",
+          "action": "initial_plan",
+          "accepted": true,
+          "facts_passed": true,
+          "semantic_passed": true,
+          "request_file": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/model/model_c63a33c2a74a4164a218541c3805ca74.request.json",
+          "request_sha256": "c11d8a896f4576081cccd4169a125beb365152e8463038bdb3241f98fa012a72",
+          "response_file": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/model/model_c63a33c2a74a4164a218541c3805ca74.response.json",
+          "response_record_sha256": "8569f8548a37880160c9e4b943379b8254f27466c852ed209d37cee1597dc73d",
+          "raw_content_sha256": "840199a90b85264b9f58c1d72209ddb6e07d67fb6fc7571a5966a7107b765add",
+          "raw_content_utf8_bytes": 1263,
+          "provider_response_hash": "c5fa85edaeeecfa7d8bec367f0063ab5b13a51cd652d2ccb7a8324445b59428b",
+          "error_category": null,
+          "assessment": "initial_plan正确映射发现、Geometries[0:1]与第一组偶极模三个Goal，typed路径和artifact均来自当前Request。单位保留unknown且明确只读、不重算，没有宣称尚未读取的数值。后续真实调用按discover、slice、标量顺序完成。",
+          "protocol_conformant": true
+        },
+        {
+          "model_id": "model_488658debc1e482fa714184dd9ae46c1",
+          "action": "call_tool",
+          "accepted": true,
+          "facts_passed": true,
+          "semantic_passed": true,
+          "request_file": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/model/model_488658debc1e482fa714184dd9ae46c1.request.json",
+          "request_sha256": "626f75d4a36cca99bb72b6477bf2d2f09ed0323309f495ffc63470ce0db90c4c",
+          "response_file": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/model/model_488658debc1e482fa714184dd9ae46c1.response.json",
+          "response_record_sha256": "92f63eb131d5e3eaa52a08eb207abcba9bd42604ed182ca8aae42991899ad1d0",
+          "raw_content_sha256": "92a47f732e3158a864a16f4882fafba02330553c8c1bb9db151ec270ebc38019",
+          "raw_content_utf8_bytes": 518,
+          "provider_response_hash": "8a80221797cfea8498c15489e4ec4abc0401fbcb8eb536fb2d021d3d447cfded",
+          "error_category": null,
+          "assessment": "仅提供正确slice Step.id，未混入tool/parameters。reason的Geometries[0:1]与持久Plan及实际第二次读取一致；unknown (not yet read)仅描述当时尚未读到偶极标量，符合第一轮root discovery覆盖。",
+          "protocol_conformant": true
+        },
+        {
+          "model_id": "model_75172b4eae0940a2b7a6ac75a241caaf",
+          "action": "call_tool",
+          "accepted": true,
+          "facts_passed": true,
+          "semantic_passed": true,
+          "request_file": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/model/model_75172b4eae0940a2b7a6ac75a241caaf.request.json",
+          "request_sha256": "ffeaa79d8008b96053e900ee785a40b3c3f425fdbf147fbe590b229209a5386d",
+          "response_file": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/model/model_75172b4eae0940a2b7a6ac75a241caaf.response.json",
+          "response_record_sha256": "8f8dd6398487502e7e350b219ce706179ad9d56b172f0872a35b973fa5b237c6",
+          "raw_content_sha256": "a642a376387474a0883034bf8682dc4c8e49275d1460274a4edf5d056b1bef43",
+          "raw_content_utf8_bytes": 612,
+          "provider_response_hash": "576845f99234e626b27d924e6468b5f06ff97183294e0ec4b124af6890c0027b",
+          "error_category": null,
+          "assessment": "仅提供正确dipole标量Step.id，实际第三次读取和reason路径一致。所见slice上下文value=[]但value_projection.partial=true、omitted=1/total=1，原Result实际有一个几何成员；模型明确它只是部分预览，不以空预览推断原始数组为空。units=null、conditions unknown与所见Result一致。",
+          "protocol_conformant": true
+        },
+        {
+          "model_id": "model_0912345065ee4d3d9ab859d82aba75f5",
+          "action": "stop",
+          "accepted": false,
+          "facts_passed": true,
+          "semantic_passed": true,
+          "request_file": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/model/model_0912345065ee4d3d9ab859d82aba75f5.request.json",
+          "request_sha256": "eddd529063b267ec9b7124e222629d15571b5f333ba6c56923fb4cd0d1a7af67",
+          "response_file": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/model/model_0912345065ee4d3d9ab859d82aba75f5.response.json",
+          "response_record_sha256": "617374b12fc8739cbfae36d3fa7c350a7a5bffd2c1ed5afac07056422a1725cb",
+          "raw_content_sha256": "f7c9fd5b1fe7ed86b756659c5732272ea5c5d1157df0c0178a122a94f7b5467b",
+          "raw_content_utf8_bytes": 870,
+          "provider_response_hash": "92cd4c3bfbc3b8433b85655fb913fc2bb72efe428821104fe6c881e52e791072",
+          "error_category": null,
+          "assessment": "stop文本中的偶极模0.6788282026678785、位置、artifact/hash/Result ID、unknown单位与unverified状态全部对应实际第三次读取。all three goals satisfied也符合当时AUTHORITY.goal_status。无ORCA重算；no execution performed按同句raw read only/no recompute理解为无科学执行，而非否认刚完成读取。唯一拒绝原因是多余顶层type字段，不是物理事实或动作语义错误。",
+          "protocol_conformant": false
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/V-07__array-location/1/review.json",
+          "sha256": "c8368221ce5fa4ebd2a9b441daa938a8f861810e36fb59ebcde874cd1f0b5701"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/V-07__array-location/1/metadata.json",
+          "sha256": "5dcc1743f160035d69733ad929872b3c2e83c5a8227a76d2e218ca3e3ed4eb95"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/V-07__array-location/1/execution.json",
+          "sha256": "c03c0b2b23464eea599db3782d8618e5158dbc58c9f1d696cfa370a307f12afa"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/V-07__array-location/1/grade.json",
+          "sha256": "37bc26be698d916ea6a74b97c9be1fec8fda4424598677575810dbcdb4b45ffe"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/V-07__array-location/1/grade-before-independent-review.json",
+          "sha256": "7b67cc049cd56cbdc9e6bf1093f367da17766e4b6121e8d15a9fccfa687b204f"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/run.json",
+          "sha256": "dbdd09023736111f1fa9ac63613a682d08191ee7551cc1be435d7102292832a0"
+        },
+        "results": [
+          {
+            "path": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/results/result_873a25985b744857ae95ccfafb7364d0.json",
+            "sha256": "7f9cf16a4c22cbfdb1fd6ed65efb7a230f686e5262927b7a129a5beb036a525f"
+          },
+          {
+            "path": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/results/result_20833b7a2f124f53b365f310c2e33fb8.json",
+            "sha256": "122b5a3fd1c3bd6d133c2c7bedfc6de6846c4ad46272b6487f1ba68412a05187"
+          },
+          {
+            "path": "data/phase-b/reference/runs/run_87b2ecda560f458f856fcc39142ec7c9/results/result_51744aef486342768070ae000e9b8d0a.json",
+            "sha256": "94bde9e0f3b1ebf7b9fad3a55f9fbc08a12e7d2880053df32e41e16e738a09ad"
+          }
+        ]
+      }
+    },
+    {
+      "variant_id": "V-09/missing-electron-state",
+      "run_id": "run_5b083256fc98409b890b2cd809243970",
+      "status": "failed",
+      "grade_api_status": "incomplete_or_failed",
+      "http_requests": 3,
+      "tokens": 10493,
+      "tokens_unknown": 0,
+      "known_usd": "0.0039732",
+      "accepted_proposals": 2,
+      "rejected_proposals": 1,
+      "final_accepted_model_id": "model_56b3458ff5674be49857ccb596aa8394",
+      "all_proposal_facts_passed": false,
+      "semantic_review_passed": false,
+      "final_six_axes": {
+        "quantity": "passed",
+        "unit": "passed",
+        "conditions": "failed",
+        "source": "passed",
+        "limits": "passed",
+        "next_action": "passed"
+      },
+      "final_axis_evidence": {
+        "quantity": {
+          "passed": true,
+          "quote": "quantity:ΔE=E(B)-E(A)",
+          "rationale": "Preserves the requested electronic energy difference and sign; no unsupported difference is published.",
+          "quote_model_ids": [
+            "model_56b3458ff5674be49857ccb596aa8394"
+          ]
+        },
+        "unit": {
+          "passed": true,
+          "quote": "unit:Eh",
+          "rationale": "Uses the requested Eh unit without inventing a numerical difference.",
+          "quote_model_ids": [
+            "model_56b3458ff5674be49857ccb596aa8394"
+          ]
+        },
+        "conditions": {
+          "passed": false,
+          "quote": "conditions:method HF, basis STO-3G, charge 0, gas_phase, geometry A/B explicit; gap: system B multiplicity is null (unknown), while source result for B is RHF multiplicity 1",
+          "rationale": "Correctly preserves current B null and distinguishes the B source singlet, but does not disclose A multiplicity=1 or the known RHF electronic-state condition for A. The final condition statement therefore does not fully cover every requested operand; earlier false applicability cannot fill that omission.",
+          "quote_model_ids": [
+            "model_56b3458ff5674be49857ccb596aa8394"
+          ]
+        },
+        "source": {
+          "passed": true,
+          "quote": "source:result_e7d9b7dabe8848ac82e20dccfb51267d (member A qualified, member B missing)",
+          "rationale": "Names the actual compatibility-analysis Result and both requested members. A qualifies; B is missing current applicable evidence while its historical source remains intact. Both original stdout records, energies and source Result hashes were independently checked.",
+          "quote_model_ids": [
+            "model_56b3458ff5674be49857ccb596aa8394"
+          ]
+        },
+        "limits": {
+          "passed": true,
+          "quote": "limits:electronic energy only, not free energy",
+          "rationale": "Correctly limits the quantity and, in the same accepted reason, identifies the unresolved B condition rather than publishing a complete comparison. This does not authorize new science; any future non-singlet request remains subject to capability, permission and budget checks.",
+          "quote_model_ids": [
+            "model_56b3458ff5674be49857ccb596aa8394"
+          ]
+        },
+        "next_action": {
+          "passed": true,
+          "quote": "next:clarify B multiplicity",
+          "rationale": "The accepted question asks the user to confirm the intended B multiplicity. This resolves the semantic gap before any source-reuse or new-execution decision; neither historical multiplicity 1 nor extra execution permission is used to supply the answer.",
+          "quote_model_ids": [
+            "model_56b3458ff5674be49857ccb596aa8394"
+          ]
+        }
+      },
+      "final_response_verified": true,
+      "required_final_response": {
+        "required": true,
+        "passed": true,
+        "status": "passed",
+        "accepted_action": "clarify",
+        "reason": "Result explanation requires accepted stop with completed/failed delivery, or accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."
+      },
+      "mechanical_assertions": {
+        "passed": 1
+      },
+      "failed_mechanical_metrics": [],
+      "safety_invariants_passed": true,
+      "real_model_evidence_present": true,
+      "scientific_facts": {
+        "run_state": "waiting_user",
+        "normalization_status": "normalized",
+        "goal_status": {
+          "electronic_energy_difference": "insufficient_evidence",
+          "finite_member_table": "insufficient_evidence"
+        },
+        "scientific_execution": false,
+        "orca_starts": 0,
+        "attempts": 0,
+        "tool_calls": 1,
+        "results": 1,
+        "qualified_ports": []
+      },
+      "scope": "首案错误宣称B显式未知multiplicity可由历史合格来源建立当前适用性，程序分析正确拒绝。第二案澄清内容正确但复制共享字符串对象作为question/unresolved，协议校验拒绝；第三案纠正为字符串并被接受。末案只覆盖部分条件，最终conditions轴失败；最后纠正不掩盖首案事实/语义错误。",
+      "proposal_records": [
+        {
+          "model_id": "model_14afce801d0e4acd87cfa02149b85bb0",
+          "action": "initial_plan",
+          "accepted": true,
+          "facts_passed": false,
+          "semantic_passed": false,
+          "request_file": "data/phase-b/reference/runs/run_5b083256fc98409b890b2cd809243970/model/model_14afce801d0e4acd87cfa02149b85bb0.request.json",
+          "request_sha256": "3798f76bee2be38ed17e6560da9b3e22f6b9a1de2497014ae2f7654a30b77a61",
+          "response_file": "data/phase-b/reference/runs/run_5b083256fc98409b890b2cd809243970/model/model_14afce801d0e4acd87cfa02149b85bb0.response.json",
+          "response_record_sha256": "a4d8f9fec98dd16ef9a26d696116e07eaebdd0060f1572a0b64dff1cf0294c4b",
+          "raw_content_sha256": "9a21f4ab07c56b25fd1aba7e5db8f035d9a9bd8793bf0c183c3b9a22d18ab25d",
+          "raw_content_utf8_bytes": 1358,
+          "provider_response_hash": "f61c021404dec5477a9c73e9f2fc7c541cfa62f67c6a859ef4990304791c93c4",
+          "error_category": null,
+          "assessment": "False current-applicability claim: the source RHF singlet checks are historical qualifications, while current B multiplicity is explicitly null. Allowing different geometries does not resolve an unknown electron-state condition. The actual first context exposes B scoped null and expressly separates source qualification from current applicability. Structurally valid analysis inputs and program acceptance permit a diagnostic check; they do not establish the proposed scientific assertion."
+        },
+        {
+          "model_id": "model_212f88980e9f4f6fb41624e8a50d7971",
+          "action": "clarify",
+          "accepted": false,
+          "facts_passed": true,
+          "semantic_passed": true,
+          "request_file": "data/phase-b/reference/runs/run_5b083256fc98409b890b2cd809243970/model/model_212f88980e9f4f6fb41624e8a50d7971.request.json",
+          "request_sha256": "13a005a22fc6241a8b62baa9a0566f2aa6f214f8941681c3730a809a5bd16543",
+          "response_file": "data/phase-b/reference/runs/run_5b083256fc98409b890b2cd809243970/model/model_212f88980e9f4f6fb41624e8a50d7971.response.json",
+          "response_record_sha256": "5cf694fa2236b63a61ca58dc849980e946133400c8d269a49b16cc06f9419a56",
+          "raw_content_sha256": "356f209a6ca594e1ff63f9a0b8ae3e63f78df7c8d2d0d99d4371c7215222cea3",
+          "raw_content_utf8_bytes": 649,
+          "provider_response_hash": "46b6031f095a0d3ac1b896d615df185a15b9e3fc79ba8aba8635318d5403033c",
+          "error_category": null,
+          "assessment": "The scientific reason now correctly distinguishes current B unknown from historical RHF multiplicity 1, retains A, withholds the difference, and chooses clarification. Its no-allowed-action statement is read with next:clarify as inability of an execution action to choose the user condition, not a claim that new science is necessary. The proposal is nevertheless unusable because it emits a compressed object instead of an actual question/unresolved string; this is recorded as a protocol failure, not invented scientific evidence."
+        },
+        {
+          "model_id": "model_56b3458ff5674be49857ccb596aa8394",
+          "action": "clarify",
+          "accepted": true,
+          "facts_passed": true,
+          "semantic_passed": true,
+          "request_file": "data/phase-b/reference/runs/run_5b083256fc98409b890b2cd809243970/model/model_56b3458ff5674be49857ccb596aa8394.request.json",
+          "request_sha256": "f3e594c088cbd7168e6a722bbb9b74b891cd5d43dba43b9ada3fc576a88dfd3e",
+          "response_file": "data/phase-b/reference/runs/run_5b083256fc98409b890b2cd809243970/model/model_56b3458ff5674be49857ccb596aa8394.response.json",
+          "response_record_sha256": "1a90343223042daed77c0b18eaae3b0425499dfaeddcbf2ef3069e5c5c8e5db7",
+          "raw_content_sha256": "86fea91efabad88983bf3d5f3e8b4d955944c7993e6ad8990c5e5826506af7e2",
+          "raw_content_utf8_bytes": 1046,
+          "provider_response_hash": "16b842b76fcbc60b57ba80e005754a92d2a059249aff8b73ffc15d3cecde2d76",
+          "error_category": null,
+          "assessment": "Correct scientific next step: keep B multiplicity unknown, ask the user to confirm it, and distinguish B original RHF singlet evidence from current applicability. No energy difference is fabricated and no new execution is proposed or authorized. Conditional reuse after a singlet confirmation is consistent with verified remaining conditions. The other-multiplicity branch describes the need for new evidence, not permission or present capability to execute it. Incomplete final condition disclosure is graded separately below."
+        }
+      ],
+      "evidence_files": {
+        "review": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/V-09__missing-electron-state/1/review.json",
+          "sha256": "ac03b8e16cc04adc06f3a74894acc858efe48962b187e9e624f7efad8f87888c"
+        },
+        "metadata": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/V-09__missing-electron-state/1/metadata.json",
+          "sha256": "d9b857c8104178e05d60234ec067feff67a5563549addba0b35c4d6124f8bab3"
+        },
+        "execution": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/V-09__missing-electron-state/1/execution.json",
+          "sha256": "3822064a83336e397946f3eb54b3710fb05c76b8d55fa88f97faf170c9303e04"
+        },
+        "grade": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/V-09__missing-electron-state/1/grade.json",
+          "sha256": "1a9b527e2bb65df5bd99a7b664e920dd20ba143aa9a8326bab719e6a819c9cf8"
+        },
+        "grade_before_independent_review": {
+          "path": "data/phase-b/model-evaluations/development/repair-revalidation-v15/V-09__missing-electron-state/1/grade-before-independent-review.json",
+          "sha256": "a6e347051468f5669a980894b4aba13de5bd91b4fa00d495a0c8b94cb9ce1c86"
+        },
+        "run": {
+          "path": "data/phase-b/reference/runs/run_5b083256fc98409b890b2cd809243970/run.json",
+          "sha256": "ccba178fe786c738a39b078e34db5672f52a46f9a2e6dcb748a8fc1b8e7f0fc0"
+        },
+        "results": [
+          {
+            "path": "data/phase-b/reference/runs/run_5b083256fc98409b890b2cd809243970/results/result_e7d9b7dabe8848ac82e20dccfb51267d.json",
+            "sha256": "45a8b7b38a344f8ea55e9610785dde3bad805a38af14b7e679db9257d0635473"
+          }
+        ]
+      }
+    }
+  ],
+  "totals": {
+    "completed_slots": 3,
+    "passed": 0,
+    "failed": 3,
+    "http_requests": 8,
+    "tokens": 27530,
+    "tokens_unknown": 0,
+    "known_usd": "0.0107421",
+    "orca_starts": 0
+  },
+  "cumulative_budget_snapshot": {
+    "observed_at_utc": "2026-10-07T11:37:38.395712+00:00",
+    "path": "data/phase-b/batch-ledger.json",
+    "sha256": "8170092caf6178e3fac543487375b2d4a8c494fa0b338dbc933a07c26a746afa",
+    "read_only_verified": true,
+    "model_usage": {
+      "http_requests": 316,
+      "tokens": 983673,
+      "usd": "0.3876102",
+      "known_tokens": 983673,
+      "unknown_tokens": 0,
+      "known_usd": "0.3876102",
+      "unknown_usd": "0"
+    },
+    "science_counts": {
+      "reference": {
+        "reserved": 16,
+        "actual": 16,
+        "unknown": 0
+      },
+      "development": {
+        "reserved": 26,
+        "actual": 26,
+        "unknown": 0
+      },
+      "formal": {
+        "reserved": 0,
+        "actual": 0,
+        "unknown": 0
+      }
+    },
+    "science_total_reserved": 42,
+    "science_total_actual": 42,
+    "limits": {
+      "orca_starts": {
+        "reference": 16,
+        "formal": 48,
+        "development": 48,
+        "total": 112
+      },
+      "model": {
+        "http_requests": 1050,
+        "tokens": 6530000,
+        "usd": 10
+      }
+    }
+  },
+  "limitation": "本批为明确批准的三个追加Run各一次，保留全部八条响应、最初评分、独立评审、最终六轴和全部成本。三槽均失败；V07读取完成与被拒最终回答不能代替接受的解释，V09末案纠正不能覆盖首案错误，N06接受normalize本身可登记交付但问题仍违反范围。汇总没有新增HTTP/ORCA或修改槽/Run；随后v16局部修复和隔离重放均非本批真实证据，不回改本记录的v15状态。三个追加机会均已使用，剩余八个raw依赖门槛仍关闭；本记录不扩大Run次数、预算或正式验收权限。"
+}

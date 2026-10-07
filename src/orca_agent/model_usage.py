@@ -16,6 +16,8 @@ from orca_agent.llm import (
     _metadata,
     _recordable_raw_content,
     _strict_json,
+    model_profile_parameters,
+    request_model_profile,
 )
 from orca_agent.models import new_id, utc_now
 from orca_agent.store import BudgetExceeded, StoreError, _id, _json_bytes, atomic_write
@@ -47,6 +49,70 @@ def current_basis(store, run):
     return {"request_version": run.request_version, "plan_version": run.plan_version,
             "permission_version": run.permission.version,
             "control_generation": store.read_control(run.id)["generation"]}
+
+
+def _request_body(store, run, record):
+    path = store.path(f"runs/{run.id}/model/{_id(record['id'])}.request.json")
+    if not path.is_file() or path.stat().st_size > 128 * 1024:
+        raise StoreError("model request evidence is missing or exceeds its size bound")
+    raw = path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != record["request_hash"]:
+        raise StoreError("frozen model request changed")
+    try:
+        body = _strict_json(raw)
+        profile = request_model_profile(body)
+    except (ValueError, UnicodeError, RecursionError):
+        raise StoreError("invalid frozen model request profile") from None
+    # Only historical disabled requests predate explicit profile records.
+    if record.get("model_profile", "disabled") != profile:
+        raise StoreError("model record profile differs from its frozen request")
+    return body
+
+
+def validate_model_profile(store, run, expected=None):
+    """Read-only verification of this Run's local immutable execution config.
+
+    Historical requests remain untouched: their hashed mode parameters are the
+    authority when no configuration snapshot existed. No missing field may turn
+    an old disabled Run into thinking_low during recovery.
+    """
+    if expected is not None:
+        model_profile_parameters(expected)
+    path = store.path(f"runs/{run.id}/model-profile.json")
+    frozen = None
+    if path.exists():
+        try:
+            if not path.is_file() or path.stat().st_size > 4096:
+                raise ValueError("invalid size")
+            data = _strict_json(path.read_bytes())
+            if (not isinstance(data, dict)
+                    or set(data) != {"schema_version", "run_id", "model_profile"}
+                    or type(data["schema_version"]) is not int or data["schema_version"] != 1
+                    or data["run_id"] != run.id):
+                raise ValueError("invalid shape")
+            model_profile_parameters(data["model_profile"])
+            frozen = data["model_profile"]
+        except (ValueError, UnicodeError, RecursionError):
+            raise StoreError("invalid immutable model profile snapshot") from None
+    elif any("model_profile" in record for record in run.model_records):
+        raise StoreError("immutable model profile snapshot is missing")
+    for record in run.model_records:
+        actual = request_model_profile(_request_body(store, run, record))
+        if frozen is not None and actual != frozen:
+            raise StoreError("Run contains conflicting frozen model profiles")
+        frozen = actual
+    if expected is not None and frozen is not None and expected != frozen:
+        raise StoreError(f"Run model profile is frozen as {frozen}; cannot select {expected}")
+    return frozen
+
+
+def _freeze_model_profile(store, run, profile):
+    # The caller holds the Run lock. Publish before any HTTP/batch reservation,
+    # so a crash with zero requests cannot reopen mode selection on resume.
+    validate_model_profile(store, run, profile)
+    store._write_json(f"runs/{run.id}/model-profile.json", {
+        "schema_version": 1, "run_id": run.id, "model_profile": profile,
+    }, immutable=True)
 
 
 def _validate_reply(data, record):
@@ -140,6 +206,7 @@ def read_model_reply(store, run, record):
         raise StoreError("model evidence exceeds its size bound")
     if hashlib.sha256(request_path.read_bytes()).hexdigest() != record["request_hash"]:
         raise StoreError("frozen model request changed")
+    validate_model_profile(store, run)
     raw = response_path.read_bytes()
     receipt_hash = hashlib.sha256(raw).hexdigest()
     if record.get("response_record_sha256", receipt_hash) != receipt_hash:
@@ -179,6 +246,7 @@ def recover_models(store, run, *, batch=None):
     with store.run_lock(run.id):
         if store.load_run(run.id) != run:
             raise StoreError("Run changed before model reconciliation")
+        validate_model_profile(store, run)
         for record in list(run.model_records):
             if record.get("status") not in {"reserved", "known", "unknown"}:
                 raise StoreError("unknown model reservation state")
@@ -198,6 +266,7 @@ def recover_models(store, run, *, batch=None):
 
 def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None, fault=None):
     logical_id = _id(logical_id)
+    validate_model_profile(store, run, prepared.model_profile)
     # Stable logical identity is idempotency, not an implicit retry switch.
     existing = [record for record in run.model_records if record.get("logical_id") == logical_id]
     if existing:
@@ -225,6 +294,9 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
                     or run.usage.model_tokens_used + run.usage.model_tokens_unknown
                     + request.reserved_tokens > run.budget.model_tokens):
                 raise BudgetExceeded("model HTTP/token budget exhausted")
+            _freeze_model_profile(store, run, request.model_profile)
+            if fault:
+                fault("after_model_profile_frozen")
             ticket = new_id("model")
             record = {"id": ticket, "logical_id": logical_id, "request_hash": request.request_hash,
                       "basis": dict(basis), "input_reserved": request.input_token_bound,
@@ -232,7 +304,8 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
                       "cost_reserved_usd": _cost(request.input_token_bound, request.output_token_bound),
                       "created_at": utc_now().isoformat(), "status": "reserved",
                       "prompt_version": request.prompt_version, "sdk_version": request.sdk_version,
-                      "model": request.model, "token_bound_version": request.token_bound_version}
+                      "model": request.model, "token_bound_version": request.token_bound_version,
+                      "model_profile": request.model_profile}
             if batch:
                 batch.reserve_model(run, record)
             atomic_write(store.path(f"runs/{run.id}/model/{ticket}.request.json"),

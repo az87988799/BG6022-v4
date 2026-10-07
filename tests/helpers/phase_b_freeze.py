@@ -39,12 +39,15 @@ def execution_files():
     return sorted(names)
 
 
-def evaluation_config(*, science=False, config_path=None):
+def evaluation_config(*, science=False, config_path=None, model_profile=None):
     """Resolve the operator's actual configuration; never embed machine paths."""
     path = config_path or os.environ.get("ORCA_AGENT_CONFIG")
     loaded = load_config(Path(path) if path else None) if science else Config()
-    return loaded.model_copy(update={"data_root": (PROJECT / "data/phase-b" /
-                                                   ("agent" if science else "reference")).resolve()})
+    values = loaded.model_dump()
+    values["data_root"] = (PROJECT / "data/phase-b" / ("agent" if science else "reference")).resolve()
+    if model_profile is not None:
+        values["model_profile"] = model_profile
+    return Config.model_validate(values)
 
 
 def execution_budget_authority():

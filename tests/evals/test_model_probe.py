@@ -13,7 +13,8 @@ def test_development_model_probe():
     if not label:
         pytest.skip("no explicit development probe identity supplied")
     variant = os.environ.get("ORCA_AGENT_MODEL_PROBE_VARIANT", "V-07/discover-and-read")
-    report = evaluate(variant, 1, allow_live=True, category="development", freeze_label=label)
+    report = evaluate(variant, 1, allow_live=True, category="development", freeze_label=label,
+                      model_profile=os.environ.get("ORCA_AGENT_MODEL_PROFILE", "disabled"))
     assert report["real_model_evidence_present"]
     assert report["safety_invariants_passed"]
     assert not report["fixture_gaps"]

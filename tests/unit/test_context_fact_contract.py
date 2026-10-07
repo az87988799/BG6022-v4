@@ -178,11 +178,16 @@ _REPLAYS = [
     ("v14_array_initial", "run_47e3358053464d4b889e7cc93cd5edc9", 0),
     ("v14_array_first_rejection", "run_47e3358053464d4b889e7cc93cd5edc9", 1),
     ("v14_array_second_rejection", "run_47e3358053464d4b889e7cc93cd5edc9", 2),
+    ("v15_unknown_initial", "run_5b083256fc98409b890b2cd809243970", 0),
+    ("v15_unknown_clarify_rejected", "run_5b083256fc98409b890b2cd809243970", 1),
+    ("v15_unknown_clarify_accepted", "run_5b083256fc98409b890b2cd809243970", 2),
 ]
 
 
 @pytest.mark.parametrize("case,run_id,index", _REPLAYS, ids=[item[0] for item in _REPLAYS])
-def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence(case, run_id, index):
+@pytest.mark.parametrize("model_profile", ["disabled", "thinking_low"])
+def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence(
+        case, run_id, index, model_profile):
     """Actual failed development inputs; no HTTP, ORCA, regrade or outcome claim.
 
     This optional local replay complements the portable fixtures above. A clean
@@ -195,7 +200,8 @@ def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evid
     store = Store(_REAL_ROOT)
     persisted = store.load_run(run_id)
     record = persisted.model_records[index]
-    assert record["prompt_version"] == ("agent-json-v14" if case.startswith("v14_") else "agent-json-v8")
+    expected_prompt = {"v14": "agent-json-v14", "v15": "agent-json-v15"}.get(case.split("_")[0], "agent-json-v8")
+    assert record["prompt_version"] == expected_prompt
     original_body = json.loads((directory / "model" / (record["id"] + ".request.json")).read_text(encoding="utf-8"))
     original = payload(SimpleNamespace(body=lambda: original_body))
     authority = original["AUTHORITY"]
@@ -216,7 +222,7 @@ def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evid
         feedback={**original["DATA"]["feedback"], **original["CONTROL"],
                   "new_result_ids": authority["related_results"],
                   "current_goal_use": original["DATA"].get("current_goal_use", [])},
-        now=run.created_at + timedelta(seconds=30))
+        now=run.created_at + timedelta(seconds=30), model_profile=model_profile)
     rebuilt = payload(prepared)
     assert prepared.input_token_bound <= 12000
     assert rebuilt["AUTHORITY"]["related_results"] == authority["related_results"]
@@ -224,6 +230,21 @@ def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evid
     assert rebuilt["AUTHORITY"]["request"]["goals"] == authority["request"]["goals"]
     assert rebuilt["CONTROL"] == original["CONTROL"]
     assert rebuilt["DATA"].get("current_goal_use") == original["DATA"].get("current_goal_use")
+    if case.startswith("v15_"):
+        raw_wire = json.loads(prepared.body()["messages"][1]["content"])
+        native = raw_wire["ACTION_PARAMETERS"]["clarify"]
+        assert set(native) == {"questions", "unresolved"}
+        assert all(isinstance(text, str) and text == "<1-5 texts,1-1000 chars>"
+                   for texts in native.values() for text in texts)
+        assert rebuilt["AUTHORITY"]["request"] == authority["request"]
+        assert rebuilt["AUTHORITY"]["system_condition_overrides"] == authority["system_condition_overrides"]
+        for old_result, new_result in zip(original["DATA"]["results"], rebuilt["DATA"]["results"], strict=True):
+            assert new_result.get("unqualified_observations") == old_result.get("unqualified_observations")
+            assert new_result.get("qualified_outputs") == old_result.get("qualified_outputs")
+        if index in (1, 2):
+            original_wire = json.loads(original_body["messages"][1]["content"])
+            assert original_wire["ACTION_PARAMETERS"]["clarify"] == {
+                "questions": [{"@": 1}], "unresolved": [{"@": 1}]}
     if case.startswith("v14_"):
         assert call_tool_instruction() in prepared.body()["messages"][0]["content"]
         # The original rejected inputs already received the structured forms.

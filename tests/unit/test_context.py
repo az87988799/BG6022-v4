@@ -97,7 +97,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v15"
+    assert context.prompt_version == "agent-json-v16"
     assert "reason<=1000" in context.body()["messages"][0]["content"]
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
@@ -661,7 +661,9 @@ def test_comparison_projection_preserves_recorded_requested_source_and_unknown_c
 
 
 @pytest.mark.parametrize("phase", ["final", "replan", "pending_analysis"])
-def test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback(tmp_path, monkeypatch, phase):
+@pytest.mark.parametrize("model_profile", ["disabled", "thinking_low"])
+def test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback(
+        tmp_path, monkeypatch, phase, model_profile):
     """Actual helper Request/long IDs; synthetic checked snapshots, no ORCA/HTTP."""
     from test_analysis import REVIEW, energy, passed_checks
 
@@ -765,7 +767,7 @@ def test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_
     if phase == "pending_analysis":
         feedback["new_result_ids"] = [results[3].id]
         feedback["pending_step_ids"] = [plan.steps[-1].id]
-    context = build_context(request, run, plan, results=results, feedback=feedback)
+    context = build_context(request, run, plan, results=results, feedback=feedback, model_profile=model_profile)
     data = payload(context)
     assert context.input_token_bound <= 12000
     assert len(data["DATA"]["results"]) == len(results)

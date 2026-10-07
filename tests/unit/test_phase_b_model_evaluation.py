@@ -30,7 +30,7 @@ def driver(tmp_path, monkeypatch):
     monkeypatch.setattr(DRIVER, "PROJECT", tmp_path / "project")
     activate(DRIVER)
 
-    def validate(label):
+    def validate(label, **kwargs):
         path = DRIVER.PROJECT / "docs/acceptance/phase-b/formal-freeze.json"
         record = json.loads(path.read_text(encoding="utf-8"))
         if record["freeze_label"] != label:

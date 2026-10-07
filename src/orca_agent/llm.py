@@ -21,6 +21,8 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field, replace
 from typing import Any
 
+from orca_agent.config import ModelProfile
+
 BASE_URL = "https://api.deepseek.com"
 MODEL = "deepseek-flash"
 SDK_VERSION = "2.28.0"
@@ -40,9 +42,13 @@ TOKEN_BOUND_VERSION = "deepseek-v41-utf8-upper-v2"
 # 81f64d1248a68ce3663e07ab3ee48b851e5df0e32d27cb98e4c9a268151e8d99
 # It uses identity normalization, byte-level pretokenization (no prefix space)
 # and BPE without affixes: each content token consumes >= 1 UTF-8 byte.
-# src/v4/mod.rs renders text-only non-thinking messages with <= 64 framing
-# bytes per message, plus BOS/assistant prefix and JSON-format instructions
-# totaling < 512 bytes. Message content is counted AFTER JSON decoding: wire
+# deepseek-recipe-encoding/src/v4/{mod.rs,dsv41.rs} renders our text-only
+# disabled/thinking_low profiles with <= 59 framing bytes per message and
+# <= 263 fixed bytes, including low effort, JSON instructions and an inserted
+# first System when needed. The 512 + 64/message bound covers both profiles.
+# This proves the fixed public implementation's bound, not that the hosted
+# service uses identical internals; reported excess still fails closed.
+# Message content is counted AFTER JSON decoding: wire
 # escape backslashes are not fed to the tokenizer. All other input fields are
 # fixed by prepare_request and their rendering is covered by this framing bound.
 # Special-token literals cannot invalidate this byte bound even when the API
@@ -52,6 +58,28 @@ _FRAMING_PER_MESSAGE = 64
 _CREDENTIAL = re.compile(r"(?:sk-[A-Za-z0-9_-]{16,}|Bearer\s+\S+)", re.IGNORECASE)
 _SAFE_METADATA = re.compile(r"[A-Za-z0-9_.:/-]{1,160}\Z")
 _JSON_ESCAPE = re.compile(r'\\(?:u[0-9a-fA-F]{4}|["\\/bfnrt])')
+
+_PROFILE_PARAMETERS: dict[ModelProfile, dict[str, Any]] = {
+    "disabled": {"thinking": {"type": "disabled"}},
+    "thinking_low": {"thinking": {"type": "enabled"}, "reasoning_effort": "low"},
+}
+
+
+def model_profile_parameters(profile: ModelProfile) -> dict[str, Any]:
+    """Only program configuration selects a mode; never infer or fall back."""
+    if not isinstance(profile, str) or profile not in _PROFILE_PARAMETERS:
+        raise ValueError("model_profile must be disabled or thinking_low")
+    return json.loads(json.dumps(_PROFILE_PARAMETERS[profile]))
+
+
+def request_model_profile(body: Mapping[str, Any]) -> ModelProfile:
+    """Recognize only the exact supported mode parameters in a frozen request."""
+    if isinstance(body, Mapping):
+        parameters = {key: body[key] for key in ("thinking", "reasoning_effort") if key in body}
+        for profile, allowed in _PROFILE_PARAMETERS.items():
+            if parameters == allowed:
+                return profile
+    raise ValueError("frozen request has unsupported model profile parameters")
 
 
 class ModelConfigurationError(RuntimeError):
@@ -87,6 +115,10 @@ class PreparedRequest:
     def body(self) -> dict[str, Any]:
         """Return a fresh copy so callers cannot change the frozen payload."""
         return json.loads(self.canonical_body)
+
+    @property
+    def model_profile(self) -> ModelProfile:
+        return request_model_profile(self.body())
 
 
 @dataclass(frozen=True)
@@ -199,6 +231,7 @@ def prepare_request(
     prompt_version: str = "agent-json-v9",
     max_output_tokens: int = MAX_OUTPUT_TOKENS,
     timeout_seconds: float = 60,
+    model_profile: ModelProfile = "disabled",
 ) -> PreparedRequest:
     """Validate fixed transport parameters before any budget reservation or send."""
     if not 1 <= len(messages) <= MAX_MESSAGES:
@@ -227,7 +260,7 @@ def prepare_request(
     body = {
         "model": MODEL, "messages": clean, "stream": False, "temperature": 0,
         "max_tokens": max_output_tokens, "response_format": {"type": "json_object"},
-        "thinking": {"type": "disabled"},
+        **model_profile_parameters(model_profile),
     }
     bound = input_token_upper_bound(body)
     if bound > MAX_INPUT_TOKENS:
@@ -327,8 +360,10 @@ def _parse_response(request: PreparedRequest, raw: bytes, status: int, request_i
         return ModelReply(**facts, error_category="unexpected_finish_reason")
     if not isinstance(message, dict) or message.get("tool_calls") or message.get("function_call"):
         return ModelReply(**facts, error_category="invalid_response_shape")
-    if message.get("reasoning_content"):
+    if request.model_profile == "disabled" and message.get("reasoning_content"):
         return ModelReply(**facts, error_category="unexpected_thinking")
+    # Enabled reasoning is deliberately discarded. Only final content can be
+    # an actionable proposal or persisted raw_content; usage counts all output.
     if not isinstance(content, str) or not content.strip():
         return ModelReply(**facts, error_category="empty_content")
     try:
@@ -482,6 +517,7 @@ class DeepSeekTransport:
         checked = prepare_request(
             body["messages"], prompt_version=request.prompt_version,
             max_output_tokens=body["max_tokens"], timeout_seconds=request.timeout_seconds,
+            model_profile=request.model_profile,
         )
         if request != checked:
             raise ValueError("prepared model request integrity mismatch")
