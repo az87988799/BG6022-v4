@@ -11,7 +11,7 @@ from test_text_entry import text_environment
 
 from orca_agent import entrypoints
 from orca_agent.models import Goal, Request
-from orca_agent.store import BudgetExceeded, StoreError
+from orca_agent.store import BudgetExceeded, StoreError, _json_bytes
 from orca_agent.web import Coordinator, create_app
 
 
@@ -89,6 +89,27 @@ def test_pending_messages_still_bounded(env):
         store.enqueue_message(run.id, f"message {i}")
     with pytest.raises(BudgetExceeded, match="pending"):
         store.enqueue_message(run.id, "one too many")
+
+
+def test_large_cli_updates_cannot_make_retained_history_unreadable(env):
+    store, _ = env
+    run = new_run(env)
+    control = store.read_control(run.id)
+    template = {"id": "message_history", "text": "x" * 8192,
+                "update": {"conditions": {"note": "y" * 65000}},
+                "source": "user", "request_version": 1}
+    limit = 8 * 1024 * 1024
+    count = (limit - 4096) // len(_json_bytes(template))
+    control["messages"] = [{**template, "id": f"message_history_{i}"} for i in range(count)]
+    run.processed_messages = [m["id"] for m in control["messages"]]
+    assert count < 512 and len(_json_bytes(control)) < limit
+    store._write_json(f"runs/{run.id}/control.json", control)
+    store.save_run(run)
+    original = store.path(f"runs/{run.id}/control.json").read_bytes()
+    with pytest.raises(BudgetExceeded, match="storage"):
+        store.enqueue_message(run.id, template["text"], update=template["update"])
+    assert store.path(f"runs/{run.id}/control.json").read_bytes() == original
+    assert len(store.read_control(run.id)["messages"]) == count
 
 
 def test_read_endpoints_leave_run_bytes_and_cost_unchanged(env, client, monkeypatch):

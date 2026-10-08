@@ -21,9 +21,9 @@
     <div class="task-header"><div><span class="eyebrow">当前任务</span><h2 id="task-title"></h2><code id="run-id"></code></div><span id="state" class="badge"></span></div>
     <div class="toolbar"><button id="resume" class="primary">继续处理</button><button id="pause">暂停</button><button id="cancel" class="danger">取消</button><span id="activity"></span></div>
     <div class="metrics"><div><small>用户目标</small><strong id="goal-state">—</strong></div><div><small>ORCA 实际启动</small><strong id="science-cost">—</strong></div><div><small>模型调用 / token</small><strong id="model-cost">—</strong></div><div><small>累计已知费用（USD）</small><strong id="money">—</strong></div></div>
-    <section class="panel"><h3>对话与澄清</h3><div id="conversation"></div><button id="more-messages" class="text-button" hidden>读取更早消息</button><div id="questions"></div></section>
+    <section class="panel"><h3>对话与澄清</h3><div id="conversation"></div><button id="more-messages" class="text-button" hidden>读取更早消息</button><div id="questions"></div><div id="diagnostics"></div></section>
     <section class="panel"><h3>计算结果 <span>来自程序检查与原始证据</span></h3><div id="results"></div><details><summary>步骤与尝试状态</summary><pre id="steps"></pre></details><details><summary>条件及默认来源</summary><pre id="conditions"></pre></details><details><summary>完整确定性报告</summary><pre id="report"></pre></details></section>
-    <section class="panel"><div class="row"><h3>原始证据</h3><button id="load-evidence">读取文件清单</button></div><div id="artifacts"></div><button id="more-artifacts" class="text-button" hidden>下一页文件</button><pre id="evidence" hidden></pre></section>
+    <section class="panel"><div class="row"><h3>原始证据</h3><button id="load-evidence">读取文件清单</button></div><div id="artifacts"></div><button id="more-artifacts" class="text-button" hidden>下一页文件</button><div id="evidence-navigation"></div><pre id="evidence" hidden></pre></section>
   </section>
   <form id="composer" class="composer"><label for="text" id="input-label">描述新的计算目标</label><textarea id="text" rows="3" maxlength="8192" placeholder="例如：优化水分子，给出优化后的电子能，并说明结果来自哪个结构。" required></textarea><div><small id="send-hint">提交将按本地配置中的许可与有限预算执行。上传、偶极矩与知识检索尚未开放。</small><button id="send" class="primary" type="submit">提交任务 ↑</button></div></form>
   <footer>证据读取、科学检查与用户目标完成分别记录。当前版本：本地网页局部交付。</footer>

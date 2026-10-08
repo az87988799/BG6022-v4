@@ -1183,6 +1183,8 @@ class Store:
                     raise StoreError("user update must be an object of at most 64 KiB")
                 control["messages"][-1]["update"] = update
             control["generation"] += 1
+            if len(_json_bytes(control)) > 8 * 1024 * 1024:
+                raise BudgetExceeded("retained user message storage limit exhausted")
             self._write_json(f"runs/{run_id}/control.json", control)
             return message_id
 
