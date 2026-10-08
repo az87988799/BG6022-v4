@@ -43,7 +43,7 @@ def revalidate(store, run, step, config):
         raise _PrelaunchControl("message") from exc
     if any(goal.minimum_check_version != CURRENT_CHECK_VERSION
            for goal in store.load_request(run).goals
-           if goal.port in ("energy", "optimized_geometry")):
+           if goal.port in ("energy", "optimized_geometry", "dipole_moment")):
         raise ValueError("check_rule_revalidation_required before scientific execution")
     if utc_now() >= run.deadline:
         raise ValueError("run deadline exhausted before execution")

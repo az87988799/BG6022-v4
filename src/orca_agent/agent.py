@@ -254,9 +254,16 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             if record.get("prompt_version") in DECISION_CONTRACT_PROMPT_VERSIONS:
                 from orca_agent.model_usage import _request_body
                 sent = json.loads(_request_body(store, run, record)["messages"][-1]["content"])
-                if sent["AUTHORITY"].get("response_contract") == "decision-intent-1":
+                if sent["AUTHORITY"].get("response_contract") in {"decision-intent-1", "decision-intent-2"}:
                     from orca_agent.proposals import DecisionIntent
                     intent = DecisionIntent.model_validate(proposal_values)
+                    if (sent["AUTHORITY"]["response_contract"] == "decision-intent-2"
+                            and intent.action in sent.get("ACTION_SCHEMAS", {})
+                            and intent.action in run.permission.allowed_tools
+                            and "call_tool" in sent["AUTHORITY"]["decision_purpose"]["allowed_actions"]
+                            and get_tool(intent.action).check_contract.get("immediate")):
+                        intent.parameters = {"tool": intent.action, "parameters": intent.parameters}
+                        intent.action = "call_tool"
                     proposal_values = {**intent.model_dump(), **sent["AUTHORITY"]["basis"],
                                        "related_results": sent["AUTHORITY"]["related_results"]}
             proposal = Proposal.model_validate(proposal_values)
@@ -324,7 +331,7 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                 if not valid_call_tool_parameters(values):
                     from orca_agent.proposals import ProposalError
                     readonly = [name for name in run.permission.allowed_tools
-                                if get_tool(name).effects == ["read_registered_artifact"]
+                                if (get_tool(name).effects == ["read_registered_artifact"] or get_tool(name).check_contract.get("immediate"))
                                 and run.usage.evidence_reads < run.budget.evidence_reads]
                     if not ready and not readonly:
                         plan_action = "revise_plan" if plan else "initial_plan"
@@ -344,7 +351,7 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                             path=["parameters", "step_id"], expected_ready_step_ids=[s.id for s in ready])
                     _mark_decision(store, run, ticket, proposal, basis)
                     return run, "step", (step, ticket)
-                if get_tool(values["tool"]).effects != ["read_registered_artifact"]:
+                if not (get_tool(values["tool"]).effects == ["read_registered_artifact"] or get_tool(values["tool"]).check_contract.get("immediate")):
                     raise StoreError("this Tool imports/writes/executes and requires a planned Step: "
                                      "use initial_plan or revise_plan; only read_registered_artifact is immediate")
                 store.reserve_call(run, values["tool"], values["parameters"], validate_only=True)
@@ -683,7 +690,7 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     run.state = "failed"
                     break
                 if (communication.get("delivery_scope") == "read_only"
-                        and get_tool(step.tool).effects != ["read_registered_artifact"]):
+                        and not (get_tool(step.tool).effects == ["read_registered_artifact"] or get_tool(step.tool).check_contract.get("immediate"))):
                     run.state = "paused"
                     run.diagnostics.append({"category": "current_scope_restriction",
                                             "message": "Current user scope permits only registered evidence reads."})

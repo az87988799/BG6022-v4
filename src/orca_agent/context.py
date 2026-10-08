@@ -35,7 +35,7 @@ from orca_agent.proposals import (
 from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v32"
+PROMPT_VERSION = "agent-json-v33"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -534,6 +534,14 @@ def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
         "artifact_ids": result.artifact_ids[:3], "artifact_count": len(result.artifact_ids),
         "source": _source_summary(result.source),
     }
+    # Retrieval already produced a bounded excerpt. Hash-only feedback cannot
+    # answer a document question and used to trigger identical network queries.
+    document = result.observations.get("document_excerpt")
+    if isinstance(document, dict) and len(_json(document).encode("utf-8")) <= 12000:
+        summary["unqualified_observations"] = {"document_excerpt": _safe(document)}
+        from orca_agent.tools.knowledge import DOCUMENTS
+        if document.get("url") in {entry[1] for entry in DOCUMENTS.values()}:
+            summary["unqualified_observations"]["document_excerpt"]["url"] = document["url"]
     return {key: value for key, value in summary.items() if value not in (None, {}, [], 0)}
 
 
@@ -1003,7 +1011,7 @@ def _action_examples(request, run, plan, catalog, final_only, control):
     if request.systems and science:
         step["system_id"] = "<system_id>"
     pending = control.get("pending_step_ids", [])
-    readonly = any(tool["effects"] == ["read_registered_artifact"] for tool in catalog)
+    readonly = any((tool["effects"] == ["read_registered_artifact"] or tool.get("check_contract", {}).get("immediate")) for tool in catalog)
     examples = {
         "initial_plan" if plan is None else "revise_plan": {
             "steps": [step], "goal_map": {"<Goal.id>": {"step_key": "s", "port": "<Goal.port>"}}},
@@ -1083,18 +1091,33 @@ def _relevant_schema_catalog(catalog, schemas, request, run, plan, frozen, pendi
         # call_tool can only reference the Step ID, not override those fields.
         needed_names = {step.tool for step in plan.steps if step.id not in frozen and step.id not in pending}
         needed_names.update(tool["name"] for tool in catalog
-                            if tool["effects"] == ["read_registered_artifact"]
+                            if (tool["effects"] == ["read_registered_artifact"] or tool.get("check_contract", {}).get("immediate"))
                             and needed_ports.intersection(tool.get("observation_outputs", [])))
     else:
         needed_names = {tool["name"] for tool in catalog if needed_ports.intersection(
             [*tool.get("output_ports", []), *tool.get("observation_outputs", [])])
-            or "write_input_artifact" in tool["effects"]}
+            or "write_input_artifact" in tool["effects"] and any(
+                needed_ports.intersection(other.get("output_ports", [])) for other in catalog
+                if "execute_orca" in other["effects"])}
+        for tool in catalog:
+            if tool["name"] in needed_names:
+                needed_names.update(tool.get("check_contract", {}).get("context_dependencies", []))
         energy_goals = [goal for goal in request.goals if goal.port == "energy"]
         if energy_goals and all(goal.conditions.get("geometry_relation") == "fixed_initial"
                                 for goal in energy_goals):
             needed_names -= {tool["name"] for tool in catalog
                              if "optimized_geometry" in tool.get("output_ports", [])
                              and "optimized_geometry" not in needed_ports}
+        if "optimized_geometry" in needed_ports and not run.result_ids and all(
+                goal.conditions.get("geometry_relation") == "optimized" for goal in request.goals
+                if goal.port in {"energy", "dipole_moment"}):
+            # The admitted optimization Tool already declares these final properties.
+            # Existing-result/revision contexts still expose property single points.
+            covered = set().union(*(set(tool.get("output_ports", [])) for tool in catalog
+                                   if "optimized_geometry" in tool.get("output_ports", [])))
+            if needed_ports <= covered:
+                needed_names -= {tool["name"] for tool in catalog if "execute_orca" in tool["effects"]
+                                 and "optimized_geometry" not in tool.get("output_ports", [])}
     if not needed_names and not plan:
         return catalog, schemas
     from orca_agent.tools.registry import validate_parameters
@@ -1212,7 +1235,7 @@ def _public_delivery(snapshot, *, resources_in_authority=False, reference_arrays
             "version", "model_execution", "max_cores", "max_memory_mb"}}}
     resources["permission"]["access_bindings_ref"] = "resources.permission"
     counters = ("orca_starts", "extra_orca_starts", "evidence_reads", "analysis_executions",
-                "identity_queries", "structure_preparations")
+                "identity_queries", "structure_preparations", "knowledge_queries")
     usage_names = {"orca_starts": "orca_starts_reserved", "extra_orca_starts": "extra_orca_starts_reserved"}
     resources["counters"] = {"columns": ["name", "limit", "used_or_reserved", "remaining"], "rows": [
         [name, resources["limits"][name], resources.get("usage", {}).get(usage_names.get(name, name), 0),
@@ -1529,13 +1552,13 @@ def _terminal_context(request, run, snapshot, purpose, feedback, user_messages, 
                 prompt_version=PROMPT_VERSION, max_output_tokens=run.budget.output_tokens,
                 timeout_seconds=min(60, seconds * 0.9), model_profile=profile)
         except ValueError as exc:
-            if str(exc) != "conservative input token bound exceeds 12000":
+            if str(exc) != "conservative input token bound exceeds 24000":
                 raise
             continue
-        if (prepared.input_token_bound <= min(10000, run.budget.input_tokens)
+        if (prepared.input_token_bound <= run.budget.input_tokens
                 and prepared.reserved_tokens <= budget["remaining_tokens_before_this_request"]):
             return prepared
-    raise ContextLimitError("required terminal context exceeds declared 10000 input envelope or remaining token reservation")
+    raise ContextLimitError("required terminal context exceeds frozen Run input envelope or remaining token reservation")
 
 
 def assess_terminal_capacity(request, run, delivery_snapshot, *, now=None, model_profile="disabled"):
@@ -1548,7 +1571,7 @@ def assess_terminal_capacity(request, run, delivery_snapshot, *, now=None, model
     prepared = _terminal_context(request, run, delivery_snapshot, purpose, {}, (),
         delivery_snapshot["basis"]["control_generation"], now or utc_now(), model_profile)
     return {"input_token_bound": prepared.input_token_bound, "output_token_bound": prepared.output_token_bound,
-            "reserved_tokens": prepared.reserved_tokens, "envelope": 10000}
+            "reserved_tokens": prepared.reserved_tokens, "envelope": run.budget.input_tokens}
 
 
 def build_context(
@@ -1831,7 +1854,7 @@ def build_context(
     examples, references = _action_examples(request, run, plan, catalog, final_only, control)
     examples = action_parameters if action_parameters is not None else examples
     readonly_feedback = bool(delivery_snapshot and plan and catalog and all(
-        tool["effects"] == ["read_registered_artifact"] for tool in catalog))
+        (tool["effects"] == ["read_registered_artifact"] or tool.get("check_contract", {}).get("immediate")) for tool in catalog))
     if readonly_feedback and "call_tool" in examples:
         # Copy an existing ready Step; the display order follows the Request,
         # never changes the Plan or expands the set of executable Steps.
@@ -1901,12 +1924,12 @@ def build_context(
     if "call_tool" in examples:
         proposal_schema["if"] = {"properties": {"action": {"const": "call_tool"}}}
         immediate = (run.usage.evidence_reads < run.budget.evidence_reads and
-                     any(tool["effects"] == ["read_registered_artifact"] for tool in catalog))
+                     any((tool["effects"] == ["read_registered_artifact"] or tool.get("check_contract", {}).get("immediate")) for tool in catalog))
         call_parameters = call_tool_parameters_schema(
             immediate=immediate,
             step_ids=control.get("pending_step_ids", []) if readonly_feedback else None,
             tool_names=[tool["name"] for tool in catalog
-                        if tool["effects"] == ["read_registered_artifact"]] if readonly_feedback else None)
+                        if (tool["effects"] == ["read_registered_artifact"] or tool.get("check_contract", {}).get("immediate"))] if readonly_feedback else None)
         proposal_schema["then"] = {"properties": {"parameters": call_parameters}}
         pending = control.get("pending_step_ids", [])
         copyable_pending = bool(readonly_feedback and pending
@@ -2049,9 +2072,13 @@ def build_context(
                 known = {key: value for key, value in effective_conditions(
                     request, system_id=request.systems[0].id)["conditions"].items() if value is not None}
                 known["system_id"] = request.systems[0].id
-            native_template = {**template, "AUTHORITY": deepcopy(authority), "TOOL_CATALOG": native_catalog}
+            native_template = {**template, "AUTHORITY": deepcopy(authority), "DATA": deepcopy(template["DATA"]),
+                               "TOOL_CATALOG": native_catalog}
             if purpose.kind == "planning" and not semantic_intake:
                 _planning_display_metadata(native_template["AUTHORITY"], run)
+                _reference_original_quotes(native_template["AUTHORITY"]["request"], request.original_text)
+                if "delivery" in native_template["DATA"]:
+                    _reference_current_conditions(native_template["DATA"]["delivery"], native_template["AUTHORITY"]["request"])
                 if native_template["AUTHORITY"].get("plan"):
                     native_template["AUTHORITY"]["plan"].pop("immutable_frozen_details_sha256", None)
             native, native_prompt = readable_context(native_template, envelope,
@@ -2069,7 +2096,7 @@ def build_context(
                         and prepared.reserved_tokens + margin <= remaining_tokens):
                     return prepared
             except ValueError as exc:
-                if str(exc) != "conservative input token bound exceeds 12000":
+                if str(exc) != "conservative input token bound exceeds 24000":
                     raise
         if compact:
             if frozen:
@@ -2189,7 +2216,7 @@ def build_context(
                 model_profile=model_profile,
             )
         except ValueError as exc:
-            if str(exc) != "conservative input token bound exceeds 12000":
+            if str(exc) != "conservative input token bound exceeds 24000":
                 raise
             continue
         if (prepared.input_token_bound > run.budget.input_tokens
@@ -2210,5 +2237,5 @@ def build_context(
         # can preserve the margin, the unchanged send guard rejects the best
         # fitting candidate before reserving or transmitting any HTTP.
         return budget_rejected_prepared
-    raise ContextLimitError("required model context exceeds the 12000 global bound, Run input limit, "
+    raise ContextLimitError("required model context exceeds the 24000 global bound, Run input limit, "
                             "or remaining token reservation")

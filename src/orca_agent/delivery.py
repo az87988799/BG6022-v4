@@ -125,7 +125,7 @@ def goal_fact_rows(request, run, selections):
         systems = goal.system_ids or ([request.systems[0].id] if len(request.systems) == 1 else [None])
         current = ({identifier or "request": effective_conditions(request, goal, identifier)
                     for identifier in systems}
-                   if goal.minimum_check_version != "evidence-read-1" else {})
+                   if goal.minimum_check_version not in {"evidence-read-1", "knowledge-answer-1"} else {})
         current_use = assessment.get("current_use") or {}
         source_conditions = current_use.get("source_conditions") or (result.source.get("conditions", {}) if result else {})
         source = ({"run_id": result.run_id, "result_id": result.id, "attempt_id": result.attempt_id,
@@ -137,7 +137,7 @@ def goal_fact_rows(request, run, selections):
             answer = {"kind": "qualified_scientific_output", "value": _value(output.value),
                       "unit": output.unit, "artifact_id": output.artifact_id,
                       "check_versions": sorted({check.rule_version for check in output.checks})}
-        elif applicable and goal.minimum_check_version == "evidence-read-1" and observation is not None:
+        elif applicable and goal.minimum_check_version in {"evidence-read-1", "knowledge-answer-1"} and observation is not None:
             # The read Tool already bounds returned lines/elements/bytes. The
             # requested answer cannot be replaced by a hash: actual matches,
             # values, units and partial-read facts are needed for delivery.
@@ -145,8 +145,14 @@ def goal_fact_rows(request, run, selections):
             observed_value = deepcopy(observation)
             answer = {"kind": "evidence_observation", "observation": observed_value,
                       "unit": observation.get("unit", observation.get("units")) if isinstance(observation, dict) else None,
-                      "scientific_qualification": False, "check_versions": ["evidence-read-1"]}
+                      "scientific_qualification": False, "check_versions": [goal.minimum_check_version]}
         recorded = run.goal_status.get(goal.id, "insufficient_evidence")
+        source_geometry = result.source.get("geometry_artifact_id") if result else None
+        if applicable and result and (goal.port == "optimized_geometry" or
+                goal.conditions.get("geometry_relation") == "optimized"):
+            optimized = result.qualified_outputs.get("optimized_geometry")
+            if optimized:
+                source_geometry = optimized.artifact_id
         row = {"goal_id": goal.id, "port": goal.port, "required": goal.required,
                      "system_ids": goal.system_ids, "requested_identity": goal.identity,
                      "current_conditions": {key: item["conditions"] for key, item in current.items()},
@@ -156,7 +162,7 @@ def goal_fact_rows(request, run, selections):
                      "geometry_relation": goal.conditions.get("geometry_relation"),
                      "requested_geometry_artifact_ids": [system.geometry_artifact_id for system in request.systems
                          if system.id in systems] or ([request.geometry_artifact_id] if request.geometry_artifact_id else []),
-                     "source_geometry_artifact_id": result.source.get("geometry_artifact_id") if result else None,
+                     "source_geometry_artifact_id": source_geometry,
                      "recorded_status": recorded, "current_evidence_status": "passed" if applicable else "unresolved",
                      "goal_complete": recorded == "satisfied" and applicable,
                      "answer": answer, "source": source,
@@ -168,7 +174,7 @@ def goal_fact_rows(request, run, selections):
                     "requested_geometry_artifact_ids", "condition_sources"):
             if row[key] in ({}, []):
                 row.pop(key)
-        if goal.minimum_check_version == "evidence-read-1":
+        if goal.minimum_check_version in {"evidence-read-1", "knowledge-answer-1"}:
             for key in ("geometry_relation", "source_geometry_artifact_id"):
                 if row[key] is None:
                     row.pop(key)
@@ -198,13 +204,13 @@ def _science_resources(run):
                 for name, counter in (("orca_starts", "orca_starts_reserved"),
                     ("extra_orca_starts", "extra_orca_starts_reserved"),
                     ("evidence_reads", "evidence_reads"), ("analysis_executions", "analysis_executions"),
-                    ("identity_queries", "identity_queries"), ("structure_preparations", "structure_preparations"))},
+                    ("identity_queries", "identity_queries"), ("structure_preparations", "structure_preparations"), ("knowledge_queries", "knowledge_queries"))},
             "limits": {name: getattr(run.budget, name) for name in (
                 "orca_starts", "extra_orca_starts", "evidence_reads", "analysis_executions",
-                "identity_queries", "structure_preparations")},
+                "identity_queries", "structure_preparations", "knowledge_queries")},
             "usage": {name: getattr(run.usage, name) for name in (
                 "orca_starts_reserved", "orca_starts_actual", "extra_orca_starts_reserved",
-                "evidence_reads", "analysis_executions", "identity_queries", "structure_preparations")},
+                "evidence_reads", "analysis_executions", "identity_queries", "structure_preparations", "knowledge_queries")},
             "unsettled_attempt_ids": [item.id for item in run.attempts
                 if item.state in {"intent", "running", "unknown"}],
             "unsettled_call_ids": [item.id for item in run.calls if item.state in {"reserved", "unknown"}]}
@@ -307,7 +313,7 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
                 block("current_goal_evidence_missing", row["gaps"], "Current goal evidence is incomplete or inapplicable.")
             if result and integrity["status"] != "verified":
                 block("source_unverified", integrity["gaps"], "Source integrity is not currently verified; values are withheld.")
-            if goal.minimum_check_version != "evidence-read-1":
+            if goal.minimum_check_version not in {"evidence-read-1", "knowledge-answer-1"}:
                 if not run.permission.scientific_execution:
                     block("scientific_execution_not_authorized", False, "New scientific execution is not authorized.")
                 if not run.permission.allow_additional_science:

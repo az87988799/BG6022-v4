@@ -47,10 +47,11 @@ LEXICAL_ALIASES = {
 SYSTEM_ALIASES = {"water": ("水", "h2o"), "methane": ("甲烷", "ch4"),
                   "h2o": ("水", "water"), "ch4": ("甲烷", "methane")}
 READ_TOOLS = {port: tool["name"] for tool in catalog()
-              if tool["effects"] == ["read_registered_artifact"] for port in tool["observation_outputs"]}
+              if tool["effects"] == ["read_registered_artifact"] or tool["check_version"] == "knowledge-answer-1"
+              for port in tool["observation_outputs"]}
 RULES = {port: tool["check_version"] for tool in catalog()
          for port in tool["output_ports"] + (tool["observation_outputs"]
-             if tool["effects"] == ["read_registered_artifact"] else [])}
+             if tool["effects"] == ["read_registered_artifact"] or tool["check_version"] == "knowledge-answer-1" else [])}
 RULES["unresolved"] = "unresolved-1"
 CONTINUE = {"继续", "继续，沿用之前条件", "继续，沿用之前的全部条件", "继续，沿用之前的全部条件。",
             "continue", "continue with the previous conditions"}
@@ -139,7 +140,7 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
         "Omit unused optional fields instead of filling placeholders. replaces is an array of old Goal IDs. "
         "Lexicon lists canonical values; quote original user wording. environment=gas/solvent; electronic_state=RHF/UHF. "
         "Keep unknown/unsupported and explain_results; unknown/inferred belong in conditions/system_conditions. "
-        "Energy needs energy Goal, not key/reason/geometry; fixed_initial=SP, optimized=after Opt. "
+        "Ordinary chemistry concepts/questions use knowledge_answer Goal (not scientific energy); no geometry or physical conditions needed. Version/manual/source questions require knowledge.search before knowledge.answer. Energy needs energy Goal, not key/reason/geometry; fixed_initial=SP, optimized=after Opt. "
         "temperature/standard_state only if requested; absent unit=unknown, no question. "
         "Copy pending IDs; unique verbatim text_basis must match field/target. "
         "normalize replaces raw_request/missing:goal_definition; amend keeps goals; replace_goals needs explicit replacement+all old IDs. "
@@ -787,8 +788,14 @@ def _goals(candidate, request, messages, *, text_input=False):
     systems = {s.id for s in request.systems}
     goals = []
     for goal_index, item in enumerate(candidate.goals or []):
-        identity, text_evidence = _goal_grounding(request, item.text_basis, item.system_refs,
-                                                 messages, message_id=item.message_id, text_input=text_input)
+        if item.port == "knowledge_answer":
+            message, start, end = _locate(item.text_basis, messages, item.message_id)
+            identity = {}
+            text_evidence = {"message_id": message["id"], "start": start, "end": end,
+                             "text_basis": item.text_basis, "schema": VERSION}
+        else:
+            identity, text_evidence = _goal_grounding(request, item.text_basis, item.system_refs,
+                                                     messages, message_id=item.message_id, text_input=text_input)
         if len(item.system_refs) != len(set(item.system_refs)) or set(item.system_refs) - systems:
             raise StoreError("semantic goal references unknown/duplicate registered systems")
         conditions = {}
@@ -805,7 +812,7 @@ def _goals(candidate, request, messages, *, text_input=False):
                               if name != "water")
         elif item.analysis_goal_ref is not None:
             raise StoreError("analysis_goal_ref is only valid for a sampling task")
-        if item.port in {"energy", "optimized_geometry"}:
+        if item.port in {"energy", "optimized_geometry", "dipole_moment"}:
             unresolved.extend("unsupported_system:" + name for name in identity["canonical_names"]
                               if name not in SCIENCE_IDENTITIES)
             if not item.system_refs and request.systems and identity["canonical_names"]:
@@ -813,6 +820,10 @@ def _goals(candidate, request, messages, *, text_input=False):
                 if registered_names != set(identity["canonical_names"]):
                     unresolved.extend("unbound_system:" + name for name in identity["canonical_names"])
             unresolved = list(dict.fromkeys(unresolved))
+        if item.port == "knowledge_answer":
+            conditions["requires_sources"] = bool(re.search(
+                r"来源|引用|参考|文献|手册|版本|最新|\b(?:sources?|references?|citations?|manual|version|latest)\b",
+                item.text_basis, re.I))
         for name, field in item.conditions.items():
             if field.source in {"unknown", "inferred"}:
                 raise StoreError("unknown/inferred Goal conditions must be placed in "
@@ -825,12 +836,12 @@ def _goals(candidate, request, messages, *, text_input=False):
             text_evidence.setdefault("conditions", {})[name] = field_evidence
         acquisition = text_input or any(system.geometry_source == "prepare" for system in request.systems)
         grounded_relation = _text_geometry_relation(request, messages, item.system_refs) if acquisition else None
-        if acquisition and item.port == "energy" and item.geometry_relation != grounded_relation:
+        if acquisition and item.port in {"energy", "dipole_moment"} and item.geometry_relation != grounded_relation:
             raise StoreError("text energy geometry relation needs explicit SP/optimization grounding; "
                              "otherwise preserve ambiguous_geometry_relation and ask")
         if item.geometry_relation:
             conditions["geometry_relation"] = item.geometry_relation
-        elif item.port == "energy":
+        elif item.port in {"energy", "dipole_moment"}:
             if acquisition:
                 unresolved.append("ambiguous_geometry_relation")
             else:
@@ -854,7 +865,7 @@ def _goals(candidate, request, messages, *, text_input=False):
                 unresolved.append("unsupported_minimum_evidence:" + requirement)
         # A scalar goal is per system; splitting is explicit and retains text.
         members = item.system_refs if len(item.system_refs) > 1 and port in {
-            "energy", "optimized_geometry"} else [None]
+            "energy", "optimized_geometry", "dipole_moment"} else [None]
         for member in members:
             key = f"goal_{item.key}" + (f"_{member}" if member else "")
             goals.append(Goal(id=key, port=port, required=item.required,
@@ -1145,7 +1156,7 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
                             path=["parameters", "questions"], new_unresolved=sorted(new_gaps))
     _authorized_geometry(store, updated, run.permission)
     for goal in updated.goals:
-        if goal.port in {"energy", "optimized_geometry"} and len(goal.system_ids) == 1:
+        if goal.port in {"energy", "optimized_geometry", "dipole_moment"} and len(goal.system_ids) == 1:
             system = next(system for system in updated.systems if system.id == goal.system_ids[0])
             if goal.identity.get("canonical_names") and system.geometry_artifact_id:
                 from orca_agent.applicability import validate_goal_identity

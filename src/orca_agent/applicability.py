@@ -153,7 +153,7 @@ def validate_goal_identity(store, request, goal, artifact_id=None):
 def _validate_step_identities(store, request, step, artifact_id):
     system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
     for goal in request.goals:
-        if (goal.port not in {"energy", "optimized_geometry"}
+        if (goal.port not in {"energy", "optimized_geometry", "dipole_moment"}
                 or (goal.system_ids and system_id not in goal.system_ids)):
             continue
         validate_goal_identity(store, request, goal)
@@ -166,7 +166,7 @@ def validate_scientific_plan(request, plan):
     steps = {s.id: s for s in plan.steps}
     for goal in request.goals:
         binding = plan.goal_map.get(goal.id)
-        if goal.port in {"energy", "optimized_geometry"} and binding and binding.step_id:
+        if goal.port in {"energy", "optimized_geometry", "dipole_moment"} and binding and binding.step_id:
             system = scientific_goal_system(request, goal)
             producer = steps[binding.step_id]
             if system and producer.system_id not in {None, system.id}:
@@ -195,11 +195,15 @@ def _qualified(result, port):
     from orca_agent.orca.checks import OPTIMIZATION_STAGE_RULE, check_outputs
 
     output = result.qualified_outputs.get(port)
-    required = {c.name for c in check_outputs({}, "orca.opt")[port]}
+    tool = "orca.opt" if port == "optimized_geometry" or (
+        port == "dipole_moment" and output and output.source.get("stage") == "optimized") else "orca.sp"
+    required = {c.name for c in check_outputs({}, tool)[port]}
     if (output is None or output.checks != result.checks.get(port)
             or not required.issubset({c.name for c in output.checks})
             or any(c.status != "passed" or c.rule_version != CURRENT_CHECK_VERSION for c in output.checks)):
         raise ValueError("qualified_" + port + "_checks_missing_or_failed")
+    if port == "dipole_moment" and output.source.get("rule_version") != "dipole-binding-1":
+        raise ValueError("qualified_dipole_rule_missing")
     if port == "optimized_geometry" and not any(
             c.name == "optimization_stage_binding" and c.source.get("rule_version") == OPTIMIZATION_STAGE_RULE
             for c in output.checks):

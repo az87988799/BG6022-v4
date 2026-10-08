@@ -281,7 +281,8 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
             # honest successful operation but lacks the requested extracted value.
             found = data.get("status") not in {"missing", "missing_json"}
             checks.update({port: [Check(
-                name="bounded_evidence_read", status="passed" if found else "unverified",
+                name=("non_scientific_delivery" if definition.check_version == "knowledge-answer-1"
+                      else "bounded_evidence_read"), status="passed" if found else "unverified",
                 rule_version=definition.check_version,
                 detail="read operation only; observed values remain scientifically unverified",
                 source={key: data[key] for key in ("artifact_id", "sha256", "view", "path", "coverage")

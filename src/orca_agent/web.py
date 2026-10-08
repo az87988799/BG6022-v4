@@ -204,9 +204,9 @@ def create_app(config, *, store=None, port=8765):
                 "defaults": config.text.defaults,
                 "permission": config.text.permission.model_dump(mode="json"),
                 "budget": config.text.budget.model_dump(mode="json"),
-                "scope": "H₂O / CH₄ · RHF/STO-3G · SP / 严格优化",
-                "limitations": ["偶极矩合格输出、普通知识问答与联网检索尚未开放。",
-                                "水分子自然语言单点计算已完成真实链路验证；其他任务覆盖范围仍有限。"]}
+                "scope": "H₂O / CH₄ · RHF/STO-3G · SP / 优化 / 偶极矩",
+                "limitations": ["支持水优化后偶极矩、化学概念解释和官方文档检索；上传暂未开放。",
+                                "知识解释与科学结果分别标记；更广分子和方法仍待扩展。"]}
 
     @app.get("/api/runs")
     def runs(offset: int = 0, limit: int = 40):
@@ -274,6 +274,20 @@ def create_app(config, *, store=None, port=8765):
     @app.post("/api/runs/{run_id}/messages", status_code=202)
     def message(run_id: str, body: Message):
         return entrypoints.message(store, run_id, body.text, message_id=body.message_id)
+
+    @app.post("/api/runs/{run_id}/questions", status_code=202)
+    def question(run_id: str, body: Submission):
+        with coordinator.lock:
+            if coordinator.closing:
+                raise StoreError("service is shutting down")
+            run, created = entrypoints.create_question(store, config, run_id, body.text,
+                                                        submission_id=body.submission_id)
+            try:
+                started = coordinator.start(run.id, resume=False) if created else False
+            except (StoreError, Timeout):
+                return {"run_id": run.id, "created": created, "started": False,
+                        "start_error": "追问已保存；当前协调者忙碌。请稍后显式继续。"}
+            return {"run_id": run.id, "created": created, "started": started}
 
     @app.post("/api/runs/{run_id}/control", status_code=202)
     def control(run_id: str, body: dict):

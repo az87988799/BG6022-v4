@@ -64,11 +64,12 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
         else:
             schema = action_parameter_schema(action, terminal_required=True)
         schemas[action] = native_schema(schema)
-    authority["response_contract"] = "decision-intent-1"
+    authority["response_contract"] = "decision-intent-2"
     wire = {"RESPONSE_ENVELOPE": {key: envelope[key] for key in ("action", "parameters", "reason")},
             "ACTION_SCHEMAS": schemas,
             "AUTHORITY": authority, "CONTROL": template["CONTROL"], "DATA": template["DATA"]}
     wire["RESPONSE_ENVELOPE"]["reason"] = "<explain chosen action and evidence>"
+    wire["RESPONSE_ENVELOPE"]["action"] = " | ".join(actions)
     if semantic_intake:
         contract = template["ACTION_PARAMETERS"]["normalize_request"]
         wire["INTENT_RULES"] = {key: value for key, value in contract.items() if key != "instruction"}
@@ -76,14 +77,19 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
         if request["normalization_status"] == "pending":
             wire["INTENT_RULES"]["instruction"] = (
                 "Interpret current user text: emit schema_version, message_ids, kind=normalize, text_basis, "
-                "goals and conditions. Quote verbatim unique user text. Shared physical conditions go once "
+                "goals and conditions. Quote verbatim contiguous user text. For coordinated goals reuse the whole "
+                "original sentence in each text_basis; never reconstruct a phrase by omitting intervening words. "
+                "Shared physical conditions go once "
                 "in top-level conditions; preserve differing/scoped values in system_conditions or Goal.conditions. "
                 "Each new Goal binds its system_refs directly; "
-                "omit goal_bindings/replaces/resolves. energy Goal geometry_relation=fixed_initial for SP, "
-                "optimized for optimized energy; ambiguous relation needs clarification. Conditions need "
+                "omit goal_bindings/replaces/resolves. energy/dipole_moment Goal geometry_relation=fixed_initial for SP, "
+                "optimized for optimized properties; ambiguous relation needs clarification. Conditions need "
                 "source and text_basis for explicit values; allowed defaults use default_rule=local-hf-1. "
                 "Omit unused optional fields. Preserve unsupported/unknown requirements. "
                 "geometry_source=prepare means OPI will generate XYZ later, not a missing user input. "
+                "Ordinary chemistry questions use knowledge_answer Goal; omit query, minimum_evidence, system_refs, "
+                "physical conditions and geometry_relation. The question is its original text_basis. "
+                "A knowledge explanation never needs geometry acquisition or ORCA. "
                 "When all requested conditions are clear, omit questions/notices/unresolved.")
     else:
         wire["TOOLS"] = [{key: value for key, value in tool.items() if key in {
@@ -95,6 +101,8 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
                 "input_ports": tool.get("check_contract", {}).get("input_ports", {})}
             for tool in template["TOOL_CATALOG"]]
         for tool in wire["TOOLS"]:
+            if tools[tool["name"]].check_contract.get("immediate"):
+                tool["immediate"] = True
             if isinstance(tool["parameters"], str):
                 for key in list(tool):
                     if key not in {"name", "effects", "output_ports", "observation_outputs", "parameters"}:
@@ -113,6 +121,11 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
         # Irrelevant capabilities remain authorized in AUTHORITY.permission,
         # but do not compete with the current goal/dependency tools in this view.
         wire["TOOLS"] = [tool for tool in wire["TOOLS"] if isinstance(tool["parameters"], dict)]
+        if "call_tool" in actions:
+            for tool in wire["TOOLS"]:
+                if tool.get("immediate"):
+                    schemas[tool["name"]] = tool["parameters"]
+            wire["RESPONSE_ENVELOPE"]["action"] = " | ".join(schemas)
         if "PLAN_REFERENCES" in template and not authority.get("plan"):
             wire["PLAN_REFERENCES"] = template["PLAN_REFERENCES"]
     prompt = (
@@ -125,7 +138,11 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
         prompt += (
             "Use TOOLS.name. Parameters inherit confirmed Request fields/Step.system_id and Tool defaults. "
             "Omit known parameters; never infer unknowns. inputs.geometry={producer_key,port} binds geometry; "
-            "other inputs use the same producer reference. Create initial_plan before call_tool. "
+            "other inputs use the same producer reference. Create initial_plan for execution Steps. "
+            "An immediate Tool can be called without Plan using call_tool {tool,parameters}. "
+            "For an immediate Tool, action=its exact tool name and parameters=its parameter object per ACTION_SCHEMAS. "
+            "Program converts this declared intent to a checked call_tool. For basic knowledge select knowledge.answer; for sources/version details "
+            "first select knowledge.search, then cite its Result ID in knowledge.answer. No calculation for knowledge. "
             "Map every required Goal ID/port. Execute existing Step: call_tool {step_id} from pending_step_ids. "
             "Inspect results before next action; qualification!=applicability. Stop uses delivery refs."
         )

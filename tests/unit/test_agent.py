@@ -49,7 +49,7 @@ class ScriptedTransport:
             "action": "stop", "parameters": {"reason": "scripted stop"},
             **values,
         }
-        if data["AUTHORITY"].get("response_contract") == "decision-intent-1":
+        if data["AUTHORITY"].get("response_contract") in {"decision-intent-1", "decision-intent-2"}:
             proposal = {key: value for key, value in proposal.items()
                         if key in {"action", "parameters", "reason"} or key in values}
         if (self.terminal_contract and proposal["action"] == "stop"
@@ -329,7 +329,7 @@ def test_related_result_correction_returns_exact_expected_ids_without_granting_e
 
     def corrected(data):
         detail = data["CONTROL"]["validation_error"]["requirement"]
-        if data["AUTHORITY"].get("response_contract") == "decision-intent-1":
+        if data["AUTHORITY"].get("response_contract") in {"decision-intent-1", "decision-intent-2"}:
             assert any(item["type"] == "extra_forbidden" and item["loc"] == ["related_results"]
                        for item in detail)
         else:

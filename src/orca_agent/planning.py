@@ -306,7 +306,7 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     if (run.science_baseline_policy == "first_science_plan" and run.initial_science_steps is None
             and any(_science(step) for step in next_plan.steps)):
         for goal in next_request.goals:
-            if goal.required and goal.port in {"energy", "optimized_geometry"}:
+            if goal.required and goal.port in {"energy", "optimized_geometry", "dipole_moment"}:
                 binding = next_plan.goal_map.get(goal.id)
                 _require(binding is not None and binding.step_id is not None
                          and _science(next(s for s in next_plan.steps if s.id == binding.step_id)),

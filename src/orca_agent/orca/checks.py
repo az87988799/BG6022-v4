@@ -45,4 +45,8 @@ def check_outputs(observations: dict[str, Any], tool_name: str) -> dict[str, lis
                   "; ".join(facts.get("optimization_stage", {}).get("reasons", []))),
             check("final_geometry", facts.get("final_geometry_matches")),
         ]
+    result["dipole_moment"] = list(result.get("optimized_geometry", energy_checks)) + [
+        check("dipole_binding", facts.get("dipole_bound"),
+              facts.get("dipole_error", "Unique OPI/text property, units and geometry frame agree.")),
+    ]
     return result

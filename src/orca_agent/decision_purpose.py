@@ -13,7 +13,7 @@ from orca_agent.applicability import CONDITION_FIELDS, effective_conditions
 # Keep older recorded requests readable without silently upgrading their contract.
 DECISION_CONTRACT_PROMPT_VERSIONS = frozenset({
     "agent-json-v22", "agent-json-v23", "agent-json-v24", "agent-json-v25", "agent-json-v26", "agent-json-v27",
-    "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32"})
+    "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32", "agent-json-v33"})
 
 
 @dataclass(frozen=True)
@@ -58,7 +58,7 @@ def terminal_actions(request, run):
            and parts[1] in fields for gap in explicit_gaps):
         return ("clarify", "stop")
     for goal in request.goals:
-        if goal.minimum_check_version == "evidence-read-1":
+        if goal.minimum_check_version in {"evidence-read-1", "knowledge-answer-1"}:
             continue
         for system_id in goal.system_ids or [None]:
             values = effective_conditions(request, goal, system_id)["conditions"]

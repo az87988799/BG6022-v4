@@ -85,7 +85,7 @@ class Goal(Record):
     # Missing fields in historical files mean the old rule, never the current rule.
     minimum_check_version: Literal[
         "orca-hf-1", "orca-hf-2", "evidence-read-1", "energy-compare-1",
-        "finite-sampling-1", "finite-sampling-check-1", "unresolved-1",
+        "finite-sampling-1", "finite-sampling-check-1", "unresolved-1", "knowledge-answer-1",
     ] = LEGACY_CHECK_VERSION
     original_text: str = ""
     identity: dict[str, Any] = Field(default_factory=dict)
@@ -301,7 +301,7 @@ class Tool(Record):
     check_contract: dict[str, Any] = Field(default_factory=dict)
     preflight: str | None = None
     recovery: str | None = None
-    usage_counter: Literal["identity_queries", "structure_preparations"] | None = None
+    usage_counter: Literal["identity_queries", "structure_preparations", "knowledge_queries"] | None = None
 
 
 class PermissionSnapshot(Record):
@@ -339,7 +339,7 @@ class BudgetLimits(Record):
     model_calls: Annotated[int, Field(ge=0, le=8)] = 0
     plan_revisions: Annotated[int, Field(ge=0, le=2)] = 0
     model_tokens: Annotated[int, Field(ge=0, le=48000)] = 0
-    input_tokens: Annotated[int, Field(ge=0, le=12000)] = 0
+    input_tokens: Annotated[int, Field(ge=0, le=24000)] = 0
     output_tokens: Annotated[int, Field(ge=0, le=2000)] = 0
     decision_rounds: Annotated[int, Field(ge=0, le=12)] = 0
     evidence_reads: Annotated[int, Field(ge=0, le=24)] = 0
@@ -348,6 +348,7 @@ class BudgetLimits(Record):
     transport_retries: Annotated[int, Field(ge=0, le=1)] = 0
     identity_queries: Annotated[int, Field(strict=True, ge=0, le=4)] = 0
     structure_preparations: Annotated[int, Field(strict=True, ge=0, le=4)] = 0
+    knowledge_queries: Annotated[int, Field(strict=True, ge=0, le=8)] = 0
 
 
 class BudgetUsage(Record):
@@ -371,6 +372,7 @@ class BudgetUsage(Record):
     logical_steps: list[Identifier] = Field(default_factory=list)
     identity_queries: Annotated[int, Field(strict=True, ge=0)] = 0
     structure_preparations: Annotated[int, Field(strict=True, ge=0)] = 0
+    knowledge_queries: Annotated[int, Field(strict=True, ge=0)] = 0
 
 
 class Attempt(Record):

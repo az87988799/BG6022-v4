@@ -8,7 +8,7 @@ from orca_agent.proposals import ProposalError
 from orca_agent.tools.registry import SCIENCE_IDENTITIES
 
 NOTICE_CONTRACT_VERSION = "registration-notices-1"
-_PORTS = frozenset({"energy", "optimized_geometry"})
+_PORTS = frozenset({"energy", "optimized_geometry", "dipole_moment"})
 
 
 def notice_choices():

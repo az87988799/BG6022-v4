@@ -517,6 +517,15 @@ def read_outputs(
                 if not text_geometry or not _same_geometry(json_atoms, text_geometry["atoms"]):
                     raise ValueError("JSON final geometry and text energy geometry disagree")
             facts["property_json_status"] = "read_existing_without_conversion"
+            try:
+                from orca_agent.orca.dipole import read_dipole
+                facts["dipole"] = read_dipole(parsed, _read(directory / "stdout.out"), facts,
+                                               tool_name=tool_name)
+                facts["dipole_bound"] = True
+                facts["evidence"]["dipole_binding"] = facts["dipole"]["source"]
+            except (ValueError, TypeError, KeyError, AttributeError) as error:
+                facts["dipole_bound"] = False
+                facts["dipole_error"] = str(error)
         except (OSError, ValueError, TypeError, KeyError, AttributeError, RuntimeError) as error:
             facts["parser_consistent"] = False
             diagnostics.append(diagnostic("parse_conflict_or_invalid_json", str(error)))
@@ -536,6 +545,11 @@ def read_outputs(
     ):
         qualified["optimized_geometry"] = {"geometry_file": "job.xyz"}
     diagnostics.extend(scientific_diagnostics(facts, tool_name))
+    if all(check.status == "passed" for check in checks["dipole_moment"]):
+        dipole = facts["dipole"]
+        qualified["dipole_moment"] = {"value": dipole["magnitude_debye"], "unit": "Debye",
+            "source": {**dipole["source"], "vector_au": dipole["vector_au"],
+                       "magnitude_au": dipole["magnitude_au"]}}
     if tool_name == "orca.opt" and not facts.get("optimization_stage_bound"):
         diagnostics.append(diagnostic(
             "optimization_stage_unverified", "Final optimized structure lacks consistent stage evidence.",

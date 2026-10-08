@@ -29,7 +29,7 @@ def test_native_plan_fits_with_local_catalog_and_no_schema_decoder(tmp_path):
     prepared = build_context(request, run, relevant_tools=run.permission.allowed_tools,
                              delivery_snapshot=snapshot)
     wire = json.loads(prepared.body()["messages"][1]["content"])
-    assert wire["AUTHORITY"]["response_contract"] == "decision-intent-1"
+    assert wire["AUTHORITY"]["response_contract"] == "decision-intent-2"
     assert set(wire["RESPONSE_ENVELOPE"]) == {"action", "parameters", "reason"}
     assert "SCHEMA_COLUMNS" not in wire and "SHARED_STRINGS" not in wire
     assert {t["name"] for t in wire["TOOLS"]} == {"structure.resolve", "structure.prepare", "orca.sp"}

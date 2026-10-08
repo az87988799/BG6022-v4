@@ -27,7 +27,7 @@ BASE_URL = "https://api.deepseek.com"
 MODEL = "deepseek-flash"
 SDK_VERSION = "2.28.0"
 HTTPX_VERSION = "0.28.1"
-MAX_INPUT_TOKENS = 12_000
+MAX_INPUT_TOKENS = 24_000
 MAX_OUTPUT_TOKENS = 2_000
 MAX_RESPONSE_BYTES = 128 * 1024
 MAX_PROPOSAL_BYTES = 32 * 1024
@@ -282,7 +282,7 @@ def prepare_request(
     }
     bound = input_token_upper_bound(body)
     if bound > MAX_INPUT_TOKENS:
-        raise ValueError("conservative input token bound exceeds 12000")
+        raise ValueError("conservative input token bound exceeds 24000")
     canonical = _canonical(body)
     return PreparedRequest(
         canonical_body=canonical,

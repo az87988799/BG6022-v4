@@ -221,7 +221,7 @@ def _recover(store, config, run, plan):
 def _validate_execution_rules(store, run):
     request = store.load_request(run)
     if any(goal.minimum_check_version != CURRENT_CHECK_VERSION for goal in request.goals
-           if goal.port in ("energy", "optimized_geometry")):
+           if goal.port in ("energy", "optimized_geometry", "dipole_moment")):
         raise ValueError("check_rule_revalidation_required: historical Run may be inspected and recovered; "
                          "scientific continuation requires explicit rule revalidation")
     environment = json.loads(store.path(f"runs/{run.id}/environment.json").read_text(encoding="utf-8"))

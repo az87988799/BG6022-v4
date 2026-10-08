@@ -17,6 +17,7 @@ from orca_agent.tools.evidence import (
     EvidenceSearchParameters,
     EvidenceValueParameters,
 )
+from orca_agent.tools.knowledge import AnswerParameters, SearchParameters
 from orca_agent.tools.structure import (
     IDENTITY_RULE,
     PREPARATION_RULE,
@@ -86,8 +87,8 @@ TOOLS: dict[str, _Registration] = {
         SinglePointParameters,
         name="orca.sp",
         check_version=CURRENT_CHECK_VERSION,
-        description="H2O/CH4 HF/STO-3G neutral singlet single-point electronic energy in Eh.",
-        output_ports=["energy"],
+        description="H2O/CH4 HF/STO-3G neutral singlet single-point electronic energy (Eh) and dipole_moment magnitude (Debye), Cartesian vector in source.",
+        output_ports=["energy", "dipole_moment"],
         required_input_checks={"optimized_geometry": CURRENT_CHECK_VERSION, "prepared_geometry": PREPARATION_RULE},
         implementation="orca_agent.tools.electronic.execute",
     ),
@@ -97,9 +98,9 @@ TOOLS: dict[str, _Registration] = {
         check_version=CURRENT_CHECK_VERSION,
         description=(
             "H2O/CH4 unconstrained HF/STO-3G geometry optimization in angstrom. Convergence does not "
-            "establish a minimum or its vibrational stability."
+            "establish a minimum or its vibrational stability. Also provides final energy and dipole_moment on the qualified optimized structure; no separate SP is needed."
         ),
-        output_ports=["energy", "optimized_geometry"],
+        output_ports=["energy", "optimized_geometry", "dipole_moment"],
         required_input_checks={"optimized_geometry": CURRENT_CHECK_VERSION, "prepared_geometry": PREPARATION_RULE},
         implementation="orca_agent.tools.geometry.execute",
     ),
@@ -125,6 +126,25 @@ TOOLS: dict[str, _Registration] = {
         check_version="evidence-read-1", implementation="orca_agent.tools.evidence.read_field",
     ),
 }
+
+
+TOOLS["knowledge.search"] = _register(
+    SearchParameters, name="knowledge.search", description="Search one versioned official ORCA/OPI document using English terms; retrieves bounded source excerpts. No science execution.",
+    input_roles=[], output_ports=[], observation_outputs=["document_excerpt"],
+    effects=["query_external_document"], max_cores=0, max_memory_mb=0,
+    check_version="knowledge-answer-1", check_contract={"immediate": True},
+    usage_counter="knowledge_queries", implementation="orca_agent.tools.knowledge.retrieve")
+TOOLS["knowledge.answer"] = _register(
+    AnswerParameters, name="knowledge.answer", description=("Deliver a non-scientific chemistry explanation for goal_id. "
+        "Use actual source_result_ids after search if references/version details are requested. "
+        "Electric dipole vector points from negative to positive charge; chemistry crossed bond-polarity arrows "
+        "use the reverse direction. Distinguish permanent dipole (vector) from polarizability (response tensor). "
+        "If retrieved excerpts do not answer the requested quantity, say what is missing. "
+        "Do not introduce unsourced experimental numbers. Answer is not a validated calculation."),
+    input_roles=[], output_ports=[], observation_outputs=["knowledge_answer"],
+    effects=["record_knowledge_answer"], max_cores=0, max_memory_mb=0,
+    check_version="knowledge-answer-1", check_contract={"immediate": True, "context_dependencies": ["knowledge.search"]},
+    implementation="orca_agent.tools.knowledge.answer")
 
 for _name, _parameters, _description, _function, _port in (
     ("evidence.discover", EvidenceDiscoverParameters, "Discover bounded existing JSON keys.",

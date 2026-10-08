@@ -100,6 +100,17 @@ def _validate_goal_evidence(store, run, request, goal, result):
     if goal.port != "artifact_metadata":
         for artifact_id in result.artifact_ids:
             store.artifact_path(artifact_id)
+    if goal.minimum_check_version == "knowledge-answer-1":
+        from orca_agent.tools.registry import get_tool
+        call = next((c for c in run.calls if c.id == result.call_id), None)
+        data = result.observations.get(goal.port, {})
+        checks = result.checks.get(goal.port, [])
+        return bool(call and call.request_version == request.version
+                    and goal.port in get_tool(call.tool).observation_outputs
+                    and data.get("scientific_qualification") is False
+                    and data.get("status") in {"answered", "found"}
+                    and (goal.port != "knowledge_answer" or data.get("goal_id") == goal.id)
+                    and checks and all(c.status == "passed" and c.rule_version == "knowledge-answer-1" for c in checks))
     if goal.minimum_check_version == "evidence-read-1":
         checks = result.checks.get(goal.port, [])
         observation = result.observations.get(goal.port)
@@ -130,7 +141,7 @@ def _validate_goal_evidence(store, run, request, goal, result):
     if not output or output.checks != result.checks.get(goal.port) or any(
             c.rule_version != goal.minimum_check_version or c.status != "passed" for c in output.checks):
         return False
-    if goal.port in ("energy", "optimized_geometry"):
+    if goal.port in ("energy", "optimized_geometry", "dipole_moment"):
         return direct_applicability(store, request, goal, result)["status"] == "passed"
     else:
         current_purpose = purpose_snapshot(request, goal, include_requirements=False)
@@ -178,7 +189,7 @@ def goal_evidence_assessment(store, run, request, goal, result):
     try:
         from orca_agent.input_bindings import resolved_request
         request = resolved_request(store, run, request)
-        if goal.port in {"energy", "optimized_geometry"}:
+        if goal.port in {"energy", "optimized_geometry", "dipole_moment"}:
             output = result.qualified_outputs.get(goal.port)
             if request.unresolved or goal.unresolved or result.operation_status != "completed":
                 passed = False
