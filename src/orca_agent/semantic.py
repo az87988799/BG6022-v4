@@ -135,6 +135,8 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
     port_rules = {port: rule for port, rule in RULES.items() if port != "unresolved"}
     contract = {"normalize_request": {
         "instruction": "Ports/rules:minimum_evidence_rules; queries:query_schemas[port]; [] keeps basic checks. "
+        "minimum_evidence is a list of rule ID strings (e.g. [\"converged_scf@1\"]), never the registry object. "
+        "resolves/unresolved/questions/notices are lists ([] when empty); goal_bindings/question_gaps are objects ({} when empty). "
         "Lexicon lists canonical values; quote original user wording. environment=gas/solvent; electronic_state=RHF/UHF. "
         "Keep unknown/unsupported and explain_results; unknown/inferred belong in conditions/system_conditions. "
         "Energy needs energy Goal, not key/reason/geometry; fixed_initial=SP, optimized=after Opt. "

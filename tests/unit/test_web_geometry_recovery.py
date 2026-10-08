@@ -64,3 +64,14 @@ def test_output_envelope_lists_native_fields_without_transport_wrapper():
     instruction = _output_instruction(intake=True)
     assert all(name in instruction for name in Proposal.model_fields)
     assert "never response fields" in instruction
+
+
+def test_container_errors_have_actionable_correction_without_copying_bad_values():
+    feedback = {"validation_error": {"requirement": {"errors": [
+        {"type": "list_type", "loc": ["parameters", "goals", 0, "minimum_evidence"]},
+        {"type": "dict_type", "loc": ["parameters", "question_gaps"]},
+    ]}}}
+    correction = _correction_instruction(feedback)
+    assert "list_type requires a JSON array []" in correction
+    assert "dict_type requires a JSON object {}" in correction
+    assert "rule IDs as strings" in correction

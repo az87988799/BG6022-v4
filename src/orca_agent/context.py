@@ -35,7 +35,7 @@ from orca_agent.proposals import (
 from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v26"
+PROMPT_VERSION = "agent-json-v27"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -1419,6 +1419,11 @@ def _correction_instruction(feedback):
     if isinstance(requirements, list) and any(isinstance(item, dict)
             and item.get("type") == "extra_forbidden" for item in requirements):
         return " extra_forbidden:remove field at loc."
+    if isinstance(requirements, list) and any(isinstance(item, dict)
+            and item.get("type") in {"list_type", "dict_type"} for item in requirements):
+        return (" Correction: at each validation_error loc, list_type requires a JSON array [], "
+                "dict_type requires a JSON object {}. Do not substitute null. "
+                "For minimum_evidence emit rule IDs as strings in an array, not the rule registry.")
     return ""
 
 
