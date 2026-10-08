@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "source_commit": "7cd1aafb827c65e7deff7ba29c481b662f3355b0",
+  "checkout": "C:\\Temp\\bg6022-repair-cycle-clean-d31dd4afcf15402b",
+  "source_repository": "E:\\BG6022-V4",
+  "started_at": "2026-10-08T12:30:00.944038+00:00",
+  "live_model": false,
+  "live_orca": false,
+  "ignored_data_copied": false,
+  "prior_venv_copied": false,
+  "removed_environment_variables": [
+    "DEEPSEEK_API_KEY"
+  ],
+  "steps": [
+    {
+      "name": "clone",
+      "command": [
+        "git",
+        "clone",
+        "--no-hardlinks",
+        "E:\\BG6022-V4",
+        "C:\\Temp\\bg6022-repair-cycle-clean-d31dd4afcf15402b"
+      ],
+      "cwd": "E:\\BG6022-V4",
+      "started_at": "2026-10-08T12:30:00.944038+00:00",
+      "finished_at": "2026-10-08T12:30:03.477398+00:00",
+      "seconds": 2.530999999959022,
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\clone.log",
+        "sha256": "58110f28a1be790b101654b5e027efad8d1a6a45b19b24ff6348791292b93eb6"
+      }
+    },
+    {
+      "name": "sync",
+      "command": [
+        "py",
+        "-3.11",
+        "-m",
+        "uv",
+        "sync",
+        "--offline",
+        "--locked",
+        "--group",
+        "dev"
+      ],
+      "cwd": "C:\\Temp\\bg6022-repair-cycle-clean-d31dd4afcf15402b",
+      "started_at": "2026-10-08T12:30:15.295823+00:00",
+      "finished_at": "2026-10-08T12:30:20.623919+00:00",
+      "seconds": 5.327999999979511,
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\sync.log",
+        "sha256": "44ae5334408ca84dc476953ce2452ac6f1028f1788334ea002dada981ccdeda8"
+      }
+    },
+    {
+      "name": "pytest",
+      "command": [
+        "C:\\Temp\\bg6022-repair-cycle-clean-d31dd4afcf15402b\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "--junitxml=E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\tests.xml"
+      ],
+      "cwd": "C:\\Temp\\bg6022-repair-cycle-clean-d31dd4afcf15402b",
+      "started_at": "2026-10-08T12:30:23.005818+00:00",
+      "finished_at": "2026-10-08T12:36:27.775856+00:00",
+      "seconds": 364.76500000001397,
+      "exit_code": 4294967295,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\pytest.log",
+        "sha256": "4d465afb04f73d0eccf75413e9b6e3258c5009056e861669170373610a4544ef"
+      }
+    },
+    {
+      "name": "ruff",
+      "command": [
+        "C:\\Temp\\bg6022-repair-cycle-clean-d31dd4afcf15402b\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "cwd": "C:\\Temp\\bg6022-repair-cycle-clean-d31dd4afcf15402b",
+      "started_at": "2026-10-08T12:36:27.782856+00:00",
+      "finished_at": "2026-10-08T12:36:28.965104+00:00",
+      "seconds": 1.1880000000237487,
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\ruff.log",
+        "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+      }
+    }
+  ],
+  "status": "failed",
+  "runtime": {
+    "python": "3.11.4",
+    "executable": "C:\\Temp\\bg6022-repair-cycle-clean-d31dd4afcf15402b\\.venv\\Scripts\\python.exe",
+    "prefix": "C:\\Temp\\bg6022-repair-cycle-clean-d31dd4afcf15402b\\.venv",
+    "product_import": "C:\\Temp\\bg6022-repair-cycle-clean-d31dd4afcf15402b\\src\\orca_agent\\__init__.py",
+    "prompt_version": "agent-json-v24",
+    "versions": {
+      "orca-pi": "2.0.0",
+      "openai": "2.28.0",
+      "httpx": "0.28.1",
+      "pydantic": "2.13.5",
+      "pytest": "9.1.1",
+      "ruff": "0.16.10"
+    }
+  },
+  "uv_version": "uv 0.12.23 (46b84fd0b 2026-10-03 x86_64-pc-windows-msvc)",
+  "setup_or_collection_error": {
+    "type": "FileNotFoundError",
+    "message": "[Errno 2] No such file or directory: 'E:\\\\BG6022-V4\\\\data\\\\phase-b-delivery\\\\repair-cycle-clean-d31dd4afcf15402b\\\\tests.xml'"
+  },
+  "finished_at": "2026-10-08T12:36:28.973113+00:00",
+  "limit": "Only this committed offline candidate; skipped live/archive cases remain unverified."
+}

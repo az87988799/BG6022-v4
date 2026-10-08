@@ -54,6 +54,58 @@
         "bytes": 101
       },
       "kind": "exact_original_bytes"
+    },
+    {
+      "archive": {
+        "path": "docs\\acceptance\\repair-cycle-v24-targeted\\first-clean-failed-receipt.json",
+        "sha256": "fc592642575604685f9f764fbe3e4140d75f378e37e40b99d7950f216901e9cc",
+        "bytes": 4213
+      },
+      "source": {
+        "path": "data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\receipt.json",
+        "sha256": "fc592642575604685f9f764fbe3e4140d75f378e37e40b99d7950f216901e9cc",
+        "bytes": 4213
+      },
+      "kind": "exact_original_bytes"
+    },
+    {
+      "archive": {
+        "path": "docs\\acceptance\\repair-cycle-v24-targeted\\first-clean-early-stop.json",
+        "sha256": "8527111c2492f63140a9208568f4cf77b08fdc8ee5bd32fc4cc1cec5f52b8b63",
+        "bytes": 364
+      },
+      "source": {
+        "path": "data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\operator-early-stop.json",
+        "sha256": "8527111c2492f63140a9208568f4cf77b08fdc8ee5bd32fc4cc1cec5f52b8b63",
+        "bytes": 364
+      },
+      "kind": "exact_original_bytes"
+    },
+    {
+      "archive": {
+        "path": "docs\\acceptance\\repair-cycle-v24-targeted\\stale-assertion-reproduction.log",
+        "sha256": "4e9c1aa9553210494ff484a8e964a0a20433203e7e593f904b86d246ba71ca92",
+        "bytes": 879
+      },
+      "source": {
+        "path": "data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\stale-assertion-reproduction.log",
+        "sha256": "4e9c1aa9553210494ff484a8e964a0a20433203e7e593f904b86d246ba71ca92",
+        "bytes": 879
+      },
+      "kind": "exact_original_bytes"
+    },
+    {
+      "archive": {
+        "path": "docs\\acceptance\\repair-cycle-v24-targeted\\call-tool-fix.log",
+        "sha256": "6fe02a8f14401a82ee8726db94f60bddfed09c49a51944333d3f498c50b7202a",
+        "bytes": 101
+      },
+      "source": {
+        "path": "data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\call-tool-fix.log",
+        "sha256": "6fe02a8f14401a82ee8726db94f60bddfed09c49a51944333d3f498c50b7202a",
+        "bytes": 101
+      },
+      "kind": "exact_original_bytes"
     }
   ],
   "retained_local_logs": [
@@ -81,6 +133,16 @@
       "path": "C:\\WINDOW~1\\orca-d3-notice-caller-0261c3f7df004de18050b6833ac532bc\\junit.xml",
       "sha256": "088defc7152592ef549f4e17b765151425a4457dffe2995b2a31358469bfc038",
       "bytes": 3973
+    },
+    {
+      "path": "data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\pytest.log",
+      "sha256": "4d465afb04f73d0eccf75413e9b6e3258c5009056e861669170373610a4544ef",
+      "bytes": 910
+    },
+    {
+      "path": "data\\phase-b-delivery\\repair-cycle-clean-d31dd4afcf15402b\\call-tool-fix.xml",
+      "sha256": "e6bac3366075cfa5f1de7363d2a4a2e19d545825878d7d90256c695d6115c2c0",
+      "bytes": 4013
     }
   ],
   "capacity": {
@@ -91,5 +153,12 @@
   "live_model": false,
   "live_orca": false,
   "full_clean_validation": "pending after source commit",
-  "boundary": "Earlier failing runs retained; overlapping targeted counts are not added or called a current full-suite pass."
+  "boundary": "Earlier failing runs retained; overlapping targeted counts are not added or called a current full-suite pass.",
+  "first_clean_attempt": {
+    "source_commit": "7cd1aafb827c65e7deff7ba29c481b662f3355b0",
+    "status": "failed_stopped_early",
+    "observed_failure": "tests/unit/test_call_tool_contract.py::test_two_row_compaction_preserves_literal_null_missing_and_trust_paths",
+    "full_counts": null,
+    "note": "Verified pytest had no child processes before operator stop. No full JUnit exists; runner receipt reports that FileNotFoundError. The assertion fix changes no production source."
+  }
 }

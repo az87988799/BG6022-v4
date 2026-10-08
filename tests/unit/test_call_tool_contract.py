@@ -151,9 +151,11 @@ def test_two_row_compaction_preserves_literal_null_missing_and_trust_paths():
     ]}}
     wire = _share_strings(value)
     assert "@columns" in str(wire)
-    assert "literal SHARED_STRINGS[i]; no recursion" in wire["STRING_ENCODING"]
+    assert "@=literal SHARED_STRINGS[i];" in wire["STRING_ENCODING"]
     decoded = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
     assert decoded["DATA"] == value["DATA"]
+    assert decoded["DATA"]["rows"][0]["repeated_long_column_name_two"] == {"@": 0}
+    assert decoded["DATA"]["rows"][1]["repeated_long_column_name_two"] == {"@": 1}
 
 
 def test_copyable_clarify_examples_remain_strings_even_when_data_shares_the_same_literal():
