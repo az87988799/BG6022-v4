@@ -91,7 +91,7 @@ def payload(prepared):
         elif isinstance(item, list):
             for child in item:
                 restore_quotes(child)
-    if "Request.text_basis_ref=text_basis at that path." in prepared.body()["messages"][0]["content"]:
+    if "Request.text_basis_ref=text_basis at that path." in prepared.body()["messages"][0].get("content", ""):
         restore_quotes(request)
     evidence = request.get("condition_evidence")
     if isinstance(evidence, list):
