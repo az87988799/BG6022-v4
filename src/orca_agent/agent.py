@@ -250,7 +250,16 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
         try:
             if reply.get("error_category") or not reply.get("proposal"):
                 raise ValueError(reply.get("error_category") or "missing_proposal")
-            proposal = Proposal.model_validate(reply["proposal"])
+            proposal_values = reply["proposal"]
+            if record.get("prompt_version") in DECISION_CONTRACT_PROMPT_VERSIONS:
+                from orca_agent.model_usage import _request_body
+                sent = json.loads(_request_body(store, run, record)["messages"][-1]["content"])
+                if sent["AUTHORITY"].get("response_contract") == "decision-intent-1":
+                    from orca_agent.proposals import DecisionIntent
+                    intent = DecisionIntent.model_validate(proposal_values)
+                    proposal_values = {**intent.model_dump(), **sent["AUTHORITY"]["basis"],
+                                       "related_results": sent["AUTHORITY"]["related_results"]}
+            proposal = Proposal.model_validate(proposal_values)
             if record.get("prompt_version") in DECISION_CONTRACT_PROMPT_VERSIONS:
                 from orca_agent.model_usage import _request_body
                 from orca_agent.proposals import ProposalError

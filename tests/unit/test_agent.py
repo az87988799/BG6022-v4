@@ -49,6 +49,9 @@ class ScriptedTransport:
             "action": "stop", "parameters": {"reason": "scripted stop"},
             **values,
         }
+        if data["AUTHORITY"].get("response_contract") == "decision-intent-1":
+            proposal = {key: value for key, value in proposal.items()
+                        if key in {"action", "parameters", "reason"} or key in values}
         if (self.terminal_contract and proposal["action"] == "stop"
                 and data["AUTHORITY"].get("contract_required")
                 and set(proposal["parameters"]) <= {"reason"}):
@@ -326,8 +329,12 @@ def test_related_result_correction_returns_exact_expected_ids_without_granting_e
 
     def corrected(data):
         detail = data["CONTROL"]["validation_error"]["requirement"]
-        assert detail["path"] == ["related_results"] and detail["expected"] == []
-        assert "Step.inputs" in detail["requirement"]
+        if data["AUTHORITY"].get("response_contract") == "decision-intent-1":
+            assert any(item["type"] == "extra_forbidden" and item["loc"] == ["related_results"]
+                       for item in detail)
+        else:
+            assert detail["path"] == ["related_results"] and detail["expected"] == []
+            assert "Step.inputs" in detail["requirement"]
         assert data["AUTHORITY"]["related_results"] == []
         assert not store.load_run(run.id).calls
         return initial_proposal(data)

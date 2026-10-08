@@ -37,7 +37,7 @@ def test_saved_web_failure_corrects_without_user_xyz_or_execution(tmp_path):
     updated, _, _ = agent._decision(store, run, None, {}, transport, None, None)
     request = store.load_request(updated)
     rejection = transport.sent[1]["CONTROL"]["validation_error"]
-    assert all(isinstance(sent["PROPOSAL_SCHEMA"]["properties"]["parameters"], dict)
+    assert all(isinstance(sent["ACTION_SCHEMAS"]["normalize_request"], dict)
                for sent in transport.sent)
     assert rejection["requirement"]["inapplicable_notice_choices"] == ["missing_geometry"]
     assert "remove the missing_geometry sentence" in _correction_instruction({"validation_error": rejection})

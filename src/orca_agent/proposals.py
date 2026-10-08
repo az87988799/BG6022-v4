@@ -53,6 +53,14 @@ class ClarifyParameters(Record):
     unresolved: list[Annotated[str, Field(strict=True, min_length=1, max_length=1000)]] = Field(min_length=1, max_length=5)
 
 
+class DecisionIntent(Record):
+    """Transient model choice; all execution identity comes from its frozen send."""
+
+    action: str = Field(strict=True)
+    parameters: dict[str, Any]
+    reason: str = Field(strict=True, max_length=1000)
+
+
 def action_parameter_schema(action, *, immediate=True, terminal_required=False):
     if action == "stop":
         return (ContractStopParameters if terminal_required else StopParameters).model_json_schema()
@@ -301,6 +309,18 @@ def materialize_plan(store, run, parameters):
         except ValueError:
             raise ProposalError("Choose a Tool from the current permitted catalog.",
                                 path=["parameters", "steps", index, "tool"]) from None
+        # The model chooses the operation and references. Repeating already
+        # confirmed Request conditions is not a second scientific decision.
+        # Only declared fields are inherited; explicit proposal values remain
+        # visible to the existing conflict/applicability checks.
+        from orca_agent.applicability import effective_conditions
+        fields = definition.parameter_schema.get("properties", {})
+        values = effective_conditions(request, system_id=item.system_id)["conditions"]
+        inherited = {key: value for key, value in values.items()
+                     if key in fields and value is not None}
+        if "system_id" in fields and item.system_id is not None:
+            inherited["system_id"] = item.system_id
+        item.parameters = {**inherited, **item.parameters}
         artifact = item.parameters.get("artifact_id")
         future_artifact = (isinstance(artifact, str) and artifact not in run.permission.artifact_ids
                            and (artifact in ids or artifact in ids.values()))
@@ -321,6 +341,12 @@ def materialize_plan(store, run, parameters):
             raise ProposalError(str(exc), tool=definition.name,
                                 path=["parameters", "steps", index, "parameters"]) from None
         geometry = item.geometry
+        bindings = dict(item.inputs)
+        if "execute_orca" in definition.effects and "geometry" in bindings:
+            if geometry is not None:
+                raise ProposalError("Bind geometry once, either geometry or inputs.geometry.",
+                                    path=["parameters", "steps", index, "inputs", "geometry"])
+            geometry = bindings.pop("geometry")
         if geometry and "producer_key" in geometry:
             if set(geometry) != {"producer_key", "port"}:
                 raise ValueError("future geometry has ambiguous or undeclared fields")
@@ -333,7 +359,7 @@ def materialize_plan(store, run, parameters):
                 if artifact:
                     geometry = {"artifact_id": artifact}
         inputs = {}
-        for name, value in item.inputs.items():
+        for name, value in bindings.items():
             if "producer_key" in value:
                 value = {**value, "producer_step_id": ids[value["producer_key"]]}
                 value.pop("producer_key")

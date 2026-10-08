@@ -206,7 +206,7 @@ def create_app(config, *, store=None, port=8765):
                 "budget": config.text.budget.model_dump(mode="json"),
                 "scope": "H₂O / CH₄ · RHF/STO-3G · SP / 严格优化",
                 "limitations": ["偶极矩合格输出、普通知识问答与联网检索尚未开放。",
-                                "水分子直接计算使用明确预设；自然语言自由规划仍在修复中。"]}
+                                "水分子自然语言单点计算已完成真实链路验证；其他任务覆盖范围仍有限。"]}
 
     @app.get("/api/runs")
     def runs(offset: int = 0, limit: int = 40):

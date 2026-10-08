@@ -35,7 +35,7 @@ from orca_agent.proposals import (
 from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v31"
+PROMPT_VERSION = "agent-json-v32"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -2040,6 +2040,37 @@ def build_context(
             template["DATA"]["current_goal_use"] = goal_use
         if goal_facts:
             template["DATA"]["goal_facts"] = goal_facts
+        if not compact and delivery_snapshot:
+            from orca_agent.readable_context import readable_context
+            native_catalog, _ = _relevant_schema_catalog(catalog, schemas, request, run,
+                                                        plan, frozen, control.get("pending_step_ids", []))
+            known = None
+            if len(request.systems) == 1:
+                known = {key: value for key, value in effective_conditions(
+                    request, system_id=request.systems[0].id)["conditions"].items() if value is not None}
+                known["system_id"] = request.systems[0].id
+            native_template = {**template, "AUTHORITY": deepcopy(authority), "TOOL_CATALOG": native_catalog}
+            if purpose.kind == "planning" and not semantic_intake:
+                _planning_display_metadata(native_template["AUTHORITY"], run)
+                if native_template["AUTHORITY"].get("plan"):
+                    native_template["AUTHORITY"]["plan"].pop("immutable_frozen_details_sha256", None)
+            native, native_prompt = readable_context(native_template, envelope,
+                semantic_intake=semantic_intake,
+                confirmed_parameters=known,
+                tools={entry["name"]: get_tool(entry["name"]) for entry in catalog})
+            try:
+                prepared = prepare_request(
+                    [{"role": "system", "content": native_prompt},
+                     {"role": "user", "content": _json(native)}],
+                    prompt_version=PROMPT_VERSION, max_output_tokens=run.budget.output_tokens,
+                    timeout_seconds=min(60, remaining_seconds), model_profile=model_profile)
+                margin = delivery_budget["future_answer_tokens"] if delivery_budget["required"] else 0
+                if (prepared.input_token_bound <= run.budget.input_tokens
+                        and prepared.reserved_tokens + margin <= remaining_tokens):
+                    return prepared
+            except ValueError as exc:
+                if str(exc) != "conservative input token bound exceeds 12000":
+                    raise
         if compact:
             if frozen:
                 template["AUTHORITY"]["plan"]["steps"] = [

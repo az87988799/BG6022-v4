@@ -27,7 +27,9 @@ Copy-Item config.example.toml config.local.toml
 
 ## 本地网页
 
-快速计算：点击“新建计算”→“直接运行水分子单点”。该明确预设采用气相 RHF/STO-3G、中性单重态，由 OPI 准备初始结构，再运行真实 ORCA，结果和原始证据保存在任务中，不调用模型。该路径已[真实跑通](docs/acceptance/web-geometry-recovery/README.md)；自然语言自由规划仍不稳定，不能视为完整自主规划验收通过。
+自然语言计算已[真实跑通水分子单点链路](docs/acceptance/natural-planning-repair/README.md)：在普通文本框输入“计算水分子初始几何的单点电子能，采用气相 RHF/STO-3G，中性单重态。”，模型解析目标、选择工具与依赖，程序生成执行参数及编号，OPI 准备结构，ORCA 计算并由模型解释结果。当前证据为该用例，不代表任意任务覆盖。
+
+另有“新建计算”→“直接运行水分子单点”的固定预设入口，使用相同计算链且不调用模型；其[此前证据](docs/acceptance/web-geometry-recovery/README.md)与自然语言验证分别记录。
 
 现在可使用本地网页提交已支持范围内的自然语言任务、补充消息、查看条件来源、实际尝试、预算、确定性报告和原始文件，以及暂停、取消和显式继续。当前是[网页局部交付](docs/acceptance/local-web/report.md)，偶极矩合格输出、普通知识问答、联网检索、上传及完整真实网页计算验收尚未完成；阶段 B 原验收义务继续保留。
 
