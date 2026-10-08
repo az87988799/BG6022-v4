@@ -193,7 +193,7 @@ def goal_evidence_assessment(store, run, request, goal, result):
                 reasons.extend(current_use["reasons"])
         else:
             passed = _validate_goal_evidence(store, run, request, goal, result)
-            if not passed and goal.port in {"energy_difference", "sampling", "member_table"}:
+            if not passed and goal.port in {"energy_difference", "sampling", "sampling_check", "member_table"}:
                 for system in purpose_snapshot(request, goal)["systems"].values():
                     reasons.extend(system["effective"]["reasons"])
     except (ValueError, KeyError, OSError, RuntimeError, TypeError) as error:

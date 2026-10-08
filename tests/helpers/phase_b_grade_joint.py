@@ -245,6 +245,12 @@ def grade_joint(store, run_or_id, case, *, metadata=None):
         if metadata is not None:
             check("evaluation_identity", metadata.get("run_id") == run.id and metadata.get("case") == case
                   and metadata.get("category") == run.batch_category)
+        current_contract = bool(metadata and metadata.get("terminal_contract_version") == "terminal-delivery-1")
+        if metadata and str(metadata.get("candidate", "")).startswith("repair-cycle-") and not current_contract:
+            raise ValueError("new cycle cannot use the historical joint grading contract")
+        if current_contract:
+            from tests.helpers.phase_b_grading import terminal_delivery_evidence
+            check("accepted_final_explanation", terminal_delivery_evidence(store, run)["passed"])
         expected_count = 3 if case == "sampling_stop" else 4 if case.startswith("sampling_") else 2 if case.startswith("repair_") else 1
         check("exact_attempt_and_launch_count", len(run.attempts) == expected_count
               and sum(a.started for a in run.attempts) == expected_count
@@ -301,7 +307,7 @@ def grade_joint(store, run_or_id, case, *, metadata=None):
             _grade_sampling(store, run, case, evidence, review, manifest, check, result)
             _grade_sampling_decisions(store, run, evidence, accepted_plans, check)
         else:
-            _grade_single(case, evidence, review, cases, check)
+            _grade_single(case, evidence, review, cases, check, current_contract=current_contract)
         check("terminal_delivery", run.state in ({"failed", "budget_exhausted"} if case == "repair_exhaustion" else {"completed"}), run.state)
     except (ValueError, KeyError, TypeError, OSError, RuntimeError) as exc:
         check("evidence_available_and_unchanged", False, type(exc).__name__)
@@ -315,7 +321,7 @@ def grade_joint(store, run_or_id, case, *, metadata=None):
     return result
 
 
-def _grade_single(case, evidence, review, cases, check):
+def _grade_single(case, evidence, review, cases, check, *, current_contract=False):
     check("scientific_attempt_evidence_available", bool(evidence))
     methane = case == "methane_opt_control"
     name = "methane_opt" if methane else "water_sp"
@@ -362,9 +368,17 @@ def _grade_single(case, evidence, review, cases, check):
         final_distances = _distances(final["files"]["job.xyz"])
         output = final["result"].qualified_outputs.get("optimized_geometry")
         expected_id = final["result"].source["files"]["job.xyz"]["artifact_id"]
+        expected_checks = GEOMETRY_CHECKS | ({"optimization_stage_binding"} if current_contract else set())
         check("strict_optimization_and_bound_final_geometry", _strict_opt(final["files"]["stdout.out"])
-              and _qualified(final["result"], "optimized_geometry", GEOMETRY_CHECKS)
+              and _qualified(final["result"], "optimized_geometry", expected_checks)
               and output.artifact_id == expected_id)
+        if current_contract:
+            from tests.helpers.phase_b_reference import independent_optimization_output
+            independent = independent_optimization_output(final["files"]["stdout.out"], final["files"]["job.xyz"],
+                                                          ["C", "H", "H", "H", "H"])
+            check("current_final_optimization_stage", independent["status"] == "converged" and bool(output) and any(
+                c.name == "optimization_stage_binding" and c.status == "passed" and c.rule_version == "orca-hf-2"
+                and c.source.get("rule_version") == "optimization-final-stage-1" for c in output.checks))
         difference = max(abs(a - b) for a, b in zip(expected_distances, final_distances, strict=True))
         check("geometry_matches_independent_reference", difference <= reference["geometry"]["tolerance_angstrom"], difference)
 

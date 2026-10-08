@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "status": "specification_only_not_executed",
+  "decision": "docs/decisions/0020-finite-sampling-check-intent.md",
+  "scope": "Six new variants, three repetitions each; old V06 and its acceptance remain unchanged.",
+  "authority": "A specification never grants execution permission or an allocation.",
+  "budget_total_per_formal_round": {
+    "model_http_requests": 36,
+    "model_tokens_total": 432000,
+    "orca_starts": 0,
+    "real_model_slots": 9,
+    "offline_slots": 9
+  },
+  "cases": [
+    {
+      "id": "SC-01",
+      "title": "Check an existing finite sampling criterion versus obtain qualifying evidence",
+      "input": {
+        "candidate_manifest": "tests/fixtures/phase_b/sampling-candidates.json"
+      },
+      "budget": {
+        "model_http_requests": 4,
+        "model_tokens_total": 48000,
+        "orca_starts": 0,
+        "extra_orca_starts": 0,
+        "analysis_calls": 1,
+        "evidence_reads": 6,
+        "autonomous_plan_revisions": 0,
+        "decision_rounds": 12
+      },
+      "variants": [
+        {
+          "id": "check-positive",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "evaluation_repeats": 3,
+          "input": {
+            "window_id": "stop",
+            "intent": "check",
+            "text": "Replace the existing goal with this task: Check whether the registered finite water sampling evidence meets its frozen internal-minimum, numerical-distinction and neighbor-width criteria. A supported yes or no answer completes this checking task. Use the registered gas-phase HF/STO-3G, charge 0, multiplicity 1 conditions, frozen candidate coordinates and exact existing criterion thresholds. Do not perform new calculations. Explain the predicate, sources and limitations."
+          },
+          "expected": [
+            {
+              "metric": "semantic_update.consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.goal_ports",
+              "operator": "eq",
+              "value": [
+                "sampling_check"
+              ]
+            },
+            {
+              "metric": "sampling_check.published",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "sampling_check.predicate_satisfied",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "goal.satisfied",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "sampling.published",
+              "operator": "eq",
+              "value": false
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "id": "check-negative",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "evaluation_repeats": 3,
+          "input": {
+            "window_id": "left",
+            "intent": "check",
+            "text": "Replace the existing goal with this task: Check whether the registered finite water sampling evidence meets its frozen internal-minimum, numerical-distinction and neighbor-width criteria. A supported yes or no answer completes this checking task. Use the registered gas-phase HF/STO-3G, charge 0, multiplicity 1 conditions, frozen candidate coordinates and exact existing criterion thresholds. Do not perform new calculations. Explain the predicate, sources and limitations."
+          },
+          "expected": [
+            {
+              "metric": "semantic_update.consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.goal_ports",
+              "operator": "eq",
+              "value": [
+                "sampling_check"
+              ]
+            },
+            {
+              "metric": "sampling_check.published",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "sampling_check.predicate_satisfied",
+              "operator": "eq",
+              "value": false
+            },
+            {
+              "metric": "goal.satisfied",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "sampling.published",
+              "operator": "eq",
+              "value": false
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "id": "acquisition-negative",
+          "evidence_requirement": "real_model_with_frozen_evidence",
+          "evaluation_repeats": 3,
+          "input": {
+            "window_id": "left",
+            "intent": "acquire",
+            "text": "Replace the existing goal with this task: Obtain qualifying finite water sampling evidence meeting the registered internal-minimum, numerical-distinction and neighbor-width criteria. Use the registered gas-phase HF/STO-3G, charge 0, multiplicity 1 conditions, frozen candidate coordinates and exact existing criterion thresholds. New calculations are not authorized and both scientific calculation budgets are zero. If the available evidence is insufficient, retain the unfulfilled goal and explain the exact predicate, sources and blockers."
+          },
+          "expected": [
+            {
+              "metric": "semantic_update.consumed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.accepted_normalization",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "raw_request.goal_ports",
+              "operator": "eq",
+              "value": [
+                "sampling"
+              ]
+            },
+            {
+              "metric": "sampling_check.published",
+              "operator": "eq",
+              "value": false
+            },
+            {
+              "metric": "sampling.published",
+              "operator": "eq",
+              "value": false
+            },
+            {
+              "metric": "goal.satisfied",
+              "operator": "eq",
+              "value": false
+            },
+            {
+              "metric": "report.budget_limit_disclosed",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "orca_starts",
+              "operator": "eq",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "id": "missing-required",
+          "evidence_requirement": "offline_fault_injection",
+          "evaluation_repeats": 3,
+          "input": {
+            "construction": "Remove one required member binding from a temporary copy; checking stays incomplete."
+          },
+          "budget_override": {
+            "model_http_requests": 0,
+            "model_tokens_total": 0
+          },
+          "expected": [
+            {
+              "metric": "sampling_check.published",
+              "operator": "eq",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": "source-change",
+          "evidence_requirement": "offline_fault_injection",
+          "evaluation_repeats": 3,
+          "input": {
+            "construction": "Change a temporary registered source after a completed check; current evidence is rejected."
+          },
+          "budget_override": {
+            "model_http_requests": 0,
+            "model_tokens_total": 0
+          },
+          "expected": [
+            {
+              "metric": "current_goal_evidence.accepted",
+              "operator": "eq",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": "multi-goal-cross-binding",
+          "evidence_requirement": "offline_fault_injection",
+          "evaluation_repeats": 3,
+          "input": {
+            "construction": "Bind a negative check Result to distinct checking and acquisition Goals; only checking completes."
+          },
+          "budget_override": {
+            "model_http_requests": 0,
+            "model_tokens_total": 0
+          },
+          "expected": [
+            {
+              "metric": "checking_goal.satisfied",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "metric": "acquisition_goal.satisfied",
+              "operator": "eq",
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "budget_interpretation": {
+    "normal_sequence": "Three real decisions: normalize the authenticated user update, plan the selected analysis, then explain through the terminal contract.",
+    "corrections": "At most one correction per proposal, subject to the actual input and remaining reservation limits. Four HTTP and 48000 tokens do not promise that a rejected proposal can always be corrected and every later stage completed.",
+    "bounded_failure": "When correction or later reservations do not fit, retain rejected evidence and deterministic delivery; do not enlarge limits or start expensive Tools.",
+    "evidence_scope": "Capacity and synthetic protocol tests are offline; independent real-model interpretation remains required."
+  }
+}

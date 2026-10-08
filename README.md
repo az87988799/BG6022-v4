@@ -37,6 +37,13 @@ Copy-Item config.example.toml config.local.toml
 
 `message` 的更新文件只能包含用户明确修改的 Request 字段；不会扩大许可或重置预算。`report` 根据已有证据确定性生成报告，不调用模型。
 
+`ask`/`resume` 的 Run JSON 保持原有脚本接口，是包含模型原答的审计记录；CLI 会在 stderr 标明这一点。
+不能将 `decisions[-1].reason` 当作已验证科学结论。新的终止交付使用 `terminal-delivery-1`，
+程序核对逐目标事实、解释关系、阻断和后续动作，关键数值与状态由确定性报告渲染。
+合同通过、自由 reason 的独立评审、科学目标完成和报告生成分别记录；历史回答不会批量升级为合同通过。
+已接受终止在崩溃恢复时先幂等补交报告。失败交付后的显式 `resume` 若重开工作，会保留原收据，
+重新决策并复核当前条件、许可和余额，不直接执行旧 ready Step；任何预算均不重置。
+
 无手工 XYZ 的水/甲烷输入可使用 `ask --text` 或 `ask --stdin`；二者与 JSON bundle 互斥。按 `config.text.example.toml` 在本地配置中显式启用 text profile，并核对 ORCA/MPI 路径、工具许可与各项预算后使用：
 
 ```powershell

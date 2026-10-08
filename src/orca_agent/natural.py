@@ -50,6 +50,9 @@ def _missing_information(request):
         goal.unresolved = [item for item in goal.unresolved if not item.startswith(("missing:", "applicability:"))]
         if goal.minimum_check_version == "unresolved-1":
             goal.unresolved.append("missing:goal_definition")
+        if goal.port in {"sampling", "sampling_check"} and not (
+                goal.conditions.get("sampling") and goal.conditions.get("candidates")):
+            goal.unresolved.append("missing:sampling_specification")
         if goal.minimum_check_version not in _SCIENTIFIC_RULES:
             continue
         selected = goal.system_ids or list(systems) or [None]

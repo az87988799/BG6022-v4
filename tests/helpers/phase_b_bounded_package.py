@@ -44,6 +44,7 @@ R3_LABEL = "bounded-20261008-r3"
 R3_ROOT = reference.BATCH_ROOT / R3_LABEL
 R4_LABEL = "bounded-20261008-r4"
 R4_ROOT = reference.BATCH_ROOT / R4_LABEL
+CYCLE_LABEL = "repair-cycle-20261008"
 DIAGNOSTICS = (
     "N-06/raw-unsupported-system", "V-06/insufficient-additional-budget",
     "V-07/array-location", "V-09/different-method", "V-09/missing-electron-state",
@@ -61,6 +62,11 @@ REFERENCE_ID = "bounded-20261008-methane-prepared-sp"
 
 
 def _root(package):
+    if package.startswith(CYCLE_LABEL + "-"):
+        from tests.helpers.phase_b_repair_cycle_execution import _root as cycle_root
+        return cycle_root(package)
+    if package == CYCLE_LABEL:
+        return reference.BATCH_ROOT / CYCLE_LABEL
     if package == LABEL:
         return ROOT
     if package == RENEWAL_LABEL:
@@ -74,6 +80,8 @@ def _root(package):
 
 def _limits(package):
     _root(package)
+    if package == CYCLE_LABEL:
+        return reference.R3_LIMITS, reference.CYCLE_LIMITS
     if package == R4_LABEL:
         return reference.R3_LIMITS, reference.R4_LIMITS
     if package == R3_LABEL:
@@ -84,6 +92,8 @@ def _limits(package):
 
 def _approval_identity(package):
     _root(package)
+    if package == CYCLE_LABEL:
+        return reference.CYCLE_APPROVAL_ID, reference.CYCLE_APPROVAL_SHA256
     if package == R4_LABEL:
         return reference.R4_APPROVAL_ID, reference.R4_APPROVAL_SHA256
     if package == R3_LABEL:
@@ -99,11 +109,14 @@ def _reference_id(package):
 
 def _assert_open(package):
     _root(package)
-    if package in {LABEL, RENEWAL_LABEL, R3_LABEL}:
-        raise reference.ReferenceBlocked(f"{package} is closed after its recorded failure; audit/regrade only")
+    if package in {LABEL, RENEWAL_LABEL, R3_LABEL, R4_LABEL}:
+        raise reference.ReferenceBlocked(f"{package} is closed; audit/regrade only")
 
 
 def scope(*, package=LABEL):
+    if package == CYCLE_LABEL:
+        from tests.helpers.phase_b_repair_cycle import scope as cycle_scope
+        return cycle_scope()
     previous, proposed = _limits(package)
     value = {
         "schema_version": 1, "package_id": package, "model_profile": "disabled",
@@ -161,6 +174,8 @@ def scope(*, package=LABEL):
 
 def _approval(*, package=LABEL):
     _root(package)
+    if package == CYCLE_LABEL:
+        return reference.cycle_approval()
     if package == R4_LABEL:
         value = reference.r4_approval()
     elif package == R3_LABEL:
@@ -198,7 +213,7 @@ def apply_limits(*, execute=False, fault=None, package=LABEL):
                 or before.get("limit_authority", {}).get("origin") != "amendment"):
             raise reference.ReferenceBlocked("source is not the preceding approved batch")
         baseline = approval.get("approval_baseline", {}).get("ledger_sha256")
-        if package in {RENEWAL_LABEL, R3_LABEL, R4_LABEL} and not baseline:
+        if package in {RENEWAL_LABEL, R3_LABEL, R4_LABEL, CYCLE_LABEL} and not baseline:
             raise reference.ReferenceBlocked("renewal approval requires its exact existing ledger baseline")
         if baseline and sha256_file(ledger.path) != baseline:
             raise reference.ReferenceBlocked("approved spend baseline changed; recheck preserved scope before migration")
@@ -248,6 +263,8 @@ def _source_files():
 def freeze_candidate(*, package=LABEL):
     """Read executable/dependency identities only; never execute ORCA or OPI."""
     _assert_open(package)
+    if package == CYCLE_LABEL:
+        raise reference.ReferenceBlocked("repair cycle requires its numbered candidate operator")
     _approval(package=package)
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=PROJECT, text=True).strip():
         raise reference.ReferenceBlocked("candidate freeze requires a clean committed checkout")
@@ -275,6 +292,8 @@ def _execution_gate(*, execute, live, package=LABEL):
     if not execute or not live:
         raise reference.ReferenceBlocked("operation requires --execute and its explicit live switch")
     _assert_open(package)
+    if package == CYCLE_LABEL:
+        raise reference.ReferenceBlocked("repair cycle requires its bound candidate and allocation operator")
     _approval(package=package)
     record = reference._json(_root(package) / "candidate.json")
     runtime = freeze.runtime_environment()
@@ -660,7 +679,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.operation == "proposal":
         result = {"status": "proposal_only", "approval_pinned": bool(_approval_identity(args.package)[1]),
-                  "execution_closed": args.package in {LABEL, RENEWAL_LABEL, R3_LABEL}, "scope": scope(package=args.package)}
+                  "execution_closed": args.package in {LABEL, RENEWAL_LABEL, R3_LABEL, R4_LABEL}, "scope": scope(package=args.package)}
     elif args.operation == "apply":
         result = apply_limits(execute=args.execute, package=args.package)
     elif args.operation == "freeze":

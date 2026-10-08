@@ -34,7 +34,7 @@ def git(*args):
     return subprocess.run(["git", *args], cwd=PROJECT, capture_output=True, check=True).stdout
 
 
-def freeze(label, *, config_path=None, with_science=False, model_profile=None):
+def freeze(label, *, config_path=None, with_science=False, model_profile=None, cycle_repair_evidence=None):
     if not re.fullmatch(r"[a-z][a-z0-9_-]{0,37}", label):
         raise ValueError("freeze label must be a local identifier of at most 38 characters")
     if FREEZE.exists():
@@ -55,17 +55,27 @@ def freeze(label, *, config_path=None, with_science=False, model_profile=None):
     normalized = [name for name in names if name.endswith(".py")
                   or (name.endswith(".md") and not name.startswith("tests/fixtures/"))
                   or name in {"pyproject.toml", "uv.lock", "config.example.toml"}]
-    coverage = json.loads((PROJECT / "docs/acceptance/phase-b/coverage.json").read_text(encoding="utf-8"))
+    cycle_manifest = None
+    if label.startswith("repair-cycle-"):
+        from tests.helpers.phase_b_repair_cycle import formal_freeze_requirements
+        cycle_manifest = formal_freeze_requirements(label, repair_evidence=cycle_repair_evidence)
+        coverage_name = "docs/acceptance/phase-b/coverage-repair-cycle-20261008.json"
+        if not with_science or model_profile != "disabled":
+            raise ValueError("cycle formal freeze requires explicit science environment and disabled model profile")
+    else:
+        coverage_name = "docs/acceptance/phase-b/coverage.json"
+    coverage = json.loads((PROJECT / coverage_name).read_text(encoding="utf-8"))
     revision = json.loads((PROJECT / "docs/acceptance/phase-b/coverage-repair-v2.json").read_text(encoding="utf-8"))
-    if revision.get("final_matrix_complete") is not True:
+    if cycle_manifest is None and revision.get("final_matrix_complete") is not True:
         raise ValueError("repair coverage still has unmapped acceptance requirements; final freeze is premature")
-    if (revision.get("development_gates_verified") is not True
+    if cycle_manifest is None and (revision.get("development_gates_verified") is not True
             or revision.get("execution_budget_review_complete") is not True):
         raise ValueError("formal freeze requires verified development gates and cumulative execution budget review")
     allocation = {kind: [slot for item in coverage["entries"] if item["evidence_requirement"] == kind
                          for slot in item["formal_slots"]]
                   for kind in ("real_model_with_frozen_evidence", "joint_real_model_orca", "offline_fault_injection")}
-    if revision.get("final_slot_count") != sum(len(slots) for slots in allocation.values()):
+    expected_count = len(cycle_manifest["coverage_bindings"]) if cycle_manifest else revision.get("final_slot_count")
+    if expected_count != sum(len(slots) for slots in allocation.values()):
         raise ValueError("revised formal slot count differs from executable coverage")
     science_config = (evaluation_config(science=True, config_path=config_path, model_profile=model_profile)
                       if with_science else None)
@@ -86,6 +96,8 @@ def freeze(label, *, config_path=None, with_science=False, model_profile=None):
                   "joint_trajectories": len({(s["joint_case"], s["repetition"]) for s in allocation["joint_real_model_orca"]}),
                   "joint_variant_slots": len(allocation["joint_real_model_orca"]),
                   "offline_variant_slots": len(allocation["offline_fault_injection"])}}
+    if cycle_manifest is not None:
+        record["cycle_coverage"] = {"path": coverage_name, "sha256": sha256_file(PROJECT / coverage_name)}
     atomic_write(FREEZE, (json.dumps(record, ensure_ascii=False, indent=2)+"\n").encode(), immutable=True)
     print(json.dumps(validate_freeze(label, config=model_config), ensure_ascii=False))
 
@@ -94,7 +106,15 @@ def offline(label, repetition, *, model_profile=None):
     if not re.fullmatch(r"[a-z][a-z0-9_-]{0,37}", label):
         raise ValueError("freeze label must be a local identifier of at most 38 characters")
     binding = validate_freeze(label, config=evaluation_config(model_profile=model_profile))
-    coverage_path = PROJECT/"docs/acceptance/phase-b/coverage.json"
+    if label.startswith("repair-cycle-"):
+        from tests.helpers.phase_b_repair_cycle import guard_formal_offline
+        guard_formal_offline(label, repetition)
+        coverage_path = PROJECT / "docs/acceptance/phase-b/coverage-repair-cycle-20261008.json"
+        saved_freeze = json.loads(FREEZE.read_text(encoding="utf-8"))
+        if saved_freeze.get("cycle_coverage") != {"path": coverage_path.relative_to(PROJECT).as_posix(), "sha256": sha256_file(coverage_path)}:
+            raise ValueError("cycle offline matrix differs from formal source freeze")
+    else:
+        coverage_path = PROJECT/"docs/acceptance/phase-b/coverage.json"
     coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
     slots = [slot for entry in coverage["entries"] if entry["evidence_requirement"] == "offline_fault_injection"
              for slot in entry["formal_slots"] if slot["repetition"] == repetition]
@@ -119,6 +139,9 @@ def offline(label, repetition, *, model_profile=None):
                "coverage_sha256": sha256_file(coverage_path), "pytest_nodeids": nodes,
                "variant_ids": sorted(s["variant_id"] for s in slots), "live_model": False, "live_orca": False}
     atomic_write(directory/"receipt.json", (json.dumps(receipt, ensure_ascii=False, indent=2)+"\n").encode(), immutable=True)
+    if label.startswith("repair-cycle-"):
+        from tests.helpers.phase_b_repair_cycle import record_formal_offline_receipt
+        record_formal_offline_receipt(label, repetition, directory / "receipt.json")
     print(json.dumps({"receipt": str(directory/"receipt.json"), "returncode": completed.returncode, "nodes": len(nodes)}))
     return completed.returncode
 

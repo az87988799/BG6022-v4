@@ -223,7 +223,8 @@ def test_v07_all_requested_reads_precede_completion_within_frozen_model_budget(s
         return proposal
 
     def stop(data):
-        assert all(value == "satisfied" for value in data["AUTHORITY"]["goal_status"].values())
+        states = [row["value"] for row in data["DATA"]["delivery"]["facts"] if row["kind"] == "goal_status"]
+        assert len(states) == len(sequence) and all(row["complete"] for row in states)
         return {"action": "stop", "parameters": {},
                 "reason": "Raw fields and the requested JSON values were read; no scientific dipole is qualified."}
 
@@ -375,9 +376,14 @@ def test_import_then_actual_stdout_read_and_explanation_fit_three_offline_rounds
             "start_line": hint["start_line"], "max_lines": hint["max_lines"]}}}
 
     def stop(data):
-        assert all(value == "satisfied" for value in data["AUTHORITY"]["goal_status"].values())
-        observed = next(result["unqualified_observations"]["search_hits"] for result in data["DATA"]["results"]
-                        if "search_hits" in result["unqualified_observations"])
+        snapshot = data["DATA"]["delivery"]
+        states = [row["value"] for row in snapshot["facts"] if row["kind"] == "goal_status"]
+        assert len(states) == 2 and all(row["complete"] for row in states)
+        search_goal = next(goal for goal in snapshot["goals"] if goal["port"] == "search_hits")
+        answer = next(row["value"] for row in snapshot["facts"]
+                      if row["kind"] == "answer" and row["ref"] in search_goal["required_fact_refs"])
+        assert answer["scientific_qualification"] is False
+        observed = answer["observation"]
         assert observed["matches"] and observed["scientific_status"] == "unverified"
         return {"action": "stop", "parameters": {},
                 "reason": "The saved stdout energy line was read. Conditions and historical cost remain unknown."}
@@ -452,7 +458,7 @@ def test_six_axes_cannot_override_failed_or_missing_proposal_review(store, monke
     assert run.usage.model_calls == 0 and not run.attempts
 
 
-@pytest.mark.parametrize("final_action,expected", [(None, False), ("rejected", False), ("stop", True)])
+@pytest.mark.parametrize("final_action,expected", [(None, False), ("rejected", False), ("stop", False)])
 def test_result_explanation_gate_rejects_unaccepted_stop_despite_read_success(store, final_action, expected):
     run, metadata = CASES.create_request(store, "V-07/discover-and-read", 1)
     request = store.load_request(run)
@@ -534,8 +540,11 @@ def test_existing_real_references_fit_context_without_writing_historical_runs(st
 
 
 def test_grader_reads_actual_persisted_model_reply_tuple_without_resend(store):
+    from orca_agent.delivery import collect_delivery_snapshot
+
     run, metadata = CASES.create_request(store, "V-01/allowed-default-origin", 1)
-    prepared = build_context(store.load_request(run), run)
+    snapshot = collect_delivery_snapshot(store, run, store.load_request(run))
+    prepared = build_context(store.load_request(run), run, delivery_snapshot=snapshot)
     basis = current_basis(store, run)
     proposal = {**basis, "action": "stop", "parameters": {}, "related_results": [],
                 "reason": "Explicit defaults; electronic energy is unknown without a permitted calculation."}
@@ -559,7 +568,8 @@ def test_grader_reads_actual_persisted_model_reply_tuple_without_resend(store):
             pass
 
     transport = OfflineTransport()
-    send_model(store, run, prepared, transport, basis=basis, logical_id="offline_decision", batch=OfflineBatch())
+    send_model(store, run, prepared, transport, basis=basis, logical_id="offline_decision", batch=OfflineBatch(),
+               delivery_snapshot=snapshot)
     run.decisions.append({"id": run.model_records[0]["id"], "basis": basis, "action": "stop"})
     store.save_run(run)
     review = {"behavior": {"default_disclosed": {"passed": True, "quote": "Explicit defaults",

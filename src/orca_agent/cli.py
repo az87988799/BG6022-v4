@@ -179,6 +179,9 @@ def main(argv=None) -> int:
                        else store.load_run(args.run_id))
             emit({"run_id": run.id, "action": args.command})
             result = execute(store, config, run.id, resume=args.command == "resume")
+            if result.agent_enabled:
+                print("Run JSON is an audit record; model reasons are not verified scientific conclusions. "
+                      "The deterministic delivery report follows.", file=sys.stderr)
             emit(result)
             if result.agent_enabled:
                 from orca_agent.report import build_report, render_report

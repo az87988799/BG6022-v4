@@ -28,6 +28,7 @@ RAW_CASES_V1 = PROJECT / "tests/fixtures/phase_b/raw-text-cases-v1.json"
 RAW_CASES_V1_SHA256 = "5166cb94d11904d5f590f2393be52aa7fdfb498407dd5990f3ae0ef6492ca78d"
 INDEX = PROJECT / "docs/acceptance/phase-b/evidence-index.json"
 MANIFEST = PROJECT / "tests/fixtures/phase_b/sampling-candidates.json"
+SAMPLING_INTENT_CASES = PROJECT / "tests/fixtures/phase_b/sampling-intent-cases.json"
 RAW = PROJECT / "tests/fixtures/phase_a/real_water_sp"
 EXPLANATION_AXES = ("quantity", "unit", "conditions", "source", "limits", "next_action")
 BEHAVIOR_METRICS = {"normalized.quantity", "normalized.operation", "default_disclosed",
@@ -46,9 +47,16 @@ def fixed_variant_ids():
     return tuple(_read(CASES)["batch_budget"]["model_allocation"]["fixed_evidence"]["variant_ids"])
 
 
+def sampling_intent_variant_ids(*, real_model_only=False):
+    return tuple(f"{case['id']}/{variant['id']}" for case in _read(SAMPLING_INTENT_CASES)["cases"]
+                 for variant in case["variants"] if not real_model_only
+                 or variant["evidence_requirement"] == "real_model_with_frozen_evidence")
+
+
 def evaluation_variant_ids():
     return (*fixed_variant_ids(), *(f"{case['id']}/{variant['id']}" for case in _read(RAW_CASES)["cases"]
-                                   for variant in case["variants"]))
+                                   for variant in case["variants"]),
+            *sampling_intent_variant_ids(real_model_only=True))
 
 
 def variant_spec(variant_id, *, recorded_sha256=None):
@@ -56,7 +64,8 @@ def variant_spec(variant_id, *, recorded_sha256=None):
     if variant_id not in evaluation_variant_ids():
         raise ValueError("variant is outside the declared fixed-evidence allocation")
     case_id, local_id = variant_id.split("/")
-    source = CASES if variant_id in fixed_variant_ids() else RAW_CASES
+    source = (CASES if variant_id in fixed_variant_ids() else SAMPLING_INTENT_CASES
+              if variant_id in sampling_intent_variant_ids(real_model_only=True) else RAW_CASES)
     contents = source
     if recorded_sha256 is not None and recorded_sha256 != sha256_file(source):
         # Only already-recorded metadata can select this exact historical spec.
@@ -411,6 +420,15 @@ def _sampling(store, spec, metadata):
     return request, ["analysis.finite_sampling"], True, {}
 
 
+def _sampling_intent(store, spec, metadata):
+    # Keep the registered acquisition Goal and specification unchanged. The
+    # actual pending user update must be normalized by the runtime model before
+    # it can choose either analysis Tool; no goal/port is selected by the grader.
+    request, tools, writes, sources = _sampling(store, spec, metadata)
+    metadata["tested_scope"].append("Raw user semantic update must select checking/acquisition through production normalization, then planning/analysis/terminal delivery. Original frozen sampling specification and source evidence are unchanged; no new ORCA.")
+    return request, [*tools, "analysis.sampling_check"], writes, sources
+
+
 def _queries(store, spec, metadata):
     case, name, values = spec["case"]["id"], spec["variant"]["id"], spec["input"]
     conditions, sources = {}, {}
@@ -520,7 +538,8 @@ def create_request(store, variant_id, repetition, *, category="formal", freeze_l
     if not isinstance(freeze_label, str) or not freeze_label or len(freeze_label) > 80:
         raise ValueError("frozen evaluation label must be a bounded nonempty string")
     spec = variant_spec(variant_id)
-    metadata = {"schema_version": 1, "variant_id": variant_id, "repetition": repetition,
+    metadata = {"schema_version": 1, "terminal_contract_version": "terminal-delivery-1",
+        "variant_id": variant_id, "repetition": repetition,
         "input_id": new_id("input"), "category": category, "freeze_label": freeze_label,
         "spec_sha256": spec["spec_sha256"], "expected_ref": spec["expected_ref"],
         "expected": spec["variant"]["expected"], "artifact_ids": [], "source_files": [],
@@ -537,7 +556,7 @@ def create_request(store, variant_id, repetition, *, category="formal", freeze_l
                         permission_sha256=fingerprint(run.permission), budget_sha256=fingerprint(run.budget))
         return run, metadata
     builder = (_normalization if case == "V-01" else _comparison if case in {"V-02", "V-09"}
-               else _sampling if case == "V-06" else _queries)
+               else _sampling if case == "V-06" else _sampling_intent if case == "SC-01" else _queries)
     request, tools, writes, sources = builder(store, spec, metadata)
     request.conditions["explain_results"] = True
     permission = PermissionSnapshot(model_execution=True, scientific_execution=False,
@@ -551,6 +570,12 @@ def create_request(store, variant_id, repetition, *, category="formal", freeze_l
         plan_revisions=b["autonomous_plan_revisions"], decision_rounds=b["decision_rounds"])
     run = initialize_agent(store, Config(data_root=store.root), request, permission, budget,
                            sources=sources, batch_category=category)
+    if case == "SC-01":
+        text = spec["input"]["text"]
+        message_id = store.enqueue_message(run.id, text)
+        metadata["semantic_update"] = {"message_id": message_id, "text": text,
+            "source_goal_id": request.goals[0].id,
+            "source_conditions_sha256": fingerprint(request.goals[0].conditions)}
     if "prepare_read" in metadata:
         # Exercise the real Tool boundary. The attack enters model DATA as one
         # explicitly unverified Result and consumes one of the eight read calls.
@@ -683,6 +708,13 @@ def evaluate_response(store, run, metadata, *, review=None):
         intake = metadata["raw_intake"]
         goals_preserved = (request.original_text == metadata["initial_request"]["original_text"]
                            and sha256_file(Path(intake["bundle_path"])) == intake["bundle_sha256"])
+    if metadata.get("semantic_update"):
+        update = metadata["semantic_update"]
+        messages = [m for m in store.read_control(run.id)["messages"] if m["id"] == update["message_id"]]
+        goals_preserved = (request.original_text == metadata["initial_request"]["original_text"]
+            and len(messages) == 1 and messages[0]["text"] == update["text"]
+            and bool(request.goals) and all(fingerprint(g.conditions) == update["source_conditions_sha256"]
+                                          for g in request.goals))
     source_integrity = all(Path(f["path"]).is_file() and sha256_file(Path(f["path"])) == f["sha256"]
                            for f in metadata["source_files"])
     source_integrity = source_integrity and all(
@@ -693,6 +725,8 @@ def evaluate_response(store, run, metadata, *, review=None):
     complete = bool(request.goals) and all(run.goal_status.get(g.id) == "satisfied" for g in request.goals if g.required)
     facts = {
         "raw_request.accepted_normalization": any(a["action"] == "normalize_request" for a in actions),
+        "semantic_update.consumed": bool(metadata.get("semantic_update") and
+            metadata["semantic_update"]["message_id"] in run.processed_messages),
         "raw_request.normalization_status": request.normalization_status,
         "raw_request.goal_ports": sorted({g.port for g in request.goals}),
         "raw_request.geometry_relations": sorted({g.conditions["geometry_relation"] for g in request.goals
@@ -728,6 +762,10 @@ def evaluate_response(store, run, metadata, *, review=None):
         "complete_comparison.published": energy is not None,
         "required_AB_comparison.published": energy is not None,
         "energy_difference.unit": energy.unit if energy else None,
+        "sampling_check.published": any(port == "sampling_check" for port, _ in qualified),
+        "sampling_check.predicate_satisfied": next((output.source.get("predicate_satisfied")
+            for port, output in qualified if port == "sampling_check"), None),
+        "sampling.published": any(port == "sampling" for port, _ in qualified),
         "scientific_dipole_port.published": any(port in {"dipole", "dipole_moment", "dipole_magnitude"} for port, _ in qualified),
         "query_goal.satisfied": complete,
         "source_hashes.unchanged": source_integrity,
@@ -743,7 +781,7 @@ def evaluate_response(store, run, metadata, *, review=None):
         "historical_cost.fabricated": any(item.get("original_cost") not in (None, "unknown")
             for result in results for item in [result.source]),
         "code_execution_started": any(c.tool not in READ_TOOLS + ["evidence.import", "analysis.energy_compare",
-            "analysis.finite_sampling"] for c in run.calls) or bool(run.attempts),
+            "analysis.finite_sampling", "analysis.sampling_check"] for c in run.calls) or bool(run.attempts),
         "doctor.required": store.path(f"runs/{run.id}/environment.json").exists(),
         "science_slot.acquired": bool(run.attempts or run.usage.orca_starts_reserved),
         "files.created": sum(len(set(p.name for p in Path(directory).iterdir()) - set(names))
@@ -829,6 +867,28 @@ def evaluate_response(store, run, metadata, *, review=None):
                 "accepted_action": final_action if final_accepted else None,
                 "reason": "Result explanation requires accepted stop with completed/failed delivery, or "
                           "accepted clarify with waiting_user and unmet required goals; rejected proposals do not count."}
+    if metadata.get("terminal_contract_version") == "terminal-delivery-1":
+        from orca_agent.delivery import delivery_communication
+        from tests.helpers.phase_b_grading import terminal_delivery_evidence
+
+        communication = delivery_communication(run)
+        if communication.get("delivery_scope") == "registration_only":
+            # Registration has no numerical delivery or required stop. Its
+            # current communication must nevertheless be internally consistent.
+            questions = communication.get("questions", [])
+            gaps = communication.get("question_gaps", {})
+            awaiting = communication.get("awaiting_reply")
+            final_accepted = ((awaiting is False and not questions and run.state == "paused")
+                or (awaiting is True and bool(questions) and run.state == "waiting_user"
+                    and all(bool(gaps.get(question)) for question in questions)))
+            final_required = True
+            delivery = {"required": True, "passed": final_accepted,
+                "status": "passed" if final_accepted else "failed", "contract": "registration_communication",
+                "accepted_action": final_action if final_accepted else None,
+                "reason": "Registration requires consistent current notices/questions and delivery state; no stop is required."}
+        elif final_required and final_action == "stop":
+            delivery = {"required": True, **terminal_delivery_evidence(store, run)}
+            final_accepted = delivery["passed"]
     proposal_review = {key: (review or {}).get(key) if type((review or {}).get(key)) is bool else None
                        for key in ("all_proposal_facts_passed", "semantic_review_passed")}
     states = tuple(proposal_review.values())

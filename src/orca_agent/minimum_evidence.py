@@ -10,7 +10,7 @@ LEGACY_NAMES = {
 REQUIREMENTS = {
     "purpose_preserved@1": {"ports": None, "predicate": "current_use_passed"},
     "converged_scf@1": {"ports": ("energy", "optimized_geometry"), "check": "scf_converged"},
-    "all_initial_members@1": {"ports": ("sampling", "member_table", "energy_difference"),
+    "all_initial_members@1": {"ports": ("sampling", "sampling_check", "member_table", "energy_difference"),
                               "predicate": "required_members_qualified"},
 }
 

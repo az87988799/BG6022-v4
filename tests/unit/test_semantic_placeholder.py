@@ -64,13 +64,13 @@ def test_actual_v3_placeholder_shape_still_rejects_and_only_test_authored_correc
     contract = data["ACTION_PARAMETERS"]["normalize_request"]
     assert prepared.input_token_bound <= 12000
     assert "PLAN_RULES" not in data and "PLAN_REFERENCES" not in data
-    assert "normalize defines goals and retires raw_request/missing:goal_definition" in contract[
+    assert "normalize replaces raw_request/missing:goal_definition" in contract[
         "instruction"]
-    assert "Registration/no-execution is not a Goal" in contract["instruction"]
-    assert "Preserve unknown/unsupported requirements" in contract["instruction"]
+    assert "No geometry conditions or registration/no-execution Goal" in contract["instruction"]
+    assert "Keep unknown/unsupported" in contract["instruction"]
     assert "preserve goals.unresolved" not in contract["instruction"]
     assert "normalize defines raw_request" not in contract["instruction"]
-    assert "Ports:minimum_evidence_rules.port_rules" in contract["instruction"]
+    assert "Ports/rules:minimum_evidence_rules" in contract["instruction"]
     assert set(contract["minimum_evidence_rules"]["port_rules"]) == set(RULES) - {"unresolved"}
     # Removing the unjustified extra Goal is a developer-authored correction;
     # production must neither silently remove it nor count this as a live pass.

@@ -84,6 +84,7 @@ def source(tmp_path):
 
     store = SimpleNamespace(load_run=lambda _: run, load_request=lambda _: request,
                             load_plan=lambda _: plan, load_result=load_result,
+                            read_control=lambda _: {"generation": run.control_generation},
                             load_artifact=artifacts.__getitem__, artifact_path=artifact_path,
                             load_request_revision=lambda *_: request)
     return SimpleNamespace(store=store, run=run, request=request, plan=plan,

@@ -28,6 +28,27 @@ def _ready(plan, results):
             and all(dep in results for dep in s.depends_on)] if plan else []
 
 
+def _delivery_preflight(store, run, tool_name, parameters, plan, results, *, model_profile):
+    """Check final delivery capacity before a costly Tool's reservation."""
+    tool = get_tool(tool_name)
+    if not run.agent_enabled or not set(tool.effects) & {
+            "execute_orca", "query_external_identity", "prepare_geometry", "write_analysis"}:
+        return
+    from orca_agent.context import assess_terminal_capacity
+    from orca_agent.delivery import collect_delivery_snapshot
+    from orca_agent.model_usage import validate_delivery_margin
+
+    request = store.load_request(run)
+    if request.conditions.get("explain_results") is True:
+        snapshot = collect_delivery_snapshot(store, run, request, plan, results,
+            control_generation=current_basis(store, run)["control_generation"])
+        assess_terminal_capacity(request, run, snapshot, model_profile=model_profile)
+    declared_seconds = (parameters.get("timeout_seconds", tool.check_contract.get("max_seconds", 0))
+                        if isinstance(parameters, dict) else getattr(
+                            parameters, "timeout_seconds", tool.check_contract.get("max_seconds", 0)))
+    validate_delivery_margin(request, run, purpose="planning", execution_seconds=declared_seconds)
+
+
 def _science(store, config, run, step, results, batch, fault):
     from orca_agent.natural import ensure_scientific_environment
     ensure_scientific_environment(store, config, run)
@@ -45,6 +66,8 @@ def _science(store, config, run, step, results, batch, fault):
     runner._validate_execution_rules(store, run)
     if run.batch_category and not batch:
         raise StoreError("acceptance Run requires its shared batch accounting")
+    if fault:
+        fault("before_science_reservation")
     ticket = None
 
     def reserve(draft):
@@ -96,7 +119,10 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
 
     basis = current_basis(store, run)
     feedback = [rid for rid in run.result_ids if rid not in run.processed_feedback]
-    logical_id = "decision_" + fingerprint({"basis": basis, "feedback": feedback})[:24]
+    identity = {"basis": basis, "feedback": feedback}
+    if run.reopened_terminal_ids:
+        identity["reopened_terminal_ids"] = list(run.reopened_terminal_ids)
+    logical_id = "decision_" + fingerprint(identity)[:24]
     rejection = None
     records = [r for r in run.model_records if r.get("logical_id", "").startswith(logical_id + "_")]
     max_requests = 1 + run.budget.corrections_per_proposal + run.budget.transport_retries
@@ -154,11 +180,16 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             data = {"new_result_ids": feedback, "validation_error": rejection,
                     "pending_step_ids": [s.id for s in _ready(plan, results)],
                     "allowed_repairs": run.permission.allowed_repairs}
-            selected = [store.load_result(run.id, rid) for rid in run.result_ids]
             from orca_agent.goals import current_goal_evidence
             request = store.load_request(run)
-            from orca_agent.delivery import collect_goal_facts
+            from orca_agent.delivery import collect_delivery_snapshot, collect_goal_facts
             data["goal_facts"] = collect_goal_facts(store, run, request, plan, results)
+            snapshot = collect_delivery_snapshot(store, run, request, plan, results,
+                                                 control_generation=basis["control_generation"])
+            data["delivery_snapshot"] = snapshot
+            from orca_agent.decision_purpose import relevant_result_ids
+            selected = [store.load_result(run.id, identifier) for identifier in relevant_result_ids(
+                run, plan, snapshot=snapshot, feedback_ids=feedback)]
             current_use = []
             for goal in request.goals:
                 selection = current_goal_evidence(store, run, request, goal, plan, results)
@@ -199,11 +230,13 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                                      action_parameters=action_parameters(semantic_tools, request=request,
                                          text_input=run.science_baseline_policy == "first_science_plan")
                                      if has_pending_messages else None,
+                                     delivery_snapshot=snapshot,
                                      model_profile=model_profile)
             if run.batch_category and not batch:
                 raise StoreError("acceptance model calls require shared batch accounting")
             response = send_model(store, run, prepared, transport, basis=basis,
-                                  logical_id=f"{logical_id}_{len(records) + 1}", batch=batch, fault=fault)
+                                  logical_id=f"{logical_id}_{len(records) + 1}", batch=batch, fault=fault,
+                                  delivery_snapshot=snapshot)
             record = run.model_records[-1]
             records.append(record)
             reply = asdict(response)
@@ -212,13 +245,23 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             run.diagnostics.append({"category": "stale_model_response", "model_id": ticket})
             store.save_run(run)
             return run, "stale", None
+        proposal = None
         try:
             if reply.get("error_category") or not reply.get("proposal"):
                 raise ValueError(reply.get("error_category") or "missing_proposal")
             proposal = Proposal.model_validate(reply["proposal"])
+            if record.get("prompt_version") == "agent-json-v22":
+                from orca_agent.model_usage import _request_body
+                from orca_agent.proposals import ProposalError
+                sent = json.loads(_request_body(store, run, record)["messages"][-1]["content"])
+                allowed = sent["AUTHORITY"]["decision_purpose"]["allowed_actions"]
+                if proposal.action not in allowed:
+                    raise ProposalError("Choose only an action permitted for this transmitted decision purpose.",
+                                        code="decision_purpose_action", path=["action"], allowed_actions=allowed)
             if proposal.action in {"stop", "clarify"}:
                 from orca_agent.proposals import validate_action_parameters
-                validate_action_parameters(proposal.action, proposal.parameters)
+                validate_action_parameters(proposal.action, proposal.parameters,
+                                           terminal_required=proposal.action == "stop")
             if {name: getattr(proposal, name) for name in basis} != basis:
                 raise StoreError("proposal version basis differs from the transmitted context")
             if set(proposal.related_results) != set(feedback):
@@ -234,6 +277,10 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                             if m["id"] not in run.processed_messages]
             if pending_user and proposal.action not in {"normalize_request", "clarify", "stop"}:
                 raise StoreError("unprocessed user conditions require clarification before execution")
+            if pending_user and proposal.action == "stop":
+                from orca_agent.proposals import ProposalError
+                raise ProposalError("Process the current user message before terminal delivery.",
+                                    code="terminal_pending_user_message", path=["action"])
             if proposal.action == "normalize_request":
                 from orca_agent.semantic import commit_candidate
                 run = commit_candidate(store, run, proposal.parameters, decision_id=ticket,
@@ -254,7 +301,7 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                 saved = store.path(f"runs/{run.id}/decisions/{ticket}.json")
                 if saved.exists():
                     from orca_agent.models import Plan
-                    candidate = Plan.model_validate(json.loads(saved.read_text())["plan"])
+                    candidate = Plan.model_validate(json.loads(saved.read_text(encoding="utf-8"))["plan"])
                 else:
                     candidate = materialize_plan(store, run, proposal.parameters)
                 _repair_evidence(store, run, candidate)
@@ -322,14 +369,16 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                 run.state = "waiting_user"
                 store.save_run(run)
                 return run, "stop", None
-            if (set(proposal.parameters) not in (set(), {"reason"}) or
-                    "reason" in proposal.parameters and not isinstance(proposal.parameters["reason"], str)):
-                raise ValueError("invalid stop parameters")
-            _mark_decision(store, run, ticket, proposal, basis)
-            run.state = "completed" if goals_complete else "failed"
-            store.save_run(run)
+            from orca_agent.terminal import accept_terminal
+            run = accept_terminal(store, run, record, proposal, basis, fault=fault)
             return run, "stop", None
+        except ControlChanged:
+            return run, "stale", None
         except (ValueError, KeyError, TypeError) as exc:
+            if any(item.decision_id == ticket for item in run.terminal_deliveries):
+                # Acceptance is atomic and durable. A later delivery fault is
+                # not a rejection and cannot trigger a second HTTP correction.
+                return run, "stop", None
             # Error values and full provider text never enter diagnostics.
             category = reply.get("error_category") or type(exc).__name__
             from pydantic import ValidationError
@@ -350,6 +399,10 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             _mark_decision(store, run, ticket, rejected, basis, action="rejected")
             run.diagnostics.append({"category": "proposal_rejected", "model_id": ticket,
                                     "error_category": category})
+            if proposal is not None and proposal.action == "stop":
+                run.diagnostics.append({"category": "terminal_explanation_rejected", "model_id": ticket,
+                                        "decision_id": ticket, "request_version": basis["request_version"],
+                                        "control_generation": basis["control_generation"], "basis": basis})
             store.save_run(run)
             rejected_state()
     raise BudgetExceeded("model request budget exhausted")
@@ -419,6 +472,7 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
         if not resume:
             validate_model_profile(store, run, config.model_profile)
         plan = store.load_plan(run)
+        force_redecision = False
         if resume:
             before = store.read_control(run.id)
             if batch:
@@ -450,6 +504,43 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     store.save_run(run)
         elif any(a.state in ("intent", "running", "unknown") for a in run.attempts):
             raise StoreError("unfinished attempts require explicit resume and reconciliation")
+        from orca_agent.terminal import active_terminal, publish_terminal_report
+        terminal = active_terminal(run)
+        pending_control = any(m["id"] not in run.processed_messages
+                              for m in store.read_control(run.id)["messages"])
+        if terminal:
+            if (not resume or not pending_control and (terminal.report_status != "rendered"
+                                                       or terminal.terminal_state == "completed")):
+                # An interrupted acceptance/publication is replayed, never a
+                # permission to run the remaining old ready Steps.
+                return publish_terminal_report(store, run, fault=fault)
+            if terminal.report_status != "rendered":
+                # Explicitly resumed new user input supersedes an interrupted
+                # old publication. Retain its failed/historical receipt, then
+                # process the message; it must not become a permanent gate.
+                run = publish_terminal_report(store, run, fault=fault)
+            with store.control_lock(run.id):
+                run.reopened_terminal_ids.append(terminal.decision_id)
+                run.diagnostics.append({"category": "terminal_reopened",
+                                        "decision_id": terminal.decision_id,
+                                        "basis": current_basis(store, run)})
+                store.save_run(run)
+            force_redecision = True
+        else:
+            latest = next((item for item in reversed(run.decisions) if item.get("action") != "rejected"), None)
+            if (latest and latest.get("action") == "stop"
+                    and latest["id"] not in {receipt.decision_id for receipt in run.terminal_deliveries}):
+                # Old accepted stops remain audit evidence, never new contract
+                # passes. They still cannot silently authorize old ready Steps.
+                if not resume or run.state == "completed" and not pending_control:
+                    return publish_terminal_report(store, run, fault=fault)
+                with store.control_lock(run.id):
+                    if latest["id"] not in run.reopened_terminal_ids:
+                        run.reopened_terminal_ids.append(latest["id"])
+                        run.diagnostics.append({"category": "legacy_terminal_reopened",
+                                                "decision_id": latest["id"], "basis": current_basis(store, run)})
+                        store.save_run(run)
+                force_redecision = True
         results = runner._step_results(store, run)
         try:
             while True:
@@ -504,7 +595,7 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                 if utc_now() >= run.deadline:
                     raise BudgetExceeded("run deadline exhausted")
                 feedback = set(run.result_ids) - set(run.processed_feedback)
-                need_model = run.agent_enabled and (plan is None or feedback or pending_messages)
+                need_model = run.agent_enabled and (plan is None or feedback or pending_messages or force_redecision)
                 step = None
                 decision_id = None
                 pending_decisions = [d for d in run.decisions if d.get("action") == "call_tool"
@@ -543,6 +634,7 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                         run, action, value = _decision(store, run, plan, results,
                                                       transport or DeepSeekTransport(), batch, fault,
                                                       model_profile=config.model_profile)
+                        force_redecision = False
                     if action == "stale":
                         signal = store.read_signal(run.id)
                         run.state = ("paused" if signal == "pause" else "cancelled"
@@ -556,6 +648,8 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                         step, decision_id = value
                     elif action == "query":
                         value, decision_id = value
+                        _delivery_preflight(store, run, value["tool"], value["parameters"], plan, results,
+                                            model_profile=config.model_profile)
                         result = execute_call(store, run, value["tool"], value["parameters"], fault=fault,
                                               decision_id=decision_id)
                         _bind_query_goals(store, run, result)
@@ -579,6 +673,8 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     break
                 run.state = "running"
                 store.save_run(run)
+                _delivery_preflight(store, run, step.tool, step.parameters, plan, results,
+                                    model_profile=config.model_profile)
                 if "execute_orca" in get_tool(step.tool).effects:
                     result, outcome = _science(store, config, run, step, results, batch, fault)
                     if not outcome.get("not_started"):
@@ -599,12 +695,15 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     store.save_run(run)
                 # Loop head always reevaluates goals and new feedback before a next Tool.
         except ControlChanged as exc:
-            run.state = "waiting_user"
+            signal = store.read_signal(run.id)
+            run.state = "paused" if signal == "pause" else "cancelled" if signal == "cancel" else "waiting_user"
             run.diagnostics.append({"category": "control_changed", "message": str(exc)})
         except KeyboardInterrupt:
             run = store.load_run(run_id)
             results = runner._step_results(store, run)
-            if run.state not in {"paused", "cancelled"}:
+            if active_terminal(run):
+                run.state = active_terminal(run).terminal_state
+            elif run.state not in {"paused", "cancelled"}:
                 run.state = "unknown"
             run.diagnostics.append({"category": "interrupted", "message": "Explicit resume required"})
         except (ValueError, OSError, RuntimeError) as exc:
@@ -616,7 +715,7 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
             if _has_credential(message):
                 message = "Operation failed; credential-bearing diagnostic withheld"
             unfinished = any(a.finished_at is None for a in run.attempts)
-            run.state = ("unknown" if unfinished else
+            run.state = (active_terminal(run).terminal_state if active_terminal(run) else "unknown" if unfinished else
                          "budget_exhausted" if isinstance(exc, BudgetExceeded) else "failed")
             run.diagnostics.append({"category": type(exc).__name__,
                                     "message": message,
@@ -625,4 +724,4 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
         if run.state == "unknown":
             run.usage.resource_usage_complete = False
         store.save_run(run)
-        return run
+        return publish_terminal_report(store, run, fault=fault)

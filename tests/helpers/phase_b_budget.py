@@ -260,6 +260,9 @@ class AcceptanceBudget:
             if ticket in ledger.get("model_records", {}):
                 raise ReferenceBlocked("HTTP identity already reserved; reconciliation must never resend")
             proposed = {**owner, "id": ticket, "record": saved, "reserved_at": utc_now().isoformat()}
+            if reference.is_cycle_ledger(ledger):
+                from tests.helpers.phase_b_repair_cycle import guard_budget_reservation
+                proposed.update(guard_budget_reservation(ledger, owner, "model", saved))
             trial = {**ledger, "model_records": {**ledger.get("model_records", {}),
                      ticket: {**proposed, "state": "reserved"}}}
             totals = self._model_totals(trial)
@@ -351,6 +354,9 @@ class AcceptanceBudget:
             self._before_reserve(ledger, owner)
             if ticket in ledger.get("agent_science", {}):
                 raise ReferenceBlocked("scientific identity already reserved; reconcile without relaunch")
+            if reference.is_cycle_ledger(ledger):
+                from tests.helpers.phase_b_repair_cycle import guard_budget_reservation
+                immutable.update(guard_budget_reservation(ledger, owner, "science", immutable))
             entries = [*ledger["entries"].values(), *ledger.get("agent_science", {}).values()]
             limits = ledger["limits"]
             if (len(entries) >= limits["orca_starts"]["total"]

@@ -7,6 +7,67 @@ from orca_agent.models import fingerprint
 from orca_agent.store import StoreError
 
 
+def terminal_delivery_evidence(store, run):
+    """Bind a new terminal contract to original model bytes and current sources.
+
+    This gate verifies the structured contract only. Free prose still requires
+    independent fact/semantic review, even when the program report is correct.
+    """
+    from orca_agent.delivery import collect_delivery_snapshot
+    from orca_agent.model_usage import current_basis
+    from orca_agent.report import build_report
+    from orca_agent.runner import _step_results
+    from orca_agent.store import sha256_file
+    from orca_agent.terminal import read_delivery_snapshot, validate_terminal_explanation
+
+    failed = {"passed": False, "status": "failed", "accepted_action": None,
+              "contract_version": "terminal-delivery-1"}
+    try:
+        receipt = next((item for item in reversed(run.terminal_deliveries)
+                        if item.decision_id not in run.reopened_terminal_ids), None)
+        if receipt is None:
+            raise ValueError("no active terminal receipt")
+        decisions = [item for item in run.decisions if item.get("id") == receipt.decision_id]
+        records = [item for item in run.model_records if item.get("id") == receipt.decision_id]
+        if len(decisions) != 1 or len(records) != 1:
+            raise ValueError("terminal decision/model identity is not unique")
+        decision, record = decisions[0], records[0]
+        reply, _ = read_model_reply(store, run, record)
+        proposal = reply.proposal or {}
+        if (proposal.get("action") != "stop" or decision.get("action") != "stop"
+                or proposal.get("parameters") != decision.get("parameters")
+                or proposal.get("reason") != decision.get("reason")
+                or proposal.get("parameters", {}).get("delivery") != receipt.explanation):
+            raise ValueError("original model stop differs from saved decision/receipt")
+        snapshot = read_delivery_snapshot(store, run, record)
+        if (snapshot != receipt.snapshot or snapshot.get("fingerprint") != receipt.snapshot_fingerprint
+                or validate_terminal_explanation(proposal["parameters"], snapshot) != receipt.explanation):
+            raise ValueError("terminal explanation differs from transmitted snapshot")
+        basis = current_basis(store, run)
+        current = collect_delivery_snapshot(store, run, store.load_request(run), store.load_plan(run),
+            _step_results(store, run), control_generation=basis["control_generation"])
+        if (receipt.basis != decision.get("basis") or receipt.basis != basis
+                or current != snapshot or receipt.contract_status != "passed"
+                or run.state != receipt.terminal_state or run.state not in {"completed", "failed"}):
+            raise ValueError("terminal contract is not current for this request and evidence")
+        report = build_report(store, run)
+        explanation = report["model_explanation"]
+        if (report["delivery"] != current or explanation.get("current") is not True
+                or explanation.get("current_status") != "passed"
+                or explanation.get("decision_id") != receipt.decision_id
+                or receipt.report_status != "rendered" or not receipt.report_path
+                or not receipt.report_sha256
+                or sha256_file(store.path(receipt.report_path)) != receipt.report_sha256):
+            raise ValueError("current program report is missing, stale, or changed")
+        return {"passed": True, "status": "passed", "accepted_action": "stop",
+                "contract_version": receipt.contract_version, "decision_id": receipt.decision_id,
+                "snapshot_fingerprint": receipt.snapshot_fingerprint,
+                "report_sha256": receipt.report_sha256,
+                "reason": "Original stop, immutable request snapshot, receipt, current sources and report agree; prose remains independently reviewed."}
+    except (ValueError, StoreError, OSError, KeyError, TypeError) as exc:
+        return {**failed, "reason": str(exc)}
+
+
 def classify_grade(grade, *, executed=None):
     """Known failures take precedence over every missing-evidence condition."""
     checks = [*grade.get("assertions", []), *grade.get("explanation", {}).values()]

@@ -50,6 +50,15 @@ def objects(*, scientific=True):
 
 def payload(prepared):
     value = json.loads(prepared.body()["messages"][1]["content"])
+    aliases = value.get("KEYS", {})
+    def decode_keys(item):
+        if isinstance(item, dict):
+            return {aliases.get(key, key): decode_keys(child) for key, child in item.items()}
+        return [decode_keys(child) for child in item] if isinstance(item, list) else item
+    # Decode key aliases before literal pooling; original pooled keys remain
+    # literal, even when they have the shape of an encoding marker.
+    value = {key: item if key in {"SHARED_STRINGS", "KEYS"} else decode_keys(item)
+             for key, item in value.items()}
     strings = value.get("SHARED_STRINGS", [])
 
     def decode(item):
@@ -59,8 +68,8 @@ def payload(prepared):
             if set(item) == {"@literal"}:
                 return {key: decode(child) for key, child in item["@literal"]}
             if {"@columns", "@rows"} <= set(item) <= {"@columns", "@rows", "@absent", "@keys", "@rest"}:
-                rows = [{key: decode(cell) for j, (key, cell) in enumerate(zip(item["@columns"], row, strict=True))
-                         if j not in item.get("@absent", {}).get(str(i), [])}
+                rows = [decode({key: cell for j, (key, cell) in enumerate(zip(item["@columns"], row, strict=True))
+                         if j not in item.get("@absent", {}).get(str(i), [])})
                         for i, row in enumerate(item["@rows"])]
                 return {**dict(zip(item["@keys"], rows, strict=True)), **decode(item.get("@rest", {}))} if "@keys" in item else rows
             return {key: decode(child) for key, child in item.items()}
@@ -71,6 +80,29 @@ def payload(prepared):
     # Pool entries are literal JSON; marker-shaped raw data inside them is not
     # another encoding layer.
     value = {key: item if key == "SHARED_STRINGS" else decode(item) for key, item in value.items()}
+    request = value.get("AUTHORITY", {}).get("request", {})
+    def restore_quotes(item):
+        if isinstance(item, dict):
+            if item.get("text_basis_ref") == "AUTHORITY.user_originals[0].text":
+                item["text_basis"] = value["AUTHORITY"]["user_originals"][0]["text"]
+                item.pop("text_basis_ref")
+            for child in item.values():
+                restore_quotes(child)
+        elif isinstance(item, list):
+            for child in item:
+                restore_quotes(child)
+    if "Request.text_basis_ref=text_basis at that path." in prepared.body()["messages"][0]["content"]:
+        restore_quotes(request)
+    evidence = request.get("condition_evidence")
+    if isinstance(evidence, list):
+        request["condition_evidence"] = {field: {"value": item, **{key: child for key, child in group.items() if key != "fields"}}
+            for group in evidence for field, item in group["fields"].items()}
+    for fact in value.get("DATA", {}).get("delivery", {}).get("facts", []):
+        if fact["kind"] == "conditions":
+            data = fact["value"]
+            for system, fields in data.pop("current_request_fields", {}).items():
+                data.setdefault("current", {})[system] = {name: request["conditions"][name] for name in fields}
+                data.setdefault("sources", {})[system] = dict.fromkeys(fields, "request.conditions")
     plan = value.get("AUTHORITY", {}).get("plan")
     if plan and plan.get("string_steps") == "immutable_frozen":
         plan["steps"] = [{"id": step, "immutable_frozen": True} if isinstance(step, str) else step
@@ -80,6 +112,12 @@ def payload(prepared):
         value["DATA"]["results"] = [{key: cell for key, cell in zip(results["columns"], row, strict=True)
                                       if cell is not None} for row in results["rows"]]
     for result in value.get("DATA", {}).get("results", []):
+        facts = {fact["ref"]: fact["value"] for fact in value.get("DATA", {}).get("delivery", {}).get("facts", [])}
+        for field in ("unqualified_observations", "checks"):
+            for port, observation in result.get(field, {}).items():
+                if isinstance(observation, dict) and set(observation) in ({"delivery_fact_ref", "field"}, {"delivery_fact_ref", "port"}):
+                    result[field][port] = facts[observation["delivery_fact_ref"]][
+                        observation.get("field", observation.get("port"))]
         for port, output in result.get("qualified_outputs", {}).items():
             if "checks" not in output and port in value["DATA"].get("qualified_check_defaults", {}):
                 output["checks"] = value["DATA"]["qualified_check_defaults"][port]
@@ -97,7 +135,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v21"
+    assert context.prompt_version == "agent-json-v22"
     assert "reason<=1000" in context.body()["messages"][0]["content"]
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)

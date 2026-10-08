@@ -36,7 +36,7 @@ def test_unapproved_package_cannot_execute_even_with_live_switches(tmp_path, mon
     monkeypatch.setattr(package, "ROOT", tmp_path / "package")
     monkeypatch.setattr(package, "R4_ROOT", tmp_path / "renewal")
     monkeypatch.setattr(package.reference, "R4_APPROVAL_SHA256", None)
-    with pytest.raises(budget.ReferenceBlocked, match="explicit human approval"):
+    with pytest.raises(budget.ReferenceBlocked, match="closed"):
         package.main([operation, "--package", package.R4_LABEL, "--execute", "--live-model", "--live-orca", "--live-network", "--live-opi",
                       "--system", "water", "--repetition", "1", "--variant", package.DIAGNOSTICS[0]])
     assert not list(tmp_path.rglob("run.json"))

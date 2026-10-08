@@ -106,7 +106,8 @@ def _sampling_report_case(variant, repetition):
         return path
 
     store = SimpleNamespace(load_run=lambda _: run, load_request=lambda _: request, load_plan=lambda _: plan,
-        load_result=lambda *_: result, load_artifact=artifacts.__getitem__, artifact_path=artifact_path)
+        load_result=lambda *_: result, load_artifact=artifacts.__getitem__, artifact_path=artifact_path,
+        read_control=lambda _: {"generation": run.control_generation})
     assert not runner._goals(store, run, plan, {step.id: result})
     return SimpleNamespace(store=store, run=run, summary=summary, result=result, goal=goal,
                            absent=absent.id if absent else None, source_hashes=source_hashes)

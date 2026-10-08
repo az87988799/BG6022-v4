@@ -6,6 +6,7 @@ These local schemas never grant permission or certify scientific success.
 
 import re
 import unicodedata
+from copy import deepcopy
 from typing import Any, Literal, get_args
 
 from pydantic import Field, ValidationError
@@ -79,6 +80,7 @@ class SemanticGoal(Record):
     query: dict | None = None
     unresolved: list[str] = Field(default_factory=list, max_length=8)
     message_id: Identifier | None = None
+    analysis_goal_ref: Identifier | None = None
 
 
 class SemanticCandidate(Record):
@@ -131,19 +133,15 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
                            {"properties": {"goal_bindings": new_goal_binding_schema}}]
     port_rules = {port: rule for port, rule in RULES.items() if port != "unresolved"}
     contract = {"normalize_request": {
-        "instruction": "Ports:minimum_evidence_rules.port_rules; query:query_schemas[port]. "
-        "[] minimum_evidence retains basic checks. "
-        "condition_lexicon=[value,explicit aliases]; environment=gas/solvent, electronic_state=RHF/UHF. "
-        "Preserve unknown/unsupported requirements and explain_results. Unknown/inferred fields belong "
-        "in conditions/system_conditions. Electronic energy needs energy Goals; keys/reasons/geometry Goals cannot substitute. "
-        "Energy relation: fixed_initial=SP, optimized=after Opt; "
-        "temperature/standard_state only if requested; absent display unit stays unknown without a question. "
-        "Copy pending_user_message_ids; quote unique verbatim text_basis with matching field/target scope. "
-        "normalize defines goals and retires raw_request/missing:goal_definition. amend retains goals; "
-        "replace_goals needs explicit replacement + all old IDs. New goals bind system_refs; existing "
-        "goals bind Goal.id via goal_bindings. No geometry conditions. Registration/no-execution is not a Goal. "
-        "science_scope: capability limits, not permission/defaults. "
-        "resolves=answered gaps (field:<field>/system:<goal_id>); question_gaps maps questions to gap IDs.",
+        "instruction": "Ports/rules:minimum_evidence_rules; queries:query_schemas[port]; [] keeps basic checks. "
+        "Lexicon lists canonical values; quote original user wording. environment=gas/solvent; electronic_state=RHF/UHF. "
+        "Keep unknown/unsupported and explain_results; unknown/inferred belong in conditions/system_conditions. "
+        "Energy needs energy Goal, not key/reason/geometry; fixed_initial=SP, optimized=after Opt. "
+        "temperature/standard_state only if requested; absent unit=unknown, no question. "
+        "Copy pending IDs; unique verbatim text_basis must match field/target. "
+        "normalize replaces raw_request/missing:goal_definition; amend keeps goals; replace_goals needs explicit replacement+all old IDs. "
+        "NewGoal system_refs; existingGoal goal_bindings keyed by Goal.id. No geometry conditions or registration/no-execution Goal. "
+        "science_scope=capability, not permission/defaults. resolves=answered field:<field>/system:<goal_id>; question_gaps=questions to gaps.",
         "science_scope": {"systems": list(SCIENCE_COMPOSITIONS), "conditions": dict(PROFILE),
                           "names": {formula: list(SYSTEM_ALIASES.get(formula.casefold(), ()))
                                     for formula in SCIENCE_COMPOSITIONS},
@@ -156,8 +154,8 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
             "the requested scope; new gaps need a question or notice. Preserve explicit choices. "
             "No execution permission alone is not registration-only intent."),
         "schema": schema,
-        "condition_lexicon": {field: [[value, aliases] for (name, value), aliases in LEXICAL_ALIASES.items()
-                                      if name == field] for field in dict.fromkeys(name for name, _ in LEXICAL_ALIASES)},
+        "condition_lexicon": {field: [value for name, value in LEXICAL_ALIASES if name == field]
+                              for field in dict.fromkeys(name for name, _ in LEXICAL_ALIASES)},
         "minimum_evidence_rules": {"version": MINIMUM_EVIDENCE_VERSION, "registered": REQUIREMENTS,
                                    "legacy_aliases": LEGACY_NAMES, "port_rules": port_rules},
         "query_schemas": {port: _schema(get_tool(name).parameter_schema) for port, name in READ_TOOLS.items()
@@ -170,6 +168,12 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
             "Confirmed water/methane bind same system_refs; authorized Tools obtain XYZ for prepare intent. "
             "Unknown/unsupported stay unresolved. Energy relation absent: ask SP vs Opt; "
             "gap=ambiguous_geometry_relation.")
+    if (set(allowed_tools) & {"analysis.finite_sampling", "analysis.sampling_check"}
+            or request and any(g.port in {"sampling", "sampling_check"} for g in request.goals)):
+        contract["normalize_request"]["sampling_intent"] = (
+            "sampling_check checks existing criterion (false may complete); sampling requires satisfying it. "
+            "Preserve each intent. analysis_goal_ref inherits frozen spec; absent=missing:sampling_specification. "
+            "Never invent thresholds/candidates.")
     return contract
 
 
@@ -528,23 +532,44 @@ def _text_geometry_relation(request, messages, system_ids):
     selected = set()
     for message in messages:
         current = set()
+        denied = set()
         uncertain = False
         clauses = [part for clause, _ in _field_propositions(
             request, message, 0, len(message["text"]), system=scope)
             for part in re.split(r"\bbut\b|但是|但", clause, flags=re.I)]
         for clause in clauses:
-            if re.search(r"不要|不确定|未知|\b(?:not|unknown|uncertain)\b", clause, re.I):
+            # A request to acquire starting coordinates is an input dependency,
+            # not a request for their electronic energy. Preserve an initial-
+            # geometry hint if energy directly qualifies that same noun phrase.
+            relation_text = re.sub(
+                r"(?:取得|获取|获得|准备|生成|提供|\b(?:obtain|acquire|prepare|generate|provide|get)\b)"
+                r"(?:(?!电子能|能量|\benerg(?:y|ies)\b).){0,40}(?:初始几何|\binitial\s+geometry\b)"
+                r"(?!\s*(?:的|上(?:的)?)?\s*(?:电子能|能量|\b(?:electronic\s+)?energ(?:y|ies)\b))",
+                " ", clause, flags=re.I)
+            # A forbidden label supplies no positive optimized relation. It
+            # must not erase an independent SP request or permit an earlier
+            # optimized relation to survive an explicit contradictory update.
+            forbidden_label = (r"(?:不得|不要|不能|不许)\s*(?:称为|称作|声称|视为).{0,12}优化|"
+                               r"\b(?:do\s+not|don't|never|must\s+not)\s+(?:call|describe|claim|label)"
+                               r".{0,32}\boptimi[sz]ed\b")
+            if re.search(forbidden_label, clause, re.I):
+                denied.add("optimized")
+                clause = re.sub(forbidden_label, " ", clause, flags=re.I)
+                relation_text = re.sub(forbidden_label, " ", relation_text, flags=re.I)
+            if re.search(r"不要|不得|不确定|未知|\b(?:not|unknown|uncertain)\b", clause, re.I):
                 if re.search(r"几何|单点|优化|\b(?:geometry|sp|opt|optimization|energy\s+relation)\b", clause, re.I):
                     uncertain = True
                 continue
             if re.search(r"优化|\b(?:opt|optimi[sz](?:e|ed|ation))\b", clause, re.I):
                 current.add("optimized")
-            if re.search(r"单点|初始几何|\b(?:sp|single[- ]point|initial\s+geometry)\b", clause, re.I):
+            if re.search(r"单点|初始几何|\b(?:sp|single[- ]point|initial\s+geometry)\b", relation_text, re.I):
                 current.add("fixed_initial")
-        if uncertain:
+        if uncertain or current & denied:
             selected = set()
         elif current:
             selected = current
+        elif denied:
+            selected -= denied
     return next(iter(selected)) if len(selected) == 1 else None
 
 
@@ -670,6 +695,89 @@ def _require_energy_coverage(candidate, request, messages, goals):
                             path=["parameters", "goals"], missing_energy_requests=missing)
 
 
+def _sampling_intents(text):
+    """Finite affirmative check/acquire vocabulary, preserving negation scope."""
+    intents = set()
+    for _, _, clause in _propositions(text):
+        for part in re.split(r"\bbut\b|但是|但|并且|\band\s+(?=check|assess|obtain|acquire|achieve)", clause, flags=re.I):
+            if not re.search(r"采样|\bsampling\b", part, re.I):
+                continue
+            part = re.sub(r"不(?:要|得)?(?:执行|运行|启动)(?:新增|追加|任何)?计算|"
+                          r"\bwithout\s+(?:(?:running|executing|starting)\s+)?(?:any\s+)?"
+                          r"(?:(?:new|additional)\s+)?calculations?\b", " ", part, flags=re.I)
+            if re.search(r"不要|不得|不(?:用|需|必|要)?(?:检查|核查|判断|取得|获得|补充)|"
+                         r"\b(?:not|never|without)\b|n't\b|是否(?:需要|应该|检查|取得)|能否|要不要|"
+                         r"\bshould\s+we\b|\bwhether\s+to\b|(?:可能|也许).{0,12}(?:检查|取得)|"
+                         r"\b(?:maybe|might|possibly)\s+(?:check|obtain|acquire)\b", part, re.I):
+                continue
+            if re.search(r"检查|核查|判断|\b(?:check|assess|evaluate|determine)\b", part, re.I):
+                intents.add("sampling_check")
+            if re.search(r"取得|获得|补充.{0,16}(?:直到|满足|达标)|\b(?:obtain|acquire|achieve)\b", part, re.I):
+                intents.add("sampling")
+    return intents
+
+
+def _sampling_specification(item, request, messages):
+    message, start, end = _locate(item.text_basis, messages, item.message_id)
+    proposition = ";".join(part for left, right, part in _propositions(message["text"])
+                           if left < end and right > start)
+    if item.port not in _sampling_intents(proposition):
+        raise StoreError("sampling check/acquire port needs an affirmative matching user intent")
+    if item.analysis_goal_ref is None:
+        return {}, None
+    sources = [goal for goal in request.goals if goal.port in {"sampling", "sampling_check"}
+               and goal.conditions.get("sampling") and goal.conditions.get("candidates")]
+    source = next((goal for goal in sources if goal.id == item.analysis_goal_ref), None)
+    if source is None or (len(sources) > 1 and source.id not in proposition):
+        raise StoreError("sampling specification needs an unambiguous registered Goal reference")
+    if source.system_ids and item.system_refs != source.system_ids:
+        raise StoreError("sampling specification reference has a different system scope")
+    scope = None
+    later_text = "\n".join(entry["text"] for entry in messages[messages.index(message):])
+    for _, _, clause in _propositions(later_text):
+        named = {goal.id for goal in sources
+                 if re.search(r"(?<![\w-])" + re.escape(goal.id) + r"(?![\w-])", clause)}
+        scope = named or scope
+        if scope and source.id not in scope:
+            continue
+        for part in re.split(r"\bbut\b|但是|但", clause, flags=re.I):
+            field = r"阈值|宽度|候选|\b(?:thresholds?|width|candidates?)\b"
+            if not re.search(field, part, re.I):
+                continue
+            # Negating an unknown/change is not an instruction to erase a
+            # confirmed specification. Other affirmative overrides stay gaps.
+            part = re.sub(r"(?:不(?:是|再)|并非)\s*未知|\bnot\s+unknown\b", "", part, flags=re.I)
+            if re.search(r"不(?:要|得|需)?(?:改|变|换)|\b(?:do\s+not|don't|never)\s+(?:change|modify|replace)\b",
+                         part, re.I):
+                continue
+            override = r"未知|不确定|改|替换|\b(?:unknown|uncertain|change|modify|replace)\b"
+            if re.search(rf"(?:{field}).{{0,24}}(?:{override})|(?:{override}).{{0,24}}(?:{field})", part, re.I):
+                return {}, None
+    return deepcopy(source.conditions), {"source": "inherited", "request_version": request.version,
+                                         "goal_id": source.id}
+
+
+def _require_sampling_coverage(request, messages, goals):
+    required = set()
+    sources = [goal.id for goal in request.goals if goal.port in {"sampling", "sampling_check"}
+               and goal.conditions.get("sampling") and goal.conditions.get("candidates")]
+    for message in messages:
+        for _, _, part in _propositions(message["text"]):
+            if _explicit_goal_replacement(part):
+                required.clear()
+            named = [identifier for identifier in sources
+                     if re.search(r"(?<![\w-])" + re.escape(identifier) + r"(?![\w-])", part)]
+            required.update((port, identifier) for port in _sampling_intents(part)
+                            for identifier in named or [None])
+    actual = {(goal.port, goal.text_evidence.get("sampling_specification", {}).get("goal_id"))
+              for goal in goals if goal.required}
+    actual.update((port, None) for port, _ in list(actual))
+    missing = required - actual
+    if missing:
+        raise ProposalError("Keep explicit sampling checking and acquisition goals separate.",
+                            path=["parameters", "goals"], missing_sampling_requests=sorted(missing, key=str))
+
+
 def _goals(candidate, request, messages, *, text_input=False):
     systems = {s.id for s in request.systems}
     goals = []
@@ -682,6 +790,16 @@ def _goals(candidate, request, messages, *, text_input=False):
         unresolved = list(item.unresolved)
         if identity.get("explicitly_unknown"):
             unresolved.append("ambiguous_system")
+        if item.port in {"sampling", "sampling_check"}:
+            conditions, inherited = _sampling_specification(item, request, messages)
+            if inherited:
+                text_evidence["sampling_specification"] = inherited
+            else:
+                unresolved.append("missing:sampling_specification")
+            unresolved.extend("unsupported_system:" + name for name in identity["canonical_names"]
+                              if name != "water")
+        elif item.analysis_goal_ref is not None:
+            raise StoreError("analysis_goal_ref is only valid for a sampling task")
         if item.port in {"energy", "optimized_geometry"}:
             unresolved.extend("unsupported_system:" + name for name in identity["canonical_names"]
                               if name not in SCIENCE_IDENTITIES)
@@ -745,6 +863,7 @@ def _goals(candidate, request, messages, *, text_input=False):
     if not goals or len(goals) > 8:
         raise StoreError("normalization requires one to eight bounded goals")
     _require_energy_coverage(candidate, request, messages, goals)
+    _require_sampling_coverage(request, messages, goals)
     return goals
 
 
@@ -900,7 +1019,10 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
         if set(candidate.replaces) != {g.id for g in request.goals}:
             raise StoreError("user replacement must identify every superseded goal")
         whole_messages = "\n".join(message["text"] for message in pending)
-        negated = re.search(_NEGATED_GOAL_CHANGE, whole_messages, re.I)
+        negated = any(re.search(_NEGATED_GOAL_CHANGE, part, re.I) and not (
+            re.search(r"阈值|宽度|候选|\b(?:thresholds?|width|candidates?)\b", part, re.I)
+            and not re.search(r"目标|物理量|电子能|能量|几何|结构|\b(?:goals?|quantity|energy|geometry|structure)\b",
+                              part, re.I)) for _, _, part in _propositions(whole_messages))
         explicit_replacement = _explicit_goal_replacement(whole_messages)
         if negated or not explicit_replacement:
             raise StoreError("goal replacement requires an explicit user replacement phrase")

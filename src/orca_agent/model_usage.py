@@ -6,6 +6,11 @@ import math
 from dataclasses import asdict, fields
 from decimal import Decimal
 
+from orca_agent.decision_purpose import (
+    DecisionPurpose,
+    prepared_authority,
+    prepared_decision_purpose,
+)
 from orca_agent.llm import (
     MAX_PROPOSAL_BYTES,
     MAX_RESPONSE_BYTES,
@@ -51,36 +56,79 @@ def current_basis(store, run):
             "control_generation": store.read_control(run.id)["generation"]}
 
 
-def final_explanation_budget(request, run, *, final_only=False):
+TERMINAL_INPUT_ENVELOPE = 10000
+TERMINAL_SECONDS = 60
+
+
+def final_explanation_budget(request, run, *, final_only=False, purpose=None,
+                             prepared=None, now=None):
     """Account for required final prose within the existing frozen Run limits.
 
     The caller has already charged the current decision round. These are
-    call/decision occupancy bounds, not actual tokenizer counts or an
-    additional ledger. Token capacity is checked against each actual prepared
-    request; the unknown size of a future context cannot reserve the maximum.
-    Ordinary queries have no final-prose obligation.
+    New purpose-aware requests reserve the declared delivery envelope within
+    the frozen budget. This is planning occupancy, never a token receipt.
+    ``final_only`` remains for historical callers; production uses purpose.
     """
     required = request.conditions.get("explain_results") is True
     calls = max(0, run.budget.model_calls - run.usage.model_calls)
     rounds = max(0, run.budget.decision_rounds - run.usage.decision_rounds)
     tokens = max(0, run.budget.model_tokens - run.usage.model_tokens_used - run.usage.model_tokens_unknown)
-    future = 1 if required and not final_only else 0
+    terminal = purpose.kind == "terminal" if isinstance(purpose, DecisionPurpose) else final_only
+    future = 1 if required and not terminal else 0
+    input_bound = min(run.budget.input_tokens, TERMINAL_INPUT_ENVELOPE)
+    final_tokens = input_bound + run.budget.output_tokens
+    current_tokens = prepared.reserved_tokens if prepared is not None else 0
+    seconds = max(0.0, (run.deadline - (now or utc_now())).total_seconds())
+    current_seconds = prepared.timeout_seconds if prepared is not None else 0
+    bounded = purpose is not None
+    future_tokens = future * final_tokens if bounded else 0
+    future_seconds = future * TERMINAL_SECONDS if bounded else 0
     corrections = min(run.budget.corrections_per_proposal, max(0, calls - 1 - future), max(0, rounds - future))
+    if bounded:
+        corrections = min(corrections, max(0, (tokens - current_tokens - future_tokens) // max(1, final_tokens)),
+                          max(0, int((seconds - current_seconds - future_seconds) // TERMINAL_SECONDS)))
     return {"required": required, "final_only": final_only,
+            "purpose": purpose.kind if isinstance(purpose, DecisionPurpose) else "legacy",
             "future_answer_calls": future,
+            "future_answer_tokens": future_tokens, "future_answer_seconds": future_seconds,
+            "terminal_input_envelope": input_bound,
             "available_future_correction_calls": corrections,
             "configured_corrections_per_proposal": run.budget.corrections_per_proposal,
             "remaining_calls_before_this_request": calls,
             "remaining_decision_rounds_after_this_round": rounds,
             "remaining_tokens_before_this_request": tokens,
-            "can_send_before_final": calls >= future + 1 and rounds >= future,
-            "token_count_basis": "actual next prepared context is checked before reservation; future final context size is unknown"}
+            "can_send_before_final": (calls >= future + 1 and rounds >= future
+                and tokens >= current_tokens + future_tokens
+                and seconds >= current_seconds + future_seconds),
+            "token_count_basis": "planning occupancy only; actual request reserved once, unknown usage remains occupied"}
 
 
-def validate_final_explanation_capacity(request, run, *, final_only=False):
-    assessment = final_explanation_budget(request, run, final_only=final_only)
+def validate_final_explanation_capacity(request, run, *, final_only=False, **kwargs):
+    assessment = final_explanation_budget(request, run, final_only=final_only, **kwargs)
     if assessment["required"] and not assessment["can_send_before_final"]:
         raise BudgetExceeded("required final explanation lacks remaining call/decision budget")
+    return assessment
+
+
+def validate_delivery_margin(request, run, *, purpose="planning", prepared=None,
+                             execution_seconds=0, now=None):
+    """Read-only preflight for a decision or costly Tool; never charge usage."""
+    if isinstance(purpose, str):
+        purpose = DecisionPurpose(purpose, ())
+    assessment = final_explanation_budget(request, run, purpose=purpose, prepared=prepared, now=now)
+    if not assessment["required"]:
+        return assessment
+    calls = assessment["remaining_calls_before_this_request"]
+    future = assessment["future_answer_calls"]
+    needed_calls = future + (prepared is not None)
+    remaining = max(0.0, (run.deadline - (now or utc_now())).total_seconds())
+    time_needed = execution_seconds + assessment["future_answer_seconds"] + (
+        prepared.timeout_seconds if prepared is not None else 0)
+    token_needed = assessment["future_answer_tokens"] + (prepared.reserved_tokens if prepared is not None else 0)
+    if (calls < needed_calls or assessment["remaining_decision_rounds_after_this_round"] < future
+            or assessment["remaining_tokens_before_this_request"] < token_needed
+            or remaining < time_needed):
+        raise BudgetExceeded("required final explanation lacks remaining call/token/decision/time budget")
     return assessment
 
 
@@ -297,8 +345,16 @@ def recover_models(store, run, *, batch=None):
     return recovered
 
 
-def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None, fault=None):
+def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None, fault=None,
+               purpose=None, delivery_snapshot=None):
     logical_id = _id(logical_id)
+    sent_purpose = prepared_decision_purpose(prepared)
+    if purpose is not None and purpose != sent_purpose:
+        raise StoreError("model decision purpose differs from prepared request")
+    purpose = sent_purpose
+    authority = prepared_authority(prepared)
+    if prepared.prompt_version == "agent-json-v22" and purpose is None:
+        raise StoreError("new model requests require an explicit decision purpose")
     validate_model_profile(store, run, prepared.model_profile)
     # Stable logical identity is idempotency, not an implicit retry switch.
     existing = [record for record in run.model_records if record.get("logical_id") == logical_id]
@@ -316,12 +372,42 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
                 raise BudgetExceeded("control or deadline prevents model transmission")
             if not run.permission.model_execution:
                 raise StoreError("model transmission is not authorized")
-            purpose = store.load_request(run)
+            user_request = store.load_request(run)
             pending = any(message["id"] not in run.processed_messages
                           for message in store.read_control(run.id)["messages"])
-            final_only = not pending and all(run.goal_status.get(goal.id) == "satisfied"
-                                             for goal in purpose.goals if goal.required)
-            validate_final_explanation_capacity(purpose, run, final_only=final_only)
+            if purpose is not None:
+                from orca_agent.agent import _ready
+                from orca_agent.context import current_decision_purpose
+                from orca_agent.runner import _step_results
+                plan = store.load_plan(run)
+                actual = current_decision_purpose(user_request, run, plan, pending_messages=pending,
+                    ready_step_ids=[step.id for step in _ready(plan, _step_results(store, run))])
+                if actual.kind != purpose.kind or not set(purpose.allowed_actions) <= set(actual.allowed_actions):
+                    raise StoreError("decision purpose no longer matches legal actions")
+                if authority.get("basis") != basis:
+                    raise StoreError("prepared decision basis differs from reservation")
+                validate_delivery_margin(user_request, run, purpose=purpose, prepared=request)
+            else:
+                final_only = not pending and all(run.goal_status.get(goal.id) == "satisfied"
+                                                 for goal in user_request.goals if goal.required)
+                validate_final_explanation_capacity(user_request, run, final_only=final_only)
+            contract = authority.get("contract_required") is True
+            if (request.prompt_version == "agent-json-v22" and purpose is not None
+                    and "stop" in purpose.allowed_actions and not contract):
+                raise StoreError("new stop decision requires a delivery snapshot contract")
+            snapshot_bytes = None
+            if delivery_snapshot is not None:
+                snapshot_bytes = _json_bytes(delivery_snapshot)
+                if len(snapshot_bytes) > 256 * 1024:
+                    raise StoreError("delivery snapshot exceeds its size bound")
+                snapshot_basis = {key: delivery_snapshot.get("basis", {}).get(key) for key in basis}
+                fingerprint = hashlib.sha256(_canonical({key: value for key, value in delivery_snapshot.items()
+                                                          if key != "fingerprint"}).encode("utf-8")).hexdigest()
+                if snapshot_basis != basis or fingerprint != delivery_snapshot.get("fingerprint"):
+                    raise StoreError("delivery snapshot basis or fingerprint differs")
+            if contract and (snapshot_bytes is None or authority.get("delivery_snapshot_fingerprint")
+                             != delivery_snapshot["fingerprint"]):
+                raise StoreError("model contract requires the exact prepared delivery snapshot")
             if any(record.get("status") == "reserved" for record in run.model_records):
                 raise StoreError("unknown old model reservation requires reconciliation")
             if any(record.get("error_category") == "token_bound_exceeded"
@@ -345,6 +431,9 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
                       "prompt_version": request.prompt_version, "sdk_version": request.sdk_version,
                       "model": request.model, "token_bound_version": request.token_bound_version,
                       "model_profile": request.model_profile}
+            if snapshot_bytes is not None:
+                store._write_json(f"runs/{run.id}/model/{ticket}.delivery.json", delivery_snapshot, immutable=True)
+                record["delivery_snapshot_sha256"] = hashlib.sha256(snapshot_bytes).hexdigest()
             if batch:
                 batch.reserve_model(run, record)
             atomic_write(store.path(f"runs/{run.id}/model/{ticket}.request.json"),

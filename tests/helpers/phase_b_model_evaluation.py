@@ -134,6 +134,10 @@ def _bounded_slot_guard(variant_id, repetition, *, category, freeze_label, model
     # These fixed packages cannot bypass their approval/operator by calling
     # this lower-level helper. Other historical evaluation labels are unchanged.
     from tests.helpers import phase_b_bounded_package as package
+    from tests.helpers import phase_b_repair_cycle as cycle
+    if freeze_label.startswith(cycle.CYCLE_ID):
+        return cycle.guard_model_slot(variant_id, repetition, category=category,
+            candidate=freeze_label, model_profile=model_profile, resume=resume)
     if freeze_label in {package.LABEL, package.RENEWAL_LABEL, package.R3_LABEL, package.R4_LABEL}:
         return package.guard_model_slot(variant_id, repetition, category=category,
             package=freeze_label, model_profile=model_profile, resume=resume)
@@ -166,6 +170,8 @@ def prepare(variant_id, repetition, *, category="formal", freeze_label="formal-v
                 raise StoreError("evaluation slot identity differs from its frozen metadata")
             if candidate_sha is not None and metadata.get("bounded_candidate_sha256") != candidate_sha:
                 raise StoreError("evaluation slot differs from its immutable package candidate")
+            if freeze_label.startswith("repair-cycle-") and metadata.get("terminal_contract_version") != "terminal-delivery-1":
+                raise StoreError("new cycle cannot use a historical terminal evaluation contract")
             if metadata.get("model_profile", "disabled") != config.model_profile:
                 raise StoreError("evaluation slot model profile cannot change")
             if category == "formal" and metadata.get("freeze_sha256") != frozen_digest:
@@ -187,6 +193,11 @@ def prepare(variant_id, repetition, *, category="formal", freeze_label="formal-v
         metadata["model_profile"] = config.model_profile
         if candidate_sha is not None:
             metadata["bounded_candidate_sha256"] = candidate_sha
+            from tests.helpers import phase_b_repair_cycle as cycle
+            if freeze_label.startswith(cycle.CYCLE_ID):
+                if metadata.get("terminal_contract_version") != "terminal-delivery-1":
+                    raise StoreError("new cycle requires the current terminal evaluation contract")
+                cycle.bind_model_run(freeze_label, variant_id, store, run, repetition=repetition)
         if frozen is not None:
             metadata["formal_freeze"] = frozen
             metadata["code_commit"] = frozen.get("code_commit", frozen.get("commit"))

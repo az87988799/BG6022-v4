@@ -1,7 +1,7 @@
 """Translate symbolic model intentions into program-owned Plan identities."""
 
 import re
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, ValidationError
 
@@ -11,8 +11,32 @@ from orca_agent.tools.registry import get_tool, validate_parameters
 _CALL_TOOL_FORMS = ({"step_id": str}, {"tool": str, "parameters": dict})
 
 
+ShortRef = Annotated[str, Field(strict=True, min_length=1, max_length=64)]
+
+
+class GoalExplanation(Record):
+    goal_ref: ShortRef
+    fact_refs: list[ShortRef] = Field(min_length=1, max_length=64)
+    explanation_ref: ShortRef
+    blocker_refs: list[ShortRef] = Field(max_length=32)
+    next_action_ref: ShortRef
+
+
+class TerminalExplanation(Record):
+    version: Literal["terminal-delivery-1"]
+    snapshot_ref: Literal["current"]
+    goal_explanations: list[GoalExplanation] = Field(min_length=1, max_length=16)
+
+
 class StopParameters(Record):
     reason: str = Field(default="", strict=True, max_length=1000)
+    delivery: TerminalExplanation | None = None
+
+
+class ContractStopParameters(StopParameters):
+    """The schema advertised by new requests; legacy parameters stay readable."""
+
+    delivery: TerminalExplanation
 
 
 class ClarifyParameters(Record):
@@ -20,9 +44,9 @@ class ClarifyParameters(Record):
     unresolved: list[Annotated[str, Field(strict=True, min_length=1, max_length=1000)]] = Field(min_length=1, max_length=5)
 
 
-def action_parameter_schema(action, *, immediate=True):
+def action_parameter_schema(action, *, immediate=True, terminal_required=False):
     if action == "stop":
-        return StopParameters.model_json_schema()
+        return (ContractStopParameters if terminal_required else StopParameters).model_json_schema()
     if action == "clarify":
         return ClarifyParameters.model_json_schema()
     if action == "call_tool":
@@ -32,14 +56,15 @@ def action_parameter_schema(action, *, immediate=True):
     raise ValueError("action parameters are owned by their specialized contract")
 
 
-def validate_action_parameters(action, values):
+def validate_action_parameters(action, values, *, terminal_required=False):
     """Shared structural validation; applicability/permission remain separate."""
     if action == "call_tool":
         if not valid_call_tool_parameters(values):
             raise ProposalError("call_tool needs exactly one declared parameter shape.",
                                 path=["parameters"], shapes=call_tool_parameter_shapes())
     elif action in {"stop", "clarify"}:
-        model = StopParameters if action == "stop" else ClarifyParameters
+        model = ((ContractStopParameters if terminal_required else StopParameters)
+                 if action == "stop" else ClarifyParameters)
         try:
             model.model_validate(values)
         except ValidationError as exc:

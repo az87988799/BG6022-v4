@@ -10,6 +10,7 @@ import json
 
 import pytest
 from test_agent import initial_proposal
+from test_analysis import sampling_case
 from test_context import payload
 from test_dispatch import archived_energy, comparison_run
 from test_natural import scientific_run
@@ -172,11 +173,23 @@ def test_new_feedback_has_its_own_correction_but_keeps_total_model_budget(tmp_pa
 
 
 def final_explanation(data):
-    assert data["AUTHORITY"]["goal_status"] == {"a": "satisfied"}
-    value = data["DATA"]["results"][0]["unqualified_observations"]["value_observation"]["value"]
-    assert value == 1
+    snapshot = data["DATA"]["delivery"]
+    assert len(snapshot["goals"]) == 1
+    goal = snapshot["goals"][0]
+    facts = {item["kind"]: item["value"] for item in snapshot["facts"]
+             if item["ref"] in goal["required_fact_refs"]}
+    assert facts["goal_status"] == {"recorded": "satisfied", "complete": True,
+                                     "current_evidence": "passed", "gaps": []}
+    assert facts["answer"]["kind"] == "evidence_observation"
+    assert facts["answer"]["observation"]["value"] == 1
+    assert facts["answer"]["unit"] is None and facts["answer"]["scientific_qualification"] is False
     explanation = "Field a is 1 in the explicitly registered JSON. Units and scientific validity are unknown."
-    return {"action": "stop", "reason": explanation, "parameters": {"reason": explanation}}
+    delivery = {"version": snapshot["version"], "snapshot_ref": "current", "goal_explanations": [{
+        "goal_ref": goal["ref"], "fact_refs": goal["required_fact_refs"],
+        "explanation_ref": goal["explanation_refs"][0], "blocker_refs": goal["required_blocker_refs"],
+        "next_action_ref": goal["next_action_refs"][0]}]}
+    return {"action": "stop", "reason": explanation,
+            "parameters": {"reason": explanation, "delivery": delivery}}
 
 
 def test_opt_in_explanation_observes_actual_result_in_a_second_scripted_model_round(tmp_path):
@@ -195,8 +208,9 @@ def test_final_explanation_cannot_request_another_tool_after_all_goals_are_satis
     store, run, _ = query_case(tmp_path, explain=True)
 
     def unnecessary_tool(data):
+        assert data["AUTHORITY"]["decision_purpose"]["allowed_actions"] == ["stop"]
         return {"action": "call_tool", "parameters": {"tool": "evidence.value",
-                "parameters": data["AUTHORITY"]["request"]["goals"][0]["conditions"]["query"]}}
+                "parameters": store.load_request(store.load_run(run.id)).goals[0].conditions["query"]}}
 
     transport = ScriptedHTTP(initial_proposal, unnecessary_tool, final_explanation)
     completed = agent.execute(store, Config(), run.id, transport=transport)
@@ -204,7 +218,8 @@ def test_final_explanation_cannot_request_another_tool_after_all_goals_are_satis
     assert completed.usage.model_calls == 3 and completed.usage.evidence_reads == 1
     assert len(completed.calls) == 1
     rejected = next(d for d in completed.decisions if d.get("action") == "rejected")
-    assert "final explanation only" in rejected["parameters"]["requirement"]
+    assert rejected["parameters"]["requirement"]["code"] == "decision_purpose_action"
+    assert rejected["parameters"]["requirement"]["allowed_actions"] == ["stop"]
 
 
 def test_explanation_budget_exhaustion_keeps_satisfied_goals_without_fabricating_model_explanation(tmp_path):
@@ -226,16 +241,16 @@ def test_explanation_budget_exhaustion_keeps_satisfied_goals_without_fabricating
     assert report["user_goal_complete"] and report["run_state"] == "budget_exhausted"
 
 
-@pytest.mark.parametrize("parameters", [None, {}, {"reason": "The original top-level explanation also applies."}],
+@pytest.mark.parametrize("parameters", [{}, {"reason": ""}, {"reason": "The original top-level explanation also applies."}],
                          ids=["omitted", "empty", "optional-reason"])
 def test_final_stop_does_not_require_duplicate_reason_fields(tmp_path, parameters):
     store, run, _ = query_case(tmp_path, explain=True)
 
     def explain(data):
         proposal = final_explanation(data)
-        proposal.pop("parameters")
-        if parameters is not None:
-            proposal["parameters"] = parameters
+        # The verified delivery is mandatory; duplicating prose in the nested
+        # reason remains optional and cannot replace that delivery contract.
+        proposal["parameters"] = {"delivery": proposal["parameters"]["delivery"], **parameters}
         return proposal
 
     completed = agent.execute(store, Config(), run.id, transport=ScriptedHTTP(initial_proposal, explain))
@@ -250,20 +265,32 @@ def test_final_stop_rejects_undeclared_fields_or_nontext_nested_reason(tmp_path,
     store, run, _ = query_case(tmp_path, explain=True)
 
     def invalid(data):
-        return {**final_explanation(data), "parameters": parameters}
+        proposal = final_explanation(data)
+        proposal["parameters"] = {"delivery": proposal["parameters"]["delivery"], **parameters}
+        return proposal
 
     stopped = agent.execute(store, Config(), run.id,
                             transport=ScriptedHTTP(initial_proposal, invalid, invalid))
     assert stopped.state != "completed" and stopped.goal_status == {"a": "satisfied"}
     assert stopped.usage.evidence_reads == 1 and stopped.usage.model_calls == 3
     assert not any(d.get("action") == "stop" for d in stopped.decisions)
+    rejections = [d for d in stopped.decisions if d.get("action") == "rejected"]
+    assert len(rejections) == 2
+    invalid_fields = {key for key, value in parameters.items() if key != "reason" or not isinstance(value, str)}
+    for rejected in rejections:
+        errors = rejected["parameters"]["requirement"]["errors"]
+        assert {tuple(error["loc"]) for error in errors} == {("parameters", field) for field in invalid_fields}
 
 
 @pytest.mark.parametrize("port, rule, conditions", [
     ("energy_difference", "energy-compare-1", {"comparison": {"member_a": "A", "member_b": "B"}}),
-    ("sampling", "finite-sampling-1", {"sampling": {"target_width_angstrom": 0.1}}),
+    ("sampling", "finite-sampling-1", None),
 ], ids=["comparison", "finite-sampling"])
 def test_derived_analysis_does_not_require_an_unrelated_initial_hf_geometry(tmp_path, port, rule, conditions):
+    if conditions is None:
+        candidates, _, _, parameters = sampling_case("stop")
+        conditions = {"sampling": parameters.model_dump(),
+                      "candidates": [candidate.model_dump() for candidate in candidates]}
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
     bundle = tmp_path / "analysis.json"
     bundle.write_text(json.dumps({"text": "Analyze the authorized source results.", "goals": [

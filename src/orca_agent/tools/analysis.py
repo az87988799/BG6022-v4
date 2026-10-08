@@ -23,6 +23,7 @@ Hash = Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
 Positive = Annotated[float, Field(gt=0)]
 ENERGY_COMPARE_VERSION = "energy-compare-1"
 SAMPLING_VERSION = "finite-sampling-1"
+SAMPLING_CHECK_VERSION = "finite-sampling-check-1"
 
 
 class EnergyConditions(Record):
@@ -418,4 +419,27 @@ def finite_sampling(candidates: list[SamplingCandidate], members: list[AnalysisM
                        "sampled": [by_id[key].evidence.model_dump(mode="json") for key in sampled],
                        "geometry_facts": facts, "goal": parameters.model_dump(mode="json")},
         }
+    return result
+
+
+def sampling_check(candidates: list[SamplingCandidate], members: list[AnalysisMember],
+                   geometry_bytes: dict[str, bytes], parameters: SamplingParameters) -> dict:
+    """Check the same finite predicate without claiming a qualified sampling goal.
+
+    A determinate negative is a completed checking task. Missing inputs or
+    invalid provenance/conditions cannot be promoted into a checked answer.
+    """
+    result = finite_sampling(candidates, members, geometry_bytes, parameters)
+    determinate = result["reason"] in {
+        "sufficient_discrete_evidence", "span_too_wide", "boundary_minimum", "not_numerically_distinct"}
+    predicate_checks = result["checks"]
+    checks = [_check("finite_sampling_predicate_determined", determinate, SAMPLING_CHECK_VERSION,
+                     result["reason"])]
+    result.update(rule_version=SAMPLING_CHECK_VERSION, predicate_rule_version=SAMPLING_VERSION,
+                  predicate_checks=predicate_checks, checks=checks, qualified_outputs={},
+                  assessment_status="determinate" if determinate else "insufficient_evidence",
+                  predicate_satisfied=result["goal_satisfied"] if determinate else None)
+    result["checked_artifact_outputs"] = ({"sampling_check": {"checks": checks, "source": {
+        "predicate_satisfied": result["predicate_satisfied"], "predicate_rule_version": SAMPLING_VERSION,
+        "reason": result["reason"], "limitation": result["limitation"]}}} if determinate else {})
     return result

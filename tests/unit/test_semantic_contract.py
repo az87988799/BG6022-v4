@@ -32,7 +32,7 @@ from tests.helpers.phase_b_model_cases import (
 def test_query_schemas_come_from_registry_and_only_permitted_read_tools():
     contract = action_parameters(["evidence.text", "orca.sp"])["normalize_request"]
     assert contract["query_schemas"] == {"text_window": _schema(get_tool("evidence.text").parameter_schema)}
-    assert "Ports:minimum_evidence_rules.port_rules" in contract["instruction"]
+    assert "Ports/rules:minimum_evidence_rules" in contract["instruction"]
     assert set(contract["minimum_evidence_rules"]["port_rules"]) == set(RULES) - {"unresolved"}
     assert contract["minimum_evidence_rules"]["port_rules"] == {
         port: rule for port, rule in RULES.items() if port != "unresolved"}
@@ -53,8 +53,8 @@ def test_raw_driver_intake_context_fits_and_exposes_the_parameter_contract(tmp_p
     assert prepared.input_token_bound <= run.budget.input_tokens == 12000
     assert data["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"] == ["normalize_request"]
     contract = data["ACTION_PARAMETERS"]["normalize_request"]
-    assert "Energy relation: fixed_initial=SP, optimized=after Opt" in contract["instruction"]
-    assert "query:query_schemas[port]" in contract["instruction"]
+    assert "fixed_initial=SP, optimized=after Opt" in contract["instruction"]
+    assert "queries:query_schemas[port]" in contract["instruction"]
     assert set(contract["query_schemas"]) == ({"artifact_metadata", "text_window"}
         if variant == "N-07/raw-read-only-window" else set())
     assert data["TOOL_CATALOG"] == [] and data["PARAMETER_SCHEMAS"] == {}

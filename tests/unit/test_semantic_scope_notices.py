@@ -64,8 +64,14 @@ def test_visible_scope_is_registry_profile_data_not_permission_or_registered_sys
     assert "not permission/defaults" in visible["instruction"]
     assert "notices" in prepared.body()["messages"][0]["content"]
     assert "critical gaps blocking the requested scope" in prepared.body()["messages"][0]["content"]
-    # Omitted disabled effects retain the same frozen permission semantics.
-    assert PermissionSnapshot.model_validate(data["AUTHORITY"]["permission"]) == run.permission
+    # Intake uses a hash/count reference for access IDs, never new authority.
+    visible_permission = copy.deepcopy(data["AUTHORITY"]["permission"])
+    reference = visible_permission.pop("access_bindings")
+    bindings = {key: getattr(run.permission, key) for key in ("artifact_ids", "source_ids", "result_ids")}
+    assert reference == {"reference": "Run.permission", "counts": {k: len(v) for k, v in bindings.items()},
+        "sha256": hashlib.sha256(json.dumps(bindings, ensure_ascii=False, sort_keys=True,
+                                              separators=(",", ":")).encode()).hexdigest()}
+    assert PermissionSnapshot.model_validate({**visible_permission, **bindings}) == run.permission
     assert data["AUTHORITY"]["permission"]["allowed_tools"] == []
     assert data["TOOL_CATALOG"] == []
     assert [s["id"] for s in data["AUTHORITY"]["request"]["systems"]] == [s.id for s in request.systems]

@@ -52,10 +52,20 @@ def test_same_id_query_change_releases_direct_and_completes_fresh_plan(tmp_path)
     assert not run.goal_evidence and run.goal_status == {"a": "insufficient_evidence"}
 
     def explanation(data):
-        current = data["DATA"]["current_goal_use"]
+        snapshot = data["DATA"]["delivery"]
+        assert len(snapshot["goals"]) == 1
+        selected_goal = snapshot["goals"][0]
+        facts = {item["kind"]: item["value"] for item in snapshot["facts"]
+                 if item["ref"] in selected_goal["required_fact_refs"]}
+        assert facts["goal_status"]["current_evidence"] == "passed"
+        assert facts["goal_status"]["complete"] is True
+        assert facts["answer"]["observation"]["value"] == 2
+        # Full durable source identities belong to the report/saved snapshot;
+        # the transmitted terminal context carries their current fact refs.
+        current = build_report(store, store.load_run(run.id))["goals"]
         assert len(current) == 1 and current[0]["goal_id"] == "a"
         assert current[0]["result_id"] != old_binding.result_id
-        assert current[0]["status"] == "passed"
+        assert current[0]["report_status"] == "satisfied"
         return {"action": "stop", "parameters": {"reason": "requested field read"}}
 
     run = agent.execute(store, Config(), run.id,

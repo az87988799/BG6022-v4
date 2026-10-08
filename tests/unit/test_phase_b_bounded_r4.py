@@ -63,7 +63,8 @@ def r4_approved(r3_approved, tmp_path, monkeypatch):
         bind_model(store, run, item)
         settle_model(book, store, run, item, prompt=prompt, completion=completion)
         r3_items.append(item)
-    monkeypatch.setattr(package, "_assert_open", OPEN_GUARD)
+    # Synthetic historical migration only; the real r4 operator is now closed.
+    monkeypatch.setattr(package, "_assert_open", lambda label: None if label == R4 else OPEN_GUARD(label))
     path = tmp_path / "synthetic-r4-approval.json"
     value = {"approval_id": package.reference.R4_APPROVAL_ID, "status": "user_approved",
         "previous_limits": package.reference.R3_LIMITS, "approved_limits": package.reference.R4_LIMITS,

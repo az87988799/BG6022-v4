@@ -197,7 +197,7 @@ def _recover(store, config, run, plan):
             proof = result.source.get("files", {}).get("reconciled.json")
             if proof and not any(item.get("category") == "termination_reconciled"
                                  and item.get("attempt_id") == attempt.id for item in run.diagnostics):
-                receipt = json.loads(store.artifact_path(proof["artifact_id"]).read_text())
+                receipt = json.loads(store.artifact_path(proof["artifact_id"]).read_text(encoding="utf-8"))
                 run.diagnostics.append({"category": "termination_reconciled", "attempt_id": attempt.id,
                                         "receipt_artifact_id": proof["artifact_id"], **receipt})
         if attempt.finished_at:
@@ -224,7 +224,7 @@ def _validate_execution_rules(store, run):
            if goal.port in ("energy", "optimized_geometry")):
         raise ValueError("check_rule_revalidation_required: historical Run may be inspected and recovered; "
                          "scientific continuation requires explicit rule revalidation")
-    environment = json.loads(store.path(f"runs/{run.id}/environment.json").read_text())
+    environment = json.loads(store.path(f"runs/{run.id}/environment.json").read_text(encoding="utf-8"))
     if not is_supported_orca_version(environment.get("orca", {}).get("version")):
         raise ValueError("frozen ORCA version is not enabled for scientific execution")
 

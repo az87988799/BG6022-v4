@@ -134,7 +134,6 @@ def test_registration_scope_can_stop_without_a_question_or_false_scientific_comp
 
 @pytest.mark.parametrize("scope,questions,unresolved", [
     ("unknown_spin", ["请提供水的多重度，以完整登记电子态。"], ["field:multiplicity"]),
-    ("permission_missing", ["你要求启动计算；当前执行权限关闭，是否授权计算？"], ["execution_permission"]),
 ])
 def test_no_execution_permission_does_not_suppress_a_needed_clarification(tmp_path, scope, questions, unresolved):
     store, run, _ = _run(tmp_path, scope)
@@ -154,6 +153,23 @@ def test_no_execution_permission_does_not_suppress_a_needed_clarification(tmp_pa
     # The question persists without repeatedly reserving a model request.
     repeated = agent.execute(store, Config(), run.id, transport=ScriptedTransport(), resume=True)
     assert repeated.state == "waiting_user" and repeated.usage == waiting.usage
+
+
+def test_execution_permission_alone_does_not_invent_a_scientific_clarification(tmp_path):
+    store, run, _ = _run(tmp_path, "permission_missing")
+    before = store.load_request(run).model_dump_json(), run.permission.model_dump_json()
+    transport = ScriptedTransport({"action": "clarify", "parameters": {
+        "questions": ["当前执行权限关闭，是否授权计算？"], "unresolved": ["execution_permission"]}},
+        {"action": "stop"})
+    ended = agent.execute(store, Config(), run.id, transport=transport)
+    assert transport.sent[0]["AUTHORITY"]["decision_purpose"]["allowed_actions"] == ["stop"]
+    assert [item["action"] for item in ended.decisions] == ["rejected"]
+    assert ended.decisions[0]["parameters"]["requirement"]["code"] == "decision_purpose_action"
+    assert ended.usage.model_calls == len(transport.sent) == 1
+    assert ended.budget.corrections_per_proposal == 0
+    assert store.active_clarification(ended) is None
+    assert (store.load_request(ended).model_dump_json(), ended.permission.model_dump_json()) == before
+    assert not ended.attempts and not ended.calls and not ended.result_ids
 
 
 def test_real_v5_post_normalization_context_keeps_explicit_scope_and_unknown_unit_without_mutation():

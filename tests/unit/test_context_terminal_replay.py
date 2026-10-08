@@ -77,7 +77,9 @@ def test_actual_failed_context_fits_without_changing_authority_data_or_tool_cont
     assert inputs["run"].state == "failed"  # Replay never relabels the historical run.
     assert inputs["run"].usage.model_calls == 1 and inputs["run"].usage.orca_starts_reserved == 0
     for key, model in (("request", inputs["request"]), ("run", inputs["run"]), ("plan", inputs["plan"])):
-        assert model.model_dump(mode="json") == before[key]
+        # Historical bytes stay frozen; newly introduced empty local receipt
+        # fields are supplied by the same model defaults on both sides.
+        assert model == type(model).model_validate(before[key])
     assert [result.model_dump(mode="json") for result in inputs["results"]] == before["results"]
     assert inputs["feedback"] == before["feedback"]
 

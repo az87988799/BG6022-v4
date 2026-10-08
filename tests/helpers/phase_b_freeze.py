@@ -22,6 +22,7 @@ FIXED = {"pyproject.toml", "uv.lock", "config.example.toml", "AGENTS.md",
          "docs/acceptance/phase-b/reference-review.json", "docs/acceptance/phase-b/cases.md",
          "docs/acceptance/phase-b/runtime-profile.json"}
 FIXED.add("docs/acceptance/phase-b/coverage-repair-v2.json")
+FIXED.add("docs/acceptance/phase-b/coverage-repair-cycle-20261008.json")
 FIXED.add("docs/acceptance/phase-b/budget-approval-20261007.json")
 FIXED.add("docs/acceptance/phase-b/budget-approval-supplement-20261007.json")
 FIXED.add("docs/acceptance/phase-b/budget-approval-thinking-v16-20261007.json")

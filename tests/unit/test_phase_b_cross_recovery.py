@@ -249,7 +249,7 @@ def test_analysis_feedback_scientific_append_crash_replays_one_reservation_and_c
 
     transport = ScriptedHTTP(append, analyze)
     interrupted = agent.execute(store, Config(), run.id, transport=transport, batch=book, fault=crash)
-    assert interrupted.state == "unknown" and interrupted.plan_version == 1
+    assert interrupted.state == "unknown" and interrupted.plan_version == 1, interrupted.diagnostics
     assert not interrupted.attempts and not reservations and not callbacks
     assert interrupted.processed_feedback == []
     snapshot = None
@@ -329,10 +329,17 @@ def test_two_failed_attempts_then_new_logical_id_cannot_create_third_start(tmp_p
         return _archive_as_offline_attempt(store, current, step, attempt, fixture)
 
     def propose(data, *, launder=False):
-        previous = data["AUTHORITY"]["plan"]["steps"][0]
+        if launder:
+            # After both attempts the transmitted purpose is terminal. The
+            # adversarial response still tries a fresh identity; no Plan is
+            # fabricated into the terminal projection to manufacture it.
+            assert data["AUTHORITY"]["decision_purpose"]["allowed_actions"] == ["stop"]
+            logical_key = "laundered_new_intent"
+        else:
+            logical_key = data["AUTHORITY"]["plan"]["steps"][0]["logical_id"]
         assert len(store.load_run(run.id).attempts) == (2 if launder else 1)
         return {"action": "revise_plan", "parameters": {"steps": [{"key": "renamed_third" if launder else "repair",
-            "logical_key": "laundered_new_intent" if launder else previous["logical_id"], "tool": "orca.sp",
+            "logical_key": logical_key, "tool": "orca.sp",
             "parameters": {"timeout_seconds": 120, "scf_maxiter": 100 if launder else 2}}],
             "goal_map": {"energy": {"step_key": "renamed_third" if launder else "repair", "port": "energy"}}}}
 

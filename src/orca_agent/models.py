@@ -85,7 +85,7 @@ class Goal(Record):
     # Missing fields in historical files mean the old rule, never the current rule.
     minimum_check_version: Literal[
         "orca-hf-1", "orca-hf-2", "evidence-read-1", "energy-compare-1",
-        "finite-sampling-1", "unresolved-1",
+        "finite-sampling-1", "finite-sampling-check-1", "unresolved-1",
     ] = LEGACY_CHECK_VERSION
     original_text: str = ""
     identity: dict[str, Any] = Field(default_factory=dict)
@@ -427,6 +427,38 @@ class Proposal(Record):
     parameters: dict[str, Any] = Field(default_factory=dict)
 
 
+class TerminalReceipt(Record):
+    """Local Run evidence, not an independent domain lifecycle."""
+
+    decision_id: Identifier
+    contract_version: Literal["terminal-delivery-1"]
+    basis: dict[str, Any]
+    snapshot_fingerprint: str
+    snapshot: dict[str, Any]
+    explanation: dict[str, Any]
+    contract_status: Literal["passed"] = "passed"
+    terminal_state: Literal["completed", "failed"]
+    report_status: Literal["pending", "rendered", "failed"] = "pending"
+    report_version: str = "terminal-report-1"
+    report_path: str | None = None
+    report_sha256: str | None = None
+    report_error: str | None = None
+
+
+class ReportReceipt(Record):
+    """Derived non-stop report evidence; never an accepted model decision."""
+
+    publication_id: Identifier
+    basis: dict[str, Any]
+    snapshot_fingerprint: str
+    snapshot: dict[str, Any]
+    report_status: Literal["pending", "rendered", "failed"] = "pending"
+    report_version: str = "terminal-report-1"
+    report_path: str | None = None
+    report_sha256: str | None = None
+    report_error: str | None = None
+
+
 class Run(Record):
     id: Identifier = Field(default_factory=lambda: new_id("run"))
     request_id: Identifier
@@ -460,6 +492,9 @@ class Run(Record):
     processed_feedback: list[Identifier] = Field(default_factory=list)
     decisions: list[dict[str, Any]] = Field(default_factory=list)
     applied_decisions: list[Identifier] = Field(default_factory=list)
+    terminal_deliveries: list[TerminalReceipt] = Field(default_factory=list)
+    fallback_report_receipts: list[ReportReceipt] = Field(default_factory=list)
+    reopened_terminal_ids: list[Identifier] = Field(default_factory=list)
     agent_enabled: bool = False
     batch_category: Literal["formal", "development"] | None = None
     input_bindings: dict[Identifier, dict[str, Any]] = Field(default_factory=dict)

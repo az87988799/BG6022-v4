@@ -12,8 +12,12 @@ import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-from orca_agent.delivery import goal_fact_rows
-from orca_agent.goals import current_goal_evidence
+from orca_agent.delivery import (
+    collect_goal_selections,
+    delivery_communication,
+    delivery_snapshot,
+    goal_fact_rows,
+)
 from orca_agent.models import Run
 
 _SECRET_KEYS = {"authorization", "api_key", "apikey", "api-key", "access_token", "password",
@@ -22,22 +26,22 @@ _SECRET = re.compile(r"\bsk-[A-Za-z0-9_-]{8,}|\bBearer\s+\S+", re.I)
 _MAX_RESULTS = 128
 
 
-def _safe(value: Any, *, depth=0) -> Any:
+def _safe(value: Any, *, depth=0, bounded=True) -> Any:
     """Bound untrusted descriptive content and omit credential-bearing fields."""
-    if depth > 10:
+    if bounded and depth > 10:
         return "[bounded report: deeper data omitted]"
     if hasattr(value, "model_dump"):
         value = value.model_dump(mode="json")
     if isinstance(value, dict):
         return {_SECRET.sub("[redacted]", str(k)): "[redacted]" if str(k).lower() in _SECRET_KEYS
-                else _safe(v, depth=depth + 1)
-                for k, v in list(value.items())[:80]}
+                else _safe(v, depth=depth + 1, bounded=bounded)
+                for k, v in (list(value.items())[:80] if bounded else value.items())}
     if isinstance(value, (list, tuple)):
-        items = [_safe(v, depth=depth + 1) for v in value[:80]]
-        return items + (["[bounded report: additional items omitted]"] if len(value) > 80 else [])
+        items = [_safe(v, depth=depth + 1, bounded=bounded) for v in (value[:80] if bounded else value)]
+        return items + (["[bounded report: additional items omitted]"] if bounded and len(value) > 80 else [])
     if isinstance(value, str):
         cleaned = _SECRET.sub("[redacted]", value)
-        return cleaned[:4096] + ("[truncated]" if len(cleaned) > 4096 else "")
+        return cleaned[:4096] + ("[truncated]" if len(cleaned) > 4096 else "") if bounded else cleaned
     if isinstance(value, float) and not math.isfinite(value):
         return None
     if value is None or isinstance(value, (int, float, bool)):
@@ -145,6 +149,20 @@ def _money(records):
             "records": sanitized}
 
 
+def _explanation_status(request, run, communication):
+    rejected = any(item.get("category") == "terminal_explanation_rejected"
+        and item.get("request_version") == run.request_version
+        and item.get("control_generation") == run.control_generation for item in run.diagnostics)
+    if rejected:
+        return "rejected"
+    if (not request or request.conditions.get("explain_results") is not True
+            or (communication["delivery_scope"] == "registration_only" and not communication["awaiting_reply"])):
+        return "not_requested"
+    if run.state in {"completed", "failed", "budget_exhausted", "cancelled"}:
+        return "unavailable"
+    return "pending"
+
+
 def build_report(store, run: Run | str) -> dict[str, Any]:
     """Build a reproducible report without changing any source or calling a model."""
     run = store.load_run(run) if isinstance(run, str) else run
@@ -179,40 +197,34 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
         read_result(run.id, result_id)
     if len(run.result_ids) > _MAX_RESULTS:
         gaps.append("result_count_exceeds_report_bound")
-    goals, selections = [], {}
+    selections = collect_goal_selections(store, run, request, plan) if request else {}
+    facts = goal_fact_rows(request, run, selections) if request else []
+    by_goal = {row["goal_id"]: row for row in facts}
+    goals = []
     for goal in request.goals if request else []:
-        goal_gaps = list(goal.unresolved)
-        selection = current_goal_evidence(store, run, request, goal, plan)
-        selections[goal.id] = selection
+        row = by_goal[goal.id]
+        goal_gaps = list(row["gaps"])
+        selection = selections[goal.id]
         binding = selection["binding"]
-        goal_gaps.extend(selection["gaps"])
         selected = None
         if selection["result"]:
             raw = selection["result"]
             selected = read_result(raw.run_id, raw.id)
-        output = selected.get("qualified_outputs", {}).get(goal.port) if selected else None
+            integrity = selection.get("source_integrity", {})
+            if integrity.get("status") == "unverified":
+                selected["gaps"] = list(dict.fromkeys([*selected.get("gaps", []), *integrity.get("gaps", [])]))
+                selected["qualified_outputs"] = {}
+                selected["scientific_status"] = "source_unverified"
         support = "insufficient_evidence"
-        if output and all(c["rule_version"] == goal.minimum_check_version for c in output["checks"]):
+        if row["answer"] and row["answer"]["kind"] == "qualified_scientific_output":
             support = "scientific_output_verified"
-        elif goal.minimum_check_version == "evidence-read-1" and selected:
-            checks = selected.get("checks", {}).get(goal.port, [])
-            if (selected.get("operation_status") == "completed" and not selected.get("gaps")
-                    and checks and all(c["status"] == "passed" and c["rule_version"] == "evidence-read-1"
-                                       for c in checks)):
-                support = "query_evidence_read_verified"
-        if goal_gaps or request.unresolved:
-            support = "insufficient_evidence"
-        applicability = None
-        if selected:
-            applicability = selection["assessment"]
-            purpose_valid = applicability is not None and applicability["status"] == "passed"
-            if not purpose_valid:
-                support = "insufficient_evidence"
-                goal_gaps.append("source_not_applicable_to_current_goal")
-                if applicability:
-                    goal_gaps.extend(applicability["reasons"])
+        elif row["answer"]:
+            support = "query_evidence_read_verified"
+        applicability = selection["assessment"]
+        if selected and row["current_evidence_status"] != "passed":
+            goal_gaps.append("source_not_applicable_to_current_goal")
         recorded = run.goal_status.get(goal.id, "insufficient_evidence")
-        satisfied = recorded == "satisfied" and support != "insufficient_evidence"
+        satisfied = row["goal_complete"]
         if not satisfied and not goal_gaps:
             goal_gaps.append("qualified_evidence_or_recorded_goal_decision_missing")
         goals.append({"goal_id": goal.id, "port": goal.port, "required": goal.required,
@@ -260,7 +272,8 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                     "systems": _safe(request.systems), "unresolved": _safe(request.unresolved)}
                    if request else None,
         "goals": goals, "results": list(results.values()), "attempts": attempts,
-        "goal_facts": _safe(goal_fact_rows(request, run, selections)) if request else [],
+        "goal_facts": _safe(facts, bounded=False),
+        "permission": run.permission.model_dump(mode="json"),
         "budget": {"limits": run.budget.model_dump(mode="json"),
                    "usage": run.usage.model_dump(mode="json"), "deadline": run.deadline.isoformat(),
                    "unresolved_scientific_attempt_ids": [a.id for a in run.attempts
@@ -272,10 +285,49 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                         "Finite sampling describes only the sampled discrete geometries.",
                         "An optimized geometry alone does not establish vibrational stability or a global minimum."],
     }
-    communication = next((item["semantics"] for item in reversed(run.decisions)
-        if item.get("request_version") == run.request_version
-        and "delivery_scope" in item.get("semantics", {})), None)
-    if communication is not None:
+    snapshot = delivery_snapshot(request, run, selections,
+        control_generation=store.read_control(run.id)["generation"]) if request else None
+    if snapshot:
+        # Mandatory goals/facts are never silently dropped by the legacy audit
+        # preview bounds. Credential redaction still applies to descriptive text.
+        report["delivery"] = _safe(snapshot, bounded=False)
+    receipt = run.terminal_deliveries[-1] if getattr(run, "terminal_deliveries", []) else None
+    communication = delivery_communication(run)
+    explanation_status = _explanation_status(request, run, communication)
+    report["model_explanation"] = {"status": explanation_status, "current_status": explanation_status, "current": False,
+                                   "free_reason_role": "audit_only"}
+    if receipt:
+        report["model_explanation"].update({"status": receipt.contract_status,
+            "current": bool(snapshot and snapshot["fingerprint"] == receipt.snapshot_fingerprint
+                            and receipt.decision_id not in run.reopened_terminal_ids),
+            "decision_id": receipt.decision_id, "contract_version": receipt.contract_version,
+            "snapshot_fingerprint": receipt.snapshot_fingerprint,
+            "report_status": receipt.report_status, "report_sha256": receipt.report_sha256})
+        if report["model_explanation"]["current"]:
+            report["model_explanation"]["current_status"] = "passed"
+    publication = receipt if receipt and report["model_explanation"]["current"] else None
+    if publication is None and snapshot:
+        from orca_agent.terminal import report_publication_id
+        identity = report_publication_id(run, snapshot)
+        publication = next((item for item in run.fallback_report_receipts
+                            if item.publication_id == identity), None)
+    report["report_artifact"] = {"status": "not_recorded", "current": False}
+    if publication:
+        report["report_artifact"] = {"status": publication.report_status, "current": True,
+            "version": publication.report_version, "snapshot_fingerprint": publication.snapshot_fingerprint,
+            "path": publication.report_path, "sha256": publication.report_sha256,
+            "error": publication.report_error}
+        if publication.report_status == "rendered":
+            from orca_agent.store import sha256_file
+            try:
+                if (not publication.report_path or not publication.report_sha256
+                        or sha256_file(store.path(publication.report_path)) != publication.report_sha256):
+                    raise ValueError("report artifact hash mismatch")
+            except (ValueError, OSError, RuntimeError):
+                report["report_artifact"].update(status="failed", current=False,
+                                                 error="report_source_unverified")
+    if any("delivery_scope" in item.get("semantics", {}) and item.get("request_version") == run.request_version
+           for item in run.decisions):
         report["communication"] = _safe({key: communication.get(key) for key in (
             "notices", "questions", "question_gaps", "delivery_scope", "awaiting_reply")})
         report["communication"]["registration_complete"] = (
@@ -316,6 +368,40 @@ def render_report(report: dict[str, Any]) -> str:
         elif answer:
             lines.append("本目标观察（不宣称科学资格）：" + _cell(answer["observation"])
                          + "；单位：" + _cell(answer["unit"] if answer["unit"] is not None else "unknown") + "。")
+    delivery = report.get("delivery", {})
+    for fact in delivery.get("facts", []):
+        if fact["kind"] != "criterion":
+            continue
+        value = fact["value"]
+        lines.append(f"\n目标 `{_cell(fact['goal_ref'])}` 已保存的判据：{_cell(value.get('reason', 'unknown'))}；"
+                     f"规则 {_cell(value.get('rule_version', 'unknown'))}。")
+        span = value.get("neighbor_span_angstrom")
+        target = value.get("target_width_angstrom")
+        tolerance = value.get("acceptance_criteria", {}).get("distance_tolerance_angstrom")
+        if span is not None and target is not None:
+            lines.append(f"邻点跨度：{_cell(span)} Å；允许阈值：{_cell(target)} Å + "
+                         f"{_cell(tolerance) if tolerance is not None else 'unknown'} Å（距离容差）。")
+        if value.get("energy_threshold_eh") is not None:
+            lines.append(f"能量区分阈值：{_cell(value['energy_threshold_eh'])} Eh。")
+        if value.get("limitation"):
+            lines.append("判据适用范围：" + _cell(value["limitation"]))
+    if delivery.get("blockers"):
+        lines.append("\n当前并列阻断（不授予新增执行许可）：")
+        for blocker in delivery["blockers"]:
+            lines.append(f"- {_cell(blocker['code'])}：{_cell(blocker['value'])}；{_cell(blocker['text'])}")
+    if delivery.get("resources"):
+        permission = delivery["resources"]["permission"]
+        remaining = delivery["resources"]["remaining"]
+        lines.append("\n科学执行许可：" + _cell(permission["scientific_execution"])
+            + "；追加科学许可：" + _cell(permission["allow_additional_science"])
+            + "；ORCA 剩余额度：" + _cell(remaining["orca_starts"])
+            + "；追加 ORCA 剩余额度：" + _cell(remaining["extra_orca_starts"]) + "。")
+    explanation = report.get("model_explanation", {})
+    if explanation:
+        lines.append("\n模型解释合同：" + _cell(explanation.get("status"))
+            + "；适用于当前快照：" + _cell(explanation.get("current"))
+            + "；当前解释状态：" + _cell(explanation.get("current_status"))
+            + "。自由 reason 仅为审计正文，不代表已核验交付。")
     communication = report.get("communication", {})
     if communication.get("registration_complete"):
         lines.append("\n需求登记已完成；科学目标状态见上表。")

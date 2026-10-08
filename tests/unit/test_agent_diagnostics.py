@@ -152,7 +152,9 @@ def test_no_ready_step_or_immediate_reader_rejects_inline_shape_with_only_plan_o
     assert error["category"] == "ProposalError"
     detail = error["requirement"]
     assert detail["path"] == ["action"]
-    assert detail["requirement"] == "No ready Step/read Tool; only revise_plan (new Steps), clarify, or stop."
+    assert detail["code"] == "decision_purpose_action"
+    assert detail["allowed_actions"] == ["clarify", "revise_plan", "stop"]
+    assert detail["requirement"] == "Choose only an action permitted for this transmitted decision purpose."
     assert "{tool,parameters}" not in str(detail) and "untrusted-unplanned-candidate" not in str(detail)
     assert stopped.state == "waiting_user" and action == "stop"
     assert stopped.usage.model_calls == 2 and stopped.usage.model_tokens_used == 150
@@ -180,7 +182,11 @@ def test_empty_catalog_without_plan_diagnostic_uses_initial_plan_not_revision(tm
                                   {"action": "stop", "parameters": {}})
     stopped, _, _ = agent._decision(store, run, None, {}, transport, None, None)
     detail = transport.sent[1]["CONTROL"]["validation_error"]["requirement"]
-    assert detail["requirement"] == "No ready Step/read Tool; only initial_plan (new Steps), clarify, or stop."
+    # The purpose guard now rejects before Tool-shape validation. An empty
+    # catalog cannot recommend planning a nonexistent executable Tool.
+    assert detail["code"] == "decision_purpose_action"
+    assert detail["allowed_actions"] == ["stop"]
+    assert detail["path"] == ["action"]
     assert stopped.state == "failed" and not stopped.calls and not stopped.attempts
 
 

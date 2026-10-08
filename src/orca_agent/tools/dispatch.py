@@ -202,7 +202,15 @@ def compare(store, run, call):
 
 
 def sample(store, run, call):
-    goal = _goal(store, run, call, "sampling")
+    return _sample(store, run, call, "sampling", analysis.finite_sampling)
+
+
+def sample_check(store, run, call):
+    return _sample(store, run, call, "sampling_check", analysis.sampling_check)
+
+
+def _sample(store, run, call, port, operation):
+    goal = _goal(store, run, call, port)
     parameters = analysis.SamplingParameters.model_validate(goal.conditions["sampling"])
     candidates = [analysis.SamplingCandidate.model_validate(v)
                   for v in goal.conditions["candidates"]]
@@ -216,7 +224,7 @@ def sample(store, run, call):
     required = [c.id for c in candidates if c.required_initial]
     members = _current_comparison_members(store, store.load_request(run), _members(
         store, call, required, [c.id for c in candidates]), goal)
-    return analysis.finite_sampling(candidates, members, geometry, parameters)
+    return operation(candidates, members, geometry, parameters)
 
 
 def import_evidence(store, run, call):
@@ -291,6 +299,19 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
             artifact = store.import_artifact(path, "analysis", run_id=run.id,
                                              source={"call_id": call.id, "consumption": consumption})
             artifacts.append(artifact.id)
+            for port, descriptor in data.get("checked_artifact_outputs", {}).items():
+                if (port not in definition.output_ports or not isinstance(descriptor, dict)
+                        or set(descriptor) != {"checks", "source"}):
+                    raise ValueError("analysis artifact output differs from its declared contract")
+                artifact_checks = [Check.model_validate(item) for item in descriptor["checks"]]
+                required = definition.check_contract.get("required_checks", {}).get(port)
+                if (not required or not artifact_checks or any(check.status != "passed"
+                        or check.rule_version != definition.check_version for check in artifact_checks)
+                        or not set(required) <= {check.name for check in artifact_checks}):
+                    raise ValueError("analysis artifact output lacks required current checks")
+                qualified[port] = QualifiedOutput(artifact_id=artifact.id, checks=artifact_checks,
+                    source={**descriptor["source"], "artifact_id": artifact.id, "sha256": artifact.sha256})
+                checks[port] = artifact_checks
             comparison = qualified.get("energy_difference")
             members = data.get("members", [])
             if ("member_table" in definition.output_ports and comparison is not None

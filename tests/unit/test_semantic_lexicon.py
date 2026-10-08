@@ -34,8 +34,8 @@ def test_protocol_lexicon_uses_the_same_explicit_aliases_as_field_validation(tmp
     actual, origin, _ = _field(field, FieldEvidence(value=value, source="explicit", text_basis=quote),
                                 request, [{"text": quote}])
     assert actual == value and origin == "explicit"
-    aliases = action_parameters()["normalize_request"]["condition_lexicon"][field]
-    assert any(mapped == value and quote in words for mapped, words in aliases)
+    canonical = action_parameters()["normalize_request"]["condition_lexicon"][field]
+    assert value in canonical
 
 
 def test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_correct_offline(tmp_path):
@@ -60,11 +60,12 @@ def test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_corr
     contract = payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
     assert prepared.input_token_bound <= 12000
     assert "electronic_state=RHF/UHF" in contract["instruction"]
-    assert "quote unique verbatim text_basis with matching field/target scope" in contract["instruction"]
+    assert "unique verbatim text_basis must match field/target" in contract["instruction"]
     assert "temperature/standard_state only if requested" in contract["instruction"]
-    assert "absent display unit stays unknown without a question" in contract["instruction"]
-    assert any(value == 0 and {"中性", "neutral", "电荷为零"}.issubset(aliases)
-               for value, aliases in contract["condition_lexicon"]["charge"])
+    assert "absent unit=unknown, no question" in contract["instruction"]
+    assert 0 in contract["condition_lexicon"]["charge"]
+    assert {"中性", "neutral", "电荷为零"}.issubset(LEXICAL_ALIASES[("charge", 0)])
+    assert "quote original user wording" in contract["instruction"]
     # This correction is authored by the test, not another model trajectory.
     second["conditions"]["electronic_state"] = {"value": "RHF", "source": "explicit", "text_basis": "RHF"}
     updated = commit_candidate(store, run, second, decision_id="offline_correct_reference", basis=current_basis(store, run))

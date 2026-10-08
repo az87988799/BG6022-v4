@@ -138,7 +138,12 @@ def test_answered_question_can_be_replaced_by_a_new_persisted_clarification(tmp_
 def test_pending_user_clarify_does_not_restart_model_on_resume(tmp_path):
     store, run, _ = make_run(tmp_path, initial_plan=True)
     message = store.enqueue_message(run.id, "还没确定电荷")
-    stopped = agent.execute(store, Config(), run.id, transport=ScriptedTransport(CLARIFY))
+    # Pending messages use the advertised normalization contract, including
+    # its clarify kind; a top-level legacy clarify is not an intake action.
+    candidate = {"action": "normalize_request", "parameters": {
+        "schema_version": VERSION, "message_ids": [message], "kind": "clarify",
+        "text_basis": "还没确定电荷", **CLARIFY["parameters"]}}
+    stopped = agent.execute(store, Config(), run.id, transport=ScriptedTransport(candidate))
     assert stopped.state == "waiting_user" and stopped.processed_messages == [message]
     assert store.active_clarification(stopped) is None
     assert store.load_request(stopped).normalization_status == "clarification"

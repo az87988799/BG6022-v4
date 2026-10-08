@@ -29,7 +29,7 @@ def revalidate(store, run, step, config):
     plan = store.load_plan(current)
     if step not in plan.steps:
         raise ValueError("step is no longer in the validated plan")
-    permission = json.loads(store.path(f"runs/{run.id}/permission.json").read_text())
+    permission = json.loads(store.path(f"runs/{run.id}/permission.json").read_text(encoding="utf-8"))
     if PermissionSnapshot.model_validate(permission) != run.permission:
         raise ValueError("permission changed after validation")
     if not run.permission.scientific_execution or step.tool not in run.permission.allowed_tools:
@@ -47,7 +47,7 @@ def revalidate(store, run, step, config):
         raise ValueError("check_rule_revalidation_required before scientific execution")
     if utc_now() >= run.deadline:
         raise ValueError("run deadline exhausted before execution")
-    environment = json.loads(store.path(f"runs/{run.id}/environment.json").read_text())
+    environment = json.loads(store.path(f"runs/{run.id}/environment.json").read_text(encoding="utf-8"))
     if not is_supported_orca_version(environment["orca"].get("version")):
         raise ValueError("frozen ORCA version is not enabled")
     if str(config.orca_path) != environment["orca"]["path"]:
@@ -183,7 +183,7 @@ def collect_result(store, run, step, attempt, outcome):
         if collection_error:
             raise ValueError(collection_error)
         environment_path = store.path(f"runs/{run.id}/environment.json")
-        environment = json.loads(environment_path.read_text()) if environment_path.exists() else {}
+        environment = json.loads(environment_path.read_text(encoding="utf-8")) if environment_path.exists() else {}
         parsed = read_outputs(workdir, step.parameters, step.tool,
                               expected_orca_version=environment.get("orca", {}).get("version"))
     except Exception as exc:

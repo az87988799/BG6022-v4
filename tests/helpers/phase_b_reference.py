@@ -95,6 +95,40 @@ R4_APPROVAL_ID = "bounded-gap-budget-20261008-r4"
 R4_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-bounded-20261008-r4.json"
 R4_APPROVAL_SHA256 = None
 
+# The adopted complete cycle is reviewed before pinning; it never inherits r4.
+CYCLE_LIMITS = {
+    "orca_starts": {"reference": 37, "development": 68, "formal": 108, "total": 213},
+    "model": {"http_requests": 2068, "tokens": 13_882_912, "usd": 20},
+}
+CYCLE_FORMAL_APPROVAL_ID = "repair-cycle-formal-budget-20261008"
+CYCLE_APPROVAL_ID = "repair-cycle-budget-20261008"
+CYCLE_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-repair-cycle-20261008.json"
+CYCLE_APPROVAL_SHA256 = "8e49c7e9151a7ce7bdcf6041533cb3f97713d43f244409010b2a3f394e0ddbef"
+
+
+def is_cycle_ledger(ledger):
+    return (ledger.get("limits") == CYCLE_LIMITS
+            or ledger.get("limit_authority", {}).get("approval_id") == CYCLE_FORMAL_APPROVAL_ID)
+
+
+def cycle_approval() -> dict:
+    from tests.helpers.phase_b_repair_cycle import PLAN_PATH, PLAN_SHA256, scope
+    if (not CYCLE_APPROVAL_SHA256 or not CYCLE_APPROVAL.is_file()
+            or sha256_file(CYCLE_APPROVAL) != CYCLE_APPROVAL_SHA256):
+        raise ReferenceBlocked("repair cycle adoption is not pinned")
+    value = _json(CYCLE_APPROVAL)
+    if (value.get("approval_id") != CYCLE_APPROVAL_ID or value.get("status") != "user_approved"
+            or value.get("previous_limits") != R3_LIMITS
+            or value.get("approved_limits") != CYCLE_LIMITS
+            or value.get("previous_approval_id") != R3_APPROVAL_ID
+            or value.get("previous_approval_sha256") != R3_APPROVAL_SHA256
+            or value.get("repair_cycle") != scope()
+            or value.get("decision_document") != PLAN_PATH
+            or value.get("decision_document_sha256") != PLAN_SHA256
+            or sha256_file(PROJECT / PLAN_PATH) != PLAN_SHA256):
+        raise ReferenceBlocked("repair cycle adoption scope, plan or previous authority changed")
+    return value
+
 
 def r4_approval() -> dict:
     r3_approval()
@@ -232,15 +266,19 @@ def _identifier(value: str) -> str:
     return value
 
 
-def reference_input(scf_maxiter: int) -> str:
-    """Reviewed SP-only profile; the actual execution copies the supplied file."""
-    return ("! RHF STO-3G TightSCF NORI NoAutoStart\n"
+def reference_input(scf_maxiter: int, *, job_type="sp") -> str:
+    """Reviewed finite profiles; the actual execution copies the supplied file."""
+    if job_type not in {"sp", "opt"}:
+        raise ValueError("unreviewed independent reference job type")
+    optimization = "%geom\n  MaxIter 100\n  EnforceStrictConvergence true\nend\n" if job_type == "opt" else ""
+    return (f"! RHF STO-3G TightSCF NORI NoAutoStart{' TightOpt' if job_type == 'opt' else ''}\n"
             "%pal nprocs 4 end\n%maxcore 192\n%scf\n"
             f"  MaxIter {scf_maxiter}\n  ConvForced 1\nend\n"
+            + optimization +
             "* xyzfile 0 1 geometry.xyz\n")
 
 
-def reviewed_sources(geometry: Path, input_path: Path, scf_maxiter: int, *, atom_mapping=None) -> dict:
+def reviewed_sources(geometry: Path, input_path: Path, scf_maxiter: int, *, atom_mapping=None, job_type="sp") -> dict:
     parameters = CalculationParameters(scf_maxiter=scf_maxiter, timeout_seconds=120)
     geometry, input_path = geometry.resolve(strict=True), input_path.resolve(strict=True)
     if geometry.stat().st_size > 65536 or input_path.stat().st_size > 65536:
@@ -248,7 +286,7 @@ def reviewed_sources(geometry: Path, input_path: Path, scf_maxiter: int, *, atom
     # Whitespace/case can differ, but arbitrary input, hidden extra blocks and
     # implicit JSON/postprocessing controls cannot enter this acceptance helper.
     if input_path.read_text(encoding="utf-8").upper().split() != reference_input(
-            scf_maxiter).upper().split():
+            scf_maxiter, job_type=job_type).upper().split():
         raise ValueError("reference input differs from the frozen SP-only profile")
     atoms = validate_geometry(geometry.read_text(encoding="utf-8"), parameters)
     mapping = ["O", "H", "H"] if atom_mapping is None else atom_mapping
@@ -256,7 +294,8 @@ def reviewed_sources(geometry: Path, input_path: Path, scf_maxiter: int, *, atom
         raise ValueError("reference candidates require a reviewed water/methane atom mapping")
     if [atom[0] for atom in atoms] != mapping:
         raise ValueError("reference geometry differs from its frozen atom mapping")
-    return {"input_path": str(input_path), "input_sha256": sha256_file(input_path),
+    return {**({"job_type": job_type} if job_type != "sp" else {}),
+            "input_path": str(input_path), "input_sha256": sha256_file(input_path),
             "geometry_path": str(geometry), "geometry_sha256": sha256_file(geometry),
             "parameters": parameters.model_dump(mode="json"), "atom_mapping": mapping,
             "coordinate_unit": "angstrom"}
@@ -295,10 +334,17 @@ class BatchLedger:
         renewal = ledger.get("limits") == RENEWAL_LIMITS
         r3 = ledger.get("limits") == R3_LIMITS
         r4 = ledger.get("limits") == R4_LIMITS
+        cycle = ledger.get("limits") == CYCLE_LIMITS
+        cycle_formal = ledger.get("limit_authority", {}).get("approval_id") == CYCLE_FORMAL_APPROVAL_ID
         if ledger.get("schema_version") != 1 or (ledger.get("limits") != ACTIVE_LIMITS
-                and not legacy and not bounded and not renewal and not r3 and not r4):
+                and not legacy and not bounded and not renewal and not r3 and not r4 and not cycle and not cycle_formal):
             raise ReferenceBlocked("batch ledger schema/limits differ; explicit approved migration required")
-        if r4:
+        if cycle_formal:
+            from tests.helpers.phase_b_cycle_formal_amendment import validate_applied
+            validate_applied(ledger, self)
+        elif cycle:
+            self._validate_bounded_limit_authority(ledger, approval_id=CYCLE_APPROVAL_ID)
+        elif r4:
             self._validate_bounded_limit_authority(ledger, approval_id=R4_APPROVAL_ID)
         elif r3:
             self._validate_bounded_limit_authority(ledger, approval_id=R3_APPROVAL_ID)
@@ -318,7 +364,11 @@ class BatchLedger:
         return ledger
 
     def _validate_bounded_limit_authority(self, ledger: dict, *, approval_id: str = BOUNDED_APPROVAL_ID) -> None:
-        if approval_id == R4_APPROVAL_ID:
+        if approval_id == CYCLE_APPROVAL_ID:
+            cycle_approval()
+            approval_sha = CYCLE_APPROVAL_SHA256
+            previous, approved = R3_LIMITS, CYCLE_LIMITS
+        elif approval_id == R4_APPROVAL_ID:
             r4_approval()
             approval_sha = R4_APPROVAL_SHA256
             previous, approved = R3_LIMITS, R4_LIMITS
@@ -359,7 +409,7 @@ class BatchLedger:
                 or receipt.get("preserved_entry_counts") != {kind: len(before.get(kind, {}))
                     for kind in ("entries", "model_records", "agent_science")}):
             raise ReferenceBlocked("bounded budget approval or baseline accounting differs")
-        if approval_id == R4_APPROVAL_ID:
+        if approval_id in {CYCLE_APPROVAL_ID, R4_APPROVAL_ID}:
             self._validate_bounded_limit_authority(before, approval_id=R3_APPROVAL_ID)
         elif approval_id == R3_APPROVAL_ID:
             self._validate_bounded_limit_authority(before, approval_id=RENEWAL_APPROVAL_ID)
@@ -558,6 +608,10 @@ class BatchLedger:
                         or existing["sources"]["parameters"] != sources["parameters"]):
                     raise ReferenceBlocked("stable id cannot change category, input, geometry or parameters")
                 return self._validated_receipt(existing, check_evidence=True), False
+            cycle_binding = {}
+            if is_cycle_ledger(ledger):
+                from tests.helpers.phase_b_repair_cycle import guard_reference_reservation
+                cycle_binding = guard_reference_reservation(ledger, reference_id, category, sources)
             for other_id, entry in ledger["entries"].items():
                 if entry["fingerprint"] != fingerprint:
                     continue
@@ -578,7 +632,7 @@ class BatchLedger:
             if (counts[category] >= ledger["limits"]["orca_starts"][category]
                     or len(entries) >= ledger["limits"]["orca_starts"]["total"]):
                 raise ReferenceBlocked("frozen batch ORCA reservation limit exhausted")
-            entry = {"id": reference_id, "category": category, "fingerprint": fingerprint,
+            entry = {**cycle_binding, "id": reference_id, "category": category, "fingerprint": fingerprint,
                      "sources": sources, "reserved_at": utc_now().isoformat(),
                      "state": "reserved", "run_id": None, "orca_starts_reserved": 1,
                      "orca_starts_actual": None, "execution_uncertain": True}
@@ -659,9 +713,63 @@ def independent_output(path: Path) -> dict:
     return result
 
 
+def independent_optimization_output(path: Path, geometry: Path, atom_mapping) -> dict:
+    """Bind strict final-stage raw convergence, energy and XYZ without OPI/parser."""
+    raw = independent_output(path)
+    result = {**raw, "status": "unverified", "optimization_rule": "independent-final-opt-1"}
+    if raw["status"] != "converged" or not geometry.is_file() or geometry.stat().st_size > 65536:
+        return result
+    text = path.read_bytes().decode("utf-8")
+    final = text.rfind("FINAL ENERGY EVALUATION AT THE STATIONARY POINT")
+    convergence = text.rfind("THE OPTIMIZATION HAS CONVERGED")
+    table = text.rfind("Geometry convergence")
+    if not 0 <= table < convergence < final:
+        return result
+    # The last strict table must describe the last optimization stage. Later
+    # unconverged/restarted stages cannot borrow an earlier HURRAY or XYZ.
+    last_scf = text.rfind("SCF CONVERGED AFTER")
+    last_energy = text.rfind("FINAL SINGLE POINT ENERGY")
+    if not final < last_scf < last_energy or re.search(
+            r"GEOMETRY OPTIMIZATION CYCLE|Geometry convergence|SCF NOT CONVERGED", text[final:]):
+        return result
+    limits = {"Energy change": 1e-6, "RMS gradient": 3e-5, "MAX gradient": 1e-4,
+              "RMS step": 6e-4, "MAX step": 1e-3}
+    rows = {}
+    for name, limit in limits.items():
+        matches = list(re.finditer(re.escape(name) + r"\s+([-+0-9.eE]+)\s+([-+0-9.eE]+)\s+(YES|NO)",
+                                   text[table:convergence]))
+        if len(matches) != 1:
+            return result
+        match = matches[0]
+        value, tolerance = float(match[1]), float(match[2])
+        if not math.isfinite(value) or not 0 < tolerance <= limit or abs(value) > tolerance or match[3] != "YES":
+            return result
+        rows[name] = {"value": value, "tolerance": tolerance}
+    coordinates = re.search(r"CARTESIAN COORDINATES \(ANGSTROEM\)\s*\n-+\s*\n(.*?)\n\s*\n",
+                            text[final:last_scf], re.S)
+    if coordinates is None:
+        return result
+    printed = [row.split() for row in coordinates[1].splitlines() if row.strip()]
+    actual = validate_geometry(geometry.read_text(encoding="utf-8"), CalculationParameters())
+    if ([row[0] for row in printed] != atom_mapping or [row[0] for row in actual] != atom_mapping
+            or any(len(row) != 4 for row in printed)):
+        return result
+    for row, atom in zip(printed, actual, strict=True):
+        for token, value in zip(row[1:], atom[1:], strict=True):
+            number = float(token)
+            mantissa, _, exponent = token.lower().partition("e")
+            quantum = 10.0 ** (int(exponent or "0") - len(mantissa.partition(".")[2]))
+            if not math.isfinite(number) or abs(number - value) > quantum / 2 + 8 * math.ulp(value):
+                return result
+    result.update(status="converged", final_stage_line=text[:final].count("\n") + 1,
+                  strict_convergence=rows, optimized_geometry_sha256=sha256_file(geometry),
+                  coordinate_unit="angstrom", atom_mapping=atom_mapping)
+    return result
+
+
 def _frozen_input(sources: dict):
     def prepare(workdir, geometry_path, parameters, tool_name):
-        if tool_name != "orca.sp" or parameters.model_dump(mode="json") != sources["parameters"]:
+        if tool_name != "orca." + sources.get("job_type", "sp") or parameters.model_dump(mode="json") != sources["parameters"]:
             raise ValueError("reference parameters changed after reservation")
         geometry_bytes = Path(geometry_path).read_bytes()
         input_bytes = Path(sources["input_path"]).read_bytes()
@@ -683,8 +791,8 @@ def _frozen_input(sources: dict):
 
 def execute_reference(reference_id: str, category: str, geometry: Path,
                       input_path: Path, scf_maxiter: int, *, atom_mapping=None,
-                      config: Config | None = None) -> dict:
-    sources = reviewed_sources(geometry, input_path, scf_maxiter, atom_mapping=atom_mapping)
+                      config: Config | None = None, job_type="sp") -> dict:
+    sources = reviewed_sources(geometry, input_path, scf_maxiter, atom_mapping=atom_mapping, job_type=job_type)
     ledger = BatchLedger()
     entry, fresh = ledger.reserve(reference_id, category, sources)
     if not fresh:
@@ -705,7 +813,7 @@ def execute_reference(reference_id: str, category: str, geometry: Path,
         atomic_write(spec_dir / "geometry.xyz", geometry_bytes, immutable=True)
         spec = {"description": f"B-01 independent reference {reference_id}; acceptance only",
                 "geometry": "geometry.xyz",
-                "steps": [{"name": "reference", "tool": "orca.sp", "parameters": sources["parameters"]}],
+                "steps": [{"name": "reference", "tool": "orca." + job_type, "parameters": sources["parameters"]}],
                 "goals": [{"name": "energy", "step": "reference", "port": "energy"}],
                 "budget": {"attempts_per_step": 1, "orca_starts": 1, "extra_orca_starts": 0,
                            "postprocess_starts": 0, "run_seconds": 180}}
@@ -733,7 +841,8 @@ def execute_reference(reference_id: str, category: str, geometry: Path,
         receipt["execution_uncertain"] = outcome["state"] == "unknown"
         if (directory / "job.2jsonout").exists() or outcome.get("postprocess_starts_detected", 0):
             raise ValueError("reference unexpectedly invoked forbidden JSON postprocessing")
-        independent = independent_output(directory / "stdout.out")
+        independent = (independent_optimization_output(directory / "stdout.out", directory / "job.xyz",
+                       sources["atom_mapping"]) if job_type == "opt" else independent_output(directory / "stdout.out"))
         receipt["independent_output"] = independent
         usage = outcome.get("resource_usage", {})
         resources_passed = (usage.get("cores") == 4 and usage.get("job_commit_limit_bytes") == 1073741824
@@ -742,7 +851,7 @@ def execute_reference(reference_id: str, category: str, geometry: Path,
         receipt["resources_passed"] = resources_passed
         receipt["reference_verified"] = bool(resources_passed and (
             (outcome["state"] == "completed" and independent["status"] == "converged")
-            or (outcome["state"] == "failed" and outcome.get("reason") == "nonzero_exit_code"
+            or (job_type == "sp" and outcome["state"] == "failed" and outcome.get("reason") == "nonzero_exit_code"
                 and independent["status"] == "scf_not_converged")))
     except Exception as exc:
         # Do not copy arbitrary exception strings/environment content into evidence.

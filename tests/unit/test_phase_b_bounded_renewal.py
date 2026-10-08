@@ -42,7 +42,7 @@ def test_renewal_proposal_is_unapproved_and_preserves_exact_old_scope(tmp_path, 
 
 
 @pytest.mark.parametrize("operation", ["apply", "freeze", "model", "resolve", "prepare", "reference", "science"])
-@pytest.mark.parametrize("label", [package.LABEL, R2, R3])
+@pytest.mark.parametrize("label", [package.LABEL, R2, R3, R4])
 def test_old_package_is_closed_despite_original_approval(tmp_path, monkeypatch, operation, label):
     monkeypatch.setattr(package, "ROOT", tmp_path / "old")
     monkeypatch.setattr(package, "RENEWAL_ROOT", tmp_path / "r2")
@@ -69,6 +69,8 @@ def test_low_level_entry_cannot_bypass_closed_or_unapproved_package(tmp_path, mo
 
 @pytest.mark.parametrize("changed", ["variant", "repetition", "category", "profile", "resume"])
 def test_renewal_rejects_extra_identity_and_resume_before_approval(changed, monkeypatch):
+    # Test the archived shape guard independently from its new permanent close.
+    monkeypatch.setattr(package, "_assert_open", lambda label: None if label == R4 else OPEN_GUARD(label))
     options = {"variant": package.MODEL_SLOTS[0], "repetition": 1, "category": "development",
                "package": R4, "model_profile": "disabled", "resume": False}
     key, value = {"variant": ("variant", "V-01/success"), "repetition": ("repetition", 2),
@@ -157,6 +159,9 @@ def test_renewal_approval_cannot_rewrite_history_or_expand_scope(renewal_approve
 
 @pytest.fixture
 def candidate(tmp_path, monkeypatch):
+    # Exercise the archived operator's invariants with an explicit synthetic
+    # bypass; production r4 remains closed at every entry point.
+    monkeypatch.setattr(package, "_assert_open", lambda label: None if label == R4 else OPEN_GUARD(label))
     root = tmp_path / "r4"
     monkeypatch.setattr(package, "R4_ROOT", root)
     monkeypatch.setattr(models, "ROOT", tmp_path / "evaluations")
@@ -236,7 +241,7 @@ def test_unknown_model_cost_in_new_package_stops_other_slots(tmp_path, monkeypat
     assert observed == ["new-unknown-run"]
 
 
-@pytest.mark.parametrize("label", [package.LABEL, R2, R3])
+@pytest.mark.parametrize("label", [package.LABEL, R2, R3, R4])
 def test_old_regrade_remains_read_only_after_package_closure(tmp_path, monkeypatch, label):
     monkeypatch.setattr(models, "ROOT", tmp_path / "evaluations")
     variant = package.MODEL_SLOTS[1]

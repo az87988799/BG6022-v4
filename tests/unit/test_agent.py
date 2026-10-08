@@ -25,9 +25,10 @@ from orca_agent.store import Store
 class ScriptedTransport:
     """Synthetic replies, with actual pre-send reservation and settlement callbacks."""
 
-    def __init__(self, *scripts, after_reserve=None):
+    def __init__(self, *scripts, after_reserve=None, terminal_contract=True):
         self.scripts = list(scripts)
         self.after_reserve = after_reserve
+        self.terminal_contract = terminal_contract
         self.sent = []
         self.tickets = []
 
@@ -48,6 +49,18 @@ class ScriptedTransport:
             "action": "stop", "parameters": {"reason": "scripted stop"},
             **values,
         }
+        if (self.terminal_contract and proposal["action"] == "stop"
+                and data["AUTHORITY"].get("contract_required")
+                and set(proposal["parameters"]) <= {"reason"}):
+            # Migrate successful *synthetic* scripts to the advertised contract.
+            # Adversarial tests opt out or provide an explicit invalid delivery;
+            # no actual model response is ever changed or repaired here.
+            snapshot = data["DATA"]["delivery"]
+            proposal["parameters"]["delivery"] = {"version": snapshot["version"], "snapshot_ref": "current",
+                "goal_explanations": [{"goal_ref": goal["ref"], "fact_refs": goal["required_fact_refs"],
+                    "explanation_ref": goal["explanation_refs"][0],
+                    "blocker_refs": goal["required_blocker_refs"], "next_action_ref": goal["next_action_refs"][0]}
+                    for goal in snapshot["goals"]]}
         reply = ModelReply(request_hash=prepared.request_hash, proposal=proposal,
                            usage=ModelUsage(prompt_tokens=50, completion_tokens=25, total_tokens=75),
                            response_hash=fingerprint(proposal), response_model="offline-fake",

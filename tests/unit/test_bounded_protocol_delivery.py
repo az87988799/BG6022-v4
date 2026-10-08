@@ -156,7 +156,11 @@ def test_context_and_report_share_actual_observation_answer_and_unknown_unit(tmp
     facts = collect_goal_facts(store, completed, request, plan)
     results = [store.load_result(completed.id, identifier) for identifier in completed.result_ids]
     projected = payload(build_context(request, completed, plan, results=results, feedback={"goal_facts": facts}))
-    assert projected["DATA"]["goal_facts"] == build_report(store, completed)["goal_facts"] == facts
+    assert build_report(store, completed)["goal_facts"] == facts
+    import copy
+    expected = copy.deepcopy(facts)
+    expected[0]["answer"]["observation"]["source"]["imported_from"] = "[path redacted; use registered reference]"
+    assert projected["DATA"]["goal_facts"] == expected
     answer = facts[0]["answer"]
     assert answer["observation"]["value"] == 1 and answer["unit"] is None
     assert answer["scientific_qualification"] is False and facts[0]["goal_complete"]

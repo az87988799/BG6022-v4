@@ -229,6 +229,10 @@ def test_tampered_metadata_and_wrong_review_are_rejected(driver, tmp_path):
 def test_default_cli_lists_frozen_ids_without_creating_state(driver, capsys):
     assert driver.main([]) == 0
     output = json.loads(capsys.readouterr().out)
-    assert len(output["variants"]) == 37 and output["http_executed"] is False
+    assert len(output["variants"]) == 40 and output["http_executed"] is False
+    assert len(driver.cases.fixed_variant_ids()) == 25
     assert set(driver.cases.fixed_variant_ids()) < set(output["variants"])
+    assert set(driver.cases.sampling_intent_variant_ids(real_model_only=True)) <= set(output["variants"])
+    assert not (set(driver.cases.sampling_intent_variant_ids())
+                - set(driver.cases.sampling_intent_variant_ids(real_model_only=True))) & set(output["variants"])
     assert not driver.ROOT.exists()
