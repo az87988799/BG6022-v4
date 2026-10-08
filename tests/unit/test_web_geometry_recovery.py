@@ -10,7 +10,6 @@ from test_text_entry import text_environment
 
 from orca_agent import agent
 from orca_agent.context import _correction_instruction, _output_instruction
-from orca_agent.models import Proposal
 from orca_agent.natural import initialize_text
 from orca_agent.semantic import action_parameters
 from orca_agent.tools.registry import get_tool
@@ -38,6 +37,8 @@ def test_saved_web_failure_corrects_without_user_xyz_or_execution(tmp_path):
     updated, _, _ = agent._decision(store, run, None, {}, transport, None, None)
     request = store.load_request(updated)
     rejection = transport.sent[1]["CONTROL"]["validation_error"]
+    assert all(isinstance(sent["PROPOSAL_SCHEMA"]["properties"]["parameters"], dict)
+               for sent in transport.sent)
     assert rejection["requirement"]["inapplicable_notice_choices"] == ["missing_geometry"]
     assert "remove the missing_geometry sentence" in _correction_instruction({"validation_error": rejection})
     assert request.normalization_status == "normalized"
@@ -63,7 +64,7 @@ def test_prepare_contract_names_the_opi_acquisition_path(tmp_path, name):
 
 def test_output_envelope_lists_native_fields_without_transport_wrapper():
     instruction = _output_instruction(intake=True)
-    assert all(name in instruction for name in Proposal.model_fields)
+    assert "native JSON per PROPOSAL_SCHEMA" in instruction
     assert "never response fields" in instruction
 
 

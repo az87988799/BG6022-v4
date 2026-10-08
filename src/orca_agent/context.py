@@ -35,7 +35,7 @@ from orca_agent.proposals import (
 from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v28"
+PROMPT_VERSION = "agent-json-v29"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -1408,8 +1408,7 @@ def _output_instruction(*, intake=False):
     if not intake:
         return (f"{len(Proposal.model_fields)} root JSON keys per PROPOSAL_SCHEMA; "
                 "no type/response_format.")
-    return (f"{len(Proposal.model_fields)} root JSON keys: {','.join(Proposal.model_fields)}. "
-            "Emit their values per PROPOSAL_SCHEMA; type/response_format are API options, never response fields.")
+    return "Emit native JSON per PROPOSAL_SCHEMA; API type/response_format are never response fields."
 
 
 def _correction_instruction(feedback):
@@ -1419,17 +1418,15 @@ def _correction_instruction(feedback):
     if isinstance(requirements, dict):
         if "missing_geometry" in requirements.get("inapplicable_notice_choices", []):
             return (" Correction: remove the missing_geometry sentence from parameters.notices. "
-                    "If geometry_source=prepare, later OPI preparation supplies XYZ. "
-                    "Preserve grounded conditions and goal; use schema array/object types, no extra root fields.")
+                    "prepare means OPI supplies XYZ; preserve conditions/goal.")
         requirements = requirements.get("errors", [])
     if isinstance(requirements, list) and any(isinstance(item, dict)
             and item.get("type") == "extra_forbidden" for item in requirements):
         return " extra_forbidden:remove field at loc."
     if isinstance(requirements, list) and any(isinstance(item, dict)
             and item.get("type") in {"list_type", "dict_type"} for item in requirements):
-        return (" Correction: at each validation_error loc, list_type requires a JSON array [], "
-                "dict_type requires a JSON object {}. Do not substitute null. "
-                "For minimum_evidence emit rule IDs as strings in an array, not the rule registry.")
+        return (" Correction at loc: list_type requires a JSON array []; dict_type requires a JSON object {}. "
+                "minimum_evidence=[rule IDs as strings], not registry objects.")
     return ""
 
 
@@ -2047,6 +2044,14 @@ def build_context(
                 if profiles:
                     template["DATA"]["projection_rules"] += " profile_ref=check_profiles."
         wire = _share_strings(template, share_lists=bool(delivery_snapshot)) if compact else template
+        if compact and semantic_intake and observation_bytes != 256:
+            # Intake emits several nested arrays and objects. Keep their JSON
+            # Schema native; column/pool encodings made the live model confuse
+            # lists with dictionaries. Only the remaining context is pooled.
+            wire = _share_strings({key: value for key, value in template.items()
+                                   if key not in {"PROPOSAL_SCHEMA", "SCHEMA_COLUMNS"}},
+                                  share_lists=bool(delivery_snapshot))
+            wire["PROPOSAL_SCHEMA"] = proposal_schema
         wire = {**wire, "RESPONSE_ENVELOPE": envelope}
         request_prompt = system_prompt
         if compact and delivery_snapshot:
