@@ -15,8 +15,15 @@ def create_text(store, config, text, *, submission_id=None):
     """Persist an intake key before work; an uncertain intake never silently repeats."""
     if not isinstance(text, str) or not text.strip() or len(text.encode("utf-8")) > 8192:
         raise StoreError("text must contain 1 to 8192 UTF-8 bytes")
+    if not config.text.enabled or not config.text.permission.model_execution:
+        raise StoreError("new text requests require the explicitly enabled local text profile")
+    return _create_once(store, text, submission_id,
+                        lambda: natural.initialize_text(store, config, text))
+
+
+def _create_once(store, text, submission_id, initialize):
     if submission_id is None:
-        return natural.initialize_text(store, config, text), True
+        return initialize(), True
     _id(submission_id)
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     relative = f"sessions/{submission_id}.json"
@@ -28,14 +35,77 @@ def create_text(store, config, text, *, submission_id=None):
             if not entry.get("run_id"):
                 raise StoreError("interrupted intake requires review; it cannot be submitted twice")
             return store.load_run(entry["run_id"]), False
-        if not config.text.enabled or not config.text.permission.model_execution:
-            raise StoreError("new text requests require the explicitly enabled local text profile")
         entry = {"text_sha256": digest, "run_id": None,
                  "created_at": utc_now().isoformat(), "message_source": "run_control"}
         store._write_json(relative, entry)
-        run = natural.initialize_text(store, config, text)
+        run = initialize()
         store._write_json(relative, {**entry, "run_id": run.id})
         return run, True
+
+
+WATER_SP_TEXT = "直接计算水分子初始几何的单点电子能：气相 RHF/STO-3G，中性单重态；OPI 准备结构。"
+
+
+def create_water_sp(store, config, *, submission_id):
+    """An explicit structured preset, using the existing deterministic loop strategy."""
+    from orca_agent.models import (
+        BudgetLimits,
+        EvidenceRef,
+        Goal,
+        InputRef,
+        OutputBinding,
+        Plan,
+        Request,
+        Step,
+        SystemInput,
+        new_id,
+    )
+
+    def initialize():
+        permission = config.text.permission.model_copy(deep=True)
+        required = {"structure.resolve", "structure.prepare", "orca.sp"}
+        if (not config.text.enabled or not required.issubset(permission.allowed_tools)
+                or not all((permission.scientific_execution, permission.artifact_writes,
+                            permission.external_identity_queries, permission.geometry_preparation))):
+            raise StoreError("water preset requires the enabled local scientific input profile")
+        permission.model_execution = False
+        permission.allowed_tools = sorted(required)
+        permission.allow_additional_science = False
+        message_id = new_id("message")
+        evidence = {"message_id": message_id, "text_basis": WATER_SP_TEXT}
+        identity = {"canonical_names": ["water"]}
+        conditions = {"method": "HF", "basis": "STO-3G", "charge": 0, "multiplicity": 1,
+                      "electronic_state": "RHF", "environment": "gas_phase"}
+        request = Request(original_text=WATER_SP_TEXT,
+            conditions={**conditions, "explain_results": False},
+            conditions_source={key: "explicit" for key in conditions},
+            messages=[{"id": message_id, "text": WATER_SP_TEXT, "source": "user",
+                       "created_at": utc_now().isoformat(), "request_version": 1}],
+            systems=[SystemInput(id="water", label="water", geometry_source="prepare",
+                                 identity=identity)],
+            goals=[Goal(id="goal_energy", port="energy", minimum_check_version="orca-hf-2",
+                        original_text=WATER_SP_TEXT, identity=identity, text_evidence=evidence,
+                        system_ids=["water"], conditions={"geometry_relation": "fixed_initial"})])
+        plan = Plan(request_id=request.id, steps=[
+            Step(id="resolve", logical_id="resolve", tool="structure.resolve", system_id="water",
+                 parameters={"system_id": "water"}),
+            Step(id="prepare", logical_id="prepare", tool="structure.prepare", system_id="water",
+                 parameters={"system_id": "water", "charge": 0, "multiplicity": 1},
+                 depends_on=["resolve"], inputs={"identity": EvidenceRef(
+                     producer_step_id="resolve", port="resolved_identity")}),
+            Step(id="science", logical_id="science", tool="orca.sp", system_id="water",
+                 depends_on=["prepare"], geometry=InputRef(
+                     producer_step_id="prepare", port="prepared_geometry"))],
+            goal_map={"goal_energy": OutputBinding(step_id="science", port="energy")})
+        configured = config.text.budget
+        budget = BudgetLimits(attempts_per_step=1, orca_starts=min(1, configured.orca_starts),
+            extra_orca_starts=0, run_seconds=min(900, configured.run_seconds),
+            identity_queries=min(1, configured.identity_queries),
+            structure_preparations=min(1, configured.structure_preparations))
+        return store.create_run(request, plan, permission, budget,
+                                science_baseline_policy="first_science_plan")
+
+    return _create_once(store, WATER_SP_TEXT, submission_id, initialize)
 
 
 def message(store, run_id, text, *, update=None, message_id=None):

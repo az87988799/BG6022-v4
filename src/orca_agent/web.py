@@ -28,6 +28,10 @@ class Submission(Record):
     submission_id: Identifier
 
 
+class PresetSubmission(Record):
+    submission_id: Identifier
+
+
 class Message(Record):
     text: Annotated[str, Field(strict=True, min_length=1, max_length=8192)]
     message_id: Identifier
@@ -202,7 +206,7 @@ def create_app(config, *, store=None, port=8765):
                 "budget": config.text.budget.model_dump(mode="json"),
                 "scope": "H₂O / CH₄ · RHF/STO-3G · SP / 严格优化",
                 "limitations": ["偶极矩合格输出、普通知识问答与联网检索尚未开放。",
-                                "本页面为局部交付，完整网页真实计算验收尚未完成。"]}
+                                "水分子直接计算使用明确预设；自然语言自由规划仍在修复中。"]}
 
     @app.get("/api/runs")
     def runs(offset: int = 0, limit: int = 40):
@@ -230,6 +234,20 @@ def create_app(config, *, store=None, port=8765):
             run, created = entrypoints.create_text(store, config, body.text,
                                                    submission_id=body.submission_id)
             # Replayed HTTP POST never resumes a paused/failed/completed Run.
+            try:
+                started = coordinator.start(run.id, resume=False) if created else False
+            except (StoreError, Timeout):
+                return {"run_id": run.id, "created": created, "started": False,
+                        "start_error": "任务已保存；当前协调者忙碌。请稍后显式继续。"}
+            return {"run_id": run.id, "created": created, "started": started}
+
+    @app.post("/api/presets/water-sp", status_code=202)
+    def water_sp(body: PresetSubmission):
+        with coordinator.lock:
+            if coordinator.closing:
+                raise StoreError("service is shutting down")
+            run, created = entrypoints.create_water_sp(store, config,
+                                                       submission_id=body.submission_id)
             try:
                 started = coordinator.start(run.id, resume=False) if created else False
             except (StoreError, Timeout):

@@ -2069,7 +2069,7 @@ def build_context(
                 if profiles:
                     template["DATA"]["projection_rules"] += " profile_ref=check_profiles."
         wire = _share_strings(template, share_lists=bool(delivery_snapshot)) if compact else template
-        if compact and not semantic_intake and plan is None and any(
+        if compact and observation_bytes != 256 and not semantic_intake and plan is None and any(
                 system.geometry_source == "prepare" for system in request.systems):
             # Tool names, argument names and resource limits must remain directly
             # readable when constructing the input chain, not column indices.
@@ -2085,7 +2085,7 @@ def build_context(
                                    if key not in {"PROPOSAL_SCHEMA", "SCHEMA_COLUMNS"}},
                                   share_lists=bool(delivery_snapshot))
             wire["PROPOSAL_SCHEMA"] = proposal_schema
-        if not semantic_intake and plan is None and (input_examples := _input_step_examples(request, catalog)):
+        if observation_bytes != 256 and not semantic_intake and plan is None and (input_examples := _input_step_examples(request, catalog)):
             # These small native objects need no bespoke column decoder. Values
             # come from the current Request and required names from the Tool.
             wire["INPUT_STEP_EXAMPLES"] = input_examples
