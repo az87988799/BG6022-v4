@@ -49,8 +49,11 @@ class ResolveParameters(Record):
 
 class PrepareParameters(Record):
     system_id: Identifier
-    charge: ElectronicInteger
-    multiplicity: Annotated[ElectronicInteger, Field(ge=1)]
+    # The currently enabled preparation capability supports neutral singlets
+    # only. Preflight still requires these values to match confirmed Request
+    # conditions; defaults never resolve an unknown user charge or spin.
+    charge: ElectronicInteger = 0
+    multiplicity: Annotated[ElectronicInteger, Field(ge=1)] = 1
 
 
 def _json_bytes(value):

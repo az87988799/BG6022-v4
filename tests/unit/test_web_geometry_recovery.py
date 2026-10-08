@@ -91,3 +91,38 @@ def test_prepare_catalog_exposes_actual_consumption_key_and_required_arguments(t
     assert tool["check_contract"]["input_ports"] == {"identity": "resolved_identity"}
     assert schemas[tool["parameter_schema"]]["required"] == get_tool("structure.prepare").parameter_schema["required"]
     assert not run.calls and store.load_request(run).normalization_status == "normalized"
+
+
+def test_native_input_examples_copy_request_and_tool_contract_without_execution(tmp_path):
+    from test_structure_input_chain import intake
+
+    from orca_agent.context import _input_step_examples, _tools
+
+    store, run = intake(tmp_path)
+    request = store.load_request(run)
+    catalog, _ = _tools(run, run.permission.allowed_tools)
+    examples = _input_step_examples(request, catalog)
+    prepare = next(item for item in examples if item["tool"] == "structure.prepare")
+    assert prepare["parameters"] == {"system_id": "water", "charge": 0, "multiplicity": 1}
+    assert prepare["inputs"]["identity"]["port"] == "resolved_identity"
+    assert not run.calls and not run.attempts
+    assert not _input_step_examples(request.model_copy(update={"systems": []}), catalog)
+
+
+def test_prepare_defaults_do_not_resolve_unknown_request_conditions(tmp_path):
+    from test_structure_input_chain import intake
+
+    from orca_agent.tools.structure import PrepareParameters, validate_call_inputs
+
+    store, run = intake(tmp_path)
+    parameters = PrepareParameters(system_id="water").model_dump()
+    assert parameters == {"system_id": "water", "charge": 0, "multiplicity": 1}
+    request = store.load_request(run)
+    request.charge = None
+    request.conditions.pop("charge", None)
+    request.systems[0].conditions["charge"] = None
+    # Read-only test projection: neither the request archive nor permission changes.
+    from unittest.mock import patch
+    with patch.object(store, "load_request", return_value=request):
+        with pytest.raises(ValueError, match="confirmed neutral singlet"):
+            validate_call_inputs(store, run, parameters, "structure.prepare")

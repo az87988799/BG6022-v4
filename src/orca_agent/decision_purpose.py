@@ -13,7 +13,7 @@ from orca_agent.applicability import CONDITION_FIELDS, effective_conditions
 # Keep older recorded requests readable without silently upgrading their contract.
 DECISION_CONTRACT_PROMPT_VERSIONS = frozenset({
     "agent-json-v22", "agent-json-v23", "agent-json-v24", "agent-json-v25", "agent-json-v26", "agent-json-v27",
-    "agent-json-v28", "agent-json-v29"})
+    "agent-json-v28", "agent-json-v29", "agent-json-v30"})
 
 
 @dataclass(frozen=True)

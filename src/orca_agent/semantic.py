@@ -136,6 +136,7 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
     contract = {"normalize_request": {
         "instruction": "Ports/rules:minimum_evidence_rules; queries:query_schemas[port]; [] keeps basic checks. "
         "minimum_evidence=[rule ID strings], not registry objects. Empty arrays=[]; empty objects={}, not null. "
+        "Omit unused optional fields instead of filling placeholders. replaces is an array of old Goal IDs. "
         "Lexicon lists canonical values; quote original user wording. environment=gas/solvent; electronic_state=RHF/UHF. "
         "Keep unknown/unsupported and explain_results; unknown/inferred belong in conditions/system_conditions. "
         "Energy needs energy Goal, not key/reason/geometry; fixed_initial=SP, optimized=after Opt. "
@@ -152,7 +153,6 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
                           "ports": sorted({port for tool in catalog() if "execute_orca" in tool["effects"]
                                            for port in tool["output_ports"]})},
         "questions_policy": (
-        "Identity/geometry/capability/permission are separate. "
             "For explicit registration-only, disclose scope and geometry limits via notices, "
             "without asking for resources/confirmation. Copy each applicable notice_choices sentence once. "
             "Otherwise ask only critical gaps; new gaps need a question or notice. Preserve explicit choices. "
@@ -169,10 +169,10 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
             "source": "default", "default_rule": "local-hf-1", "values": request.semantic_defaults}
     if request and (text_input or any(system.geometry_source == "prepare" for system in request.systems)):
         contract["normalize_request"]["input_acquisition"] = (
-            "geometry_source=prepare: structure.resolve supplies identity/SMILES, then structure.prepare via OPI supplies XYZ. "
-            "Null geometry is NOT missing:geometry; omit missing_geometry, do not ask for XYZ or invent artifacts. "
-            "Keep system_refs. Permission still gates execution. Unknown/unsupported stay unresolved. "
-            "Ask SP vs Opt only if geometry relation absent (ambiguous_geometry_relation).")
+            "geometry_source=prepare: structure.resolve obtains SMILES; structure.prepare via OPI supplies XYZ. "
+            "Null XYZ is NOT missing:geometry; omit missing_geometry; no user XYZ or invented artifacts. "
+            "Keep system_refs. Permission still gates execution. Unknown/unsupported unresolved; "
+            "ask SP vs Opt only when absent (ambiguous_geometry_relation).")
     if (set(allowed_tools) & {"analysis.finite_sampling", "analysis.sampling_check"}
             or request and any(g.port in {"sampling", "sampling_check"} for g in request.goals)):
         contract["normalize_request"]["sampling_intent"] = (

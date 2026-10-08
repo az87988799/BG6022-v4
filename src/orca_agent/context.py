@@ -35,7 +35,7 @@ from orca_agent.proposals import (
 from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v29"
+PROMPT_VERSION = "agent-json-v30"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -966,6 +966,31 @@ def _tools(run: Run, relevant_tools: Sequence[str]) -> tuple[list[dict], dict]:
     return catalog, schemas
 
 
+def _input_step_examples(request, catalog):
+    """Copy grounded arguments into Tool-owned shapes; never choose a Plan."""
+    if len(request.systems) != 1 or request.systems[0].geometry_source != "prepare":
+        return []
+    system = request.systems[0]
+    known = {**effective_conditions(request, system_id=system.id)["conditions"], "system_id": system.id}
+    examples = []
+    for entry in catalog:
+        tool = get_tool(entry["name"])
+        if "write_input_artifact" not in tool.effects:
+            continue
+        required = tool.parameter_schema.get("required", [])
+        if any(key not in known or known[key] is None for key in required):
+            continue
+        example = {"tool": tool.name, "system_id": system.id,
+                   "parameters": {key: known[key] for key in tool.parameter_schema.get("properties", {})
+                                  if key in known and known[key] is not None}}
+        ports = tool.check_contract.get("input_ports", {})
+        if ports:
+            example["inputs"] = {role: {"producer_key": "<producer Step.key>", "port": port}
+                                 for role, port in ports.items()}
+        examples.append(example)
+    return examples
+
+
 def _action_examples(request, run, plan, catalog, final_only, control):
     """JSON parameter objects, never JSON encoded inside action-name strings."""
     if final_only:
@@ -1417,8 +1442,7 @@ def _correction_instruction(feedback):
     requirements = error.get("requirement", []) if isinstance(error, dict) else []
     if isinstance(requirements, dict):
         if "missing_geometry" in requirements.get("inapplicable_notice_choices", []):
-            return (" Correction: remove the missing_geometry sentence from parameters.notices. "
-                    "prepare means OPI supplies XYZ; preserve conditions/goal.")
+            return " Correction: remove the missing_geometry sentence from parameters.notices; prepare supplies XYZ."
         requirements = requirements.get("errors", [])
     if isinstance(requirements, list) and any(isinstance(item, dict)
             and item.get("type") == "extra_forbidden" for item in requirements):
@@ -2052,6 +2076,10 @@ def build_context(
                                    if key not in {"PROPOSAL_SCHEMA", "SCHEMA_COLUMNS"}},
                                   share_lists=bool(delivery_snapshot))
             wire["PROPOSAL_SCHEMA"] = proposal_schema
+        if not semantic_intake and plan is None and (input_examples := _input_step_examples(request, catalog)):
+            # These small native objects need no bespoke column decoder. Values
+            # come from the current Request and required names from the Tool.
+            wire["INPUT_STEP_EXAMPLES"] = input_examples
         wire = {**wire, "RESPONSE_ENVELOPE": envelope}
         request_prompt = system_prompt
         if compact and delivery_snapshot:
