@@ -157,13 +157,15 @@ for _name, _schema, _port, _version, _effect, _counter, _check in (
         description=("Resolve one named water/methane identity using bounded official PubChem evidence."
                      if _effect == "query_external_identity" else
                      "Prepare one initial XYZ with locked OPI from identity input; not optimized geometry."),
-        input_roles=["requested_identity"] if _effect == "query_external_identity" else ["resolved_identity"],
+        input_roles=["requested_identity"] if _effect == "query_external_identity" else ["identity"],
         output_ports=[_port], observation_outputs=["input_preparation"],
         effects=[_effect, "write_input_artifact"], max_cores=PREPARE_CORES if _effect == "prepare_geometry" else 0,
         max_memory_mb=PREPARE_MEMORY_MB if _effect == "prepare_geometry" else 0,
         check_version=_version, required_input_checks=({"resolved_identity": IDENTITY_RULE}
                                                       if _effect == "prepare_geometry" else {}),
         check_contract={"required_checks": {_port: [_check]},
+                        **({"input_ports": {"identity": "resolved_identity"}}
+                           if _effect == "prepare_geometry" else {}),
                         "max_seconds": PREPARE_TIMEOUT_SECONDS if _effect == "prepare_geometry" else 62,
                         "max_output_bytes": 65536 if _effect == "prepare_geometry" else 262144},
         implementation="orca_agent.tools.structure." + ("resolve" if _effect == "query_external_identity" else "prepare"),

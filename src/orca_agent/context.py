@@ -35,7 +35,7 @@ from orca_agent.proposals import (
 from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v27"
+PROMPT_VERSION = "agent-json-v28"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -949,6 +949,12 @@ def _tools(run: Run, relevant_tools: Sequence[str]) -> tuple[list[dict], dict]:
         }
         if name in selected:
             schema = _schema(tool.parameter_schema)
+            # Keep required argument names visible. Replacing the entire list
+            # with minProperties is equivalent JSON Schema but easy for a model
+            # to misread as optional Tool parameters when planning new Steps.
+            if "required" in tool.parameter_schema and "minProperties" in schema:
+                schema["required"] = tool.parameter_schema["required"]
+                schema.pop("minProperties")
             schema_id = schema_ids.setdefault(_hash(schema), f"p{len(schema_ids)}")
             entry["parameter_schema"] = schema_id
             schemas[schema_id] = schema
@@ -1894,6 +1900,14 @@ def build_context(
         proposal_schema = _compact_planning_schema(_exhaustive_action_schema(proposal_schema))
         if set(examples) & {"initial_plan", "revise_plan"}:
             system_prompt += " Plan schema=structure; Step/evidence contents checked separately."
+            if plan is None and any(system.geometry_source == "prepare" for system in request.systems):
+                system_prompt += (
+                    " Create the Plan with action=initial_plan, never call_tool with steps. "
+                    "Copy every Tool's required parameter, including known charge/multiplicity. "
+                    "Bind each consumer's required input explicitly: Step.inputs[role]={producer_key,port}; "
+                    "geometry input uses Step.geometry={producer_key,port}. "
+                    "Use actual producer output_ports. Listing ordered steps alone does not bind outputs. "
+                    "Use initial_plan again when correcting an unaccepted initial plan.")
     template = {
         "PROPOSAL_SCHEMA": proposal_schema,
         "ACTION_PARAMETERS": examples,

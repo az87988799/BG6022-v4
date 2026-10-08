@@ -13,6 +13,7 @@ from orca_agent.context import _correction_instruction, _output_instruction
 from orca_agent.models import Proposal
 from orca_agent.natural import initialize_text
 from orca_agent.semantic import action_parameters
+from orca_agent.tools.registry import get_tool
 
 EVIDENCE = Path(__file__).resolve().parents[2] / "docs/acceptance/local-web/live-demo.json"
 
@@ -75,3 +76,17 @@ def test_container_errors_have_actionable_correction_without_copying_bad_values(
     assert "list_type requires a JSON array []" in correction
     assert "dict_type requires a JSON object {}" in correction
     assert "rule IDs as strings" in correction
+
+
+def test_prepare_catalog_exposes_actual_consumption_key_and_required_arguments(tmp_path):
+    from test_structure_input_chain import intake
+
+    from orca_agent.context import _tools
+
+    store, run = intake(tmp_path)
+    catalog, schemas = _tools(run, ["structure.prepare"])
+    tool = next(tool for tool in catalog if tool["name"] == "structure.prepare")
+    assert tool["input_roles"] == ["identity"]
+    assert tool["check_contract"]["input_ports"] == {"identity": "resolved_identity"}
+    assert schemas[tool["parameter_schema"]]["required"] == get_tool("structure.prepare").parameter_schema["required"]
+    assert not run.calls and store.load_request(run).normalization_status == "normalized"
