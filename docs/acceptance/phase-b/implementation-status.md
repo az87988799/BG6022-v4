@@ -13,7 +13,7 @@
 - v24 按[决定 0022](../../decisions/0022-registration-notices-and-goal-targets.md)修复有限登记告知、目标路由互斥类型、目标几何缺项以及有界上下文呈现。源码 `84f42ac` 的[干净验证](../repair-cycle-offline-v24/report.md)为 **2919 passed、202 skipped、0 failed**，Ruff 通过；此前失败与提前停止记录保留。
 - [第三开发候选](../repair-cycle-development-3/report.md)在同一 v24 源码上通过 N06 登记与 V06 预算不足交付，随后 V07 查询失败：第二答混用调用形状、将效果名当工具名并漏数组索引。实际只有一次字段发现，没有最终模型回答。**2 通过、1 失败、10 未运行**；候选已关闭，科学验证和正式矩阵不能据此准入。
 - v25 按[决定 0023](../../decisions/0023-grounded-query-call-choices.md)修补实际调用枚举与复制例子，并使投影选择考虑未来交付预留，复用既有紧凑表示。生产修补的新原答反例、原额度四调用查询链及相关合同的[定向验证](../repair-cycle-v25-targeted/report.md)共 **132 passed**，该截点 Ruff 通过；这是离线证据，最终干净全量按最新要求集中到修复末尾执行。
-- [第四候选的固定转拨工具](../../decisions/0024-fixed-development-transfer.md)已实现并通过独立静态审查，原 scope 和累计限额不变。专用测试会话在用户中断期间结束，未取回最终结果；后补的必要负例尚未运行，不计为通过。[具体提案](../../reviews/2026-10-08-repair-cycle-development-4-amendment.md)仍待批准，未应用、未冻结、未发送新真实请求。
+- [第四候选的固定转拨工具](../../decisions/0024-fixed-development-transfer.md)已实现并通过独立静态审查，原 scope 和累计限额不变。首次专用测试会话未取回最终结果，不计为通过；用户批准后完成[4 项关键守卫定向检查](../repair-cycle-development-4-safety/report.md)，全部通过，未运行全量。[固定转拨已获实际批准](budget-approval-repair-cycle-development-4-20261008.json)并应用到同一账本，正在准备冻结与真实门禁；新增额度仅为原分项之间的固定转拨。
 
 仍需完成：v25 干净离线验证；获具体批准后的新源码冻结及同一候选全部 13 个真实模型门槛；分层输入和水/甲烷各三条科学轨迹；两体系各三条自主纯文本 E2E；原 C 与实际触发才执行的条件 D；完整正式矩阵和独立 E2E 重复。正式核心覆盖为 76 变体 / 228 槽，另列 6 条 E2E；覆盖映射不是执行结果，旧候选两项通过不能搬到新候选。
 
