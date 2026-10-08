@@ -35,7 +35,7 @@ from orca_agent.proposals import (
 from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v30"
+PROMPT_VERSION = "agent-json-v31"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -975,14 +975,15 @@ def _input_step_examples(request, catalog):
     examples = []
     for entry in catalog:
         tool = get_tool(entry["name"])
-        if "write_input_artifact" not in tool.effects:
+        if not set(tool.effects) & {"write_input_artifact", "execute_orca"}:
             continue
         required = tool.parameter_schema.get("required", [])
         if any(key not in known or known[key] is None for key in required):
             continue
         example = {"tool": tool.name, "system_id": system.id,
-                   "parameters": {key: known[key] for key in tool.parameter_schema.get("properties", {})
-                                  if key in known and known[key] is not None}}
+                   "parameters": {key: known[key] if key in known and known[key] is not None else field["default"]
+                                  for key, field in tool.parameter_schema.get("properties", {}).items()
+                                  if key in known and known[key] is not None or "default" in field}}
         ports = tool.check_contract.get("input_ports", {})
         if ports:
             example["inputs"] = {role: {"producer_key": "<producer Step.key>", "port": port}
@@ -2068,6 +2069,14 @@ def build_context(
                 if profiles:
                     template["DATA"]["projection_rules"] += " profile_ref=check_profiles."
         wire = _share_strings(template, share_lists=bool(delivery_snapshot)) if compact else template
+        if compact and not semantic_intake and plan is None and any(
+                system.geometry_source == "prepare" for system in request.systems):
+            # Tool names, argument names and resource limits must remain directly
+            # readable when constructing the input chain, not column indices.
+            native_keys = {"TOOL_CATALOG", "PARAMETER_SCHEMAS"}
+            wire = _share_strings({key: value for key, value in template.items() if key not in native_keys},
+                                  share_lists=bool(delivery_snapshot))
+            wire.update({key: template[key] for key in native_keys})
         if compact and semantic_intake and observation_bytes != 256:
             # Intake emits several nested arrays and objects. Keep their JSON
             # Schema native; column/pool encodings made the live model confuse
