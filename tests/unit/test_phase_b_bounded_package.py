@@ -34,10 +34,10 @@ def test_proposal_is_read_only_and_all_fixed_allocations_add_up(tmp_path, monkey
 @pytest.mark.parametrize("operation", ["apply", "freeze", "model", "resolve", "prepare", "reference", "science"])
 def test_unapproved_package_cannot_execute_even_with_live_switches(tmp_path, monkeypatch, operation):
     monkeypatch.setattr(package, "ROOT", tmp_path / "package")
-    monkeypatch.setattr(package, "R3_ROOT", tmp_path / "renewal")
-    monkeypatch.setattr(package.reference, "R3_APPROVAL_SHA256", None)
+    monkeypatch.setattr(package, "R4_ROOT", tmp_path / "renewal")
+    monkeypatch.setattr(package.reference, "R4_APPROVAL_SHA256", None)
     with pytest.raises(budget.ReferenceBlocked, match="explicit human approval"):
-        package.main([operation, "--package", package.R3_LABEL, "--execute", "--live-model", "--live-orca", "--live-network", "--live-opi",
+        package.main([operation, "--package", package.R4_LABEL, "--execute", "--live-model", "--live-orca", "--live-network", "--live-opi",
                       "--system", "water", "--repetition", "1", "--variant", package.DIAGNOSTICS[0]])
     assert not list(tmp_path.rglob("run.json"))
 

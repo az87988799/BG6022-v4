@@ -90,7 +90,8 @@ def r3_approved(renewal_approved, tmp_path, monkeypatch):
     book.reserve_model(run, r2_item)
     bind_model(store, run, r2_item)
     settle_model(book, store, run, r2_item, prompt=2974, completion=1282)
-    monkeypatch.setattr(package, "_assert_open", OPEN_GUARD)
+    # Audit only the synthetic historical sixth amendment; live r3 stays closed.
+    monkeypatch.setattr(package, "_assert_open", lambda label: None if label == R3 else OPEN_GUARD(label))
     path = tmp_path / "synthetic-r3-approval.json"
     value = {"approval_id": package.reference.R3_APPROVAL_ID, "status": "user_approved",
         "previous_limits": package.reference.RENEWAL_LIMITS, "approved_limits": package.reference.R3_LIMITS,
@@ -175,17 +176,17 @@ def test_sixth_authority_recursively_rejects_loss_of_historical_cost(r3_approved
         book.snapshot()
 
 
-def test_old_candidate_and_passes_cannot_supply_r3_prior_gate(candidate, monkeypatch):
+def test_old_candidate_and_passes_cannot_supply_current_prior_gate(candidate, monkeypatch):
     root, _, record = candidate
-    for label in (package.LABEL, package.RENEWAL_LABEL):
+    for label in (package.LABEL, package.RENEWAL_LABEL, R3):
         old_slot = models._slot(package.MODEL_SLOTS[0], 1, "development", label)
         package._save(old_slot / "metadata.json", {"bounded_candidate_sha256": sha256_file(root / "candidate.json")})
         package._save(old_slot / "grade.json", {"status": "passed"})
-    monkeypatch.setattr(models, "regrade", lambda *_, **__: pytest.fail("old package pass cannot qualify r3"))
+    monkeypatch.setattr(models, "regrade", lambda *_, **__: pytest.fail("old package pass cannot qualify r4"))
     with pytest.raises(FileNotFoundError):
-        package.guard_model_slot(package.MODEL_SLOTS[1], 1, category="development", package=R3, model_profile="disabled")
+        package.guard_model_slot(package.MODEL_SLOTS[1], 1, category="development", package=package.R4_LABEL, model_profile="disabled")
     old_record = copy.deepcopy(record)
     old_record["scope"] = package.scope(package=package.RENEWAL_LABEL)
     package.reference._save(root / "candidate.json", old_record)
     with pytest.raises(package.reference.ReferenceBlocked, match="candidate"):
-        package.guard_model_slot(package.MODEL_SLOTS[0], 1, category="development", package=R3, model_profile="disabled")
+        package.guard_model_slot(package.MODEL_SLOTS[0], 1, category="development", package=package.R4_LABEL, model_profile="disabled")
