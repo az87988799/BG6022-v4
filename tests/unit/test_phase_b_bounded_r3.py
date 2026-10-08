@@ -1,4 +1,4 @@
-"""One disabled r3 package and synthetic sixth amendment; no external calls."""
+"""Pinned r3 approval and synthetic sixth amendment guards; no external calls."""
 
 import copy
 import json
@@ -25,6 +25,8 @@ R3 = package.R3_LABEL
 
 
 def test_r3_proposal_has_no_authority_and_retains_both_historical_scopes(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(package.reference, "R3_APPROVAL_SHA256", None)
+    monkeypatch.setattr(package.reference, "R3_APPROVAL", tmp_path / "missing-approval.json")
     assert package.reference.R3_APPROVAL_SHA256 is None
     assert not package.reference.R3_APPROVAL.exists()
     for label, path in ((package.LABEL, package.reference.BOUNDED_APPROVAL),
@@ -54,6 +56,28 @@ def test_r3_proposal_has_no_authority_and_retains_both_historical_scopes(tmp_pat
     }
     assert scope["reference_id"] == "bounded-20261008-r3-methane-prepared-sp"
     assert not list(tmp_path.iterdir())
+
+
+def test_recorded_r3_approval_binds_exact_user_statement_proposal_and_fixed_scope():
+    value = package.reference.r3_approval()
+    assert value["user_statement"] == "批准，直至完成"
+    assert value["response_mode"] == "subsequent free-form user turn; not an option selection"
+    assert value["development_package"] == package.scope(package=R3)
+    assert value["previous_approval_id"] == package.reference.RENEWAL_APPROVAL_ID
+    assert value["previous_approval_sha256"] == package.reference.RENEWAL_APPROVAL_SHA256
+    assert value["decision_document_sha256"] == sha256_file(package.PROJECT / value["decision_document"])
+    assert value["approval_baseline"]["ledger_sha256"] == "822d08480b166cfd62183f7ba688052c6beca78562191fb44554f89664ec6d5d"
+    assert value["approval_baseline"]["model_http_requests"] == 321
+    assert value["approval_baseline"]["model_tokens"] == 1005807
+    assert value["application_status_at_recording"] == "not_applied"
+    assert value["execution_status_at_recording"] == "not_executed"
+    assert value["acceptance_status"] == "not_verified"
+    assert value["interpretation"] == {
+        "fixed_package_only": True,
+        "until_complete_does_not_expand_budget_or_slots": True,
+        "stop_on_any_failed_gate": True,
+        "automatic_retries_or_extra_packages_authorized": False,
+    }
 
 
 @pytest.fixture

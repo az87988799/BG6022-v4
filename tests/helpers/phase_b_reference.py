@@ -74,15 +74,15 @@ RENEWAL_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-bounded-20
 RENEWAL_APPROVAL_SHA256 = "97ba032010094862df3854e06e642e42b2872ba833b96f1a89c0f40c3e6b89b9"
 
 
-# Proposed next fixed package. No quota or execution is granted without a new
-# human approval record, its exact pin, and the existing ledger amendment.
+# Explicit human-approved fixed r3 package. Applying it still requires the
+# exact pinned record and an amendment to the existing cumulative ledger.
 R3_LIMITS = {
     "orca_starts": {"reference": 17, "formal": 48, "development": 54, "total": 119},
     "model": {"http_requests": 1121, "tokens": 6_893_807, "usd": 10},
 }
 R3_APPROVAL_ID = "bounded-gap-budget-20261008-r3"
 R3_APPROVAL = PROJECT / "docs/acceptance/phase-b/budget-approval-bounded-20261008-r3.json"
-R3_APPROVAL_SHA256 = None
+R3_APPROVAL_SHA256 = "428fa58791993d77055b70ce99249616051edd86eab2b89153bb0e737adf47d2"
 
 
 def r3_approval() -> dict:
