@@ -28,12 +28,13 @@ from orca_agent.models import Plan, Proposal, Request, Result, Run, utc_now
 from orca_agent.proposals import (
     action_parameter_schema,
     call_tool_instruction,
+    call_tool_parameter_shapes,
     call_tool_parameters_schema,
     plan_structure_schema,
 )
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v24"
+PROMPT_VERSION = "agent-json-v25"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -226,6 +227,10 @@ def _compact_planning_schema(schema):
                 removed.add(name)
                 return compact(definitions[name], (*ancestors, ref))
         output = {key: compact(value, ancestors) for key, value in node.items()}
+        if (output.get("type") == "string" and isinstance(output.get("enum"), list)
+                and output["enum"] and all(isinstance(value, str) for value in output["enum"])):
+            # A finite set of string literals already implies this type.
+            output.pop("type")
         alternatives = output.get("anyOf", [])
         # String-only constraints ignore null under JSON Schema semantics.
         if (set(output) == {"anyOf"} and len(alternatives) == 2
@@ -675,7 +680,7 @@ def _share_strings(value, *, share_lists=False, _compare_children=True):
             "version", "snapshot_ref", "action", "request_version", "plan_version",
             "permission_version", "control_generation")}
         return (kind in {"const", "c"} and protocol_field and scalar_literal(item)
-                or kind in {"enum", "e"} and path[-1:] == ("action",)
+                or kind in {"enum", "e"} and path[-1:] in {("action",), ("step_id",), ("tool",)}
                 and isinstance(item, list) and all(map(scalar_literal, item)))
     def protocol_literals(item, path):
         if isinstance(item, dict):
@@ -1345,7 +1350,7 @@ def _terminal_key_encoding(wire):
     collide with any existing key. This changes no contract constraints.
     """
     counts = {}
-    native = {("SHARED_STRINGS",), *(('AUTHORITY', key) for key in (
+    native = {("SHARED_STRINGS",), ("ACTION_PARAMETERS", "call_tool"), *(('AUTHORITY', key) for key in (
         "basis", "related_results", "decision_purpose", "contract_required", "delivery_snapshot_fingerprint",
         "goal_status"))}
     def count(value, path):
@@ -1778,6 +1783,18 @@ def build_context(
                           " Authorized defaults/inherited user settings need no prior scientific Result as proof.")
     control = {key: _safe(feedback[key]) for key in ("validation_error", "pending_step_ids")
                if feedback is not None and feedback.get(key) not in (None, [], {})}
+    if delivery_snapshot and isinstance(error := control.get("validation_error"), dict):
+        requirement = error.get("requirement")
+        for immediate_shape in (True, False):
+            if (error.get("category") == "ProposalError" and requirement == {
+                    "requirement": call_tool_instruction(immediate=immediate_shape),
+                    "path": ["parameters"],
+                    "allowed_shapes": call_tool_parameter_shapes(immediate=immediate_shape)}):
+                # The shapes are already in the schema and system instruction.
+                # Keep the path and complete disjoint shapes as the diagnostic;
+                # the original persisted rejection is never rewritten.
+                error["requirement"] = {key: value for key, value in requirement.items() if key != "requirement"}
+                break
     data_feedback = {key: value for key, value in (feedback or {}).items()
                      if key not in {"validation_error", "pending_step_ids", "allowed_repairs", "new_result_ids",
                                     "current_goal_use", "goal_facts", "delivery_snapshot"}}
@@ -1794,6 +1811,17 @@ def build_context(
         proposal_schema["properties"][key] = {"const": value}
     examples, references = _action_examples(request, run, plan, catalog, final_only, control)
     examples = action_parameters if action_parameters is not None else examples
+    readonly_feedback = bool(delivery_snapshot and plan and catalog and all(
+        tool["effects"] == ["read_registered_artifact"] for tool in catalog))
+    if readonly_feedback and "call_tool" in examples:
+        # Copy an existing ready Step; the display order follows the Request,
+        # never changes the Plan or expands the set of executable Steps.
+        pending = control.get("pending_step_ids", [])
+        for goal_id in request.conditions.get("user_query_sequence", []):
+            binding = plan.goal_map.get(goal_id)
+            if binding and binding.step_id in pending and run.goal_status.get(goal_id) != "satisfied":
+                examples["call_tool"] = {"step_id": binding.step_id}
+                break
     system_prompt = _terminal_prompt(system_prompt, examples)
     if unknown_scoped_condition and not final_only and "clarify" in examples:
         system_prompt += (" If unknown conditions block the goal, clarify; source evidence or execution permission "
@@ -1850,17 +1878,31 @@ def build_context(
         authority.update(contract_required=True, delivery_snapshot_fingerprint=delivery_snapshot["fingerprint"])
         examples = {**examples, "stop": _terminal_example(delivery_snapshot)}
         system_prompt += " Stop:done/no useful allowed work;delivery refs;reason=audit."
+    copyable_pending = False
     if "call_tool" in examples:
         proposal_schema["if"] = {"properties": {"action": {"const": "call_tool"}}}
         immediate = (run.usage.evidence_reads < run.budget.evidence_reads and
                      any(tool["effects"] == ["read_registered_artifact"] for tool in catalog))
-        proposal_schema["then"] = {"properties": {"parameters": call_tool_parameters_schema(immediate=immediate)}}
-        system_prompt += (" call_tool=Plan{step_id} only; match reason." +
-            (" Reader {tool,parameters}, tool=catalog.name, not effects." if immediate else "")
+        call_parameters = call_tool_parameters_schema(
+            immediate=immediate,
+            step_ids=control.get("pending_step_ids", []) if readonly_feedback else None,
+            tool_names=[tool["name"] for tool in catalog
+                        if tool["effects"] == ["read_registered_artifact"]] if readonly_feedback else None)
+        proposal_schema["then"] = {"properties": {"parameters": call_parameters}}
+        pending = control.get("pending_step_ids", [])
+        copyable_pending = bool(readonly_feedback and pending
+            and call_parameters.get("properties", {}).get("step_id", {}).get("enum") == pending
+            and examples["call_tool"] == {"step_id": examples["call_tool"].get("step_id")}
+            and examples["call_tool"]["step_id"] in pending)
+        system_prompt += (" call_tool:Step{step_id} only;no overrides." +
+            (" Reader{tool,parameters}:tool=catalog.name,not effects." if immediate else "")
             if delivery_snapshot else " " + call_tool_instruction(immediate=immediate))
+        if copyable_pending:
+            system_prompt += " Ready IDs=call_tool.step_id enum."
     if delivery_snapshot and purpose.kind == "planning":
         proposal_schema = _compact_planning_schema(_exhaustive_action_schema(proposal_schema))
-        system_prompt += " Plan schema=structure; Step/evidence contents checked separately."
+        if set(examples) & {"initial_plan", "revise_plan"}:
+            system_prompt += " Plan schema=structure; Step/evidence contents checked separately."
     template = {
         "PROPOSAL_SCHEMA": proposal_schema,
         "ACTION_PARAMETERS": examples,
@@ -1885,6 +1927,7 @@ def build_context(
     # Only large untrusted observations are replaceable by explicit hash/size
     # references. User originals, goals, uncertainty and qualified outputs stay.
     quotes_referenced = False
+    budget_rejected_prepared = None
     for observation_bytes, compact in ((1024, False), (1024, True), (256, True)):
         if compact and semantic_intake:
             template["PROPOSAL_SCHEMA"] = _schema_columns(proposal_schema)
@@ -1898,7 +1941,8 @@ def build_context(
                 # Examples need not repeat every schema branch. The allowed
                 # action enum and all strict parameter schemas stay unchanged.
                 template["ACTION_PARAMETERS"] = {key: examples[key] for key in ("call_tool", "stop") if key in examples}
-                template["PLAN_RULES"] = _PLAN_RULES + " All actions=schema."
+                if set(examples) & {"initial_plan", "revise_plan"}:
+                    template["PLAN_RULES"] = _PLAN_RULES + " All actions=schema."
             if delivery_snapshot:
                 if purpose.kind == "planning":
                     _planning_display_metadata(authority, run)
@@ -1922,7 +1966,8 @@ def build_context(
                 template["ACTION_PARAMETERS"] = {key: value for key, value in template["ACTION_PARAMETERS"].items()
                                                   if key not in {"stop", "clarify"}}
                 example = template["ACTION_PARAMETERS"].get("call_tool", {})
-                if (set(example) == {"step_id"} and example["step_id"] in control.get("pending_step_ids", [])):
+                if (not readonly_feedback and set(example) == {"step_id"}
+                        and example["step_id"] in control.get("pending_step_ids", [])):
                     # This exact ID and its frozen parameters are already in
                     # CONTROL/AUTHORITY. The action's strict schema is intact.
                     template["ACTION_PARAMETERS"].pop("call_tool")
@@ -2000,6 +2045,13 @@ def build_context(
         wire = {**wire, "RESPONSE_ENVELOPE": envelope}
         request_prompt = system_prompt
         if compact and delivery_snapshot:
+            if (copyable_pending and wire.get("CONTROL", {}).get("pending_step_ids")
+                    == control["pending_step_ids"]):
+                # The complete same IDs are native enum values and the chosen
+                # example is native too. Keep the input control and live ready
+                # set unchanged; omit only this third display copy.
+                wire["CONTROL"] = {key: value for key, value in wire["CONTROL"].items()
+                                   if key != "pending_step_ids"}
             wire.pop("RESPONSE_ENVELOPE")
             for key in ("CONTROL", "PARAMETER_SCHEMAS", "ACTION_PARAMETERS"):
                 if wire.get(key) == {}:
@@ -2023,7 +2075,8 @@ def build_context(
                 if '"delivery_fact_ref"' in _json(template["DATA"]):
                     request_prompt += " delivery_fact_ref=DATA.delivery.facts[ref].value[field/port]."
                 if {goal.id for goal in request.goals} == authority["goal_status"].keys():
-                    request_prompt += " Goal IDs=AUTHORITY.goal_status keys; gN/diagnostics are not IDs."
+                    request_prompt += (" Goal IDs=goal_status keys;gN=delivery refs." if readonly_feedback else
+                                       " Goal IDs=AUTHORITY.goal_status keys; gN/diagnostics are not IDs.")
                 else:
                     request_prompt += " Goal IDs=AUTHORITY.request.goals[].id."
                 if isinstance(authority["request"].get("condition_evidence"), list):
@@ -2064,6 +2117,20 @@ def build_context(
         if (prepared.input_token_bound > run.budget.input_tokens
                 or prepared.reserved_tokens > remaining_tokens):
             continue
+        if (delivery_snapshot and delivery_budget["required"]
+                and prepared.reserved_tokens + delivery_budget["future_answer_tokens"] > remaining_tokens):
+            # A candidate fitting the HTTP envelope can still crowd out the
+            # reserved final answer. Try the existing tighter projections
+            # before send_model correctly rejects its combined reservation.
+            if (budget_rejected_prepared is None
+                    or prepared.reserved_tokens < budget_rejected_prepared.reserved_tokens):
+                budget_rejected_prepared = prepared
+            continue
         return prepared
+    if budget_rejected_prepared is not None:
+        # Projection remains usable for read-only inspection. If no candidate
+        # can preserve the margin, the unchanged send guard rejects the best
+        # fitting candidate before reserving or transmitting any HTTP.
+        return budget_rejected_prepared
     raise ContextLimitError("required model context exceeds the 12000 global bound, Run input limit, "
                             "or remaining token reservation")

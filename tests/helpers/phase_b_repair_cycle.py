@@ -135,13 +135,15 @@ def _book():
     return budget.AcceptanceBudget(Store(reference.BATCH_ROOT / "reference"))
 
 
-def _state(ledger):
+def _state(ledger, *, allow_development_pending=False):
     _, reference, _ = _parts()
     if not reference.is_cycle_ledger(ledger):
         _fail("cycle limits have not been applied")
     if ledger.get("limit_authority", {}).get("approval_id") == reference.CYCLE_FORMAL_APPROVAL_ID:
         from tests.helpers.phase_b_cycle_formal_amendment import validate_applied
         validate_applied(ledger, reference.BatchLedger())
+    from tests.helpers.phase_b_development_amendment import validate_if_present
+    validate_if_present(ledger, reference.BatchLedger(), allow_pending=allow_development_pending)
     value = ledger.get("repair_cycle")
     initial = {"scope_sha256": _digest(scope()), "candidates": {}, "slots": {},
                "activities": {}, "activity_settlements": {}, "outcomes": {}, "reconciliations": {}}
@@ -183,14 +185,16 @@ def _publish(book, ledger, kind, key, value):
 
 
 def candidate_label(kind, number):
-    limit = 3 if kind == "development" else 2 if kind == "formal" else 0
+    # A representable label is not execution authority; admission below checks
+    # the separately applied D4 extension before any freeze or reservation.
+    limit = 4 if kind == "development" else 2 if kind == "formal" else 0
     if type(number) is not int or not 1 <= number <= limit:
         _fail("candidate outside adopted finite cycle")
     return f"{CYCLE_ID}-{kind}-{number}"
 
 
 def parse_candidate(label):
-    match = re.fullmatch(re.escape(CYCLE_ID) + r"-(development|formal)-([1-3])", label)
+    match = re.fullmatch(re.escape(CYCLE_ID) + r"-(development|formal)-([1-4])", label)
     if not match or candidate_label(match[1], int(match[2])) != label:
         _fail("unknown repair-cycle candidate label")
     return match[1], int(match[2])
@@ -238,6 +242,15 @@ def _allowed_slot(allocation, slot_id):
 
 
 def _validate_manifest(kind, number, manifest, *, ledger=None):
+    from tests.helpers.phase_b_development_amendment import allocations
+    from tests.helpers.phase_b_cycle_formal_amendment import allocations as original_allocations
+    maxima = allocations(ledger) if ledger is not None else original_allocations({})
+    if kind == "development" and number == 4:
+        from tests.helpers.phase_b_development_amendment import fourth_authorized
+        fourth_authorized(ledger)
+        if ledger is None:
+            _, reference, _ = _parts()
+            maxima = allocations(reference.BatchLedger().snapshot())
     if not isinstance(manifest, dict) or not manifest.get("slots"):
         _fail("cycle freeze requires its generated nonempty manifest")
     if kind == "formal":
@@ -246,7 +259,7 @@ def _validate_manifest(kind, number, manifest, *, ledger=None):
             _fail("formal cycle freeze requires its exact complete matrix adapter manifest")
     for key, row in manifest["slots"].items():
         allocation, slot_id = key.split("/", 1)
-        if allocation not in ALLOCATIONS or (kind == "formal") != allocation.startswith("formal-"):
+        if allocation not in maxima or (kind == "formal") != allocation.startswith("formal-"):
             _fail("manifest contains wrong candidate allocation")
         _allowed_slot(allocation, slot_id)
         if allocation.startswith("gates-") and allocation != f"gates-{number}":
@@ -259,8 +272,7 @@ def _validate_manifest(kind, number, manifest, *, ledger=None):
     for key, row in (model_manifest(number)["slots"].items() if kind == "development" else []):
         if manifest["slots"].get(key) != row:
             _fail("candidate manifest must contain all exact current model gates")
-    from tests.helpers.phase_b_cycle_formal_amendment import allocations, validate_applied
-    maxima = allocations(ledger or {})
+    from tests.helpers.phase_b_cycle_formal_amendment import validate_applied
     if kind == "formal" and ledger and ledger.get("limit_authority", {}).get("approval_id") == "repair-cycle-formal-budget-20261008":
         _, reference, _ = _parts()
         approved = validate_applied(ledger, reference.BatchLedger())
@@ -281,6 +293,9 @@ def freeze_candidate(kind, number, *, manifest, repair_evidence=None):
     label = candidate_label(kind, number)
     book = _book()
     _, reference, _ = _parts()
+    # Admission precedes source/runtime probes as well as any publication.
+    from tests.helpers.phase_b_development_amendment import assert_open
+    assert_open(book.snapshot(), label)
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=reference.PROJECT, text=True).strip():
         _fail("cycle freeze needs a clean committed candidate")
     _validate_manifest(kind, number, manifest, ledger=book.snapshot() if kind == "formal" else None)
@@ -311,6 +326,8 @@ def freeze_candidate(kind, number, *, manifest, repair_evidence=None):
     with book.ledger._lock():
         ledger = book._snapshot_unlocked()
         state = _state(ledger)
+        from tests.helpers.phase_b_development_amendment import assert_open
+        assert_open(ledger, label)
         _no_unknown(ledger, state)
         if label in state["candidates"]:
             saved = _candidate(state, label)
@@ -528,7 +545,7 @@ def bind_slot(candidate, allocation, slot_id, *, declared, dependencies,
     """Reserve full slot allowances once; originals retain all model/ORCA costs."""
     book = _book()
     _, reference, _ = _parts()
-    if allocation not in ALLOCATIONS or not re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", slot_id):
+    if allocation not in {*ALLOCATIONS, "gates-4"} or not re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", slot_id):
         _fail("unknown cycle allocation or unsafe slot identity")
     _allowed_slot(allocation, slot_id)
     if set(declared) != set(DIMENSIONS):
@@ -562,6 +579,8 @@ def bind_slot(candidate, allocation, slot_id, *, declared, dependencies,
     with book.ledger._lock():
         ledger = book._snapshot_unlocked()
         state = _state(ledger)
+        from tests.helpers.phase_b_development_amendment import assert_open
+        assert_open(ledger, candidate)
         frozen = _candidate(state, candidate)
         if allocation in {"conditional-d", "targeted-repair"} and not frozen.get("repair_evidence"):
             _fail("conditional repair allocation requires an actual repaired candidate")
@@ -578,7 +597,7 @@ def bind_slot(candidate, allocation, slot_id, *, declared, dependencies,
             if any((run is not None and s.get("run_id") == run.id)
                    or (reference_id and s.get("reference_id") == reference_id) for s in state["slots"].values()):
                 _fail("existing Run/reference cannot be moved or repeated across cycle slots")
-            from tests.helpers.phase_b_cycle_formal_amendment import allocations
+            from tests.helpers.phase_b_development_amendment import allocations
             ceiling = allocations(ledger)[allocation]
             for dimension, maximum in ceiling.items():
                 used = sum(s["declared"][dimension] for s in state["slots"].values() if s["allocation"] == allocation)
@@ -596,6 +615,8 @@ def _slot_guard(ledger, owner=None, reference_id=None):
     if len(matches) != 1:
         _fail("new cycle execution needs exactly one frozen slot; unbound low-level call rejected")
     slot = matches[0]
+    from tests.helpers.phase_b_development_amendment import assert_open
+    assert_open(ledger, slot["candidate"])
     _candidate(state, slot["candidate"])
     _dependencies(state, slot["candidate"], slot["dependencies"],
                   scientific=bool(sum(slot["declared"][k] for k in ("reference", "development", "formal"))))
@@ -667,6 +688,8 @@ def activity(slot, *, seconds, segment="complete"):
     with book.ledger._lock():
         ledger = book._snapshot_unlocked()
         state = _state(ledger)
+        from tests.helpers.phase_b_development_amendment import assert_open
+        assert_open(ledger, slot["candidate"])
         _no_unknown(ledger, state)
         if key in state["activities"]:
             _fail("slot activity already consumed; reconcile rather than repeat")
@@ -797,7 +820,7 @@ def model_manifest(number):
                         tokens=case["budget"]["model_tokens_total"])
         slots[f"gates-{number}/{variant.replace('/', '__')}"] = {
             "declared": declared, "dependencies": model_dependencies(variant)}
-    maxima = dict(zip(DIMENSIONS, ALLOCATIONS[f"gates-{number}"], strict=True))
+    maxima = dict(zip(DIMENSIONS, ALLOCATIONS[f"gates-{min(number, 3)}"], strict=True))
     if any(sum(s["declared"][d] for s in slots.values()) > maxima[d] for d in DIMENSIONS):
         _fail("current model manifest exceeds the adopted per-candidate allocation")
     return {"schema_version": 1, "slots": slots}
@@ -814,6 +837,8 @@ def guard_model_slot(variant, repetition, *, category, candidate, model_profile,
     with book.ledger._lock():
         ledger = book._snapshot_unlocked()
         state = _state(ledger)
+        from tests.helpers.phase_b_development_amendment import assert_open
+        assert_open(ledger, candidate)
         frozen = _candidate(state, candidate)
         _no_unknown(ledger, state)
         allocation, slot_id = model_slot_identity(candidate, variant, repetition)

@@ -1,0 +1,427 @@
+{
+  "variant_id": "V-07/array-location",
+  "repetition": 1,
+  "run_id": "run_4bb14d8c266a4168851b0f6fc2fac49e",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "all_proposal_facts_passed": false,
+  "semantic_review_passed": false,
+  "instructions": "Review actual persisted model text independently; quote exact text. Do not infer a pass from fixture expectations.",
+  "behavior": {},
+  "explanation": {
+    "quantity": {
+      "passed": null,
+      "quote": "",
+      "rationale": "No accepted terminal response exists. The accepted initial_plan and rejected call_tool are not final answers; the deterministic fallback report is not model text.",
+      "status": "not_verified"
+    },
+    "unit": {
+      "passed": null,
+      "quote": "",
+      "rationale": "No accepted terminal response exists. The accepted initial_plan and rejected call_tool are not final answers; the deterministic fallback report is not model text.",
+      "status": "not_verified"
+    },
+    "conditions": {
+      "passed": null,
+      "quote": "",
+      "rationale": "No accepted terminal response exists. The accepted initial_plan and rejected call_tool are not final answers; the deterministic fallback report is not model text.",
+      "status": "not_verified"
+    },
+    "source": {
+      "passed": null,
+      "quote": "",
+      "rationale": "No accepted terminal response exists. The accepted initial_plan and rejected call_tool are not final answers; the deterministic fallback report is not model text.",
+      "status": "not_verified"
+    },
+    "limits": {
+      "passed": null,
+      "quote": "",
+      "rationale": "No accepted terminal response exists. The accepted initial_plan and rejected call_tool are not final answers; the deterministic fallback report is not model text.",
+      "status": "not_verified"
+    },
+    "next_action": {
+      "passed": null,
+      "quote": "",
+      "rationale": "No accepted terminal response exists. The accepted initial_plan and rejected call_tool are not final answers; the deterministic fallback report is not model text.",
+      "status": "not_verified"
+    }
+  },
+  "audit": {
+    "review_kind": "independent_actual_trajectory_review",
+    "reviewed_at": "2026-10-08T13:27:27.329196+00:00",
+    "verdict": "failed",
+    "candidate": "repair-cycle-20261008-development-3",
+    "candidate_sha256": "9ed3e45d6c6ddcf32b84a55ec0fcef2328b3ceff9a67975fc1cfc653c4b3bb0a",
+    "source_commit": "84f42aca55378bbe5c24be3d0e753ff262c07b46",
+    "prompt_version": "agent-json-v24",
+    "failure_classification_recommendation": {
+      "failure_kind": "ordinary",
+      "affected_dependencies": [
+        "protocol",
+        "query",
+        "budget",
+        "terminal_delivery"
+      ],
+      "rationale": "The actual planning feedback response violates the existing call union and misreads query/Goal references; after rejection the known-cost Run stops at its delivery-reservation budget guard. No unknown cost, source conflict or scientific process is observed. Root operator owns final outcome classification."
+    },
+    "first_pass": {
+      "http_requests": 2,
+      "accepted_proposals": 1,
+      "accepted_actions": [
+        "initial_plan"
+      ],
+      "rejected_proposals": 1,
+      "rejected_actions": [
+        "call_tool"
+      ],
+      "accepted_final_responses": 0,
+      "correction_http_requests": 0,
+      "transport_failures": 0,
+      "interpretation": "First planning proposal was accepted; the following feedback proposal failed. This is not a successful full trajectory or final delivery."
+    },
+    "all_proposal_review": [
+      {
+        "model_id": "model_a52457620ea64b2594dc5f79571a9f7e",
+        "accepted": true,
+        "action": "initial_plan",
+        "facts_passed": true,
+        "semantics_passed": true,
+        "reason": "Three goals require read-only evidence from the registered artifact: discover its field structure, then read the dipole moment magnitude of the first geometry and the first geometry slice. Plan uses only allowed read-only tools (evidence.discover, evidence.value) with no recomputation.",
+        "parameters": {
+          "steps": [
+            {
+              "key": "s1",
+              "tool": "evidence.discover",
+              "parameters": {
+                "artifact_id": "artifact_100dee5859854330a5129e82e0ce43bd"
+              }
+            },
+            {
+              "key": "s2",
+              "tool": "evidence.value",
+              "parameters": {
+                "artifact_id": "artifact_100dee5859854330a5129e82e0ce43bd",
+                "path": [
+                  {
+                    "kind": "key",
+                    "key": "Geometries"
+                  },
+                  {
+                    "kind": "index",
+                    "index": 0
+                  },
+                  {
+                    "kind": "key",
+                    "key": "Dipole_Moment"
+                  },
+                  {
+                    "kind": "index",
+                    "index": 0
+                  },
+                  {
+                    "kind": "key",
+                    "key": "dipoleMagnitude"
+                  }
+                ]
+              }
+            },
+            {
+              "key": "s3",
+              "tool": "evidence.value",
+              "parameters": {
+                "artifact_id": "artifact_100dee5859854330a5129e82e0ce43bd",
+                "path": [
+                  {
+                    "kind": "key",
+                    "key": "Geometries"
+                  },
+                  {
+                    "kind": "slice",
+                    "start": 0,
+                    "stop": 1
+                  }
+                ]
+              }
+            }
+          ],
+          "goal_map": {
+            "raw_field_discovery": {
+              "step_key": "s1",
+              "port": "content_index"
+            },
+            "raw_field_observation": {
+              "step_key": "s2",
+              "port": "value_observation"
+            },
+            "raw_geometry_slice": {
+              "step_key": "s3",
+              "port": "value_observation"
+            }
+          }
+        },
+        "rationale": "The initial Plan preserves all three current Goal IDs/ports and the registered artifact. It includes the exact five-part dipole path with both array indices and a separate Geometries slice 0:1. Only permitted discovery/value readers are proposed, with no fabricated value/unit or scientific qualification. Step list order alone is not credited as executed query-sequence compliance; the original sequence remains authoritative.",
+        "raw_content_sha256": "3e1a549a79ef07f38d0c64c875f55e1108e092a7e514d732060679187587003c"
+      },
+      {
+        "model_id": "model_2985348009964fb48028f71f8d687991",
+        "accepted": false,
+        "action": "call_tool",
+        "facts_passed": false,
+        "semantics_passed": false,
+        "reason": "Goal raw_field_discovery is satisfied (f6/f7 show the property JSON top-level keys). Goal raw_field_observation (g2) is insufficient: the read only returned the object's top-level entries (Calculation_Info, Calculation_Status, Calculation_Timings, Geometries) with no values, so the first-geometry dipoleMagnitude value, units, and validation status are still unobserved. Next step: read the registered artifact along the path Geometries[0].Dipole_Moment.dipoleMagnitude to obtain the raw value and its location.",
+        "parameters": {
+          "step_id": "step_9a3e07da3ff94e66a4225e5a40f380a0",
+          "tool": "read_registered_artifact",
+          "parameters": {
+            "artifact_id": "artifact_100dee5859854330a5129e82e0ce43bd",
+            "path": [
+              {
+                "key": "Geometries",
+                "kind": "key"
+              },
+              {
+                "index": 0,
+                "kind": "index"
+              },
+              {
+                "key": "Dipole_Moment",
+                "kind": "key"
+              },
+              {
+                "key": "dipoleMagnitude",
+                "kind": "key"
+              }
+            ]
+          }
+        },
+        "errors": [
+          {
+            "kind": "protocol",
+            "quote": "\"step_id\": \"step_9a3e07da3ff94e66a4225e5a40f380a0\"",
+            "location": "proposal.parameters",
+            "rationale": "Actual parameters also include tool and parameters. Sent schema permits exactly step_id alone or tool+parameters, not all three. This was the program-recorded rejection."
+          },
+          {
+            "kind": "tool_identity",
+            "quote": "read_registered_artifact",
+            "rationale": "This is a declared effect, not a callable catalog Tool. The actual Tool is evidence.value; the sent system prompt explicitly forbids using effects as tool names."
+          },
+          {
+            "kind": "wrong_array_location",
+            "quote": "Geometries[0].Dipole_Moment.dipoleMagnitude",
+            "rationale": "Both the prose and attempted inline path omit Dipole_Moment[0]. The original Request, immutable Plan and sent feedback show the necessary second index; the raw source has a Dipole_Moment array."
+          },
+          {
+            "kind": "wrong_goal_reference",
+            "quote": "Goal raw_field_observation (g2) is insufficient",
+            "rationale": "The actual sent delivery map binds g1 to raw_field_observation and g2 to the satisfied raw_field_discovery. The named observation Goal is unmet, but its claimed ref g2 is false."
+          },
+          {
+            "kind": "query_sequence",
+            "quote": "Next step: read the registered artifact along the path",
+            "rationale": "The selected persisted Step is raw_field_observation while raw_geometry_slice is still unmet. The actual Request requires discovery, then slice, then field observation. No authorized Plan revision changes that sequence."
+          }
+        ],
+        "preserved_correct_parts": [
+          "Discovery is satisfied and its returned top-level key list is correctly described.",
+          "No numeric dipole value, unit, scientific-success claim or new science permission was invented."
+        ],
+        "raw_content_sha256": "0a03d0288341dde9b1011efb5d177c1701e65476ead1dc04c69cc9ba2d426712"
+      }
+    ],
+    "termination": {
+      "recorded_state": "budget_exhausted",
+      "diagnostics": [
+        {
+          "category": "proposal_rejected",
+          "model_id": "model_2985348009964fb48028f71f8d687991",
+          "error_category": "ProposalError"
+        },
+        {
+          "category": "BudgetExceeded",
+          "message": "required final explanation lacks remaining call/token/decision/time budget",
+          "environment_occupied": false
+        }
+      ],
+      "rejection_requirement": {
+        "requirement": "call_tool Plan Step={step_id} only; no inline params; match reason. Or {tool,parameters} for an immediate reader; tool=catalog.name, never effects.",
+        "path": [
+          "parameters"
+        ],
+        "allowed_shapes": [
+          [
+            "step_id"
+          ],
+          [
+            "tool",
+            "parameters"
+          ]
+        ]
+      },
+      "causal_order": [
+        "Initial Plan accepted and one bounded evidence.discover call completed.",
+        "Feedback proposal rejected for invalid call_tool parameter shape.",
+        "No correction HTTP was sent; final-explanation budget reservation guard raised BudgetExceeded.",
+        "Run published deterministic partial fallback, not accepted model terminal delivery."
+      ],
+      "capacity_evidence": {
+        "sent_input_bounds": [
+          8261,
+          11359
+        ],
+        "per_request_input_limit": 12000,
+        "output_bound": 2000,
+        "remaining_model_calls": 2,
+        "remaining_tokens": 25303,
+        "future_terminal_reserve_tokens": 12000,
+        "interpretation": "Both transmitted requests fit the input envelope (8261 and 11359). The stop is explicitly a call/token/decision/time margin BudgetExceeded, not a recorded ContextLimitError. The unsent correction PreparedRequest is not persisted here, so this review does not invent its exact token bound or identify an input-size overflow."
+      }
+    },
+    "query_evidence": {
+      "call_count": 1,
+      "tool": "evidence.discover",
+      "read_operation": "completed",
+      "source_integrity": "verified by exact current original/imported-byte hashes",
+      "returned_top_level_keys": [
+        "Calculation_Info",
+        "Calculation_Status",
+        "Calculation_Timings",
+        "Geometries"
+      ],
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "entries",
+          "start": 0,
+          "stop": 40
+        },
+        "returned": {
+          "kind": "entries",
+          "start": 0,
+          "stop": 4
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "units": null,
+      "scientific_status": "unverified",
+      "geometry_indices": [],
+      "typed_index_or_slice_executed": false,
+      "qualified_scientific_outputs": {},
+      "raw_reference": {
+        "path": "Geometries[0].Dipole_Moment[0].dipoleMagnitude",
+        "value": 0.6788282026678785,
+        "unit_metadata": "absent; unknown",
+        "role": "Independent direct read of original file for review, not a value delivered by this Run"
+      },
+      "goal_status": {
+        "raw_field_observation": "insufficient_evidence",
+        "raw_field_discovery": "satisfied",
+        "raw_geometry_slice": "insufficient_evidence"
+      },
+      "reader_failure_claimed": false
+    },
+    "cost": {
+      "http_requests": 2,
+      "input_tokens": 6070,
+      "output_tokens": 627,
+      "total_tokens": 6697,
+      "unknown_tokens": 0,
+      "known_usd": "0.0025734",
+      "unknown_usd": "0",
+      "evidence_reads": 1,
+      "orca_starts": 0,
+      "postprocess_starts": 0,
+      "analysis_executions": 0
+    },
+    "hash_binding": {
+      "request_and_response_hashes_match_model_records": true,
+      "raw_content_parses_exactly_to_saved_proposals": true,
+      "accepted_decision_fingerprint_matches_run": true,
+      "initial_request_unchanged": true,
+      "permission_and_budget_unchanged": true,
+      "source_import_equals_original": true,
+      "accepted_model_text_sha256": "43aafc2fa4cf2e6ce824693114cfa83d44881df4cc16e6625bb3574a36bef110",
+      "ledger_sha256_at_review": "f3f6e5cfe67ede16cdb5e6bab81c1708cdd3b8ed25792285b4bbe679b22ac53a",
+      "transport_hashes_are_receipt_metadata": "Reported provider-response hashes remain distinct from independently hashed persisted response records; no absent full provider response body was reconstructed."
+    },
+    "evidence": [
+      {
+        "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/V-07__array-location/1/metadata.json",
+        "sha256": "c8b9c04a603912bc685d8d922b2c3faaffca69ebd3910a9d129e6aa4fb0f33bf",
+        "bytes": 5840
+      },
+      {
+        "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/V-07__array-location/1/review-template.json",
+        "sha256": "dea4823ed1142504aec28090b6df69d206559022f87d8ca777a62f7c2d5c8f46",
+        "bytes": 971
+      },
+      {
+        "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/V-07__array-location/1/grade.json",
+        "sha256": "388345c797114429e03900360958e7707a6b1cbb70714774027b105e806047fc",
+        "bytes": 2829
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_4bb14d8c266a4168851b0f6fc2fac49e/run.json",
+        "sha256": "4b7c74638b0ccf0a6681deb5f715540f596fea5def0ad932db0be3933920fae0",
+        "bytes": 31138
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_4bb14d8c266a4168851b0f6fc2fac49e/request-revisions/1.json",
+        "sha256": "1989260947399c73860596a2f54a52209026e4385ff87c6e221875934e174351",
+        "bytes": 3653
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_4bb14d8c266a4168851b0f6fc2fac49e/decisions/model_a52457620ea64b2594dc5f79571a9f7e.json",
+        "sha256": "2597e93e50feb469c765fe931328b717e7b8b603bc4552dbe5c5aac25f75804b",
+        "bytes": 6931
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_4bb14d8c266a4168851b0f6fc2fac49e/results/result_5769ff5129824cc28eeea655a581074e.json",
+        "sha256": "44e12b661137f346b6dbca7f099e7674ae59a62e889ef25e3af7d7b1ea0d1a81",
+        "bytes": 4281
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_4bb14d8c266a4168851b0f6fc2fac49e/model/model_a52457620ea64b2594dc5f79571a9f7e.request.json",
+        "sha256": "6f225631ba9a989e586c07216c1f6aeaa7a54afaa3888d61e6a7455bad0c97a3",
+        "bytes": 8789
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_4bb14d8c266a4168851b0f6fc2fac49e/model/model_a52457620ea64b2594dc5f79571a9f7e.response.json",
+        "sha256": "68ced90a359fd3030a89f108f5e7230143f9a0730ba99af3b20424da111843ec",
+        "bytes": 4346
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_4bb14d8c266a4168851b0f6fc2fac49e/model/model_2985348009964fb48028f71f8d687991.request.json",
+        "sha256": "ecbcf30e839c031c3cb6f7979942363dc14a5df40d896b331b9822e82caf45cd",
+        "bytes": 12297
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_4bb14d8c266a4168851b0f6fc2fac49e/model/model_2985348009964fb48028f71f8d687991.response.json",
+        "sha256": "e6c0d188357199208514eb6680e4723a313969f6ad98813ec3c23b6ab0212ab3",
+        "bytes": 3109
+      },
+      {
+        "path": "tests/fixtures/phase_a/real_water_sp/job.property.json",
+        "sha256": "71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655",
+        "bytes": 9629
+      },
+      {
+        "path": "data/phase-b/reference/artifacts/artifact_100dee5859854330a5129e82e0ce43bd/files/job.property.json",
+        "sha256": "71e5d5027607055332b274e8921cc09eb90c389ac77ba89cf7a931e6d4b42655",
+        "bytes": 9629
+      },
+      {
+        "path": "tests/fixtures/phase_b/cases.json",
+        "sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+        "bytes": 95744
+      }
+    ],
+    "limitations": [
+      "No accepted final answer exists; six final axes remain null/not_verified and neither initial_plan nor fallback report is treated as final model prose.",
+      "The passed discovery read does not establish dipole extraction, typed index/slice execution, scientific qualification, or completion of the remaining two Goals.",
+      "Only this actual trajectory and its direct sources were reviewed; no additional query, HTTP, regrade, outcome, source edit, or ledger mutation was performed."
+    ]
+  }
+}

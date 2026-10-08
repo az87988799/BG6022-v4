@@ -1,0 +1,397 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "offline_targeted_validation",
+  "recorded_at": "2026-10-08T13:57:00.318941+00:00",
+  "scope": "v25 read-only query feedback protocol and capacity repair; pre-commit working-tree targeted evidence",
+  "full_clean_validation": "not performed by this record; a separate exact-commit clean full run is still required",
+  "live_activity": {
+    "http": 0,
+    "orca": 0,
+    "pubchem": 0,
+    "opi_geometry_generation": 0,
+    "budget_amendments": 0
+  },
+  "final_joint": {
+    "passed": 132,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "wall_seconds_log": 18.92,
+    "junit_suite_seconds": 18.827,
+    "timestamp": "2026-10-08T21:52:15.995451+08:00",
+    "test_class_counts": {
+      "tests.unit.test_call_tool_contract": 27,
+      "tests.unit.test_context_goal_copy_targets": 12,
+      "tests.unit.test_context_budget_fallback": 7,
+      "tests.unit.test_prompt_contract_versions": 17,
+      "tests.unit.test_query_feedback_contract": 10,
+      "tests.unit.test_context_plan_schema": 37,
+      "tests.unit.test_context_action_budget": 18,
+      "tests.unit.test_delivery_preflight": 4
+    },
+    "log": "logs/final-contracts.log",
+    "junit": "logs/final-contracts.xml"
+  },
+  "independent_query_group": {
+    "passed": 10,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "wall_seconds_log": 6.4,
+    "junit_suite_seconds": 6.362,
+    "timestamp": "2026-10-08T21:51:12.808357+08:00",
+    "included_in_joint_132": true,
+    "additive_total_is_forbidden": true,
+    "ruff": {
+      "passed": true,
+      "scope": "tests/unit/test_query_feedback_contract.py",
+      "evidence": "tool result ad3908/63dc21; no separate Ruff file was produced"
+    },
+    "log": "logs/query-feedback-final.log",
+    "junit": "logs/query-feedback-final.xml"
+  },
+  "capacity": {
+    "original_actual_run": "run_4bb14d8c266a4168851b0f6fc2fac49e",
+    "original_status": "failed and closed; historical bytes/outcome unchanged",
+    "original_ledger_facts": {
+      "http": 2,
+      "known_tokens": 6697,
+      "unknown_tokens": 0,
+      "calls_limit": 4,
+      "tokens_limit": 32000
+    },
+    "input_limit": 12000,
+    "output_bound": 2000,
+    "reserved_future_terminal_tokens": 12000,
+    "post_second_reply_remaining_tokens": 25303,
+    "allowed_correction_input_bound": 11303,
+    "historical_correction_offline_reconstruction": {
+      "input_bound": 11662,
+      "current_plus_future_reserved": 25662,
+      "shortfall": 359,
+      "not_a_sent_request": true,
+      "evidence": "read-only tool calculation b90c63 at second-record created_at + 5 seconds; no original third request exists"
+    },
+    "intermediate_v25": {
+      "smallest_input_bound": 11615,
+      "shortfall": 312,
+      "log": "logs/query-feedback-capacity-failed.log"
+    },
+    "final_correction": {
+      "candidate_input_bounds": [
+        18442,
+        11489,
+        11197
+      ],
+      "selected_input_bound": 11197,
+      "current_plus_future_reserved": 25197,
+      "remaining_margin": 106,
+      "http_sent": false,
+      "inputs": "immutable v24 fixture with the existing rejected-shape diagnostic; current v25 build only",
+      "capacity_log": "logs/query-correction-capacity.json"
+    },
+    "legal_four_call_synthetic": {
+      "actions": [
+        "initial_plan (then discover)",
+        "call_tool slice Step",
+        "call_tool dipole Step",
+        "stop"
+      ],
+      "sent_input_bounds": [
+        8257,
+        11336,
+        11808,
+        8461
+      ],
+      "output_bounds": [
+        2000,
+        2000,
+        2000,
+        2000
+      ],
+      "calls": 4,
+      "read_calls": 3,
+      "orca_starts": 0,
+      "terminal_contract": "passed",
+      "synthetic_settled_tokens": 300,
+      "budget_proof_limit": "75 synthetic tokens per response proves control flow, not conservative settlement of the full four-request chain and not live model reliability",
+      "capacity_log": "logs/query-four-call-capacity.json"
+    },
+    "specific_path_correction_negative": "A nonidentical diagnostic retaining Dipole_Moment index 0 remains verbatim; if its complete reservation cannot preserve the terminal allowance, validate_delivery_margin rejects before send."
+  },
+  "history": [
+    {
+      "kind": "early_test_fixture_and_capacity_failures",
+      "passed": 3,
+      "failed": 3,
+      "evidence": "interactive pytest output ed374e, no redirected log",
+      "details": [
+        "Two direct _decision tests had not initialized/persisted goal_status as the real execute loop does; stale Run fixture errors were repaired.",
+        "The legal four-call chain failed capacity. Its short s1/s2/s3 proposal is the final portable success case; target text, all three Goals, typed paths, user order and budgets were retained."
+      ]
+    },
+    {
+      "kind": "capacity_failure",
+      "passed": 7,
+      "failed": 2,
+      "seconds": 5.15,
+      "log": "logs/query-feedback-capacity-failed.log",
+      "details": "Correction shortfall 312 after existing tighter encoding; four-call third input still over 12000. These were source-capacity defects, not live HTTP failures."
+    },
+    {
+      "kind": "single_capacity_capture",
+      "passed": 0,
+      "failed": 1,
+      "seconds": 2.52,
+      "log": "logs/query-four-call-overflow.log",
+      "details": "Third request candidates 22087, 14425, 12034; smallest exceeded by 34. Exact sizes are preserved separately."
+    },
+    {
+      "kind": "assertion_migration",
+      "passed": 8,
+      "failed": 1,
+      "seconds": 8.15,
+      "log": "logs/query-diagnostic-assertion-migration.log",
+      "details": "Capacity and four calls passed; old byte-equality assertion still required repeated generic instruction text. Updated only for the exact program-authored duplicate; category/path/all disjoint shapes and original fixture hashes remain checked."
+    },
+    {
+      "kind": "assertion_migration",
+      "passed": 9,
+      "failed": 1,
+      "seconds": 6.43,
+      "log": "logs/query-reference-assertion-migration.log",
+      "details": "Capacity passed; test decoder comparison had not restored the existing explicitly declared same-fact metadata references. Test now restores only source/file/artifact/hash metadata from the byte-bound sidecar, while exact values/path/units/coverage/qualification remain required. Ruff import formatting was then corrected."
+    },
+    {
+      "kind": "additional_interactive_diagnostic",
+      "passed": 7,
+      "failed": 2,
+      "seconds": 60.69,
+      "evidence": "tool result 3a3720, no redirected log",
+      "details": "The same two capacity failures before final candidate capture; not counted as additional coverage."
+    },
+    {
+      "kind": "broad_diagnostic_interrupted",
+      "final_result": null,
+      "observed_failure_marks": 8,
+      "log": "logs/broad-diagnostic-stopped.log",
+      "receipt": "logs/broad-diagnostic-early-stop.json",
+      "details": "Root explicitly interrupted during continuing source repair. No final JUnit/completed suite conclusion; failure node details are not inferred from progress marks."
+    }
+  ],
+  "preservation": {
+    "fixture": {
+      "path": "E:/BG6022-V4/tests/fixtures/phase_b/repair-cycle-v24-query-rejection.json",
+      "sha256": "486895e9bf6029d398fa37e68e1b45d3a84783b517e6f5e31f758d214c135ca8",
+      "bytes": 121653
+    },
+    "assertions": "Original actual request/response/sidecar UTF-8 byte hashes are verified in the tests; rejected response is never rewritten or executed.",
+    "source_scope_at_document_capture": [
+      {
+        "path": "E:/BG6022-V4/src/orca_agent/context.py",
+        "sha256": "e5a8e3356de9044ea8b22b37cff4ae0d13596ccf69777a68c7b52c03c690f163",
+        "bytes": 123307
+      },
+      {
+        "path": "E:/BG6022-V4/src/orca_agent/proposals.py",
+        "sha256": "3b990f5d09bb119fee75e91dff3ca2b20fd944b13bc3d710e7648c6887376b4b",
+        "bytes": 17912
+      },
+      {
+        "path": "E:/BG6022-V4/src/orca_agent/decision_purpose.py",
+        "sha256": "eceadc316f37b466bc2ad7f3eab4aaf87f0268ac16a6b74bb78a7392b246b9a9",
+        "bytes": 5676
+      },
+      {
+        "path": "E:/BG6022-V4/src/orca_agent/agent.py",
+        "sha256": "dc122816942114c144481fb6d928498a6fd03e4156a43a5b46c1bc7f99fb8e71",
+        "bytes": 45376
+      },
+      {
+        "path": "E:/BG6022-V4/src/orca_agent/model_usage.py",
+        "sha256": "0610af43281234092b71473a425808ed6e543744068ad2e8c4c47e3656b4fd5c",
+        "bytes": 26420
+      },
+      {
+        "path": "E:/BG6022-V4/src/orca_agent/versions.py",
+        "sha256": "5ebf4dd2391c8ef78ba4e41d63b477549b21c315c17cb31769dae5b34a67eb9c",
+        "bytes": 885
+      },
+      {
+        "path": "E:/BG6022-V4/tests/unit/test_query_feedback_contract.py",
+        "sha256": "ba34a4df4dab0b6e2b859769662a32984c0da21203f9e4e39e23617f012d18ac",
+        "bytes": 18031
+      },
+      {
+        "path": "E:/BG6022-V4/tests/fixtures/phase_b/repair-cycle-v24-query-rejection.json",
+        "sha256": "486895e9bf6029d398fa37e68e1b45d3a84783b517e6f5e31f758d214c135ca8",
+        "bytes": 121653
+      },
+      {
+        "path": "E:/BG6022-V4/uv.lock",
+        "sha256": "d2093fef40888e83ba3e0d80380553087a7175eb2bc30bbce7bb43954933115e",
+        "bytes": 106340
+      }
+    ],
+    "source_hash_limit": "Post-targeted working-tree capture of the listed files only; does not assert an exact clean commit or whole-repository manifest."
+  },
+  "evidence_files": [
+    {
+      "source": {
+        "path": "E:/BG6022-V4/data/phase-b-delivery/repair-cycle-v25-targeted/final-contracts.log",
+        "sha256": "ed8f591616870629520485a1c9e80180fd4677862dcf86d976d4132b62027402",
+        "bytes": 184
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/final-contracts.log",
+        "sha256": "ed8f591616870629520485a1c9e80180fd4677862dcf86d976d4132b62027402",
+        "bytes": 184
+      }
+    },
+    {
+      "source": {
+        "path": "E:/BG6022-V4/data/phase-b-delivery/repair-cycle-v25-targeted/final-contracts.xml",
+        "sha256": "d0b994f94b9b64164b275a09b45afeb7c756853344a8469a0d8fa781457f4ecc",
+        "bytes": 21156
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/final-contracts.xml",
+        "sha256": "d0b994f94b9b64164b275a09b45afeb7c756853344a8469a0d8fa781457f4ecc",
+        "bytes": 21156
+      }
+    },
+    {
+      "source": {
+        "path": "E:/BG6022-V4/data/phase-b-delivery/repair-cycle-v25-targeted/root-context.log",
+        "sha256": "7142ae809445f375dbb01e407f9ccaa7a69f9a5c943d92a2a9f9fd6559476455",
+        "bytes": 137
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/broad-diagnostic-stopped.log",
+        "sha256": "7142ae809445f375dbb01e407f9ccaa7a69f9a5c943d92a2a9f9fd6559476455",
+        "bytes": 137
+      }
+    },
+    {
+      "source": {
+        "path": "E:/BG6022-V4/data/phase-b-delivery/repair-cycle-v25-targeted/root-context-early-stop.json",
+        "sha256": "b8d766a6d85b220aeb5f81b29d705eb1d1b9bad3fb28cb7e2d849db115ddc827",
+        "bytes": 964
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/broad-diagnostic-early-stop.json",
+        "sha256": "b8d766a6d85b220aeb5f81b29d705eb1d1b9bad3fb28cb7e2d849db115ddc827",
+        "bytes": 964
+      }
+    },
+    {
+      "source": {
+        "path": "C:/WINDOW~1/orca-query-feedback-final-633c6733106a49c3845f9c2bb293514d/pytest.log",
+        "sha256": "8791f1046b41d14bbbd873211437b8ba2c9c43684e4c9875f291096d6aeac16f",
+        "bytes": 101
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/query-feedback-final.log",
+        "sha256": "8791f1046b41d14bbbd873211437b8ba2c9c43684e4c9875f291096d6aeac16f",
+        "bytes": 101
+      }
+    },
+    {
+      "source": {
+        "path": "C:/WINDOW~1/orca-query-feedback-final-633c6733106a49c3845f9c2bb293514d/junit.xml",
+        "sha256": "50808f09294d09c5db43a307bc6bf23f44c4cb3f02d423e313b4a2e2c81903f8",
+        "bytes": 1920
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/query-feedback-final.xml",
+        "sha256": "50808f09294d09c5db43a307bc6bf23f44c4cb3f02d423e313b4a2e2c81903f8",
+        "bytes": 1920
+      }
+    },
+    {
+      "source": {
+        "path": "C:/WINDOW~1/orca-query-feedback-final-633c6733106a49c3845f9c2bb293514d/tmp/test_actual_correction_uses_sm0/prepared-candidates.json",
+        "sha256": "5ee34892a9f1337cd8d8a891b2cb1fba969a0db242f9a69aa0520dd8a3f6e957",
+        "bytes": 977
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/query-correction-capacity.json",
+        "sha256": "5ee34892a9f1337cd8d8a891b2cb1fba969a0db242f9a69aa0520dd8a3f6e957",
+        "bytes": 977
+      }
+    },
+    {
+      "source": {
+        "path": "C:/WINDOW~1/orca-query-feedback-final-633c6733106a49c3845f9c2bb293514d/tmp/test_v07_four_calls_read_in_us0/prepared-candidates.json",
+        "sha256": "b7c883491bedb27713219cdceaa1c705f5b7e5f73bd395e18467a8b96c57816c",
+        "bytes": 2646
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/query-four-call-capacity.json",
+        "sha256": "b7c883491bedb27713219cdceaa1c705f5b7e5f73bd395e18467a8b96c57816c",
+        "bytes": 2646
+      }
+    },
+    {
+      "source": {
+        "path": "C:/WINDOW~1/orca-query-feedback-90ae3746edac4a659e4cdbcbcd26da5a/pytest.log",
+        "sha256": "c8e77026946c83dc24d15ea8ce45f7b74112b21095c75d60519eb8f2f7229737",
+        "bytes": 2767
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/query-feedback-capacity-failed.log",
+        "sha256": "c8e77026946c83dc24d15ea8ce45f7b74112b21095c75d60519eb8f2f7229737",
+        "bytes": 2767
+      }
+    },
+    {
+      "source": {
+        "path": "C:/WINDOW~1/orca-query-feedback-f7928c5f64144cbeabde4539361033c5/pytest.log",
+        "sha256": "b8a59e03babcfb9458daef0eaa470c73c19c7246f932c4d48852cfea97b6aebe",
+        "bytes": 1031
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/query-four-call-overflow.log",
+        "sha256": "b8a59e03babcfb9458daef0eaa470c73c19c7246f932c4d48852cfea97b6aebe",
+        "bytes": 1031
+      }
+    },
+    {
+      "source": {
+        "path": "C:/WINDOW~1/orca-query-feedback-f7928c5f64144cbeabde4539361033c5/tmp/test_v07_four_calls_read_in_us0/prepared-candidates.json",
+        "sha256": "3135d034a862a17296970f0f996b2f63f58cc2bf2256c8e8778d8604155743d7",
+        "bytes": 2194
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/query-four-call-overflow-capacity.json",
+        "sha256": "3135d034a862a17296970f0f996b2f63f58cc2bf2256c8e8778d8604155743d7",
+        "bytes": 2194
+      }
+    },
+    {
+      "source": {
+        "path": "C:/WINDOW~1/orca-query-feedback-final-4db6b542198a4b7fb12b5e0cbf36de23/pytest.log",
+        "sha256": "f84e18cc7cf81d18d4f42f5770a7631484ec38fa78a586d0b9997d7429395fb1",
+        "bytes": 1265
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/query-diagnostic-assertion-migration.log",
+        "sha256": "f84e18cc7cf81d18d4f42f5770a7631484ec38fa78a586d0b9997d7429395fb1",
+        "bytes": 1265
+      }
+    },
+    {
+      "source": {
+        "path": "C:/WINDOW~1/orca-query-feedback-final-8615011a67384f7cafd20d6bce4bd6c1/pytest.log",
+        "sha256": "c30a10742481f7bfa1c8397d4baa9adf883e02696ccfc04661ef457000f9828b",
+        "bytes": 1279
+      },
+      "copy": {
+        "path": "E:/BG6022-V4/docs/acceptance/repair-cycle-v25-targeted/logs/query-reference-assertion-migration.log",
+        "sha256": "c30a10742481f7bfa1c8397d4baa9adf883e02696ccfc04661ef457000f9828b",
+        "bytes": 1279
+      }
+    }
+  ],
+  "acceptance_status": "waiting for user acceptance; no new live pass asserted"
+}

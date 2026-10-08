@@ -124,7 +124,9 @@ def test_hybrid_correction_cannot_override_or_reserve_a_ready_step(tmp_path):
     assert error["category"] == "ProposalError"
     assert error["requirement"]["path"] == ["parameters"]
     assert error["requirement"]["allowed_shapes"] == call_tool_parameter_shapes()
-    assert error["requirement"]["requirement"] == call_tool_instruction()
+    assert "requirement" not in error["requirement"]
+    # The display omits repeated prose, not the original persisted rejection.
+    assert updated.decisions[0]["parameters"]["requirement"]["requirement"] == call_tool_instruction()
     assert [decision["action"] for decision in updated.decisions] == ["rejected", "call_tool"]
     assert not updated.calls and not updated.attempts and updated.usage.evidence_reads == 0
 

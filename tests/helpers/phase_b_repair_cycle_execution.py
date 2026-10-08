@@ -128,7 +128,7 @@ def freeze_formal_candidate(number, *, repair_evidence=None):
 def manifest_budget(manifest):
     return {allocation: {dimension: sum(row["declared"][dimension] for key, row in manifest["slots"].items()
                          if key.startswith(allocation + "/")) for dimension in cycle.DIMENSIONS}
-            for allocation in cycle.ALLOCATIONS if any(key.startswith(allocation + "/") for key in manifest["slots"])}
+            for allocation in dict.fromkeys(key.split("/", 1)[0] for key in manifest["slots"])}
 
 
 def _root(candidate):
@@ -141,8 +141,11 @@ def _open(candidate, allocation, slot_id, *, execute, live):
         cycle._fail("cycle trajectory requires explicit execute and live switches")
     book = cycle._book()
     with book.ledger._lock():
-        state = cycle._state(book._snapshot_unlocked())
-        cycle._no_unknown(book._snapshot_unlocked(), state)
+        ledger = book._snapshot_unlocked()
+        state = cycle._state(ledger)
+        from tests.helpers.phase_b_development_amendment import assert_open
+        assert_open(ledger, candidate)
+        cycle._no_unknown(ledger, state)
         frozen = cycle._candidate(state, candidate)
         row = frozen["manifest"]["slots"].get(f"{allocation}/{slot_id}")
         if row is None:

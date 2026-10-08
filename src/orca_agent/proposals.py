@@ -141,13 +141,20 @@ def call_tool_instruction(*, immediate=True):
     return text
 
 
-def call_tool_parameters_schema(*, immediate=True):
+def call_tool_parameters_schema(*, immediate=True, step_ids=None, tool_names=None):
     """One structural contract; scientific parameters remain the Tool's job."""
     types = {str: "string", dict: "object"}
     forms = _CALL_TOOL_FORMS if immediate else _CALL_TOOL_FORMS[:1]
+    forms = [form for form in forms if not (
+        "step_id" in form and step_ids == [] or "tool" in form and tool_names == [])]
+    if not forms:
+        return {"not": {}}
     alternatives = [{"required": list(form), "maxProperties": len(form)} for form in forms]
-    return {"type": "object", "properties": {
-        field: {"type": types[kind]} for form in forms for field, kind in form.items()},
+    properties = {field: {"type": types[kind]} for form in forms for field, kind in form.items()}
+    for field, choices in (("step_id", step_ids), ("tool", tool_names)):
+        if choices is not None and field in properties:
+            properties[field]["enum"] = list(dict.fromkeys(choices))
+    return {"type": "object", "properties": properties,
         **(alternatives[0] if len(alternatives) == 1 else {"oneOf": alternatives})}
 
 

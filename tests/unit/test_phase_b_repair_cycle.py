@@ -52,7 +52,7 @@ def test_model_operator_uses_unchanged_run_seconds(manager, monkeypatch):
     assert store.load_run(run.id).model_dump(mode="json") == original
 
 
-@pytest.mark.parametrize("number", [0, 4, True, 1.0, "1"])
+@pytest.mark.parametrize("number", [0, 5, True, 1.0, "1"])
 def test_candidate_count_has_strict_finite_identity(number):
     with pytest.raises(budget.ReferenceBlocked):
         cycle.candidate_label("development", number)

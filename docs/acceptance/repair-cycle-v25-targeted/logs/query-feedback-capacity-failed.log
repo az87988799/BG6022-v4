@@ -1,0 +1,28 @@
+..FF.....                                                                [100%]
+================================== FAILURES ===================================
+_ test_actual_correction_uses_smaller_existing_projection_and_keeps_final_margin _
+tests\unit\test_query_feedback_contract.py:131: in test_actual_correction_uses_smaller_existing_projection_and_keeps_final_margin
+    prepared = build_context(**values)
+               ^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\context.py:2093: in build_context
+    validate_delivery_margin(request, run, purpose=purpose, prepared=budget_rejected_prepared, now=now)
+src\orca_agent\model_usage.py:132: in validate_delivery_margin
+    raise BudgetExceeded("required final explanation lacks remaining call/token/decision/time budget")
+E   orca_agent.store.BudgetExceeded: required final explanation lacks remaining call/token/decision/time budget
+
+During handling of the above exception, another exception occurred:
+tests\unit\test_query_feedback_contract.py:133: in test_actual_correction_uses_smaller_existing_projection_and_keeps_final_margin
+    pytest.fail(f"{exc}; prepared candidates={candidates}")
+E   Failed: required final explanation lacks remaining call/token/decision/time budget; prepared candidates=[{'input_bound': 11907, 'sections': {'PROPOSAL_SCHEMA': 1305, 'ACTION_PARAMETERS': 65, 'TOOL_CATALOG': 224, 'AUTHORITY': 3082, 'CONTROL': 405, 'DATA': 3517, 'SCHEMA_COLUMNS': 169, 'SHARED_STRINGS': 1517, 'STRING_ENCODING': 145}}, {'input_bound': 11615, 'sections': {'PROPOSAL_SCHEMA': 1173, 'ACTION_PARAMETERS': 65, 'TOOL_CATALOG': 215, 'AUTHORITY': 2961, 'CONTROL': 405, 'DATA': 3365, 'SCHEMA_COLUMNS': 169, 'SHARED_STRINGS': 1215, 'STRING_ENCODING': 145, 'KEYS': 189, 'KEY_ENCODING': 54}}]
+_____ test_v07_four_calls_read_in_user_order_and_publish_exact_raw_value ______
+tests\unit\test_query_feedback_contract.py:213: in test_v07_four_calls_read_in_user_order_and_publish_exact_raw_value
+    assert completed.state == "completed", {"diagnostics": completed.diagnostics, "candidates": candidates}
+E   AssertionError: {'diagnostics': [{'category': 'ContextLimitError', 'message': 'required model context exceeds the 12000 global bound, ...: 11601, 'sections': {'PROPOSAL_SCHEMA': 1305, 'ACTION_PARAMETERS': 65, 'TOOL_CATALOG': 224, 'AUTHORITY': 3079, ...}}]}
+E   assert 'failed' == 'completed'
+E     
+E     - completed
+E     + failed
+=========================== short test summary info ===========================
+FAILED tests/unit/test_query_feedback_contract.py::test_actual_correction_uses_smaller_existing_projection_and_keeps_final_margin
+FAILED tests/unit/test_query_feedback_contract.py::test_v07_four_calls_read_in_user_order_and_publish_exact_raw_value
+2 failed, 7 passed in 5.15s

@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "source_commit": "84f42aca55378bbe5c24be3d0e753ff262c07b46",
+  "checkout": "C:\\Temp\\bg6022-repair-cycle-clean-bbb6e91837fb46a2",
+  "source_repository": "E:\\BG6022-V4",
+  "started_at": "2026-10-08T12:37:27.677302+00:00",
+  "live_model": false,
+  "live_orca": false,
+  "ignored_data_copied": false,
+  "prior_venv_copied": false,
+  "removed_environment_variables": [
+    "DEEPSEEK_API_KEY"
+  ],
+  "steps": [
+    {
+      "name": "clone",
+      "command": [
+        "git",
+        "clone",
+        "--no-hardlinks",
+        "E:\\BG6022-V4",
+        "C:\\Temp\\bg6022-repair-cycle-clean-bbb6e91837fb46a2"
+      ],
+      "cwd": "E:\\BG6022-V4",
+      "started_at": "2026-10-08T12:37:27.677302+00:00",
+      "finished_at": "2026-10-08T12:37:30.684525+00:00",
+      "seconds": 3.0,
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-bbb6e91837fb46a2\\clone.log",
+        "sha256": "7eb6e0efeabc1242f20c3129eae4c89ab9f1a7e1accfe897733b419a20c5704f"
+      }
+    },
+    {
+      "name": "sync",
+      "command": [
+        "py",
+        "-3.11",
+        "-m",
+        "uv",
+        "sync",
+        "--offline",
+        "--locked",
+        "--group",
+        "dev"
+      ],
+      "cwd": "C:\\Temp\\bg6022-repair-cycle-clean-bbb6e91837fb46a2",
+      "started_at": "2026-10-08T12:37:42.159517+00:00",
+      "finished_at": "2026-10-08T12:37:45.443497+00:00",
+      "seconds": 3.297000000020489,
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-bbb6e91837fb46a2\\sync.log",
+        "sha256": "77e5d98ba6c42449a3735ad9579a4b14921d911ef13cbd54fb47589d42296015"
+      }
+    },
+    {
+      "name": "pytest",
+      "command": [
+        "C:\\Temp\\bg6022-repair-cycle-clean-bbb6e91837fb46a2\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "--junitxml=E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-bbb6e91837fb46a2\\tests.xml"
+      ],
+      "cwd": "C:\\Temp\\bg6022-repair-cycle-clean-bbb6e91837fb46a2",
+      "started_at": "2026-10-08T12:37:46.780767+00:00",
+      "finished_at": "2026-10-08T12:59:24.212490+00:00",
+      "seconds": 1297.4380000000237,
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-bbb6e91837fb46a2\\pytest.log",
+        "sha256": "b0ee8fa8065dc84ceb575ea5ad26bb525f60bf62a8fff0c4611539d95bf49635"
+      }
+    },
+    {
+      "name": "ruff",
+      "command": [
+        "C:\\Temp\\bg6022-repair-cycle-clean-bbb6e91837fb46a2\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "cwd": "C:\\Temp\\bg6022-repair-cycle-clean-bbb6e91837fb46a2",
+      "started_at": "2026-10-08T12:59:24.220491+00:00",
+      "finished_at": "2026-10-08T12:59:26.424550+00:00",
+      "seconds": 2.202999999979511,
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-bbb6e91837fb46a2\\ruff.log",
+        "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+      }
+    }
+  ],
+  "status": "passed",
+  "runtime": {
+    "python": "3.11.4",
+    "executable": "C:\\Temp\\bg6022-repair-cycle-clean-bbb6e91837fb46a2\\.venv\\Scripts\\python.exe",
+    "prefix": "C:\\Temp\\bg6022-repair-cycle-clean-bbb6e91837fb46a2\\.venv",
+    "product_import": "C:\\Temp\\bg6022-repair-cycle-clean-bbb6e91837fb46a2\\src\\orca_agent\\__init__.py",
+    "prompt_version": "agent-json-v24",
+    "versions": {
+      "orca-pi": "2.0.0",
+      "openai": "2.28.0",
+      "httpx": "0.28.1",
+      "pydantic": "2.13.5",
+      "pytest": "9.1.1",
+      "ruff": "0.16.10"
+    }
+  },
+  "uv_version": "uv 0.12.23 (46b84fd0b 2026-10-03 x86_64-pc-windows-msvc)",
+  "counts": {
+    "tests": 3121,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 202,
+    "passed": 2919
+  },
+  "skips": {
+    "creating test symlinks requires Windows developer mode/privilege": 1,
+    "local real reference archive unavailable; source-backed context unverified": 3,
+    "local real-development archive is absent; no replacement evidence is fabricated": 14,
+    "phase-A original archive unavailable; immutable restoration unverified": 1,
+    "real ORCA not enabled; unverified": 13,
+    "real model not enabled; unverified": 139,
+    "retained V06 development archive absent; real-request rebuild unverified": 3,
+    "retained development receipt unavailable; no live evidence fabricated": 1,
+    "retained real N06 receipt absent; real-input replay unverified": 1,
+    "retained v15 N06 archive absent; real-input replay unverified": 1,
+    "retained v5 real request absent; real-input replay unverified": 1,
+    "retained v8 development record absent; real-request replay unverified": 24
+  },
+  "failures": [],
+  "seconds": 1295.029,
+  "checkout_after": "",
+  "tracked_bytes_unchanged": true,
+  "junit": {
+    "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-bbb6e91837fb46a2\\tests.xml",
+    "sha256": "6799cdbd0ece50d0b1bbfae12aa9bee3366349748a6e3cd8d4819593681f4eaa"
+  },
+  "tracking": {
+    "tracked-before.json": "bafb4787f70c648618357f2c3b941d6cc83f58ffd44d3d32e0cd4c938baa0d4f",
+    "tracked-after.json": "bafb4787f70c648618357f2c3b941d6cc83f58ffd44d3d32e0cd4c938baa0d4f"
+  },
+  "finished_at": "2026-10-08T12:59:40.552540+00:00",
+  "limit": "Only this committed offline candidate; skipped live/archive cases remain unverified."
+}

@@ -1,0 +1,337 @@
+{
+  "variant_id": "V-06/insufficient-additional-budget",
+  "repetition": 1,
+  "run_id": "run_6c90cccdbac0419da5d7ce2980ca5630",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "all_proposal_facts_passed": true,
+  "semantic_review_passed": true,
+  "instructions": "Review actual persisted model text independently; quote exact text. Do not infer a pass from fixture expectations.",
+  "behavior": {
+    "report.budget_limit_disclosed": {
+      "passed": true,
+      "quote": "scientific execution and additional science are not authorized and orca_starts/extra_orca_starts are exhausted (limit 0, remaining 0)",
+      "rationale": "This exact final model text states both missing permissions and both zero Run quotas. The actual permission and budget agree; no batch allowance is treated as Run authority and no additional ORCA was started.",
+      "quote_location": "final original stop reason"
+    }
+  },
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "goal g1 (finite_sample_internal_minimum) is unmet.",
+      "rationale": "The actual Request requires port sampling under finite-sampling-1. The model keeps the acquisition goal, distinguishes three qualified energy members from overall success, and states unmet rather than substituting sampling_check or declaring a qualified sampling output.",
+      "quote_location": "final original stop reason"
+    },
+    "unit": {
+      "passed": true,
+      "quote": "E=-74.964906308165 Eh",
+      "rationale": "The center energy is exactly the authenticated qualified/raw-source electronic energy in Eh. The same final reason states span 0.16000000000042536 Angstrom and target 0.12 Angstrom plus 1e-8 tolerance. Selected f5 additionally binds the energy distinction threshold 6.13686837721616e-11 Eh; no energy/length transposition is present.",
+      "quote_location": "final original stop reason"
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "\"f2\"",
+      "rationale": "This is the model's explicit final fact_ref selection, not a quote from a generated report. In the actual sent snapshot, f2 is the complete conditions fact: HF/STO-3G, charge 0, multiplicity 1, RHF electronic state, gas_phase; method/basis/charge/multiplicity are request.explicit, RHF is default:fixed-rhf-profile-1, environment is request.conditions. The current Request and member source conditions agree. The adopted typed delivery contract allows selecting this complete fact; it does not require duplicating every field in free prose. No contrary free-text condition claim occurs.",
+      "quote_location": "final original stop parameters.delivery.goal_explanations[0].fact_refs"
+    },
+    "source": {
+      "passed": true,
+      "quote": "\"f6\"",
+      "rationale": "The final selection f6 binds every member and its exact source_ref in the transmitted snapshot; f3/f4/f5 also select the actual completed analysis, failed sampling check and criterion. I independently matched all three input Run/Result/Attempt/energy bindings to current Plan and Call consumption, nine passed orca-hf-2 source checks, original stdout energies and XYZ hashes/distances. The analysis Result exposes no qualified sampling output, and the model does not claim one. These are real model-selected structured citations, not program prose substituted for the answer.",
+      "quote_location": "final original stop parameters.delivery.goal_explanations[0].fact_refs"
+    },
+    "limits": {
+      "passed": true,
+      "quote": "Conclusion is limited to the sampled discrete range; no continuous/global minimum, vibrational stability, transition state, or full PES is claimed.",
+      "rationale": "The model accurately states span_too_wide, insufficient goal evidence, two missing optional candidates, both permission prohibitions and both exhausted quotas. Selected f1/f4/f5 preserve failure and selected b1-b5 cover all simultaneous blockers. Three qualified energy members are not presented as a qualified sampling window.",
+      "quote_location": "final original stop reason"
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "the only permitted action is to stop with partial results.",
+      "rationale": "At this actual second request the allowed action enum is exactly [stop]; the one authorized analysis execution is consumed and no scientific execution is permitted. The model selects current unmet relation e1 and partial-stop next action n1, with all required facts and blockers. Accepted stop leaves state failed and delivery partial, which is an honest negative-case completion rather than scientific success.",
+      "quote_location": "final original stop reason"
+    }
+  },
+  "review_summary": {
+    "verdict": "passed_for_this_fixed_evidence_negative_case",
+    "candidate": "repair-cycle-20261008-development-3",
+    "candidate_sha256": "9ed3e45d6c6ddcf32b84a55ec0fcef2328b3ceff9a67975fc1cfc653c4b3bb0a",
+    "source_commit": "84f42aca55378bbe5c24be3d0e753ff262c07b46",
+    "prompt_version": "agent-json-v24",
+    "scope": "Independent inspection of both actual original responses, sent planning/terminal contexts and sidecars, Request, Plan, actual analysis Call/Result, referenced XYZ/raw stdout/qualified energies, stop receipt and report. No HTTP, Tool, tests, regrade or outcome operation performed by this review.",
+    "accepted_actions": [
+      "initial_plan",
+      "stop"
+    ],
+    "rejected_proposals": 0,
+    "corrections": 0,
+    "scientific_goal_satisfied": false,
+    "run_state": "failed",
+    "delivery_status": "partial",
+    "limits": [
+      "This pass is an honest insufficient-evidence delivery in one fixed-evidence model Run, not successful sampling science, a new ORCA result, or acceptance of later slots.",
+      "Conditions/source axes rely on explicit model-selected full facts f2/f3/f4/f5/f6 whose actual transmitted meanings and source bindings were independently verified. The program report was not used as model quotation.",
+      "The first reason conditionally repeats the original at-most-one-candidate allowance, but immediately states scientific_execution=false/orca_starts=0 and only the allowed analysis may be used. In context it is not new authorization; actual execution is one allowed analysis and zero ORCA.",
+      "The final phrase required sampling completed is explicitly qualified by goal criterion not satisfied; it refers to the three required sampled members, not overall Goal success."
+    ]
+  },
+  "trajectory_review": [
+    {
+      "model_id": "model_0ed472671f114eb18a9993afd50bbf43",
+      "action": "initial_plan",
+      "facts_passed": true,
+      "semantic_passed": true,
+      "quote": "Scientific execution is not authorized (scientific_execution=false, orca_starts=0), so only the allowed analysis tool may be used.",
+      "rationale": "Correct current Goal ID, three distinct correct qualified-energy references, exact future {step_key,port=sampling} route, no mixed gap and no invented completion. Analysis is separately authorized despite zero scientific quotas."
+    },
+    {
+      "model_id": "model_98461e7608834afd9a134deb38b4c1a2",
+      "action": "stop",
+      "facts_passed": true,
+      "semantic_passed": true,
+      "quote": "the neighbor span is 0.16000000000042536 Angstrom, which exceeds the target width 0.12 Angstrom plus tolerance 1e-8, so the span criterion fails (span_too_wide).",
+      "rationale": "Matches actual analysis and independent XYZ arithmetic. Source-qualified center energy and nearest sampled members are correct, required/optional roles are preserved, all selected terminal facts and blockers belong to current g1, and current action is partial stop."
+    }
+  ],
+  "direct_evidence_audit": {
+    "terminal_chain_read_only_check": {
+      "passed": true,
+      "decision_id": "model_98461e7608834afd9a134deb38b4c1a2",
+      "snapshot_fingerprint": "eef2cd7762b9d412704fd9b07d152ee0c6d0de10552605c8c6adaf03d3b12d3c",
+      "report_sha256": "4b8e4ac750ee4e5aa792fbcc2d2f11d52078e370aeac747c10c3ea2ce54713ed",
+      "meaning": "Original stop/decision/sent snapshot/receipt/current snapshot/report agree; separately from this independent prose review."
+    },
+    "conditions_fact": {
+      "current": {
+        "request": {
+          "method": "HF",
+          "basis": "STO-3G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RHF",
+          "environment": "gas_phase"
+        }
+      },
+      "sources": {
+        "request": {
+          "method": "request.explicit",
+          "basis": "request.explicit",
+          "charge": "request.explicit",
+          "multiplicity": "request.explicit",
+          "electronic_state": "default:fixed-rhf-profile-1",
+          "environment": "request.conditions"
+        }
+      },
+      "source": {},
+      "source_evidence": {},
+      "geometry_relation": null
+    },
+    "criteria": {
+      "rule_version": "finite-sampling-1",
+      "acceptance_criteria": {
+        "rule": "Current samples: interior min; each other sampled E-Emin>energy_threshold_eh; nearest left/right span<=target_width_angstrom+distance_tolerance_angstrom. New samples may change minimum and neighbors.",
+        "distance_tolerance_angstrom": 1e-08
+      },
+      "target_width_angstrom": 0.12,
+      "energy_threshold_eh": 6.13686837721616e-11,
+      "neighbor_span_angstrom": 0.16000000000042536,
+      "left_gap_eh": 0.0022141499260044384,
+      "right_gap_eh": 0.010618342036991635,
+      "minimum_candidate_id": "geom_997a7b6154fa",
+      "left_neighbor_id": "geom_a1fd9c54f540",
+      "right_neighbor_id": "geom_4551ffe49805",
+      "goal_satisfied": false,
+      "scientific_status": "insufficient_evidence",
+      "reason": "span_too_wide"
+    },
+    "members": [
+      {
+        "member_id": "geom_a1fd9c54f540",
+        "required": true,
+        "status": "qualified",
+        "energy_eh": -74.962692158239,
+        "missing_reason": null
+      },
+      {
+        "member_id": "geom_997a7b6154fa",
+        "required": true,
+        "status": "qualified",
+        "energy_eh": -74.964906308165,
+        "missing_reason": null
+      },
+      {
+        "member_id": "geom_4551ffe49805",
+        "required": true,
+        "status": "qualified",
+        "energy_eh": -74.954287966128,
+        "missing_reason": null
+      },
+      {
+        "member_id": "geom_e98835a38ce7",
+        "required": false,
+        "status": "missing",
+        "energy_eh": null,
+        "missing_reason": "optional member not bound"
+      },
+      {
+        "member_id": "geom_6b95efc712da",
+        "required": false,
+        "status": "missing",
+        "energy_eh": null,
+        "missing_reason": "optional member not bound"
+      }
+    ],
+    "independent_sources_verified": [
+      {
+        "member_id": "geom_a1fd9c54f540",
+        "result_id": "result_35776666c6fe43078609fc570d47f048",
+        "geometry_sha256": "a1fd9c54f5400a6c3fe01dd1d1f69d75071fc94b36cf7d18ac336661b03e4f63",
+        "raw_stdout_sha256": "03305f9eaee924c41e1740c36c29357209034d734c2c7bfb90c96ecb8be71fa7",
+        "energy_eh": -74.962692158239,
+        "unit": "Eh"
+      },
+      {
+        "member_id": "geom_997a7b6154fa",
+        "result_id": "result_2b37e67a22e8474d92d933ec94eac9e5",
+        "geometry_sha256": "997a7b6154fa44f7f6e2b287042d0445916d34ec8657ee6d38c7fe9403e7050b",
+        "raw_stdout_sha256": "20551d72c54ba51b91d5ee2cf0df6b4e0dee076ebc85e4ee45194b629bf61f1d",
+        "energy_eh": -74.964906308165,
+        "unit": "Eh"
+      },
+      {
+        "member_id": "geom_4551ffe49805",
+        "result_id": "result_543267b93a134036b87e656ee640d79d",
+        "geometry_sha256": "4551ffe49805441fc16889a75eacbe6d1b5d35a41cfba75a7634434e9a65c90a",
+        "raw_stdout_sha256": "954f82164fb0183683c24411271404f8cffaccd18d58ea6985da00e10048475d",
+        "energy_eh": -74.954287966128,
+        "unit": "Eh"
+      }
+    ],
+    "operation_completed": true,
+    "qualified_sampling_output_present": false,
+    "selected_fact_refs": [
+      "f1",
+      "f2",
+      "f3",
+      "f4",
+      "f5",
+      "f6"
+    ],
+    "selected_blocker_refs": [
+      "b1",
+      "b2",
+      "b3",
+      "b4",
+      "b5"
+    ]
+  },
+  "cost": {
+    "http_requests": 2,
+    "tokens_used": 7033,
+    "tokens_unknown": 0,
+    "known_cost_usd": "0.0030162",
+    "analysis_executions": 1,
+    "orca_starts_actual": 0,
+    "additional_paid_calls_by_review": 0
+  },
+  "binding": {
+    "accepted_model_text_sha256": "54169a23ae6bf766c759ca83c8604074acd81011e527cd3dbc49ee58dfe5d633",
+    "metadata_sha256": "90977dffa14fcb3bb4b0fed2fde68e533a667bad4ab7f24f0ba584b1df46e89f",
+    "run_sha256": "02596d749dff4ed24d64266082f44a151b985eaf0fde6360de6870430704b221",
+    "review_does_not_write_grade_or_outcome": true
+  },
+  "evidence_sha256": [
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/V-06__insufficient-additional-budget/1/metadata.json",
+      "sha256": "90977dffa14fcb3bb4b0fed2fde68e533a667bad4ab7f24f0ba584b1df46e89f"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/V-06__insufficient-additional-budget/1/ready.json",
+      "sha256": "a9be0454b54e728eba2a608875a6cbd980fb32dcf34a043c343afec5c0037c58"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/V-06__insufficient-additional-budget/1/execution.json",
+      "sha256": "1c018965232120d2700c424695d38be737328f9d4f21679e402ae0f56ad6f8db"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_6c90cccdbac0419da5d7ce2980ca5630/run.json",
+      "sha256": "02596d749dff4ed24d64266082f44a151b985eaf0fde6360de6870430704b221"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_6c90cccdbac0419da5d7ce2980ca5630/request-revisions/1.json",
+      "sha256": "bf9d77e4fcd6b6bc0f7a45338c1a48dd8515ace756998a7c6c205ccb1a401171"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_6c90cccdbac0419da5d7ce2980ca5630/results/result_2a45df691fd2453ba706ea69550a0572.json",
+      "sha256": "ac41441bcaa7dce5ad2c3e84c8694ea0c42956e5dd2af3d29b5025130ee146ce"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_6c90cccdbac0419da5d7ce2980ca5630/deliveries/model_98461e7608834afd9a134deb38b4c1a2.md",
+      "sha256": "4b8e4ac750ee4e5aa792fbcc2d2f11d52078e370aeac747c10c3ea2ce54713ed"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_6c90cccdbac0419da5d7ce2980ca5630/model/model_0ed472671f114eb18a9993afd50bbf43.request.json",
+      "sha256": "14ed1dff2626492a33ef26ca4566a4a055a23a03125f0f604dd29aadeafb69b9"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_6c90cccdbac0419da5d7ce2980ca5630/model/model_0ed472671f114eb18a9993afd50bbf43.response.json",
+      "sha256": "9d81b01bd4dae6011668d7eee7d8bf81455732a7b448dae0253af48499bd9c97"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_6c90cccdbac0419da5d7ce2980ca5630/model/model_0ed472671f114eb18a9993afd50bbf43.delivery.json",
+      "sha256": "ae98acef8191d9df5571eb66978925118ace72fd4ebd332a60e430847b4ae6bd"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_6c90cccdbac0419da5d7ce2980ca5630/model/model_98461e7608834afd9a134deb38b4c1a2.request.json",
+      "sha256": "4b1c75f46a8e157b99c26a97d14e4b5b3d296f88df0c151299671af5813dea4b"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_6c90cccdbac0419da5d7ce2980ca5630/model/model_98461e7608834afd9a134deb38b4c1a2.response.json",
+      "sha256": "7f08dbbfd269ad31beb7dd7d6162d740cbcbcd8696041aebe34318c35d5f0348"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_6c90cccdbac0419da5d7ce2980ca5630/model/model_98461e7608834afd9a134deb38b4c1a2.delivery.json",
+      "sha256": "804cc09cd0d6de22907ce3214d18f255543ca5727bf7f0712a15ddd471bd5c63"
+    },
+    {
+      "path": "tests/fixtures/phase_b/independent/sampling-left-minus/stdout.out",
+      "sha256": "03305f9eaee924c41e1740c36c29357209034d734c2c7bfb90c96ecb8be71fa7"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_857dff7e962b44948f8ab561c6f21b98/results/result_35776666c6fe43078609fc570d47f048.json",
+      "sha256": "88df68949babe042e67b7aa201bbab53c6a7328ce68e845487bfb9f10d975bc2"
+    },
+    {
+      "path": "tests/fixtures/phase_b/independent/sampling-left-center/stdout.out",
+      "sha256": "20551d72c54ba51b91d5ee2cf0df6b4e0dee076ebc85e4ee45194b629bf61f1d"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_cf30441b40ea46418ef4a98762da8643/results/result_2b37e67a22e8474d92d933ec94eac9e5.json",
+      "sha256": "9035086c8b3010302c9815e439c2d8ee4dea99c659f24ace15257abd03601b66"
+    },
+    {
+      "path": "tests/fixtures/phase_b/independent/sampling-left-plus/stdout.out",
+      "sha256": "954f82164fb0183683c24411271404f8cffaccd18d58ea6985da00e10048475d"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_86509407dbae44aa9afa30dd61714887/results/result_543267b93a134036b87e656ee640d79d.json",
+      "sha256": "33d891cdc69a46caa8bb5bd43f7c8c7a31a9e04b5547b85b797fc98e7429bf36"
+    }
+  ],
+  "original_response_binding": [
+    {
+      "model_id": "model_0ed472671f114eb18a9993afd50bbf43",
+      "raw_content_sha256": "94b0889b0cf8d41936fbdd414feaacaeebf5add9c573ab9062b81bfd926f5b97",
+      "request_hash": "14ed1dff2626492a33ef26ca4566a4a055a23a03125f0f604dd29aadeafb69b9",
+      "response_record_sha256": "9d81b01bd4dae6011668d7eee7d8bf81455732a7b448dae0253af48499bd9c97",
+      "delivery_snapshot_sha256": "ae98acef8191d9df5571eb66978925118ace72fd4ebd332a60e430847b4ae6bd"
+    },
+    {
+      "model_id": "model_98461e7608834afd9a134deb38b4c1a2",
+      "raw_content_sha256": "2a1c2f81402ef5d409890bc3ff28d789a9f6c7ea4224eabaeff4e55c6150766c",
+      "request_hash": "4b1c75f46a8e157b99c26a97d14e4b5b3d296f88df0c151299671af5813dea4b",
+      "response_record_sha256": "7f08dbbfd269ad31beb7dd7d6162d740cbcbcd8696041aebe34318c35d5f0348",
+      "delivery_snapshot_sha256": "804cc09cd0d6de22907ce3214d18f255543ca5727bf7f0712a15ddd471bd5c63"
+    }
+  ]
+}

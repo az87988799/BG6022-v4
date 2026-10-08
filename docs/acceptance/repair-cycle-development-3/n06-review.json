@@ -1,0 +1,359 @@
+{
+  "variant_id": "N-06/raw-unsupported-system",
+  "repetition": 1,
+  "run_id": "run_cebe4db3c746453c89c89734b6f8c6af",
+  "spec_sha256": "f8665a5d28cddab5ae5da477faf31d58cf6050b27faa806a27f70f67617d0d4c",
+  "all_proposal_facts_passed": true,
+  "semantic_review_passed": true,
+  "instructions": "Review actual persisted model text independently; quote exact text. Do not infer a pass from fixture expectations.",
+  "behavior": {},
+  "explanation": {
+    "quantity": {
+      "passed": true,
+      "quote": "quantity:optimized electronic energy",
+      "rationale": "原答明确所求为优化后的电子能；参数保留乙醇原文、energy 端口和 optimized 几何关系。用户没有单独要求交付坐标，按决定0015，一个 energy+optimized Goal 足以表示此目的；不把优化操作错误地强制拆成第二个坐标交付目标。"
+    },
+    "unit": {
+      "passed": true,
+      "quote": "unit:unknown",
+      "rationale": "这是只登记且没有科学结果的回答，原文未指定显示单位。模型保留 unknown，没有臆造数值/单位、转换或将未计算结果称为 Eh。"
+    },
+    "conditions": {
+      "passed": true,
+      "quote": "conditions:method=HF,basis=STO-3G,charge=0,multiplicity=1,electronic_state=RHF,environment=gas_phase",
+      "rationale": "原答和每个有来源的 condition 都准确对应气相 RHF/STO-3G、中性单重态；规范化为 HF 加 electronic_state=RHF，不丢弃限制或将显式字段称为默认/推断。"
+    },
+    "source": {
+      "passed": true,
+      "quote": "source:AUTHORITY.user_originals[0]",
+      "rationale": "实际发送上下文的该索引确为这条完整用户原文，message_ids 也精确对应待处理用户消息；Goal 与条件引用均可在原文定位。没有引用不存在的科学 Result/Artifact，也没有把用户文本充当已计算数值。"
+    },
+    "limits": {
+      "passed": true,
+      "quote": "Energy/optimization supports only water(H2O), methane(CH4); other requested targets stay unsupported after geometry registration.",
+      "rationale": "这句是实际模型自己选择并输出的 notice，不是报告补写。它明确披露 H2O/CH4 的科学能力范围及补登几何也不会让乙醇获得支持；另一实际 notice 将自身缺几何与能力分开。reason 同时明确 ethanol not in supported systems、no registered ethanol geometry 和 registration-only intent，没有延续 D2 中能力/登记范围混淆。"
+    },
+    "next_action": {
+      "passed": true,
+      "quote": "next:normalize_request",
+      "rationale": "原答只提出登记规范化，完整引用本轮不启动计算的用户限制，questions=[]、question_gaps={}，没有要求重新确认执行许可或补资源才能完成此次登记。实际接受后 registration_only/awaiting_reply=false、paused、零 Tool/ORCA 与此一致；登记通信完成无需额外 stop，科学 Goal 仍未满足。"
+    }
+  },
+  "audit": {
+    "review_kind": "independent_actual_trajectory_review",
+    "reviewed_at": "2026-10-08T13:15:04.394785+00:00",
+    "verdict": "passed",
+    "scope": "One actual N-06 registration-only trajectory; original accepted model reason and parameters reviewed independently of deterministic assertions and finite-notice acceptance.",
+    "candidate": "repair-cycle-20261008-development-3",
+    "candidate_receipt": {
+      "path": "data/phase-b/repair-cycle-20261008/candidates/repair-cycle-20261008-development-3.json",
+      "sha256": "9ed3e45d6c6ddcf32b84a55ec0fcef2328b3ceff9a67975fc1cfc653c4b3bb0a",
+      "bytes": 80016
+    },
+    "source_commit": "84f42aca55378bbe5c24be3d0e753ff262c07b46",
+    "prompt_version": "agent-json-v24",
+    "source_file_hash_check": {
+      "files": 396,
+      "changed": [],
+      "mode": "raw bytes against immutable development candidate"
+    },
+    "model_text_sha256": "8eec740135262070d3a3f37064425296b2bededb4f37fd3dd57855d2662ec65d",
+    "first_pass": {
+      "http_requests": 1,
+      "accepted_proposals": 1,
+      "rejected_proposals": 0,
+      "corrections": 0,
+      "transport_failures": 0,
+      "accepted_action": "normalize_request",
+      "first_proposal_accepted": true
+    },
+    "all_proposal_review": [
+      {
+        "model_id": "model_3e81cc1c3a6b496eb4caeed2478fee45",
+        "accepted": true,
+        "action": "normalize_request",
+        "facts_passed": true,
+        "semantics_passed": true,
+        "reason": "quantity:optimized electronic energy;unit:unknown;conditions:method=HF,basis=STO-3G,charge=0,multiplicity=1,electronic_state=RHF,environment=gas_phase;source:AUTHORITY.user_originals[0];limits:ethanol not in supported systems (H2O,CH4), no registered ethanol geometry, registration-only intent;next:normalize_request",
+        "parameters": {
+          "schema_version": "request-semantics-2",
+          "message_ids": [
+            "message_466152801aef44508599fd6e5131c0eb"
+          ],
+          "kind": "normalize",
+          "text_basis": "优化乙醇，给出优化后的电子能。采用气相 RHF/STO-3G，中性单重态。没有登记乙醇几何；本轮只登记需求，不启动计算。",
+          "conditions": {
+            "method": {
+              "value": "HF",
+              "source": "explicit",
+              "text_basis": "RHF/STO-3G"
+            },
+            "basis": {
+              "value": "STO-3G",
+              "source": "explicit",
+              "text_basis": "RHF/STO-3G"
+            },
+            "charge": {
+              "value": 0,
+              "source": "explicit",
+              "text_basis": "中性单重态"
+            },
+            "multiplicity": {
+              "value": 1,
+              "source": "explicit",
+              "text_basis": "中性单重态"
+            },
+            "electronic_state": {
+              "value": "RHF",
+              "source": "explicit",
+              "text_basis": "RHF/STO-3G"
+            },
+            "environment": {
+              "value": "gas_phase",
+              "source": "explicit",
+              "text_basis": "气相"
+            }
+          },
+          "goals": [
+            {
+              "key": "optimized_ethanol_energy",
+              "port": "energy",
+              "text_basis": "优化乙醇，给出优化后的电子能",
+              "required": true,
+              "geometry_relation": "optimized",
+              "minimum_evidence": [
+                "converged_scf@1"
+              ],
+              "conditions": {
+                "method": {
+                  "value": "HF",
+                  "source": "explicit",
+                  "text_basis": "RHF/STO-3G"
+                },
+                "basis": {
+                  "value": "STO-3G",
+                  "source": "explicit",
+                  "text_basis": "RHF/STO-3G"
+                },
+                "charge": {
+                  "value": 0,
+                  "source": "explicit",
+                  "text_basis": "中性单重态"
+                },
+                "multiplicity": {
+                  "value": 1,
+                  "source": "explicit",
+                  "text_basis": "中性单重态"
+                },
+                "electronic_state": {
+                  "value": "RHF",
+                  "source": "explicit",
+                  "text_basis": "RHF/STO-3G"
+                },
+                "environment": {
+                  "value": "gas_phase",
+                  "source": "explicit",
+                  "text_basis": "气相"
+                }
+              },
+              "unresolved": [
+                "unsupported_system:ethanol",
+                "missing_geometry:ethanol"
+              ],
+              "message_id": "message_466152801aef44508599fd6e5131c0eb"
+            }
+          ],
+          "replaces": [
+            "raw_request"
+          ],
+          "goal_bindings": {},
+          "resolves": [],
+          "unresolved": [
+            "unsupported_system:ethanol",
+            "missing_geometry:ethanol"
+          ],
+          "questions": [],
+          "notices": [
+            "Energy/optimization supports only water(H2O), methane(CH4); other requested targets stay unsupported after geometry registration.",
+            "At least one scientific target lacks its own bound registered geometry. This input gap is separate from capability; registration executes nothing."
+          ],
+          "question_gaps": {}
+        },
+        "raw_content_sha256": "c9154b75087ff4ffd186e0dae163d925ecb196938695fbbc26bd1c82ada21da0",
+        "raw_content_utf8_bytes": 2496,
+        "parsed_proposal_exactly_matches_raw_content": true,
+        "sent_request_sha256": "83608eaf9fede5bc7541f3fdb67ee0f8e3b069d060bf02d048b7b4a6360ca39d",
+        "persisted_response_record_sha256": "4a77c186483aaac9d2ff8aded17aa0fa595a512916c7ecaf038a3e0a9c721610",
+        "reported_transport_response_hash": "0ebd3235eba8abc415c332b977c101eef305acd57e7d76ac4097fff27df57921",
+        "reported_transport_response_bytes": 3214,
+        "transport_hash_scope": "The saved response receipt records this transport digest; it is distinct from the independently hashed persisted response record and raw_content. No separate full provider HTTP response body was reconstructed.",
+        "field_review": [
+          "The eight root proposal fields have no extra type; action, basis, related_results and pending message identity match the actual sent context.",
+          "Single required energy Goal preserves ethanol and optimized relation; minimum_evidence converged_scf@1 is a requested registered predicate, not a claim that SCF or optimization occurred; current minimum_check_version remains orca-hf-2.",
+          "Global and Goal conditions quote the explicit gas-phase RHF/STO-3G, neutral singlet request. No default, inherited condition or registered-system substitution is asserted.",
+          "replaces names only the raw_request placeholder; goal_bindings and resolves are empty; both unsupported_system:ethanol and missing_geometry:ethanol remain unresolved.",
+          "Both capability and input notices are present in the original raw response and unchanged in persisted semantics. Capability remains unsupported after geometry registration; missing geometry is a separate input gap.",
+          "No question, execution permission confirmation, requested calculation, fabricated value, source result or science-completion claim is present."
+        ]
+      }
+    ],
+    "current_state": {
+      "request_version": 2,
+      "normalization_status": "clarification",
+      "goal_ids": [
+        "goal_optimized_ethanol_energy"
+      ],
+      "goal_ports": [
+        "energy"
+      ],
+      "geometry_relations": [
+        "optimized"
+      ],
+      "goal_status": {
+        "goal_optimized_ethanol_energy": "insufficient_evidence"
+      },
+      "run_state": "paused",
+      "delivery_status": "partial",
+      "delivery_scope": "registration_only",
+      "awaiting_reply": false,
+      "questions": [],
+      "notices": [
+        "Energy/optimization supports only water(H2O), methane(CH4); other requested targets stay unsupported after geometry registration.",
+        "At least one scientific target lacks its own bound registered geometry. This input gap is separate from capability; registration executes nothing."
+      ],
+      "plan_id": null,
+      "scientific_execution": false,
+      "allowed_tools": [],
+      "permission_and_budget_unchanged": true,
+      "calls": 0,
+      "attempts": 0,
+      "results": 0,
+      "terminal_deliveries": 0,
+      "fallback_report_present": true,
+      "fallback_report_used_as_model_answer": false
+    },
+    "cost": {
+      "http_requests": 1,
+      "input_tokens": 2974,
+      "output_tokens": 701,
+      "total_tokens": 3675,
+      "unknown_tokens": 0,
+      "known_usd": "0.0017334",
+      "unknown_usd": "0",
+      "orca_starts": 0,
+      "identity_queries": 0,
+      "structure_preparations": 0,
+      "analysis_executions": 0,
+      "source": "Persisted Run model record matched to the existing shared-ledger settlement; this review writes neither."
+    },
+    "evidence": [
+      {
+        "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/N-06__raw-unsupported-system/1/metadata.json",
+        "sha256": "8eea091286505825049602bb4242b293df6e4304246423b65d2d3fdcf3e9d660",
+        "bytes": 3691
+      },
+      {
+        "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/N-06__raw-unsupported-system/1/ready.json",
+        "sha256": "3f2a0206a56bc1ab9d399accde58e3d357efab1d49da0cf2a4fca0bfbb64283a",
+        "bytes": 144
+      },
+      {
+        "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/N-06__raw-unsupported-system/1/review-template.json",
+        "sha256": "c8f1472681065164f0e1fc7f2b7a343055c569b9e26a7a59afb8d2464b8d8407",
+        "bytes": 979
+      },
+      {
+        "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/N-06__raw-unsupported-system/1/grade.json",
+        "sha256": "d92f7a77c33f3830bfa1c30d73731396daeda1b3888ea2dfceca4916545d0d24",
+        "bytes": 4027
+      },
+      {
+        "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-3/N-06__raw-unsupported-system/1/interrupted.json",
+        "sha256": "121184bbd3074c9a669c3a9fd9c14e7d5326232058b391c31d8933591ddfeff4",
+        "bytes": 172
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_cebe4db3c746453c89c89734b6f8c6af/run.json",
+        "sha256": "9ba9afb35448949cdac5a69f2f37beff64f8e4b609459657f08bbc1d5b90c21f",
+        "bytes": 23880
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_cebe4db3c746453c89c89734b6f8c6af/model/model_3e81cc1c3a6b496eb4caeed2478fee45.request.json",
+        "sha256": "83608eaf9fede5bc7541f3fdb67ee0f8e3b069d060bf02d048b7b4a6360ca39d",
+        "bytes": 11614
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_cebe4db3c746453c89c89734b6f8c6af/model/model_3e81cc1c3a6b496eb4caeed2478fee45.response.json",
+        "sha256": "4a77c186483aaac9d2ff8aded17aa0fa595a512916c7ecaf038a3e0a9c721610",
+        "bytes": 7192
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_cebe4db3c746453c89c89734b6f8c6af/model/model_3e81cc1c3a6b496eb4caeed2478fee45.delivery.json",
+        "sha256": "d79b7978bfb2af900364ccad21a8e7c42bc8d814d6baa7b87040b01743953161",
+        "bytes": 6817
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_cebe4db3c746453c89c89734b6f8c6af/decisions/model_3e81cc1c3a6b496eb4caeed2478fee45.json",
+        "sha256": "9e632aa03289a47494f21d7111f3a14adb587f71e7e831dc6c5d20a39130820f",
+        "bytes": 13951
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_cebe4db3c746453c89c89734b6f8c6af/request-revisions/1.json",
+        "sha256": "ab03b9c1610bb2aa9ae76ba79ea46f669e5d9ba5c5437286d0c6e9736dc7685f",
+        "bytes": 1155
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_cebe4db3c746453c89c89734b6f8c6af/control.json",
+        "sha256": "8671450645581ae4bfa8b793206a02bd89333d2edc7547a76175b2943168953d",
+        "bytes": 412
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_cebe4db3c746453c89c89734b6f8c6af/permission.json",
+        "sha256": "00343e485995f4599ddfc85be17016ae130207c6da0971bceac87d5ca063ea4d",
+        "bytes": 368
+      },
+      {
+        "path": "data/phase-b/reference/runs/run_cebe4db3c746453c89c89734b6f8c6af/budget.json",
+        "sha256": "83dbcfa0c7d60137045e439670f1ee27f3fe82532ae0ed5924b9f046318fdae6",
+        "bytes": 435
+      },
+      {
+        "path": "data/phase-b/reference/evaluation-inputs/input_35b770b484f3493b9a471864a69ecf92/user-input.json",
+        "sha256": "a60d95ace9493f4a9df7bac7ff5bd6057b6a595ac0e0ad68e9ae2f2db2b53549",
+        "bytes": 519
+      },
+      {
+        "path": "tests/fixtures/phase_b/raw-text-cases.json",
+        "sha256": "f8665a5d28cddab5ae5da477faf31d58cf6050b27faa806a27f70f67617d0d4c",
+        "bytes": 27686
+      },
+      {
+        "path": "docs/decisions/0015-grounded-request-and-current-evidence.md",
+        "sha256": "b681c651e77b9388810e1222c148bd862639c3fa472cd1f38a29139ed5449699",
+        "bytes": 6800
+      }
+    ],
+    "ledger_snapshot_at_review": {
+      "path": "data/phase-b/batch-ledger.json",
+      "sha256": "e28400d5ea8595e698e653a45614646d864e1edf1d065abb4a0053c0cfa3f7ce",
+      "model_record_id": "model_3e81cc1c3a6b496eb4caeed2478fee45",
+      "cumulative_model_usage": {
+        "http_requests": 333,
+        "tokens": 1053557,
+        "usd": "0.4218891",
+        "known_tokens": 1053557,
+        "unknown_tokens": 0,
+        "known_usd": "0.4218891",
+        "unknown_usd": "0"
+      }
+    },
+    "limitations": [
+      "This passes one bounded registration trajectory on this frozen prompt/profile, not the remaining 12 gates, scientific execution, or a general natural-language reliability guarantee.",
+      "The notices were supplied as finite choices and selected by the model. Their correct selection and actual free reason were reviewed; this does not prove arbitrary future prose is correct.",
+      "The requested ethanol scientific Goal remains insufficient_evidence and outside supported science. Registration completion does not produce energy, an optimized structure, or execution permission.",
+      "The persisted fallback report and program-generated identity/provenance fields are state evidence only; all six axis quotes come from the actual accepted model answer.",
+      "interrupted.json names a paused registration state; zero pending calls/attempts and known HTTP settlement do not show an unknown scientific process.",
+      "This file is an independent review only; the pre-review grade remains incomplete_or_failed until the root operator regrades and records the outcome."
+    ]
+  }
+}
