@@ -35,7 +35,7 @@ from orca_agent.proposals import (
 from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v25"
+PROMPT_VERSION = "agent-json-v26"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -1397,10 +1397,13 @@ def _schema_columns(schema):
     return encode(schema)
 
 
-def _output_instruction():
+def _output_instruction(*, intake=False):
     """Name the exact runtime envelope without creating another schema."""
-    return (f"{len(Proposal.model_fields)} root JSON keys per PROPOSAL_SCHEMA; "
-            "no type/response_format.")
+    if not intake:
+        return (f"{len(Proposal.model_fields)} root JSON keys per PROPOSAL_SCHEMA; "
+                "no type/response_format.")
+    return (f"{len(Proposal.model_fields)} root JSON keys: {','.join(Proposal.model_fields)}. "
+            "Emit their values per PROPOSAL_SCHEMA; type/response_format are API options, never response fields.")
 
 
 def _correction_instruction(feedback):
@@ -1408,6 +1411,10 @@ def _correction_instruction(feedback):
     error = feedback.get("validation_error", {})
     requirements = error.get("requirement", []) if isinstance(error, dict) else []
     if isinstance(requirements, dict):
+        if "missing_geometry" in requirements.get("inapplicable_notice_choices", []):
+            return (" Correction: remove the missing_geometry sentence from parameters.notices. "
+                    "If geometry_source=prepare, later OPI preparation supplies XYZ. "
+                    "Preserve grounded conditions and goal; use schema array/object types, no extra root fields.")
         requirements = requirements.get("errors", [])
     if isinstance(requirements, list) and any(isinstance(item, dict)
             and item.get("type") == "extra_forbidden" for item in requirements):
@@ -2076,7 +2083,7 @@ def build_context(
                 request_prompt = system_prompt.replace(
                     "RESPONSE_ENVELOPE only.", "JSON per PROPOSAL_SCHEMA; reason per REASON_TEMPLATE.")
         if delivery_snapshot:
-            request_prompt += " " + _output_instruction() + _correction_instruction(feedback or {})
+            request_prompt += " " + _output_instruction(intake=semantic_intake) + _correction_instruction(feedback or {})
         if delivery_snapshot and not semantic_intake and not final_only and any(
                 "write_analysis" in tool["effects"] for tool in catalog):
             request_prompt += " Snapshot=current, not final. Science limit0 still permits allowed analysis; join members by ID, not order."
