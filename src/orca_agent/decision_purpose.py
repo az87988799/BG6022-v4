@@ -9,6 +9,10 @@ from dataclasses import dataclass
 
 from orca_agent.applicability import CONDITION_FIELDS, effective_conditions
 
+# These prompt versions require the same purpose and terminal snapshot guards.
+# Keep older recorded requests readable without silently upgrading their contract.
+DECISION_CONTRACT_PROMPT_VERSIONS = frozenset({"agent-json-v22", "agent-json-v23"})
+
 
 @dataclass(frozen=True)
 class DecisionPurpose:

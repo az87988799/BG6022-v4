@@ -389,9 +389,18 @@ def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decod
 
     requests = []
     prepare = context.prepare_request
+    source_schemas = []
+    source_schema_by_hash = {}
+    schema_columns = context._schema_columns
+    def capture_schema(schema):
+        source_schemas.append(copy.deepcopy(schema))
+        return schema_columns(schema)
+    monkeypatch.setattr(context, "_schema_columns", capture_schema)
     def capture(*args, **kwargs):
         prepared = prepare(*args, **kwargs)
         requests.append(prepared)
+        if "SCHEMA_COLUMNS" in json.loads(prepared.body()["messages"][1]["content"]):
+            source_schema_by_hash[prepared.request_hash] = copy.deepcopy(source_schemas[-1])
         return prepared
     monkeypatch.setattr(context, "prepare_request", capture)
     test_text_to_model_plan_to_prepared_input_uses_the_single_feedback_loop(tmp_path, monkeypatch)
@@ -417,7 +426,9 @@ def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decod
         original_conditions = {fact["ref"]: fact["value"] for fact in full["facts"] if fact["kind"] == "conditions"}
         assert {fact["ref"]: fact["value"] for fact in wire["DATA"]["delivery"]["facts"]
                 if fact["kind"] == "conditions"} == original_conditions
-        assert context._hash(wire["PROPOSAL_SCHEMA"]) == wire["SCHEMA_SHA256"]
+        assert wire["PROPOSAL_SCHEMA"] == source_schema_by_hash[prepared.request_hash]
+        assert wire["PROPOSAL_SCHEMA"]["additionalProperties"] is False
+        assert wire["PROPOSAL_SCHEMA"]["minProperties"] == 8
         grouped.append(prepared.input_token_bound)
     assert grouped and run.usage.structure_preparations == 1
     assert run.usage.orca_starts_actual == run.usage.orca_starts_reserved == 0

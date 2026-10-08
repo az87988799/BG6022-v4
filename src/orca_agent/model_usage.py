@@ -7,6 +7,7 @@ from dataclasses import asdict, fields
 from decimal import Decimal
 
 from orca_agent.decision_purpose import (
+    DECISION_CONTRACT_PROMPT_VERSIONS,
     DecisionPurpose,
     prepared_authority,
     prepared_decision_purpose,
@@ -353,7 +354,7 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
         raise StoreError("model decision purpose differs from prepared request")
     purpose = sent_purpose
     authority = prepared_authority(prepared)
-    if prepared.prompt_version == "agent-json-v22" and purpose is None:
+    if prepared.prompt_version in DECISION_CONTRACT_PROMPT_VERSIONS and purpose is None:
         raise StoreError("new model requests require an explicit decision purpose")
     validate_model_profile(store, run, prepared.model_profile)
     # Stable logical identity is idempotency, not an implicit retry switch.
@@ -392,7 +393,7 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
                                                  for goal in user_request.goals if goal.required)
                 validate_final_explanation_capacity(user_request, run, final_only=final_only)
             contract = authority.get("contract_required") is True
-            if (request.prompt_version == "agent-json-v22" and purpose is not None
+            if (request.prompt_version in DECISION_CONTRACT_PROMPT_VERSIONS and purpose is not None
                     and "stop" in purpose.allowed_actions and not contract):
                 raise StoreError("new stop decision requires a delivery snapshot contract")
             snapshot_bytes = None

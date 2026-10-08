@@ -1,0 +1,150 @@
+{
+  "variant_id": "N-06/raw-unsupported-system",
+  "repetition": 1,
+  "run_id": "run_a5213d7b944d4e0eb0459845fb772c6d",
+  "expected_ref": "tests/fixtures/phase_b/raw-text-cases.json#/cases/5/variants/0/expected",
+  "spec_sha256": "f8665a5d28cddab5ae5da477faf31d58cf6050b27faa806a27f70f67617d0d4c",
+  "status": "passed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "real_model_http_evidence_present": true,
+  "protocol_delivery": {
+    "status": "passed",
+    "accepted_proposals": 1
+  },
+  "model_response_evidence": {
+    "present": true,
+    "http_evidence_present": true,
+    "usage": {
+      "known": 2,
+      "unknown": 0
+    },
+    "http_records": 2,
+    "verified_http_responses": 2,
+    "accepted_proposals": 1,
+    "rejected_proposals": 1,
+    "accepted_final_responses": 0,
+    "transport_failures": 0,
+    "inspectable_proposal_content": true,
+    "protocol_delivery_status": "passed",
+    "reason": null
+  },
+  "assertions": [
+    {
+      "metric": "raw_request.accepted_normalization",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "raw_request.normalization_status",
+      "operator": "eq",
+      "value": "clarification",
+      "status": "passed",
+      "observed": "clarification",
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "raw_request.original_text_preserved",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "raw_request.geometry_relations",
+      "operator": "eq",
+      "value": [
+        "optimized"
+      ],
+      "status": "passed",
+      "observed": [
+        "optimized"
+      ],
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "raw_request.unsupported_or_unresolved",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "raw_request.no_registered_system_substitution",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "next:normalize_request with two goals (optimized_geometry fixed_initial? no—geometry optimization then energy)",
+      "rationale": "The accepted reply explicitly keeps optimized_geometry and energy, both with geometry_relation=optimized, preserving the requested optimization and energy. The first energy-only Goal with optimized relation is also valid under decision 0015: no separate geometry Goal is required. The parenthetical post-optimization SP energy is not treated as a new independent computation request; no Plan or execution exists and the bound Goal asks for energy at optimized geometry."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "电子能单位未在请求中给出，保持为未知。",
+      "rationale": "Neither the user input nor any scientific Result supplies a numeric energy or output unit. Both replies preserve unknown units and invent no energy value or unit conversion; the accepted notice explicitly states that limit."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "conditions:method=HF, basis=STO-3G, charge=0, multiplicity=1, electronic_state=RHF, environment=gas_phase (all explicit)",
+      "rationale": "All six conditions are directly grounded in the actual user wording 气相 RHF/STO-3G，中性单重态. Both the accepted reason and each goal parameter preserve HF/STO-3G, neutral singlet, restricted state and gas phase; no temperature, solvent or default is fabricated."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "source:AUTHORITY.user_originals[0]",
+      "rationale": "The exact sent context contains this user text at AUTHORITY.user_originals[0] and the matching pending message ID. Goal and condition text_basis strings match that text. There is no registered geometry, Result, external query or scientific source being substituted."
+    },
+    "limits": {
+      "status": "passed",
+      "quote": "limits:no ethanol geometry registered, registration-only intent (no execution), ethanol not in registered science_scope systems",
+      "rationale": "The corrected actual reply distinguishes missing geometry, explicit registration-only intent and ethanol outside the transmitted H2O/CH4 capability scope. It does not substitute a supported system or claim scientific completion. This final-axis pass quotes only the accepted second reply; the first missing scope notice remains separately recorded as corrected incompleteness."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "本轮为登记需求，不启动计算；未登记乙醇几何，优化与能量目标均缺少初始几何。",
+      "rationale": "The actual accepted action is normalize_request. The reply has no questions or request for resources/permission, and no Tool, Plan or computation proposal. The resulting communication is registration_only with awaiting_reply=false and the Run paused; these persisted facts corroborate the model wording rather than supply its review quote. No stop proposal is required for this registration-only contract."
+    }
+  },
+  "fixture_gaps": [],
+  "proposal_review": {
+    "all_proposal_facts_passed": true,
+    "semantic_review_passed": true,
+    "status": "passed",
+    "reason": "Full-trajectory facts and semantics require explicit independent review; final six axes cannot replace it."
+  },
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "contract": "registration_communication",
+    "accepted_action": "normalize_request",
+    "reason": "Registration requires consistent current notices/questions and delivery state; no stop is required."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [
+    "raw user text interpreted by the production semantic candidate path",
+    "0 ORCA; scientific execution permission remains false"
+  ],
+  "tokens_used": 7396,
+  "tokens_unknown": 0,
+  "model_text_sha256": "c2cd5f71bea291d771a76ed57a292248b5c4bb8c9f0665bb209db2c457f374e8"
+}

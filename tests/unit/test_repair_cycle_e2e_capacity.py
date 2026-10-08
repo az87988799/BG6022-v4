@@ -10,6 +10,7 @@ import ast
 import inspect
 import json
 import shutil
+from copy import deepcopy
 
 import pytest
 from test_agent import ScriptedTransport
@@ -28,6 +29,7 @@ from orca_agent.tools import electronic, geometry, structure
 from orca_agent.tools.calculation import collect_result, revalidate
 from tests.helpers import phase_b_repair_cycle as cycle
 from tests.helpers import phase_b_repair_cycle_execution as execution
+from tests.unit.test_decision_purpose_capacity import expand_schema
 
 
 def _fixed_text(system):
@@ -53,6 +55,11 @@ def _parts(messages):
 @pytest.mark.parametrize("system", ["water", "methane"])
 @pytest.mark.parametrize("path_shape", ["temporary", "development", "formal"])
 def test_fixed_e2e_profile_every_normal_stage_fits_without_live_execution(tmp_path, monkeypatch, system, path_shape):
+    run_fixed_e2e(tmp_path, monkeypatch, system, path_shape)
+
+
+def run_fixed_e2e(tmp_path, monkeypatch, system, path_shape, *, goal_names=None, correction=False):
+    """Reuse the fixed scope with explicit presentation variations only."""
     config = execution._e2e_profile(Config(), category="development")
     # Explicit synthetic executable identities satisfy the ordinary environment
     # receipt contract; the scientific Tool boundary below never starts them.
@@ -88,9 +95,11 @@ def test_fixed_e2e_profile_every_normal_stage_fits_without_live_execution(tmp_pa
     assert store.load_request(run).geometry_artifact_id is None and not run.result_ids
     tool = "orca.opt" if system == "water" else "orca.sp"
     ports = ["optimized_geometry", "energy"] if system == "water" else ["energy"]
+    goal_names = goal_names or {port: port for port in ports}
+    assert set(goal_names) == set(ports)
     relation = "optimized" if system == "water" else "fixed_initial"
     normalize = {"action": "normalize_request", "parameters": candidate(store, run, kind="normalize",
-        goals=[{"key": port, "port": port, "system_refs": [system], "text_basis": text,
+        goals=[{"key": goal_names[port], "port": port, "system_refs": [system], "text_basis": text,
                 "geometry_relation": relation} for port in ports],
         conditions={key: {"value": value, "source": "explicit", "text_basis": text}
                     for key, value in config.text.defaults.items()})}
@@ -101,7 +110,7 @@ def test_fixed_e2e_profile_every_normal_stage_fits_without_live_execution(tmp_pa
          "inputs": {"identity": {"producer_key": "identity", "port": "resolved_identity"}}},
         {"key": "science", "tool": tool, "system_id": system, "parameters": {},
          "geometry": {"producer_key": "prepare", "port": "prepared_geometry"}}],
-        "goal_map": {"goal_" + port: {"step_key": "science", "port": port} for port in ports}}}
+        "goal_map": {"goal_" + goal_names[port]: {"step_key": "science", "port": port} for port in ports}}}
 
     def next_tool(name):
         def proposal(data):
@@ -132,6 +141,23 @@ def test_fixed_e2e_profile_every_normal_stage_fits_without_live_execution(tmp_pa
     monkeypatch.setattr(geometry, "execute", synthetic_science)
     attempts = []
     prepare = context.prepare_request
+    source_schemas = []
+    source_schema_by_hash = {}
+    schema_columns = context._schema_columns
+    def capture_schema(schema):
+        source_schemas.append(deepcopy(schema))
+        return schema_columns(schema)
+    monkeypatch.setattr(context, "_schema_columns", capture_schema)
+    build_context = agent.build_context
+    def capture_context(*args, **kwargs):
+        before = deepcopy((args, kwargs))
+        try:
+            return build_context(*args, **kwargs)
+        finally:
+            # Request/Plan/Run (including frozen Calls) and every selected
+            # Result/snapshot remain exact while display digests are omitted.
+            assert (args, kwargs) == before
+    monkeypatch.setattr(agent, "build_context", capture_context)
 
     def capture(messages, **kwargs):
         item = _parts(messages)
@@ -145,6 +171,8 @@ def test_fixed_e2e_profile_every_normal_stage_fits_without_live_execution(tmp_pa
             raise
         attempts.append({**item, "request_hash": prepared.request_hash,
                          "input_bound": prepared.input_token_bound, "output_bound": prepared.output_token_bound})
+        if "SCHEMA_COLUMNS" in json.loads(messages[1]["content"]):
+            source_schema_by_hash[prepared.request_hash] = deepcopy(source_schemas[-1])
         return prepared
 
     monkeypatch.setattr(context, "prepare_request", capture)
@@ -162,7 +190,12 @@ def test_fixed_e2e_profile_every_normal_stage_fits_without_live_execution(tmp_pa
             stages.append(stage)
             return super().send(prepared, reserve=reserve, settle=settle)
 
-    transport = CapacityTransport(normalize, plan, next_tool("structure.prepare"), next_tool(tool),
+    scripts = [normalize, plan]
+    if correction:
+        def rejected(data):
+            return {**next_tool("structure.prepare")(data), "type": "json_object"}
+        scripts.append(rejected)
+    transport = CapacityTransport(*scripts, next_tool("structure.prepare"), next_tool(tool),
         {"action": "stop", "parameters": {"reason": "Offline synthetic capacity fixture; no real science claim."}})
     ended = agent.execute(store, config, run.id, transport=transport)
     sent = []
@@ -182,18 +215,30 @@ def test_fixed_e2e_profile_every_normal_stage_fits_without_live_execution(tmp_pa
         "actual_model_tokens": None, "synthetic_usage_is_not_budget_proof": True,
         "state": ended.state, "diagnostics": ended.diagnostics, "all_preparation_attempts": attempts}
     (tmp_path / "capacity.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    assert len(sent) == 5 and len(transport.sent) == 5 and not transport.scripts, summary
-    assert stages == ["normalize", "initial_plan", "after_resolve", "after_prepare", "after_science"]
+    count = 6 if correction else 5
+    assert len(sent) == count and len(transport.sent) == count and not transport.scripts, summary
+    assert stages == ["normalize", "initial_plan", "after_resolve", *(["after_resolve"] if correction else []),
+                      "after_prepare", "after_science"]
     assert all(item["input_bound"] <= 12000 and item["output_bound"] == 2000 for item in sent)
     assert len(generated) == len(scientific_calls) == 1
     assert ended.usage.identity_queries == ended.usage.structure_preparations == 1
     assert ended.usage.orca_starts_reserved == 1 and ended.usage.orca_starts_actual == 0
     report = build_report(store, ended)
     assert ended.state == "completed" and report["user_goal_complete"], summary
-    assert set(ended.goal_status) == {"goal_" + port for port in ports}
+    assert set(ended.goal_status) == {"goal_" + goal_names[port] for port in ports}
     assert report["model_explanation"]["current_status"] == "passed"
-    for data in transport.sent:
+    for data, record in zip(transport.sent, ended.model_records, strict=True):
         assert data["AUTHORITY"]["basis"]["permission_version"] == run.permission.version
+        if "SCHEMA_COLUMNS" in data:
+            schema = expand_schema(data["PROPOSAL_SCHEMA"])
+            assert schema == source_schema_by_hash[record["request_hash"]]
+            assert schema["additionalProperties"] is False and schema["minProperties"] == 8
+    after_resolve = transport.sent[2]
+    assert "immutable_frozen_details_sha256" not in after_resolve["AUTHORITY"]["plan"]
+    assert "SCHEMA_SHA256" not in after_resolve
+    frozen = ended.calls[0].frozen_step
+    assert frozen == store.load_plan(ended).steps[0]
+    assert after_resolve["AUTHORITY"]["plan"]["steps"][0] == {"id": frozen.id, "immutable_frozen": True}
     terminal = transport.sent[-1]["DATA"]["delivery"]
     assert {goal["port"] for goal in terminal["goals"]} == set(ports)
     # Capacity must retain scientific answers and conditions, not merely fit by
@@ -203,3 +248,10 @@ def test_fixed_e2e_profile_every_normal_stage_fits_without_live_execution(tmp_pa
     for fact in report["delivery"]["facts"]:
         if fact["kind"] in {"answer", "conditions", "goal_status"}:
             assert visible_facts[fact["ref"]]["value"] == context._safe(fact["value"])
+    if correction:
+        rejected_decisions = [decision for decision in ended.decisions if decision.get("action") == "rejected"]
+        assert len(rejected_decisions) == 1
+        assert transport.sent[3]["CONTROL"]["validation_error"]["requirement"] == [
+            {"type": "extra_forbidden", "loc": ["type"]}]
+        assert ended.usage.model_calls == 6 and ended.usage.model_tokens_used == 450
+    return summary

@@ -9,6 +9,7 @@ import psutil
 from orca_agent import runner
 from orca_agent.backends import local
 from orca_agent.context import build_context
+from orca_agent.decision_purpose import DECISION_CONTRACT_PROMPT_VERSIONS
 from orca_agent.llm import DeepSeekTransport, proposal_recovery_kind
 from orca_agent.model_usage import current_basis, send_model
 from orca_agent.models import EvidenceRef, Proposal, fingerprint, utc_now
@@ -250,7 +251,7 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             if reply.get("error_category") or not reply.get("proposal"):
                 raise ValueError(reply.get("error_category") or "missing_proposal")
             proposal = Proposal.model_validate(reply["proposal"])
-            if record.get("prompt_version") == "agent-json-v22":
+            if record.get("prompt_version") in DECISION_CONTRACT_PROMPT_VERSIONS:
                 from orca_agent.model_usage import _request_body
                 from orca_agent.proposals import ProposalError
                 sent = json.loads(_request_body(store, run, record)["messages"][-1]["content"])
