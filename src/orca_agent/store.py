@@ -316,7 +316,7 @@ class Store:
                           "elapsed_seconds", "cpu_seconds", "extra_orca_starts_reserved",
                           "model_calls", "model_tokens_used", "model_tokens_unknown",
                           "plan_revisions", "decision_rounds",
-                          "evidence_reads", "analysis_executions", "identity_queries", "structure_preparations"):
+                          "evidence_reads", "analysis_executions", "identity_queries", "structure_preparations", "knowledge_queries"):
                 if getattr(run.usage, field) < getattr(previous.usage, field):
                     raise StoreError(f"cumulative usage cannot decrease: {field}")
             for field in ("logical_attempts", "fingerprint_attempts"):

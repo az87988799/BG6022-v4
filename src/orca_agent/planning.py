@@ -85,6 +85,8 @@ def _concrete_reference(reference: EvidenceRef, run: Run) -> None:
 def _step_permissions(step: Step, run: Run) -> None:
     tool = get_tool(step.tool)
     permission = run.permission
+    _require(not tool.check_contract.get("immediate_only"),
+             "this Tool requires an immediate decision after inspecting current evidence, not a planned Step")
     _require(step.tool in permission.allowed_tools, "tool is outside the permission snapshot")
     if "execute_orca" in tool.effects:
         _require(permission.scientific_execution, "scientific execution is not authorized")

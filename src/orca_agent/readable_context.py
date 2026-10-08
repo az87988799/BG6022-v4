@@ -101,7 +101,7 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
                 "input_ports": tool.get("check_contract", {}).get("input_ports", {})}
             for tool in template["TOOL_CATALOG"]]
         for tool in wire["TOOLS"]:
-            if tools[tool["name"]].check_contract.get("immediate"):
+            if tools[tool["name"]].check_contract.get("immediate") or tool["effects"] == ["read_registered_artifact"]:
                 tool["immediate"] = True
             if isinstance(tool["parameters"], str):
                 for key in list(tool):
@@ -124,7 +124,8 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
         if "call_tool" in actions:
             for tool in wire["TOOLS"]:
                 if tool.get("immediate"):
-                    schemas[tool["name"]] = tool["parameters"]
+                    schemas[tool["name"]] = tool.pop("parameters")
+                    tool["parameters_ref"] = "ACTION_SCHEMAS." + tool["name"]
             wire["RESPONSE_ENVELOPE"]["action"] = " | ".join(schemas)
         if "PLAN_REFERENCES" in template and not authority.get("plan"):
             wire["PLAN_REFERENCES"] = template["PLAN_REFERENCES"]
@@ -146,4 +147,8 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
             "Map every required Goal ID/port. Execute existing Step: call_tool {step_id} from pending_step_ids. "
             "Inspect results before next action; qualification!=applicability. Stop uses delivery refs."
         )
+        for tool in wire["TOOLS"]:
+            guidance = tools[tool["name"]].check_contract.get("model_guidance")
+            if guidance:
+                prompt += " " + guidance
     return wire, prompt

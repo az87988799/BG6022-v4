@@ -127,20 +127,29 @@ def create_question(store, config, source_run_id, text, *, submission_id):
         raise StoreError("question must contain 1 to 8192 bytes")
     def initialize():
         source = store.load_run(source_run_id)
-        facts = build_report(store, source.id)["goal_facts"]
+        from orca_agent.tools.knowledge import question_source_facts
+        facts = question_source_facts(store, source.id)
         import re
         request = Request(original_text=text, goals=[Goal(id="question", port="knowledge_answer",
             minimum_check_version="knowledge-answer-1", original_text=text,
             conditions={"requires_sources": bool(re.search(r"来源链接|引用文献|文献|手册|官方|最新|版本|references?|manual|version", text, re.I))})],
             conditions={"explain_results": True, "read_only_source_run": source.id,
+                        "source_fact_view": "query-facts-1",
                         "available_evidence": facts,
                         "query_scope": "Only explain these saved facts; no calculation or scientific permission."})
         permission = config.text.permission.model_copy(deep=True)
         permission.scientific_execution = False
         permission.external_identity_queries = False
         permission.geometry_preparation = False
-        permission.allowed_tools = [name for name in ("knowledge.answer", "knowledge.search")
+        permission.allowed_tools = [name for name in ("knowledge.answer", "knowledge.search", "evidence.list",
+                                    "evidence.discover", "evidence.value", "evidence.text", "evidence.search")
                                     if name in permission.allowed_tools]
+        if any(name.startswith("evidence.") for name in permission.allowed_tools):
+            permission.artifact_ids = sorted(artifact_ids(store, source.id))
+            request.conditions["authorized_artifacts"] = [{"artifact_id": aid,
+                "role": store.load_artifact(aid).role,
+                "attempt_id": store.load_artifact(aid).attempt_id,
+                "filename": store.artifact_path(aid).name} for aid in permission.artifact_ids]
         budget = config.text.budget.model_copy(update={"orca_starts": 0, "extra_orca_starts": 0,
             "identity_queries": 0, "structure_preparations": 0, "model_calls": min(4, config.text.budget.model_calls)})
         return natural.initialize_agent(store, config, request, permission, budget, defer_environment=True)

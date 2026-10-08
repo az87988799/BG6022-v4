@@ -143,7 +143,24 @@ TOOLS["knowledge.answer"] = _register(
         "Do not introduce unsourced experimental numbers. Answer is not a validated calculation."),
     input_roles=[], output_ports=[], observation_outputs=["knowledge_answer"],
     effects=["record_knowledge_answer"], max_cores=0, max_memory_mb=0,
-    check_version="knowledge-answer-1", check_contract={"immediate": True, "context_dependencies": ["knowledge.search"]},
+    check_version="knowledge-answer-1", check_contract={"immediate": True, "immediate_only": True,
+        "context_dependencies": ["knowledge.search", "evidence.list", "evidence.discover", "evidence.value", "evidence.text", "evidence.search"],
+        "model_guidance": (
+            "Knowledge answers: answer the exact requested quantity in concise Chinese prose. "
+            "For conceptual questions omit unrequested experimental values, angles and electronegativity numbers. "
+            "The exact molecular electric dipole includes nuclear point charges AND continuous electron charge density. "
+            "An atom-partial-charge sum is only a model approximation, not its exact definition. "
+            "For neutral molecules its vector points from negative to positive charge center. "
+            "Do not introduce chemical arrow conventions unless the user asks about them; individual bond "
+            "arrows are not generally parallel to the total molecular vector. Permanent dipole is not polarizability. "
+            "For document questions support claims with retrieved excerpts; clearly mark missing support "
+            "instead of substituting a nearby topic. Do not assert units from an excerpt that does not state them. "
+            "For saved-result questions use available_evidence exactly, including final geometry and unit; "
+            "do not invent a new calculation or reuse its initial structure as its optimized result. "
+            "For raw file questions inspect authorized_artifacts with evidence Tools before answering; "
+            "select by exact basename and producing attempt_id from source facts, not by geometry Artifact ID. "
+            "preserve returned line numbers, typed paths, hashes and partial coverage. A missing field stays missing. "
+            "For public documents keep quotations under 25 words per source; paraphrase explanations.")},
     implementation="orca_agent.tools.knowledge.answer")
 
 for _name, _parameters, _description, _function, _port in (

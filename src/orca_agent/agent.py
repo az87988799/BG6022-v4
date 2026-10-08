@@ -261,7 +261,8 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                             and intent.action in sent.get("ACTION_SCHEMAS", {})
                             and intent.action in run.permission.allowed_tools
                             and "call_tool" in sent["AUTHORITY"]["decision_purpose"]["allowed_actions"]
-                            and get_tool(intent.action).check_contract.get("immediate")):
+                            and (get_tool(intent.action).check_contract.get("immediate")
+                                 or get_tool(intent.action).effects == ["read_registered_artifact"])):
                         intent.parameters = {"tool": intent.action, "parameters": intent.parameters}
                         intent.action = "call_tool"
                     proposal_values = {**intent.model_dump(), **sent["AUTHORITY"]["basis"],

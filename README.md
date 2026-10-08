@@ -141,4 +141,4 @@ $env:ORCA_AGENT_MPI = 'C:\Program Files\Microsoft MPI\Bin\mpiexec.exe'
 
 在已有任务中输入问题后点 **只读追问**，建立关联原计算证据的查询任务，科学启动预算为零；“发送消息”仍用于补充原任务条件。追问独立计入模型调用和查询预算，不迁移原计算额度。`config.text.example.toml` 列出新增知识工具和文档查询限额，升级已有本地配置需同步这些字段；旧 Run 的冻结许可不会自动扩大。
 
-基础知识回答及五份版本化 ORCA/OPI 官方文档读取已接通；它们不产生合格科学数值。真实知识回答仍出现方向概念混淆、检索答案偏题和最终协议失败，尚未达到可靠知识助手的验收要求。全部实际消耗、失败与适用范围见[本次交付记录](docs/acceptance/web-properties-knowledge/README.md)。
+基础知识回答与已有结果追问已各完成三次真实复核；五份版本化 ORCA/OPI 官方文档读取已接通，实际引用链完成三次，摘录未覆盖的输出细节会在网页显示范围说明。知识解释不产生合格科学数值。原文件自然语言追问的文件索引与协议已修复，但最终完整模型复核尚未通过；可在“原始证据”中直接查看文件。完整方案仍有未完成项，详见[本批交付与剩余清单](docs/acceptance/knowledge-query-completion/README.md)，此前失败见[上一批记录](docs/acceptance/web-properties-knowledge/README.md)。

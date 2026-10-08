@@ -38,14 +38,25 @@ class _Text(HTMLParser):
         self.parts = []
         self.skip = 0
         self.in_article = False
+        self.buffer = []
+
+    def flush(self):
+        value = " ".join(self.buffer).strip()
+        if value:
+            self.parts.append(value)
+        self.buffer = []
 
     def handle_starttag(self, tag, attrs):
         if tag == "article":
             self.in_article = True
         if tag in {"script", "style", "nav"}:
             self.skip += 1
+        if self.in_article and not self.skip and tag in {"p", "pre", "li", "h1", "h2", "h3", "h4"}:
+            self.flush()
 
     def handle_endtag(self, tag):
+        if self.in_article and not self.skip and tag in {"p", "pre", "li", "h1", "h2", "h3", "h4", "article"}:
+            self.flush()
         if tag == "article":
             self.in_article = False
         if tag in {"script", "style", "nav"} and self.skip:
@@ -53,7 +64,24 @@ class _Text(HTMLParser):
 
     def handle_data(self, data):
         if self.in_article and not self.skip and data.strip():
-            self.parts.append(data.strip())
+            self.buffer.append(data.strip())
+
+
+def matched_excerpt(parts, query):
+    """Keep paragraphs together and prefer the requested phrase over nearby terms."""
+    terms = list(dict.fromkeys(re.findall(r"[A-Za-z][A-Za-z0-9_-]{2,}", query.lower())))
+    if not terms:
+        return "", []
+    phrase = " ".join(terms)
+    ranked = []
+    for index, paragraph in enumerate(parts):
+        normalized = " ".join(re.findall(r"[a-z0-9_-]+", paragraph.lower()))
+        hits = sum(bool(re.search(r"\b" + re.escape(term) + r"\b", normalized)) for term in terms)
+        score = hits + 10 * (hits == len(terms)) + 40 * (phrase in normalized)
+        if hits:
+            ranked.append((score, index))
+    chosen = sorted(index for _, index in sorted(ranked, key=lambda pair: (-pair[0], pair[1]))[:3])
+    return "\n\n".join(parts[index][:1800] for index in chosen)[:5400], chosen
 
 
 def retrieve(store, run, call):
@@ -69,17 +97,29 @@ def retrieve(store, run, call):
                     raise ValueError("document exceeds 1 MiB retrieval bound")
     parser = _Text()
     parser.feed(raw.decode("utf-8", errors="replace"))
-    terms = re.findall(r"[A-Za-z][A-Za-z0-9_-]{2,}", call.parameters["query"].lower())
-    scores = [(sum((5 if len(term) >= 6 else 1) for term in terms if term in line.lower()), i)
-              for i, line in enumerate(parser.parts)]
-    matches = [i for score, i in sorted(scores, key=lambda v: (-v[0], v[1])) if score][:4]
-    indices = sorted({j for i in matches for j in range(max(0, i - 2), min(len(parser.parts), i + 24))})
-    excerpt = "\n".join(parser.parts[i] for i in indices)[:6000]
+    parser.flush()
+    excerpt, indices = matched_excerpt(parser.parts, call.parameters["query"])
     return {"status": "found" if excerpt else "missing", "title": title, "url": url,
             "published_at": None, "accessed_at": utc_now().isoformat(), "query": call.parameters["query"],
             "document_sha256": hashlib.sha256(raw).hexdigest(), "excerpt": excerpt,
-            "coverage": {"complete": False, "scope": "bounded matched document excerpts"},
+            "coverage": {"complete": False, "scope": "bounded matched document paragraphs",
+                         "paragraph_indices": indices, "paragraph_count": len(parser.parts)},
             "scientific_qualification": False, "retrieval": "versioned official-document index; one HTTPS GET"}
+
+
+def question_source_facts(store, source_run):
+    """Exact bounded report fields for explanations, without duplicate inventories."""
+    from orca_agent.report import build_report
+    fields = {"goal_id", "port", "current_conditions", "source_conditions", "geometry_relation",
+              "source_geometry_artifact_id", "recorded_status", "current_evidence_status",
+              "goal_complete", "answer", "gaps", "minimum_check_version"}
+    rows = []
+    for fact in build_report(store, source_run)["goal_facts"]:
+        row = {key: value for key, value in fact.items() if key in fields}
+        row["source"] = {key: value for key, value in (fact.get("source") or {}).items()
+                         if key in {"run_id", "result_id", "attempt_id", "call_id"}}
+        rows.append(row)
+    return rows
 
 
 def answer(store, run, call):
@@ -92,20 +132,35 @@ def answer(store, run, call):
     if not identifiers and goal.conditions.get("requires_sources"):
         identifiers = [identifier for identifier in run.result_ids if
             store.load_result(run.id, identifier).observations.get("document_excerpt", {}).get("status") == "found"]
+    elif not identifiers:
+        identifiers = [identifier for identifier in run.result_ids if
+            (source := store.load_result(run.id, identifier)).operation_status == "completed"
+            and source.source.get("tool", "").startswith("evidence.")]
     for identifier in identifiers:
         if identifier not in run.result_ids:
             raise ValueError("source must be an actually retrieved Result in this Run")
         result = store.load_result(run.id, identifier)
         document = result.observations.get("document_excerpt")
+        if not document and result.source.get("tool", "").startswith("evidence."):
+            if result.operation_status != "completed":
+                raise ValueError("file source is not a completed evidence read")
+            for artifact_id in result.artifact_ids:
+                store.artifact_path(artifact_id)
+            sources.append({"result_id": result.id, "kind": "raw_evidence_observation",
+                            "observations": result.observations,
+                            "scientific_qualification": False})
+            continue
         if not document or document.get("status") != "found" or result.operation_status != "completed":
             raise ValueError("source is not a successful document retrieval")
         sources.append({key: document[key] for key in ("url", "title", "published_at", "accessed_at", "document_sha256")})
-    if goal.conditions.get("requires_sources") and not sources:
+    if goal.conditions.get("requires_sources") and not any(source.get("url") for source in sources):
         raise ValueError("this knowledge goal requires actual retrieved sources")
     source_facts = None
     if source_run := request.conditions.get("read_only_source_run"):
         from orca_agent.report import build_report
-        source_facts = build_report(store, source_run)["goal_facts"]
+        source_facts = (question_source_facts(store, source_run)
+            if request.conditions.get("source_fact_view") == "query-facts-1"
+            else build_report(store, source_run)["goal_facts"])
         if source_facts != request.conditions.get("available_evidence"):
             raise ValueError("source facts changed since question intake; refresh explicitly")
     return {"status": "answered", "goal_id": goal.id, "answer": call.parameters["answer"],
