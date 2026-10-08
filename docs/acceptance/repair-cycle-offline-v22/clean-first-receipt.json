@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "source_commit": "5b2c326dab4d8cf8c163cecf61c9d70f1a19d49f",
+  "checkout": "C:\\Temp\\bg6022-repair-cycle-clean-45b7a657c0a845d1",
+  "source_repository": "E:\\BG6022-V4",
+  "started_at": "2026-10-08T08:21:29.730939+00:00",
+  "live_model": false,
+  "live_orca": false,
+  "ignored_data_copied": false,
+  "prior_venv_copied": false,
+  "removed_environment_variables": [
+    "DEEPSEEK_API_KEY"
+  ],
+  "steps": [
+    {
+      "name": "clone",
+      "command": [
+        "git",
+        "clone",
+        "--no-hardlinks",
+        "E:\\BG6022-V4",
+        "C:\\Temp\\bg6022-repair-cycle-clean-45b7a657c0a845d1"
+      ],
+      "cwd": "E:\\BG6022-V4",
+      "started_at": "2026-10-08T08:21:29.730939+00:00",
+      "finished_at": "2026-10-08T08:21:32.253114+00:00",
+      "seconds": 2.5310000000172295,
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-45b7a657c0a845d1\\clone.log",
+        "sha256": "810fe62b0f8c136daf6695c3aa78217ce14e06f0f60dc98bdc5aaedab24f9093"
+      }
+    },
+    {
+      "name": "sync",
+      "command": [
+        "py",
+        "-3.11",
+        "-m",
+        "uv",
+        "sync",
+        "--offline",
+        "--locked",
+        "--group",
+        "dev"
+      ],
+      "cwd": "C:\\Temp\\bg6022-repair-cycle-clean-45b7a657c0a845d1",
+      "started_at": "2026-10-08T08:21:43.483122+00:00",
+      "finished_at": "2026-10-08T08:21:50.594509+00:00",
+      "seconds": 7.10899999999674,
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-45b7a657c0a845d1\\sync.log",
+        "sha256": "c9f7c1ce2f28f0556bc89126b25096963e5244f549f777ff9d129230f9b00ce0"
+      }
+    },
+    {
+      "name": "pytest",
+      "command": [
+        "C:\\Temp\\bg6022-repair-cycle-clean-45b7a657c0a845d1\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "--junitxml=E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-45b7a657c0a845d1\\tests.xml"
+      ],
+      "cwd": "C:\\Temp\\bg6022-repair-cycle-clean-45b7a657c0a845d1",
+      "started_at": "2026-10-08T08:21:53.003707+00:00",
+      "finished_at": "2026-10-08T08:41:49.428308+00:00",
+      "seconds": 1196.4369999999763,
+      "exit_code": 1,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-45b7a657c0a845d1\\pytest.log",
+        "sha256": "e6df87df7868e80634edce81b48decfaa4e4b9ec870aa7e7fce46426b07d37f0"
+      }
+    },
+    {
+      "name": "ruff",
+      "command": [
+        "C:\\Temp\\bg6022-repair-cycle-clean-45b7a657c0a845d1\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "cwd": "C:\\Temp\\bg6022-repair-cycle-clean-45b7a657c0a845d1",
+      "started_at": "2026-10-08T08:41:49.435919+00:00",
+      "finished_at": "2026-10-08T08:41:50.724518+00:00",
+      "seconds": 1.297000000020489,
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-45b7a657c0a845d1\\ruff.log",
+        "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+      }
+    }
+  ],
+  "status": "failed",
+  "runtime": {
+    "python": "3.11.4",
+    "executable": "C:\\Temp\\bg6022-repair-cycle-clean-45b7a657c0a845d1\\.venv\\Scripts\\python.exe",
+    "prefix": "C:\\Temp\\bg6022-repair-cycle-clean-45b7a657c0a845d1\\.venv",
+    "product_import": "C:\\Temp\\bg6022-repair-cycle-clean-45b7a657c0a845d1\\src\\orca_agent\\__init__.py",
+    "prompt_version": "agent-json-v22",
+    "versions": {
+      "orca-pi": "2.0.0",
+      "openai": "2.28.0",
+      "httpx": "0.28.1",
+      "pydantic": "2.13.5",
+      "pytest": "9.1.1",
+      "ruff": "0.16.10"
+    }
+  },
+  "uv_version": "uv 0.12.23 (46b84fd0b 2026-10-03 x86_64-pc-windows-msvc)",
+  "counts": {
+    "tests": 2954,
+    "failures": 9,
+    "errors": 0,
+    "skipped": 202,
+    "passed": 2743
+  },
+  "skips": {
+    "creating test symlinks requires Windows developer mode/privilege": 1,
+    "local real reference archive unavailable; source-backed context unverified": 3,
+    "local real-development archive is absent; no replacement evidence is fabricated": 14,
+    "phase-A original archive unavailable; immutable restoration unverified": 1,
+    "real ORCA not enabled; unverified": 13,
+    "real model not enabled; unverified": 139,
+    "retained V06 development archive absent; real-request rebuild unverified": 3,
+    "retained development receipt unavailable; no live evidence fabricated": 1,
+    "retained real N06 receipt absent; real-input replay unverified": 1,
+    "retained v15 N06 archive absent; real-input replay unverified": 1,
+    "retained v5 real request absent; real-input replay unverified": 1,
+    "retained v8 development record absent; real-request replay unverified": 24
+  },
+  "failures": [
+    {
+      "classname": "tests.unit.test_call_tool_contract",
+      "name": "test_two_row_compaction_preserves_literal_null_missing_and_trust_paths",
+      "kind": "failure",
+      "message": "KeyError: 'content'",
+      "detail": "tests\\unit\\test_call_tool_contract.py:155: in test_two_row_compaction_preserves_literal_null_missing_and_trust_paths\n    decoded = payload(SimpleNamespace(body=lambda: {\"messages\": [{}, {\"content\": json.dumps(wire)}]}))\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\unit\\test_context.py:94: in payload\n    if \"Request.text_basis_ref=text_basis at that path.\" in prepared.body()[\"messages\"][0][\"content\"]:\n                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'content'"
+    },
+    {
+      "classname": "tests.unit.test_call_tool_contract",
+      "name": "test_copyable_clarify_examples_remain_strings_even_when_data_shares_the_same_literal",
+      "kind": "failure",
+      "message": "KeyError: 'content'",
+      "detail": "tests\\unit\\test_call_tool_contract.py:169: in test_copyable_clarify_examples_remain_strings_even_when_data_shares_the_same_literal\n    decoded = payload(SimpleNamespace(body=lambda: {\"messages\": [{}, {\"content\": json.dumps(wire)}]}))\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\unit\\test_context.py:94: in payload\n    if \"Request.text_basis_ref=text_basis at that path.\" in prepared.body()[\"messages\"][0][\"content\"]:\n                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'content'"
+    },
+    {
+      "classname": "tests.unit.test_call_tool_contract",
+      "name": "test_native_paths_survive_shared_parent_objects_in_untrusted_data[ACTION_PARAMETERS-fields0-native_keys0]",
+      "kind": "failure",
+      "message": "KeyError: 'content'",
+      "detail": "tests\\unit\\test_call_tool_contract.py:197: in test_native_paths_survive_shared_parent_objects_in_untrusted_data\n    decoded = payload(SimpleNamespace(body=lambda: {\"messages\": [{}, {\"content\": json.dumps(wire)}]}))\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\unit\\test_context.py:94: in payload\n    if \"Request.text_basis_ref=text_basis at that path.\" in prepared.body()[\"messages\"][0][\"content\"]:\n                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'content'"
+    },
+    {
+      "classname": "tests.unit.test_call_tool_contract",
+      "name": "test_native_paths_survive_shared_parent_objects_in_untrusted_data[AUTHORITY-fields1-native_keys1]",
+      "kind": "failure",
+      "message": "KeyError: 'content'",
+      "detail": "tests\\unit\\test_call_tool_contract.py:197: in test_native_paths_survive_shared_parent_objects_in_untrusted_data\n    decoded = payload(SimpleNamespace(body=lambda: {\"messages\": [{}, {\"content\": json.dumps(wire)}]}))\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\unit\\test_context.py:94: in payload\n    if \"Request.text_basis_ref=text_basis at that path.\" in prepared.body()[\"messages\"][0][\"content\"]:\n                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'content'"
+    },
+    {
+      "classname": "tests.unit.test_call_tool_contract",
+      "name": "test_native_paths_survive_shared_parent_objects_in_untrusted_data[CONTROL-fields2-None]",
+      "kind": "failure",
+      "message": "KeyError: 'content'",
+      "detail": "tests\\unit\\test_call_tool_contract.py:197: in test_native_paths_survive_shared_parent_objects_in_untrusted_data\n    decoded = payload(SimpleNamespace(body=lambda: {\"messages\": [{}, {\"content\": json.dumps(wire)}]}))\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\unit\\test_context.py:94: in payload\n    if \"Request.text_basis_ref=text_basis at that path.\" in prepared.body()[\"messages\"][0][\"content\"]:\n                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'content'"
+    },
+    {
+      "classname": "tests.unit.test_call_tool_contract",
+      "name": "test_native_action_path_survives_dense_sibling_tabulation",
+      "kind": "failure",
+      "message": "KeyError: 'content'",
+      "detail": "tests\\unit\\test_call_tool_contract.py:210: in test_native_action_path_survives_dense_sibling_tabulation\n    decoded = payload(SimpleNamespace(body=lambda: {\"messages\": [{}, {\"content\": json.dumps(wire)}]}))\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\unit\\test_context.py:94: in payload\n    if \"Request.text_basis_ref=text_basis at that path.\" in prepared.body()[\"messages\"][0][\"content\"]:\n                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'content'"
+    },
+    {
+      "classname": "tests.unit.test_context",
+      "name": "test_shared_wire_roundtrip_preserves_untrusted_instructions_and_literal_markers",
+      "kind": "failure",
+      "message": "KeyError: 'content'",
+      "detail": "tests\\unit\\test_context.py:552: in test_shared_wire_roundtrip_preserves_untrusted_instructions_and_literal_markers\n    decoded = payload(SimpleNamespace(body=lambda: {\"messages\": [{}, {\"content\": json.dumps(wire)}]}))\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\unit\\test_context.py:94: in payload\n    if \"Request.text_basis_ref=text_basis at that path.\" in prepared.body()[\"messages\"][0][\"content\"]:\n                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'content'"
+    },
+    {
+      "classname": "tests.unit.test_context_budget_fallback",
+      "name": "test_shared_fact_objects_roundtrip_without_promoting_untrusted_content",
+      "kind": "failure",
+      "message": "KeyError: 'content'",
+      "detail": "tests\\unit\\test_context_budget_fallback.py:54: in test_shared_fact_objects_roundtrip_without_promoting_untrusted_content\n    decoded = payload(SimpleNamespace(body=lambda: {\"messages\": [{}, {\"content\": json.dumps(wire)}]}))\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\unit\\test_context.py:94: in payload\n    if \"Request.text_basis_ref=text_basis at that path.\" in prepared.body()[\"messages\"][0][\"content\"]:\n                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'content'"
+    },
+    {
+      "classname": "tests.unit.test_phase_b_repair_cycle",
+      "name": "test_exact_cycle_scope_matches_adopted_plan_and_original_applied_baseline",
+      "kind": "failure",
+      "message": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Temp\\\\bg6022-repair-cycle-clean-45b7a657c0a845d1\\\\docs\\\\reviews\\\\2026-10-08-repair-cycle-authorization-draft.json'",
+      "detail": "tests\\unit\\test_phase_b_repair_cycle.py:31: in test_exact_cycle_scope_matches_adopted_plan_and_original_applied_baseline\n    draft = package.reference._json(package.PROJECT / \"docs/reviews/2026-10-08-repair-cycle-authorization-draft.json\")\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\helpers\\phase_b_reference.py:198: in _json\n    return json.loads(path.read_text(encoding=\"utf-8\"))\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\pathlib.py:1058: in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\pathlib.py:1044: in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Temp\\\\bg6022-repair-cycle-clean-45b7a657c0a845d1\\\\docs\\\\reviews\\\\2026-10-08-repair-cycle-authorization-draft.json'"
+    }
+  ],
+  "seconds": 1192.811,
+  "checkout_after": "",
+  "tracked_bytes_unchanged": true,
+  "junit": {
+    "path": "E:\\BG6022-V4\\data\\phase-b-delivery\\repair-cycle-clean-45b7a657c0a845d1\\tests.xml",
+    "sha256": "baaf59921328a9badf11179693180a81acae4324d7cfeb346442735791f3398c"
+  },
+  "tracking": {
+    "tracked-before.json": "3a88aee16243c6fe5a6a64d16714707ef750b99796d151836079a0cbebd0939f",
+    "tracked-after.json": "3a88aee16243c6fe5a6a64d16714707ef750b99796d151836079a0cbebd0939f"
+  },
+  "finished_at": "2026-10-08T08:42:01.024459+00:00",
+  "limit": "Only this committed offline candidate; skipped live/archive cases remain unverified."
+}
