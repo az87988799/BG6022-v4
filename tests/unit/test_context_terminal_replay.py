@@ -49,7 +49,8 @@ def test_actual_failed_context_fits_without_changing_authority_data_or_tool_cont
     old_messages = data["legacy_compact_messages"]
     messages = prepared.body()["messages"]
     assert input_token_upper_bound({"messages": old_messages}) == 12372
-    assert prepared.input_token_bound == data["expected"]["corrected_input_token_bound"] == 11983
+    assert data["expected"]["corrected_input_token_bound"] == 11983  # Historical v19 bytes stay frozen.
+    assert prepared.input_token_bound == 11988  # v21 changes only terminal guidance.
     assert prepared.input_token_bound <= inputs["run"].budget.input_tokens == 12000
     for key, sent in (("legacy", old_messages), ("corrected", messages)):
         assert hashlib.sha256(sent[1]["content"].encode()).hexdigest() == (
@@ -91,7 +92,7 @@ def test_post_result_and_deadline_clock_widths_fit_without_changing_facts(replay
                      inputs["run"].deadline - timedelta(seconds=seconds_remaining))
     assert inputs["now"] >= inputs["results"][0].created_at
     prepared = context.build_context(**inputs)
-    assert prepared.input_token_bound <= 11983 < inputs["run"].budget.input_tokens
+    assert prepared.input_token_bound <= 11988 < inputs["run"].budget.input_tokens
     assert inputs["run"].budget.input_tokens == 12000
 
 

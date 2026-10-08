@@ -26,7 +26,7 @@ from orca_agent.proposals import (
 )
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v20"
+PROMPT_VERSION = "agent-json-v21"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SYSTEM_PROMPT = """JSON; reason<=1000. Program gates execution/science/goals.
@@ -56,6 +56,26 @@ Report settles final token costs, unknown now.
 """
 
 _PLAN_RULES = "Unique key=id; map required Goal.port/gap; artifact_id!=key."
+
+_TERMINAL_OUTCOME_PROMPT = (
+    "Members qualified!=goals met. Use goal_status; disclose gaps and "
+    "permission/budget blocks, including zero.")
+
+
+def _terminal_prompt(prompt, actions):
+    """Explain a terminal outcome without instructions to propose more work.
+
+    This changes guidance only. Program goal status, available actions, checks
+    and resource facts remain the authority; prose is still independently
+    reviewed and is not used to grant permission or declare scientific success.
+    """
+    if not actions or not set(actions) <= {"stop", "clarify"}:
+        return prompt
+    prompt = prompt.replace(" Reason=Step/params/effects; proposed!=settled.", "")
+    prompt = prompt.replace("Plan write_analysis.", "")
+    stopping = "Stop: goals met/no allowed action."
+    return (prompt.replace(stopping, _TERMINAL_OUTCOME_PROMPT) if stopping in prompt
+            else prompt + " " + _TERMINAL_OUTCOME_PROMPT)
 
 _PATH = re.compile(
     r"(?i)(?:[a-z]:[\\/]|\\\\)[^\s\"<>|]*|(?:file://)[^\s\"<>]*"
@@ -1025,6 +1045,7 @@ def build_context(
         proposal_schema["properties"][key] = {"const": value}
     examples, references = _action_examples(request, run, plan, catalog, final_only, control)
     examples = action_parameters if action_parameters is not None else examples
+    system_prompt = _terminal_prompt(system_prompt, examples)
     if unknown_scoped_condition and not final_only and "clarify" in examples:
         system_prompt += (" If unknown conditions block the goal, clarify; source evidence or execution permission "
                           "cannot supply unknown user conditions.")
