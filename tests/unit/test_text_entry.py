@@ -315,7 +315,8 @@ def test_later_named_answer_registers_prepare_system_in_production_commit(tmp_pa
     run = commit_candidate(store, run, candidate(store, run, kind="normalize", conditions=defaults(config),
         goals=[{"key": "energy", "port": "energy", "text_basis": text,
                 "geometry_relation": "fixed_initial", "unresolved": ["ambiguous_system"]}],
-        questions=["Which molecule is the target?"]), decision_id="unknown_identity", basis=current_basis(store, run))
+        questions=["Which molecule is the target?"], notice_kinds=["missing_geometry"]),
+        decision_id="unknown_identity", basis=current_basis(store, run))
     before = store.load_request(run)
     goal_id = before.goals[0].id
     message_id = store.enqueue_message(run.id, answer)
@@ -341,7 +342,8 @@ def test_identity_question_is_not_frozen_as_a_confirmed_original_target(tmp_path
     run = commit_candidate(store, run, candidate(store, run, kind="normalize", conditions=defaults(config),
         goals=[{"key": "energy", "port": "energy", "text_basis": text,
                 "geometry_relation": "fixed_initial", "unresolved": ["ambiguous_system"]}],
-        questions=["Which molecule is the target?"]), decision_id="tentative_identity", basis=current_basis(store, run))
+        questions=["Which molecule is the target?"], notice_kinds=["missing_geometry"]),
+        decision_id="tentative_identity", basis=current_basis(store, run))
     request = store.load_request(run)
     assert not request.goals[0].identity["canonical_names"]
     message_id = store.enqueue_message(run.id, "It is methane.")

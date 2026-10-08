@@ -20,7 +20,7 @@ def test_current_prompt_version_cannot_skip_decision_contract_guards():
     assert context.PROMPT_VERSION in DECISION_CONTRACT_PROMPT_VERSIONS
 
 
-@pytest.mark.parametrize("version", ["agent-json-v22", "agent-json-v23"])
+@pytest.mark.parametrize("version", ["agent-json-v22", "agent-json-v23", "agent-json-v24"])
 @pytest.mark.parametrize("missing", ["purpose", "contract", "sidecar"])
 def test_current_prompt_rejects_missing_contract_before_reserving_or_sending(tmp_path, version, missing):
     store, run, request, snapshot = terminal_run(tmp_path)
@@ -47,7 +47,7 @@ def test_current_prompt_rejects_missing_contract_before_reserving_or_sending(tmp
     assert store.path(f"runs/{run.id}/run.json").read_bytes() == before
 
 
-@pytest.mark.parametrize("version", ["agent-json-v22", "agent-json-v23"])
+@pytest.mark.parametrize("version", ["agent-json-v22", "agent-json-v23", "agent-json-v24"])
 def test_current_prompt_rejects_action_outside_sent_purpose_and_accepts_legal_correction(
     tmp_path, monkeypatch, version,
 ):

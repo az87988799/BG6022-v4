@@ -14,7 +14,14 @@ from orca_agent.semantic import VERSION, commit_candidate
 from orca_agent.store import ControlChanged, StoreError
 
 
-def candidate(store, run, **values):
+def candidate(store, run, *, notice_kinds=None, **values):
+    # Explicit test-authored selections only; never infer missing notices for a
+    # historical replay or a negative case from the proposed target text.
+    if notice_kinds is not None:
+        from orca_agent.semantic_notices import notice_choices
+        if "notices" in values:
+            raise ValueError("choose explicit notice_kinds or notices, not both")
+        values["notices"] = [notice_choices()[kind] for kind in notice_kinds]
     messages = [m for m in store.read_control(run.id)["messages"] if m["id"] not in run.processed_messages]
     return {"schema_version": VERSION, "message_ids": [m["id"] for m in messages],
             "kind": "clarify", "text_basis": messages[0]["text"], **values}
@@ -34,7 +41,8 @@ def test_raw_text_creates_unknown_request_before_first_model_reservation(tmp_pat
         goals=[{"key": "ethanol", "port": "energy", "text_basis": request.original_text,
                 "geometry_relation": "optimized", "unresolved": ["unsupported_system:ethanol"]}],
         unresolved=["ethanol is outside the supported registered water/methane systems"],
-        questions=["请提供当前范围支持的体系或保留未支持目标。"])}
+        questions=["请提供当前范围支持的体系或保留未支持目标。"],
+        notice_kinds=["unsupported_system", "missing_geometry"])}
     transport = ScriptedTransport(proposal)
     stopped = agent.execute(store, Config(), run.id, transport=transport)
     assert stopped.state == "waiting_user"

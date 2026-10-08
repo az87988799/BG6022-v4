@@ -1,0 +1,150 @@
+{
+  "variant_id": "N-06/raw-unsupported-system",
+  "repetition": 1,
+  "run_id": "run_da6c4d47c7c44b6c9a0f6b09f03c8ad1",
+  "expected_ref": "tests/fixtures/phase_b/raw-text-cases.json#/cases/5/variants/0/expected",
+  "spec_sha256": "f8665a5d28cddab5ae5da477faf31d58cf6050b27faa806a27f70f67617d0d4c",
+  "status": "incomplete_or_failed",
+  "real_model_evidence_present": true,
+  "safety_invariants_passed": true,
+  "real_model_http_evidence_present": true,
+  "protocol_delivery": {
+    "status": "passed",
+    "accepted_proposals": 1
+  },
+  "model_response_evidence": {
+    "present": true,
+    "http_evidence_present": true,
+    "usage": {
+      "known": 2,
+      "unknown": 0
+    },
+    "http_records": 2,
+    "verified_http_responses": 2,
+    "accepted_proposals": 1,
+    "rejected_proposals": 1,
+    "accepted_final_responses": 0,
+    "transport_failures": 0,
+    "inspectable_proposal_content": true,
+    "protocol_delivery_status": "passed",
+    "reason": null
+  },
+  "assertions": [
+    {
+      "metric": "raw_request.accepted_normalization",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "raw_request.normalization_status",
+      "operator": "eq",
+      "value": "clarification",
+      "status": "passed",
+      "observed": "clarification",
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "raw_request.original_text_preserved",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "orca_starts",
+      "operator": "eq",
+      "value": 0,
+      "status": "passed",
+      "observed": 0,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "raw_request.geometry_relations",
+      "operator": "eq",
+      "value": [
+        "optimized"
+      ],
+      "status": "passed",
+      "observed": [
+        "optimized"
+      ],
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "raw_request.unsupported_or_unresolved",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    },
+    {
+      "metric": "raw_request.no_registered_system_substitution",
+      "operator": "eq",
+      "value": true,
+      "status": "passed",
+      "observed": true,
+      "kind": "persisted_evidence"
+    }
+  ],
+  "explanation": {
+    "quantity": {
+      "status": "passed",
+      "quote": "quantity:optimized_geometry+electronic_energy",
+      "rationale": "The accepted response separately retains the ethanol optimization request and electronic energy after optimization; both actual submitted Goals have geometry_relation=optimized. The rejected first response already had energy+optimized, which decision 0015 explicitly permits without a separate geometry Goal. No scientific result is claimed."
+    },
+    "unit": {
+      "status": "passed",
+      "quote": "unit:unknown",
+      "rationale": "The original user text specifies neither an energy display unit nor a numerical result. The accepted model leaves the unit unknown and supplies no calculated energy/geometry or invented unit."
+    },
+    "conditions": {
+      "status": "passed",
+      "quote": "conditions:method=HF,basis=STO-3G,charge=0,multiplicity=1,electronic_state=RHF,environment=gas_phase",
+      "rationale": "These values match the user gas-phase RHF/STO-3G neutral singlet requirement. All six actual candidate condition entries cite the corresponding verbatim user spans as explicit; neither a default nor a different electronic/environment condition is silently substituted."
+    },
+    "source": {
+      "status": "passed",
+      "quote": "source:AUTHORITY.user_originals[0]",
+      "rationale": "Both transmitted AUTHORITY.user_originals[0] values exactly contain the actual registration-only ethanol text. The accepted candidate quotes this text and its current message ID. No geometry/Artifact/Result source is invented; current systems and scientific results are empty."
+    },
+    "limits": {
+      "status": "failed",
+      "quote": "乙醇不在已登记体系范围内，无法解析其身份与几何。",
+      "rationale": "The accepted response discloses no registered ethanol/geometry and no execution, but this sentence and reason (ethanol not registered) leave the separate scientific capability limit ambiguous. With current systems empty, these words can describe only missing registration/input. They do not clearly tell the user that the declared science_scope supports H2O/CH4 and excludes ethanol independently of geometry registration. The transmitted instruction explicitly separates identity, registered geometry, capability and permission. The program-added unsupported_system:ethanol cannot substitute for the model disclosure. No fixed wording or counterfactual sentence is required; the actual accepted wording is insufficiently clear about this independent capability limit."
+    },
+    "next_action": {
+      "status": "passed",
+      "quote": "limits:ethanol not registered, registration-only scope, no execution;next:normalize_request",
+      "rationale": "The accepted action only registers the requested goals and notices. Actual questions are empty; persisted delivery_scope is registration_only, awaiting_reply=false and Run is paused, with zero Tool/science execution. It does not ask the user to reconfirm permission or obtain resources for this registration-only turn. This is an accepted registration communication, not an accepted numerical stop answer."
+    }
+  },
+  "fixture_gaps": [],
+  "proposal_review": {
+    "all_proposal_facts_passed": true,
+    "semantic_review_passed": false,
+    "status": "failed",
+    "reason": "Full-trajectory facts and semantics require explicit independent review; final six axes cannot replace it."
+  },
+  "required_final_response_accepted": {
+    "required": true,
+    "passed": true,
+    "status": "passed",
+    "contract": "registration_communication",
+    "accepted_action": "normalize_request",
+    "reason": "Registration requires consistent current notices/questions and delivery state; no stop is required."
+  },
+  "runtime_limitations": [],
+  "http_requests": 2,
+  "tested_scope": [
+    "raw user text interpreted by the production semantic candidate path",
+    "0 ORCA; scientific execution permission remains false"
+  ],
+  "tokens_used": 7423,
+  "tokens_unknown": 0,
+  "model_text_sha256": "d7b9828dcdab2cf92e80ab1553caf3d5ac18c69f116a4674712e088711dc4d95"
+}

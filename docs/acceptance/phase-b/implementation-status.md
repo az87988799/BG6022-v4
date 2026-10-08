@@ -6,13 +6,15 @@
 
 - P1–P5 已实现并推送。独立干净检出、锁定安装的[完整离线验证](../repair-cycle-offline-v22/report.md)为 **2752 passed、202 skipped、0 failed**，Ruff 通过。202 跳过项按真实模型、真实 ORCA、外部历史档案和 Windows symlink 分列，不计为通过。
 - [第一开发候选](../repair-cycle-development-1/report.md)冻结源码 `8ae3fd2`、提示 v22。N06 一次纠正后登记通过；V06 两答均被协议拒绝，第二答还错误关联几何与能量。原始失败及独立审查已保留，该候选停止后续执行。
-- v23 已修补协议呈现、规划与终止解释的区分、证据成员对应，以及现有守卫覆盖，见[决定 0021](../../decisions/0021-readable-protocol-and-planning-evidence.md)。本地定向回归 383 项通过，Ruff 通过；干净检出完整回归与新候选真实验证仍待完成，不能把离线脚本轨迹称为真实模型或科学通过。
+- v23 已修补协议呈现、规划与终止解释的区分、证据成员对应，以及现有守卫覆盖，见[决定 0021](../../decisions/0021-readable-protocol-and-planning-evidence.md)。源码 `65947b1` 的[干净锁定依赖全量验证](../repair-cycle-offline-v23/report.md)为 **2785 passed、202 skipped、0 failed**，Ruff 通过；不把离线脚本轨迹称为真实模型或科学通过。
+- [第二开发候选](../repair-cycle-development-2/report.md)冻结 v23。N06 程序接受纠正答，但能力边界和缺输入的告知混淆；V06 两答被规划协议拒绝，纠正答还误称 energy 已绑定 sampling。两个门槛失败、其余十一项未运行，原答及独立复核修订均保留。
+- v24 按[决定 0022](../../decisions/0022-registration-notices-and-goal-targets.md)修复有限登记告知、目标路由互斥类型、目标几何缺项以及有界上下文呈现。[提交前定向记录](../repair-cycle-v24-targeted/report.md)保留两次失败联合回归及后续修复：最后的长 Goal ID＋纠正容量反例和 schema 矩阵 71 项通过；另一合成告知调用方文件 23 项通过。干净全量仍待精确提交后执行，第三开发候选尚未冻结，没有新的真实通过证据。
 
 仍需完成：修补的干净离线验证、新源码冻结、同一候选全部 13 个真实模型门槛、分层输入和水/甲烷各三条科学轨迹、两体系各三条自主纯文本 E2E、原 C 与必要条件 D、完整正式矩阵和独立 E2E 重复。正式核心覆盖已扩至 76 变体 / 228 槽，另列 6 条 E2E；覆盖映射不是执行结果。
 
 ## 成本与执行边界
 
-第一开发候选结束时，唯一账本累计 **328 HTTP、1034021 已知 tokens、USD 0.4129944**，未知消耗为零；ORCA reference/development/formal 为 **16/26/0**，合计 42。本修复周期尚未新增 ORCA、身份查询或结构准备。
+第二开发候选结束时，唯一账本累计 **332 HTTP、1049882 已知 tokens、USD 0.4201557**，未知消耗为零；ORCA reference/development/formal 为 **16/26/0**，合计 42。本修复周期尚未新增 ORCA、身份查询或结构准备。
 
 用户已批准并应用本修复周期及[正式矩阵增补](../../reviews/2026-10-08-repair-cycle-formal-delta.md)：累计上限 **2140 HTTP、14746912 tokens、USD 20**；ORCA reference/development/formal/总计 **37/68/108/213**，新增身份查询与准备各 22，执行活动 96 小时。各候选、分项、Run 原有限额及第二正式轮触发条件继续有效。旧包机会不重开，换候选不重置历史费用。
 

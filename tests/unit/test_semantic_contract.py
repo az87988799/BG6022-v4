@@ -115,6 +115,8 @@ def test_energy_relation_is_correctable_before_any_request_activation(tmp_path):
     assert store.load_run(run.id).model_dump_json() == before
     assert not store.load_run(run.id).processed_messages
     parameters["goals"][0]["geometry_relation"] = "fixed_initial"
+    from orca_agent.semantic_notices import notice_choices
+    parameters["notices"] = [notice_choices()["missing_geometry"]]
     parameters["questions"] = ["请提供几何、方法、基组、电荷与多重度。"]
     updated = commit_candidate(store, run, parameters, decision_id="corrected_relation", basis=current_basis(store, run))
     goal = store.load_request(updated).goals[0]

@@ -19,6 +19,7 @@ from orca_agent.model_usage import current_basis
 from orca_agent.models import Goal, Identifier, Record, Request
 from orca_agent.natural import _authorized_geometry, _missing_information
 from orca_agent.proposals import ProposalError, _schema_error
+from orca_agent.semantic_notices import NOTICE_CONTRACT_VERSION, notice_choices, validate_notices
 from orca_agent.store import StoreError
 from orca_agent.tools.registry import (
     SCIENCE_COMPOSITIONS,
@@ -142,6 +143,8 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
         "normalize replaces raw_request/missing:goal_definition; amend keeps goals; replace_goals needs explicit replacement+all old IDs. "
         "NewGoal system_refs; existingGoal goal_bindings keyed by Goal.id. No geometry conditions or registration/no-execution Goal. "
         "science_scope=capability, not permission/defaults. resolves=answered field:<field>/system:<goal_id>; question_gaps=questions to gaps.",
+        "notice_contract_version": NOTICE_CONTRACT_VERSION,
+        "notice_choices": notice_choices(),
         "science_scope": {"systems": list(SCIENCE_COMPOSITIONS), "conditions": dict(PROFILE),
                           "names": {formula: list(SYSTEM_ALIASES.get(formula.casefold(), ()))
                                     for formula in SCIENCE_COMPOSITIONS},
@@ -150,7 +153,8 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
         "questions_policy": (
             "Identity, registered geometry, capability and permission are separate facts. "
             "For explicit registration-only, disclose scope and geometry limits via notices, "
-            "without asking for resources/confirmation. Otherwise ask for critical gaps blocking "
+            "without asking for resources/confirmation. Copy each applicable notice_choices sentence once. "
+            "Otherwise ask for critical gaps blocking "
             "the requested scope; new gaps need a question or notice. Preserve explicit choices. "
             "No execution permission alone is not registration-only intent."),
         "schema": schema,
@@ -1154,10 +1158,11 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
         if query.get("run_id") and query["run_id"] != run.id:
             raise StoreError("semantic query cannot invent another Run reference")
     communication = _communication(candidate, updated, pending, current_gaps)
+    notice_contract = validate_notices(updated, candidate.notices)
     semantics = {"schema": VERSION, "kind": candidate.kind,
                  "candidate": candidate.model_dump(mode="json"),
                  "replaced_goal_ids": [g.id for g in request.goals] if candidate.goals else [],
-                 **communication}
+                 **communication, "notice_contract": notice_contract}
     if active_question and not unresolved_questions:
         semantics["resolved_clarification_id"] = active_question["id"]
     return store.commit_revision(run, None, request=updated, decision_id=decision_id,

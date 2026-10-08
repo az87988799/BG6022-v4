@@ -111,6 +111,9 @@ def test_developer_scope_notices_keep_requested_targets_and_all_unmet_facts(tmp_
     parameters["questions"] = []
     parameters["notices"] = [NOTICES[entry["variant_id"]]]
     if entry["variant_id"] == "N-06/raw-unsupported-system":
+        from orca_agent.semantic_notices import notice_choices
+        # This explicitly corrected offline candidate is not the archived reply.
+        parameters["notices"].extend(notice_choices().values())
         parameters["unresolved"].append("unsupported_system:ethanol")
     updated = commit_candidate(store, run, parameters, decision_id="developer_notice", basis=current_basis(store, run))
     request = store.load_request(updated)

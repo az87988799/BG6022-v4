@@ -50,17 +50,32 @@ def test_actual_failed_context_fits_without_changing_authority_data_or_tool_cont
     messages = prepared.body()["messages"]
     assert input_token_upper_bound({"messages": old_messages}) == 12372
     assert data["expected"]["corrected_input_token_bound"] == 11983  # Historical v19 bytes stay frozen.
-    assert prepared.input_token_bound == 11988  # v21 changes only terminal guidance.
+    assert prepared.input_token_bound == input_token_upper_bound({"messages": messages})
     assert prepared.input_token_bound <= inputs["run"].budget.input_tokens == 12000
-    for key, sent in (("legacy", old_messages), ("corrected", messages)):
-        assert hashlib.sha256(sent[1]["content"].encode()).hexdigest() == (
-            data["expected"][f"{key}_user_message_sha256"])
+    assert hashlib.sha256(old_messages[1]["content"].encode()).hexdigest() == (
+        data["expected"]["legacy_user_message_sha256"])
     old_wire, wire = (json.loads(sent[1]["content"]) for sent in (old_messages, messages))
-    for key in ("AUTHORITY", "DATA", "TOOL_CATALOG", "SHARED_STRINGS", "STRING_ENCODING"):
+    # Reproduce the archived v19 *user* projection from its frozen input and
+    # verify its original hash. Do not relabel v24 bytes as historical bytes.
+    historical = context._compact_terminal_response(copy.deepcopy(old_wire))
+    historical_content = json.dumps(historical, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    assert hashlib.sha256(historical_content.encode()).hexdigest() == (
+        data["expected"]["corrected_user_message_sha256"])
+    assert hashlib.sha256(messages[1]["content"].encode()).hexdigest() != (
+        data["expected"]["corrected_user_message_sha256"])
+    expected = copy.deepcopy(historical)
+    assert "qualified_check_defaults" not in expected["DATA"]
+    expected["DATA"]["projection_rules"] = (
+        "Rows zip columns;null=absent;operation_status defaults completed;full observations=Result.")
+    expected["STRING_ENCODING"] = expected["STRING_ENCODING"].replace("; no recursion", "")
+    assert wire == expected  # Only those two documented representation texts change.
+    for key in ("AUTHORITY", "TOOL_CATALOG", "SHARED_STRINGS"):
         assert wire[key] == old_wire[key]
     old, new = decoded(old_messages), decoded(messages)
-    for key in ("AUTHORITY", "DATA", "TOOL_CATALOG"):
+    for key in ("AUTHORITY", "TOOL_CATALOG"):
         assert new[key] == old[key]
+    assert {key: value for key, value in new["DATA"].items() if key != "projection_rules"} == {
+        key: value for key, value in old["DATA"].items() if key != "projection_rules"}
     assert new["TOOL_CATALOG"][0]["check_contract"] == old["TOOL_CATALOG"][0]["check_contract"]
     assert set(new["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
     assert "RESPONSE_ENVELOPE" not in wire and "ACTION_PARAMETERS" not in wire

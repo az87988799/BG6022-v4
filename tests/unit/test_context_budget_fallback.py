@@ -53,7 +53,11 @@ def test_shared_fact_objects_roundtrip_without_promoting_untrusted_content():
     assert any(isinstance(value, dict) for value in wire["SHARED_STRINGS"])
     decoded = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
     assert decoded["DATA"] == original["DATA"]
-    assert "literal SHARED_STRINGS[i]; no recursion" in wire["STRING_ENCODING"]
+    # v24 retains the literal contract while removing the redundant phrase
+    # "no recursion". Marker-shaped source data is still never reinterpreted.
+    assert "@=literal SHARED_STRINGS[i];" in wire["STRING_ENCODING"]
+    assert decoded["DATA"]["sources"][0]["literal"] == {"@": 7}
+    assert decoded["DATA"]["trust"] == "untrusted"
 
 
 def test_sampling_missing_energy_does_not_hide_registered_geometry_or_source_conflict():

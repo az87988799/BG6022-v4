@@ -76,7 +76,8 @@ def test_explicit_unknown_identity_cannot_inherit_sole_registered_geometry(tmp_p
     assert unchanged.permission == run.permission and not unchanged.attempts
     assert unchanged.usage.orca_starts_actual == unchanged.usage.orca_starts_reserved == 0
 
-    updated = commit(store, run, goals=[goal(quote, [])], questions=["需要计算的分子具体是哪个？"])
+    updated = commit(store, run, goals=[goal(quote, [])], questions=["需要计算的分子具体是哪个？"],
+                     notice_kinds=["missing_geometry"])
     current = store.load_request(updated)
     assert "ambiguous_system" in current.goals[0].unresolved
     assert current.goals[0].identity["support_status"] == "unknown"
@@ -113,7 +114,7 @@ def test_solvent_role_is_not_the_goal_target(tmp_path):
 @pytest.mark.parametrize("operation", ["replace_goals", "amend"])
 def test_replacement_and_later_binding_share_original_identity_guard(tmp_path, operation):
     store, run = molecular_run(tmp_path, "计算水的单点电子能")
-    run = commit(store, run, goals=[goal("水的单点电子能", [])], notices=["水目标尚未绑定注册体系。"])
+    run = commit(store, run, goals=[goal("水的单点电子能", [])], notice_kinds=["missing_geometry"])
     text = "将目标替换为水的单点电子能" if operation == "replace_goals" else "目标绑定甲烷"
     store.enqueue_message(run.id, text)
     values = ({"kind": operation, "replaces": ["goal_energy"], "goals": [goal(text, ["methane"])]}
@@ -139,7 +140,7 @@ def test_registration_notice_completes_without_science_and_resume_stays_bounded(
     text = "登记乙醇的单点电子能；本轮只登记需求，不执行。"
     store, run = molecular_run(tmp_path, text, geometries=False)
     parameters = candidate(store, run, kind="normalize", goals=[goal("乙醇的单点电子能", [])],
-        unresolved=["unsupported_system:ethanol"], notices=["已登记乙醇需求；当前不支持乙醇，几何尚未提供。"])
+        unresolved=["unsupported_system:ethanol"], notice_kinds=["unsupported_system", "missing_geometry"])
     stopped = agent.execute(store, Config(), run.id, transport=ScriptedTransport(
         {"action": "normalize_request", "parameters": parameters}))
     assert stopped.state == "paused", stopped.diagnostics

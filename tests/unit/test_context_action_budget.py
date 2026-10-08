@@ -286,7 +286,14 @@ def test_retained_v06_budget_actions_rebuild_without_changing_history(index):
     assert rebuilt.get("CONTROL", {}) == original["CONTROL"]
     # v13 additionally projects the actual settled Call's registry effects.
     # Every pre-existing data fact must survive, allowing that truthful addition.
-    assert {key: value for key, value in rebuilt["DATA"].items() if key != "tool_effects"} == original["DATA"]
+    # v24 shortens representation instructions; they are not scientific facts.
+    metadata = {"tool_effects", "projection_rules"}
+    assert {key: value for key, value in rebuilt["DATA"].items() if key not in metadata} == {
+        key: value for key, value in original["DATA"].items() if key != "projection_rules"}
+    if "projection_rules" in original["DATA"]:
+        assert "qualified_check_defaults" not in original["DATA"]
+        assert rebuilt["DATA"]["projection_rules"] == (
+            "Rows zip columns;null=absent;operation_status defaults completed;full observations=Result.")
     if index:
         assert rebuilt["DATA"]["tool_effects"] == {
             "analysis.finite_sampling": get_tool("analysis.finite_sampling").effects}

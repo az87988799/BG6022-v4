@@ -94,15 +94,19 @@ def test_named_targets_without_geometry_keep_identity_and_registration_notice(tm
                     else "该体系属于当前H2O/CH4支持范围；")
     notice = f"已登记{target}需求；{scope_notice}几何未登记，本轮不执行。"
     parameters = named_parameters(store, run, target, notice)
+    # Explicit synthetic declaration selections; original notice remains visible.
+    from orca_agent.semantic_notices import notice_choices
+    parameters["notices"].append(notice_choices()["missing_geometry"])
     if outside_scope:
         parameters["unresolved"].append(f"unsupported_scope:{target}")
+        parameters["notices"].append(notice_choices()["unsupported_system"])
     updated = commit_candidate(store, run, parameters, decision_id="named_notice", basis=current_basis(store, run))
     normalized = store.load_request(updated)
     assert normalized.original_text == request.original_text
     assert normalized.goals[0].original_text == f"{target}的单点电子能"
     assert not normalized.systems and normalized.geometry_artifact_id is None
     assert "missing:geometry" in normalized.goals[0].unresolved
-    assert updated.decisions[-1]["semantics"]["notices"] == [notice]
+    assert updated.decisions[-1]["semantics"]["notices"] == parameters["notices"]
     assert not updated.permission.scientific_execution and not updated.permission.allowed_tools
     assert not updated.calls and not updated.attempts and not updated.model_records
 

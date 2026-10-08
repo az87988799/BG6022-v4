@@ -56,13 +56,28 @@ def _missing_information(request):
         if goal.minimum_check_version not in _SCIENTIFIC_RULES:
             continue
         selected = goal.system_ids or list(systems) or [None]
+        unbound_identity = False
+        if not goal.system_ids and goal.identity:
+            names = set(goal.identity.get("canonical_names", []))
+            if goal.identity.get("explicitly_unknown"):
+                unbound_identity = True
+            elif names and systems:
+                # Use the same finite name binding as semantic grounding, not
+                # registry uniqueness alone. Legacy identity={} keeps its old
+                # input rules; multiple registered inputs need an explicit ID.
+                from orca_agent.semantic import _registered_identity
+                unbound_identity = not (len(systems) == len(names) == 1
+                    and _registered_identity(next(iter(systems.values()))) in names)
+            if unbound_identity:
+                selected = [None]
         for system_id in selected:
             system = systems.get(system_id) if system_id is not None else None
             suffix = f":{system_id}" if system_id is not None else ""
             if system_id is not None and system is None:
                 goal.unresolved.append(f"missing:system{suffix}")
                 continue
-            geometry = system.geometry_artifact_id if system else request.geometry_artifact_id
+            geometry = (None if unbound_identity else
+                        system.geometry_artifact_id if system else request.geometry_artifact_id)
             if geometry is None and not (system and system.geometry_source == "prepare"):
                 goal.unresolved.append(f"missing:geometry{suffix}")
             for name in _PHYSICAL:

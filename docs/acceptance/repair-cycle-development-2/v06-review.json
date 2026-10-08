@@ -1,0 +1,573 @@
+{
+  "variant_id": "V-06/insufficient-additional-budget",
+  "repetition": 1,
+  "run_id": "run_380127d669d94c5bbf0f77135ad15223",
+  "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+  "all_proposal_facts_passed": false,
+  "semantic_review_passed": false,
+  "instructions": "Review actual persisted model text independently; quote exact text. Do not infer a pass from fixture expectations.",
+  "behavior": {
+    "report.budget_limit_disclosed": {
+      "passed": null,
+      "quote": "",
+      "rationale": "No accepted final response exists. The second rejected proposal explicitly discloses ORCA and extra-ORCA limits of zero, but rejected planning text and the program fallback cannot supply this final-response behavior."
+    }
+  },
+  "explanation": {
+    "quantity": {
+      "passed": null,
+      "quote": "",
+      "rationale": "Neither response was accepted; both are rejected initial_plan proposals. No accepted stop/clarify, model terminal delivery, or model final explanation exists. The program fallback report is not a model answer; this final axis is not verified."
+    },
+    "unit": {
+      "passed": null,
+      "quote": "",
+      "rationale": "Neither response was accepted; both are rejected initial_plan proposals. No accepted stop/clarify, model terminal delivery, or model final explanation exists. The program fallback report is not a model answer; this final axis is not verified."
+    },
+    "conditions": {
+      "passed": null,
+      "quote": "",
+      "rationale": "Neither response was accepted; both are rejected initial_plan proposals. No accepted stop/clarify, model terminal delivery, or model final explanation exists. The program fallback report is not a model answer; this final axis is not verified."
+    },
+    "source": {
+      "passed": null,
+      "quote": "",
+      "rationale": "Neither response was accepted; both are rejected initial_plan proposals. No accepted stop/clarify, model terminal delivery, or model final explanation exists. The program fallback report is not a model answer; this final axis is not verified."
+    },
+    "limits": {
+      "passed": null,
+      "quote": "",
+      "rationale": "Neither response was accepted; both are rejected initial_plan proposals. No accepted stop/clarify, model terminal delivery, or model final explanation exists. The program fallback report is not a model answer; this final axis is not verified."
+    },
+    "next_action": {
+      "passed": null,
+      "quote": "",
+      "rationale": "Neither response was accepted; both are rejected initial_plan proposals. No accepted stop/clarify, model terminal delivery, or model final explanation exists. The program fallback report is not a model answer; this final axis is not verified."
+    }
+  },
+  "review_summary": {
+    "verdict": "failed",
+    "scope": "Independent review of both actual HTTP responses and all proposal fields, sent requests and delivery sidecars, immutable/current Request, persisted rejection decisions, Run state, original qualified energy Results/raw files/XYZ, and fallback report. No regrade or runtime action performed.",
+    "candidate": "repair-cycle-20261008-development-2",
+    "candidate_sha256": "306ccd18b01613740d7bb40c62d43cf5d8bb1adf24e8b7b14744d80ddbe28020",
+    "source_commit": "65947b1043526be1ae877b563fe4f2fd7608ab5b",
+    "prompt_version": "agent-json-v23",
+    "first_pass_accepted": false,
+    "accepted_proposals": 0,
+    "rejected_proposals": 2,
+    "accepted_final_responses": 0,
+    "bounded_corrections_used": 1,
+    "principal_failures": [
+      "First proposal substituted the current gap code goal_has_no_evidence_binding for the actual Request Goal ID; the required Goal was not mapped.",
+      "Second proposal corrected the Goal ID but combined a future step binding with an explicit gap in the same goal_map value; the one-source contract rejects this.",
+      "Second reason claims qualified energy results are already bound to the sampling port, although the source Results expose only energy and current Goal evidence has no binding."
+    ],
+    "important_limits": [
+      "No member-to-energy transposition was found: both proposals correctly identify the three required members and preserve all three explicit Run/Result/Attempt/energy references.",
+      "No new ORCA, Tool, analysis, evidence read, input preparation, or query occurred.",
+      "Planning an allowed finite_sampling analysis is legitimate despite zero scientific permission. The failure is not that the model chose analysis instead of immediately stopping.",
+      "No model final answer exists; all six final axes and final budget-disclosure behavior remain null/not_verified.",
+      "The 0.16000000000042536 Angstrom span is an independent reviewer calculation from stored XYZ, not a Tool Result or a claim actually made by this model."
+    ],
+    "dependency_recommendation": {
+      "classification": "ordinary_failure",
+      "affected_dependencies": [
+        "protocol"
+      ],
+      "rationale": "Concrete unrecovered failure is Plan/Goal binding protocol and correction handling. Source member identity/energy references and runtime permission enforcement remained intact. There was no terminal attempt, so this review does not diagnose a terminal-renderer defect. The incorrect current sampling-binding statement remains a separate full-trajectory factual/semantic defect. This is a recommendation, not a recorded outcome."
+    }
+  },
+  "all_proposal_review": [
+    {
+      "sequence": 1,
+      "model_id": "model_474e1d30c6c2406fa7b77983fb7611e4",
+      "accepted": false,
+      "proposal": {
+        "action": "initial_plan",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "Goal g1 requires a finite-sampling internal-minimum check over registered water geometries. Three required candidates (geom_a1fd9c54f540, geom_997a7b6154fa, geom_4551ffe49805) already have qualified energy evidence; the two optional candidates (geom_e98835a38ce7, geom_6b95efc712da) do not. Plan: run the finite-sampling analysis tool on the three required points first, using their existing energy results as qualified_energy inputs, to determine whether the sampled internal minimum has nearest left/right neighbor span <= 0.12 Angstrom. If evidence is insufficient, one additional registered candidate may be added within budget.",
+        "parameters": {
+          "steps": [
+            {
+              "key": "s1",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "goal_has_no_evidence_binding"
+              },
+              "inputs": {
+                "geom_a1fd9c54f540": {
+                  "run_id": "run_857dff7e962b44948f8ab561c6f21b98",
+                  "result_id": "result_35776666c6fe43078609fc570d47f048",
+                  "attempt_id": "attempt_c347a5b964414ab2961b182f09e07c36",
+                  "port": "energy"
+                },
+                "geom_997a7b6154fa": {
+                  "run_id": "run_cf30441b40ea46418ef4a98762da8643",
+                  "result_id": "result_2b37e67a22e8474d92d933ec94eac9e5",
+                  "attempt_id": "attempt_9bbc1df0d21e4f4ab39ee88267f292f0",
+                  "port": "energy"
+                },
+                "geom_4551ffe49805": {
+                  "run_id": "run_86509407dbae44aa9afa30dd61714887",
+                  "result_id": "result_543267b93a134036b87e656ee640d79d",
+                  "attempt_id": "attempt_738caa94e4e44668b0979696ce86e96d",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "goal_has_no_evidence_binding": {
+              "step_key": "s1",
+              "port": "sampling"
+            }
+          }
+        }
+      },
+      "persisted_rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": {
+          "requirement": "Map every required Request goal. When evidence or capability is unavailable, retain the goal with its exact port and an explicit gap; a gap records unmet evidence, not goal completion.",
+          "path": [
+            "parameters",
+            "goal_map"
+          ],
+          "missing_goals": [
+            {
+              "goal_id": "finite_sample_internal_minimum",
+              "port": "sampling"
+            }
+          ],
+          "gap_bindings": {
+            "finite_sample_internal_minimum": {
+              "port": "sampling",
+              "gap": "<describe missing evidence or capability>"
+            }
+          }
+        }
+      },
+      "response_record_sha256": "80cceed6e148929714334d1dd0e2cca5c1d07cb25a4b20f40c7b06b4a22a9d16",
+      "request_sha256": "126d66adf885a5fad58b59db594130581c40d005793620f7112415c1f64cb9af",
+      "raw_http_response_sha256": "75044fd38a6890c560bd23f34d5bdba2b92817e396e63c76232cbd411964d77f",
+      "delivery_sidecar_sha256": "aa77c4d18304324494817c806498542d6c3b227e930132c0fc9e8b074fb2b9f7",
+      "http_status": 200,
+      "usage_status": "known",
+      "tokens": 4086,
+      "cost_usd": "0.0016722",
+      "review": {
+        "facts_passed": true,
+        "semantic_passed": false,
+        "supported_quote": "Three required candidates (geom_a1fd9c54f540, geom_997a7b6154fa, geom_4551ffe49805) already have qualified energy evidence; the two optional candidates (geom_e98835a38ce7, geom_6b95efc712da) do not.",
+        "supported_rationale": "This member-role/evidence statement is correct, and every source energy reference matches the original registered source. The reason also states the nearest-neighbor-span <= 0.12 Angstrom criterion correctly. No energy value, false completion, or completed analysis is claimed.",
+        "defect_quote": "goal_has_no_evidence_binding",
+        "defect_location": "parameters.steps[0].parameters.goal_id and parameters.goal_map key",
+        "defect_rationale": "This is a current evidence-gap code, not Request Goal finite_sample_internal_minimum (nor its display ref g1). Both step purpose and map identify the wrong object; the actual required Goal is omitted. This is an intent-binding defect, not a member-energy transposition.",
+        "budget_caveat_quote": "If evidence is insufficient, one additional registered candidate may be added within budget.",
+        "budget_caveat_rationale": "This conditional repeats the original request allowance without explicitly disclosing the current Run prohibition and zero quotas. Since it says within budget and proposes only allowed analysis, this review does not treat it as an affirmative permission grant or an executed extra calculation. The second response explicitly corrects the budget disclosure, but neither response was accepted."
+      }
+    },
+    {
+      "sequence": 2,
+      "model_id": "model_82d020fc0e3b45b398a1934453b2cab7",
+      "accepted": false,
+      "proposal": {
+        "action": "initial_plan",
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 0,
+        "related_results": [],
+        "reason": "Goal finite_sample_internal_minimum (port sampling) requires a finite-sampling analysis over the registered energy evidence. Three required candidates (geom_a1fd9c54f540, geom_997a7b6154fa, geom_4551ffe49805) already have qualified energy results bound to the sampling port; the two optional candidates (geom_e98835a38ce7, geom_6b95efc712da) have no evidence yet. Scientific execution is not authorized (orca_starts=0, extra_orca_starts=0), so no new single points can be computed; the analysis must run on the three existing qualified energies only, and the goal is retained with an explicit gap for the unsampled optional candidates.",
+        "parameters": {
+          "steps": [
+            {
+              "key": "s1",
+              "tool": "analysis.finite_sampling",
+              "parameters": {
+                "goal_id": "finite_sample_internal_minimum"
+              },
+              "inputs": {
+                "geom_a1fd9c54f540": {
+                  "run_id": "run_857dff7e962b44948f8ab561c6f21b98",
+                  "result_id": "result_35776666c6fe43078609fc570d47f048",
+                  "attempt_id": "attempt_c347a5b964414ab2961b182f09e07c36",
+                  "port": "energy"
+                },
+                "geom_997a7b6154fa": {
+                  "run_id": "run_cf30441b40ea46418ef4a98762da8643",
+                  "result_id": "result_2b37e67a22e8474d92d933ec94eac9e5",
+                  "attempt_id": "attempt_9bbc1df0d21e4f4ab39ee88267f292f0",
+                  "port": "energy"
+                },
+                "geom_4551ffe49805": {
+                  "run_id": "run_86509407dbae44aa9afa30dd61714887",
+                  "result_id": "result_543267b93a134036b87e656ee640d79d",
+                  "attempt_id": "attempt_738caa94e4e44668b0979696ce86e96d",
+                  "port": "energy"
+                }
+              }
+            }
+          ],
+          "goal_map": {
+            "finite_sample_internal_minimum": {
+              "step_key": "s1",
+              "port": "sampling",
+              "gap": "Only the three required candidates (r = 0.9394, 1.0194, 1.0994 Angstrom) have qualified energies; the two optional candidates (geom_e98835a38ce7 at 0.9794, geom_6b95efc712da at 1.0594 Angstrom) have no evidence, and scientific execution is not authorized (orca_starts=0, extra_orca_starts=0), so no additional single points can be computed. The internal-minimum determination is therefore limited to the three sampled points and cannot be extended to the full 0.12 Angstrom span."
+            }
+          }
+        }
+      },
+      "persisted_rejection": {
+        "error_category": "ValidationError",
+        "recovery_kind": "correction",
+        "requirement": [
+          {
+            "type": "value_error",
+            "loc": []
+          }
+        ]
+      },
+      "response_record_sha256": "692f5efebbc21aa5ff98192111d37ef0ffb5c7263f15b0879712166653751077",
+      "request_sha256": "d756a1d038c946dde02a384496cf4d33731ed022ad07749ef4c6e1d3e7974c98",
+      "raw_http_response_sha256": "1c8a9f90f51349c66e3b9d7eeed263d79d3ed24723b1715b39f0997f0935f38c",
+      "delivery_sidecar_sha256": "aa77c4d18304324494817c806498542d6c3b227e930132c0fc9e8b074fb2b9f7",
+      "http_status": 200,
+      "usage_status": "known",
+      "tokens": 4352,
+      "cost_usd": "0.0018753",
+      "review": {
+        "facts_passed": false,
+        "semantic_passed": false,
+        "false_binding_quote": "already have qualified energy results bound to the sampling port",
+        "false_binding_rationale": "The three source Results are qualified for energy only. The current sampling Goal has no bound analysis Result, and both transmitted current-delivery snapshots say goal_has_no_evidence_binding. Proposed future analysis inputs cannot be described as an existing qualified sampling-port binding.",
+        "protocol_fields": {
+          "finite_sample_internal_minimum": {
+            "step_key": "s1",
+            "port": "sampling",
+            "gap": "Only the three required candidates (r = 0.9394, 1.0194, 1.0994 Angstrom) have qualified energies; the two optional candidates (geom_e98835a38ce7 at 0.9794, geom_6b95efc712da at 1.0594 Angstrom) have no evidence, and scientific execution is not authorized (orca_starts=0, extra_orca_starts=0), so no additional single points can be computed. The internal-minimum determination is therefore limited to the three sampled points and cannot be extended to the full 0.12 Angstrom span."
+          }
+        },
+        "protocol_rationale": "The corrected Goal ID is exact, but step_key=s1 and gap are present together. OutputBinding requires exactly one of a future output, existing evidence, or explicit gap. The stored rejection is ValidationError/value_error, and the bounded correction is exhausted.",
+        "correct_budget_quote": "Scientific execution is not authorized (orca_starts=0, extra_orca_starts=0), so no new single points can be computed; the analysis must run on the three existing qualified energies only",
+        "correct_budget_rationale": "This correctly separates prohibited new single points from allowed existing-evidence analysis. The step uses analysis.finite_sampling with the correct three explicit energy references.",
+        "ambiguous_criterion_quote": "cannot be extended to the full 0.12 Angstrom span.",
+        "criterion_rationale": "This is not a correct quantitative explanation of the unmet criterion: 0.12 Angstrom is the maximum nearest sampled-neighbor span, while the current three-point span is approximately 0.16 Angstrom. The optional points are not missing required initial members. The first reason did state the correct <= criterion; this review therefore records the later phrase as unclear/misleading and does not invent an explicit reversed-inequality or swapped-energy claim.",
+        "no_final_credit": "These quotations are from rejected planning text, not a final answer. They cannot populate the final six-axis review."
+      }
+    }
+  ],
+  "independent_read_only_source_audit": {
+    "method": "Read original UTF-8 Request/Result/XYZ/stdout files and verify stored SHA256. Recompute distances and comparisons with Python stdlib only; no production Tool, model, ORCA, or source modification.",
+    "goal_id": "finite_sample_internal_minimum",
+    "goal_port": "sampling",
+    "original_request": "对已登记的五个水分子几何候选，用 RHF/STO-3G、电荷 0、多重度 1 做有限单点采样。先计算标记必需的三个点；若证据不足，最多追加一个登记候选。请判断已采样点中的可区分内部最低点，其最近左右采样邻点的距离跨度是否不超过 0.12 Angstrom。证据充分则停止；结论仅限已采样离散范围。",
+    "conditions": {
+      "method": "HF",
+      "electronic_state": "RHF",
+      "basis": "STO-3G",
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase"
+    },
+    "members": [
+      {
+        "member_id": "geom_a1fd9c54f540",
+        "required_initial": true,
+        "geometry_sha256": "a1fd9c54f5400a6c3fe01dd1d1f69d75071fc94b36cf7d18ac336661b03e4f63",
+        "declared_r_angstrom": 0.9394092224081524,
+        "measured_r_angstrom": 0.9394092224077724,
+        "qualified_energy_eh": -74.962692158239,
+        "unit": "Eh",
+        "binding": {
+          "run_id": "run_857dff7e962b44948f8ab561c6f21b98",
+          "result_id": "result_35776666c6fe43078609fc570d47f048",
+          "attempt_id": "attempt_c347a5b964414ab2961b182f09e07c36",
+          "port": "energy",
+          "rule_version": "orca-hf-2"
+        },
+        "result_sha256": "88df68949babe042e67b7aa201bbab53c6a7328ce68e845487bfb9f10d975bc2",
+        "raw_stdout_sha256": "03305f9eaee924c41e1740c36c29357209034d734c2c7bfb90c96ecb8be71fa7",
+        "qualification": "energy only; all nine orca-hf-2 checks passed; no sampling port"
+      },
+      {
+        "member_id": "geom_e98835a38ce7",
+        "required_initial": false,
+        "geometry_sha256": "e98835a38ce77d77775cd4c4cc32e6d343e9d1566adc63bdece588d1dbc13462",
+        "declared_r_angstrom": 0.9794092224081523,
+        "measured_r_angstrom": 0.9794092224081369,
+        "qualified_energy_eh": null
+      },
+      {
+        "member_id": "geom_997a7b6154fa",
+        "required_initial": true,
+        "geometry_sha256": "997a7b6154fa44f7f6e2b287042d0445916d34ec8657ee6d38c7fe9403e7050b",
+        "declared_r_angstrom": 1.0194092224081523,
+        "measured_r_angstrom": 1.0194092224084847,
+        "qualified_energy_eh": -74.964906308165,
+        "unit": "Eh",
+        "binding": {
+          "run_id": "run_cf30441b40ea46418ef4a98762da8643",
+          "result_id": "result_2b37e67a22e8474d92d933ec94eac9e5",
+          "attempt_id": "attempt_9bbc1df0d21e4f4ab39ee88267f292f0",
+          "port": "energy",
+          "rule_version": "orca-hf-2"
+        },
+        "result_sha256": "9035086c8b3010302c9815e439c2d8ee4dea99c659f24ace15257abd03601b66",
+        "raw_stdout_sha256": "20551d72c54ba51b91d5ee2cf0df6b4e0dee076ebc85e4ee45194b629bf61f1d",
+        "qualification": "energy only; all nine orca-hf-2 checks passed; no sampling port"
+      },
+      {
+        "member_id": "geom_6b95efc712da",
+        "required_initial": false,
+        "geometry_sha256": "6b95efc712da0386b5b1d39737a015aa566b451e34e60f9da51e2a2b2e196654",
+        "declared_r_angstrom": 1.0594092224081524,
+        "measured_r_angstrom": 1.0594092224078497,
+        "qualified_energy_eh": null
+      },
+      {
+        "member_id": "geom_4551ffe49805",
+        "required_initial": true,
+        "geometry_sha256": "4551ffe49805441fc16889a75eacbe6d1b5d35a41cfba75a7634434e9a65c90a",
+        "declared_r_angstrom": 1.0994092224081524,
+        "measured_r_angstrom": 1.0994092224081977,
+        "qualified_energy_eh": -74.954287966128,
+        "unit": "Eh",
+        "binding": {
+          "run_id": "run_86509407dbae44aa9afa30dd61714887",
+          "result_id": "result_543267b93a134036b87e656ee640d79d",
+          "attempt_id": "attempt_738caa94e4e44668b0979696ce86e96d",
+          "port": "energy",
+          "rule_version": "orca-hf-2"
+        },
+        "result_sha256": "33d891cdc69a46caa8bb5bd43f7c8c7a31a9e04b5547b85b797fc98e7429bf36",
+        "raw_stdout_sha256": "954f82164fb0183683c24411271404f8cffaccd18d58ea6985da00e10048475d",
+        "qualification": "energy only; all nine orca-hf-2 checks passed; no sampling port"
+      }
+    ],
+    "criteria": {
+      "target_width_angstrom": 0.12,
+      "energy_threshold_eh": 6.13686837721616e-11,
+      "fixed_bond_angstrom": 0.9894092978042807,
+      "fixed_angle_degrees": 100.02691849272762,
+      "index_base": 0,
+      "elements": [
+        "O",
+        "H",
+        "H"
+      ],
+      "center_atom": 0,
+      "scanned_atom": 1,
+      "fixed_atom": 2
+    },
+    "distance_tolerance_angstrom": 1e-08,
+    "nearest_sampled_neighbor_span_angstrom": 0.16000000000042536,
+    "center_to_left_energy_margin_eh": 0.0022141499260044384,
+    "center_to_right_energy_margin_eh": 0.010618342036991635,
+    "distinguishable_internal_minimum_in_sampled_points": true,
+    "nearest_neighbor_span_criterion_passed": false,
+    "acquisition_goal_satisfied": false,
+    "scope_limit": "Only the stored discrete sampled points and current conditions; no continuous/global minimum claim. The reviewer arithmetic does not create a qualified sampling output. The Run contains no analysis execution or analysis Result."
+  },
+  "actual_runtime": {
+    "state": "failed",
+    "plan_id": null,
+    "plan_version": null,
+    "goal_status": {
+      "finite_sample_internal_minimum": "insufficient_evidence"
+    },
+    "delivery_status": "partial",
+    "usage": {
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 2,
+      "model_tokens_used": 8438,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 0,
+      "decision_rounds": 2,
+      "evidence_reads": 0,
+      "analysis_executions": 0,
+      "logical_steps": [],
+      "identity_queries": 0,
+      "structure_preparations": 0
+    },
+    "calls": [],
+    "attempts": [],
+    "result_ids": [],
+    "terminal_deliveries": [],
+    "fallback_report_receipts": [
+      {
+        "publication_id": "report_57a01117936427937637ca56",
+        "snapshot_fingerprint": "9f51f89a41f583e6511cbac0e25d6badfaf6c491676c1fdea3820f31acbfcf84",
+        "report_status": "rendered",
+        "report_version": "terminal-report-1",
+        "report_path": "runs/run_380127d669d94c5bbf0f77135ad15223/deliveries/report_57a01117936427937637ca56.md",
+        "report_sha256": "3974adc70b0e7e1897dafa236af13a7870e301220a974522f1ccda92497c9abd"
+      }
+    ],
+    "fallback_not_model_delivery": true
+  },
+  "cost": {
+    "http_requests": 2,
+    "model_tokens_used": 8438,
+    "known_cost_usd": "0.0035475",
+    "unknown_records": 0,
+    "orca_starts_actual": 0,
+    "analysis_executions": 0,
+    "review_added_paid_calls": 0
+  },
+  "binding": {
+    "metadata_sha256": "d8476a9016dd56087c078c35bc05f19a163cce3407fd041a18a16a89499de35c",
+    "spec_sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30",
+    "permission_sha256": "304c9149379e51872a552d607ff3730d249dba87e865ac592cbaa61d33ee2669",
+    "budget_sha256": "c8b1aaf32e728e12ae60a68af75ece6a99e3b5b481de41834d2f16ce9defc941",
+    "accepted_model_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ledger_sha256_at_review": "ce1d3f2dd65c85d5281f846b214e844448c549a89266a676396c2a2eddb1ccda",
+    "grade_sha256_before_review": "18c9b125f7df11df578d2b6c5aa2d3f2208f405858d20d676646850dc753a40b"
+  },
+  "evidence_sha256": [
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-2/V-06__insufficient-additional-budget/1/execution.json",
+      "sha256": "5fc5adb790faf4fa4044c1058140a15099fe6aa7cf96a8ff9777b197bb91ffef"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-2/V-06__insufficient-additional-budget/1/grade.json",
+      "sha256": "18c9b125f7df11df578d2b6c5aa2d3f2208f405858d20d676646850dc753a40b"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-2/V-06__insufficient-additional-budget/1/metadata.json",
+      "sha256": "d8476a9016dd56087c078c35bc05f19a163cce3407fd041a18a16a89499de35c"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-2/V-06__insufficient-additional-budget/1/ready.json",
+      "sha256": "37cb3fa98f4138879e5480b4eadd6164e0c38921f85af93e438525f541f190ec"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-2/V-06__insufficient-additional-budget/1/reservation.json",
+      "sha256": "24a82da1d361b4974357c40f3523fdcf50330e09b9bdd86f760899770cb9cd1e"
+    },
+    {
+      "path": "data/phase-b/model-evaluations/development/repair-cycle-20261008-development-2/V-06__insufficient-additional-budget/1/review-template.json",
+      "sha256": "4f1dc0c3a82e1f7b55bb312bb49e72e96fc1d0a78c60513c67e06a471b534588"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/budget.json",
+      "sha256": "c8b1aaf32e728e12ae60a68af75ece6a99e3b5b481de41834d2f16ce9defc941"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/deliveries/report_57a01117936427937637ca56.md",
+      "sha256": "3974adc70b0e7e1897dafa236af13a7870e301220a974522f1ccda92497c9abd"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/model/model_474e1d30c6c2406fa7b77983fb7611e4.delivery.json",
+      "sha256": "aa77c4d18304324494817c806498542d6c3b227e930132c0fc9e8b074fb2b9f7"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/model/model_474e1d30c6c2406fa7b77983fb7611e4.request.json",
+      "sha256": "126d66adf885a5fad58b59db594130581c40d005793620f7112415c1f64cb9af"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/model/model_474e1d30c6c2406fa7b77983fb7611e4.response.json",
+      "sha256": "80cceed6e148929714334d1dd0e2cca5c1d07cb25a4b20f40c7b06b4a22a9d16"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/model/model_82d020fc0e3b45b398a1934453b2cab7.delivery.json",
+      "sha256": "aa77c4d18304324494817c806498542d6c3b227e930132c0fc9e8b074fb2b9f7"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/model/model_82d020fc0e3b45b398a1934453b2cab7.request.json",
+      "sha256": "d756a1d038c946dde02a384496cf4d33731ed022ad07749ef4c6e1d3e7974c98"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/model/model_82d020fc0e3b45b398a1934453b2cab7.response.json",
+      "sha256": "692f5efebbc21aa5ff98192111d37ef0ffb5c7263f15b0879712166653751077"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/model-profile.json",
+      "sha256": "5ed9c26b215534e43da607d78289001b84ad1bec7909e5bb9b286a9e6a833ace"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/permission.json",
+      "sha256": "304c9149379e51872a552d607ff3730d249dba87e865ac592cbaa61d33ee2669"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/request-revisions/1.json",
+      "sha256": "1139d45e22cb9476b8c4a942b4debac9d877ef82f853e951c141cc250fa95ae8"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/run.json",
+      "sha256": "345a49e8ce5af0dee660a1a16af89bcb3bc9976168f5130b3e957ff636a207da"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_380127d669d94c5bbf0f77135ad15223/sources.json",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_857dff7e962b44948f8ab561c6f21b98/results/result_35776666c6fe43078609fc570d47f048.json",
+      "sha256": "88df68949babe042e67b7aa201bbab53c6a7328ce68e845487bfb9f10d975bc2"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_86509407dbae44aa9afa30dd61714887/results/result_543267b93a134036b87e656ee640d79d.json",
+      "sha256": "33d891cdc69a46caa8bb5bd43f7c8c7a31a9e04b5547b85b797fc98e7429bf36"
+    },
+    {
+      "path": "data/phase-b/reference/runs/run_cf30441b40ea46418ef4a98762da8643/results/result_2b37e67a22e8474d92d933ec94eac9e5.json",
+      "sha256": "9035086c8b3010302c9815e439c2d8ee4dea99c659f24ace15257abd03601b66"
+    },
+    {
+      "path": "data/phase-b/repair-cycle-20261008/candidates/repair-cycle-20261008-development-2.json",
+      "sha256": "306ccd18b01613740d7bb40c62d43cf5d8bb1adf24e8b7b14744d80ddbe28020"
+    },
+    {
+      "path": "src/orca_agent/models.py",
+      "sha256": "7cf796839ca64d105e7a13f49490e172c6cf9c5d50e785d8183b56ed2d2d9c0e"
+    },
+    {
+      "path": "tests/fixtures/phase_b/cases.json",
+      "sha256": "ed3ed06a5027468388cdced66a9ce321889897c28289d8a7e02dd95050af8b30"
+    },
+    {
+      "path": "tests/fixtures/phase_b/independent/sampling-left-center/stdout.out",
+      "sha256": "20551d72c54ba51b91d5ee2cf0df6b4e0dee076ebc85e4ee45194b629bf61f1d"
+    },
+    {
+      "path": "tests/fixtures/phase_b/independent/sampling-left-minus/stdout.out",
+      "sha256": "03305f9eaee924c41e1740c36c29357209034d734c2c7bfb90c96ecb8be71fa7"
+    },
+    {
+      "path": "tests/fixtures/phase_b/independent/sampling-left-plus/stdout.out",
+      "sha256": "954f82164fb0183683c24411271404f8cffaccd18d58ea6985da00e10048475d"
+    },
+    {
+      "path": "tests/fixtures/phase_b/sampling/left/center.xyz",
+      "sha256": "997a7b6154fa44f7f6e2b287042d0445916d34ec8657ee6d38c7fe9403e7050b"
+    },
+    {
+      "path": "tests/fixtures/phase_b/sampling/left/minus.xyz",
+      "sha256": "a1fd9c54f5400a6c3fe01dd1d1f69d75071fc94b36cf7d18ac336661b03e4f63"
+    },
+    {
+      "path": "tests/fixtures/phase_b/sampling/left/minus_half.xyz",
+      "sha256": "e98835a38ce77d77775cd4c4cc32e6d343e9d1566adc63bdece588d1dbc13462"
+    },
+    {
+      "path": "tests/fixtures/phase_b/sampling/left/plus.xyz",
+      "sha256": "4551ffe49805441fc16889a75eacbe6d1b5d35a41cfba75a7634434e9a65c90a"
+    },
+    {
+      "path": "tests/fixtures/phase_b/sampling/left/plus_half.xyz",
+      "sha256": "6b95efc712da0386b5b1d39737a015aa566b451e34e60f9da51e2a2b2e196654"
+    }
+  ]
+}

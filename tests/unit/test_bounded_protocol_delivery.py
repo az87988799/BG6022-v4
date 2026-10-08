@@ -183,15 +183,19 @@ def test_portable_n06_registration_preserves_both_unmet_scientific_goals(tmp_pat
     from test_semantic_control import candidate
     from test_semantic_goal_binding_production import molecular_run
 
+    from orca_agent.semantic_notices import notice_choices
+
     case = next(item for item in FIXTURE["semantic_and_delivery"] if item["case"] == "n06-registration-only")
     store, run = molecular_run(tmp_path, case["text"], geometries=False)
     clause = case["text"].split("。")[0]
+    choices = notice_choices()
     values = candidate(store, run, kind="normalize", goals=[
         {"key": "geometry", "port": "optimized_geometry", "text_basis": clause, "system_refs": []},
         {"key": "energy", "port": "energy", "text_basis": clause,
          "system_refs": [], "geometry_relation": "optimized"}],
         unresolved=["unsupported_system:ethanol"],
-        notices=["乙醇优化结构及优化后电子能均已登记；当前范围不支持乙醇且未登记几何，本轮不计算。"])
+        notices=["乙醇优化结构及优化后电子能均已登记；当前范围不支持乙醇且未登记几何，本轮不计算。",
+                 choices["unsupported_system"], choices["missing_geometry"]])
     stopped = agent.execute(store, Config(), run.id,
         transport=ScriptedTransport({"action": "normalize_request", "parameters": values}))
     report = build_report(store, stopped)

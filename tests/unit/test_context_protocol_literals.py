@@ -146,8 +146,8 @@ def test_preanalysis_snapshot_does_not_erase_allowed_analysis_or_member_mapping(
     assert "Stop:done/no useful allowed work" in prompt
     assert "Science limit0 still permits allowed analysis" in prompt
     assert "join members by ID, not order" in prompt
-    assert "8-key JSON:PROPOSAL_SCHEMA.properties only" in prompt
-    assert "not transport type/response_format" in prompt
+    assert "8 root JSON keys per PROPOSAL_SCHEMA" in prompt
+    assert "no type/response_format" in prompt
     assert set(wire["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
     if correction:
         assert wire["CONTROL"]["validation_error"] == feedback["validation_error"]

@@ -15,6 +15,7 @@ from orca_agent.natural import initialize_agent
 from orca_agent.proposals import ProposalError
 from orca_agent.report import build_report
 from orca_agent.semantic import commit_candidate
+from orca_agent.semantic_notices import notice_choices
 from orca_agent.store import Store, StoreError
 from tests.unit.test_agent import ScriptedTransport
 from tests.unit.test_semantic_control import candidate
@@ -84,9 +85,11 @@ def synthetic_intake(tmp_path, text):
     return store, run
 
 
-def proposed(store, run, goals, **values):
+def proposed(store, run, goals, *, notice_kinds=None, **values):
+    notices = (["Registered requested scope; capability/geometry gaps remain."] if notice_kinds is None
+               else [notice_choices()[kind] for kind in notice_kinds])
     return candidate(store, run, kind="normalize", goals=goals,
-                     notices=["Registered requested scope; capability/geometry gaps remain."], **values)
+                     notices=notices, **values)
 
 
 def test_real_n06_candidate_is_rejected_without_activation_or_budget_mutation(tmp_path):
@@ -131,6 +134,8 @@ def test_synthetic_derivative_registers_energy_and_notices_then_resumes_without_
                   "changes": ["goals[0].port = energy"]}
     structure = copy.deepcopy(parameters["goals"][0])
     parameters["goals"][0]["port"] = "energy"
+    parameters["notices"] = list(notice_choices().values())
+    derivative["changes"].append("select both current finite notice statements")
     if include_geometry:
         structure["key"] = "requested_structure"
         parameters["goals"].append(structure)
@@ -182,7 +187,7 @@ def test_an_energy_named_key_or_geometry_goal_does_not_cover_explicit_energy(tmp
 ])
 def test_negated_questions_and_pure_optimization_do_not_create_energy_obligations(tmp_path, text):
     store, run = synthetic_intake(tmp_path, text + "本轮只登记需求，不启动计算。")
-    parameters = proposed(store, run, [goal(text, port="optimized_geometry", relation="optimized")])
+    parameters = proposed(store, run, [goal(text, port="optimized_geometry", relation="optimized")], notice_kinds=['missing_geometry', 'unsupported_system'])
     updated = commit(store, run, parameters)
     assert [g.port for g in store.load_request(updated).goals] == ["optimized_geometry"]
 
@@ -205,7 +210,7 @@ def test_energy_coverage_keeps_the_requested_target_relation_and_required_status
 ])
 def test_energy_target_is_not_the_other_task_or_solvent(tmp_path, text, quote, target):
     store, run = synthetic_intake(tmp_path, text + "本轮只登记需求，不启动计算。")
-    updated = commit(store, run, proposed(store, run, [goal(quote)]))
+    updated = commit(store, run, proposed(store, run, [goal(quote)], notice_kinds=['missing_geometry']))
     assert store.load_request(updated).goals[0].identity["canonical_names"] == [target]
 
 
@@ -213,7 +218,7 @@ def test_coordinated_other_quantity_does_not_create_a_second_energy_requirement(
     text = "Report water electronic energy and methane geometry. Registration only."
     store, run = synthetic_intake(tmp_path, text)
     parameters = proposed(store, run, [goal("water electronic energy"),
-        goal("methane geometry", port="optimized_geometry", relation="optimized", key="structure")])
+        goal("methane geometry", port="optimized_geometry", relation="optimized", key="structure")], notice_kinds=['missing_geometry'])
     updated = commit(store, run, parameters)
     assert {g.port for g in store.load_request(updated).goals} == {"energy", "optimized_geometry"}
 
@@ -222,7 +227,7 @@ def test_initial_later_explicit_energy_cancellation_does_not_force_a_retired_goa
     store, run = synthetic_intake(tmp_path, "给出水的单点电子能。本轮只登记需求。")
     store.enqueue_message(run.id, "取消电子能目标，只登记水优化结构。")
     updated = commit(store, run, proposed(store, run, [
-        goal("水优化结构", port="optimized_geometry", relation="optimized")]))
+        goal("水优化结构", port="optimized_geometry", relation="optimized")], notice_kinds=['missing_geometry']))
     assert [g.port for g in store.load_request(updated).goals] == ["optimized_geometry"]
 
 
@@ -240,7 +245,7 @@ def test_negated_cancellation_keeps_the_energy_requirement(tmp_path, withdrawal)
 @pytest.mark.parametrize("withdrawal", ["不取消", "不撤回"])
 def test_negated_replacement_cannot_remove_registered_energy(tmp_path, withdrawal):
     store, run = synthetic_intake(tmp_path, "给出水的单点电子能。本轮只登记需求。")
-    current = commit(store, run, proposed(store, run, [goal("水的单点电子能")]))
+    current = commit(store, run, proposed(store, run, [goal("水的单点电子能")], notice_kinds=['missing_geometry']))
     store.enqueue_message(current.id, withdrawal + "电子能目标。同时登记水优化结构。")
     parameters = candidate(store, current, kind="replace_goals",
         replaces=[g.id for g in store.load_request(current).goals],
@@ -257,7 +262,7 @@ def test_negated_replacement_cannot_remove_registered_energy(tmp_path, withdrawa
 def test_condition_change_does_not_authorize_replacing_energy_goals(tmp_path, already_normalized, amendment):
     store, run = synthetic_intake(tmp_path, "优化水结构，给出水的单点电子能。本轮只登记需求。")
     if already_normalized:
-        run = commit(store, run, proposed(store, run, [goal("水的单点电子能")]))
+        run = commit(store, run, proposed(store, run, [goal("水的单点电子能")], notice_kinds=['missing_geometry']))
     store.enqueue_message(run.id, amendment + "同时登记水优化结构。")
     parameters = candidate(store, run, kind="replace_goals",
         replaces=[g.id for g in store.load_request(run).goals],
@@ -273,11 +278,11 @@ def test_condition_change_does_not_authorize_replacing_energy_goals(tmp_path, al
 def test_explicit_n09_quantity_replacement_remains_legal(tmp_path, already_normalized):
     store, run = synthetic_intake(tmp_path, "给出水的单点电子能。本轮只登记需求。")
     if already_normalized:
-        run = commit(store, run, proposed(store, run, [goal("水的单点电子能")]))
+        run = commit(store, run, proposed(store, run, [goal("水的单点电子能")], notice_kinds=['missing_geometry']))
     text = "不再需要单点电子能，把目标明确替换为优化后的几何结构，沿用原科学条件；本轮不启动计算。"
     store.enqueue_message(run.id, text)
     values = dict(goals=[goal("优化后的几何结构", port="optimized_geometry", relation="optimized")],
-                  notices=["Registered the explicitly replaced quantity."])
+                  notices=[notice_choices()["missing_geometry"]])
     parameters = candidate(store, run, kind="replace_goals" if already_normalized else "normalize",
         replaces=[g.id for g in store.load_request(run).goals] if already_normalized else [], **values)
     updated = commit(store, run, parameters, "explicit_quantity_replacement")
@@ -287,7 +292,7 @@ def test_explicit_n09_quantity_replacement_remains_legal(tmp_path, already_norma
 def test_targeted_cancellation_does_not_retire_the_other_systems_energy(tmp_path):
     store, run = synthetic_intake(tmp_path, "给出水的单点电子能。给出甲烷的单点电子能。本轮只登记需求。")
     store.enqueue_message(run.id, "取消水的电子能目标，只登记甲烷目标。")
-    parameters = proposed(store, run, [goal("甲烷的单点电子能")])
+    parameters = proposed(store, run, [goal("甲烷的单点电子能")], notice_kinds=['missing_geometry'])
     updated = commit(store, run, parameters)
     assert store.load_request(updated).goals[0].identity["canonical_names"] == ["methane"]
 
@@ -298,7 +303,7 @@ def test_targeted_cancellation_does_not_retire_the_other_systems_energy(tmp_path
 def test_unnamed_cancellation_requires_a_unique_target_or_explicit_all(tmp_path, withdrawal, accepted):
     store, run = synthetic_intake(tmp_path, "给出水的单点电子能。给出甲烷的单点电子能。本轮只登记需求。")
     store.enqueue_message(run.id, withdrawal + "，只登记乙醇优化结构。")
-    parameters = proposed(store, run, [goal("乙醇优化结构", port="optimized_geometry", relation="optimized")])
+    parameters = proposed(store, run, [goal("乙醇优化结构", port="optimized_geometry", relation="optimized")], notice_kinds=['missing_geometry', 'unsupported_system'])
     if accepted:
         assert [g.port for g in store.load_request(commit(store, run, parameters)).goals] == ["optimized_geometry"]
     else:
@@ -327,7 +332,7 @@ def test_cross_message_pronoun_uses_a_previously_named_target_and_validated_bind
 def test_all_initial_messages_are_covered_but_explicit_replacement_retires_old_energy(tmp_path):
     store, run = synthetic_intake(tmp_path, "给出水的单点电子能。本轮只登记需求，不启动计算。")
     store.enqueue_message(run.id, "还需要甲烷的单点电子能。")
-    parameters = proposed(store, run, [goal("水的单点电子能")])
+    parameters = proposed(store, run, [goal("水的单点电子能")], notice_kinds=['missing_geometry'])
     before = snapshot(store, run)
     with pytest.raises(ProposalError, match="electronic-energy"):
         commit(store, run, parameters)
@@ -338,14 +343,14 @@ def test_all_initial_messages_are_covered_but_explicit_replacement_retires_old_e
     replacement = candidate(store, current, kind="replace_goals",
         replaces=[g.id for g in store.load_request(current).goals],
         goals=[goal("优化乙醇结构", port="optimized_geometry", relation="optimized")],
-        notices=["Registered the explicitly replaced structure requirement."])
+        notices=list(notice_choices().values()))
     updated = commit(store, current, replacement, "replacement")
     assert [g.port for g in store.load_request(updated).goals] == ["optimized_geometry"]
 
 
 def test_replacement_message_cannot_drop_its_new_explicit_energy(tmp_path):
     store, run = synthetic_intake(tmp_path, "优化水结构。本轮只登记需求。")
-    current = commit(store, run, proposed(store, run, [goal("优化水结构", port="optimized_geometry")]))
+    current = commit(store, run, proposed(store, run, [goal("优化水结构", port="optimized_geometry")], notice_kinds=['missing_geometry']))
     store.enqueue_message(current.id, "替换目标为给出乙醇优化后的电子能。本轮只登记需求。")
     parameters = candidate(store, current, kind="replace_goals",
         replaces=[g.id for g in store.load_request(current).goals],

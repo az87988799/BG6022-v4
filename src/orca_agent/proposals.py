@@ -5,7 +5,16 @@ from typing import Annotated, Any, Literal
 
 from pydantic import Field, ValidationError
 
-from orca_agent.models import EvidenceRef, InputRef, OutputBinding, Plan, Record, Step, new_id
+from orca_agent.models import (
+    EvidenceRef,
+    InputRef,
+    OutputBinding,
+    Plan,
+    Port,
+    Record,
+    Step,
+    new_id,
+)
 from orca_agent.tools.registry import get_tool, validate_parameters
 
 _CALL_TOOL_FORMS = ({"step_id": str}, {"tool": str, "parameters": dict})
@@ -56,6 +65,44 @@ def action_parameter_schema(action, *, immediate=True, terminal_required=False):
     raise ValueError("action parameters are owned by their specialized contract")
 
 
+def plan_structure_schema():
+    """Bounded structural projection of the one production Plan parameter type.
+
+    Step fields and EvidenceRef contents are intentionally not expanded here;
+    the full schema and runtime validation remain available and unchanged.
+    """
+    schema = ProposedPlan.model_json_schema()
+    definitions = schema["$defs"]
+    step_name = schema["properties"]["steps"]["items"]["$ref"].removeprefix("#/$defs/")
+    schema["properties"]["steps"]["items"] = {"type": definitions[step_name]["type"]}
+    definitions[EvidenceRef.__name__] = {"type": definitions[EvidenceRef.__name__]["type"]}
+    schema["description"] = (
+        "Structural projection only: Step fields and EvidenceRef contents are validated separately.")
+
+    # Dropped expansion layers can leave unused definitions. Retain the exact
+    # transitive closure, never a second copy of the target validation rules.
+    needed = set()
+
+    def visit(node):
+        if isinstance(node, dict):
+            ref = node.get("$ref")
+            if isinstance(ref, str) and ref.startswith("#/$defs/"):
+                name = ref.removeprefix("#/$defs/")
+                if name not in needed:
+                    needed.add(name)
+                    visit(definitions[name])
+            for key, value in node.items():
+                if key != "$defs":
+                    visit(value)
+        elif isinstance(node, list):
+            for value in node:
+                visit(value)
+
+    visit(schema)
+    schema["$defs"] = {name: definition for name, definition in definitions.items() if name in needed}
+    return schema
+
+
 def validate_action_parameters(action, values, *, terminal_required=False):
     """Shared structural validation; applicability/permission remain separate."""
     if action == "call_tool":
@@ -77,6 +124,8 @@ def validate_action_parameters(action, values, *, terminal_required=False):
                     min_string_length=questions["items"]["minLength"],
                     max_string_length=questions["items"]["maxLength"])
             raise error from None
+    elif action in {"initial_plan", "revise_plan"}:
+        _validate_plan_parameters(values)
 
 
 def call_tool_parameter_shapes(*, immediate=True):
@@ -140,30 +189,85 @@ class ProposedStep(Record):
     inputs: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
+class FutureGoalTarget(Record):
+    step_key: str
+    port: Port
+
+
+class EvidenceGoalTarget(Record):
+    evidence: EvidenceRef
+    port: Port
+
+
+class GapGoalTarget(Record):
+    gap: str
+    port: Port
+
+
+_GOAL_TARGET_TYPES = (FutureGoalTarget, EvidenceGoalTarget, GapGoalTarget)
+
+
+def goal_target_shapes():
+    """Disjoint closed records are the shared schema and correction contract."""
+    return [list(model.model_fields) for model in _GOAL_TARGET_TYPES]
+
+
 class ProposedPlan(Record):
     steps: list[ProposedStep] = Field(min_length=1, max_length=8)
-    goal_map: dict[str, dict[str, Any]]
+    # Keys are checked against this Request's IDs, not merely an identifier
+    # regex; only the target shape is a context-independent schema contract.
+    goal_map: dict[str, FutureGoalTarget | EvidenceGoalTarget | GapGoalTarget]
+
+
+def _validate_plan_parameters(parameters):
+    try:
+        return ProposedPlan.model_validate(parameters)
+    except ValidationError as exc:
+        error = _schema_error(exc, path=["parameters"])
+        # Union branch names are implementation details, not JSON paths. Keep
+        # nested EvidenceRef failures at their real field path as well.
+        branch_names = {model.__name__ for model in _GOAL_TARGET_TYPES}
+        errors = []
+        for item in error.detail["errors"]:
+            loc = item["loc"]
+            if len(loc) > 3 and loc[1] == "goal_map" and loc[3] in branch_names:
+                loc = [*loc[:3], *loc[4:]]
+            item = {**item, "loc": loc}
+            if item not in errors:
+                errors.append(item)
+        error.detail["errors"] = errors
+        target_errors = [item for item in errors if item["loc"][1:2] == ["goal_map"]]
+        if target_errors:
+            error.detail.update(
+                code="goal_target_shape", path=target_errors[0]["loc"][:3],
+                requirement="Each Goal target must use exactly one binding shape. "
+                    "A Step binding is a future output route, not goal completion; do not combine it with a gap.",
+                binding_shapes=goal_target_shapes())
+        raise error from None
 
 
 def materialize_plan(store, run, parameters):
-    try:
-        proposal = ProposedPlan.model_validate(parameters)
-    except ValidationError as exc:
-        raise _schema_error(exc, path=["parameters"]) from None
+    proposal = _validate_plan_parameters(parameters)
     prior = store.load_plan(run)
     request = store.load_request(run)
     if run.input_bindings:
         from orca_agent.input_bindings import resolved_request
         request = resolved_request(store, run, request)
     missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]
+    unknown = set(proposal.goal_map) - {goal.id for goal in request.goals}
     if missing:
         raise ProposalError(
-            "Map every required Request goal. When evidence or capability is unavailable, retain the goal "
-            "with its exact port and an explicit gap; a gap records unmet evidence, not goal completion.",
+            "Map every required Request Goal ID to exactly one binding shape with its unchanged port. "
+            "A planned Step output is a route, not completion; use a gap only when no valid route or evidence exists.",
             path=["parameters", "goal_map"],
             missing_goals=[{"goal_id": goal.id, "port": goal.port} for goal in missing],
+            binding_shapes=goal_target_shapes(),
             gap_bindings={goal.id: {"port": goal.port, "gap": "<describe missing evidence or capability>"}
                           for goal in missing})
+    if unknown:
+        raise ProposalError("Use only current Request Goal IDs; a Plan cannot introduce a Goal.",
+                            code="unknown_goal_id", path=["parameters", "goal_map"],
+                            allowed_goal_ids=[goal.id for goal in request.goals])
     existing = {s.id: s for s in prior.steps} if prior else {}
     history = {a.frozen_step.id: a.frozen_step for a in run.attempts if a.frozen_step}
     history.update({c.frozen_step.id: c.frozen_step for c in run.calls if c.frozen_step})
@@ -238,15 +342,22 @@ def materialize_plan(store, run, parameters):
                           depends_on=list(dict.fromkeys(dependencies)), inputs=inputs))
     goals = {}
     requested_goals = {goal.id: goal for goal in request.goals}
-    for goal_id, value in proposal.goal_map.items():
+    for goal_id, target in proposal.goal_map.items():
+        value = target.model_dump(exclude_none=True)
         if goal_id in requested_goals and value.get("port") != requested_goals[goal_id].port:
             raise ProposalError("A goal binding must preserve its requested physical quantity or query port. "
                 "If that output is not yet available, use {gap,port} with the same port.",
                 path=["parameters", "goal_map", goal_id, "port"], expected=requested_goals[goal_id].port)
         if "step_key" in value:
+            if value["step_key"] not in ids:
+                raise ProposalError("Use an exact key from this proposed Plan's Steps.",
+                    code="unknown_goal_step", path=["parameters", "goal_map", goal_id, "step_key"])
             value = {**value, "step_id": ids[value["step_key"]]}
             value.pop("step_key")
-        goals[goal_id] = OutputBinding.model_validate(value)
+        try:
+            goals[goal_id] = OutputBinding.model_validate(value)
+        except ValidationError as exc:
+            raise _schema_error(exc, path=["parameters", "goal_map", goal_id]) from None
     previous = [d for d in run.decisions if d.get("plan_version") is not None]
     previous += [{"plan_id": d["prior_plan_id"], "plan_version": d["prior_plan_version"]}
                  for d in run.decisions if d.get("prior_plan_version") is not None]
