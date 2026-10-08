@@ -229,8 +229,9 @@ def _validate_execution_rules(store, run):
         raise ValueError("frozen ORCA version is not enabled for scientific execution")
 
 
-def execute(store, config, run_id, *, resume=False, fault=None, transport=None, batch=None):
+def execute(store, config, run_id, *, resume=False, fault=None, transport=None, batch=None,
+            stop_event=None):
     """Compatibility entry into the one feedback loop, including fixed structured plans."""
     from orca_agent.agent import execute as run_agent
     return run_agent(store, config, run_id, resume=resume, fault=fault,
-                     transport=transport, batch=batch)
+                     transport=transport, batch=batch, stop_event=stop_event)

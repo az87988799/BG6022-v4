@@ -242,8 +242,8 @@ def _allowed_slot(allocation, slot_id):
 
 
 def _validate_manifest(kind, number, manifest, *, ledger=None):
-    from tests.helpers.phase_b_development_amendment import allocations
     from tests.helpers.phase_b_cycle_formal_amendment import allocations as original_allocations
+    from tests.helpers.phase_b_development_amendment import allocations
     maxima = allocations(ledger) if ledger is not None else original_allocations({})
     if kind == "development" and number == 4:
         from tests.helpers.phase_b_development_amendment import fourth_authorized

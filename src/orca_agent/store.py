@@ -1156,15 +1156,25 @@ class Store:
             if self.load_request(run).unresolved:
                 raise ControlChanged("unresolved user conditions prevent a new Tool action")
 
-    def enqueue_message(self, run_id: str, text: str, *, update: dict | None = None) -> str:
+    def enqueue_message(self, run_id: str, text: str, *, update: dict | None = None,
+                        message_id: str | None = None) -> str:
         if not text.strip() or len(text.encode("utf-8")) > 8192:
             raise StoreError("user message must be nonempty and at most 8 KiB")
         with self.control_lock(run_id):
             run = self.load_run(run_id)
             control = self.read_control(run_id)
-            if len(control["messages"]) >= 24:
-                raise BudgetExceeded("user message limit exhausted")
-            message_id = new_id("message")
+            if message_id is not None:
+                _id(message_id)
+                prior = next((m for m in control["messages"] if m["id"] == message_id), None)
+                if prior:
+                    if prior["text"] != text or prior.get("update") != update:
+                        raise StoreError("message ID already names different content")
+                    return message_id
+            if sum(m["id"] not in run.processed_messages for m in control["messages"]) >= 24:
+                raise BudgetExceeded("pending user message limit exhausted")
+            if len(control["messages"]) >= 512:
+                raise BudgetExceeded("retained user message history limit exhausted")
+            message_id = message_id or new_id("message")
             control["messages"].append({"id": message_id, "text": text,
                                         "source": "user", "created_at": utc_now().isoformat()})
             control["messages"][-1]["request_version"] = run.request_version

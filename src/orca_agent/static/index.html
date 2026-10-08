@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ORCA · 分子工作台</title><link rel="stylesheet" href="/static/app.css"><script src="/static/app.js" defer></script></head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="/"><span class="brandmark">O</span><span>ORCA<small>分子工作台</small></span></a>
+  <button id="new" class="primary">＋ 新建计算</button>
+  <div class="section-label">本地任务 <button id="refresh" class="text-button" aria-label="刷新任务">↻</button></div>
+  <nav id="runs" aria-label="历史任务"></nav><button id="more-runs" class="text-button" hidden>更多任务</button>
+  <div class="sidebar-bottom"><span class="live-dot"></span> 前台本地服务<small>数据保存在本机 · 关闭浏览器可继续运行<br>重启服务后需显式继续任务</small></div>
+</aside>
+<main>
+  <header><div><span class="eyebrow">COMPUTATIONAL CHEMISTRY</span><h1>从一个问题，走到可追溯的结果。</h1></div><span class="local-tag">LOCAL / 本机</span></header>
+  <div id="notice" role="status" aria-live="polite"></div>
+  <section id="welcome" class="welcome">
+    <div class="welcome-copy"><span class="eyebrow">开始探索</span><h2>今天，要计算哪个分子？</h2><p>用自然语言描述目标与条件。每一次尝试、科学检查和原始文件，都保留在同一个任务中。</p><div class="examples"><button data-example="计算水分子初始几何的单点电子能，采用气相 RHF/STO-3G，中性单重态。">水分子单点能 <span>↗</span></button><button data-example="优化甲烷分子并给出优化后的电子能，采用气相 RHF/STO-3G，中性单重态。">甲烷结构优化 <span>↗</span></button></div></div>
+    <div class="molecule" aria-hidden="true"><div class="bond b1"></div><div class="bond b2"></div><div class="atom oxygen">O</div><div class="atom h1">H</div><div class="atom h2">H</div><span>H₂O · 从结构到证据</span></div>
+  </section>
+  <section class="profile"><div><span class="live-dot"></span><strong id="scope">正在连接本地服务…</strong></div><details><summary>计算许可与默认条件</summary><pre id="profile"></pre></details><p id="limitations"></p></section>
+  <section id="task" hidden>
+    <div class="task-header"><div><span class="eyebrow">当前任务</span><h2 id="task-title"></h2><code id="run-id"></code></div><span id="state" class="badge"></span></div>
+    <div class="toolbar"><button id="resume" class="primary">继续处理</button><button id="pause">暂停</button><button id="cancel" class="danger">取消</button><span id="activity"></span></div>
+    <div class="metrics"><div><small>用户目标</small><strong id="goal-state">—</strong></div><div><small>ORCA 实际启动</small><strong id="science-cost">—</strong></div><div><small>模型调用 / token</small><strong id="model-cost">—</strong></div><div><small>累计已知费用（USD）</small><strong id="money">—</strong></div></div>
+    <section class="panel"><h3>对话与澄清</h3><div id="conversation"></div><button id="more-messages" class="text-button" hidden>读取更早消息</button><div id="questions"></div></section>
+    <section class="panel"><h3>计算结果 <span>来自程序检查与原始证据</span></h3><div id="results"></div><details><summary>步骤与尝试状态</summary><pre id="steps"></pre></details><details><summary>条件及默认来源</summary><pre id="conditions"></pre></details><details><summary>完整确定性报告</summary><pre id="report"></pre></details></section>
+    <section class="panel"><div class="row"><h3>原始证据</h3><button id="load-evidence">读取文件清单</button></div><div id="artifacts"></div><button id="more-artifacts" class="text-button" hidden>下一页文件</button><pre id="evidence" hidden></pre></section>
+  </section>
+  <form id="composer" class="composer"><label for="text" id="input-label">描述新的计算目标</label><textarea id="text" rows="3" maxlength="8192" placeholder="例如：优化水分子，给出优化后的电子能，并说明结果来自哪个结构。" required></textarea><div><small id="send-hint">提交将按本地配置中的许可与有限预算执行。上传、偶极矩与知识检索尚未开放。</small><button id="send" class="primary" type="submit">提交任务 ↑</button></div></form>
+  <footer>证据读取、科学检查与用户目标完成分别记录。当前版本：本地网页局部交付。</footer>
+</main>
+</body></html>

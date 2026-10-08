@@ -466,7 +466,8 @@ def _bind_query_goals(store, run, result):
                 rule_version=goal.minimum_check_version)
 
 
-def execute(store, config, run_id, *, resume=False, fault=None, transport=None, batch=None):
+def execute(store, config, run_id, *, resume=False, fault=None, transport=None, batch=None,
+            stop_event=None):
     with store.run_lock(run_id):
         run = store.load_run(run_id)
         from orca_agent.model_usage import validate_model_profile
@@ -494,7 +495,10 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
             validate_model_profile(store, run, config.model_profile)
             with store.control_lock(run.id):
                 unchanged_control = before == store.read_control(run.id)
-                if unchanged_control and store.read_signal(run.id) == "pause":
+                if stop_event is not None and stop_event.is_set():
+                    if store.read_signal(run.id) != "cancel":
+                        store.signal(run.id, "pause")
+                elif unchanged_control and store.read_signal(run.id) == "pause":
                     store.signal(run.id, None)
                 control = store.read_control(run.id)
                 if not control["action"]:
@@ -545,6 +549,9 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
         results = runner._step_results(store, run)
         try:
             while True:
+                if stop_event is not None and stop_event.is_set():
+                    if store.read_signal(run.id) != "cancel":
+                        store.signal(run.id, "pause")
                 plan = store.load_plan(run)
                 if run.state in {"paused", "cancelled"}:
                     if store.read_signal(run.id) == "cancel":

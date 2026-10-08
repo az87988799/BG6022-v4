@@ -32,6 +32,7 @@ from orca_agent.proposals import (
     call_tool_parameters_schema,
     plan_structure_schema,
 )
+from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.tools.registry import get_tool
 
 PROMPT_VERSION = "agent-json-v25"
@@ -140,28 +141,6 @@ def _original(text: str) -> dict[str, Any]:
             "path_redacted": safe != text}
 
 
-def _schema(schema: Any) -> Any:
-    if isinstance(schema, dict):
-        projected = {key: _schema(value) for key, value in schema.items()
-                # Pydantic's discriminator is a dispatch hint, not a JSON Schema
-                # constraint. Annotation keywords including default do not
-                # validate input; omitting them does not change registry/Pydantic
-                # defaults. Required/type/limits and oneOf kind constants remain.
-                if key not in {"title", "description", "default", "discriminator"}
-                and not (key == "additionalProperties" and value is True)
-                and not (key == "type" and "const" in schema)
-                and not (key == "type" and "enum" in schema)}
-        if (projected.get("additionalProperties") is False and projected.get("required")
-                and set(projected["required"]) == set(projected.get("properties", {}))):
-            projected["minProperties"] = len(projected.pop("required"))
-        alternatives = projected.get("anyOf")
-        if alternatives and all(set(branch) == {"type"} and isinstance(branch["type"], str)
-                                for branch in alternatives):
-            projected["type"] = [branch["type"] for branch in projected.pop("anyOf")]
-        return projected
-    if isinstance(schema, list):
-        return [_schema(value) for value in schema]
-    return schema
 
 
 def _compose_semantic_parameters(proposal_schema, candidate_schema):

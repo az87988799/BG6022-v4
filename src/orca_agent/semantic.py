@@ -12,13 +12,13 @@ from typing import Any, Literal, get_args
 from pydantic import Field, ValidationError
 
 from orca_agent.applicability import PROFILE, canonical_condition
-from orca_agent.context import _schema
 from orca_agent.minimum_evidence import LEGACY_NAMES, REQUIREMENTS
 from orca_agent.minimum_evidence import RULE_VERSION as MINIMUM_EVIDENCE_VERSION
 from orca_agent.model_usage import current_basis
 from orca_agent.models import Goal, Identifier, Record, Request
 from orca_agent.natural import _authorized_geometry, _missing_information
 from orca_agent.proposals import ProposalError, _schema_error
+from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic_notices import NOTICE_CONTRACT_VERSION, notice_choices, validate_notices
 from orca_agent.store import StoreError
 from orca_agent.tools.registry import (
