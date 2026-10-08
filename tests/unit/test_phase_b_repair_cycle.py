@@ -28,11 +28,11 @@ def test_exact_cycle_scope_matches_adopted_plan_and_original_applied_baseline():
     assert s["development_candidates"] == 3 and s["formal_candidates"] == 2
     assert tuple(s["model_gates_per_development_candidate"]) == package.MODEL_SLOTS
     assert sha256_file(package.PROJECT / cycle.PLAN_PATH) == cycle.PLAN_SHA256
-    draft = package.reference._json(package.PROJECT / "docs/reviews/2026-10-08-repair-cycle-authorization-draft.json")
-    assert draft["user_statement"] == "按照方案开始修复，并完成刚才还没有完成的任务"
-    assert draft["approval_question"] is None and draft["approval_options"] == []
-    assert draft["repair_cycle"] == s
-    assert draft["previous_approval_id"] == package.reference.R3_APPROVAL_ID
+    approval = package.reference.cycle_approval()
+    assert approval["user_statement"] == "按照方案开始修复，并完成刚才还没有完成的任务"
+    assert approval["approval_question"] is None and approval["approval_options"] == []
+    assert approval["repair_cycle"] == s
+    assert approval["previous_approval_id"] == package.reference.R3_APPROVAL_ID
 
 
 def test_model_operator_uses_unchanged_run_seconds(manager, monkeypatch):
