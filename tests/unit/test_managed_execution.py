@@ -56,7 +56,7 @@ def test_shared_orca_launch_rejects_parallel_input_before_staging_without_serial
     reason = "MPI_Init fails inside network-disabled Windows LPAC; explicit serial input is required"
     for name in ("orca.sp", "orca.opt", "orca.run"):
         contract = get_tool(name).check_contract
-        assert contract["parallel_execution"] is False
+        assert contract["parallel_execution"] == ["linux-container"]
         assert contract["parallel_execution_reason"] == reason
     prepared = {"input_path": str(root / "task" / "job.inp"),
                 "resources": {"cores": resources.max_cores, "memory_mb": resources.total_memory_mb,

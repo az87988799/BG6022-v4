@@ -59,7 +59,8 @@ def _science(store, config, run, step, results, batch, fault):
         raise StoreError("managed execution is not authorized")
     if "execute_orca" in tool.effects:
         from orca_agent.natural import ensure_scientific_environment
-        ensure_scientific_environment(store, config, run)
+        ensure_scientific_environment(store, config, run,
+                                      require_mpi=getattr(step.parameters, "cores", 1) > 1)
     reference = step.geometry
     geometry_id = None
     if reference is None:
@@ -80,6 +81,18 @@ def _science(store, config, run, step, results, batch, fault):
         raise StoreError("generic execution has no formal batch acceptance contract yet")
     if run.batch_category and not batch:
         raise StoreError("acceptance Run requires its shared batch accounting")
+    configuration = store.run_configuration(run)
+    container_intent = None
+    if configuration.execution.backend == "linux-container":
+        from orca_agent.backends import container
+        from orca_agent.doctor import freeze_environment
+        environment = freeze_environment(store, config, run, require_mpi=False)
+        # Runtime identity lookup is read-only and precedes reservation; a missing
+        # daemon must not strand a lease that has no durable execution identity.
+        container_intent = container.new_attempt_handle(configuration.execution, run.id, "pending")
+        frozen_daemon = environment["container"].get("daemon_id") or environment["container"]["engine_id"]
+        if container_intent.get("engine_id") != frozen_daemon:
+            raise StoreError("container daemon changed before durable launch intent")
     if fault:
         fault("before_science_reservation")
     ticket = None
@@ -89,8 +102,11 @@ def _science(store, config, run, step, results, batch, fault):
         ticket = batch.reserve_science(run, step, geometry_id, draft_attempt=draft)
 
     attempt = store.reserve_attempt(run, step, geometry_id, before_reserve=reserve if batch else None)
-    attempt.execution_handle = {"job_name": local.new_job_name(), "coordinator_pid": os.getpid(),
-                                "coordinator_create_time": psutil.Process().create_time()}
+    if container_intent is not None:
+        attempt.execution_handle = {**container_intent, "attempt_id": attempt.id}
+    else:
+        attempt.execution_handle = {"job_name": local.new_job_name(), "coordinator_pid": os.getpid(),
+                                    "coordinator_create_time": psutil.Process().create_time()}
     store.update_lease_handle(run.id, attempt.id, attempt.execution_handle)
     store.save_run(run)
     if fault:

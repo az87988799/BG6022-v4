@@ -1,0 +1,21 @@
+# Explicit local Linux backend. Build the private image first; use the image ID
+# and manifest hash printed by scripts/container_runtime/build_image.py.
+# These IDs identify the tested image on the development machine, not a registry.
+data_root = 'data'
+model_profile = 'disabled'
+
+[execution]
+backend = 'linux-container'
+docker_path = 'C:\Program Files\Docker\Docker\resources\bin\docker.exe'
+docker_context = 'desktop-linux'
+image_id = 'sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e'
+manifest_sha256 = '535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f'
+
+[resources]
+max_cores = 4
+total_memory_mb = 1024
+maxcore_mb = 192
+environment_concurrency = 1
+job_timeout_seconds = 900
+script_timeout_seconds = 300
+collection_timeout_seconds = 30

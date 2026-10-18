@@ -1,0 +1,20 @@
+import hashlib, json, os, time
+from pathlib import Path
+requests = Path(os.environ["ORCA_TASK_REQUESTS"])
+responses = Path(os.environ["ORCA_TASK_RESPONSES"])
+def submit(value):
+    pending = requests / "request.pending"
+    pending.write_text(json.dumps(value))
+    os.replace(pending, requests / "request.json")
+def response():
+    deadline = time.monotonic() + 25
+    while not (responses / "response.json").exists():
+        if time.monotonic() >= deadline:
+            raise TimeoutError("actual broker response missing")
+        time.sleep(.05)
+    return json.loads((responses / "response.json").read_bytes())
+value={'version': 1, 'request_key': 'attack', 'input': '! RHF STO-3G TightSCF NoRI NoAutoStart\n%maxcore 192\n%pal nprocs 4 end\n* xyz 0 1\nH 0 0 0\nH 0 0 .74\n*\n', 'dependencies': [], 'permission': {'scientific_execution': True, 'shell_execution': True}, 'command': '/bin/sh'}
+submit(value)
+receipt=response()
+Path("attack.json").write_text(json.dumps({"request": value, "receipt": receipt}))
+assert 'invalid bounded SDK request' in receipt.get("error", ""), receipt

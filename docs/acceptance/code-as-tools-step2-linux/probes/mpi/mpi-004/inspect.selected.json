@@ -1,0 +1,104 @@
+{
+  "Config": {
+    "Cmd": [
+      "/opt/openmpi/bin/mpirun",
+      "--timeout",
+      "15",
+      "--disable-recovery",
+      "--host",
+      "localhost:4",
+      "--bind-to",
+      "none",
+      "--mca",
+      "pml",
+      "ob1",
+      "--mca",
+      "btl",
+      "self,vader",
+      "--mca",
+      "btl_vader_single_copy_mechanism",
+      "none",
+      "-n",
+      "4",
+      "/opt/mpi_probe"
+    ],
+    "Entrypoint": [
+      "/usr/bin/timeout",
+      "--signal=TERM",
+      "--kill-after=2s",
+      "18s"
+    ],
+    "Env": [
+      "PATH=/opt/openmpi/bin:/usr/bin:/bin",
+      "LD_LIBRARY_PATH=/opt/openmpi/lib",
+      "OMPI_MCA_plm=isolated",
+      "HOME=/tmp",
+      "TMPDIR=/tmp"
+    ],
+    "Labels": {
+      "org.orca-agent.development-probe": "20261018"
+    },
+    "User": "10001:10001",
+    "WorkingDir": "/tmp"
+  },
+  "Created": "2026-10-18T10:56:20.55293706Z",
+  "HostConfig": {
+    "AutoRemove": false,
+    "CapAdd": null,
+    "CapDrop": [
+      "ALL"
+    ],
+    "CpusetCpus": "0-3",
+    "Init": true,
+    "LogConfig": {
+      "Config": {
+        "compress": "false",
+        "max-file": "1",
+        "max-size": "1m"
+      },
+      "Type": "json-file"
+    },
+    "Memory": 1073741824,
+    "MemorySwap": 1073741824,
+    "NanoCpus": 4000000000,
+    "NetworkMode": "none",
+    "PidsLimit": 128,
+    "ReadonlyRootfs": true,
+    "RestartPolicy": {
+      "MaximumRetryCount": 0,
+      "Name": "no"
+    },
+    "SecurityOpt": [
+      "no-new-privileges=true"
+    ],
+    "ShmSize": 134217728,
+    "Tmpfs": {
+      "/tmp": "rw,noexec,nosuid,nodev,size=128m,mode=1777"
+    },
+    "Ulimits": [
+      {
+        "Hard": 0,
+        "Name": "core",
+        "Soft": 0
+      }
+    ]
+  },
+  "Id": "72475bf52919783712d4dc21cdfb76d868cdc9eede5792d25fe310c7f9cb5111",
+  "Image": "sha256:2aa55bc2693d5d2a0371f04fdec3e1cc1eb0a796225896b617e2fa42a915782e",
+  "Mounts": [],
+  "Name": "/orca-agent-mpi-proof-20261018-004",
+  "RestartCount": 0,
+  "State": {
+    "Dead": false,
+    "Error": "",
+    "ExitCode": 0,
+    "FinishedAt": "2026-10-18T10:56:21.539128466Z",
+    "OOMKilled": false,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "StartedAt": "2026-10-18T10:56:21.031677811Z",
+    "Status": "exited"
+  }
+}

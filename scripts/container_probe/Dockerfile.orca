@@ -1,0 +1,32 @@
+# Private development image only. Never publish this image or the ORCA archive.
+# Use a separate minimal build context containing only this file, the verified
+# package.tar.xz, water.inp, and geometry.xyz; do not use the repository root.
+ARG MPI_IMAGE
+FROM ${MPI_IMAGE}
+USER 0:0
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends xz-utils libgfortran5 binutils \
+    && rm -rf /var/lib/apt/lists/*
+COPY package.tar.xz /opt/package.tar.xz
+# Local hash of the user-supplied official download; not a vendor signature.
+RUN printf '%s\n' 'a0bc1d6d2c3c00620367bbc5dbf2b3a7018abc92d1ff65f06cec46f75350b9be  /opt/package.tar.xz' | sha256sum --check --strict \
+    && mkdir /opt/orca \
+    && tar -xJf /opt/package.tar.xz --strip-components=1 --no-same-owner -C /opt/orca \
+    && rm /opt/package.tar.xz \
+    && mkdir -p /tmp/task \
+    && chown 10001:10001 /tmp/task \
+    && chmod 700 /tmp/task
+RUN dpkg-query -W > /opt/probe-provenance/orca-image-packages.txt \
+    && readelf -d /opt/orca/orca /opt/orca/orca_startup_mpi /opt/orca/orca_leanscf_mpi /opt/orca/lib/liborca_tools_6_1_1_mpi.so.6 > /opt/probe-provenance/orca-dynamic-needed.txt
+COPY water.inp geometry.xyz /opt/orca-probe-input/
+ENV PATH=/opt/orca:/opt/openmpi/bin:/usr/bin:/bin \
+    LD_LIBRARY_PATH=/opt/orca/lib:/opt/openmpi/lib \
+    OMPI_MCA_plm=isolated \
+    OMPI_MCA_pml=ob1 \
+    OMPI_MCA_btl=self,vader \
+    OMPI_MCA_btl_vader_single_copy_mechanism=none
+USER 10001:10001
+WORKDIR /tmp/task
+# Fixed developer-authored smoke only; not the managed Tool/SDK entry point.
+ENTRYPOINT ["/usr/bin/timeout", "--signal=TERM", "--kill-after=5s", "120s"]
+CMD ["/bin/sh", "-c", "cp /opt/orca-probe-input/water.inp /opt/orca-probe-input/geometry.xyz /tmp/task/ && exec /opt/orca/orca water.inp"]

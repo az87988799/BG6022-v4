@@ -119,6 +119,86 @@ def test_internal_reservation_shares_parent_lease_and_persists_before_launch(tmp
     assert run.usage.cpu_seconds == 1
 
 
+def container_call(tmp_path, monkeypatch):
+    store, run, step, _ = make_task(tmp_path, monkeypatch)
+    parent = store.reserve_attempt(run, step)
+    code = native_input(store, run, parent, tmp_path)
+    store.reserve_internal_call(run, parent, "single", "a" * 64, code=code)
+    gated = {"backend": "linux-container", "container_id": "c" * 64,
+             "launch_id": "d" * 32, "launch_phase": "gated_launcher",
+             "workload_identity": {"pid": 42, "start_ticks": 12345}}
+    return store, run, parent, gated
+
+
+def test_gated_internal_orca_failure_keeps_reservation_without_actual_start(tmp_path, monkeypatch):
+    store, run, parent, gated = container_call(tmp_path, monkeypatch)
+    lease = store.environment_lease()
+    store.mark_internal_call_started(run, parent, "single", gated)
+    persisted = store.load_run(run.id)
+    assert persisted.internal_calls[0].execution_handle == gated
+    assert persisted.internal_calls[0].started is False
+    assert persisted.usage.orca_starts_actual == 0
+    assert persisted.usage.orca_starts_reserved == 1
+    assert persisted.usage.internal_work_units == 1
+    store.finish_internal_call(run, parent, "single", state="failed")
+    persisted = store.load_run(run.id)
+    assert persisted.internal_calls[0].state == "failed"
+    assert persisted.internal_calls[0].started is False
+    assert persisted.usage.orca_starts_actual == 0
+    assert persisted.usage.orca_starts_reserved == 1
+    assert store.environment_lease() == lease
+    assert not store.path(f"{parent.directory}/internal/single/actual-start.json").exists()
+
+
+def test_confirmed_internal_container_start_is_durable_and_charged_once(tmp_path, monkeypatch):
+    store, run, parent, gated = container_call(tmp_path, monkeypatch)
+    store.mark_internal_call_started(run, parent, "single", gated)
+    executed = {**gated, "launch_phase": "executed", "actual_start_evidence": {
+        **gated["workload_identity"], "executable": "/opt/orca/orca"}}
+    store.mark_internal_call_started(run, parent, "single", executed)
+    persisted = store.load_run(run.id)
+    assert persisted.internal_calls[0].started is True
+    assert persisted.internal_calls[0].execution_handle == executed
+    assert persisted.usage.orca_starts_actual == 1
+    receipt = store.path(f"{parent.directory}/internal/single/actual-start.json")
+    assert json.loads(receipt.read_text()) == executed
+    store.mark_internal_call_started(run, parent, "single", executed)
+    store.finish_internal_call(run, parent, "single", state="completed",
+                               resource_usage={"user_cpu_seconds": 2, "aggregate_charged_to_parent": True})
+    assert store.load_run(run.id).usage.orca_starts_actual == 1
+    assert run.usage.cpu_seconds == 0
+
+
+@pytest.mark.parametrize("field,value", [
+    ("container_id", "e" * 64),
+    ("launch_id", "f" * 32),
+    ("workload_identity.pid", 43),
+    ("workload_identity.start_ticks", 12346),
+    ("actual_start_evidence.executable", "/usr/bin/python3.11"),
+    ("actual_start_evidence.pid", 43),
+    ("actual_start_evidence.start_ticks", 12346),
+])
+def test_internal_actual_start_rejects_changed_or_unproven_identity(tmp_path, monkeypatch, field, value):
+    store, run, parent, gated = container_call(tmp_path, monkeypatch)
+    store.mark_internal_call_started(run, parent, "single", gated)
+    executed = {**gated, "workload_identity": dict(gated["workload_identity"]),
+                "launch_phase": "executed", "actual_start_evidence": {
+                    **gated["workload_identity"], "executable": "/opt/orca/orca"}}
+    if "." in field:
+        section, name = field.split(".")
+        executed[section][name] = value
+    else:
+        executed[field] = value
+    with pytest.raises(StoreError, match="identity cannot change|matching executable evidence"):
+        store.mark_internal_call_started(run, parent, "single", executed)
+    persisted = store.load_run(run.id)
+    assert persisted.internal_calls[0].execution_handle == gated
+    assert persisted.internal_calls[0].started is False
+    assert persisted.usage.orca_starts_actual == 0
+    assert persisted.usage.orca_starts_reserved == 1
+    assert not store.path(f"{parent.directory}/internal/single/actual-start.json").exists()
+
+
 @pytest.mark.parametrize("budgets,reason", [
     ({"orca_starts": 0}, "ORCA launch budget"),
     ({"internal_work_units": 0}, "work unit budget"),

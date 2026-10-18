@@ -57,6 +57,10 @@ def launch_fixture(store, run, step, config, prepared, workdir, root, **kwargs):
     parameters = step.parameters
     fault = kwargs.pop("fault", None)
     on_started = kwargs.pop("on_started")
+    # Container preparation has no equivalent in this Windows-only fixture.
+    kwargs.pop("execution_handle", None)
+    kwargs.pop("on_prepared", None)
+    kwargs.pop("on_actual_started", None)
     control_lock = store.control_lock(run.id)
     locked = False
 

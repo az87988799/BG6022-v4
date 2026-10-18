@@ -19,7 +19,7 @@ from orca_agent.models import (
     SystemInput,
     require_electronic_integer,
 )
-from orca_agent.store import StoreError, _is_link, atomic_write, sha256_file
+from orca_agent.store import StoreError, _is_link, sha256_file
 from orca_agent.tools.registry import get_tool
 
 _PHYSICAL = ("method", "basis", "charge", "multiplicity")
@@ -172,16 +172,8 @@ def initialize_agent(store, config, request, permission, budget=None, *, sources
         raise StoreError("invalid acceptance batch category")
     environment = None
     if permission.scientific_execution and not defer_environment:
-        from orca_agent.doctor import diagnose
-        from orca_agent.versions import is_supported_orca_version
-        environment = diagnose(config)
-        if not environment["orca"]["compatible"] or not is_supported_orca_version(
-                environment["orca"].get("version")):
-            raise StoreError("ORCA installation is missing, incompatible or unverified")
-        if not config.mpi_path or not config.mpi_path.is_file():
-            raise StoreError("parallel execution requires the explicit MPI executable")
-        environment["orca"]["sha256"] = sha256_file(config.orca_path)
-        environment["mpi"]["sha256"] = sha256_file(config.mpi_path)
+        from orca_agent.doctor import capture_environment
+        environment = capture_environment(config)
     elif not permission.scientific_execution:
         budget = BudgetLimits.model_validate({**budget.model_dump(),
                                               "orca_starts": 0, "extra_orca_starts": 0})
@@ -189,9 +181,7 @@ def initialize_agent(store, config, request, permission, budget=None, *, sources
                            science_baseline_policy=science_baseline_policy,
                            configuration=config.run_configuration())
     if environment:
-        import json
-        atomic_write(store.path(f"runs/{run.id}/environment.json"),
-                     (json.dumps(environment, ensure_ascii=False, indent=2) + "\n").encode(), immutable=True)
+        store._write_json(f"runs/{run.id}/environment.json", environment, immutable=True)
     store._write_json(f"runs/{run.id}/sources.json", registered, immutable=True)
     run.agent_enabled = True
     run.batch_category = batch_category
@@ -484,19 +474,7 @@ def apply_user_update(store, run_id, message_id, changes):
                                          if "goals" in changes else []})
 
 
-def ensure_scientific_environment(store, config, run):
+def ensure_scientific_environment(store, config, run, *, require_mpi=True):
     """Raw semantic intake does not probe ORCA; first scientific use does."""
-    path = store.path(f"runs/{run.id}/environment.json")
-    if path.exists():
-        return
-    from orca_agent.doctor import diagnose
-    from orca_agent.versions import is_supported_orca_version
-    environment = diagnose(config)
-    if not environment["orca"]["compatible"] or not is_supported_orca_version(
-            environment["orca"].get("version")):
-        raise StoreError("ORCA installation is missing, incompatible or unverified")
-    if not config.mpi_path or not config.mpi_path.is_file():
-        raise StoreError("parallel execution requires the explicit MPI executable")
-    environment["orca"]["sha256"] = sha256_file(config.orca_path)
-    environment["mpi"]["sha256"] = sha256_file(config.mpi_path)
-    store._write_json(f"runs/{run.id}/environment.json", environment, immutable=True)
+    from orca_agent.doctor import freeze_environment
+    return freeze_environment(store, config, run, require_mpi=require_mpi)

@@ -1,0 +1,51 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 3.81kB done
+#1 WARN: InvalidDefaultArgInFrom: Default value for ARG ${DEBIAN_IMAGE} results in empty or invalid base image name (line 3)
+#1 WARN: InvalidDefaultArgInFrom: Default value for ARG ${DEBIAN_IMAGE} results in empty or invalid base image name (line 37)
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/debian:bookworm-slim@sha256:a4672c0cb26fbdde88e38fa2dfb6c681942306680e41e4378b28770b6e79ee91
+#2 DONE 2.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [build 1/7] FROM docker.io/library/debian:bookworm-slim@sha256:a4672c0cb26fbdde88e38fa2dfb6c681942306680e41e4378b28770b6e79ee91
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 33B done
+#5 DONE 0.0s
+
+#6 [build 5/7] RUN curl --fail --location --proto '=https' --tlsv1.2 --retry 2       --connect-timeout 30 --max-time 300       https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.8.tar.gz       --output openmpi.tar.gz     && printf '%s\n' 'fb41086bbed9300baa2f3d7572491facfe5257412fa524ec5a396aa9101d5c62  openmpi.tar.gz' | sha256sum --check --strict     && tar -xzf openmpi.tar.gz     && cd openmpi-4.1.8     && ./configure --prefix=/opt/openmpi          --disable-mpi-fortran --disable-mpi-cxx --disable-oshmem          --with-libevent=internal --with-hwloc=internal --with-pmix=internal     && make -j2     && make install     && mkdir -p /opt/probe-provenance     && cp LICENSE /opt/probe-provenance/openmpi-LICENSE     && cp config.log /opt/probe-provenance/openmpi-config.log     && /opt/openmpi/bin/ompi_info --all --parsable > /opt/probe-provenance/ompi-info.txt     && dpkg-query -W > /opt/probe-provenance/build-packages.txt
+#6 CACHED
+
+#7 [build 6/7] COPY mpi_probe.c /build/mpi_probe.c
+#7 CACHED
+
+#8 [build 2/7] RUN printf '%s\n' "debian:bookworm-slim@sha256:a4672c0cb26fbdde88e38fa2dfb6c681942306680e41e4378b28770b6e79ee91" | grep -Eq '^debian:bookworm-slim@sha256:[0-9a-f]{64}$'
+#8 CACHED
+
+#9 [build 3/7] RUN apt-get update     && apt-get install -y --no-install-recommends build-essential ca-certificates curl     && rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [build 4/7] WORKDIR /build
+#10 CACHED
+
+#11 [build 7/7] RUN /opt/openmpi/bin/mpicc -std=c11 -O2 -Wall -Wextra -Werror       /build/mpi_probe.c -o /opt/mpi_probe     && sha256sum /build/mpi_probe.c /opt/mpi_probe > /opt/probe-provenance/probe-sha256.txt
+#11 CACHED
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 8.8s done
+#12 writing image sha256:e7abde46665dfd13844f0f68a4ccb5b44b6e69899787cf1d3805b9f160b0ba97 0.1s done
+#12 naming to docker.io/library/orca-dev-compiler:openmpi-4.1.8
+#12 naming to docker.io/library/orca-dev-compiler:openmpi-4.1.8 0.0s done
+#12 DONE 9.1s
+
+ [33m2 warnings found (use docker --debug to expand):
+[0m - InvalidDefaultArgInFrom: Default value for ARG ${DEBIAN_IMAGE} results in empty or invalid base image name (line 3)
+ - InvalidDefaultArgInFrom: Default value for ARG ${DEBIAN_IMAGE} results in empty or invalid base image name (line 37)

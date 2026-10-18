@@ -1,0 +1,27 @@
+HOST_PATHS=['/mnt/e/BG6022-V4/data/container-proof-20261018/live-security-001/test_real_host_source_and_cred0/host-only/source-canary.py', '/run/desktop/mnt/host/e/BG6022-V4/data/container-proof-20261018/live-security-001/test_real_host_source_and_cred0/host-only/source-canary.py', '/mnt/e/BG6022-V4/data/container-proof-20261018/live-security-001/test_real_host_source_and_cred0/host-only/credentials-canary.txt', '/run/desktop/mnt/host/e/BG6022-V4/data/container-proof-20261018/live-security-001/test_real_host_source_and_cred0/host-only/credentials-canary.txt', '/mnt/e/BG6022-V4/src/orca_agent/task_sdk.py', '/run/desktop/mnt/host/e/BG6022-V4/src/orca_agent/task_sdk.py']
+HOST_PORT=58869
+import errno, json, os, socket
+from pathlib import Path
+facts = {"paths": [], "network": [], "environment_canary_absent":
+    "ORCA_ATTACK_CREDENTIAL_CANARY" not in os.environ}
+for name in HOST_PATHS:
+    for action, flags in (("read", os.O_RDONLY), ("write", os.O_WRONLY)):
+        try:
+            descriptor = os.open(name, flags | os.O_NOFOLLOW)
+        except OSError as exc:
+            facts["paths"].append({"path": name, "action": action, "errno": exc.errno})
+        else:
+            os.close(descriptor)
+            raise AssertionError("host path unexpectedly accessible: " + name)
+for host in ("127.0.0.1", "host.docker.internal", "gateway.docker.internal"):
+    try:
+        channel = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    except OSError as exc:
+        facts["network"].append({"host": host, "port": HOST_PORT,
+                                 "phase": "socket", "errno": exc.errno})
+        assert exc.errno == errno.EPERM
+    else:
+        channel.close()
+        raise AssertionError("task created a network socket")
+assert facts["environment_canary_absent"]
+Path("attack.json").write_text(json.dumps(facts, indent=2))

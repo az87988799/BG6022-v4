@@ -1,0 +1,29 @@
+import hashlib, json, os, time
+from pathlib import Path
+requests = Path(os.environ["ORCA_TASK_REQUESTS"])
+responses = Path(os.environ["ORCA_TASK_RESPONSES"])
+def submit(value):
+    pending = requests / "request.pending"
+    pending.write_text(json.dumps(value))
+    os.replace(pending, requests / "request.json")
+def response():
+    deadline = time.monotonic() + 25
+    while not (responses / "response.json").exists():
+        if time.monotonic() >= deadline:
+            raise TimeoutError("actual broker response missing")
+        time.sleep(.05)
+    return json.loads((responses / "response.json").read_bytes())
+value={'version': 1, 'request_key': 'attack', 'input': '! RHF STO-3G TightSCF NoRI NoAutoStart\n%maxcore 192\n%pal nprocs 4 end\n* xyz 0 1\nH 0 0 0\nH 0 0 .74\n*\n', 'dependencies': []}
+kind='symlink'
+payload = requests / "payload.json"
+payload.write_text(json.dumps(value))
+target = requests / "request.json"
+if kind == "symlink":
+    target.symlink_to(payload)
+else:
+    os.link(payload, target)
+observed = {"is_symlink": target.is_symlink(), "nlink": target.stat().st_nlink}
+receipt = response()
+Path("attack.json").write_text(json.dumps({"kind": kind, "observed_link": observed,
+    "receipt": receipt}))
+assert "mailbox read rejected" in receipt.get("error", ""), receipt

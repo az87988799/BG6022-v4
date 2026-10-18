@@ -269,7 +269,7 @@ class Store:
 
     def run_configuration(self, run: Run) -> RunConfiguration:
         """Historical Runs retain the enforced old envelope, never today's config."""
-        return run.configuration or RunConfiguration()
+        return run.configuration or RunConfiguration(version=1)
 
     def validate_execution_resources(self, run: Run, parameters) -> None:
         limits = self.run_configuration(run).resources
@@ -836,12 +836,29 @@ class Store:
                 return call
             if not handle:
                 raise StoreError("internal process identity is required")
-            self._write_json(f"{parent.directory}/internal/{request_key}/started.json",
+            container = handle.get("backend") == "linux-container"
+            confirmed = not container or handle.get("launch_phase") == "executed"
+            previous = call.execution_handle
+            if container and previous:
+                for key in ("container_id", "launch_id"):
+                    if previous.get(key) != handle.get(key):
+                        raise StoreError("internal container identity cannot change")
+                for key in ("pid", "start_ticks"):
+                    if previous.get("workload_identity", {}).get(key) != handle.get("workload_identity", {}).get(key):
+                        raise StoreError("internal workload identity cannot change")
+            if container and confirmed:
+                proof = handle.get("actual_start_evidence", {})
+                if (not previous or proof.get("executable") != "/opt/orca/orca"
+                        or any(proof.get(key) != handle.get("workload_identity", {}).get(key)
+                               for key in ("pid", "start_ticks"))):
+                    raise StoreError("actual ORCA start requires matching executable evidence")
+            filename = "actual-start.json" if container and confirmed else "started.json"
+            self._write_json(f"{parent.directory}/internal/{request_key}/{filename}",
                              handle, immutable=True)
             call.execution_handle = dict(handle)
-            call.started = True
+            call.started = confirmed
             call.state = "running"
-            run.usage.orca_starts_actual += 1
+            run.usage.orca_starts_actual += int(confirmed)
             self.save_run(run)
             return call
 

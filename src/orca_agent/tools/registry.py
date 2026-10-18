@@ -39,7 +39,7 @@ from orca_agent.versions import CURRENT_CHECK_VERSION
 SCIENCE_COMPOSITIONS = {"H2O": {"H": 2, "O": 1}, "CH4": {"C": 1, "H": 4}}
 SCIENCE_IDENTITIES = {"water": "H2O", "methane": "CH4"}
 _LOCAL_ORCA_EXECUTION = {
-    "parallel_execution": False,
+    "parallel_execution": ["linux-container"],
     "parallel_execution_reason": (
         "MPI_Init fails inside network-disabled Windows LPAC; explicit serial input is required"
     ),
@@ -98,7 +98,7 @@ def _register(parameters: type[Record], **metadata: Any) -> _Registration:
 TOOLS: dict[str, _Registration] = {
     "python.execute": _register(
         CodeExecutionParameters, name="python.execute",
-        description="Execute a pinned Python Artifact in the managed Windows task boundary, with one bounded SDK ORCA call.",
+        description="Execute a pinned Python Artifact in the frozen managed task boundary, with one bounded SDK ORCA call.",
         input_roles=["code", "input_manifest"], output_ports=[],
         observation_outputs=["observations", "artifacts"],
         effects=["read_registered_artifact", "execute_python", "write_artifact"],
@@ -110,7 +110,7 @@ TOOLS: dict[str, _Registration] = {
     ),
     "orca.run": _register(
         NativeOrcaParameters, name="orca.run",
-        description="Execute pinned native ORCA input and dependencies in the managed Windows task boundary; raw evidence is unqualified.",
+        description="Execute pinned native ORCA input and dependencies in the frozen managed task boundary; raw evidence is unqualified.",
         input_roles=["native_input", "input_manifest"], output_ports=[],
         observation_outputs=["observations", "artifacts"],
         effects=["read_registered_artifact", "execute_orca", "write_artifact"],

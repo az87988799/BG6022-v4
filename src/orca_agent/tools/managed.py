@@ -48,8 +48,15 @@ def _control(store, run, step):
 
 def launch_orca(store, run, step, config, prepared, workdir, root, *,
                 on_started, job_name=None, parent_job_name=None, fault=None, deadline=None,
-                boundary=None):
+                boundary=None, execution_handle=None, on_prepared=None, parent_handle=None,
+                on_actual_started=None):
     """The sole ORCA process-launch path for OPI and native input adapters."""
+    if store.run_configuration(run).execution.backend == "linux-container":
+        return _launch_container_orca(
+            store, run, step, config, prepared, workdir, root, on_started=on_started,
+            execution_handle=execution_handle, on_prepared=on_prepared,
+            parent_handle=parent_handle, boundary=boundary, deadline=deadline, fault=fault,
+            on_actual_started=on_actual_started)
     from orca_agent.natural import ensure_scientific_environment
     from orca_agent.store import sha256_file
 
@@ -58,9 +65,10 @@ def launch_orca(store, run, step, config, prepared, workdir, root, *,
     try:
         resources = prepared["resources"]
         contract = get_tool("orca.run").check_contract
-        if resources["cores"] > 1 and not contract["parallel_execution"]:
+        if (resources["cores"] > 1
+                and store.run_configuration(run).execution.backend not in contract["parallel_execution"]):
             raise ValueError("parallel_execution_unavailable: " + contract["parallel_execution_reason"])
-        ensure_scientific_environment(store, config, run)
+        ensure_scientific_environment(store, config, run, require_mpi=resources["cores"] > 1)
         environment = json.loads(store.path(f"runs/{run.id}/environment.json").read_text("utf-8"))
         if (str(config.orca_path) != environment["orca"]["path"]
                 or sha256_file(config.orca_path) != environment["orca"]["sha256"]):
@@ -121,6 +129,116 @@ def launch_orca(store, run, step, config, prepared, workdir, root, *,
     return outcome
 
 
+def _collection_limits(store, run):
+    return {"count": run.budget.artifact_count, "file_bytes": run.budget.artifact_bytes,
+            "total_bytes": run.budget.artifact_total_bytes,
+            "seconds": store.run_configuration(run).resources.collection_timeout_seconds}
+
+
+def record_actual_start(store, run, attempt, handle):
+    """Persist positive exec evidence without rewriting the earlier gated identity."""
+    previous = attempt.execution_handle or {}
+    proof = handle.get("actual_start_evidence", {})
+    if (handle.get("backend") != "linux-container" or handle.get("launch_phase") != "executed"
+            or proof.get("executable") != "/opt/orca/orca"
+            or any(previous.get(key) != handle.get(key) for key in ("container_id", "launch_id"))
+            or any(previous.get("workload_identity", {}).get(key) != proof.get(key)
+                   for key in ("pid", "start_ticks"))):
+        raise ValueError("actual start differs from the persisted gated workload")
+    _save_json(store.path(attempt.directory) / "actual-start.json", handle)
+    attempt.execution_handle = handle
+    store.update_lease_handle(run.id, attempt.id, handle)
+    store.save_run(run)
+
+
+def _retain_input_copies(workdir):
+    """Keep staging bytes separate from subsequently collected mutable outputs."""
+    source = workdir.resolve(strict=True)
+    parent = source.parent.resolve(strict=True)
+    target = parent / (source.name + "-inputs")
+    if source.parent != parent or target.resolve().parent != parent or target.exists():
+        raise ValueError("input snapshot destination is not a fresh sibling")
+    source.rename(target)
+    source.mkdir()
+
+
+def _launch_container_orca(store, run, step, config, prepared, workdir, root, *,
+                           on_started, execution_handle, on_prepared, parent_handle,
+                           boundary, deadline, fault, on_actual_started):
+    """The Linux execution adapter; input admission and budgets remain above it."""
+    from orca_agent.backends import container
+    from orca_agent.natural import ensure_scientific_environment
+
+    configuration = store.run_configuration(run)
+    invoked = False
+    try:
+        ensure_scientific_environment(store, config, run)
+        _control(store, run, step)
+        timeout = min(prepared["resources"]["timeout_seconds"],
+                      (run.deadline - utc_now()).total_seconds(),
+                      deadline - time.monotonic() if deadline is not None else float("inf"))
+        if boundary is None:
+            invoked = True
+            boundary = container.prepare_boundary(
+                configuration.execution, execution_handle, local_root=root,
+                resources=configuration.resources, timeout_s=timeout,
+                on_prepared=on_prepared, fault=fault)
+        def checkpoint():
+            container.check_active(boundary)
+        container.stage(boundary, "orca", {
+            path.relative_to(workdir).as_posix(): path
+            for path in collect_paths(workdir, count=run.budget.artifact_count)},
+            checkpoint=checkpoint)
+        _retain_input_copies(workdir)
+        lock = store.control_lock(run.id)
+        locked = False
+
+        def hook(point):
+            nonlocal locked
+            if point == "after_resumed" and locked:
+                lock.release()
+                locked = False
+            if fault:
+                fault(point)
+
+        def started(handle):
+            on_started(handle)
+            _control(store, run, step)
+
+        try:
+            lock.acquire()
+            locked = True
+            _control(store, run, step)
+            invoked = True
+            outcome = container.run_managed(
+                boundary, kind="orca", local_workdir=workdir, timeout_s=timeout,
+                on_started=started, cancel_requested=lambda: store.read_signal(run.id) == "cancel",
+                on_actual_started=on_actual_started,
+                parent_handle=parent_handle, fault=hook)
+        finally:
+            if locked:
+                lock.release()
+        if outcome["state"] != "unknown":
+            try:
+                container.collect(boundary, "orca", workdir,
+                                  limits=_collection_limits(store, run),
+                                  checkpoint=checkpoint if parent_handle else None)
+            except Exception as exc:
+                outcome.update(state="failed", reason=f"container_collection_error: {exc}")
+                outcome["collection_error"] = str(exc)
+            if not parent_handle:
+                reconciliation = container.reconcile(boundary["handle"])
+                if reconciliation["state"] != "terminated":
+                    outcome.update(state="unknown", reason="container_collection_termination_unconfirmed")
+                    outcome["collection_reconciliation"] = reconciliation
+        return outcome
+    except Exception as exc:
+        # A missing create/exec receipt does not prove absence of a workload.
+        return {"state": "unknown" if invoked else "failed", "reason": str(exc),
+                "not_started": not invoked, "handle": execution_handle if invoked else None,
+                "exit_code": None, "resource_usage": {}}
+
+
 def _prepare_native_boundary(config, root, workdir):
     """Prepare before task Python starts so expensive copies cannot stall its monitor."""
     from orca_agent.backends.runtime_files import stage_orca_runtime
@@ -157,6 +275,8 @@ def collect_result(store, run, step, attempt, outcome):
     """Keep actual files; no fixed JSON requirement or implicit scientific parser."""
     root = store.path(attempt.directory)
     files, diagnostics = {}, []
+    if outcome.get("collection_error"):
+        diagnostics.append({"category": "collection_error", "detail": outcome["collection_error"]})
     if outcome["state"] != "unknown":
         try:
             for folder in ("sealed", "task"):
@@ -209,25 +329,39 @@ def collect_result(store, run, step, attempt, outcome):
 
 class _Broker:
     def __init__(self, store, run, step, attempt, config, session, requests, responses, deadline,
-                 native_boundary=None):
+                 native_boundary=None, container_boundary=None):
         self.store, self.run, self.step, self.attempt = store, run, step, attempt
         self.config, self.session = config, session
         self.requests, self.responses = requests, responses
         self.handled = False
         self.deadline = deadline
         self.native_boundary = native_boundary
+        self.container_boundary = container_boundary
 
     def poll(self, parent_handle):
-        target = self.requests / "request.json"
-        if self.handled or not target.exists():
+        if self.handled:
             return
-        self.handled = True
         try:
-            data = read_mailbox(target, MAX_REQUEST_BYTES)
+            if self.container_boundary:
+                from orca_agent.backends import container
+                data = container.read_request(self.container_boundary, max_bytes=MAX_REQUEST_BYTES)
+                if data is None:
+                    return
+            else:
+                target = self.requests / "request.json"
+                if not target.exists():
+                    return
+                data = read_mailbox(target, MAX_REQUEST_BYTES)
+            self.handled = True
             response = self.execute(json.loads(data), parent_handle)
         except Exception as exc:
+            self.handled = True
             response = {"error": f"managed_orca_request_rejected: {exc}"}
         _save_json(self.responses / "response.json", response)
+        if self.container_boundary:
+            from orca_agent.backends import container
+            container.publish_response(self.container_boundary, response,
+                                       {name: Path(path) for name, path in response.get("files", {}).items()})
 
     def execute(self, value, parent_handle):
         if self.native_boundary is None:
@@ -246,7 +380,11 @@ class _Broker:
         def checkpoint():
             # The task is still alive while its coordinator imports/copies evidence.
             # Keep the same parent's cancellation, memory and deadline monitor active.
-            local.check_active_job(parent_handle["job_name"])
+            if self.container_boundary:
+                from orca_agent.backends import container
+                container.check_active(self.container_boundary)
+            else:
+                local.check_active_job(parent_handle["job_name"])
 
         checkpoint()
         root = self.store.path(self.attempt.directory)
@@ -291,15 +429,18 @@ class _Broker:
 
         outcome = launch_orca(self.store, self.run, self.step, self.config, prepared, task,
                               internal_root, on_started=started,
-                              parent_job_name=parent_handle["job_name"], deadline=self.deadline,
-                              boundary=self.native_boundary)
+                              on_actual_started=started,
+                              parent_job_name=parent_handle.get("job_name"), deadline=self.deadline,
+                              parent_handle=parent_handle if self.container_boundary else None,
+                              execution_handle=parent_handle,
+                              boundary=self.container_boundary or self.native_boundary)
         _save_json(internal_root / "execution.json", outcome)
         files = {}
         collection_error = None
         try:
             if outcome["state"] != "unknown":
                 _archive(self.store, self.run, self.attempt, task, "", files, checkpoint=checkpoint)
-                for name in ("intent.json", "started.json", "prepared.json", "execution.json", "runtime-manifest.json"):
+                for name in ("intent.json", "started.json", "actual-start.json", "prepared.json", "execution.json", "runtime-manifest.json"):
                     path = internal_root / name
                     if path.exists():
                         artifact = self.store.import_artifact(path, "execution_record", run_id=self.run.id,
@@ -331,7 +472,8 @@ class _Broker:
                     checkpoint()
                     writer.write(block)
             checkpoint()
-        self.session.grant_read(output)
+        if self.session is not None:
+            self.session.grant_read(output)
         checkpoint()
         return {"request_key": receipt.request_key, "input_fingerprint": receipt.input_fingerprint,
                 "operation_status": outcome["state"],
@@ -339,16 +481,41 @@ class _Broker:
                 "files": {name: str(output / name) for name in files if not name.startswith("record/")}}
 
 
-def execute(store, run, step, attempt, config, fault=None):
-    """Execute generic Tools under LPAC; failure never falls back to host execution."""
-    from orca_agent.backends.runtime_files import stage_python_runtime
+def _prepare_python_inputs(store, run, step, root, task):
+    if len(step.parameters.inputs.entries) > run.budget.artifact_count:
+        raise ValueError("task input count exceeds the frozen artifact budget")
+    input_bytes = sum(store.load_artifact(entry.artifact_id).size
+                      for entry in step.parameters.inputs.entries)
+    if input_bytes > run.budget.artifact_total_bytes:
+        raise ValueError("task input copies exceed the frozen byte budget")
+    sealed = root / "sealed"
+    sealed.mkdir()
+    code = read_pinned_input(store.artifact_path(step.parameters.code.artifact_id),
+                             step.parameters.code.sha256, limit=MAX_REQUEST_BYTES)
+    (sealed / "task.py").write_bytes(code)
+    _save_json(sealed / "inputs.json", step.parameters.model_dump(mode="json"))
+    for entry in step.parameters.inputs.entries:
+        data = read_pinned_input(store.artifact_path(entry.artifact_id), entry.sha256,
+                                 limit=run.budget.artifact_bytes)
+        target = task / entry.target_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+    return sealed
 
-    root = store.path(attempt.directory)
-    task = root / "task"
-    task.mkdir()
-    resources = store.run_configuration(run).resources
+
+def _execute_container_python(store, run, step, attempt, config, root, task, fault):
+    from orca_agent.backends import container
+    from orca_agent.natural import ensure_scientific_environment
+
+    configuration = store.run_configuration(run)
     invoked = False
-    stack = ExitStack()
+    boundary = None
+
+    def prepared(handle):
+        attempt.execution_handle = handle
+        _save_json(root / "boundary.json", handle)
+        store.update_lease_handle(run.id, attempt.id, handle)
+        store.save_run(run)
 
     def started(handle):
         attempt.execution_handle = handle
@@ -360,37 +527,133 @@ def execute(store, run, step, attempt, config, fault=None):
 
     try:
         _control(store, run, step)
+        ensure_scientific_environment(store, config, run)
+        sealed = _prepare_python_inputs(store, run, step, root, task)
+        timeout = min(configuration.resources.script_timeout_seconds,
+                      (run.deadline - utc_now()).total_seconds())
+        deadline = time.monotonic() + timeout
+        invoked = True
+        boundary = container.prepare_boundary(
+            configuration.execution, attempt.execution_handle, local_root=root,
+            resources=configuration.resources, timeout_s=timeout,
+            on_prepared=prepared, fault=fault)
+
+        def checkpoint():
+            container.check_active(boundary)
+
+        container.stage(boundary, "sealed", {"task.py": sealed / "task.py"}, checkpoint=checkpoint)
+        container.stage(boundary, "python", {
+            path.relative_to(task).as_posix(): path
+            for path in collect_paths(task, count=run.budget.artifact_count)}, checkpoint=checkpoint)
+        _retain_input_copies(task)
+        requests, responses = root / "requests", root / "responses"
+        requests.mkdir()
+        responses.mkdir()
+        native = None
+        if run.permission.scientific_execution and "orca.run" in run.permission.allowed_tools:
+            workdir = root / "native" / "task"
+            workdir.mkdir(parents=True)
+            native = {"workdir": workdir}
+        broker = _Broker(store, run, step, attempt, config, None, requests, responses,
+                         deadline, native, container_boundary=boundary)
+        lock = store.control_lock(run.id)
+        locked = False
+
+        def hook(point):
+            nonlocal locked
+            if point == "after_resumed" and locked:
+                lock.release()
+                locked = False
+            if fault:
+                fault(point)
+
+        try:
+            lock.acquire()
+            locked = True
+            _control(store, run, step)
+            outcome = container.run_managed(
+                boundary, kind="python", local_workdir=task, timeout_s=timeout,
+                on_started=started, on_poll=broker.poll,
+                cancel_requested=lambda: store.read_signal(run.id) == "cancel", fault=hook)
+        finally:
+            if locked:
+                lock.release()
+        if outcome["state"] != "unknown":
+            try:
+                container.collect(boundary, "python", task, limits=_collection_limits(store, run))
+            except Exception as exc:
+                outcome.update(state="failed", reason=f"container_collection_error: {exc}",
+                               collection_error=str(exc))
+            reconciliation = container.reconcile(boundary["handle"])
+            if reconciliation["state"] != "terminated":
+                outcome.update(state="unknown", reason="container_collection_termination_unconfirmed")
+                outcome["collection_reconciliation"] = reconciliation
+    except Exception as exc:
+        outcome = {"state": "unknown" if invoked else "failed", "reason": str(exc),
+                   "not_started": not invoked, "handle": attempt.execution_handle if invoked else None,
+                   "exit_code": None, "resource_usage": {}}
+    _save_json(root / "execution.json", outcome)
+    _settle_interrupted_calls(store, run, attempt, outcome)
+    return collect_result(store, run, step, attempt, outcome), outcome
+
+
+def _settle_interrupted_calls(store, run, attempt, outcome):
+    if outcome["state"] != "unknown":
+        for receipt in run.internal_calls:
+            if receipt.parent_attempt_id == attempt.id and receipt.state in {"reserved", "running", "unknown"}:
+                store.finish_internal_call(run, attempt, receipt.request_key, state="failed",
+                    actual_conditions={"termination_basis": "parent_boundary_terminated",
+                                       "operation_details": "incomplete_broker_receipt"},
+                    resource_usage={"complete": False})
+
+
+def execute(store, run, step, attempt, config, fault=None):
+    """Execute generic Tools in the frozen boundary; no host execution fallback."""
+    from orca_agent.backends.runtime_files import stage_python_runtime
+
+    root = store.path(attempt.directory)
+    task = root / "task"
+    task.mkdir()
+    resources = store.run_configuration(run).resources
+    if (store.run_configuration(run).execution.backend == "linux-container"
+            and "execute_python" in get_tool(step.tool).effects):
+        return _execute_container_python(store, run, step, attempt, config, root, task, fault)
+    invoked = False
+    stack = ExitStack()
+
+    def started(handle):
+        attempt.execution_handle = handle
+        attempt.state = "running"
+        _save_json(root / "started.json", handle)
+        store.update_lease_handle(run.id, attempt.id, handle)
+        store.save_run(run)
+        _control(store, run, step)
+
+    def prepared_boundary(handle):
+        attempt.execution_handle = handle
+        _save_json(root / "boundary.json", handle)
+        store.update_lease_handle(run.id, attempt.id, handle)
+        store.save_run(run)
+
+    try:
+        _control(store, run, step)
         if "execute_python" not in get_tool(step.tool).effects:
             prepared = prepare_native_input(task, step.parameters, store.artifact_path, resources)
             _save_json(root / "prepared.json", prepared)
             invoked = True
             outcome = launch_orca(store, run, step, config, prepared, task, root,
-                                  on_started=started, job_name=attempt.execution_handle["job_name"], fault=fault)
+                                  on_started=started, job_name=attempt.execution_handle.get("job_name"),
+                                  execution_handle=attempt.execution_handle,
+                                  on_actual_started=lambda handle: record_actual_start(store, run, attempt, handle),
+                                  on_prepared=prepared_boundary, fault=fault)
         else:
-            if len(step.parameters.inputs.entries) > run.budget.artifact_count:
-                raise ValueError("task input count exceeds the frozen artifact budget")
-            input_bytes = sum(store.load_artifact(entry.artifact_id).size
-                              for entry in step.parameters.inputs.entries)
-            if input_bytes > run.budget.artifact_total_bytes:
-                raise ValueError("task input copies exceed the frozen byte budget")
+            sealed = _prepare_python_inputs(store, run, step, root, task)
             native_boundary = None
             if (run.permission.scientific_execution and "orca.run" in run.permission.allowed_tools
                     and config.orca_path is not None):
                 native_boundary = _prepare_native_boundary(config, root / "native", root / "native" / "task")
                 stack.callback(native_boundary["session"].close)
                 _save_json(root / "native-runtime-manifest.json", native_boundary["staged"]["manifest"])
-            sealed = root / "sealed"
-            sealed.mkdir()
-            code = read_pinned_input(store.artifact_path(step.parameters.code.artifact_id),
-                                     step.parameters.code.sha256, limit=MAX_REQUEST_BYTES)
-            (sealed / "task.py").write_bytes(code)
-            _save_json(sealed / "inputs.json", step.parameters.model_dump(mode="json"))
-            for entry in step.parameters.inputs.entries:
-                data = read_pinned_input(store.artifact_path(entry.artifact_id), entry.sha256,
-                                         limit=run.budget.artifact_bytes)
-                target = task / entry.target_path
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes(data)
             staged = stage_python_runtime(root / "runtime", Path(__file__).parents[1] / "task_sdk.py")
             _save_json(root / "runtime-manifest.json", staged["manifest"])
             requests, responses = root / "requests", root / "responses"
@@ -439,13 +702,5 @@ def execute(store, run, step, attempt, config, fault=None):
     finally:
         stack.close()
     _save_json(root / "execution.json", outcome)
-    if outcome["state"] != "unknown":
-        for receipt in run.internal_calls:
-            if receipt.parent_attempt_id == attempt.id and receipt.state in {"reserved", "running", "unknown"}:
-                # The outer Job contains every internal process; only its confirmed
-                # termination permits conservative settlement of an interrupted broker.
-                store.finish_internal_call(run, attempt, receipt.request_key, state="failed",
-                    actual_conditions={"termination_basis": "parent_job_terminated",
-                                       "operation_details": "incomplete_broker_receipt"},
-                    resource_usage={"complete": False})
+    _settle_interrupted_calls(store, run, attempt, outcome)
     return collect_result(store, run, step, attempt, outcome), outcome

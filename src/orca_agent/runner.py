@@ -1,29 +1,19 @@
 """Shared initialization, evidence collection and recovery for the single Agent loop."""
 
 import json
-import os
 
 from orca_agent.backends import local
-from orca_agent.doctor import diagnose
+from orca_agent.doctor import capture_environment
 from orca_agent.models import PermissionSnapshot, utc_now
-from orca_agent.store import atomic_write, sha256_file
+from orca_agent.store import atomic_write
 from orca_agent.structured import prepare_task
 from orca_agent.versions import CURRENT_CHECK_VERSION, is_supported_orca_version
 
 
 def initialize(store, config, spec_path):
     request, plan, budget = prepare_task(spec_path, store)
-    environment = diagnose(config)
-    if (environment["orca"]["compatible"] is not True
-            or not is_supported_orca_version(environment["orca"].get("version"))):
-        raise ValueError("ORCA installation is missing, incompatible or unverified; run doctor")
-    if os.name != "nt":
-        raise ValueError("only the explicitly selected Windows local environment is supported")
-    environment["orca"]["sha256"] = sha256_file(config.orca_path)
-    if any(step.parameters.cores > 1 for step in plan.steps):
-        if not config.mpi_path or not config.mpi_path.is_file():
-            raise ValueError("parallel input requires the explicit MPI executable")
-        environment["mpi"]["sha256"] = sha256_file(config.mpi_path)
+    environment = capture_environment(config, require_mpi=any(
+        step.parameters.cores > 1 for step in plan.steps))
     run = store.create_run(request, plan, PermissionSnapshot(
         scientific_execution=True, artifact_ids=[request.geometry_artifact_id],
         max_cores=config.resources.max_cores, max_memory_mb=config.resources.total_memory_mb), budget,
@@ -94,7 +84,12 @@ def _outcome(store, attempt):
 
 def _settle(store, run, attempt, result, outcome):
     usage = outcome.get("resource_usage", {})
-    if outcome["state"] == "unknown" or outcome.get("reconciliation"):
+    handle = outcome.get("handle") or {}
+    started = bool(handle) and not outcome.get("not_started", False)
+    if handle.get("backend") == "linux-container" and attempt.execution_kind == "orca":
+        started = bool(handle.get("actual_start_evidence")) and handle.get("launch_phase") == "executed"
+    if (outcome["state"] == "unknown" or outcome.get("reconciliation")
+            or usage.get("complete") is False):
         run.usage.resource_usage_complete = False
     detected_postprocess = sum((_outcome(store, item) or {}).get("postprocess_starts_detected", 0)
                                for item in run.attempts)
@@ -104,7 +99,7 @@ def _settle(store, run, attempt, result, outcome):
                else outcome["state"]), result_id=result.id,
         elapsed_seconds=max(attempt.elapsed_seconds, usage.get("wall_seconds", 0)),
         cpu_seconds=max(attempt.cpu_seconds, usage.get("user_cpu_seconds", 0) + usage.get("kernel_cpu_seconds", 0)),
-        started=bool(outcome.get("handle")),
+        started=started,
         termination_confirmed=outcome["state"] != "unknown",
     )
 
@@ -159,9 +154,34 @@ def _recover(store, config, run, plan):
         uncertain_receipt = not outcome or outcome["state"] == "unknown"
         if uncertain_receipt or (owns_lease and recovered_outcome.get("reconciliation")):
             handle_path = store.path(f"{attempt.directory}/started.json")
+            actual_path = store.path(f"{attempt.directory}/actual-start.json")
             handle = (json.loads(handle_path.read_text(encoding="utf-8")) if handle_path.exists()
                       else attempt.execution_handle or {})
-            reconciliation = local.reconcile(handle)
+            if actual_path.exists():
+                actual = json.loads(actual_path.read_text(encoding="utf-8"))
+                proof = actual.get("actual_start_evidence", {}) if isinstance(actual, dict) else {}
+                identity = handle.get("workload_identity", {})
+                actual_identity = actual.get("workload_identity", {}) if isinstance(actual, dict) else {}
+                if (attempt.execution_kind != "orca" or not handle_path.exists()
+                        or handle.get("backend") != "linux-container"
+                        or not isinstance(actual, dict) or actual.get("backend") != "linux-container"
+                        or actual.get("launch_phase") != "executed"
+                        or not isinstance(proof, dict) or not isinstance(actual_identity, dict)
+                        or proof.get("executable") != "/opt/orca/orca"
+                        or proof.get("method") != "proc_exe_inode_and_pid_start_ticks"
+                        or any(not handle.get(key) or handle.get(key) != actual.get(key) for key in (
+                            "container_id", "launch_id", "image_id", "manifest_sha256",
+                            "engine_id", "run_id", "attempt_id"))
+                        or actual.get("execution") != handle.get("execution")
+                        or any(identity.get(key) is None or identity.get(key) != actual_identity.get(key)
+                               or identity.get(key) != proof.get(key) for key in ("pid", "start_ticks"))):
+                    raise ValueError("actual-start receipt differs from its persisted gated ORCA identity")
+                handle = actual
+            if handle.get("backend") == "linux-container":
+                from orca_agent.backends import container
+                reconciliation = container.reconcile(handle)
+            else:
+                reconciliation = local.reconcile(handle)
             if reconciliation["state"] != "terminated":
                 if not attempt.finished_at:
                     attempt.state = "unknown"
@@ -196,6 +216,24 @@ def _recover(store, config, run, plan):
                 step = next(s for s in historical.steps if s.id == attempt.step_id)
             collector = get_tool(step.tool).check_contract.get(
                 "collector", "orca_agent.tools.calculation.collect_result")
+            handle = outcome.get("handle") or attempt.execution_handle or {}
+            if handle.get("backend") == "linux-container":
+                from orca_agent.backends import container
+                from orca_agent.tools.managed import _collection_limits
+                recorddir = store.path(attempt.directory)
+                boundary = container.boundary_from_handle(handle, local_root=recorddir)
+                try:
+                    container.collect(boundary, "python" if attempt.execution_kind == "python" else "orca",
+                                      recorddir / "task", limits=_collection_limits(store, run))
+                except Exception as exc:
+                    outcome["collection_error"] = f"container recovery collection: {exc}"
+                collection_state = container.reconcile(handle)
+                if collection_state["state"] != "terminated":
+                    run.state = "unknown"
+                    run.usage.resource_usage_complete = False
+                    store.record_diagnostic(run, "collection_reconciliation_required",
+                                             collection_state["reason"])
+                    return False
             module, name = collector.rsplit(".", 1)
             result = getattr(importlib.import_module(module), name)(store, run, step, attempt, outcome)
             result.supersedes_result_id = current.id if current else None

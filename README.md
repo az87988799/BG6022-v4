@@ -6,11 +6,13 @@
 
 R-01～R-05 的后续修复见 [修复验收记录](docs/acceptance/phase-a-repair/report.md)。新请求采用 `orca-hf-2`；旧 Request/Result 保留原规则和原字节。旧 Run 仍可查看、取消、恢复对账及补收，但未完成的旧规则 Run 不会直接继续计算，需另行明确复验；本轮未实现自动规则迁移。
 
-当前科学范围是 **H₂O / CH₄ 组成、中性单重态、RHF/STO-3G、单点与无约束严格优化**。优化收敛只表示五项指定判据通过；未进行 Hessian/频率检查。DFT 泛函、更广体系、远程执行尚未实现。逐项状态见 [能力矩阵](docs/capabilities.md)。
+当前可发布已检查科学结果的范围是 **H₂O / CH₄ 组成、中性单重态、RHF/STO-3G、单点与无约束严格优化**。优化收敛只表示五项指定判据通过；未进行 Hessian/频率检查。受管理的原生输入可执行准入范围内的其他方法，但所得观察不自动获得科学资格；DFT、更广体系的科学保证及远程执行尚未实现。逐项状态见 [能力矩阵](docs/capabilities.md)与[原生输入边界](docs/native-orca-input.md)。
+
+Code as Tools 步骤 2 已增加显式选择的本地 `linux-container` 后端。最终固定镜像通过 7 项真实测试：科学库与内核拒绝边界、超时、OOM、取消、薄 SDK 四 rank ORCA，以及既有 OPI 四核水单点和优化。Windows LPAC 的串行能力与 MPI 初始化失败继续作为该后端的事实保留；Linux 路径使用独立的 Open MPI 环境。详见[步骤 2 Linux 验证报告](docs/acceptance/code-as-tools-step2-linux/report.md)。这些是开发验证，等待用户验收；本轮未推进步骤 3 的真实模型验证。
 
 ## 安装与环境
 
-本机验证环境：Windows 10.0.26200、CPython 3.11.4、OPI 2.0.0、独立安装的 ORCA 6.1.1、MS-MPI 文件版 10.1.12498.18。Python 依赖由 `uv.lock` 固定，ORCA 安装包不随仓库分发。
+Windows 历史基线及 LPAC 后端使用 Windows 10.0.26200、CPython 3.11.4、OPI 2.0.0、独立安装的 ORCA 6.1.1、MS-MPI 文件版 10.1.12498.18。宿主 Python 依赖由 `uv.lock` 固定，ORCA 安装包不随仓库分发。以下配置选择 Windows 后端；当前 LPAC 隔离下仅验证串行科学执行，不能据历史四核验收推断其 MPI 可用。
 
 ```powershell
 py -3.11 -m pip install --user uv==0.12.23
@@ -21,7 +23,11 @@ Copy-Item config.example.toml config.local.toml
 .venv\Scripts\orca-agent.exe tools
 ```
 
-`doctor` 仅执行有期限的无输入版本探测；本机 ORCA 会打印版本后以退出码 2 报告找不到 `--version` 输入文件，该事实保留在报告中，并未提交科学计算。配置中的 MPI 目录实际加入子进程 PATH，核验时冻结可执行文件 hash。
+Windows `doctor` 仅执行有期限的无输入版本探测；本机 ORCA 会打印版本后以退出码 2 报告找不到 `--version` 输入文件，该事实保留在报告中，并未提交科学计算。配置中的 MPI 目录用于相应后端的环境核验，核验时冻结可执行文件 hash；版本探测不证明 LPAC 内 MPI 初始化成功。
+
+Linux 后端需要本地 Docker Desktop/WSL2 及已构建的私有镜像，镜像中固定 Linux CPython 3.11.2、OPI 2.0.0、ORCA 6.1.1 与 Open MPI 4.1.8。按[运行镜像说明](scripts/container_runtime/README.md)准备环境后，使用 [config.container.example.toml](config.container.example.toml) 显式配置 `execution.backend = 'linux-container'`、Docker 路径/context、不可变 image ID 与 manifest hash。示例身份只标识开发机上已验证的私有镜像，不是可下载的公共镜像；执行不会自动拉取或构建镜像。Linux `doctor` 只读核对镜像、manifest 和 daemon 身份，不启动计算。
+
+新 Run 的配置快照固定所选后端与运行身份。旧 Run 不会因更换本机配置自动迁移后端，恢复时应使用其原始环境。
 
 项目仅启用精确的 ORCA `6.1.1`；未知版本后缀、重复或含混版本证据会拒绝准入。第三方要求的最低兼容版本不等于本项目已验证范围。
 
@@ -89,7 +95,7 @@ Copy-Item config.text.example.toml config.local.toml
 .venv\Scripts\orca-agent.exe --config config.local.toml inspect PROPERTY_JSON_ARTIFACT_ID --field Calculation_Info.Charge
 ```
 
-将输出中的实际 ID 替换示例占位符；字段示例须使用 property JSON 的 Artifact ID，键名区分大小写。`run` 表示明确授权执行该文件中的有限科学任务；几何必须位于请求文件所在目录内。条件缺省来源会保留，所有持久 ID 由程序生成。未知工具、任意脚本/原生输入、非法电子态、越界文件、循环依赖及超资源请求在执行前拒绝。
+将输出中的实际 ID 替换示例占位符；字段示例须使用 property JSON 的 Artifact ID，键名区分大小写。`run` 表示明确授权执行该文件中的有限科学任务；几何必须位于请求文件所在目录内。条件缺省来源会保留，所有持久 ID 由程序生成。未知工具、未获许可或未通过准入的任务代码/原生输入、任意 shell、非法电子态、越界文件、循环依赖及超资源请求在执行前拒绝。
 
 `status` 和 `inspect` 不推进计算、不转换文件。`pause` 让当前作业在原期限内完成并收集，然后停止后续步骤；`cancel` 请求终止整个受管进程树。新 CLI 启动不自动续算，只有 `resume` 才先对账再推进。失败输入不会自动重试，执行身份不足的崩溃窗口保留未知状态与额度，不能据没有句柄就重算。
 
@@ -97,7 +103,9 @@ Copy-Item config.text.example.toml config.local.toml
 
 ## 资源、预算与保存
 
-本地每次计算最多 4 核、整个进程树总提交内存 1024 MiB、ORCA 每进程 MaxCore 192 MB。Windows Job Object 原子绑定发生在进程执行前，禁止脱离 Job，协调者消失后由系统清理。CPU 由 affinity 限制；内存指提交内存，不能与工作集或 `%maxcore` 等同。
+本地默认资源上限为 4 核、整个计算进程树 1024 MiB、ORCA 每进程 MaxCore 192 MB。Windows 后端在执行前原子绑定 Job Object，禁止脱离 Job，协调者消失后由系统清理；CPU 由 affinity 限制，内存指标是提交内存。
+
+Linux 后端把任务 Python、内部 ORCA/MPI 与固定 helper 放入同一容器 cgroup，核验 CPU quota/cpuset、1024 MiB 内存上限、禁用 swap 和 PID 限制。容器无网络、根文件系统只读，不挂载宿主任务或 Store 目录；Python 另受禁止进程创建及网络调用的 seccomp 约束。keeper 在协调者心跳失联或绝对期限到达后退出，清理整个 PID namespace；身份或终止无法确认时保留租约。cgroup 内存与 Windows 提交内存的统计口径不同，二者都不能用 `%maxcore` 代替。资源账保留已观测下界；持久证据卷尚无硬磁盘配额，产物额度只约束收集与归档。
 
 整个本机用户执行环境共用一个持久额度文件，位于 `%LOCALAPPDATA%\orca-agent\environment`，换项目目录或 Run 不能绕过它。生产 CLI 不提供更换环境额度位置的选项。环境未知占用须恢复对应 Run 并取得终止证据后释放。
 
@@ -110,16 +118,12 @@ Copy-Item config.text.example.toml config.local.toml
 ```powershell
 py -3.11 -m uv run --offline --locked ruff check .
 py -3.11 -m uv run --offline --locked pytest -q
-# 真实测试不读取 config.local.toml，安装路径通过以下变量指定：
-$env:ORCA_AGENT_ORCA = 'E:\orca\orca.exe'
-$env:ORCA_AGENT_MPI = 'C:\Program Files\Microsoft MPI\Bin\mpiexec.exe'
-# 仅在新工作副本尚无 data/acceptance 证据时，按顺序建立一批真实证据：
-.venv\Scripts\python.exe -m pytest tests/live/test_science.py --live-orca -q
-.venv\Scripts\python.exe -m pytest tests/live/test_reference.py --live-orca -q
-.venv\Scripts\python.exe -m pytest tests/live/test_lifecycle.py --live-orca -q
+# Linux 测试读取显式冻结配置；每批使用新的 basetemp 路径：
+$env:ORCA_AGENT_CONTAINER_CONFIG = 'E:\path\config.container.local.toml'
+.venv\Scripts\python.exe -m pytest tests/live/test_container_execution.py --live-container --live-orca -q
 ```
 
-默认测试禁止网络和外部科学程序启动，只允许标记的受管测试子进程验证系统协议。真实测试需要 `--live-orca`，会占用已声明资源并保留原始数据；缺少安装时标记跳过/未验证。参考复算先依赖科学测试保存的证据索引；不使用被测输出反向生成参考值。仅显式运行真实生命周期测试才会强制结束它自己创建的协调者。
+默认测试禁止网络和外部科学程序启动，只允许标记的受管测试子进程验证系统协议。真实 ORCA 测试需要 `--live-orca`；Linux 容器测试另需 `--live-container`，两类开关独立，均不启用真实模型。测试会占用已声明资源并保留原始数据；缺少环境时标记跳过/未验证。历史参考复算依赖其原科学测试保存的证据索引，不使用被测输出反向生成参考值。仅显式运行真实生命周期测试才会强制结束它自己创建的协调者。
 
 本工作副本已保存完整生产与参考证据，可单独执行参考测试以只读核验已有收据及 hash。不要先重跑科学测试再期待旧参考自动重绑：科学测试会创建新 Run，而旧参考仍绑定原 Run，届时将明确拒绝。新一批完整复算应在新的工作副本建立独立数据，保留本次历史证据，并继续共享本机全局计算额度。
 

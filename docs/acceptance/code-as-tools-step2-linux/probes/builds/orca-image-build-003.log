@@ -1,0 +1,49 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.81kB done
+#1 WARN: InvalidDefaultArgInFrom: Default value for ARG ${MPI_IMAGE} results in empty or invalid base image name (line 5)
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/orca-dev-mpi-probe:openmpi-4.1.8
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/7] FROM docker.io/library/orca-dev-mpi-probe:openmpi-4.1.8
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 100B done
+#5 DONE 0.0s
+
+#6 [2/7] RUN apt-get update     && apt-get install -y --no-install-recommends xz-utils libgfortran5 binutils     && rm -rf /var/lib/apt/lists/*
+#6 CACHED
+
+#7 [3/7] COPY package.tar.xz /opt/package.tar.xz
+#7 CACHED
+
+#8 [4/7] RUN printf '%s\n' 'a0bc1d6d2c3c00620367bbc5dbf2b3a7018abc92d1ff65f06cec46f75350b9be  /opt/package.tar.xz' | sha256sum --check --strict     && mkdir /opt/orca     && tar -xJf /opt/package.tar.xz --strip-components=1 --no-same-owner -C /opt/orca     && rm /opt/package.tar.xz     && mkdir -p /tmp/task     && chown 10001:10001 /tmp/task     && chmod 700 /tmp/task
+#8 2.423 /opt/package.tar.xz: OK
+#8 DONE 169.0s
+
+#9 [5/7] RUN dpkg-query -W > /opt/probe-provenance/orca-image-packages.txt     && readelf -d /opt/orca/orca /opt/orca/orca_startup_mpi /opt/orca/orca_leanscf_mpi /opt/orca/lib/liborca_tools_6_1_1_mpi.so.6 > /opt/probe-provenance/orca-dynamic-needed.txt
+#9 DONE 0.7s
+
+#10 [6/7] COPY water.inp geometry.xyz /opt/orca-probe-input/
+#10 DONE 0.3s
+
+#11 [7/7] WORKDIR /tmp/task
+#11 DONE 0.3s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 38.9s done
+#12 writing image sha256:2f49f3f0441697f75ec792f6a0cdbdff814e9ffc7a3eff9b4684a440c7639c88 0.0s done
+#12 naming to docker.io/library/orca-dev-orca-probe:6.1.1-openmpi-4.1.8 0.0s done
+#12 DONE 39.1s
+
+ [33m1 warning found (use docker --debug to expand):
+[0m - InvalidDefaultArgInFrom: Default value for ARG ${MPI_IMAGE} results in empty or invalid base image name (line 5)

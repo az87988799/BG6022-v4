@@ -3,6 +3,11 @@ orca_path = 'E:\orca\orca.exe'
 mpi_path = 'C:\Program Files\Microsoft MPI\Bin\mpiexec.exe'
 data_root = 'data'
 
+[execution]
+backend = 'windows-lpac'
+# This backend accepts explicit serial ORCA requests only. For the frozen local
+# Linux image and four-rank MPI, see scripts/container_runtime/README.md.
+
 # Resource and budget limits are validated and frozen per Run.
 # This implementation enables one environment slot; larger values are expressible
 # but launch is refused until shared multi-job resource management is implemented.
@@ -29,4 +34,4 @@ proposal_bytes = 32768
 messages = 64
 
 # New Runs freeze these settings. Editing this file does not change existing Runs.
-# Python/native ORCA execution contracts remain disabled in implementation step 1.
+# Task Python and one SDK ORCA call require the Run's explicit execution permission.

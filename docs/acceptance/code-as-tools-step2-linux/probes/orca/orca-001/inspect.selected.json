@@ -1,0 +1,97 @@
+{
+  "Config": {
+    "Cmd": [
+      "python3",
+      "-c",
+      "\"\"\"Fixed developer smoke; records one ORCA launch, never a production runner.\"\"\"\n\nimport json\nimport os\nfrom pathlib import Path\nimport shutil\nimport subprocess\nimport time\n\n\ndef resources():\n    root = Path('/sys/fs/cgroup')\n    names = ('memory.max', 'memory.swap.max', 'memory.current', 'memory.peak',\n             'memory.events', 'cpu.max', 'cpu.stat', 'cpuset.cpus.effective', 'pids.max')\n    return {name: (root / name).read_text().strip() for name in names}\n\n\ndef main():\n    before = resources()\n    if (os.geteuid() != 10001 or before['memory.max'] != '1073741824'\n            or before['memory.swap.max'] != '0' or before['cpu.max'] != '400000 100000'\n            or before['cpuset.cpus.effective'] != '0-3'):\n        raise RuntimeError('required restricted execution envelope missing')\n    task = Path('/tmp/task')\n    for name in ('water.inp', 'geometry.xyz'):\n        shutil.copyfile(Path('/opt/orca-probe-input') / name, task / name)\n    start = time.monotonic()\n    processes = {}\n    with (task / 'stdout.out').open('xb') as out, (task / 'stderr.txt').open('xb') as err:\n        process = subprocess.Popen(['/opt/orca/orca', 'water.inp'], cwd=task,\n                                   stdout=out, stderr=err)\n        while process.poll() is None:\n            for item in Path('/proc').iterdir():\n                if not item.name.isdigit():\n                    continue\n                try:\n                    command = (item / 'cmdline').read_bytes()[:8192].split(b'\\0')\n                    command = [part.decode(errors='replace') for part in command if part]\n                    if command and (command[0].startswith('/opt/orca/')\n                                    or command[0].endswith('mpirun')):\n                        key = item.name\n                        if key not in processes:\n                            processes[key] = {'cmd': command,\n                                              'stat': (item / 'stat').read_text(),\n                                              'status': (item / 'status').read_text(),\n                                              'cgroup': (item / 'cgroup').read_text(),\n                                              'observed_seconds': time.monotonic() - start}\n                except (FileNotFoundError, ProcessLookupError, PermissionError):\n                    pass\n            if time.monotonic() - start > 110:\n                # The outer fixed timeout bounds and kills the whole container.\n                raise TimeoutError('ORCA smoke exceeded its inner observation deadline')\n            time.sleep(0.02)\n    result = {'exit_code': process.returncode, 'seconds': time.monotonic() - start,\n              'before': before, 'after': resources(), 'processes': processes,\n              'scientific_validation': 'unverified'}\n    (task / 'probe-record.json').write_text(json.dumps(result, indent=2))\n    print(json.dumps({key: value for key, value in result.items() if key != 'processes'}))\n    return process.returncode\n\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n"
+    ],
+    "Entrypoint": [
+      "/usr/bin/timeout",
+      "--signal=TERM",
+      "--kill-after=5s",
+      "120s"
+    ],
+    "Env": [
+      "PATH=/opt/orca:/opt/openmpi/bin:/usr/bin:/bin",
+      "LD_LIBRARY_PATH=/opt/orca/lib:/opt/openmpi/lib",
+      "OMPI_MCA_plm=isolated",
+      "HOME=/tmp",
+      "TMPDIR=/tmp",
+      "OMPI_MCA_pml=ob1",
+      "OMPI_MCA_btl=self,vader",
+      "OMPI_MCA_btl_vader_single_copy_mechanism=none"
+    ],
+    "Labels": {
+      "org.orca-agent.development-probe": "20261018"
+    },
+    "User": "10001:10001",
+    "WorkingDir": "/tmp/task"
+  },
+  "Created": "2026-10-18T11:08:48.133802799Z",
+  "HostConfig": {
+    "AutoRemove": false,
+    "CapAdd": null,
+    "CapDrop": [
+      "ALL"
+    ],
+    "CpusetCpus": "0-3",
+    "Init": true,
+    "LogConfig": {
+      "Config": {
+        "compress": "false",
+        "max-file": "1",
+        "max-size": "1m"
+      },
+      "Type": "json-file"
+    },
+    "Memory": 1073741824,
+    "MemorySwap": 1073741824,
+    "NanoCpus": 4000000000,
+    "NetworkMode": "none",
+    "PidsLimit": 128,
+    "ReadonlyRootfs": true,
+    "RestartPolicy": {
+      "MaximumRetryCount": 0,
+      "Name": "no"
+    },
+    "SecurityOpt": [
+      "no-new-privileges=true"
+    ],
+    "ShmSize": 134217728,
+    "Tmpfs": {
+      "/tmp": "rw,noexec,nosuid,nodev,size=128m,mode=1777"
+    },
+    "Ulimits": [
+      {
+        "Hard": 0,
+        "Name": "core",
+        "Soft": 0
+      }
+    ]
+  },
+  "Id": "75c770d6d187e6f249dada6bb632d586222f5e2d5ce272ee2fae05f10faf52c3",
+  "Image": "sha256:2f49f3f0441697f75ec792f6a0cdbdff814e9ffc7a3eff9b4684a440c7639c88",
+  "Mounts": [
+    {
+      "Destination": "/tmp/task",
+      "Name": "orca-agent-orca-proof-20261018-001-evidence",
+      "RW": true,
+      "Type": "volume"
+    }
+  ],
+  "Name": "/orca-agent-orca-proof-20261018-001",
+  "RestartCount": 0,
+  "State": {
+    "Dead": false,
+    "Error": "",
+    "ExitCode": 0,
+    "FinishedAt": "2026-10-18T11:08:49.868535523Z",
+    "OOMKilled": false,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "StartedAt": "2026-10-18T11:08:48.568324394Z",
+    "Status": "exited"
+  }
+}

@@ -1,0 +1,12 @@
+kind='symlink'
+import json, os
+from pathlib import Path
+Path("ordinary.txt").write_text("ordinary task data")
+if kind == "symlink":
+    Path("redirect").symlink_to("/opt/orca/orca")
+else:
+    os.link("ordinary.txt", "redirect")
+Path("attack.json").write_text(json.dumps({"kind": kind,
+    "is_symlink": Path("redirect").is_symlink(),
+    "nlink": Path("redirect").lstat().st_nlink}))
+print("output link created", flush=True)

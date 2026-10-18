@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timedelta, timezone
-from pathlib import PurePosixPath, PureWindowsPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Annotated, Any, Literal
 from uuid import uuid4
 
@@ -513,14 +513,58 @@ class ModelLimits(Record):
         return self
 
 
+class ExecutionConfiguration(Record):
+    """Trusted host selection, frozen per Run; never accepted from task code."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    backend: Literal["windows-lpac", "linux-container"] = "windows-lpac"
+    image_id: Annotated[str, Field(strict=True, pattern=r"^sha256:[a-f0-9]{64}$")] | None = None
+    manifest_sha256: Digest | None = None
+    docker_context: Annotated[str, Field(strict=True,
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")] | None = None
+    docker_path: Path | None = None
+
+    @model_validator(mode="after")
+    def explicit_backend_identity(self):
+        fields = (self.image_id, self.manifest_sha256, self.docker_context, self.docker_path)
+        if self.backend == "windows-lpac":
+            if any(value is not None for value in fields):
+                raise ValueError("Windows execution cannot carry Linux container configuration")
+        elif any(value is None for value in fields):
+            raise ValueError("Linux container execution requires an immutable image, manifest, context and Docker path")
+        if self.docker_path is not None:
+            value = str(self.docker_path)
+            windows = PureWindowsPath(value)
+            if (not (PurePosixPath(value).is_absolute() or windows.is_absolute())
+                    or value.startswith(("\\\\", "//"))
+                    or any(ord(char) < 32 for char in value)
+                    or ".." in windows.parts or ".." in PurePosixPath(value).parts):
+                raise ValueError("Docker executable must be an absolute local trusted host path")
+        return self
+
+
 class RunConfiguration(Record):
     """Credential-free configuration captured at Run creation, never on resume."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
-    version: Literal[1] = 1
+    version: Literal[1, 2] = 2
     resources: ResourceLimits = Field(default_factory=ResourceLimits)
     model: ModelLimits = Field(default_factory=ModelLimits)
     model_profile: Literal["disabled", "thinking_low"] = "disabled"
+    execution: ExecutionConfiguration = Field(default_factory=ExecutionConfiguration)
+
+    @model_validator(mode="before")
+    @classmethod
+    def explicit_version_two_backend(cls, value):
+        if isinstance(value, dict) and value.get("version") == 2 and "execution" not in value:
+            raise ValueError("version 2 Run configuration requires an explicit execution snapshot")
+        return value
+
+    @model_validator(mode="after")
+    def historical_backend(self):
+        if self.version == 1 and self.execution.backend != "windows-lpac":
+            raise ValueError("version 1 Run configuration retains the Windows execution backend")
+        return self
 
 
 class BudgetUsage(Record):

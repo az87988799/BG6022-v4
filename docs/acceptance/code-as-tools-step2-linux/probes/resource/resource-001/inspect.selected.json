@@ -1,0 +1,88 @@
+{
+  "Config": {
+    "Cmd": [
+      "python3",
+      "-c",
+      "#!/usr/bin/env python3\n\"\"\"Development-only aggregate-memory probe, never a production entry point.\n\nRequire --inside-bounded-container, Linux, a private Docker cgroup namespace,\n1 GiB memory.max, zero swap, and finite pids before allocating. A lightweight\nparent supervises two children that each request/touch 600 MiB. Only /proc and\ncgroup metadata are read;\nno cgroup limits, OOM scores, network, or host files are changed. A surviving\nparent emits final JSON. If it is OOM-killed, children receive PDEATHSIG and the\ntrusted host must collect container exit/OOM evidence; missing JSON is not a pass.\n\"\"\"\n\nimport ctypes\nimport json\nimport mmap\nimport os\nfrom pathlib import Path\nimport signal\nimport sys\nimport time\n\nLIMIT = 1024 * 1024 * 1024\nALLOCATION = 600 * 1024 * 1024\nCGROUP = Path(\"/sys/fs/cgroup\")\n\n\ndef emit(event, **facts):\n    print(json.dumps({\"event\": event, \"pid\": os.getpid(), **facts}), flush=True)\n\n\ndef read(path):\n    with Path(path).open(\"r\", encoding=\"ascii\") as stream:\n        value = stream.read(8193)\n    if len(value) > 8192:\n        raise ValueError(\"metadata exceeds read bound\")\n    return value.strip()\n\n\ndef snapshot():\n    return {\n        \"events\": {key: int(value) for key, value in\n                   (line.split() for line in read(CGROUP / \"memory.events\").splitlines())},\n        \"peak\": int(read(CGROUP / \"memory.peak\")),\n        \"current\": int(read(CGROUP / \"memory.current\")),\n    }\n\n\ndef gate():\n    if sys.platform != \"linux\" or sys.argv[1:] != [\"--inside-bounded-container\"]:\n        raise ValueError(\"Linux and explicit --inside-bounded-container are required\")\n    if not Path(\"/.dockerenv\").is_file() or os.geteuid() == 0:\n        raise ValueError(\"a non-root Docker container is required\")\n    membership = read(\"/proc/self/cgroup\")\n    if membership != \"0::/\" or not (CGROUP / \"cgroup.controllers\").is_file():\n        raise ValueError(\"private cgroup v2 namespace is required\")\n    limits = {name: read(CGROUP / name) for name in\n              (\"memory.max\", \"memory.swap.max\", \"pids.max\", \"memory.oom.group\")}\n    if limits[\"memory.max\"] != str(LIMIT) or limits[\"memory.swap.max\"] != \"0\":\n        raise ValueError(\"refusing allocation without exactly 1 GiB and zero swap\")\n    if not limits[\"pids.max\"].isdigit() or not 4 <= int(limits[\"pids.max\"]) <= 4096:\n        raise ValueError(\"finite pids.max in [4, 4096] is required\")\n    identity = CGROUP.stat()\n    return {\"membership\": membership, \"device\": identity.st_dev,\n            \"inode\": identity.st_ino, \"limits\": limits}\n\n\ndef touch():\n    memory = mmap.mmap(-1, ALLOCATION, flags=mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS)\n    for offset in range(0, ALLOCATION, mmap.PAGESIZE):\n        memory[offset] = 1\n    return memory\n\n\ndef child(parent, expected, start_fd, ready_fd):\n    # These children never fork. PDEATHSIG also covers an uncatchable parent OOM.\n    try:\n        signal.signal(signal.SIGALRM, signal.SIG_DFL)\n        signal.alarm(10)\n        libc = ctypes.CDLL(None, use_errno=True)\n        if libc.prctl(1, signal.SIGKILL, 0, 0, 0) != 0 or os.getppid() != parent:\n            raise RuntimeError(\"parent-death cleanup could not be armed\")\n        actual = gate()\n        if actual != expected:\n            raise RuntimeError(\"child cgroup or limits differ from parent\")\n        emit(\"child_ready\", cgroup=actual, requested_bytes=ALLOCATION)\n        os.write(ready_fd, b\"1\")\n        os.close(ready_fd)\n        if os.read(start_fd, 1) != b\"1\":\n            raise RuntimeError(\"parent did not release allocation\")\n        os.close(start_fd)\n        memory = touch()\n        emit(\"child_touched\", touched_bytes=ALLOCATION)\n        while memory:\n            signal.pause()\n    except BaseException as exc:\n        emit(\"child_error\", error=type(exc).__name__, detail=str(exc))\n    os._exit(2)\n\n\ndef interrupted(signum, frame):\n    raise TimeoutError(\"probe deadline or cancellation signal: \" + str(signum))\n\n\ndef main():\n    try:\n        cgroup, before = gate(), snapshot()\n    except (OSError, ValueError) as exc:\n        emit(\"refused\", error=type(exc).__name__, detail=str(exc), allocated_bytes=0)\n        return 2\n    emit(\"preflight\", cgroup=cgroup, before=before, requested_bytes_per_child=ALLOCATION,\n         parent_requested_bytes=0, allocator_count=2, total_requested_bytes=2 * ALLOCATION, monitor_seconds=10,\n         cleanup_seconds=2, parent_oom_requires_host_evidence=True)\n    started = time.monotonic()\n    children, returncodes, cleanup_signals = [], {}, {}\n    error = None\n    start_read, start_write = os.pipe()\n    ready_read, ready_write = os.pipe()\n    parent = os.getpid()\n    for signum in (signal.SIGALRM, signal.SIGTERM, signal.SIGINT):\n        signal.signal(signum, interrupted)\n    signal.setitimer(signal.ITIMER_REAL, 10)\n    try:\n        for unused in range(2):\n            pid = os.fork()  # The parent remains a lightweight supervisor.\n            if pid == 0:\n                os.close(start_write)\n                os.close(ready_read)\n                child(parent, cgroup, start_read, ready_write)\n            children.append(pid)\n        os.close(start_read)\n        os.close(ready_write)\n        ready = b\"\"\n        while len(ready) < 2:\n            item = os.read(ready_read, 2 - len(ready))\n            if not item:\n                raise RuntimeError(\"children did not both pass preflight\")\n            ready += item\n        os.write(start_write, b\"11\")\n        emit(\"children_released\", children=children, requested_bytes_per_child=ALLOCATION)\n        while time.monotonic() - started < 10:\n            current = snapshot()\n            emit(\"monitor\", **current)\n            for pid in children:\n                if pid not in returncodes:\n                    done, status = os.waitpid(pid, os.WNOHANG)\n                    if done:\n                        returncodes[pid] = os.waitstatus_to_exitcode(status)\n            if current[\"events\"].get(\"oom_kill\", 0) > before[\"events\"].get(\"oom_kill\", 0):\n                break\n            if len(returncodes) == len(children):\n                break\n            time.sleep(0.25)\n    except BaseException as exc:\n        error = {\"type\": type(exc).__name__, \"detail\": str(exc)}\n    finally:\n        signal.setitimer(signal.ITIMER_REAL, 0)\n        for signum in (signal.SIGTERM, signal.SIGINT):\n            signal.signal(signum, signal.SIG_IGN)\n        for sig in (signal.SIGTERM, signal.SIGKILL):\n            until = time.monotonic() + 1\n            for pid in children:\n                if pid not in returncodes:\n                    try:\n                        os.kill(pid, sig)\n                        cleanup_signals.setdefault(pid, []).append(int(sig))\n                    except ProcessLookupError:\n                        pass\n            while time.monotonic() < until and len(returncodes) < len(children):\n                for pid in children:\n                    if pid not in returncodes:\n                        done, status = os.waitpid(pid, os.WNOHANG)\n                        if done:\n                            returncodes[pid] = os.waitstatus_to_exitcode(status)\n                time.sleep(0.01)\n        for fd in (start_read, start_write, ready_read, ready_write):\n            try:\n                os.close(fd)\n            except OSError:\n                pass\n    after = snapshot()\n    delta = {key: value - before[\"events\"].get(key, 0) for key, value in after[\"events\"].items()}\n    local_oom = all(delta.get(key, 0) > 0 for key in (\"max\", \"oom\", \"oom_kill\"))\n    emit(\"final\", cgroup=cgroup, requested_bytes_per_child=ALLOCATION, parent_requested_bytes=0,\n         allocator_count=2, total_requested_bytes=2 * ALLOCATION, before=before, after=after, events_delta=delta,\n         returncodes=returncodes, cleanup_signals=cleanup_signals,\n         unreaped_children=[pid for pid in children if pid not in returncodes],\n         elapsed_seconds=round(time.monotonic() - started, 3), error=error,\n         interpretation=\"cgroup_limit_oom_observed\" if local_oom else \"inconclusive\",\n         scientific_result=False)\n    return 0 if local_oom and len(returncodes) == 2 else 1\n\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n",
+      "--inside-bounded-container"
+    ],
+    "Entrypoint": [
+      "/usr/bin/timeout",
+      "--signal=TERM",
+      "--kill-after=2s",
+      "18s"
+    ],
+    "Env": [
+      "PATH=/opt/openmpi/bin:/usr/bin:/bin",
+      "LD_LIBRARY_PATH=/opt/openmpi/lib",
+      "OMPI_MCA_plm=isolated",
+      "HOME=/tmp",
+      "TMPDIR=/tmp"
+    ],
+    "Labels": {
+      "org.orca-agent.development-probe": "20261018"
+    },
+    "User": "10001:10001",
+    "WorkingDir": "/tmp"
+  },
+  "Created": "2026-10-18T11:04:46.029258874Z",
+  "HostConfig": {
+    "AutoRemove": false,
+    "CapAdd": null,
+    "CapDrop": [
+      "ALL"
+    ],
+    "CpusetCpus": "0-3",
+    "Init": true,
+    "LogConfig": {
+      "Config": {
+        "compress": "false",
+        "max-file": "1",
+        "max-size": "1m"
+      },
+      "Type": "json-file"
+    },
+    "Memory": 1073741824,
+    "MemorySwap": 1073741824,
+    "NanoCpus": 4000000000,
+    "NetworkMode": "none",
+    "PidsLimit": 128,
+    "ReadonlyRootfs": true,
+    "RestartPolicy": {
+      "MaximumRetryCount": 0,
+      "Name": "no"
+    },
+    "SecurityOpt": [
+      "no-new-privileges=true"
+    ],
+    "ShmSize": 134217728,
+    "Tmpfs": {
+      "/tmp": "rw,noexec,nosuid,nodev,size=128m,mode=1777"
+    },
+    "Ulimits": [
+      {
+        "Hard": 0,
+        "Name": "core",
+        "Soft": 0
+      }
+    ]
+  },
+  "Id": "82496ddee239a27b3095acb2eed1adf1079f5e48820db7a0a1097f32373e3afc",
+  "Image": "sha256:e972e01af6462cfd76e38dfaf045550d26017d336f57349eae65d19c92fc97f5",
+  "Mounts": [],
+  "Name": "/orca-agent-resource-proof-20261018-001",
+  "RestartCount": 0,
+  "State": {
+    "Dead": false,
+    "Error": "",
+    "ExitCode": 0,
+    "FinishedAt": "2026-10-18T11:05:42.04667373Z",
+    "OOMKilled": true,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "StartedAt": "2026-10-18T11:05:38.160753641Z",
+    "Status": "exited"
+  }
+}

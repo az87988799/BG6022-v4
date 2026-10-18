@@ -1,0 +1,87 @@
+{
+  "Config": {
+    "Cmd": [
+      "/usr/bin/python3",
+      "/opt/boundary_probe.py"
+    ],
+    "Entrypoint": [
+      "/usr/bin/timeout",
+      "--signal=TERM",
+      "--kill-after=2s",
+      "18s"
+    ],
+    "Env": [
+      "PATH=/opt/openmpi/bin:/usr/bin:/bin",
+      "LD_LIBRARY_PATH=/opt/openmpi/lib",
+      "OMPI_MCA_plm=isolated",
+      "HOME=/tmp",
+      "TMPDIR=/tmp"
+    ],
+    "Labels": {
+      "org.orca-agent.development-probe": "20261018"
+    },
+    "User": "10001:10001",
+    "WorkingDir": "/tmp"
+  },
+  "Created": "2026-10-18T10:56:22.103441787Z",
+  "HostConfig": {
+    "AutoRemove": false,
+    "CapAdd": null,
+    "CapDrop": [
+      "ALL"
+    ],
+    "CpusetCpus": "0-3",
+    "Init": true,
+    "LogConfig": {
+      "Config": {
+        "compress": "false",
+        "max-file": "1",
+        "max-size": "1m"
+      },
+      "Type": "json-file"
+    },
+    "Memory": 1073741824,
+    "MemorySwap": 1073741824,
+    "NanoCpus": 4000000000,
+    "NetworkMode": "none",
+    "PidsLimit": 128,
+    "ReadonlyRootfs": true,
+    "RestartPolicy": {
+      "MaximumRetryCount": 0,
+      "Name": "no"
+    },
+    "SecurityOpt": [
+      "no-new-privileges=true"
+    ],
+    "ShmSize": 134217728,
+    "Tmpfs": {
+      "/tmp": "rw,noexec,nosuid,nodev,size=128m,mode=1777",
+      "/tmp/task": "rw,noexec,nosuid,nodev,size=16m,mode=0700,uid=10001,gid=10001"
+    },
+    "Ulimits": [
+      {
+        "Hard": 0,
+        "Name": "core",
+        "Soft": 0
+      }
+    ]
+  },
+  "Id": "4a554e77b2833b5211a882a717df20f38124e8ee6da7df308da434df4202d4f4",
+  "Image": "sha256:2aa55bc2693d5d2a0371f04fdec3e1cc1eb0a796225896b617e2fa42a915782e",
+  "Mounts": [],
+  "Name": "/orca-agent-boundary-proof-20261018-001",
+  "RestartCount": 0,
+  "State": {
+    "Dead": false,
+    "Error": "",
+    "ExitCode": 1,
+    "FinishedAt": "2026-10-18T10:56:22.741419189Z",
+    "OOMKilled": false,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "StartedAt": "2026-10-18T10:56:22.50309149Z",
+    "Status": "exited"
+  }
+}

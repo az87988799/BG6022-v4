@@ -6,7 +6,7 @@ import time
 from orca_agent.models import Check, PermissionSnapshot, QualifiedOutput, Result, utc_now
 from orca_agent.orca.adapter import prepare_input, read_outputs
 from orca_agent.store import ControlChanged, atomic_write, sha256_file
-from orca_agent.versions import CURRENT_CHECK_VERSION, is_supported_orca_version
+from orca_agent.versions import CURRENT_CHECK_VERSION
 
 
 class _PrelaunchControl(ValueError):
@@ -45,21 +45,12 @@ def revalidate(store, run, step, config):
         raise ValueError("check_rule_revalidation_required before scientific execution")
     if utc_now() >= run.deadline:
         raise ValueError("run deadline exhausted before execution")
-    environment = json.loads(store.path(f"runs/{run.id}/environment.json").read_text(encoding="utf-8"))
-    if not is_supported_orca_version(environment["orca"].get("version")):
-        raise ValueError("frozen ORCA version is not enabled")
-    if str(config.orca_path) != environment["orca"]["path"]:
-        raise ValueError("ORCA executable differs from the frozen environment")
-    if sha256_file(config.orca_path) != environment["orca"]["sha256"]:
-        raise ValueError("ORCA executable changed after environment validation")
-    if step.parameters.cores > 1:
-        mpi = environment["mpi"]
-        if str(config.mpi_path) != mpi["path"] or sha256_file(config.mpi_path) != mpi["sha256"]:
-            raise ValueError("MPI executable changed after environment validation")
+    from orca_agent.doctor import validate_environment
+    validate_environment(store, config, run, require_mpi=step.parameters.cores > 1)
 
 
 def execute_calculation(store, run, step, attempt, config, fault=None):
-    from orca_agent.tools.managed import launch_orca
+    from orca_agent.tools.managed import launch_orca, record_actual_start
 
     recorddir = store.path(attempt.directory)
     workdir = recorddir / "task"
@@ -85,6 +76,12 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
             startup_control = exc.action
             raise
 
+    def on_prepared(handle):
+        attempt.execution_handle = handle
+        _save_json(recorddir / "boundary.json", handle)
+        store.update_lease_handle(run.id, attempt.id, handle)
+        store.save_run(run)
+
     invoked = False
     try:
         # This entire boundary precedes entry into the backend. An ordinary
@@ -97,8 +94,10 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
         revalidate(store, run, step, config)
         invoked = True
         outcome = launch_orca(store, run, step, config, prepared, workdir, recorddir,
-                              on_started=on_started, job_name=attempt.execution_handle["job_name"],
-                              fault=hook)
+                              on_started=on_started, job_name=attempt.execution_handle.get("job_name"),
+                              execution_handle=attempt.execution_handle,
+                              on_actual_started=lambda handle: record_actual_start(store, run, attempt, handle),
+                              on_prepared=on_prepared, fault=hook)
         if startup_control and outcome["state"] != "unknown":
             outcome.update(state="cancelled", control_action=startup_control,
                            reason="control_changed_before_suspended_thread_resumed")
@@ -111,7 +110,7 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
                    "control_action": signal,
                    "handle": None, "resource_usage": {}, "exit_code": None}
     converters = {p["pid"] for p in outcome.get("resource_usage", {}).get("observed_processes", [])
-                  if p.get("executable", "").lower().endswith("orca_2json.exe")}
+                  if p.get("executable", "").lower().endswith(("orca_2json.exe", "/orca_2json"))}
     outcome["postprocess_starts_detected"] = max(len(converters), int((workdir / "job.2jsonout").exists()))
     if outcome["postprocess_starts_detected"]:
         outcome.setdefault("budget_violations", []).append({
@@ -144,7 +143,7 @@ def collect_result(store, run, step, attempt, outcome):
                       "reason": outcome.get("reason")}, *outcome.get("budget_violations", [])],
                       source={"execution": outcome, **versions})
     artifacts = {}
-    collection_error = None
+    collection_error = outcome.get("collection_error")
     try:
         from orca_agent.backends.task_files import collect_paths
         files = sorted(collect_paths(workdir, count=run.budget.artifact_count))

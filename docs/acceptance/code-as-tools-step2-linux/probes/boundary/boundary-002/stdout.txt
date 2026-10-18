@@ -1,0 +1,375 @@
+{
+  "cgroup": {
+    "controls": {
+      "cpu.max": "400000 100000",
+      "cpuset.cpus.effective": "0-3",
+      "memory.max": "1073741824",
+      "memory.swap.max": "0",
+      "pids.max": "128"
+    },
+    "cpu_quota_cores": 4.0,
+    "cpuset_effective_count": 4,
+    "enforcement_tested": false,
+    "membership": "/",
+    "memory_limit_is_1024_mib": true,
+    "pids_limit_is_finite": true,
+    "process_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "read_directory": "/sys/fs/cgroup",
+    "swap_limit_is_zero": true,
+    "version": 2
+  },
+  "complete_security_boundary_proven": false,
+  "forbidden_entries": {
+    "credentials": [
+      {
+        "path": "/run/secrets",
+        "state": "absent"
+      },
+      {
+        "path": "/opt/credentials",
+        "state": "absent"
+      },
+      {
+        "errno": 13,
+        "error": "PermissionError",
+        "path": "/root/.ssh",
+        "state": "metadata_denied"
+      },
+      {
+        "errno": 13,
+        "error": "PermissionError",
+        "path": "/root/.aws",
+        "state": "metadata_denied"
+      },
+      {
+        "errno": 13,
+        "error": "PermissionError",
+        "path": "/root/.codex",
+        "state": "metadata_denied"
+      },
+      {
+        "path": "/home/task/.ssh",
+        "state": "absent"
+      },
+      {
+        "path": "/home/task/.aws",
+        "state": "absent"
+      }
+    ],
+    "explicit_canaries": [],
+    "host": [
+      {
+        "path": "/host",
+        "state": "absent"
+      },
+      {
+        "path": "/mnt/c",
+        "state": "absent"
+      },
+      {
+        "path": "/mnt/d",
+        "state": "absent"
+      },
+      {
+        "path": "/mnt/e",
+        "state": "absent"
+      }
+    ],
+    "runtime_control": [
+      {
+        "path": "/var/run/docker.sock",
+        "state": "absent"
+      },
+      {
+        "path": "/run/docker.sock",
+        "state": "absent"
+      },
+      {
+        "path": "/run/containerd/containerd.sock",
+        "state": "absent"
+      },
+      {
+        "path": "/run/podman/podman.sock",
+        "state": "absent"
+      }
+    ],
+    "source": [
+      {
+        "path": "/workspace",
+        "state": "absent"
+      },
+      {
+        "path": "/src",
+        "state": "absent"
+      },
+      {
+        "path": "/repo",
+        "state": "absent"
+      },
+      {
+        "path": "/opt/product-source",
+        "state": "absent"
+      },
+      {
+        "path": "/opt/orca-agent",
+        "state": "absent"
+      }
+    ],
+    "wsl_interop": [
+      {
+        "path": "/mnt/wsl",
+        "state": "absent"
+      },
+      {
+        "path": "/mnt/wslg",
+        "state": "absent"
+      },
+      {
+        "path": "/run/WSL",
+        "state": "absent"
+      },
+      {
+        "path": "/run/WSL_interop",
+        "state": "absent"
+      },
+      {
+        "path": "/usr/lib/wsl",
+        "state": "absent"
+      },
+      {
+        "path": "/proc/sys/fs/binfmt_misc/WSLInterop",
+        "state": "absent"
+      }
+    ]
+  },
+  "host_environment_entry_names_present": [],
+  "identity": {
+    "euid": 10001,
+    "gid": 10001,
+    "groups": [
+      10001
+    ],
+    "non_root": true,
+    "proc_status": {
+      "CapAmb": "0000000000000000",
+      "CapBnd": "0000000000000000",
+      "CapEff": "0000000000000000",
+      "CapInh": "0000000000000000",
+      "CapPrm": "0000000000000000",
+      "Gid": "10001\t10001\t10001\t10001",
+      "NoNewPrivs": "1",
+      "Seccomp": "2",
+      "Seccomp_filters": "2",
+      "Uid": "10001\t10001\t10001\t10001",
+      "cap_eff_zero": true,
+      "no_new_privileges": true,
+      "seccomp_filter_mode": true
+    },
+    "uid": 10001
+  },
+  "limitations": [
+    "No ORCA/MPI execution or scientific validation",
+    "No resource stress, coordinator-loss, or SDK bypass test",
+    "Path absence covers listed paths only; mount origins need trusted host inspection",
+    "Network namespace identity needs host comparison; timeout/refused is inconclusive"
+  ],
+  "mounts": [
+    {
+      "filesystem": "overlay",
+      "mount_point": "/",
+      "read_only": true,
+      "root": "/"
+    },
+    {
+      "filesystem": "proc",
+      "mount_point": "/proc",
+      "read_only": false,
+      "root": "/"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/dev",
+      "read_only": false,
+      "root": "/"
+    },
+    {
+      "filesystem": "devpts",
+      "mount_point": "/dev/pts",
+      "read_only": false,
+      "root": "/"
+    },
+    {
+      "filesystem": "sysfs",
+      "mount_point": "/sys",
+      "read_only": true,
+      "root": "/"
+    },
+    {
+      "filesystem": "cgroup2",
+      "mount_point": "/sys/fs/cgroup",
+      "read_only": true,
+      "root": "/"
+    },
+    {
+      "filesystem": "mqueue",
+      "mount_point": "/dev/mqueue",
+      "read_only": false,
+      "root": "/"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/dev/shm",
+      "read_only": false,
+      "root": "/"
+    },
+    {
+      "filesystem": "overlay",
+      "mount_point": "/usr/sbin/docker-init",
+      "read_only": true,
+      "root": "/usr/libexec/docker/docker-init"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/tmp",
+      "read_only": false,
+      "root": "/"
+    },
+    {
+      "filesystem": "ext4",
+      "mount_point": "/etc/hostname",
+      "read_only": true,
+      "root": "/data/docker/containers/5e07a8091e3007aed16ae995d58fbaf856d4ecf6ec6b556b068b2265bb22bf5a/hostname"
+    },
+    {
+      "filesystem": "ext4",
+      "mount_point": "/etc/hosts",
+      "read_only": true,
+      "root": "/data/docker/containers/5e07a8091e3007aed16ae995d58fbaf856d4ecf6ec6b556b068b2265bb22bf5a/hosts"
+    },
+    {
+      "filesystem": "ext4",
+      "mount_point": "/etc/resolv.conf",
+      "read_only": true,
+      "root": "/data/docker/containers/5e07a8091e3007aed16ae995d58fbaf856d4ecf6ec6b556b068b2265bb22bf5a/resolv.conf"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/tmp/task",
+      "read_only": false,
+      "root": "/"
+    },
+    {
+      "filesystem": "proc",
+      "mount_point": "/proc/bus",
+      "read_only": true,
+      "root": "/bus"
+    },
+    {
+      "filesystem": "proc",
+      "mount_point": "/proc/fs",
+      "read_only": true,
+      "root": "/fs"
+    },
+    {
+      "filesystem": "proc",
+      "mount_point": "/proc/irq",
+      "read_only": true,
+      "root": "/irq"
+    },
+    {
+      "filesystem": "proc",
+      "mount_point": "/proc/sys",
+      "read_only": true,
+      "root": "/sys"
+    },
+    {
+      "filesystem": "proc",
+      "mount_point": "/proc/sysrq-trigger",
+      "read_only": true,
+      "root": "/sysrq-trigger"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/proc/acpi",
+      "read_only": true,
+      "root": "/"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/proc/interrupts",
+      "read_only": false,
+      "root": "/null"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/proc/kcore",
+      "read_only": false,
+      "root": "/null"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/proc/keys",
+      "read_only": false,
+      "root": "/null"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/proc/scsi",
+      "read_only": true,
+      "root": "/"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/proc/timer_list",
+      "read_only": false,
+      "root": "/null"
+    },
+    {
+      "filesystem": "tmpfs",
+      "mount_point": "/sys/firmware",
+      "read_only": true,
+      "root": "/"
+    }
+  ],
+  "network": {
+    "external_connection": {
+      "elapsed_seconds": 0.00015272600012394832,
+      "errno": 101,
+      "error": "OSError",
+      "ip": "1.1.1.1",
+      "isolation_denial_observed": true,
+      "payload_sent": false,
+      "port": 443,
+      "state": "denied",
+      "timeout_seconds": 0.5
+    },
+    "interfaces": [
+      "lo"
+    ],
+    "namespace": "net:[4026532391]",
+    "only_loopback_interface": true
+  },
+  "probe_version": 1,
+  "python_child_creation_tested": false,
+  "root_mount_read_only": true,
+  "scope": "development_observations_only",
+  "writes": {
+    "task": {
+      "directory": "/tmp/task",
+      "owned_file_removed": true,
+      "write_succeeded": true
+    },
+    "usr": {
+      "denied": true,
+      "directory": "/usr",
+      "errno": 30,
+      "error": "OSError",
+      "write_succeeded": false
+    }
+  }
+}

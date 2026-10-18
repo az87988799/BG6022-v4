@@ -1,0 +1,40 @@
+import hashlib, json, os, time
+from pathlib import Path
+requests = Path(os.environ["ORCA_TASK_REQUESTS"])
+responses = Path(os.environ["ORCA_TASK_RESPONSES"])
+def submit(value):
+    pending = requests / "request.pending"
+    pending.write_text(json.dumps(value))
+    os.replace(pending, requests / "request.json")
+def response():
+    deadline = time.monotonic() + 25
+    while not (responses / "response.json").exists():
+        if time.monotonic() >= deadline:
+            raise TimeoutError("actual broker response missing")
+        time.sleep(.05)
+    return json.loads((responses / "response.json").read_bytes())
+first={'version': False, 'request_key': 'attack', 'input': '! RHF STO-3G TightSCF NoRI NoAutoStart\n%maxcore 192\n%pal nprocs 4 end\n* xyz 0 1\nH 0 0 0\nH 0 0 .74\n*\n', 'dependencies': []}
+second={'version': 1, 'request_key': 'replay', 'input': '! RHF STO-3G TightSCF NoRI NoAutoStart\n%maxcore 192\n%pal nprocs 4 end\n* xyz 0 1\nH 0 0 0\nH 0 0 .74\n*\n', 'dependencies': []}
+submit(first)
+receipt = response()
+assert "invalid bounded SDK request" in receipt.get("error", ""), receipt
+original = (responses / "response.json").read_bytes()
+denied = []
+for action in ("overwrite", "unlink"):
+    try:
+        if action == "overwrite":
+            (responses / "response.json").write_text('{"operation_status":"completed"}')
+        else:
+            (responses / "response.json").unlink()
+    except PermissionError as exc:
+        denied.append({"action": action, "errno": exc.errno})
+    else:
+        raise AssertionError("task changed trusted response")
+submit(second)
+time.sleep(2.5)
+after = (responses / "response.json").read_bytes()
+Path("attack.json").write_text(json.dumps({"first_request": first, "replay_request": second,
+    "receipt": receipt, "receipt_mutations_denied": denied,
+    "before_sha256": hashlib.sha256(original).hexdigest(),
+    "after_sha256": hashlib.sha256(after).hexdigest()}))
+assert original == after and len(denied) == 2

@@ -1,0 +1,672 @@
+{
+  "report_kind": "independent_local_evidence_audit",
+  "schema_version": 1,
+  "scope": "Initial developer-written ORCA-001 container smoke; read-only saved-evidence parsing, no Docker, scientific launch or conversion during audit.",
+  "conclusion": {
+    "bounded_real_four_process_orca_smoke_passed": true,
+    "existing_property_json_and_text_agree": true,
+    "predeclared_serial_reference_agreement_passed": true,
+    "production_tool_chain_exercised": false,
+    "python_sdk_exercised": false,
+    "full_security_boundary_accepted": false,
+    "step2_accepted": false,
+    "new_production_qualified_output_published": false
+  },
+  "identity": {
+    "container_id": "75c770d6d187e6f249dada6bb632d586222f5e2d5ce272ee2fae05f10faf52c3",
+    "image_id": "sha256:2f49f3f0441697f75ec792f6a0cdbdff814e9ffc7a3eff9b4684a440c7639c88",
+    "wrapper_sha256": "52b92714ac19692492d3b92cf9a0f1a46506b5177bd5b51cffb03bca4e9eb619",
+    "driver_pid": 9,
+    "observed_orca_version": "6.1.1",
+    "image_env": [
+      "PATH=/opt/orca:/opt/openmpi/bin:/usr/bin:/bin",
+      "LD_LIBRARY_PATH=/opt/orca/lib:/opt/openmpi/lib",
+      "OMPI_MCA_plm=isolated",
+      "HOME=/tmp",
+      "TMPDIR=/tmp",
+      "OMPI_MCA_pml=ob1",
+      "OMPI_MCA_btl=self,vader",
+      "OMPI_MCA_btl_vader_single_copy_mechanism=none"
+    ],
+    "entrypoint": [
+      "/usr/bin/timeout",
+      "--signal=TERM",
+      "--kill-after=5s",
+      "120s"
+    ]
+  },
+  "scientific_observations": {
+    "profile": "RHF/STO-3G water single point, charge 0 multiplicity 1, TightSCF, no RI",
+    "input_maxcore_mb_per_process": 192,
+    "input_pal_processes": 4,
+    "energy_text_hartree": -74.962991615317,
+    "energy_property_json_hartree": -74.96299161531729,
+    "property_json_version": "6.1.1",
+    "text_scf_converged": true,
+    "property_json_scf_converged": true,
+    "normal_termination": true,
+    "initial_and_energy_and_json_geometries_agree": true,
+    "energy_fragment": {
+      "file": "stdout.out",
+      "segment_start_line": 229,
+      "segment_end_line": 849,
+      "geometry_line": 229,
+      "energy_line": 666,
+      "converged_lines": [
+        522
+      ],
+      "failure_lines": [],
+      "stage_line": null,
+      "unique_binding": true,
+      "conflict": false,
+      "scf_converged": true,
+      "detail": "One converged SCF precedes the energy in the same coordinate segment."
+    },
+    "reference_energy_hartree": -74.962991615317,
+    "absolute_difference_hartree": 2.984279490192421e-13,
+    "reference_tolerance_hartree": 1e-07,
+    "reference_energy_checks_all_passed": true,
+    "reference_directory": "docs/acceptance/code-as-tools-step2/orca/09-legacy-serial-sp-qualified",
+    "read_only_parser": {
+      "orca-pi": "2.0.0",
+      "create_property_json": false,
+      "create_gbw_json": false,
+      "redump_jsons": false
+    }
+  },
+  "process_observations": {
+    "sampled_count": 26,
+    "grouped_pids": {
+      "/opt/orca/orca": [
+        9
+      ],
+      "mpirun": [
+        11,
+        28,
+        45,
+        52,
+        62,
+        79
+      ],
+      "/opt/orca/orca_startup_mpi": [
+        15,
+        16,
+        17,
+        18
+      ],
+      "/opt/orca/orca_guess_mpi": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "/opt/orca/orca_leanscf_mpi": [
+        49,
+        50,
+        51
+      ],
+      "/opt/orca/orca_prop_mpi": [
+        66,
+        67,
+        68,
+        69
+      ],
+      "/opt/orca/orca_util_mpi": [
+        83,
+        84,
+        85,
+        86
+      ]
+    },
+    "processes": [
+      {
+        "pid": 9,
+        "ppid": 8,
+        "start_ticks": "218315",
+        "command": [
+          "/opt/orca/orca",
+          "water.inp"
+        ],
+        "observed_seconds": 0.005683792999661819
+      },
+      {
+        "pid": 11,
+        "ppid": 10,
+        "start_ticks": "218323",
+        "command": [
+          "mpirun",
+          "-np",
+          "4",
+          "/opt/orca/orca_startup_mpi",
+          "water.int.tmp",
+          "water"
+        ],
+        "observed_seconds": 0.08799112199994852
+      },
+      {
+        "pid": 15,
+        "ppid": 11,
+        "start_ticks": "218333",
+        "command": [
+          "/opt/orca/orca_startup_mpi",
+          "water.int.tmp",
+          "water"
+        ],
+        "observed_seconds": 0.1960606109996661
+      },
+      {
+        "pid": 16,
+        "ppid": 11,
+        "start_ticks": "218333",
+        "command": [
+          "/opt/orca/orca_startup_mpi",
+          "water.int.tmp",
+          "water"
+        ],
+        "observed_seconds": 0.19617544799984898
+      },
+      {
+        "pid": 17,
+        "ppid": 11,
+        "start_ticks": "218333",
+        "command": [
+          "/opt/orca/orca_startup_mpi",
+          "water.int.tmp",
+          "water"
+        ],
+        "observed_seconds": 0.19629849700004343
+      },
+      {
+        "pid": 18,
+        "ppid": 11,
+        "start_ticks": "218334",
+        "command": [
+          "/opt/orca/orca_startup_mpi",
+          "water.int.tmp",
+          "water"
+        ],
+        "observed_seconds": 0.19639728599986483
+      },
+      {
+        "pid": 28,
+        "ppid": 27,
+        "start_ticks": "218352",
+        "command": [
+          "mpirun",
+          "-np",
+          "4",
+          "/opt/orca/orca_guess_mpi",
+          "water.gbw",
+          "water"
+        ],
+        "observed_seconds": 0.38183800499973586
+      },
+      {
+        "pid": 32,
+        "ppid": 28,
+        "start_ticks": "218354",
+        "command": [
+          "/opt/orca/orca_guess_mpi",
+          "water.gbw",
+          "water"
+        ],
+        "observed_seconds": 0.4043598429998383
+      },
+      {
+        "pid": 33,
+        "ppid": 28,
+        "start_ticks": "218355",
+        "command": [
+          "/opt/orca/orca_guess_mpi",
+          "water.gbw",
+          "water"
+        ],
+        "observed_seconds": 0.40442634900000485
+      },
+      {
+        "pid": 34,
+        "ppid": 28,
+        "start_ticks": "218355",
+        "command": [
+          "/opt/orca/orca_guess_mpi",
+          "water.gbw",
+          "water"
+        ],
+        "observed_seconds": 0.4044872729996314
+      },
+      {
+        "pid": 35,
+        "ppid": 28,
+        "start_ticks": "218355",
+        "command": [
+          "/opt/orca/orca_guess_mpi",
+          "water.gbw",
+          "water"
+        ],
+        "observed_seconds": 0.4046132159996887
+      },
+      {
+        "pid": 45,
+        "ppid": 44,
+        "start_ticks": "218372",
+        "command": [
+          "mpirun",
+          "-np",
+          "4",
+          "/opt/orca/orca_leanscf_mpi",
+          "water.gbw",
+          "water"
+        ],
+        "observed_seconds": 0.5701916789998904
+      },
+      {
+        "pid": 49,
+        "ppid": 45,
+        "start_ticks": "218373",
+        "command": [
+          "/opt/orca/orca_leanscf_mpi",
+          "water.gbw",
+          "water"
+        ],
+        "observed_seconds": 0.5907733139997617
+      },
+      {
+        "pid": 50,
+        "ppid": 45,
+        "start_ticks": "218374",
+        "command": [
+          "/opt/orca/orca_leanscf_mpi",
+          "water.gbw",
+          "water"
+        ],
+        "observed_seconds": 0.5908397399998648
+      },
+      {
+        "pid": 51,
+        "ppid": 45,
+        "start_ticks": "218374",
+        "command": [
+          "/opt/orca/orca_leanscf_mpi",
+          "water.gbw",
+          "water"
+        ],
+        "observed_seconds": 0.5909217829998852
+      },
+      {
+        "pid": 52,
+        "ppid": 45,
+        "start_ticks": "218374",
+        "command": [
+          "mpirun",
+          "-np",
+          "4",
+          "/opt/orca/orca_leanscf_mpi",
+          "water.gbw",
+          "water"
+        ],
+        "observed_seconds": 0.5909969929998624
+      },
+      {
+        "pid": 62,
+        "ppid": 61,
+        "start_ticks": "218393",
+        "command": [
+          "mpirun",
+          "-np",
+          "4",
+          "/opt/orca/orca_prop_mpi",
+          "water.propinp.tmp",
+          "water",
+          "1",
+          "water"
+        ],
+        "observed_seconds": 0.779773178999676
+      },
+      {
+        "pid": 66,
+        "ppid": 62,
+        "start_ticks": "218394",
+        "command": [
+          "/opt/orca/orca_prop_mpi",
+          "water.propinp.tmp",
+          "water",
+          "1",
+          "water"
+        ],
+        "observed_seconds": 0.80064270999992
+      },
+      {
+        "pid": 67,
+        "ppid": 62,
+        "start_ticks": "218394",
+        "command": [
+          "/opt/orca/orca_prop_mpi",
+          "water.propinp.tmp",
+          "water",
+          "1",
+          "water"
+        ],
+        "observed_seconds": 0.8007459259997631
+      },
+      {
+        "pid": 68,
+        "ppid": 62,
+        "start_ticks": "218394",
+        "command": [
+          "/opt/orca/orca_prop_mpi",
+          "water.propinp.tmp",
+          "water",
+          "1",
+          "water"
+        ],
+        "observed_seconds": 0.8008090079997601
+      },
+      {
+        "pid": 69,
+        "ppid": 62,
+        "start_ticks": "218395",
+        "command": [
+          "/opt/orca/orca_prop_mpi",
+          "water.propinp.tmp",
+          "water",
+          "1",
+          "water"
+        ],
+        "observed_seconds": 0.8008845429999383
+      },
+      {
+        "pid": 79,
+        "ppid": 78,
+        "start_ticks": "218405",
+        "command": [
+          "mpirun",
+          "-np",
+          "4",
+          "/opt/orca/orca_util_mpi",
+          "water",
+          "orca_cleanup",
+          "water"
+        ],
+        "observed_seconds": 0.9033505129996229
+      },
+      {
+        "pid": 83,
+        "ppid": 79,
+        "start_ticks": "218407",
+        "command": [
+          "/opt/orca/orca_util_mpi",
+          "water",
+          "orca_cleanup",
+          "water"
+        ],
+        "observed_seconds": 0.9240819169999668
+      },
+      {
+        "pid": 84,
+        "ppid": 79,
+        "start_ticks": "218407",
+        "command": [
+          "/opt/orca/orca_util_mpi",
+          "water",
+          "orca_cleanup",
+          "water"
+        ],
+        "observed_seconds": 0.9241945149997264
+      },
+      {
+        "pid": 85,
+        "ppid": 79,
+        "start_ticks": "218407",
+        "command": [
+          "/opt/orca/orca_util_mpi",
+          "water",
+          "orca_cleanup",
+          "water"
+        ],
+        "observed_seconds": 0.9243100639996555
+      },
+      {
+        "pid": 86,
+        "ppid": 79,
+        "start_ticks": "218407",
+        "command": [
+          "/opt/orca/orca_util_mpi",
+          "water",
+          "orca_cleanup",
+          "water"
+        ],
+        "observed_seconds": 0.9243910799996229
+      }
+    ],
+    "all_sampled_cgroup_membership": "0::/",
+    "all_sampled_uid": 10001,
+    "all_sampled_capabilities_zero": true,
+    "all_sampled_no_new_privs": 1,
+    "all_sampled_seccomp_mode": 2,
+    "all_sampled_allowed_cpus": "0-3"
+  },
+  "execution_and_resources": {
+    "client_exit": 0,
+    "docker_state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-18T11:08:48.568324394Z",
+      "FinishedAt": "2026-10-18T11:08:49.868535523Z"
+    },
+    "probe_duration_seconds": 1.0287826569997378,
+    "before": {
+      "memory.max": "1073741824",
+      "memory.swap.max": "0",
+      "memory.current": "18690048",
+      "memory.peak": "18690048",
+      "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+      "cpu.max": "400000 100000",
+      "cpu.stat": "usage_usec 96152\nuser_usec 36981\nsystem_usec 59170\nnice_usec 0\nnr_periods 2\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+      "cpuset.cpus.effective": "0-3",
+      "pids.max": "128"
+    },
+    "after": {
+      "memory.max": "1073741824",
+      "memory.swap.max": "0",
+      "memory.current": "30343168",
+      "memory.peak": "211456000",
+      "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+      "cpu.max": "400000 100000",
+      "cpu.stat": "usage_usec 2088577\nuser_usec 1323861\nsystem_usec 764715\nnice_usec 0\nnr_periods 12\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+      "cpuset.cpus.effective": "0-3",
+      "pids.max": "128"
+    },
+    "cpu_delta": {
+      "usage_usec": 1992425,
+      "user_usec": 1286880,
+      "system_usec": 705545
+    },
+    "peak_memory_bytes": 211456000,
+    "raw_stderr_bytes": 0,
+    "host_stderr_bytes": 0,
+    "host_config": {
+      "Memory": 1073741824,
+      "MemorySwap": 1073741824,
+      "NanoCpus": 4000000000,
+      "CpusetCpus": "0-3",
+      "PidsLimit": 128,
+      "CgroupnsMode": "private",
+      "NetworkMode": "none",
+      "ReadonlyRootfs": true,
+      "CapDrop": [
+        "ALL"
+      ],
+      "SecurityOpt": [
+        "no-new-privileges=true"
+      ],
+      "Privileged": false,
+      "Binds": null,
+      "Tmpfs": {
+        "/tmp": "rw,noexec,nosuid,nodev,size=128m,mode=1777"
+      },
+      "ShmSize": 134217728,
+      "RestartPolicy": {
+        "Name": "no",
+        "MaximumRetryCount": 0
+      },
+      "Init": true
+    },
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "orca-agent-orca-proof-20261018-001-evidence",
+        "Source": "/var/lib/docker/volumes/orca-agent-orca-proof-20261018-001-evidence/_data",
+        "Destination": "/tmp/task",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": true,
+        "Propagation": ""
+      }
+    ]
+  },
+  "limitations": [
+    "This is a trusted developer probe, not the newly implemented production container backend, untrusted task Python, an SDK request, or autonomous model execution.",
+    "The 20 ms sampler captured 26 selected ORCA/mpirun processes, not a complete process-event trace. Four distinct startup, guess, property and utility workers were observed; only three leanscf worker PIDs were sampled. All six sampled mpirun commands requested -np 4. Missing short-lived processes must not be interpreted as absent.",
+    "No rank-number or MPI-finalize events were emitted by ORCA. The separate MPI-003/004 evidence tests rank semantics; it cannot be represented as this exact ORCA image run.",
+    "A successful small water calculation below the memory cap does not stress the cap, demonstrate CPU saturation, cancellation, hard-death cleanup, source/credential rejection, IPC replay protection or aggregate Python plus ORCA accounting.",
+    "The cgroup CPU delta spans the probe observation interval and includes its overhead, not a complete final container lifetime. The recorded memory peak is the kernel high-water value at the final probe read.",
+    "The saved reference declares it was established before this run; this audit verifies reference contents and agreement, not an independent authenticated creation chronology.",
+    "The initial probe lacks the production job input-manifest and uses water.* names. This audit reuses existing text parsing and OPI read-only parsing for narrow smoke agreement; it does not manufacture a new production Result or upgrade arbitrary observations to qualified outputs.",
+    "The inspected image inherits descriptive MPI-probe labels that say no ORCA; those labels are stale and are not used as identity or capability evidence. Immutable image ID, executed command, raw output and process observations identify this run.",
+    "No ORCA license or installation package is published by this report; the private package inventory is hashed only. Program binary hashes are not re-read from the live image during this offline audit."
+  ],
+  "evidence_files": [
+    {
+      "path": "data/container-proof-20261018/orca-001-run.json",
+      "bytes": 5014,
+      "sha256": "afe9c4a4a9227194ceead6e0becf4f9fa2a1e755053b4919e93ceba232083c4c"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-intent.json",
+      "bytes": 4546,
+      "sha256": "5869c0547149767b2d050cfc9770c4a7c003a23a15c308e30b81b350c659c60a"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-inspect.json",
+      "bytes": 16012,
+      "sha256": "f6864edb214c25103984ed211b6bc1b0078139fc941ee2dc94881c317d6459df"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-files.json",
+      "bytes": 1570,
+      "sha256": "5865d6025fe6eaeef9e6125fe9824c3f8d4a77f3efd10aeaaea289b7e4be9a34"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-stdout.txt",
+      "bytes": 961,
+      "sha256": "94852f8ef68be8c8a81c09616ee673bc8b95192612b834e5f94d6281380c8b9d"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-image.json",
+      "bytes": 4414,
+      "sha256": "c87561d1003c583e7472c39defeee4c53e6b791cb800b6e7c2c6bee406f3e346"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-smoke-reference.json",
+      "bytes": 690,
+      "sha256": "260594f6b891000edd86eaad2ae922250d10cba2912f71a7a2ffcd196c7faf3a"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-package.json",
+      "bytes": 79452,
+      "sha256": "90f7da0e4a71ae0d2172e66a43e954e341745580f0fac1628982c83376b0fa2a"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/geometry.xyz",
+      "bytes": 153,
+      "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/probe-record.json",
+      "bytes": 55667,
+      "sha256": "042668a678a02ffd1aa83ff3ce4b3ff5aab14ca766739f38ccf19d7db3c72e0f"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/stdout.out",
+      "bytes": 42480,
+      "sha256": "57c8d242f58e91154b6caa751c8e171a55f95379e50967c1073e6513ea28a7b9"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/water.bibtex",
+      "bytes": 1806,
+      "sha256": "e758a502365e0706720fa3dc93c94e43ee2c604e3e8f753f7dff93437c13b13b"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/water.densities",
+      "bytes": 784,
+      "sha256": "c216d6dffd4bd506d19ca02fc732b95f556c8a32688f7cd5ecfccda2ef9cf6c2"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/water.densitiesinfo",
+      "bytes": 1838,
+      "sha256": "779f98567a8884860e83965a9a02d755ae1a42886e00c497d5072fee68135af7"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/water.gbw",
+      "bytes": 985228,
+      "sha256": "b1ac6873969a4eb9349993a40fc8b6ddc6873aa1b0667c4f85a954104d66482b"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/water.inp",
+      "bytes": 187,
+      "sha256": "7592dbe58acb906bd1273d3ed6948e9dc8990c54319a83540ab45891b985c3b8"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/water.property.json",
+      "bytes": 9312,
+      "sha256": "e1f24667578c921c6c209cde0a5d683115bab350e4e26acd836b2ea0a899bf31"
+    },
+    {
+      "path": "data/container-proof-20261018/orca-001-raw/water.property.txt",
+      "bytes": 9169,
+      "sha256": "4a2bd9cc068bd90a30c23cfda75b7104302efe935c813f3a90be382bc95b06de"
+    },
+    {
+      "path": "scripts/container_probe/orca_probe.py",
+      "bytes": 3040,
+      "sha256": "52b92714ac19692492d3b92cf9a0f1a46506b5177bd5b51cffb03bca4e9eb619"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step2/orca/09-legacy-serial-sp-qualified/result.json",
+      "bytes": 44017,
+      "sha256": "62d422fd0294dcf159d0c75da87c81f49ed00272d1cf25f7904f9538f6e7ee94"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step2/orca/09-legacy-serial-sp-qualified/geometry.xyz",
+      "bytes": 153,
+      "sha256": "f1a41c4aad004c42e34da293c64bedbed62d59fa812d2109b4205facced9b331"
+    },
+    {
+      "path": "src/orca_agent/orca/adapter.py",
+      "bytes": 30973,
+      "sha256": "32f27599d500ea944c0152bc9359aaaa5b40796ff965a9342237857d2f758a08"
+    },
+    {
+      "path": "src/orca_agent/versions.py",
+      "bytes": 885,
+      "sha256": "5ebf4dd2391c8ef78ba4e41d63b477549b21c315c17cb31769dae5b34a67eb9c"
+    }
+  ]
+}

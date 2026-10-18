@@ -1,0 +1,7 @@
+import json, os, time
+from pathlib import Path
+Path("before-stop.json").write_text(json.dumps({"pid": os.getpid(), "uid": os.getuid(),
+    "cgroup": Path("/proc/self/cgroup").read_text(), "started": time.monotonic()}))
+print("real lifecycle task started", flush=True)
+while True:
+    time.sleep(.05)

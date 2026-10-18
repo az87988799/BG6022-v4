@@ -26,9 +26,9 @@
 
 单元测试只证明输入准入、hash、路径和旧适配器回归；真实 ORCA、实际 OS 隔离、MPI 和资源行为必须分别依据执行验收记录。
 
-## 私有运行库的范围
+## Windows LPAC 私有运行库的范围
 
-`private-task-runtime-1` 不把整个 Python 安装、用户 `site-packages` 或仓库授予脚本。它复制基础 CPython 可执行文件、Python DLL、标准库及扩展 DLL，以及明确的安装分发依赖：OPI、RDKit、NumPy、Pillow、platformdirs、Pydantic、pydantic-core、annotated-types、typing-extensions、typing-inspection、semantic-version。采用安装分发的文件清单复制，排除测试目录、`.pth`、宿主入口程序和无关包；专用 `python311._pth` 只列私有运行库中的目录，不初始化 `site`。薄 SDK 作为单个受信任文件另行复制。
+Windows 后端的 `private-task-runtime-1` 不把整个 Python 安装、用户 `site-packages` 或仓库授予脚本。它复制基础 CPython 可执行文件、Python DLL、标准库及扩展 DLL，以及明确的安装分发依赖：OPI、RDKit、NumPy、Pillow、platformdirs、Pydantic、pydantic-core、annotated-types、typing-extensions、typing-inspection、semantic-version。采用安装分发的文件清单复制，排除测试目录、`.pth`、宿主入口程序和无关包；专用 `python311._pth` 只列私有运行库中的目录，不初始化 `site`。薄 SDK 作为单个受信任文件另行复制。
 
 ORCA 私有运行库只复制已安装主程序以及 `orca_startup`、`orca_guess`、`orca_leanscf`、`orca_prop`、`orca_scfgrad`、`orca_util` 的串行与 MPI 版本。Windows 原生驱动使用命令解释器启动内部模块，因此同时复制系统 `cmd.exe` 的准确字节供 manifest 固定；实际清理后的 `ComSpec` 仍指向 `System32\cmd.exe`，它是受 LPAC/Job 约束的 Windows 运行依赖，不能声称实际仅执行私有副本。Python 任务由操作系统禁止子进程。不能把这一事实表述为“ORCA 环境不含命令解释器”。原生输入的路径和控制语法校验、ORCA 子进程继承的 LPAC 与 Job 约束仍是必要边界。
 
@@ -42,6 +42,14 @@ ORCA 私有运行库只复制已安装主程序以及 `orca_startup`、`orca_gue
 
 随后两次独立的真实 MPI 初始化探针揭示了兼容性阻塞。两个 Python 工作进程通过 `ctypes` 加载私有 `msmpi.dll` 并调用 `MPI_Init`，预定再执行 rank/size、`MPI_Allreduce` 与 `MPI_Finalize`。默认传输设置在 `MPI_Init` 中失败，报告 `NdStartup failed with 0x8007271d`；按 Microsoft 文档设置 `MSMPI_DISABLE_ND=1`、`MSMPI_DISABLE_SOCK=1`、`MSMPI_DISABLE_SHM=0` 的共享内存探针仍在 `MPI_Init` 失败，报告 `errno11001`。两次退出码均为 -4，耗时分别约 0.422 秒和 0.328 秒，均未到达 rank、消息交换或 finalize。宿主在每次运行观察到的 7 个进程均属于同一 Job，没有残留 MPI 进程。测试没有放宽 LPAC 网络 capability、文件授权或服务权限。
 
-因此本机当前边界下仅有 MPI 进程启动成功的证据，**没有可用的 MPI 科学计算路径**。不能用启动成功替代初始化成功，也不能自动改用串行结果冒充请求的并行运行。环境变量含义见 [Microsoft 官方传输配置](https://learn.microsoft.com/en-us/powershell/high-performance-computing/environment-variables-for-the-mpiexec-command?view=hpc19-ps)。[Windows 官方错误码](https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2) 将 10013 标为访问被拒绝、11001 标为主机名未找到；这说明诊断类别，并未单独定位完整根因。应保留这个失败事实，不能为通过验收而添加网络权限或调用未隔离的宿主 MPI。
+因此，在上述 **Windows LPAC 后端** 中仅有 MPI 进程启动成功的证据，没有可用的 MPI 科学计算路径；该后端当前仅验证串行科学执行。这一失败不适用于下述独立的 Linux 容器/Open MPI 路径。不能用启动成功替代初始化成功，也不能自动改用串行结果冒充请求的并行运行。环境变量含义见 [Microsoft 官方传输配置](https://learn.microsoft.com/en-us/powershell/high-performance-computing/environment-variables-for-the-mpiexec-command?view=hpc19-ps)。[Windows 官方错误码](https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2) 将 10013 标为访问被拒绝、11001 标为主机名未找到；这说明诊断类别，并未单独定位完整根因。应保留这个失败事实，不能为通过验收而添加网络权限或调用未隔离的宿主 MPI。
 
-这个模块集并非完整 ORCA 安装，也未验证所有方法组合。需要其他计算模块、转换程序或外部程序的输入可能被准入器拒绝，或由 ORCA 返回缺失模块的真实失败；程序不得自动复制未知助手、调用宿主未隔离安装或模拟结果作为回退。MPI 服务与系统运行库依赖必须单独验证，复制 `_mpi.exe` 不能证明并行科学路径已可用。库导入烟测仅证明执行底座兼容性，不证明 Agent 自主解题。
+上述 Windows 私有模块集并非完整 ORCA 安装，也未验证所有方法组合。需要其他计算模块、转换程序或外部程序的输入可能被准入器拒绝，或由 ORCA 返回缺失模块的真实失败；程序不得自动复制未知助手、调用宿主未隔离安装或模拟结果作为回退。Windows MPI 服务与系统运行库依赖必须单独验证，复制 `_mpi.exe` 不能证明并行科学路径已可用。库导入烟测仅证明执行底座兼容性，不证明 Agent 自主解题。
+
+## Linux 容器运行库与已验证范围
+
+`linux-container` 是新 Run 可显式选择的本地后端，使用固定 Linux CPython 3.11.2、OPI 2.0.0、ORCA 6.1.1 与 Open MPI 4.1.8。配置入口见 [config.container.example.toml](../config.container.example.toml)，私有镜像构建、依赖锁和许可证说明见[运行镜像 README](../scripts/container_runtime/README.md)。执行绑定不可变 image ID、manifest hash 与本地 Docker daemon 身份，不自动拉取镜像，不把宿主 ORCA、Store 或用户目录挂入容器。旧 Run 的环境快照不会自动迁移到新后端。
+
+已验证配置把任务 Python 与内部 ORCA 放在同一个容器 cgroup 的 4 核、1024 MiB 总内存边界内；两者使用不同 UID，Python 无权读取或执行 `/opt/orca`，须经薄 SDK 向可信协调者提出有限 ORCA 请求。根文件系统只读、容器网络为 `none`，任务 Python 的附加 seccomp 禁止子进程和 socket；本地 MPI 只使用容器内的隔离环境。任务文件位于专用持久卷，通过固定 helper 有界传输，证据卷没有硬磁盘配额。ORCA 实际启动须由同 PID/start_ticks 的 `/proc/PID/exe` 正证据确认；仅创建或放行启动器不计实际 ORCA 启动。
+
+最终固定镜像通过 7 项真实验证：科学库及操作系统拒绝边界、超时、OOM、取消、Python 薄 SDK 四 rank ORCA、既有 OPI 四核水单点与优化。准确镜像身份、原始证据及限制见[步骤 2 Linux 验证报告](acceptance/code-as-tools-step2-linux/report.md)。这些验证没有扩大 `native-orca-input-1` 准入范围：原生优化、频率等仍按上文拒绝；既有 OPI 优化继续使用原科学检查器。原生执行和 SDK 原始输出只作为未获科学资格的观察，不能凭退出码或正常终止标记自行宣告科学通过。本轮不包含步骤 3 的真实模型解题验证，等待用户验收。

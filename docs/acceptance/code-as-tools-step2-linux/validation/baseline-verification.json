@@ -1,0 +1,796 @@
+{
+  "scope": "Independent offline HEAD/current comparison of representative unit failures, followed by a minimal execution-catalog compactness regression fix.",
+  "baseline_commit": "4136843aa66370a9ed44b0b9bc1d055d61fc0cdf",
+  "baseline_commit_subject": "Implement code-as-tools step 2 managed serial execution",
+  "snapshot": "baseline-snapshot",
+  "archive_paths": [
+    "src",
+    "tests",
+    "pyproject.toml",
+    "config.example.toml"
+  ],
+  "additional_tracked_fixture": "docs/acceptance/phase-b/reference-review.json",
+  "snapshot_import_verified": true,
+  "baseline_unique_tests": 205,
+  "baseline_counts": {
+    "failed": 87,
+    "passed": 118
+  },
+  "precompact_current_unique_tests": 205,
+  "precompact_current_counts": {
+    "failed": 89,
+    "passed": 116
+  },
+  "new_regressions_found_and_fixed": [
+    "tests/unit/test_context.py::test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback[disabled-replan]",
+    "tests/unit/test_context.py::test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback[thinking_low-replan]"
+  ],
+  "fix": {
+    "files": [
+      "src/orca_agent/tools/registry.py",
+      "src/orca_agent/tools/managed.py",
+      "tests/unit/test_managed_execution.py"
+    ],
+    "description": "Use one parallel_execution backend-name list plus the precise Windows rejection reason; admission consumes the same list. No context budgets, scientific guarantees or historical tests changed.",
+    "head_contract": {
+      "value": {
+        "parallel_execution": false,
+        "parallel_execution_reason": "MPI_Init fails inside network-disabled Windows LPAC; explicit serial input is required"
+      },
+      "canonical_json_bytes": 145
+    },
+    "final_contract": {
+      "value": {
+        "parallel_execution": [
+          "linux-container"
+        ],
+        "parallel_execution_reason": "MPI_Init fails inside network-disabled Windows LPAC; explicit serial input is required"
+      },
+      "canonical_json_bytes": 159
+    }
+  },
+  "final_targeted_counts": {
+    "passed": 131
+  },
+  "final_targeted_scope": "All 118 baseline-passing representative cases plus 13 managed-execution tests; 131 passed in 32.85s.",
+  "final_context_file": "7 failed (the same seven HEAD failures), 43 passed; tested together with 13 passing managed-execution tests.",
+  "original_and_copied_replay_json_unchanged": true,
+  "replay_json_count": 109,
+  "confirmed_existing_failures": [
+    {
+      "nodeid": "tests/unit/test_context.py::test_actual_proposal_schema_and_bounded_default_context",
+      "baseline_evidence": "baseline-context-002.json",
+      "current_evidence": "current-context-001.json",
+      "baseline_failure": "E   AssertionError: assert 1 == 2\nE    +  where 1 = len({'p0': {'additionalProperties': False, 'properties': {'method': {'maxLength': 256, 'minLength': 1, 'pattern': '^[^\\\\s\\...type': 'string'}, 'charge': {'type': 'integer'}, 'multiplicity': {'ge': 1, 'type': 'integer'}, ...}, 'type': 'object'}})",
+      "current_failure": "E   AssertionError: assert 1 == 2\nE    +  where 1 = len({'p0': {'additionalProperties': False, 'properties': {'method': {'maxLength': 256, 'minLength': 1, 'pattern': '^[^\\\\s\\...type': 'string'}, 'charge': {'type': 'integer'}, 'multiplicity': {'ge': 1, 'type': 'integer'}, ...}, 'type': 'object'}})"
+    },
+    {
+      "nodeid": "tests/unit/test_context.py::test_schema_annotations_are_omitted_without_changing_constraints_or_tool_defaults",
+      "baseline_evidence": "baseline-context-002.json",
+      "current_evidence": "current-context-001.json",
+      "baseline_failure": "E   KeyError: 'maximum'",
+      "current_failure": "E   KeyError: 'maximum'"
+    },
+    {
+      "nodeid": "tests/unit/test_context.py::test_oversized_authority_refused_without_truncating_user_goal",
+      "baseline_evidence": "baseline-context-002.json",
+      "current_evidence": "current-context-001.json",
+      "baseline_failure": "E   AssertionError: Regex pattern did not match.\nE     Expected regex: '12000'\nE     Actual message: 'required model context exceeds the configured global input bound, Run input limit, or remaining token reservation'",
+      "current_failure": "E   AssertionError: Regex pattern did not match.\nE     Expected regex: '12000'\nE     Actual message: 'required model context exceeds the configured global input bound, Run input limit, or remaining token reservation'"
+    },
+    {
+      "nodeid": "tests/unit/test_context.py::test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback[disabled-final]",
+      "baseline_evidence": "baseline-context-002.json",
+      "current_evidence": "current-context-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context.py::test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback[disabled-pending_analysis]",
+      "baseline_evidence": "baseline-context-002.json",
+      "current_evidence": "current-context-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context.py::test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback[thinking_low-final]",
+      "baseline_evidence": "baseline-context-002.json",
+      "current_evidence": "current-context-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context.py::test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback[thinking_low-pending_analysis]",
+      "baseline_evidence": "baseline-context-002.json",
+      "current_evidence": "current-context-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_action_budget.py::test_retained_v06_budget_actions_rebuild_without_changing_history[first_plan]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'logical_ste...arts': 0, ...} == {'attempts_pe...arts': 0, ...}\nE\nE     Omitting 15 identical items, use -vv to show\nE     Left contains 7 more items:\nE     {'artifact_bytes': 268435456,",
+      "current_failure": "E   AssertionError: assert {'logical_ste...arts': 0, ...} == {'attempts_pe...arts': 0, ...}\nE\nE     Omitting 15 identical items, use -vv to show\nE     Left contains 7 more items:\nE     {'artifact_bytes': 268435456,"
+    },
+    {
+      "nodeid": "tests/unit/test_context_action_budget.py::test_retained_v06_budget_actions_rebuild_without_changing_history[analysis_feedback]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'logical_ste...arts': 0, ...} == {'attempts_pe...arts': 0, ...}\nE\nE     Omitting 15 identical items, use -vv to show\nE     Left contains 7 more items:\nE     {'artifact_bytes': 268435456,",
+      "current_failure": "E   AssertionError: assert {'logical_ste...arts': 0, ...} == {'attempts_pe...arts': 0, ...}\nE\nE     Omitting 15 identical items, use -vv to show\nE     Left contains 7 more items:\nE     {'artifact_bytes': 268435456,"
+    },
+    {
+      "nodeid": "tests/unit/test_context_action_budget.py::test_retained_v06_budget_actions_rebuild_without_changing_history[correction]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'logical_ste...arts': 0, ...} == {'attempts_pe...arts': 0, ...}\nE\nE     Omitting 15 identical items, use -vv to show\nE     Left contains 7 more items:\nE     {'artifact_bytes': 268435456,",
+      "current_failure": "E   AssertionError: assert {'logical_ste...arts': 0, ...} == {'attempts_pe...arts': 0, ...}\nE\nE     Omitting 15 identical items, use -vv to show\nE     Left contains 7 more items:\nE     {'artifact_bytes': 268435456,"
+    },
+    {
+      "nodeid": "tests/unit/test_context_goal_copy_targets.py::test_sampling_intake_defers_inputs_but_preserves_specification_and_restores_planning_evidence",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_goal_copy_targets.py::test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals[mixed_energy]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_protocol_literals.py::test_actual_error_shapes_use_one_bounded_correction_without_any_tool",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   AssertionError: assert [{'loc': ['co...a_forbidden'}] == [{'type': 'ex...c': ['type']}]\nE\nE     At index 0 diff: {'loc': ['control_generation'], 'type': 'extra_forbidden'} != {'type': 'extra_forbidden', 'loc': ['type']}\nE     Left contains 5 more items, first extra item: {'loc': ['permission_version'], 'type': 'extra_forbidden'}\nE     Use -v to get more diff",
+      "current_failure": "E   AssertionError: assert [{'loc': ['co...a_forbidden'}] == [{'type': 'ex...c': ['type']}]\nE\nE     At index 0 diff: {'loc': ['control_generation'], 'type': 'extra_forbidden'} != {'type': 'extra_forbidden', 'loc': ['type']}\nE     Left contains 5 more items, first extra item: {'loc': ['permission_version'], 'type': 'extra_forbidden'}\nE     Use -v to get more diff"
+    },
+    {
+      "nodeid": "tests/unit/test_context_protocol_literals.py::test_planning_omits_only_normalization_template_and_later_intake_restores_it",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_protocol_literals.py::test_fixed_e2e_with_longer_descriptive_goal_keys_keeps_original_scope[water]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   AssertionError: {'kind': 'offline_scripted_capacity_not_real_model_or_science', 'system': 'water', 'text': '没有XYZ。请取得水分子的初始几何，以气相 RHF/...xtra_orca_starts': 0, ...}, 'defaults': {'method': 'HF', 'basis': 'STO-3G', 'charge': 0, 'multiplicity': 1, ...}}, ...}\nE   assert (1 == 5)\nE    +  where 1 = len([{'stage': 'normalize', 'system_bytes': 334, 'user_bytes': 10196, 'wire_top_level_bytes': {'ACTION_SCHEMAS': 2757, 'AUTHORITY': 3302, 'CONTROL': 2, 'DATA': 104, ...}, ...}])",
+      "current_failure": "E   AssertionError: {'kind': 'offline_scripted_capacity_not_real_model_or_science', 'system': 'water', 'text': '没有XYZ。请取得水分子的初始几何，以气相 RHF/...xtra_orca_starts': 0, ...}, 'defaults': {'method': 'HF', 'basis': 'STO-3G', 'charge': 0, 'multiplicity': 1, ...}}, ...}\nE   assert (1 == 5)\nE    +  where 1 = len([{'stage': 'normalize', 'system_bytes': 334, 'user_bytes': 10197, 'wire_top_level_bytes': {'ACTION_SCHEMAS': 2757, 'AUTHORITY': 3303, 'CONTROL': 2, 'DATA': 104, ...}, ...}])"
+    },
+    {
+      "nodeid": "tests/unit/test_context_protocol_literals.py::test_fixed_water_development_resolve_feedback_allows_one_format_correction",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   AssertionError: {'kind': 'offline_scripted_capacity_not_real_model_or_science', 'system': 'water', 'text': '没有XYZ。请取得水分子的初始几何，以气相 RHF/...xtra_orca_starts': 0, ...}, 'defaults': {'method': 'HF', 'basis': 'STO-3G', 'charge': 0, 'multiplicity': 1, ...}}, ...}\nE   assert (1 == 6)\nE    +  where 1 = len([{'stage': 'normalize', 'system_bytes': 334, 'user_bytes': 10196, 'wire_top_level_bytes': {'ACTION_SCHEMAS': 2757, 'AUTHORITY': 3302, 'CONTROL': 2, 'DATA': 104, ...}, ...}])",
+      "current_failure": "E   AssertionError: {'kind': 'offline_scripted_capacity_not_real_model_or_science', 'system': 'water', 'text': '没有XYZ。请取得水分子的初始几何，以气相 RHF/...xtra_orca_starts': 0, ...}, 'defaults': {'method': 'HF', 'basis': 'STO-3G', 'charge': 0, 'multiplicity': 1, ...}}, ...}\nE   assert (1 == 6)\nE    +  where 1 = len([{'stage': 'normalize', 'system_bytes': 334, 'user_bytes': 10197, 'wire_top_level_bytes': {'ACTION_SCHEMAS': 2757, 'AUTHORITY': 3303, 'CONTROL': 2, 'DATA': 104, ...}, ...}])"
+    },
+    {
+      "nodeid": "tests/unit/test_context_protocol_literals.py::test_fixed_water_long_goal_keys_and_development_correction_fit_together",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   AssertionError: {'kind': 'offline_scripted_capacity_not_real_model_or_science', 'system': 'water', 'text': '没有XYZ。请取得水分子的初始几何，以气相 RHF/...xtra_orca_starts': 0, ...}, 'defaults': {'method': 'HF', 'basis': 'STO-3G', 'charge': 0, 'multiplicity': 1, ...}}, ...}\nE   assert (1 == 6)\nE    +  where 1 = len([{'stage': 'normalize', 'system_bytes': 334, 'user_bytes': 10197, 'wire_top_level_bytes': {'ACTION_SCHEMAS': 2757, 'AUTHORITY': 3303, 'CONTROL': 2, 'DATA': 104, ...}, ...}])",
+      "current_failure": "E   AssertionError: {'kind': 'offline_scripted_capacity_not_real_model_or_science', 'system': 'water', 'text': '没有XYZ。请取得水分子的初始几何，以气相 RHF/...xtra_orca_starts': 0, ...}, 'defaults': {'method': 'HF', 'basis': 'STO-3G', 'charge': 0, 'multiplicity': 1, ...}}, ...}\nE   assert (1 == 6)\nE    +  where 1 = len([{'stage': 'normalize', 'system_bytes': 334, 'user_bytes': 10197, 'wire_top_level_bytes': {'ACTION_SCHEMAS': 2757, 'AUTHORITY': 3303, 'CONTROL': 2, 'DATA': 104, ...}, ...}])"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_actual_failed_context_fits_without_changing_authority_data_or_tool_contract",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   AssertionError: Regex pattern did not match.\nE     Expected regex: '12000 global bound'\nE     Actual message: 'required model context exceeds the configured global input bound, Run input limit, or remaining token reservation'",
+      "current_failure": "E   AssertionError: Regex pattern did not match.\nE     Expected regex: '12000 global bound'\nE     Actual message: 'required model context exceeds the configured global input bound, Run input limit, or remaining token reservation'"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_post_result_and_deadline_clock_widths_fit_without_changing_facts[None]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_post_result_and_deadline_clock_widths_fit_without_changing_facts[1790.001]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_post_result_and_deadline_clock_widths_fit_without_changing_facts[1000.001]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_post_result_and_deadline_clock_widths_fit_without_changing_facts[999.999]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_post_result_and_deadline_clock_widths_fit_without_changing_facts[100.001]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_post_result_and_deadline_clock_widths_fit_without_changing_facts[99.999]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_post_result_and_deadline_clock_widths_fit_without_changing_facts[10.001]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_post_result_and_deadline_clock_widths_fit_without_changing_facts[9.999]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_post_result_and_deadline_clock_widths_fit_without_changing_facts[1.001]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_post_result_and_deadline_clock_widths_fit_without_changing_facts[0.001]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[stop-parameters0-True]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[stop-parameters1-True]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[stop-parameters2-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[stop-parameters3-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[stop-parameters4-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[clarify-parameters5-True]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[clarify-parameters6-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[clarify-parameters7-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[clarify-parameters8-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[clarify-parameters9-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[clarify-parameters10-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[clarify-parameters11-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[clarify-parameters12-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_old_and_compact_action_parameter_schemas_agree_with_program_validation[clarify-parameters13-False]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_both_actions_still_require_exactly_the_eight_envelope_fields[clarify]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_context_terminal_replay.py::test_both_actions_still_require_exactly_the_eight_envelope_fields[stop]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "current_failure": "E   orca_agent.context.ContextLimitError: required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_actual_v06_all_required_facts_fit_eight_thousand_without_relabeling_failure[None]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_actual_v06_all_required_facts_fit_eight_thousand_without_relabeling_failure[1790.001]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_actual_v06_all_required_facts_fit_eight_thousand_without_relabeling_failure[1000.001]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_actual_v06_all_required_facts_fit_eight_thousand_without_relabeling_failure[99.999]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_actual_v06_all_required_facts_fit_eight_thousand_without_relabeling_failure[10.001]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_actual_v06_all_required_facts_fit_eight_thousand_without_relabeling_failure[0.001]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_terminal_correction_long_ids_chinese_provenance_and_two_source_messages_fit_declared_boundary",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_unrelated_processed_history_does_not_grow_terminal_context",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_capacity_overflow_refuses_instead_of_summarizing_required_original",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_snapshot_science_fingerprint_is_unchanged_by_model_settlement_and_time",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_extra_and_missing_contract_fields_remain_invalid_after_schema_roundtrip",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_passed_check_counts_retain_rules_and_every_nonpassing_detail",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   KeyError: 'knowledge_queries'",
+      "current_failure": "E   KeyError: 'knowledge_queries'"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_planning_schema_transport_and_raw_array_sidecar_report_roundtrip",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   AssertionError: [{'category': 'ContextLimitError', 'message': 'required model context exceeds the configured global input bound, Run input limit, or remaining token reservation', 'environment_occupied': False}]\nE   assert 'failed' == 'completed'\nE\nE     - completed\nE     + failed",
+      "current_failure": "E   AssertionError: [{'category': 'ContextLimitError', 'message': 'required model context exceeds the configured global input bound, Run input limit, or remaining token reservation', 'environment_occupied': False}]\nE   assert 'failed' == 'completed'\nE\nE     - completed\nE     + failed"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_input_chain_grouped_condition_provenance_roundtrips_without_store_decoder",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   FileNotFoundError: [Errno 2] No such file or directory: 'config.text.example.toml'",
+      "current_failure": "E   AssertionError: assert 12075 <= 12000\nE    +  where 12075 = PreparedRequest(request_hash='956df7993f86d1b803feaaa3b30ea06a7d185a69ce070de253dbeb30c22d6a26', input_token_bound=120...es=32768, messages=64), model='deepseek-flash', sdk_version='2.28.0', token_bound_version='deepseek-v41-utf8-upper-v2').input_token_bound"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_fixed_science_terminal_shapes_fit_with_all_outputs_and_source_conditions[water_opt-orca.opt-ports0-ordinary]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   AssertionError: assert (10749 <= 10000)\nE    +  where 10749 = PreparedRequest(request_hash='5c7197dbe61c0182b7370bcb44a0eda41dc5fb9a3211a8e5ba13365d88e8cad6', input_token_bound=107...es=32768, messages=64), model='deepseek-flash', sdk_version='2.28.0', token_bound_version='deepseek-v41-utf8-upper-v2').input_token_bound",
+      "current_failure": "E   AssertionError: assert (10749 <= 10000)\nE    +  where 10749 = PreparedRequest(request_hash='edfd62831f2cb87a723484110f02d8d06831d5b44866f3f6e0d5c058dc812347', input_token_bound=107...es=32768, messages=64), model='deepseek-flash', sdk_version='2.28.0', token_bound_version='deepseek-v41-utf8-upper-v2').input_token_bound"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_fixed_science_terminal_shapes_fit_with_all_outputs_and_source_conditions[water_opt-orca.opt-ports1-correction]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   AssertionError: assert (10861 <= 10000)\nE    +  where 10861 = PreparedRequest(request_hash='07be4c7c4485afad47d822a8b234f8d83d7376bc61c80bc0da771d8cd831f5be', input_token_bound=108...es=32768, messages=64), model='deepseek-flash', sdk_version='2.28.0', token_bound_version='deepseek-v41-utf8-upper-v2').input_token_bound",
+      "current_failure": "E   AssertionError: assert (10861 <= 10000)\nE    +  where 10861 = PreparedRequest(request_hash='1c956ede7199ce4bad0dd3dc72dcd22b248f8ce929c91848e33a379ba6fff92c', input_token_bound=108...es=32768, messages=64), model='deepseek-flash', sdk_version='2.28.0', token_bound_version='deepseek-v41-utf8-upper-v2').input_token_bound"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_fixed_science_terminal_shapes_fit_with_all_outputs_and_source_conditions[water_opt-orca.opt-ports2-long_identity_and_source]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   AssertionError: assert (10840 <= 10000)\nE    +  where 10840 = PreparedRequest(request_hash='44da690c2631edaf6401b3a93a2c166c77002785a58cef9be0c9f6c8b3e9bc5f', input_token_bound=108...es=32768, messages=64), model='deepseek-flash', sdk_version='2.28.0', token_bound_version='deepseek-v41-utf8-upper-v2').input_token_bound",
+      "current_failure": "E   AssertionError: assert (10840 <= 10000)\nE    +  where 10840 = PreparedRequest(request_hash='409d90ec6dae05e812189cbbc59b2ce7dd98b9803dfe966918dfad11a00e0cee', input_token_bound=108...es=32768, messages=64), model='deepseek-flash', sdk_version='2.28.0', token_bound_version='deepseek-v41-utf8-upper-v2').input_token_bound"
+    },
+    {
+      "nodeid": "tests/unit/test_decision_purpose_capacity.py::test_fixed_science_terminal_shapes_fit_with_all_outputs_and_source_conditions[methane_sp-orca.sp-ports3-ordinary]",
+      "baseline_evidence": "baseline-representative-001.json",
+      "current_evidence": "current-representative-001.json",
+      "baseline_failure": "E   AssertionError: assert (10519 <= 10000)\nE    +  where 10519 = PreparedRequest(request_hash='604393865e99d5ea7996b3d36261089b222538047e060f11df7f9a30eff42b03', input_token_bound=105...es=32768, messages=64), model='deepseek-flash', sdk_version='2.28.0', token_bound_version='deepseek-v41-utf8-upper-v2').input_token_bound",
+      "current_failure": "E   AssertionError: assert (10518 <= 10000)\nE    +  where 10518 = PreparedRequest(request_hash='eb416ea44d403526321ccff217fc53d5cc904f04497358bbcf746ac2013f6f8a', input_token_bound=105...es=32768, messages=64), model='deepseek-flash', sdk_version='2.28.0', token_bound_version='deepseek-v41-utf8-upper-v2').input_token_bound"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-array_pending]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-array_final]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-import_initial]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-import_final]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-comparison_basis]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-comparison_unknown]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-v14_array_initial]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-v14_array_first_rejection]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-v14_array_second_rejection]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-v15_unknown_initial]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-v15_unknown_clarify_rejected]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[disabled-v15_unknown_clarify_accepted]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-array_pending]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-array_final]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-import_initial]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-import_final]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-comparison_basis]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-comparison_unknown]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-v14_array_initial]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-v14_array_first_rejection]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-v14_array_second_rejection]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-v15_unknown_initial]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-v15_unknown_clarify_rejected]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_fact_contract.py::test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence[thinking_low-v15_unknown_clarify_accepted]",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}",
+      "current_failure": "E   AssertionError: assert {'version': 1...ores': 4, ...} == {'version': 1...ores': 4, ...}\nE\nE     Omitting 12 identical items, use -vv to show\nE     Left contains 1 more item:\nE     {'code_execution': False}"
+    },
+    {
+      "nodeid": "tests/unit/test_context_clarification_scope.py::test_real_v5_post_normalization_context_keeps_explicit_scope_and_unknown_unit_without_mutation",
+      "baseline_evidence": "baseline-replays-001.json",
+      "current_evidence": "current-replays-compact-001.json",
+      "baseline_failure": "E   AssertionError: assert {'id': 'reque...arge': 0, ...} == {'id': 'reque...arge': 0, ...}\nE\nE     Omitting 13 identical items, use -vv to show\nE     Differing items:\nE     {'goals': [{'id': 'goal_energy', 'port': 'energy', 'required': True, 'minimum_check_version': 'orca-hf-2', ...}]} != {'goals': [{'id': 'goal_energy', 'port': 'energy', 'required': True, 'minimum_check_version': 'orca-hf-2', ...}]}",
+      "current_failure": "E   AssertionError: assert {'id': 'reque...arge': 0, ...} == {'id': 'reque...arge': 0, ...}\nE\nE     Omitting 13 identical items, use -vv to show\nE     Differing items:\nE     {'goals': [{'id': 'goal_energy', 'port': 'energy', 'required': True, 'minimum_check_version': 'orca-hf-2', ...}]} != {'goals': [{'id': 'goal_energy', 'port': 'energy', 'required': True, 'minimum_check_version': 'orca-hf-2', ...}]}"
+    }
+  ],
+  "sources": [
+    {
+      "path": "baseline-head.zip",
+      "sha256": "379f910aac18fee85ce918afbdea3729521478d83e76e0dc06994b5f85670cd7",
+      "bytes": 1475469
+    },
+    {
+      "path": "baseline-fixtures.zip",
+      "sha256": "321a204fa34568ab111bddd8da611213a5d44b2bdcd56a682c0a18e8367025ae",
+      "bytes": 18938
+    },
+    {
+      "path": "baseline-context-001.json",
+      "sha256": "24c3aa82f1e8fee9cbc0795a3e9ec5796f86458d9bc3a29d500cbaaa4c26a111",
+      "bytes": 24685
+    },
+    {
+      "path": "baseline-context-001.log",
+      "sha256": "2495a8c10c9753dc0154c3d3b487e24e56a07d7615d88588cd16133475bcc845",
+      "bytes": 15541
+    },
+    {
+      "path": "baseline-context-002.json",
+      "sha256": "90c371399dcf0364208362020c4b4e4efd0b8a0032117c8a375447abbf9d3bb5",
+      "bytes": 16131
+    },
+    {
+      "path": "baseline-context-002.log",
+      "sha256": "0ec4e40057535422ce286dcbc266c3b74659b868d5e261540a0fbc79871323c7",
+      "bytes": 6384
+    },
+    {
+      "path": "current-context-001.json",
+      "sha256": "5ce2929bf8556a7c2a6b88dadd572962490dc8fe0accf3ca3dac4dfcfc38b1e9",
+      "bytes": 17291
+    },
+    {
+      "path": "current-context-001.log",
+      "sha256": "a1da4683a12ef8bf02941bc19fb70b9ed9651da724aff3d7efe92effa16ad7aa",
+      "bytes": 8074
+    },
+    {
+      "path": "current-context-compact-001.json",
+      "sha256": "ead3eac43295f327fab16808a79720cce260c89898e203f0b0ad8b276f578611",
+      "bytes": 18919
+    },
+    {
+      "path": "current-context-compact-001.log",
+      "sha256": "ba2d3f3cbf9368592a631d3f06a7a08deb6085f89812b17e5cedb1862bd16b84",
+      "bytes": 6221
+    },
+    {
+      "path": "baseline-representative-001.json",
+      "sha256": "27b7de7d9bd865d9ddf68630331b422d04c2c6959280efc32e6bef1f2387c343",
+      "bytes": 66788
+    },
+    {
+      "path": "baseline-representative-001.log",
+      "sha256": "241cde6fabb9563382600dded4bc45d592dcb235cd920f3c4c16c0d8e2c478b1",
+      "bytes": 47621
+    },
+    {
+      "path": "current-representative-001.json",
+      "sha256": "fc8dc40a2626f137d3c8ace2efab1e43e8cea1ec8fa5b5dafd4da49df6cc01be",
+      "bytes": 67916
+    },
+    {
+      "path": "current-representative-001.log",
+      "sha256": "eee3537bc991c7c4475be61bc8a7132966ab67916175ed50c9365755e0eda709",
+      "bytes": 49273
+    },
+    {
+      "path": "baseline-replays-001.json",
+      "sha256": "809b1106b899958782f90f7965ad4ed272bd8b87c0ada3d208a5d4c80ac52176",
+      "bytes": 22572
+    },
+    {
+      "path": "baseline-replays-001.log",
+      "sha256": "7af8e381e41f4ec7703c93292b116102909d3b82cb9149fbdad5f55fbc1029d4",
+      "bytes": 22207
+    },
+    {
+      "path": "current-replays-compact-001.json",
+      "sha256": "405ab303202665fa07d0315e93d4e5e24e1ac8d29dd8e13108c300c5523cda26",
+      "bytes": 22396
+    },
+    {
+      "path": "current-replays-compact-001.log",
+      "sha256": "799e94bc371177d689704d22827b1ce8aa88069d1c87d666a198a77616e14205",
+      "bytes": 22003
+    },
+    {
+      "path": "baseline-replay-fixtures.json",
+      "sha256": "ca708e57ed83001587f40172c38fdd568dc1f248034ab5c0a0a5f092d00b5cb3",
+      "bytes": 51507
+    },
+    {
+      "path": "baseline-passing-nodeids.json",
+      "sha256": "db83edbbf7afd17cf11a0600439ed093567458d5961831dbe32cda0357037861",
+      "bytes": 14557
+    },
+    {
+      "path": "current-baseline-passing-compact-001.json",
+      "sha256": "85d12cb22bd46680b39bfadb49c80f426969baf62162fd956e9b3718afc88463",
+      "bytes": 45742
+    },
+    {
+      "path": "current-baseline-passing-compact-001.log",
+      "sha256": "aaad3f9d2aa470d7a193906460c9bff1e79c0cdba199f084b38f625e3415df66",
+      "bytes": 14689
+    },
+    {
+      "path": "run_baseline_tests.py",
+      "sha256": "031690ad33b6c60e9e898734ea4404a7520fb0dc542e4211a45830611ce22958",
+      "bytes": 2631
+    }
+  ],
+  "limitations": [
+    "Representative comparison, not the complete unit suite; unit-final-001.log belongs to a separate concurrently running root test command and is not classified here.",
+    "The current virtualenv dependencies were reused for both sides; a historical dependency environment was not rebuilt.",
+    "The first baseline-context-001 run lacked one tracked reference JSON and has two artificial missing-file failures; only corrected baseline-context-002 is used for classification.",
+    "Ignored historical Run JSON was copied byte-for-byte only for explicit replay tests; it is not part of the HEAD git archive.",
+    "current-representative-001 imported the then-current registry before the compact edit; its older runner captured file hashes at completion. Use it for observed failures, not as an immutable loaded-source fingerprint. Final-targeted and replay runs capture source hashes at startup.",
+    "All 87 baseline failures were also observed on current code before the compact edit or in the subsequent replay comparison. The final run reran all 118 baseline-passing cases and managed tests; it does not claim to repair the historical failures.",
+    "No real model, ORCA, or Docker execution occurred in this comparison."
+  ]
+}

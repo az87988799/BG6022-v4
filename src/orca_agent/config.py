@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from orca_agent.models import (
     BudgetLimits,
+    ExecutionConfiguration,
     ModelLimits,
     PermissionSnapshot,
     ResourceLimits,
@@ -38,10 +39,11 @@ class Config(BaseModel):
     resources: ResourceLimits = Field(default_factory=ResourceLimits)
     model: ModelLimits = Field(default_factory=ModelLimits)
     text: TextProfile = Field(default_factory=TextProfile)
+    execution: ExecutionConfiguration = Field(default_factory=ExecutionConfiguration)
 
     def run_configuration(self) -> RunConfiguration:
         return RunConfiguration(resources=self.resources, model=self.model,
-                                model_profile=self.model_profile)
+                                model_profile=self.model_profile, execution=self.execution)
 
 
 def load_config(path: Path | None = None) -> Config:
@@ -49,9 +51,10 @@ def load_config(path: Path | None = None) -> Config:
     if path is not None:
         with path.open("rb") as stream:
             values = tomllib.load(stream)
-    for key, command in (("orca_path", "orca"), ("mpi_path", "mpiexec")):
-        if key not in values and (found := shutil.which(command)):
-            values[key] = found
+    if values.get("execution", {}).get("backend", "windows-lpac") == "windows-lpac":
+        for key, command in (("orca_path", "orca"), ("mpi_path", "mpiexec")):
+            if key not in values and (found := shutil.which(command)):
+                values[key] = found
     config = Config.model_validate(values)
     for name in ("orca_path", "mpi_path", "data_root"):
         value = getattr(config, name)

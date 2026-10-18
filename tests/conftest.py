@@ -12,10 +12,13 @@ import pytest
 def pytest_addoption(parser):
     parser.addoption("--live-orca", action="store_true", help="Enable real ORCA evidence tests")
     parser.addoption("--live-model", action="store_true", help="Enable bounded DeepSeek HTTPS tests")
+    parser.addoption("--live-container", action="store_true", help="Enable the frozen local Linux container")
 
 
 def pytest_collection_modifyitems(config, items):
     for item in items:
+        if item.get_closest_marker("container") and not config.getoption("--live-container"):
+            item.add_marker(pytest.mark.skip(reason="real container not enabled; unverified"))
         if item.get_closest_marker("model") or item.get_closest_marker("e2e"):
             if not config.getoption("--live-model"):
                 item.add_marker(pytest.mark.skip(reason="real model not enabled; unverified"))
@@ -32,6 +35,9 @@ def execution_boundary(request, monkeypatch):
 
     model = request.node.get_closest_marker("model") or request.node.get_closest_marker("e2e")
     science = request.node.get_closest_marker("live") or request.node.get_closest_marker("e2e")
+    container = request.node.get_closest_marker("container")
+    if container and not request.config.getoption("--live-container"):
+        pytest.skip("real container not enabled; unverified")
     if model and request.config.getoption("--live-model"):
         if not os.environ.get("DEEPSEEK_API_KEY"):
             pytest.skip("model key missing; unverified")
@@ -67,9 +73,9 @@ def execution_boundary(request, monkeypatch):
     if science:
         if not request.config.getoption("--live-orca"):
             pytest.skip("real ORCA not enabled; unverified")
-        if not Path(os.environ.get("ORCA_AGENT_ORCA", "E:/orca/orca.exe")).is_file():
+        if not container and not Path(os.environ.get("ORCA_AGENT_ORCA", "E:/orca/orca.exe")).is_file():
             pytest.skip("ORCA missing; scientific behavior unverified")
-    elif not request.node.get_closest_marker("backend"):
+    elif not request.node.get_closest_marker("backend") and not container:
         monkeypatch.setattr(subprocess, "Popen", denied)
         monkeypatch.setattr(os, "system", denied)
         monkeypatch.setattr(os, "popen", denied)

@@ -1,0 +1,234 @@
+{
+  "report_kind": "independent_local_evidence_audit",
+  "schema_version": 1,
+  "scope": "Development-only resource-001 evidence; no Docker invocation or new execution during this audit.",
+  "conclusion": {
+    "shared_cgroup_memory_limit_oom_observed": true,
+    "two_allocators_same_cgroup_observed": true,
+    "surviving_parent_cleaned_and_reaped_children": true,
+    "whole_group_automatic_oom_cleanup_proven": false,
+    "parent_hard_death_cleanup_proven": false,
+    "full_security_boundary_accepted": false,
+    "step2_accepted": false,
+    "scientific_result": false
+  },
+  "identity": {
+    "container_id": "82496ddee239a27b3095acb2eed1adf1079f5e48820db7a0a1097f32373e3afc",
+    "container_name": "/orca-agent-resource-proof-20261018-001",
+    "image_id": "sha256:e972e01af6462cfd76e38dfaf045550d26017d336f57349eae65d19c92fc97f5",
+    "executed_probe_sha256": "6c0b308cdcdb9dd069c0a15a46fe07b482ee57c146a244bbb686a9032ce483e3",
+    "executed_command_matches_current_source": true
+  },
+  "create_timeout_reconciliation": {
+    "declared_client_timeout_seconds": 20,
+    "declared_reconciliation": "same container confirmed created, never started",
+    "before_start_state": {
+      "Status": "created",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "0001-01-01T00:00:00Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "final_state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": true,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-18T11:05:38.160753641Z",
+      "FinishedAt": "2026-10-18T11:05:42.04667373Z"
+    },
+    "same_container_and_configuration": true,
+    "host_config_representation_difference": {
+      "OomKillDisable": {
+        "created": false,
+        "finished": null
+      }
+    },
+    "limitation": "The saved inspect proves the same container was created with PID 0 and zero StartedAt before later start. The 20-second client timeout duration is declared in run.json; the original client invocation, timeout stderr, and timing trace are not present in these resource-001 files."
+  },
+  "observations": {
+    "parent_pid": 8,
+    "child_pids": [
+      9,
+      10
+    ],
+    "cgroup": {
+      "membership": "0::/",
+      "device": 25,
+      "inode": 4687,
+      "limits": {
+        "memory.max": "1073741824",
+        "memory.swap.max": "0",
+        "pids.max": "128",
+        "memory.oom.group": "0"
+      }
+    },
+    "requested_bytes_per_child": 629145600,
+    "total_requested_bytes": 1258291200,
+    "parent_requested_bytes": 0,
+    "before": {
+      "events": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      },
+      "peak": 19861504,
+      "current": 19861504
+    },
+    "after": {
+      "events": {
+        "low": 0,
+        "high": 0,
+        "max": 1637,
+        "oom": 3,
+        "oom_kill": 1,
+        "oom_group_kill": 0
+      },
+      "peak": 1073741824,
+      "current": 16445440
+    },
+    "events_delta": {
+      "low": 0,
+      "high": 0,
+      "max": 1637,
+      "oom": 3,
+      "oom_kill": 1,
+      "oom_group_kill": 0
+    },
+    "child_touched": [
+      {
+        "event": "child_touched",
+        "pid": 9,
+        "touched_bytes": 629145600
+      }
+    ],
+    "returncodes": {
+      "10": -9,
+      "9": 2
+    },
+    "cleanup_signals": {
+      "9": [
+        15
+      ]
+    },
+    "unreaped_children": [],
+    "probe_error": null,
+    "event_counts": {
+      "preflight": 1,
+      "child_ready": 2,
+      "children_released": 1,
+      "monitor": 11,
+      "child_touched": 1,
+      "child_error": 1,
+      "final": 1
+    },
+    "host_client_exit": 0,
+    "container_exit": 0,
+    "container_oom_killed": true,
+    "stderr_bytes": 0
+  },
+  "configuration_readback": {
+    "user": "10001:10001",
+    "entrypoint": [
+      "/usr/bin/timeout",
+      "--signal=TERM",
+      "--kill-after=2s",
+      "18s"
+    ],
+    "host_config": {
+      "Memory": 1073741824,
+      "MemorySwap": 1073741824,
+      "NanoCpus": 4000000000,
+      "CpusetCpus": "0-3",
+      "PidsLimit": 128,
+      "CgroupnsMode": "private",
+      "NetworkMode": "none",
+      "ReadonlyRootfs": true,
+      "CapDrop": [
+        "ALL"
+      ],
+      "SecurityOpt": [
+        "no-new-privileges=true"
+      ],
+      "Privileged": false,
+      "Binds": null,
+      "Mounts": null,
+      "Devices": [],
+      "Tmpfs": {
+        "/tmp": "rw,noexec,nosuid,nodev,size=128m,mode=1777"
+      },
+      "RestartPolicy": {
+        "Name": "no",
+        "MaximumRetryCount": 0
+      },
+      "Init": true
+    }
+  },
+  "interpretation_limits": [
+    "Both children requested 600 MiB; only PID 9 logged completing all page touches. Simultaneously resident 1.2 GiB is not established and is not expected under a 1 GiB cgroup limit.",
+    "memory.peak reached exactly 1073741824 bytes. memory.events max=1637 counts events, not bytes of overage; oom=3 is not a count of killed processes; oom_kill=1 records one OOM victim.",
+    "PID 10 return code -9 without a supervisor cleanup signal is consistent with the observed OOM kill. No per-PID kernel OOM log was provided, so victim attribution is an inference.",
+    "PID 9 received supervisor SIGTERM and exited 2. memory.oom.group=0 and oom_group_kill=0 do not demonstrate automatic whole-group OOM termination.",
+    "parent_requested_bytes=0 means no intentional large parent allocation, not zero parent memory usage. The parent stayed alive and explicitly reaped both children.",
+    "The source installs child PDEATHSIG but this run does not exercise parent or trusted-host hard death, daemon restart, disk failure, production lease recovery, or unknown-state reconciliation.",
+    "The source accepts 0::/ and /.dockerenv as part of its preflight; those alone do not prove namespace security. Saved HostConfig separately reports a private cgroup namespace.",
+    "Probe exit 0 means its expected OOM observation completed. Container OOMKilled=true must remain failure evidence for production scientific work even when ExitCode=0.",
+    "Source exit predicate checks OOM counters and reaping, but does not itself require final.error to be null; this audit explicitly verified final.error is null in the actual run.",
+    "No CPU contention benchmark, pids exhaustion, wall-time cancellation failure, source/credential canary, Python child-process restriction, SDK boundary, or complete production integration is verified here."
+  ],
+  "evidence_files": [
+    {
+      "path": "data/container-proof-20261018/resource-001-run.json",
+      "bytes": 675,
+      "sha256": "642a61aecd74f1153e2ce29461f79ed719855c3a6232dbfbd29d6a4040f9f6a9"
+    },
+    {
+      "path": "data/container-proof-20261018/resource-001-create-reconcile.json",
+      "bytes": 25209,
+      "sha256": "12d8bf25419855f572370493d7d2f61a8432566a1e875cf6fb8992f7b19f1ae7"
+    },
+    {
+      "path": "data/container-proof-20261018/resource-001-inspect.json",
+      "bytes": 25754,
+      "sha256": "7ff36370ae2a4f74989b5ebb75e1377d4ecf9be79ccd800a6d100e98d1030f8c"
+    },
+    {
+      "path": "data/container-proof-20261018/resource-001-stdout.txt",
+      "bytes": 4006,
+      "sha256": "8b3836299697ca60d2d318026697c0608dcce917e7ad47b77ede1eb48c9481b3"
+    },
+    {
+      "path": "data/container-proof-20261018/resource-001-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/container-proof-20261018/mpi-image-with-python.json",
+      "bytes": 3735,
+      "sha256": "110c73c4475bc8af906af69e7f539f95434ffce1272f9271060828cd8bc1feff"
+    },
+    {
+      "path": "scripts/container_probe/resource_probe.py",
+      "bytes": 8141,
+      "sha256": "6c0b308cdcdb9dd069c0a15a46fe07b482ee57c146a244bbb686a9032ce483e3"
+    }
+  ],
+  "unchanged_prior_report": {
+    "path": "data/container-proof-20261018/mpi-verification.json",
+    "sha256": "3c80a68de546f97a318b90eb4c191c7f075f36f885ffe3a49b71f79e491a721d"
+  }
+}

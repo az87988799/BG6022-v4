@@ -116,7 +116,7 @@ def test_legacy_run_read_preserves_absent_config_and_historical_bytes(tmp_path):
 def test_configuration_versions_missing_snapshot_and_invalid_copy_fail(tmp_path):
     store, run, _, _ = make_science(tmp_path)
     with pytest.raises(ValidationError):
-        RunConfiguration(version=2)
+        RunConfiguration(version=3)
     invalid = RunConfiguration(resources=ResourceLimits().model_copy(update={"max_cores": 0}))
     with pytest.raises(ValidationError):
         store.create_run(store.load_request(run), None, run.permission, configuration=invalid)

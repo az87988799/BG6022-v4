@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="6" skipped="0" tests="13" time="146.572" timestamp="2026-10-18T19:37:41.458218+08:00" hostname="AZ"><testcase classname="tests.live.test_container_lifecycle" name="test_coordinator_hard_exit_keeper_stops_task_and_recovery_never_replays" time="26.872" /><testcase classname="tests.live.test_container_lifecycle" name="test_two_stores_share_environment_quota_without_second_container" time="14.263" /><testcase classname="tests.live.test_container_lifecycle" name="test_lost_create_ack_reconciles_same_intent_without_start[after_container_created]" time="6.694" /><testcase classname="tests.live.test_container_lifecycle" name="test_lost_create_ack_reconciles_same_intent_without_start[after_boundary_saved]" time="6.834" /><testcase classname="tests.live.test_container_attacks" name="test_real_host_source_and_credential_canaries_and_host_socket_denied" time="9.232" /><testcase classname="tests.live.test_container_attacks" name="test_actual_broker_rejects_malicious_schema_before_reservation[forged_authority]" time="9.260"><failure message="AssertionError: assert {'error': 'ma..., 'files': {}} == {'error': 'ma... SDK request'}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Left contains 1 more item:&#10;  {'files': {}}&#10;  Use -v to get more diff">tmp_path = WindowsPath('E:/BG6022-V4/data/container-proof-20261018/live-security-001/test_actual_broker_rejects_mal0')
+case = 'forged_authority'
+
+    @pytest.mark.parametrize("case", ["forged_authority", "boolean_version", "dependency_traversal"])
+    def test_actual_broker_rejects_malicious_schema_before_reservation(tmp_path, case):
+        value = _request()
+        expected = "invalid bounded SDK request"
+        if case == "forged_authority":
+            value["permission"] = {"scientific_execution": True, "shell_execution": True}
+            value["command"] = "/bin/sh"
+        elif case == "boolean_version":
+            value["version"] = True
+        else:
+            value["dependencies"] = [
+                {
+                    "target_path": "../../escape.txt",
+                    "content_base64": base64.b64encode(b"escape-canary").decode(),
+                }
+            ]
+            expected = "unambiguous relative task path"
+        code = REQUEST_PREAMBLE + f"value={value!r}\nsubmit(value)\nreceipt=response()\n"
+        code += 'Path("attack.json").write_text(json.dumps({"request": value, "receipt": receipt}))\n'
+        code += f'assert {expected!r} in receipt.get("error", ""), receipt\n'
+        config, store, run, step = _request_task(tmp_path, code)
+        result, outcome = _science(store, config, run, step, {}, None, None)
+        evidence = save_evidence(tmp_path, run, result, outcome)
+        assert outcome["state"] == "completed", evidence
+        assert result.observations["evidence_collection_complete"], evidence
+        facts = _read_fact(store, result)
+&gt;       _assert_broker_receipt(store, run, facts)
+
+tests\live\test_container_attacks.py:256: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = &lt;orca_agent.store.Store object at 0x000001A873DA4F50&gt;
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...eopened_terminal_ids=[], agent_enabled=False, batch_category=None, input_bindings={}, science_baseline_policy='legacy')
+facts = {'request': {'version': 1, 'request_key': 'attack', 'input': '! RHF STO-3G TightSCF NoRI NoAutoStart\n%maxcore 192\n%p...pendencies': [], ...}, 'receipt': {'error': 'managed_orca_request_rejected: invalid bounded SDK request', 'files': {}}}
+
+    def _assert_broker_receipt(store, run, facts):
+        trusted = store.path(run.attempts[0].directory) / "responses/response.json"
+&gt;       assert facts["receipt"] == json.loads(trusted.read_bytes())
+E       AssertionError: assert {'error': 'ma..., 'files': {}} == {'error': 'ma... SDK request'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'files': {}}
+E         Use -v to get more diff
+
+tests\live\test_container_attacks.py:48: AssertionError</failure></testcase><testcase classname="tests.live.test_container_attacks" name="test_actual_broker_rejects_malicious_schema_before_reservation[boolean_version]" time="9.724"><failure message="AssertionError: assert {'error': 'ma..., 'files': {}} == {'error': 'ma... SDK request'}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Left contains 1 more item:&#10;  {'files': {}}&#10;  Use -v to get more diff">tmp_path = WindowsPath('E:/BG6022-V4/data/container-proof-20261018/live-security-001/test_actual_broker_rejects_mal1')
+case = 'boolean_version'
+
+    @pytest.mark.parametrize("case", ["forged_authority", "boolean_version", "dependency_traversal"])
+    def test_actual_broker_rejects_malicious_schema_before_reservation(tmp_path, case):
+        value = _request()
+        expected = "invalid bounded SDK request"
+        if case == "forged_authority":
+            value["permission"] = {"scientific_execution": True, "shell_execution": True}
+            value["command"] = "/bin/sh"
+        elif case == "boolean_version":
+            value["version"] = True
+        else:
+            value["dependencies"] = [
+                {
+                    "target_path": "../../escape.txt",
+                    "content_base64": base64.b64encode(b"escape-canary").decode(),
+                }
+            ]
+            expected = "unambiguous relative task path"
+        code = REQUEST_PREAMBLE + f"value={value!r}\nsubmit(value)\nreceipt=response()\n"
+        code += 'Path("attack.json").write_text(json.dumps({"request": value, "receipt": receipt}))\n'
+        code += f'assert {expected!r} in receipt.get("error", ""), receipt\n'
+        config, store, run, step = _request_task(tmp_path, code)
+        result, outcome = _science(store, config, run, step, {}, None, None)
+        evidence = save_evidence(tmp_path, run, result, outcome)
+        assert outcome["state"] == "completed", evidence
+        assert result.observations["evidence_collection_complete"], evidence
+        facts = _read_fact(store, result)
+&gt;       _assert_broker_receipt(store, run, facts)
+
+tests\live\test_container_attacks.py:256: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = &lt;orca_agent.store.Store object at 0x000001A8553C95D0&gt;
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...eopened_terminal_ids=[], agent_enabled=False, batch_category=None, input_bindings={}, science_baseline_policy='legacy')
+facts = {'request': {'version': True, 'request_key': 'attack', 'input': '! RHF STO-3G TightSCF NoRI NoAutoStart\n%maxcore 192\..., 'dependencies': []}, 'receipt': {'error': 'managed_orca_request_rejected: invalid bounded SDK request', 'files': {}}}
+
+    def _assert_broker_receipt(store, run, facts):
+        trusted = store.path(run.attempts[0].directory) / "responses/response.json"
+&gt;       assert facts["receipt"] == json.loads(trusted.read_bytes())
+E       AssertionError: assert {'error': 'ma..., 'files': {}} == {'error': 'ma... SDK request'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'files': {}}
+E         Use -v to get more diff
+
+tests\live\test_container_attacks.py:48: AssertionError</failure></testcase><testcase classname="tests.live.test_container_attacks" name="test_actual_broker_rejects_malicious_schema_before_reservation[dependency_traversal]" time="10.844"><failure message="AssertionError: assert {'error': 'ma..., 'files': {}} == {'error': 'ma.../value_error'}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Left contains 1 more item:&#10;  {'files': {}}&#10;  Use -v to get more diff">tmp_path = WindowsPath('E:/BG6022-V4/data/container-proof-20261018/live-security-001/test_actual_broker_rejects_mal2')
+case = 'dependency_traversal'
+
+    @pytest.mark.parametrize("case", ["forged_authority", "boolean_version", "dependency_traversal"])
+    def test_actual_broker_rejects_malicious_schema_before_reservation(tmp_path, case):
+        value = _request()
+        expected = "invalid bounded SDK request"
+        if case == "forged_authority":
+            value["permission"] = {"scientific_execution": True, "shell_execution": True}
+            value["command"] = "/bin/sh"
+        elif case == "boolean_version":
+            value["version"] = True
+        else:
+            value["dependencies"] = [
+                {
+                    "target_path": "../../escape.txt",
+                    "content_base64": base64.b64encode(b"escape-canary").decode(),
+                }
+            ]
+            expected = "unambiguous relative task path"
+        code = REQUEST_PREAMBLE + f"value={value!r}\nsubmit(value)\nreceipt=response()\n"
+        code += 'Path("attack.json").write_text(json.dumps({"request": value, "receipt": receipt}))\n'
+        code += f'assert {expected!r} in receipt.get("error", ""), receipt\n'
+        config, store, run, step = _request_task(tmp_path, code)
+        result, outcome = _science(store, config, run, step, {}, None, None)
+        evidence = save_evidence(tmp_path, run, result, outcome)
+        assert outcome["state"] == "completed", evidence
+        assert result.observations["evidence_collection_complete"], evidence
+        facts = _read_fact(store, result)
+&gt;       _assert_broker_receipt(store, run, facts)
+
+tests\live\test_container_attacks.py:256: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = &lt;orca_agent.store.Store object at 0x000001A87428A190&gt;
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...eopened_terminal_ids=[], agent_enabled=False, batch_category=None, input_bindings={}, science_baseline_policy='legacy')
+facts = {'request': {'version': 1, 'request_key': 'attack', 'input': '! RHF STO-3G TightSCF NoRI NoAutoStart\n%maxcore 192\n%p...y'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error", 'files': {}}}
+
+    def _assert_broker_receipt(store, run, facts):
+        trusted = store.path(run.attempts[0].directory) / "responses/response.json"
+&gt;       assert facts["receipt"] == json.loads(trusted.read_bytes())
+E       AssertionError: assert {'error': 'ma..., 'files': {}} == {'error': 'ma.../value_error'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'files': {}}
+E         Use -v to get more diff
+
+tests\live\test_container_attacks.py:48: AssertionError</failure></testcase><testcase classname="tests.live.test_container_attacks" name="test_actual_broker_denies_linked_request_file[symlink]" time="10.315"><failure message="assert {'error': &quot;ma..., 'files': {}} == {'error': &quot;ma...uest.json'\n&quot;}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Left contains 1 more item:&#10;  {'files': {}}&#10;  Use -v to get more diff">tmp_path = WindowsPath('E:/BG6022-V4/data/container-proof-20261018/live-security-001/test_actual_broker_denies_link0')
+kind = 'symlink'
+
+    @pytest.mark.parametrize("kind", ["symlink", "hardlink"])
+    def test_actual_broker_denies_linked_request_file(tmp_path, kind):
+        code = REQUEST_PREAMBLE + f"value={_request()!r}\nkind={kind!r}\n"
+        code += """payload = requests / "payload.json"
+    payload.write_text(json.dumps(value))
+    target = requests / "request.json"
+    if kind == "symlink":
+        target.symlink_to(payload)
+    else:
+        os.link(payload, target)
+    observed = {"is_symlink": target.is_symlink(), "nlink": target.stat().st_nlink}
+    receipt = response()
+    Path("attack.json").write_text(json.dumps({"kind": kind, "observed_link": observed,
+        "receipt": receipt}))
+    assert "mailbox read rejected" in receipt.get("error", ""), receipt
+    """
+        config, store, run, step = _request_task(tmp_path, code)
+        result, outcome = _science(store, config, run, step, {}, None, None)
+        evidence = save_evidence(tmp_path, run, result, outcome)
+        assert outcome["state"] == "completed", evidence
+        assert result.observations["evidence_collection_complete"], evidence
+        facts = _read_fact(store, result)
+&gt;       _assert_broker_receipt(store, run, facts)
+
+tests\live\test_container_attacks.py:284: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = &lt;orca_agent.store.Store object at 0x000001A87436D250&gt;
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...eopened_terminal_ids=[], agent_enabled=False, batch_category=None, input_bindings={}, science_baseline_policy='legacy')
+facts = {'kind': 'symlink', 'observed_link': {'is_symlink': True, 'nlink': 1}, 'receipt': {'error': 'managed_orca_request_reje...^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nOSError: [Errno 40] Too many levels of symbolic links: \'request.json\'\n', 'files': {}}}
+
+    def _assert_broker_receipt(store, run, facts):
+        trusted = store.path(run.attempts[0].directory) / "responses/response.json"
+&gt;       assert facts["receipt"] == json.loads(trusted.read_bytes())
+E       assert {'error': "ma..., 'files': {}} == {'error': "ma...uest.json'\n"}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'files': {}}
+E         Use -v to get more diff
+
+tests\live\test_container_attacks.py:48: AssertionError</failure></testcase><testcase classname="tests.live.test_container_attacks" name="test_actual_broker_denies_linked_request_file[hardlink]" time="11.010"><failure message="AssertionError: assert {'error': 'ma..., 'files': {}} == {'error': 'ma...-link file\n'}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Left contains 1 more item:&#10;  {'files': {}}&#10;  Use -v to get more diff">tmp_path = WindowsPath('E:/BG6022-V4/data/container-proof-20261018/live-security-001/test_actual_broker_denies_link1')
+kind = 'hardlink'
+
+    @pytest.mark.parametrize("kind", ["symlink", "hardlink"])
+    def test_actual_broker_denies_linked_request_file(tmp_path, kind):
+        code = REQUEST_PREAMBLE + f"value={_request()!r}\nkind={kind!r}\n"
+        code += """payload = requests / "payload.json"
+    payload.write_text(json.dumps(value))
+    target = requests / "request.json"
+    if kind == "symlink":
+        target.symlink_to(payload)
+    else:
+        os.link(payload, target)
+    observed = {"is_symlink": target.is_symlink(), "nlink": target.stat().st_nlink}
+    receipt = response()
+    Path("attack.json").write_text(json.dumps({"kind": kind, "observed_link": observed,
+        "receipt": receipt}))
+    assert "mailbox read rejected" in receipt.get("error", ""), receipt
+    """
+        config, store, run, step = _request_task(tmp_path, code)
+        result, outcome = _science(store, config, run, step, {}, None, None)
+        evidence = save_evidence(tmp_path, run, result, outcome)
+        assert outcome["state"] == "completed", evidence
+        assert result.observations["evidence_collection_complete"], evidence
+        facts = _read_fact(store, result)
+&gt;       _assert_broker_receipt(store, run, facts)
+
+tests\live\test_container_attacks.py:284: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = &lt;orca_agent.store.Store object at 0x000001A8745A1510&gt;
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...eopened_terminal_ids=[], agent_enabled=False, batch_category=None, input_bindings={}, science_baseline_policy='legacy')
+facts = {'kind': 'hardlink', 'observed_link': {'is_symlink': False, 'nlink': 2}, 'receipt': {'error': 'managed_orca_request_re...epts only a regular single-link file")\nValueError: transport accepts only a regular single-link file\n', 'files': {}}}
+
+    def _assert_broker_receipt(store, run, facts):
+        trusted = store.path(run.attempts[0].directory) / "responses/response.json"
+&gt;       assert facts["receipt"] == json.loads(trusted.read_bytes())
+E       AssertionError: assert {'error': 'ma..., 'files': {}} == {'error': 'ma...-link file\n'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'files': {}}
+E         Use -v to get more diff
+
+tests\live\test_container_attacks.py:48: AssertionError</failure></testcase><testcase classname="tests.live.test_container_attacks" name="test_task_cannot_replace_receipt_or_replay_broker_request" time="12.466"><failure message="AssertionError: assert {'error': 'ma..., 'files': {}} == {'error': 'ma... SDK request'}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Left contains 1 more item:&#10;  {'files': {}}&#10;  Use -v to get more diff">tmp_path = WindowsPath('E:/BG6022-V4/data/container-proof-20261018/live-security-001/test_task_cannot_replace_recei0')
+
+    def test_task_cannot_replace_receipt_or_replay_broker_request(tmp_path):
+        first = {**_request(), "version": False}
+        second = {**_request(), "request_key": "replay"}
+        code = REQUEST_PREAMBLE + f"first={first!r}\nsecond={second!r}\n"
+        code += """submit(first)
+    receipt = response()
+    assert "invalid bounded SDK request" in receipt.get("error", ""), receipt
+    original = (responses / "response.json").read_bytes()
+    denied = []
+    for action in ("overwrite", "unlink"):
+        try:
+            if action == "overwrite":
+                (responses / "response.json").write_text('{"operation_status":"completed"}')
+            else:
+                (responses / "response.json").unlink()
+        except PermissionError as exc:
+            denied.append({"action": action, "errno": exc.errno})
+        else:
+            raise AssertionError("task changed trusted response")
+    submit(second)
+    time.sleep(2.5)
+    after = (responses / "response.json").read_bytes()
+    Path("attack.json").write_text(json.dumps({"first_request": first, "replay_request": second,
+        "receipt": receipt, "receipt_mutations_denied": denied,
+        "before_sha256": hashlib.sha256(original).hexdigest(),
+        "after_sha256": hashlib.sha256(after).hexdigest()}))
+    assert original == after and len(denied) == 2
+    """
+        config, store, run, step = _request_task(tmp_path, code)
+        result, outcome = _science(store, config, run, step, {}, None, None)
+        evidence = save_evidence(tmp_path, run, result, outcome)
+        assert outcome["state"] == "completed", evidence
+        assert result.observations["evidence_collection_complete"], evidence
+        facts = _read_fact(store, result)
+&gt;       _assert_broker_receipt(store, run, facts)
+
+tests\live\test_container_attacks.py:328: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = &lt;orca_agent.store.Store object at 0x000001A874398D50&gt;
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...eopened_terminal_ids=[], agent_enabled=False, batch_category=None, input_bindings={}, science_baseline_policy='legacy')
+facts = {'first_request': {'version': False, 'request_key': 'attack', 'input': '! RHF STO-3G TightSCF NoRI NoAutoStart\n%maxco...iles': {}}, 'receipt_mutations_denied': [{'action': 'overwrite', 'errno': 13}, {'action': 'unlink', 'errno': 13}], ...}
+
+    def _assert_broker_receipt(store, run, facts):
+        trusted = store.path(run.attempts[0].directory) / "responses/response.json"
+&gt;       assert facts["receipt"] == json.loads(trusted.read_bytes())
+E       AssertionError: assert {'error': 'ma..., 'files': {}} == {'error': 'ma... SDK request'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'files': {}}
+E         Use -v to get more diff
+
+tests\live\test_container_attacks.py:48: AssertionError</failure></testcase><testcase classname="tests.live.test_container_attacks" name="test_real_output_link_is_retained_as_failure_not_followed[symlink]" time="9.385" /><testcase classname="tests.live.test_container_attacks" name="test_real_output_link_is_retained_as_failure_not_followed[hardlink]" time="8.410" /></testsuite></testsuites>
