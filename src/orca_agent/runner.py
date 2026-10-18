@@ -25,7 +25,9 @@ def initialize(store, config, spec_path):
             raise ValueError("parallel input requires the explicit MPI executable")
         environment["mpi"]["sha256"] = sha256_file(config.mpi_path)
     run = store.create_run(request, plan, PermissionSnapshot(
-        scientific_execution=True, artifact_ids=[request.geometry_artifact_id]), budget)
+        scientific_execution=True, artifact_ids=[request.geometry_artifact_id],
+        max_cores=config.resources.max_cores, max_memory_mb=config.resources.total_memory_mb), budget,
+        configuration=config.run_configuration())
     atomic_write(store.path(f"runs/{run.id}/environment.json"),
                  (json.dumps(environment, ensure_ascii=False, indent=2) + "\n").encode(),
                  immutable=True)

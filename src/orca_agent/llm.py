@@ -22,18 +22,20 @@ from dataclasses import asdict, dataclass, field, replace
 from typing import Any
 
 from orca_agent.config import ModelProfile
+from orca_agent.models import ModelLimits
 
 BASE_URL = "https://api.deepseek.com"
 MODEL = "deepseek-flash"
 SDK_VERSION = "2.28.0"
 HTTPX_VERSION = "0.28.1"
-MAX_INPUT_TOKENS = 24_000
-MAX_OUTPUT_TOKENS = 2_000
-MAX_RESPONSE_BYTES = 128 * 1024
-MAX_PROPOSAL_BYTES = 32 * 1024
+_DEFAULT_LIMITS = ModelLimits()
+MAX_INPUT_TOKENS = _DEFAULT_LIMITS.input_tokens
+MAX_OUTPUT_TOKENS = _DEFAULT_LIMITS.output_tokens
+MAX_RESPONSE_BYTES = _DEFAULT_LIMITS.response_bytes
+MAX_PROPOSAL_BYTES = _DEFAULT_LIMITS.proposal_bytes
 MAX_RAW_CONTENT_BYTES = MAX_PROPOSAL_BYTES
 MAX_RAW_CONTENT_JSON_BYTES = 2 * MAX_PROPOSAL_BYTES
-MAX_MESSAGES = 64
+MAX_MESSAGES = _DEFAULT_LIMITS.messages
 TOKEN_BOUND_VERSION = "deepseek-v41-utf8-upper-v2"
 
 # Inspected official source, frozen rather than following the moving API alias:
@@ -104,6 +106,7 @@ class PreparedRequest:
     output_token_bound: int
     timeout_seconds: float
     prompt_version: str
+    limits: ModelLimits = field(default_factory=ModelLimits)
     model: str = MODEL
     sdk_version: str = SDK_VERSION
     token_bound_version: str = TOKEN_BOUND_VERSION
@@ -178,18 +181,19 @@ def _has_credential(text: str) -> bool:
     return bool((secret and secret in text) or _CREDENTIAL.search(text))
 
 
-def _recordable_raw_content(value: Any) -> str | None:
+def _recordable_raw_content(value: Any, limits: ModelLimits | None = None) -> str | None:
     """Preserve only bounded, credential-free text, including failed proposals.
 
     Escape decoding is solely a conservative credential scan. The returned
     evidence remains byte-for-byte text; proposal parsing never uses this scan.
     The JSON bound also keeps control-character expansion inside receipt limits.
     """
+    limits = limits or _DEFAULT_LIMITS
     if not isinstance(value, str):
         return None
     try:
-        if (len(value.encode("utf-8")) > MAX_RAW_CONTENT_BYTES
-                or len(json.dumps(value, ensure_ascii=False).encode("utf-8")) > MAX_RAW_CONTENT_JSON_BYTES):
+        if (len(value.encode("utf-8")) > limits.proposal_bytes
+                or len(json.dumps(value, ensure_ascii=False).encode("utf-8")) > 2 * limits.proposal_bytes):
             return None
     except UnicodeError:
         return None
@@ -247,19 +251,23 @@ def prepare_request(
     messages: Sequence[Mapping[str, str]],
     *,
     prompt_version: str = "agent-json-v9",
-    max_output_tokens: int = MAX_OUTPUT_TOKENS,
-    timeout_seconds: float = 60,
+    max_output_tokens: int | None = None,
+    timeout_seconds: float | None = None,
     model_profile: ModelProfile = "disabled",
+    limits: ModelLimits | None = None,
 ) -> PreparedRequest:
     """Validate fixed transport parameters before any budget reservation or send."""
-    if not 1 <= len(messages) <= MAX_MESSAGES:
+    limits = ModelLimits.model_validate((limits or _DEFAULT_LIMITS).model_dump())
+    max_output_tokens = limits.output_tokens if max_output_tokens is None else max_output_tokens
+    timeout_seconds = limits.timeout_seconds if timeout_seconds is None else timeout_seconds
+    if not 1 <= len(messages) <= limits.messages:
         raise ValueError("model message count exceeds supported bounds")
     if (type(max_output_tokens) is not int
-            or not 1 <= max_output_tokens <= MAX_OUTPUT_TOKENS):
+            or not 1 <= max_output_tokens <= limits.output_tokens):
         raise ValueError("model output token limit exceeds supported bounds")
     if (isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (int, float))
-            or not math.isfinite(timeout_seconds) or not 0 < timeout_seconds <= 60):
-        raise ValueError("model timeout must be within the remaining 60 second bound")
+            or not math.isfinite(timeout_seconds) or not 0 < timeout_seconds <= limits.timeout_seconds):
+        raise ValueError("model timeout exceeds its configured bound")
     if (not isinstance(prompt_version, str)
             or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,80}", prompt_version)
             or _has_credential(prompt_version)):
@@ -281,14 +289,14 @@ def prepare_request(
         **model_profile_parameters(model_profile),
     }
     bound = input_token_upper_bound(body)
-    if bound > MAX_INPUT_TOKENS:
-        raise ValueError("conservative input token bound exceeds 24000")
+    if bound > limits.input_tokens:
+        raise ValueError(f"conservative input token bound exceeds {limits.input_tokens}")
     canonical = _canonical(body)
     return PreparedRequest(
         canonical_body=canonical,
         request_hash=hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
         input_token_bound=bound, output_token_bound=max_output_tokens,
-        timeout_seconds=float(timeout_seconds), prompt_version=prompt_version,
+        timeout_seconds=float(timeout_seconds), prompt_version=prompt_version, limits=limits,
     )
 
 
@@ -355,7 +363,7 @@ def _parse_response(request: PreparedRequest, raw: bytes, status: int, request_i
     choice = choices[0] if isinstance(choices, list) and len(choices) == 1 else None
     message = choice.get("message") if isinstance(choice, dict) else None
     content = message.get("content") if isinstance(message, dict) else None
-    facts["raw_content"] = _recordable_raw_content(content)
+    facts["raw_content"] = _recordable_raw_content(content, request.limits)
     usage = _usage(response.get("usage"), request)
     facts.update(usage=usage, response_model=_metadata(response.get("model")),
                  completion_id=_metadata(response.get("id")))
@@ -388,7 +396,7 @@ def _parse_response(request: PreparedRequest, raw: bytes, status: int, request_i
         content_bytes = len(content.encode("utf-8"))
     except UnicodeError:
         return ModelReply(**facts, error_category="invalid_proposal_json")
-    if content_bytes > MAX_PROPOSAL_BYTES:
+    if content_bytes > request.limits.proposal_bytes:
         return ModelReply(**facts, error_category="proposal_too_large")
     if facts["raw_content"] is None and _has_credential(content):
         return ModelReply(**facts, error_category="credential_in_response")
@@ -455,7 +463,7 @@ def _exception_reply(request: PreparedRequest, exc: Exception) -> ModelReply:
     )
 
 
-def _real_client(*, api_key: str, timeout: float):
+def _real_client(*, api_key: str, timeout: float, response_bytes: int = MAX_RESPONSE_BYTES):
     """Lazy imports keep no-model operation independent of credential availability."""
     try:
         import httpx
@@ -477,7 +485,7 @@ def _real_client(*, api_key: str, timeout: float):
             total = 0
             async for chunk in self.stream:
                 total += len(chunk)
-                if total > MAX_RESPONSE_BYTES:
+                if total > response_bytes:
                     raise _ResponseTooLarge()
                 yield chunk
 
@@ -499,7 +507,7 @@ def _real_client(*, api_key: str, timeout: float):
                 await response.aclose()
                 raise _ResponseEncodingRejected()
             size = response.headers.get("content-length", "")
-            if size.isdecimal() and int(size) > MAX_RESPONSE_BYTES:
+            if size.isdecimal() and int(size) > response_bytes:
                 await response.aclose()
                 raise _ResponseTooLarge()
             response.stream = BoundedStream(response.stream)
@@ -535,7 +543,7 @@ class DeepSeekTransport:
         checked = prepare_request(
             body["messages"], prompt_version=request.prompt_version,
             max_output_tokens=body["max_tokens"], timeout_seconds=request.timeout_seconds,
-            model_profile=request.model_profile,
+            model_profile=request.model_profile, limits=request.limits,
         )
         if request != checked:
             raise ValueError("prepared model request integrity mismatch")
@@ -550,7 +558,10 @@ class DeepSeekTransport:
         else:
             raise ModelConfigurationError("synchronous model transport requires a worker thread")
         # Construction does not transmit; fail missing dependencies before reserve.
-        client = self._client_factory(api_key=key, timeout=request.timeout_seconds)
+        client_kwargs = {"api_key": key, "timeout": request.timeout_seconds}
+        if self._client_factory is _real_client:
+            client_kwargs["response_bytes"] = request.limits.response_bytes
+        client = self._client_factory(**client_kwargs)
         try:
             ticket = reserve(request)
         except BaseException:
@@ -571,7 +582,7 @@ class DeepSeekTransport:
         # Match the Store's actual JSON representation, including indentation:
         # a small nested proposal may expand substantially when persisted.
         if len((json.dumps(asdict(reply), ensure_ascii=False, indent=2, allow_nan=False)
-                + "\n").encode("utf-8")) > MAX_RESPONSE_BYTES:
+                + "\n").encode("utf-8")) > request.limits.response_bytes:
             reply = replace(reply, proposal=None, raw_content=None,
                             error_category=reply.error_category or "proposal_too_large")
         settle(ticket, reply)
@@ -589,7 +600,7 @@ class DeepSeekTransport:
             ) as response:
                 raw = bytearray()
                 async for chunk in response.iter_bytes():
-                    if len(raw) + len(chunk) > MAX_RESPONSE_BYTES:
+                    if len(raw) + len(chunk) > request.limits.response_bytes:
                         raise _ResponseTooLarge()
                     raw.extend(chunk)
                 return _parse_response(request, bytes(raw), response.status_code,

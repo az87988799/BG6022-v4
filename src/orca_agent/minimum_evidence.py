@@ -15,6 +15,32 @@ REQUIREMENTS = {
 }
 
 
+def describe_evidence_contract(goal):
+    """Describe coverage without changing a Goal or manufacturing a check result.
+
+    A missing evaluator is distinct from an unknown target and from an unavailable
+    execution dependency. Unknown requirements remain explicit obligations.
+    """
+    generic = goal.evidence_contract_version == "generic-observation-1"
+    known_rules = {
+        "orca-hf-1", "orca-hf-2", "evidence-read-1", "energy-compare-1",
+        "finite-sampling-1", "finite-sampling-check-1", "knowledge-answer-1",
+    }
+    requirements = []
+    for text in goal.minimum_evidence:
+        canonical = LEGACY_NAMES.get(text, text)
+        known = canonical in REQUIREMENTS or canonical in {goal.port, goal.minimum_check_version}
+        requirements.append({"requested": text, "canonical": canonical,
+                             "source": goal.minimum_evidence_source.get(text, "unknown"),
+                             "evaluator": "registered" if known and not generic else "unavailable"})
+    return {"quantity": goal.quantity or goal.port, "port": goal.port,
+            "contract_version": goal.evidence_contract_version,
+            "verification": goal.verification,
+            "scientific_checker": ("registered" if goal.minimum_check_version in known_rules
+                                   and not generic else "unavailable"),
+            "requirements": requirements}
+
+
 def assess_minimum_evidence(goal, result, *, purpose_passed):
     """Retain each requested string and its mapping; unsupported never means pass."""
     entries = []

@@ -327,7 +327,7 @@ def test_windows_junction_is_rejected_without_python_is_junction(tmp_path):
 
 def test_create_run_revalidates_copied_budget_models(setup_run):
     store, run, _, _ = setup_run
-    changed = run.budget.model_copy(update={"orca_starts": 100})
+    changed = run.budget.model_copy(update={"orca_starts": -1})
     with pytest.raises(ValueError):
         store.create_run(store.load_request(run), store.load_plan(run), run.permission, changed)
 

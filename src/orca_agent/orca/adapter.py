@@ -26,7 +26,11 @@ from opi.utils.orca_version import OrcaVersion
 from orca_agent.models import CalculationParameters
 from orca_agent.orca.checks import OPTIMIZATION_STAGE_RULE, check_outputs
 from orca_agent.orca.diagnostics import diagnostic, scientific_diagnostics
-from orca_agent.tools.registry import validate_geometry, validate_parameters
+from orca_agent.tools.registry import (
+    validate_geometry,
+    validate_legacy_profile,
+    validate_parameters,
+)
 from orca_agent.versions import (
     extract_orca_version,
     is_supported_orca_version,
@@ -60,6 +64,7 @@ def prepare_input(
 ) -> dict[str, Any]:
     """Write fresh OPI input and an immutable input fingerprint manifest."""
     params = _parameters(parameters, tool_name)
+    validate_legacy_profile(params)
     directory = Path(workdir).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     source = Path(geometry_path).resolve(strict=True)
@@ -423,6 +428,7 @@ def read_outputs(
 ) -> dict[str, Any]:
     """Read existing bounded evidence, then check every proposed scientific port."""
     params = _parameters(parameters, tool_name)
+    validate_legacy_profile(params)
     directory = Path(workdir).resolve(strict=True)
     diagnostics = []
     facts: dict[str, Any] = {"parser_consistent": True, "evidence": {}}

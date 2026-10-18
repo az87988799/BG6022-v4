@@ -243,10 +243,12 @@ def run_managed(
             if len(sample_errors) < 32:
                 sample_errors.append({"reason": str(error)})
     try:
-        if type(cores) is not int or not 1 <= cores <= 4:
-            raise ValueError("cores must be an integer in [1, 4]")
-        if type(total_memory_mb) is not int or not 32 <= total_memory_mb <= 1024:
-            raise ValueError("total_memory_mb must be an integer in [32, 1024]")
+        if type(cores) is not int or cores < 1:
+            raise ValueError("cores must be a positive integer")
+        if type(total_memory_mb) is not int or total_memory_mb < 1:
+            raise ValueError("total_memory_mb must be a positive integer")
+        if total_memory_mb * 1024 * 1024 > (1 << (8 * c.sizeof(c.c_size_t))) - 1:
+            raise ValueError("total_memory_mb exceeds the native Job Object limit representation")
         if not math.isfinite(timeout_s) or timeout_s <= 0:
             raise ValueError("timeout_s must be finite and positive")
         executable, workdir = Path(executable), Path(workdir)

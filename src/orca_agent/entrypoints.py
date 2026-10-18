@@ -103,7 +103,8 @@ def create_water_sp(store, config, *, submission_id):
             identity_queries=min(1, configured.identity_queries),
             structure_preparations=min(1, configured.structure_preparations))
         return store.create_run(request, plan, permission, budget,
-                                science_baseline_policy="first_science_plan")
+                                science_baseline_policy="first_science_plan",
+                                configuration=config.run_configuration())
 
     return _create_once(store, WATER_SP_TEXT, submission_id, initialize)
 

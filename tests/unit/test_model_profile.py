@@ -94,6 +94,8 @@ def test_reasoning_never_becomes_final_content_or_a_receipt(content, finish, err
 
 def low_setup(setup):
     store, run, prepared = setup
+    run = store.create_run(store.load_request(run), store.load_plan(run), run.permission, run.budget,
+                           configuration=Config(model_profile="thinking_low").run_configuration())
     low = prepare_request(prepared.body()["messages"], model_profile="thinking_low")
     return store, run, low
 
@@ -148,6 +150,8 @@ def test_reasoning_completion_is_charged_once_and_crash_recovery_preserves_evide
 @pytest.mark.parametrize(("first", "other"), [("disabled", "thinking_low"), ("thinking_low", "disabled")])
 def test_zero_http_crash_freezes_profile_before_first_reservation(setup, first, other):
     store, run, original = setup
+    run = store.create_run(store.load_request(run), store.load_plan(run), run.permission, run.budget,
+                           configuration=Config(model_profile=first).run_configuration())
     prepared = prepare_request(original.body()["messages"], model_profile=first)
     transport = ScriptedTransport()
     def crash(stage):
@@ -218,7 +222,7 @@ def test_new_profile_binding_tampering_blocks_read_recovery_and_new_send(setup, 
 
 
 def test_agent_uses_explicit_profile_and_resume_cannot_change_it(tmp_path):
-    store, run, _ = make_run(tmp_path)
+    store, run, _ = make_run(tmp_path, model_profile="thinking_low")
     transport = AgentTransport(initial_proposal)
     completed = agent.execute(store, Config(model_profile="thinking_low"), run.id, transport=transport)
     assert completed.state == "completed"
@@ -236,7 +240,7 @@ def test_agent_uses_explicit_profile_and_resume_cannot_change_it(tmp_path):
 
 
 def test_private_reasoning_is_not_replayed_and_final_extra_field_still_needs_correction(tmp_path):
-    store, run, _ = make_run(tmp_path)
+    store, run, _ = make_run(tmp_path, model_profile="thinking_low")
     class ParsedTransport:
         def __init__(self):
             self.requests = []
@@ -249,6 +253,9 @@ def test_private_reasoning_is_not_replayed_and_final_extra_field_still_needs_cor
                         "related_results": data["AUTHORITY"]["related_results"],
                         "reason": "Offline fixture requests only a registered read.",
                         **initial_proposal(data)}
+            if data["AUTHORITY"].get("response_contract") in {"decision-intent-1", "decision-intent-2"}:
+                proposal = {key: value for key, value in proposal.items()
+                            if key in {"action", "parameters", "reason"}}
             if len(self.requests) == 1:
                 proposal["type"] = "json_object"
             reply = _parse_response(prepared, completion(choices=[{

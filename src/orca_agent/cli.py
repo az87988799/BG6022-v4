@@ -123,7 +123,7 @@ def main(argv=None) -> int:
             emit(catalog())
             return 0
         from orca_agent.store import Store
-        store = Store(config.data_root)
+        store = Store(config.data_root, configuration=config.run_configuration())
         if args.command == "inspect":
             from orca_agent.tools.registry import dispatch_evidence
             if args.run_id:

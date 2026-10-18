@@ -36,7 +36,7 @@ SPEC.loader.exec_module(FIXTURE)
 WATER = "3\nWater in angstrom\nO 0 0 0\nH 0 .757 .587\nH 0 -.757 .587\n"
 
 
-def make_run(tmp_path, steps=1, check_version=CURRENT_CHECK_VERSION):
+def make_run(tmp_path, steps=1, check_version=CURRENT_CHECK_VERSION, model_profile="disabled"):
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
     source = tmp_path / "water.xyz"
     source.write_text(WATER)
@@ -51,9 +51,10 @@ def make_run(tmp_path, steps=1, check_version=CURRENT_CHECK_VERSION):
     plan = Plan(request_id=request.id, steps=plan_steps,
                 goal_map={"e": OutputBinding(step_id=plan_steps[-1].id, port="energy")})
     run = store.create_run(request, plan, PermissionSnapshot(
-        scientific_execution=True, artifact_ids=[artifact.id]))
+        scientific_execution=True, artifact_ids=[artifact.id]),
+        configuration=Config(model_profile=model_profile).run_configuration())
     executable = Path(sys.executable).resolve()
-    config = Config(data_root=store.root, orca_path=executable)
+    config = Config(data_root=store.root, orca_path=executable, model_profile=model_profile)
     atomic_write(store.path(f"runs/{run.id}/environment.json"), json.dumps({
         "orca": {"version": "6.1.1", "path": str(executable), "sha256": sha256_file(executable)},
         "synthetic_fixture": True,

@@ -434,7 +434,10 @@ def _generate(store, run, call, document, params):
             return outcome
         outcome = run_managed(Path(sys.executable).resolve(),
             ["-m", "orca_agent.tools.structure", "--worker", str(worker_input)], directory,
-            cores=PREPARE_CORES, total_memory_mb=PREPARE_MEMORY_MB, timeout_s=PREPARE_TIMEOUT_SECONDS,
+            cores=PREPARE_CORES, total_memory_mb=PREPARE_MEMORY_MB,
+            timeout_s=min(PREPARE_TIMEOUT_SECONDS,
+                          store.run_configuration(run).resources.script_timeout_seconds,
+                          max(0.001, (run.deadline - utc_now()).total_seconds())),
             job_name=new_job_name(), cancel_requested=lambda: store.read_signal(run.id) == "cancel",
             environment=environment, on_started=started, fault=release)
     finally:
@@ -453,7 +456,9 @@ def prepare(store, run, call):
               "identity_sha256": identity_artifact.sha256, "smiles": document["smiles"],
               "charge": params.charge, "multiplicity": params.multiplicity,
               "generator": "opi.Structure.from_smiles", "random_seed": None,
-              "generation_reproducibility": "no seed exposed; reuse this immutable XYZ", "timeout_seconds": 30}
+              "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+              "timeout_seconds": min(PREPARE_TIMEOUT_SECONDS,
+                  store.run_configuration(run).resources.script_timeout_seconds)}
     artifacts = []
     generation_entered = False
     outcome = None

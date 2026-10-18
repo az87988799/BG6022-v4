@@ -54,6 +54,13 @@ def _request_revision(prior: Request, proposed: Request, user_update: bool,
                  "required scientific checks cannot be lowered or substituted")
         _require(set(old.minimum_evidence).issubset(new.minimum_evidence),
                  "minimum required evidence cannot be removed")
+        _require(new.evidence_contract_version == old.evidence_contract_version
+                 and (old.verification != "qualified" or new.verification == "qualified"),
+                 "required evidence contract cannot be weakened")
+        _require(new.quantity == old.quantity, "required scientific quantity cannot be renamed")
+        _require(all(new.minimum_evidence_source.get(name) == source
+                     for name, source in old.minimum_evidence_source.items()),
+                 "minimum evidence provenance cannot be rewritten")
         _require(new.original_text == old.original_text, "required goal's user-text basis is immutable")
     for name in ("charge", "multiplicity", "method", "basis", "geometry_artifact_id"):
         if getattr(prior, name) != getattr(proposed, name):
@@ -82,6 +89,20 @@ def _concrete_reference(reference: EvidenceRef, run: Run) -> None:
                  "concrete Artifact is outside the permission snapshot")
 
 
+def validate_code_inputs(store, permission, step):
+    """Verify pinned task files at consumption; a declaration cannot expand access."""
+    tool = get_tool(step.tool)
+    if not tool.check_contract.get("generic_observations"):
+        return
+    code = getattr(step.parameters, "code", None) or getattr(step.parameters, "input", None)
+    for reference in [code, *step.parameters.inputs.entries]:
+        _require(reference.artifact_id in permission.artifact_ids,
+                 "task input is outside the permission snapshot")
+        store.artifact_path(reference.artifact_id)
+        artifact = store.load_artifact(reference.artifact_id)
+        _require(artifact.sha256 == reference.sha256, "task input hash differs from pinned Artifact")
+
+
 def _step_permissions(step: Step, run: Run) -> None:
     tool = get_tool(step.tool)
     permission = run.permission
@@ -90,9 +111,17 @@ def _step_permissions(step: Step, run: Run) -> None:
     _require(step.tool in permission.allowed_tools, "tool is outside the permission snapshot")
     if "execute_orca" in tool.effects:
         _require(permission.scientific_execution, "scientific execution is not authorized")
-        _require(step.parameters.cores <= permission.max_cores
-                 and step.parameters.memory_mb <= permission.max_memory_mb,
-                 "scientific resources exceed the permission snapshot")
+        if hasattr(step.parameters, "cores"):
+            _require(step.parameters.cores <= permission.max_cores
+                     and step.parameters.memory_mb <= permission.max_memory_mb,
+                     "scientific resources exceed the permission snapshot")
+    if "execute_python" in tool.effects:
+        _require(permission.code_execution, "task code execution is not authorized")
+    if tool.check_contract.get("generic_observations"):
+        code = getattr(step.parameters, "code", None) or getattr(step.parameters, "input", None)
+        _require(all(reference.artifact_id in permission.artifact_ids
+                     for reference in [code, *step.parameters.inputs.entries]),
+                 "task input is outside the permission snapshot")
     if "query_external_identity" in tool.effects:
         _require(permission.external_identity_queries, "external identity queries are not authorized")
     if "prepare_geometry" in tool.effects:
@@ -164,7 +193,23 @@ def _repair(prior: Step, proposed: Step, run: Run, logical_by_id, user_change):
         _require(old != new or bool(changed), "renaming unchanged scientific input is not a repair")
 
 
+def validate_goal_output_contract(request: Request, plan: Plan):
+    """Initial and revised Plans have the same scientific evidence boundary."""
+    steps = {step.id: step for step in plan.steps}
+    for goal in request.goals:
+        binding = plan.goal_map.get(goal.id)
+        if binding is None or binding.step_id is None:
+            continue
+        tool = get_tool(steps[binding.step_id].tool)
+        if tool.check_contract.get("generic_observations"):
+            _require(goal.evidence_contract_version == "generic-observation-1"
+                     and goal.verification == "reported_with_limitations"
+                     and goal.minimum_check_version == "generic-observation-1",
+                     "generic observations cannot replace required scientific qualification")
+
+
 def _goal_bindings(request: Request, plan: Plan, run: Run):
+    validate_goal_output_contract(request, plan)
     steps = {step.id: step for step in plan.steps}
     for goal in request.goals:
         binding = plan.goal_map.get(goal.id)
@@ -179,6 +224,8 @@ def _goal_bindings(request: Request, plan: Plan, run: Run):
                 "concrete goal evidence lacks the minimum scientific rule")
         else:
             tool = get_tool(steps[binding.step_id].tool)
+            if tool.check_contract.get("generic_observations"):
+                continue
             _require(_compatible_rule(goal.minimum_check_version, tool.check_version),
                      "planned output cannot meet the required check version")
             if binding.port in tool.output_ports:

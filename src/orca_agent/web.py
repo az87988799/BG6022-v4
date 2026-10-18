@@ -130,7 +130,7 @@ class Coordinator:
 
 
 def create_app(config, *, store=None, port=8765):
-    store = store or Store(config.data_root)
+    store = store or Store(config.data_root, configuration=config.run_configuration())
     coordinator = Coordinator(store, config)
     token = secrets.token_urlsafe(32)
     origin = f"http://127.0.0.1:{port}"

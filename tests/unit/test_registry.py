@@ -3,7 +3,14 @@ from pathlib import Path
 
 import pytest
 
-from orca_agent.models import CalculationParameters, InputRef, PermissionSnapshot, Step, fingerprint
+from orca_agent.models import (
+    CalculationParameters,
+    InputRef,
+    NativeOrcaParameters,
+    PermissionSnapshot,
+    Step,
+    fingerprint,
+)
 from orca_agent.tools.registry import (
     EvidenceFieldParameters,
     EvidenceListParameters,
@@ -20,32 +27,32 @@ WATER = "3\nWater coordinates, angstrom\nO 0 0 0\nH 0 0.757 0.587\nH 0 -0.757 0.
 
 
 def test_catalog_schema_and_execution_share_one_model():
-    models = {"orca.sp": SinglePointParameters, "orca.opt": CalculationParameters}
+    models = {"orca.sp": SinglePointParameters, "orca.opt": CalculationParameters,
+              "orca.run": NativeOrcaParameters}
     for tool in catalog():
         if tool["name"].startswith("orca."):
             assert tool["parameter_schema"] == models[tool["name"]].model_json_schema()
             assert "execute_orca" in tool["effects"]
-    assert get_tool("orca.sp").output_ports == ["energy"]
-    assert get_tool("orca.opt").output_ports == ["energy", "optimized_geometry"]
+    assert get_tool("orca.sp").output_ports == ["energy", "dipole_moment"]
+    assert get_tool("orca.opt").output_ports == ["energy", "optimized_geometry", "dipole_moment"]
     with pytest.raises(ValueError, match="unregistered"):
         get_tool("shell.run")
 
 
-@pytest.mark.parametrize("name,limit", [("orca.sp", 300), ("orca.opt", 900)])
-def test_calculation_deadline_schema_matches_registered_validation(name, limit):
+@pytest.mark.parametrize("name", ["orca.sp", "orca.opt"])
+def test_calculation_deadline_schema_defers_resource_limit_to_run_snapshot(name):
     field = get_tool(name).parameter_schema["properties"]["timeout_seconds"]
-    assert field["maximum"] == limit
+    assert "maximum" not in field
     assert field["exclusiveMinimum"] == 0
     assert field["default"] == 300
-    assert validate_parameters(name, {"timeout_seconds": limit}).timeout_seconds == limit
-    for invalid in (0, limit + 0.001, float("inf")):
+    assert validate_parameters(name, {"timeout_seconds": 1200}).timeout_seconds == 1200
+    for invalid in (0, float("inf")):
         with pytest.raises(ValueError, match="timeout_seconds"):
             validate_parameters(name, {"timeout_seconds": invalid})
 
 
 def test_single_point_revalidates_general_calculation_parameter_objects():
-    with pytest.raises(ValueError, match="300"):
-        validate_parameters("orca.sp", CalculationParameters(timeout_seconds=900))
+    assert validate_parameters("orca.sp", CalculationParameters(timeout_seconds=900)).timeout_seconds == 900
     # The inherited resource combination check remains active on the subtype.
     with pytest.raises(ValueError, match="memory"):
         validate_parameters("orca.sp", {"memory_mb": 512, "cores": 4})
@@ -91,7 +98,7 @@ def test_historical_input_manifest_parameters_preserve_serialized_values(path):
 
 def test_catalog_copy_cannot_mutate_the_runtime_contract():
     get_tool("orca.sp").output_ports.append("optimized_geometry")
-    assert get_tool("orca.sp").output_ports == ["energy"]
+    assert get_tool("orca.sp").output_ports == ["energy", "dipole_moment"]
 
 
 @pytest.mark.parametrize("name,model", [

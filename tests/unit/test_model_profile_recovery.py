@@ -20,7 +20,7 @@ class NoModel:
 def test_mode_mismatch_collects_existing_science_before_rejecting_without_resuming_control(
     tmp_path, monkeypatch, synthetic, profile, other, window,
 ):
-    store, config, run = make_run(tmp_path, steps=2)
+    store, config, run = make_run(tmp_path, steps=2, model_profile=profile)
     config = config.model_copy(update={"model_profile": profile})
     with store.run_lock(run.id):
         _freeze_model_profile(store, run, profile)
@@ -78,7 +78,7 @@ def test_mode_mismatch_collects_existing_science_before_rejecting_without_resumi
 def test_unresolved_scientific_identity_keeps_occupancy_and_pause_without_new_actions(
     tmp_path, synthetic, profile, other,
 ):
-    store, config, run = make_run(tmp_path)
+    store, config, run = make_run(tmp_path, model_profile=profile)
     config = config.model_copy(update={"model_profile": profile})
     with store.run_lock(run.id):
         _freeze_model_profile(store, run, profile)

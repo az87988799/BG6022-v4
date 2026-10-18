@@ -8,7 +8,7 @@ from pydantic import Field, TypeAdapter
 from orca_agent.models import Check, Identifier, QualifiedOutput, Record, Result, fingerprint
 from orca_agent.store import ControlChanged, StoreError, atomic_write
 from orca_agent.tools import analysis
-from orca_agent.tools.registry import get_tool
+from orca_agent.tools.registry import get_tool, require_execution_available
 
 
 class _MemberRequirement(Record):
@@ -235,6 +235,7 @@ def import_evidence(store, run, call):
 
 def execute_call(store, run, tool_name, parameters, *, step=None, results=None, fault=None,
                  decision_id=None):
+    require_execution_available(tool_name)
     definition = get_tool(tool_name)
     consumption = bind_inputs(store, run, step, results or {}) if step else {}
     if "write_input_artifact" in definition.effects:

@@ -36,9 +36,9 @@ def request_plan():
 
 
 @pytest.mark.parametrize("values", [
-    {"method": "B3LYP"}, {"basis": "def2-TZVP"}, {"charge": 1}, {"multiplicity": 3},
-    {"cores": 5}, {"cores": True}, {"memory_mb": 2048}, {"maxcore_mb": 193},
-    {"scf_maxiter": 0}, {"opt_maxiter": 100000}, {"timeout_seconds": float("inf")},
+    {"method": ""}, {"basis": " "}, {"multiplicity": 0},
+    {"cores": 0}, {"cores": True}, {"memory_mb": 0}, {"maxcore_mb": 0},
+    {"scf_maxiter": 0}, {"opt_maxiter": 0}, {"timeout_seconds": float("inf")},
     {"raw_input": "! HF\n%pal nprocs 100 end"}, {"shell": "echo unsafe"},
     {"memory_mb": 512, "cores": 4},
 ])
@@ -76,8 +76,8 @@ def test_normalized_historical_integer_json_and_explicit_unknown_remain_readable
                                       "conditions_source": {"charge": "unknown", "multiplicity": "unknown"}})
     assert Request.model_validate_json(unknown.model_dump_json()) == unknown
     assert unknown.charge is unknown.multiplicity is None
-    # Request records unsupported integer requirements; the Tool retains its
-    # independent, fixed neutral-singlet scientific range.
+    # General requested states remain representable. Execution compatibility and
+    # scientific qualification are checked separately from the data contract.
     unsupported = Request.model_validate({**request.model_dump(), "charge": -1, "multiplicity": 2})
     assert unsupported.charge == -1 and unsupported.multiplicity == 2
     assert CalculationParameters.model_validate_json('{"charge":0,"multiplicity":1}').charge == 0

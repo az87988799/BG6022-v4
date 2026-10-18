@@ -170,11 +170,18 @@ def collect_result(store, run, step, attempt, outcome):
     collection_error = None
     try:
         files = sorted(path for path in workdir.iterdir() if path.is_file())
-        if len(files) > 200 or sum(p.stat().st_size for p in files) > 256 * 1024 * 1024:
-            raise ValueError("artifact collection exceeds the small-system 256 MiB/200-file limit")
+        usage = store.artifact_budget_usage(run)
+        if not store.cumulative_artifact_budget(run):
+            # Original budgets bounded each collection, without a Run-wide quota.
+            usage = {"reserved_count": 0, "reserved_bytes": 0}
+        if (len(files) + usage["reserved_count"] > run.budget.artifact_count
+                or sum(p.stat().st_size for p in files) + usage["reserved_bytes"]
+                > run.budget.artifact_total_bytes
+                or any(p.stat().st_size > run.budget.artifact_bytes for p in files)):
+            raise ValueError("artifact collection exceeds the frozen count/size budget")
         for path in files:
-            if time.monotonic() - start > 30:
-                raise TimeoutError("artifact collection exceeded its 30 second budget")
+            if time.monotonic() - start > store.run_configuration(run).resources.collection_timeout_seconds:
+                raise TimeoutError("artifact collection exceeded its configured time budget")
             artifacts[path.name] = store.import_artifact(path, role="raw_evidence", run_id=run.id,
                                                          attempt_id=attempt.id)
     except Exception as exc:

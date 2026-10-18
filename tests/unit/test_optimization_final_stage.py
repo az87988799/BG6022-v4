@@ -249,7 +249,7 @@ def test_real_sp_preserves_existing_rule_and_readonly_energy_qualification():
     before = snapshot(directory)
     params = json.loads((directory / "input-manifest.json").read_text())["parameters"]
     parsed = read_outputs(directory, params, "orca.sp")
-    assert set(parsed["qualified_outputs"]) == {"energy"}
+    assert set(parsed["qualified_outputs"]) == {"energy", "dipole_moment"}
     assert all(check.rule_version == CURRENT_CHECK_VERSION for check in parsed["checks"]["energy"])
     assert not any(check.name == "optimization_stage_binding" for check in parsed["checks"]["energy"])
     assert snapshot(directory) == before

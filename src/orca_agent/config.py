@@ -7,7 +7,13 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from orca_agent.models import BudgetLimits, PermissionSnapshot
+from orca_agent.models import (
+    BudgetLimits,
+    ModelLimits,
+    PermissionSnapshot,
+    ResourceLimits,
+    RunConfiguration,
+)
 
 ModelProfile = Literal["disabled", "thinking_low"]
 
@@ -29,7 +35,13 @@ class Config(BaseModel):
     mpi_path: Path | None = None
     data_root: Path = Path("data")
     model_profile: ModelProfile = "disabled"
+    resources: ResourceLimits = Field(default_factory=ResourceLimits)
+    model: ModelLimits = Field(default_factory=ModelLimits)
     text: TextProfile = Field(default_factory=TextProfile)
+
+    def run_configuration(self) -> RunConfiguration:
+        return RunConfiguration(resources=self.resources, model=self.model,
+                                model_profile=self.model_profile)
 
 
 def load_config(path: Path | None = None) -> Config:

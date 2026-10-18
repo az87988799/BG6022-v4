@@ -306,7 +306,8 @@ def test_backend_unconfirmed_cleanup_preserves_unknown(tmp_path, monkeypatch):
 
 
 def test_backend_rejects_resources_and_existing_evidence_before_creation(tmp_path):
-    for kwargs in ({"cores": 5}, {"cores": 0}, {"total_memory_mb": 1025}, {"timeout_s": float("inf")}):
+    for kwargs in ({"cores": 0}, {"cores": True}, {"total_memory_mb": 0},
+                   {"total_memory_mb": 1 << 64}, {"timeout_s": float("inf")}):
         result = launch(tmp_path, "affinity", **kwargs)
         assert result["state"] == "failed"
         assert result["handle"] is None
@@ -315,3 +316,16 @@ def test_backend_rejects_resources_and_existing_evidence_before_creation(tmp_pat
     assert result["state"] == "failed"
     assert result["handle"] is None
     assert (tmp_path / "stdout.out").read_text() == "immutable evidence"
+
+
+def test_backend_configured_envelope_above_previous_caps_is_retained_by_kernel(tmp_path):
+    cores = min(5, len(psutil.Process().cpu_affinity()))
+    result = launch(tmp_path, "affinity", cores=cores, total_memory_mb=1536, timeout_s=15)
+    assert result["state"] == "completed", result
+    usage = result["resource_usage"]
+    assert usage["cores"] == cores
+    assert usage["cpu_affinity_mask"].bit_count() == cores
+    assert usage["job_commit_limit_bytes"] == 1536 * 1024 * 1024
+    assert usage["active_processes"] == 0
+    child = json.loads((tmp_path / "stdout.out").read_text())
+    assert len(child["affinity"]) == cores

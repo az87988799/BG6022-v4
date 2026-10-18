@@ -228,7 +228,7 @@ def goal_target_shapes():
 
 
 class ProposedPlan(Record):
-    steps: list[ProposedStep] = Field(min_length=1, max_length=8)
+    steps: list[ProposedStep] = Field(min_length=1)
     # Keys are checked against this Request's IDs, not merely an identifier
     # regex; only the target shape is a context-independent schema contract.
     goal_map: dict[str, FutureGoalTarget | EvidenceGoalTarget | GapGoalTarget]

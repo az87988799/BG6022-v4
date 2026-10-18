@@ -73,7 +73,7 @@ class ScriptedTransport:
         return reply
 
 
-def make_run(tmp_path, *, two_goals=False, agent_enabled=True, initial_plan=False, model_calls=8):
+def make_run(tmp_path, *, two_goals=False, agent_enabled=True, initial_plan=False, model_calls=8, model_profile="disabled"):
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
     raw = tmp_path / "raw.json"
     raw.write_text('{"a": 1, "b": 2}', encoding="utf-8")
@@ -97,7 +97,8 @@ def make_run(tmp_path, *, two_goals=False, agent_enabled=True, initial_plan=Fals
         plan = Plan(request_id=request.id, steps=steps,
                     goal_map={key: OutputBinding(step_id=f"read_{key}", port="value_observation")
                               for key in keys})
-    run = store.create_run(request, plan, permission, budget)
+    run = store.create_run(request, plan, permission, budget,
+                           configuration=Config(model_profile=model_profile).run_configuration())
     run.agent_enabled = agent_enabled
     store.save_run(run)
     return store, run, artifact

@@ -21,7 +21,7 @@ from orca_agent.proposals import (
 )
 from orca_agent.store import BudgetExceeded, ControlChanged, EnvironmentBusy, StoreError
 from orca_agent.tools.dispatch import _source_hashes, execute_call
-from orca_agent.tools.registry import get_tool
+from orca_agent.tools.registry import get_tool, require_execution_available
 
 
 def _ready(plan, results):
@@ -31,6 +31,7 @@ def _ready(plan, results):
 
 def _delivery_preflight(store, run, tool_name, parameters, plan, results, *, model_profile):
     """Check final delivery capacity before a costly Tool's reservation."""
+    require_execution_available(tool_name)
     tool = get_tool(tool_name)
     if not run.agent_enabled or not set(tool.effects) & {
             "execute_orca", "query_external_identity", "prepare_geometry", "write_analysis"}:

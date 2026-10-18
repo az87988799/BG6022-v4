@@ -12,7 +12,7 @@ from copy import deepcopy
 
 from orca_agent.applicability import effective_conditions
 from orca_agent.goals import current_goal_evidence
-from orca_agent.models import fingerprint
+from orca_agent.models import fingerprint, result_fingerprint_payload
 
 DELIVERY_VERSION = "terminal-delivery-1"
 
@@ -199,7 +199,12 @@ def delivery_communication(run):
 def _science_resources(run):
     # Model settlement, decision counters and the clock cannot invalidate the
     # very explanation whose HTTP reservation/settlement changed those values.
-    return {"permission": run.permission.model_dump(mode="json"),
+    permission = run.permission.model_dump(mode="json")
+    # False is the legacy absence of task-code permission; retain the v1 digest.
+    # An actual new grant must still change the immutable delivery snapshot.
+    if not run.permission.code_execution:
+        permission.pop("code_execution", None)
+    return {"permission": permission,
             "remaining": {name: max(0, getattr(run.budget, name) - getattr(run.usage, counter))
                 for name, counter in (("orca_starts", "orca_starts_reserved"),
                     ("extra_orca_starts", "extra_orca_starts_reserved"),
@@ -263,7 +268,7 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
         if result:
             source_ref = "s" + str(index)
             snapshot["references"][source_ref] = {**row["source"], "integrity": integrity,
-                "result_fingerprint": _digest(result.model_dump(mode="json", exclude={"created_at"})),
+                "result_fingerprint": _digest(result_fingerprint_payload(result, exclude={"created_at"})),
                 "rule_versions": sorted({check.rule_version for checks in result.checks.values() for check in checks})}
         refs = [fact(goal_ref, "goal_status", {"recorded": row["recorded_status"],
                 "complete": row["goal_complete"], "current_evidence": row["current_evidence_status"],

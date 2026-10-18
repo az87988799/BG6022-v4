@@ -4,7 +4,29 @@ mpi_path = 'C:\Program Files\Microsoft MPI\Bin\mpiexec.exe'
 data_root = 'data'
 
 # Resource and budget limits are validated and frozen per Run.
-# Global environment concurrency is one; its location is independent of data_root.
+# This implementation enables one environment slot; larger values are expressible
+# but launch is refused until shared multi-job resource management is implemented.
+# Its location is independent of data_root.
 # Agent credentials are read only from DEEPSEEK_API_KEY in the process environment.
-# Do not put keys in this file. Model alias, HTTPS endpoint, retries and token limits
-# are fixed by the validated local profile; request bundles grant individual effects.
+# Do not put keys in this file. Model alias and HTTPS endpoint retain the validated
+# profile; request bundles grant individual effects and cumulative budgets.
+
+[resources]
+max_cores = 4
+total_memory_mb = 1024
+maxcore_mb = 192
+environment_concurrency = 1
+job_timeout_seconds = 900
+script_timeout_seconds = 300
+collection_timeout_seconds = 30
+
+[model]
+input_tokens = 24000
+output_tokens = 2000
+timeout_seconds = 60
+response_bytes = 131072
+proposal_bytes = 32768
+messages = 64
+
+# New Runs freeze these settings. Editing this file does not change existing Runs.
+# Python/native ORCA execution contracts remain disabled in implementation step 1.

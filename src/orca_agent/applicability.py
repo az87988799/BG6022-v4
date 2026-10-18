@@ -37,7 +37,7 @@ def effective_conditions(request, goal=None, system_id=None):
 
 System declarations are scoped overrides of general Request settings. A Goal is
 an additional constraint, never an override of the applicable system setting.
-Only absent state/environment inherit the existing fixed calculation profile.
+Only legacy HF neutral-singlet requests inherit the historical state/environment.
 """
     reasons, origins, values = [], {}, {}
     system = next((s for s in request.systems if s.id == system_id), None)
@@ -52,7 +52,11 @@ Only absent state/environment inherit the existing fixed calculation profile.
         elif hasattr(request, name):
             value, origin = getattr(request, name), "request." + request.conditions_source.get(name, "unknown")
         else:
-            value, origin = PROFILE[name], "default:fixed-rhf-profile-1"
+            legacy = (canonical_condition("method", request.method) == "HF"
+                      and request.charge == 0 and request.multiplicity == 1
+                      and all(item.evidence_contract_version == "legacy-1" for item in request.goals))
+            value, origin = ((PROFILE[name], "default:fixed-rhf-profile-1") if legacy
+                             else (None, "unknown:unspecified_condition"))
         if request.conditions_source.get(name) in {"unknown", "not_applicable", "inferred"}:
             value, origin = None, "request." + request.conditions_source[name]
         if system and name in system.conditions:
@@ -74,8 +78,6 @@ Only absent state/environment inherit the existing fixed calculation profile.
         values[name], origins[name] = value, origin
         if value is None:
             reasons.append("unknown_condition:" + name)
-        elif value != PROFILE[name]:
-            reasons.append("unsupported_condition:" + name)
     if request.unresolved or (goal and goal.unresolved):
         reasons.append("unresolved_request_or_goal")
     return {"version": PURPOSE_VERSION, "conditions": values, "sources": origins,
@@ -172,7 +174,11 @@ def validate_scientific_plan(request, plan):
             if system and producer.system_id not in {None, system.id}:
                 raise ValueError("scientific goal is bound to a different requested system")
     for step in plan.steps:
-        if "execute_orca" not in get_tool(step.tool).effects:
+        tool = get_tool(step.tool)
+        if tool.check_contract.get("generic_observations"):
+            validate_generic_conditions(request, plan, step)
+            continue
+        if "execute_orca" not in tool.effects:
             continue
         if len(request.systems) > 1 and step.system_id is None:
             raise ValueError("scientific Step requires its requested system identity")
@@ -189,6 +195,34 @@ def validate_scientific_plan(request, plan):
             producer = steps[step.geometry.producer_step_id]
             if producer.system_id != step.system_id:
                 raise ValueError("cross-system optimized geometry dependency is unsupported")
+
+
+def validate_generic_conditions(request, plan, step):
+    """Keep declared choices separate from the actual conditions of a future run."""
+    if step.system_id and step.system_id not in {system.id for system in request.systems}:
+        raise ValueError("step references an unknown requested system")
+    declared = step.parameters.conditions
+    system = next((item for item in request.systems if item.id == step.system_id), None)
+    if system is None and len(request.systems) == 1:
+        system = request.systems[0]
+    constraints = dict(request.conditions)
+    for name in CONDITION_FIELDS:
+        value = getattr(request, name, None)
+        if value is not None and request.conditions_source.get(name) in {
+                "explicit", "inherited", "default", "auto_selected"}:
+            constraints.setdefault(name, value)
+    if system:
+        constraints.update(system.conditions)
+    goals = [goal for goal in request.goals if (
+        plan.goal_map.get(goal.id) and plan.goal_map[goal.id].step_id == step.id)]
+    for goal in goals:
+        for name, value in goal.conditions.items():
+            if name in constraints and canonical_condition(name, value) != canonical_condition(name, constraints[name]):
+                raise ValueError("conflicting_goal_condition:" + name)
+            constraints[name] = value
+    for name, expected in constraints.items():
+        if name in declared and canonical_condition(name, declared[name]) != canonical_condition(name, expected):
+            raise ValueError("step changes request condition:" + name)
 
 
 def _qualified(result, port):

@@ -186,7 +186,8 @@ def initialize_agent(store, config, request, permission, budget=None, *, sources
         budget = BudgetLimits.model_validate({**budget.model_dump(),
                                               "orca_starts": 0, "extra_orca_starts": 0})
     run = store.create_run(request, None, permission, budget,
-                           science_baseline_policy=science_baseline_policy)
+                           science_baseline_policy=science_baseline_policy,
+                           configuration=config.run_configuration())
     if environment:
         import json
         atomic_write(store.path(f"runs/{run.id}/environment.json"),

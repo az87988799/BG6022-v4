@@ -10,7 +10,14 @@ from typing import Annotated, Any
 
 from pydantic import Field, field_validator
 
-from orca_agent.models import CalculationParameters, Identifier, Record, Tool
+from orca_agent.models import (
+    CalculationParameters,
+    CodeExecutionParameters,
+    Identifier,
+    NativeOrcaParameters,
+    Record,
+    Tool,
+)
 from orca_agent.tools.analysis import SAMPLING_CHECK_VERSION, sampling_check_contract
 from orca_agent.tools.evidence import (
     EvidenceDiscoverParameters,
@@ -34,7 +41,7 @@ SCIENCE_IDENTITIES = {"water": "H2O", "methane": "CH4"}
 
 
 class SinglePointParameters(CalculationParameters):
-    timeout_seconds: Annotated[float, Field(gt=0, le=300)] = 300
+    """Historical SP type; resource limits come from the Run snapshot."""
 
 
 class EvidenceListParameters(Record):
@@ -83,6 +90,26 @@ def _register(parameters: type[Record], **metadata: Any) -> _Registration:
 
 
 TOOLS: dict[str, _Registration] = {
+    "python.execute": _register(
+        CodeExecutionParameters, name="python.execute",
+        description="Contract for a pinned task Python Artifact and explicit input manifest. Execution is not enabled yet.",
+        input_roles=["code", "input_manifest"], output_ports=[],
+        observation_outputs=["observations", "artifacts"],
+        effects=["read_registered_artifact", "execute_python", "write_artifact"],
+        check_version="generic-observation-1",
+        check_contract={"execution_available": False, "generic_observations": True},
+        implementation="orca_agent.tools.registry.execution_unavailable",
+    ),
+    "orca.run": _register(
+        NativeOrcaParameters, name="orca.run",
+        description="Contract for pinned native ORCA input and dependencies. Execution is not enabled yet.",
+        input_roles=["native_input", "input_manifest"], output_ports=[],
+        observation_outputs=["observations", "artifacts"],
+        effects=["read_registered_artifact", "execute_orca", "write_artifact"],
+        check_version="generic-observation-1",
+        check_contract={"execution_available": False, "generic_observations": True},
+        implementation="orca_agent.tools.registry.execution_unavailable",
+    ),
     "orca.sp": _register(
         SinglePointParameters,
         name="orca.sp",
@@ -243,6 +270,31 @@ def _definition(name: str) -> _Registration:
 
 def get_tool(name: str) -> Tool:
     return _definition(name).tool.model_copy(deep=True)
+
+
+def declared_outputs(step) -> list[str]:
+    """Declarations are data ports, never a grant of scientific qualification."""
+    tool = get_tool(step.tool)
+    ports = tool.output_ports + tool.observation_outputs
+    if tool.check_contract.get("generic_observations"):
+        ports += step.parameters.observation_names
+    return list(dict.fromkeys(ports))
+
+
+def require_execution_available(name: str) -> None:
+    if get_tool(name).check_contract.get("execution_available") is False:
+        raise ValueError("managed_execution_not_implemented:" + name)
+
+
+def execution_unavailable(*args, **kwargs):
+    raise ValueError("managed_execution_not_implemented")
+
+
+def validate_legacy_profile(parameters: CalculationParameters) -> None:
+    """The existing writer/checker must not silently rewrite newly expressible inputs."""
+    expected = {"method": "HF", "basis": "STO-3G", "charge": 0, "multiplicity": 1}
+    if any(getattr(parameters, key) != value for key, value in expected.items()):
+        raise ValueError("legacy_adapter_profile_unsupported: use the managed native input contract")
 
 
 def catalog() -> list[dict[str, Any]]:

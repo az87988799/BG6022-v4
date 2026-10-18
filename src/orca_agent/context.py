@@ -24,7 +24,7 @@ from orca_agent.decision_purpose import (
 )
 from orca_agent.llm import PreparedRequest, prepare_request
 from orca_agent.model_usage import final_explanation_budget
-from orca_agent.models import Plan, Proposal, Request, Result, Run, utc_now
+from orca_agent.models import ModelLimits, Plan, Proposal, Request, Result, Run, utc_now
 from orca_agent.proposals import (
     action_parameter_schema,
     call_tool_instruction,
@@ -1595,12 +1595,13 @@ def _terminal_context(request, run, snapshot, purpose, feedback, user_messages, 
         prepared = prepare_request([{"role": "system", "content": native_prompt},
             {"role": "user", "content": _json(native)}], prompt_version=PROMPT_VERSION,
             max_output_tokens=run.budget.output_tokens,
-            timeout_seconds=min(60, seconds * 0.9), model_profile=profile)
+            timeout_seconds=min((run.configuration.model if run.configuration else ModelLimits()).timeout_seconds, seconds * 0.9),
+            model_profile=profile, limits=run.configuration.model if run.configuration else None)
         if (prepared.input_token_bound <= run.budget.input_tokens
                 and prepared.reserved_tokens <= budget["remaining_tokens_before_this_request"]):
             return prepared
     except ValueError as exc:
-        if str(exc) != "conservative input token bound exceeds 24000":
+        if not str(exc).startswith("conservative input token bound exceeds "):
             raise
     for reference_arrays in (False, True):
         template["DATA"]["delivery"] = _public_delivery(snapshot, reference_arrays=reference_arrays)
@@ -1611,9 +1612,10 @@ def _terminal_context(request, run, snapshot, purpose, feedback, user_messages, 
                 {"role": "system", "content": request_prompt},
                 {"role": "user", "content": json.dumps(wire, ensure_ascii=False, separators=(",", ":"), allow_nan=False)}],
                 prompt_version=PROMPT_VERSION, max_output_tokens=run.budget.output_tokens,
-                timeout_seconds=min(60, seconds * 0.9), model_profile=profile)
+                timeout_seconds=min((run.configuration.model if run.configuration else ModelLimits()).timeout_seconds, seconds * 0.9),
+            model_profile=profile, limits=run.configuration.model if run.configuration else None)
         except ValueError as exc:
-            if str(exc) != "conservative input token bound exceeds 24000":
+            if not str(exc).startswith("conservative input token bound exceeds "):
                 raise
             continue
         if (prepared.input_token_bound <= run.budget.input_tokens
@@ -2152,13 +2154,14 @@ def build_context(
                     [{"role": "system", "content": native_prompt},
                      {"role": "user", "content": _json(native)}],
                     prompt_version=PROMPT_VERSION, max_output_tokens=run.budget.output_tokens,
-                    timeout_seconds=min(60, remaining_seconds), model_profile=model_profile)
+                    timeout_seconds=min((run.configuration.model if run.configuration else ModelLimits()).timeout_seconds, remaining_seconds),
+                    model_profile=model_profile, limits=run.configuration.model if run.configuration else None)
                 margin = delivery_budget["future_answer_tokens"] if delivery_budget["required"] else 0
                 if (prepared.input_token_bound <= run.budget.input_tokens
                         and prepared.reserved_tokens + margin <= remaining_tokens):
                     return prepared
             except ValueError as exc:
-                if str(exc) != "conservative input token bound exceeds 24000":
+                if not str(exc).startswith("conservative input token bound exceeds "):
                     raise
         if compact:
             if frozen:
@@ -2274,11 +2277,11 @@ def build_context(
                  {"role": "user", "content": json.dumps(wire, ensure_ascii=False, separators=(",", ":"), allow_nan=False)}],
                 prompt_version=PROMPT_VERSION,
                 max_output_tokens=run.budget.output_tokens,
-                timeout_seconds=min(60, remaining_seconds),
-                model_profile=model_profile,
+                timeout_seconds=min((run.configuration.model if run.configuration else ModelLimits()).timeout_seconds, remaining_seconds),
+                model_profile=model_profile, limits=run.configuration.model if run.configuration else None,
             )
         except ValueError as exc:
-            if str(exc) != "conservative input token bound exceeds 24000":
+            if not str(exc).startswith("conservative input token bound exceeds "):
                 raise
             continue
         if (prepared.input_token_bound > run.budget.input_tokens
@@ -2299,5 +2302,5 @@ def build_context(
         # can preserve the margin, the unchanged send guard rejects the best
         # fitting candidate before reserving or transmitting any HTTP.
         return budget_rejected_prepared
-    raise ContextLimitError("required model context exceeds the 24000 global bound, Run input limit, "
+    raise ContextLimitError("required model context exceeds the configured global input bound, Run input limit, "
                             "or remaining token reservation")

@@ -27,13 +27,20 @@ from orca_agent.models import (
     Request,
     Result,
     Run,
+    RunConfiguration,
     Step,
     ToolCall,
     fingerprint,
     new_id,
     utc_now,
 )
-from orca_agent.tools.registry import get_tool, validate_geometry, validate_parameters
+from orca_agent.tools.registry import (
+    get_tool,
+    require_execution_available,
+    validate_geometry,
+    validate_legacy_profile,
+    validate_parameters,
+)
 
 
 class StoreError(ValueError):
@@ -120,7 +127,9 @@ def default_environment_root() -> Path:
 
 
 class Store:
-    def __init__(self, root: str | Path, *, environment_root: str | Path | None = None):
+    def __init__(self, root: str | Path, *, environment_root: str | Path | None = None,
+                 configuration: RunConfiguration | None = None):
+        self.configuration = configuration or RunConfiguration()
         original = Path(root).absolute()
         if _is_link(original):
             raise StoreError("data root cannot be a link")
@@ -177,7 +186,7 @@ class Store:
     def create_run(
         self, request: Request, plan: Plan | None,
         permission: PermissionSnapshot | None = None, budget: BudgetLimits | None = None,
-        *, science_baseline_policy: str = "legacy",
+        *, science_baseline_policy: str = "legacy", configuration: RunConfiguration | None = None,
     ) -> Run:
         request = Request.model_validate(request.model_dump())
         if plan is not None:
@@ -189,7 +198,8 @@ class Store:
             if self.artifact_path(artifact_id).stat().st_size > 65536:
                 raise StoreError("geometry exceeds the 64 KiB input limit")
         for step in plan.steps if plan else []:
-            if "execute_orca" in get_tool(step.tool).effects and step.geometry.artifact_id:
+            if ("execute_orca" in get_tool(step.tool).effects and step.geometry
+                    and step.geometry.artifact_id):
                 from orca_agent.applicability import validate_direct_geometry
                 try:
                     validate_direct_geometry(self, request, step)
@@ -201,11 +211,18 @@ class Store:
         permission = PermissionSnapshot.model_validate(permission.model_dump())
         if not set(geometry_ids).issubset(permission.artifact_ids):
             raise StoreError("initial geometry is outside the permission snapshot")
+        from orca_agent.planning import validate_code_inputs
+        for step in plan.steps if plan else []:
+            validate_code_inputs(self, permission, step)
         budget = budget or BudgetLimits()
         budget = BudgetLimits.model_validate(budget.model_dump())
+        if plan is not None and len(plan.steps) > budget.logical_steps:
+            raise BudgetExceeded("initial logical Step count exceeds the configured budget")
         science_steps = ([s.logical_id for s in plan.steps
                           if "execute_orca" in get_tool(s.tool).effects] if plan else None)
         run = Run(
+            configuration=RunConfiguration.model_validate(
+                (configuration or self.configuration).model_dump()),
             request_id=request.id, request_version=request.version,
             plan_id=plan.id if plan else None, plan_version=plan.version if plan else None,
             permission=permission, budget=budget,
@@ -224,6 +241,7 @@ class Store:
             self._write_json(f"runs/{run.id}/plan-revisions/{plan.version}.json", plan, immutable=True)
         self._write_json(f"runs/{run.id}/permission.json", permission, immutable=True)
         self._write_json(f"runs/{run.id}/budget.json", budget, immutable=True)
+        self._write_json(f"runs/{run.id}/configuration.json", run.configuration, immutable=True)
         self._write_json(f"runs/{run.id}/run.json", run, immutable=True)
         return run
 
@@ -231,7 +249,29 @@ class Store:
         run = Run.model_validate(self._read_json(f"runs/{_id(run_id)}/run.json"))
         if run.id != run_id:
             raise StoreError("run identity does not match its location")
+        path = self.path(f"runs/{run.id}/configuration.json")
+        if run.configuration is None and path.exists():
+            raise StoreError("Run configuration was removed while its immutable snapshot remains")
+        if run.configuration is not None:
+            if not path.is_file() or RunConfiguration.model_validate(
+                    self._read_json(f"runs/{run.id}/configuration.json")) != run.configuration:
+                raise StoreError("immutable Run configuration snapshot is missing or changed")
         return run
+
+    def run_configuration(self, run: Run) -> RunConfiguration:
+        """Historical Runs retain the enforced old envelope, never today's config."""
+        return run.configuration or RunConfiguration()
+
+    def validate_execution_resources(self, run: Run, parameters) -> None:
+        limits = self.run_configuration(run).resources
+        if limits.environment_concurrency != 1:
+            raise StoreError("environment_concurrency above 1 is not implemented; launch refused")
+        for name, maximum in (("cores", limits.max_cores),
+                              ("memory_mb", limits.total_memory_mb),
+                              ("maxcore_mb", limits.maxcore_mb),
+                              ("timeout_seconds", limits.job_timeout_seconds)):
+            if getattr(parameters, name) > maximum:
+                raise StoreError(f"{name} exceeds the frozen Run resource configuration")
 
     def load_request(self, run: Run | str) -> Request:
         run = self.load_run(run) if isinstance(run, str) else run
@@ -309,14 +349,15 @@ class Store:
             previous = self.load_run(run.id)
             for field in ("request_id", "request_version", "plan_id", "plan_version", "permission",
                           "science_baseline_policy",
-                          "budget", "created_at", "deadline"):
+                          "budget", "configuration", "created_at", "deadline"):
                 if getattr(run, field) != getattr(previous, field):
                     raise StoreError(f"fixed run field cannot be changed: {field}")
             for field in ("orca_starts_reserved", "orca_starts_actual", "postprocess_starts",
                           "elapsed_seconds", "cpu_seconds", "extra_orca_starts_reserved",
                           "model_calls", "model_tokens_used", "model_tokens_unknown",
                           "plan_revisions", "decision_rounds",
-                          "evidence_reads", "analysis_executions", "identity_queries", "structure_preparations", "knowledge_queries"):
+                          "evidence_reads", "analysis_executions", "identity_queries", "structure_preparations", "knowledge_queries",
+                          "internal_work_units", "code_retries"):
                 if getattr(run.usage, field) < getattr(previous.usage, field):
                     raise StoreError(f"cumulative usage cannot decrease: {field}")
             for field in ("logical_attempts", "fingerprint_attempts"):
@@ -401,6 +442,40 @@ class Store:
             run.__dict__.update(updated.__dict__)
             return reply
 
+    def artifact_budget_usage(self, run: Run) -> dict:
+        """Count durable import reservations, including failed/unknown copies.
+
+        Earlier imports have no reservation: their existing Artifact metadata is
+        counted without rewriting it. An old Run's unknown history stays unknown.
+        """
+        allocations = {}
+        for path in self.root.glob("artifacts/*/artifact.json"):
+            data = self._read_json(path.relative_to(self.root).as_posix())
+            if data.get("run_id") == run.id:
+                artifact = Artifact.model_validate(data)
+                allocations[artifact.id] = artifact.size
+        folder = self.path(f"runs/{run.id}/artifact-reservations")
+        if folder.exists():
+            for path in folder.glob("*.json"):
+                data = self._read_json(path.relative_to(self.root).as_posix())
+                if (set(data) != {"artifact_id", "run_id", "bytes"}
+                        or data["run_id"] != run.id or data["artifact_id"] != path.stem
+                        or type(data["bytes"]) is not int or data["bytes"] < 0):
+                    raise StoreError("invalid immutable artifact reservation")
+                allocations[data["artifact_id"]] = max(
+                    allocations.get(data["artifact_id"], 0), data["bytes"])
+        return {"reserved_count": len(allocations), "reserved_bytes": sum(allocations.values()),
+                "history_complete": run.configuration is not None,
+                "basis": "retained Artifact metadata and immutable import reservations"}
+
+    def cumulative_artifact_budget(self, run: Run) -> bool:
+        """Old budgets had only a per-collection cap; do not invent a past total."""
+        if run.configuration is not None:
+            return True
+        original = self._read_json(f"runs/{run.id}/budget.json")
+        return all(name in original for name in (
+            "artifact_count", "artifact_bytes", "artifact_total_bytes"))
+
     def import_artifact(
         self, path: str | Path, role: str, *, run_id: str | None = None,
         attempt_id: str | None = None, source: dict | None = None,
@@ -410,6 +485,19 @@ class Store:
         if not original.is_file() or _is_link(original):
             raise StoreError("artifact source must be an existing regular, non-link file")
         artifact_id = new_id("artifact")
+        source_size = original.stat().st_size
+        if run_id:
+            with self.run_lock(run_id):
+                run = self.load_run(run_id)
+                usage = self.artifact_budget_usage(run)
+                cumulative = self.cumulative_artifact_budget(run)
+                if (source_size > run.budget.artifact_bytes
+                        or (cumulative and (usage["reserved_count"] >= run.budget.artifact_count
+                            or usage["reserved_bytes"] + source_size > run.budget.artifact_total_bytes))):
+                    raise BudgetExceeded("artifact count/size budget exhausted; original file retained")
+                self._write_json(f"runs/{run.id}/artifact-reservations/{artifact_id}.json", {
+                    "artifact_id": artifact_id, "run_id": run.id, "bytes": source_size,
+                }, immutable=True)
         relative = f"artifacts/{artifact_id}/files/{original.name}"
         destination = self.path(relative)
         before_hash = sha256_file(original)
@@ -418,7 +506,11 @@ class Store:
         destination.parent.mkdir(parents=True, exist_ok=False)
         # Stream rather than load GBW files into memory. Metadata publication occurs last.
         with original.open("rb") as reader, destination.open("xb") as writer:
+            copied_size = 0
             for block in iter(lambda: reader.read(1024 * 1024), b""):
+                copied_size += len(block)
+                if copied_size > source_size:
+                    raise StoreError("artifact source grew beyond its reserved size")
                 writer.write(block)
             writer.flush()
             os.fsync(writer.fileno())
@@ -459,6 +551,7 @@ class Store:
         The callback may reserve an external budget but must not launch work.
         Its fixed Attempt identity precedes all intent/lease/Run publication.
         """
+        require_execution_available(step.tool)
         with self.run_lock(run.id), self.control_lock(run.id), self._environment_lock():
             current = self.load_run(run.id)
             if current.model_dump() != run.model_dump():
@@ -484,6 +577,8 @@ class Store:
                     f"runs/{run.id}/budget.json")) != run.budget:
                 raise StoreError("budget snapshot mismatch")
             params = validate_parameters(step.tool, step.parameters)
+            validate_legacy_profile(params)
+            self.validate_execution_resources(run, params)
             if step.tool not in permission.allowed_tools:
                 raise StoreError("tool is outside the permission snapshot")
             if params.cores > permission.max_cores or params.memory_mb > permission.max_memory_mb:
@@ -759,6 +854,14 @@ class Store:
                 raise StoreError("stale Run snapshot")
             self.check_execution_control(run)
             definition = get_tool(tool)
+            require_execution_available(tool)
+            if "prepare_geometry" in definition.effects:
+                limits = self.run_configuration(run).resources
+                if limits.environment_concurrency != 1:
+                    raise StoreError("environment_concurrency above 1 is not implemented; launch refused")
+                if ((definition.max_cores or 0) > limits.max_cores
+                        or (definition.max_memory_mb or 0) > limits.total_memory_mb):
+                    raise StoreError("Tool resources exceed the frozen Run resource configuration")
             if "execute_orca" in definition.effects:
                 raise StoreError("scientific calls require a Plan/Step/Attempt")
             if tool not in run.permission.allowed_tools:
@@ -935,8 +1038,11 @@ class Store:
                                   user_update=bool(user_message_ids),
                                   authenticated_user_revision=semantic_record is not None)
             from orca_agent.applicability import validate_direct_geometry
+            from orca_agent.planning import validate_code_inputs
             for step in plan.steps if plan else []:
-                if "execute_orca" in get_tool(step.tool).effects and step.geometry.artifact_id:
+                validate_code_inputs(self, run.permission, step)
+                if ("execute_orca" in get_tool(step.tool).effects and step.geometry
+                        and step.geometry.artifact_id):
                     try:
                         validate_direct_geometry(self, next_request, step, run=run)
                     except ValueError as exc:
@@ -952,7 +1058,7 @@ class Store:
                 raise BudgetExceeded("plan revision budget exhausted")
             logical = set(run.usage.logical_steps) | {
                 s.logical_id for s in (plan.steps if plan else [])}
-            if len(logical) > 12:
+            if len(logical) > run.budget.logical_steps:
                 raise BudgetExceeded("cumulative logical Step limit exhausted")
             record = {"id": decision_id, "basis": basis, "request": next_request.model_dump(mode="json"),
                       "plan": plan.model_dump(mode="json") if plan else None,

@@ -4,6 +4,7 @@ import pytest
 
 from orca_agent.config import Config
 from orca_agent.doctor import diagnose
+from orca_agent.models import ResourceLimits
 
 
 def test_missing_environment_is_reported_without_launch(tmp_path):
@@ -11,6 +12,14 @@ def test_missing_environment_is_reported_without_launch(tmp_path):
     assert report["orca"]["compatible"] is None
     assert report["issues"]
     assert report["scientific_execution"] == "not performed by doctor"
+
+
+def test_diagnose_reports_configured_envelope_without_claiming_kernel_verification(tmp_path):
+    report = diagnose(Config(data_root=tmp_path, resources=ResourceLimits(
+        max_cores=8, total_memory_mb=4096, maxcore_mb=384, environment_concurrency=2)))
+    assert report["configured_limits"] == {"cores": 8, "job_commit_memory_mb": 4096,
+        "maxcore_mb_per_process": 384, "global_concurrency": 2}
+    assert report["job_control"] == "requires managed backend acceptance tests"
 
 
 def test_banner_probe_does_not_mistake_libxc_for_orca(tmp_path, monkeypatch):

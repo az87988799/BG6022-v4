@@ -13,8 +13,6 @@ from orca_agent.decision_purpose import (
     prepared_decision_purpose,
 )
 from orca_agent.llm import (
-    MAX_PROPOSAL_BYTES,
-    MAX_RESPONSE_BYTES,
     ModelReply,
     ModelUsage,
     _canonical,
@@ -25,7 +23,7 @@ from orca_agent.llm import (
     model_profile_parameters,
     request_model_profile,
 )
-from orca_agent.models import new_id, utc_now
+from orca_agent.models import ModelLimits, new_id, utc_now
 from orca_agent.store import BudgetExceeded, StoreError, _id, _json_bytes, atomic_write
 
 # Frozen uncached peak prices. Discounts never enlarge reservations.
@@ -83,11 +81,12 @@ def final_explanation_budget(request, run, *, final_only=False, purpose=None,
     current_seconds = prepared.timeout_seconds if prepared is not None else 0
     bounded = purpose is not None
     future_tokens = future * final_tokens if bounded else 0
-    future_seconds = future * TERMINAL_SECONDS if bounded else 0
+    terminal_seconds = (run.configuration.model.timeout_seconds if run.configuration else TERMINAL_SECONDS)
+    future_seconds = future * terminal_seconds if bounded else 0
     corrections = min(run.budget.corrections_per_proposal, max(0, calls - 1 - future), max(0, rounds - future))
     if bounded:
         corrections = min(corrections, max(0, (tokens - current_tokens - future_tokens) // max(1, final_tokens)),
-                          max(0, int((seconds - current_seconds - future_seconds) // TERMINAL_SECONDS)))
+                          max(0, int((seconds - current_seconds - future_seconds) // terminal_seconds)))
     return {"required": required, "final_only": final_only,
             "purpose": purpose.kind if isinstance(purpose, DecisionPurpose) else "legacy",
             "future_answer_calls": future,
@@ -135,7 +134,10 @@ def validate_delivery_margin(request, run, *, purpose="planning", prepared=None,
 
 def _request_body(store, run, record):
     path = store.path(f"runs/{run.id}/model/{_id(record['id'])}.request.json")
-    if not path.is_file() or path.stat().st_size > 128 * 1024:
+    limits = ModelLimits.model_validate(record.get("transport_limits", {}))
+    if run.configuration is not None and limits != run.configuration.model:
+        raise StoreError("model record limits differ from the immutable Run configuration")
+    if not path.is_file() or path.stat().st_size > limits.input_tokens * 6 + 4096:
         raise StoreError("model request evidence is missing or exceeds its size bound")
     raw = path.read_bytes()
     if hashlib.sha256(raw).hexdigest() != record["request_hash"]:
@@ -161,7 +163,7 @@ def validate_model_profile(store, run, expected=None):
     if expected is not None:
         model_profile_parameters(expected)
     path = store.path(f"runs/{run.id}/model-profile.json")
-    frozen = None
+    frozen = run.configuration.model_profile if run.configuration is not None else None
     if path.exists():
         try:
             if not path.is_file() or path.stat().st_size > 4096:
@@ -173,6 +175,8 @@ def validate_model_profile(store, run, expected=None):
                     or data["run_id"] != run.id):
                 raise ValueError("invalid shape")
             model_profile_parameters(data["model_profile"])
+            if frozen is not None and frozen != data["model_profile"]:
+                raise ValueError("profile differs from the Run configuration")
             frozen = data["model_profile"]
         except (ValueError, UnicodeError, RecursionError):
             raise StoreError("invalid immutable model profile snapshot") from None
@@ -199,6 +203,7 @@ def _freeze_model_profile(store, run, profile):
 
 def _validate_reply(data, record):
     """Reconstruct bounded, typed and credential-free persisted transport facts."""
+    limits = ModelLimits.model_validate(record.get("transport_limits", {}))
     if not isinstance(data, dict):
         raise StoreError("invalid model response record shape")
     if set(data) == _LEGACY_REPLY_FIELDS:
@@ -222,7 +227,7 @@ def _validate_reply(data, record):
                  or any(c not in "0123456789abcdef" for c in data["response_hash"]))):
         raise StoreError("invalid model response hash")
     if (type(data["response_bytes"]) is not int
-            or not 0 <= data["response_bytes"] <= MAX_RESPONSE_BYTES):
+            or not 0 <= data["response_bytes"] <= limits.response_bytes):
         raise StoreError("invalid model response size")
     if data["http_status"] is not None and (
         type(data["http_status"]) is not int or not 100 <= data["http_status"] <= 599
@@ -238,14 +243,14 @@ def _validate_reply(data, record):
     proposal = data["proposal"]
     if proposal is not None and (
         not isinstance(proposal, dict) or data["error_category"] is not None
-        or len(json.dumps(proposal, ensure_ascii=False).encode("utf-8")) > MAX_PROPOSAL_BYTES
+        or len(json.dumps(proposal, ensure_ascii=False).encode("utf-8")) > limits.proposal_bytes
     ):
         raise StoreError("invalid model proposal receipt")
     if proposal is None and data["error_category"] is None:
         raise StoreError("model receipt has neither a proposal nor an error")
     raw_content = data["raw_content"]
     if raw_content is not None:
-        if not isinstance(raw_content, str) or _recordable_raw_content(raw_content) != raw_content:
+        if not isinstance(raw_content, str) or _recordable_raw_content(raw_content, limits) != raw_content:
             raise StoreError("invalid model raw content receipt")
         if proposal is not None:
             try:
@@ -284,7 +289,9 @@ def read_model_reply(store, run, record):
     response_path = store.path(f"runs/{run.id}/model/{ticket}.response.json")
     if not request_path.is_file() or not response_path.is_file():
         raise StoreError("model request or response evidence is missing")
-    if request_path.stat().st_size > 128 * 1024 or response_path.stat().st_size > MAX_RESPONSE_BYTES:
+    limits = ModelLimits.model_validate(record.get("transport_limits", {}))
+    if (request_path.stat().st_size > limits.input_tokens * 6 + 4096
+            or response_path.stat().st_size > limits.response_bytes):
         raise StoreError("model evidence exceeds its size bound")
     if hashlib.sha256(request_path.read_bytes()).hexdigest() != record["request_hash"]:
         raise StoreError("frozen model request changed")
@@ -420,6 +427,8 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
                     or run.usage.model_tokens_used + run.usage.model_tokens_unknown
                     + request.reserved_tokens > run.budget.model_tokens):
                 raise BudgetExceeded("model HTTP/token budget exhausted")
+            if request.limits != store.run_configuration(run).model:
+                raise StoreError("model limits differ from the frozen Run configuration")
             _freeze_model_profile(store, run, request.model_profile)
             if fault:
                 fault("after_model_profile_frozen")
@@ -431,7 +440,8 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
                       "created_at": utc_now().isoformat(), "status": "reserved",
                       "prompt_version": request.prompt_version, "sdk_version": request.sdk_version,
                       "model": request.model, "token_bound_version": request.token_bound_version,
-                      "model_profile": request.model_profile}
+                      "model_profile": request.model_profile,
+                      "transport_limits": request.limits.model_dump()}
             if snapshot_bytes is not None:
                 store._write_json(f"runs/{run.id}/model/{ticket}.delivery.json", delivery_snapshot, immutable=True)
                 record["delivery_snapshot_sha256"] = hashlib.sha256(snapshot_bytes).hexdigest()
@@ -458,7 +468,7 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
             _validate_reply(data, record)
             if _has_credential(json.dumps(data, ensure_ascii=False)):
                 raise StoreError("credential-like content in model receipt")
-            if len(_json_bytes(data)) > MAX_RESPONSE_BYTES:
+            if len(_json_bytes(data)) > prepared.limits.response_bytes:
                 raise StoreError("model response evidence exceeds its size bound")
             store._write_json(f"runs/{run.id}/model/{ticket}.response.json", data, immutable=True)
             if fault:

@@ -94,8 +94,10 @@ def diagnose(config: Config) -> dict:
             "data_root": str(config.data_root), "data_root_writable": writable,
             "host_resources": {"logical_cpus": psutil.cpu_count(),
                                "available_memory_bytes": psutil.virtual_memory().available},
-            "configured_limits": {"cores": 4, "job_commit_memory_mb": 1024,
-                                  "maxcore_mb_per_process": 192, "global_concurrency": 1},
+            "configured_limits": {"cores": config.resources.max_cores,
+                                  "job_commit_memory_mb": config.resources.total_memory_mb,
+                                  "maxcore_mb_per_process": config.resources.maxcore_mb,
+                                  "global_concurrency": config.resources.environment_concurrency},
             "job_control": "requires managed backend acceptance tests",
             "source_hashes": {str(p.relative_to(Path(__file__).parent)):
                               hashlib.sha256(p.read_bytes()).hexdigest()

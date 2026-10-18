@@ -1,7 +1,7 @@
 """The seven persisted objects and their small, typed local records.
 
-Scientific conditions are deliberately narrow. Extending this profile requires a
-registry/adapter/check change and new evidence, not free-form ORCA input.
+Scientific requests can describe general conditions and code-backed work.
+Representable parameters do not themselves grant execution or scientific qualification.
 """
 
 from __future__ import annotations
@@ -9,16 +9,25 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timedelta, timezone
+from pathlib import PurePosixPath, PureWindowsPath
 from typing import Annotated, Any, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, JsonValue, model_validator
 
 from orca_agent.versions import LEGACY_CHECK_VERSION
 
 Identifier = Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$")]
 Port = Annotated[str, Field(pattern=r"^[A-Za-z][A-Za-z0-9_]{0,63}$")]
 CheckStatus = Literal["passed", "failed", "unverified", "not_applicable"]
+Digest = Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
+ScientificLabel = Annotated[str, Field(strict=True, min_length=1, max_length=256,
+                                      pattern=r"^[^\s\x00-\x1f\x7f](?:[^\x00-\x1f\x7f]*[^\s\x00-\x1f\x7f])?$")]
+RuleVersion = Annotated[str, Field(min_length=3, max_length=96,
+                                   pattern=r"^[A-Za-z][A-Za-z0-9_-]*-[0-9]+$")]
+ConditionSource = Literal[
+    "explicit", "default", "inherited", "inferred", "auto_selected", "unknown", "not_applicable",
+]
 
 
 def require_electronic_integer(value: Any) -> int:
@@ -44,22 +53,125 @@ class Record(BaseModel):
 
 
 class CalculationParameters(Record):
-    method: Literal["HF"] = "HF"
-    basis: Literal["STO-3G"] = "STO-3G"
-    charge: Annotated[Literal[0], BeforeValidator(require_electronic_integer)] = 0
-    multiplicity: Annotated[Literal[1], BeforeValidator(require_electronic_integer)] = 1
-    cores: Annotated[int, Field(strict=True, ge=1, le=4)] = 4
-    memory_mb: Annotated[int, Field(strict=True, ge=256, le=1024)] = 1024
-    maxcore_mb: Annotated[int, Field(strict=True, ge=1, le=192)] = 192
-    scf_maxiter: Annotated[int, Field(strict=True, ge=1, le=300)] = 100
-    opt_maxiter: Annotated[int, Field(strict=True, ge=1, le=200)] = 100
-    timeout_seconds: Annotated[float, Field(gt=0, le=900)] = 300
+    method: ScientificLabel = "HF"
+    basis: ScientificLabel = "STO-3G"
+    charge: ElectronicInteger = 0
+    multiplicity: Annotated[ElectronicInteger, Field(ge=1)] = 1
+    cores: Annotated[int, Field(strict=True, ge=1)] = 4
+    memory_mb: Annotated[int, Field(strict=True, ge=1)] = 1024
+    maxcore_mb: Annotated[int, Field(strict=True, ge=1)] = 192
+    scf_maxiter: Annotated[int, Field(strict=True, ge=1)] = 100
+    opt_maxiter: Annotated[int, Field(strict=True, ge=1)] = 100
+    timeout_seconds: Annotated[float, Field(gt=0)] = 300
 
     @model_validator(mode="after")
     def within_memory(self) -> CalculationParameters:
         if self.cores * self.maxcore_mb > self.memory_mb:
             raise ValueError("aggregate MaxCore exceeds the requested total memory")
         return self
+
+
+class CodeRef(Record):
+    """An immutable code/input Artifact binding; not permission to execute it."""
+
+    artifact_id: Identifier
+    sha256: Digest
+    language: Literal["python", "orca"] = "python"
+    version: Annotated[int, Field(strict=True, ge=1)] = 1
+
+
+class InputManifestEntry(Record):
+    artifact_id: Identifier
+    sha256: Digest
+    target_path: Annotated[str, Field(strict=True, min_length=1, max_length=240)]
+    purpose: ScientificLabel
+
+    @model_validator(mode="after")
+    def relative_target(self):
+        # This is a task-local copy name, never an arbitrary host filesystem path.
+        parts = self.target_path.split("/")
+        if (any(char in self.target_path for char in '\\:<>"|?*')
+                or any(ord(char) < 32 or ord(char) == 127 for char in self.target_path)
+                or PurePosixPath(self.target_path).is_absolute()
+                or any(part in {"", ".", ".."} or part.endswith((" ", "."))
+                       or PureWindowsPath(part).is_reserved() for part in parts)):
+            raise ValueError("manifest target must be an unambiguous relative task path")
+        return self
+
+
+class InputManifest(Record):
+    """Versioned, hash-pinned input copies and their declared use within a Step."""
+
+    version: Literal[1] = 1
+    entries: list[InputManifestEntry] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def unique_targets(self):
+        targets = [entry.target_path.casefold() for entry in self.entries]
+        if len(set(targets)) != len(targets):
+            raise ValueError("manifest target paths collide")
+        for target in targets:
+            if any(other.startswith(target + "/") for other in targets if other != target):
+                raise ValueError("manifest target cannot be both a file and a directory")
+        artifacts = {}
+        for entry in self.entries:
+            if artifacts.setdefault(entry.artifact_id, entry.sha256) != entry.sha256:
+                raise ValueError("one manifest Artifact cannot have different hashes")
+        return self
+
+
+class CodeExecutionParameters(Record):
+    code: CodeRef
+    inputs: InputManifest = Field(default_factory=InputManifest)
+    observation_names: list[Port] = Field(default_factory=list)
+    conditions: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def python_code(self):
+        if self.code.language != "python":
+            raise ValueError("Python execution requires a Python code Artifact")
+        if any(entry.artifact_id == self.code.artifact_id and entry.sha256 != self.code.sha256
+               for entry in self.inputs.entries):
+            raise ValueError("code and input manifest disagree on the Artifact hash")
+        if len(set(self.observation_names)) != len(self.observation_names):
+            raise ValueError("observation names must be unique")
+        return self
+
+
+class NativeOrcaParameters(Record):
+    input: CodeRef
+    inputs: InputManifest = Field(default_factory=InputManifest)
+    observation_names: list[Port] = Field(default_factory=list)
+    conditions: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def native_input(self):
+        if self.input.language != "orca":
+            raise ValueError("native ORCA execution requires an ORCA input Artifact")
+        if any(entry.artifact_id == self.input.artifact_id and entry.sha256 != self.input.sha256
+               for entry in self.inputs.entries):
+            raise ValueError("native input and manifest disagree on the Artifact hash")
+        if len(set(self.observation_names)) != len(self.observation_names):
+            raise ValueError("observation names must be unique")
+        return self
+
+
+class InternalCall(Record):
+    """Run-owned receipt data for a managed internal call, without a new lifecycle."""
+
+    request_key: Identifier
+    input_fingerprint: Digest
+    tool: Literal["orca.run"] = "orca.run"
+    code: CodeRef | None = None
+    inputs: InputManifest = Field(default_factory=InputManifest)
+    conditions: dict[str, Any] = Field(default_factory=dict)
+    actual_conditions: dict[str, Any] = Field(default_factory=dict)
+    state: Literal["reserved", "running", "completed", "failed", "cancelled", "timed_out", "unknown"]
+    attempt_id: Identifier | None = None
+    result_id: Identifier | None = None
+    artifact_ids: list[Identifier] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=utc_now)
+    finished_at: datetime | None = None
 
 
 class InputRef(Record):
@@ -83,16 +195,17 @@ class Goal(Record):
     port: Port
     required: bool = True
     # Missing fields in historical files mean the old rule, never the current rule.
-    minimum_check_version: Literal[
-        "orca-hf-1", "orca-hf-2", "evidence-read-1", "energy-compare-1",
-        "finite-sampling-1", "finite-sampling-check-1", "unresolved-1", "knowledge-answer-1",
-    ] = LEGACY_CHECK_VERSION
+    minimum_check_version: RuleVersion = LEGACY_CHECK_VERSION
+    evidence_contract_version: Literal["legacy-1", "generic-observation-1"] = "legacy-1"
+    verification: Literal["qualified", "reported_with_limitations"] = "qualified"
+    quantity: ScientificLabel | None = None
     original_text: str = ""
     identity: dict[str, Any] = Field(default_factory=dict)
     text_evidence: dict[str, Any] = Field(default_factory=dict)
     system_ids: list[Identifier] = Field(default_factory=list)
     conditions: dict[str, Any] = Field(default_factory=dict)
     minimum_evidence: list[str] = Field(default_factory=list)
+    minimum_evidence_source: dict[str, ConditionSource] = Field(default_factory=dict)
     unresolved: list[str] = Field(default_factory=list)
 
 
@@ -148,23 +261,25 @@ class Request(Record):
     original_text: str = "Structured local calculation"
     geometry_artifact_id: Identifier | None = None
     charge: ElectronicInteger | None = 0
-    multiplicity: ElectronicInteger | None = 1
-    method: str | None = "HF"
-    basis: str | None = "STO-3G"
-    conditions_source: dict[str, Literal["explicit", "default", "inherited", "inferred", "unknown", "not_applicable"]] = Field(
+    multiplicity: Annotated[ElectronicInteger, Field(ge=1)] | None = 1
+    method: ScientificLabel | None = "HF"
+    basis: ScientificLabel | None = "STO-3G"
+    conditions_source: dict[str, ConditionSource] = Field(
         default_factory=lambda: {
             "charge": "explicit", "multiplicity": "explicit", "method": "explicit",
             "basis": "explicit", "geometry": "explicit",
         }
     )
     goals: Annotated[list[Goal], Field(min_length=1)]
-    systems: Annotated[list[SystemInput], Field(max_length=5)] = Field(default_factory=list)
+    systems: list[SystemInput] = Field(default_factory=list)
     messages: list[dict[str, Any]] = Field(default_factory=list)
     unresolved: list[str] = Field(default_factory=list)
     conditions: dict[str, Any] = Field(default_factory=dict)
     normalization_status: Literal["structured", "pending", "clarification", "normalized"] = "structured"
     condition_evidence: dict[str, Any] = Field(default_factory=dict)
     semantic_defaults: dict[str, Any] = Field(default_factory=dict)
+    automatic_selection: list[str] = Field(default_factory=list)
+    selection_reasons: dict[str, str] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def unique_goals(self) -> Request:
@@ -191,9 +306,11 @@ class Step(Record):
     def registered_parameters(self):
         from orca_agent.tools.registry import get_tool, validate_parameters
         self.parameters = validate_parameters(self.tool, self.parameters)
-        if "execute_orca" in get_tool(self.tool).effects and self.geometry is None:
+        tool = get_tool(self.tool)
+        if ("execute_orca" in tool.effects and "native_input" not in tool.input_roles
+                and self.geometry is None):
             raise ValueError("scientific tool requires geometry")
-        if "execute_orca" not in get_tool(self.tool).effects and self.geometry is not None:
+        if ("execute_orca" not in tool.effects or "native_input" in tool.input_roles) and self.geometry:
             raise ValueError("non-scientific tool cannot claim a scientific geometry binding")
         return self
 
@@ -203,12 +320,12 @@ class Plan(Record):
     version: Annotated[int, Field(ge=1)] = 1
     request_id: Identifier
     request_version: Annotated[int, Field(ge=1)] = 1
-    steps: Annotated[list[Step], Field(min_length=1, max_length=8)]
+    steps: Annotated[list[Step], Field(min_length=1)]
     goal_map: dict[str, OutputBinding]
 
     @model_validator(mode="after")
     def valid_graph(self) -> Plan:
-        from orca_agent.tools.registry import get_tool
+        from orca_agent.tools.registry import declared_outputs, get_tool
         steps = {step.id: step for step in self.steps}
         if len(steps) != len(self.steps):
             raise ValueError("step identities must be unique")
@@ -229,7 +346,7 @@ class Plan(Record):
                 if reference.producer_step_id:
                     if reference.producer_step_id not in step.depends_on:
                         raise ValueError("future evidence producer must be an explicit dependency")
-                    if reference.port not in get_tool(steps[reference.producer_step_id].tool).output_ports:
+                    if reference.port not in declared_outputs(steps[reference.producer_step_id]):
                         raise ValueError("producer does not declare the required port")
         visited: set[str] = set()
         active: set[str] = set()
@@ -250,14 +367,13 @@ class Plan(Record):
         for binding in self.goal_map.values():
             if binding.step_id is not None and binding.step_id not in steps:
                 raise ValueError("goal binding references an unknown step")
-            if (binding.step_id and binding.port not in
-                    (get_tool(steps[binding.step_id].tool).output_ports
-                     + get_tool(steps[binding.step_id].tool).observation_outputs)):
+            if binding.step_id and binding.port not in declared_outputs(steps[binding.step_id]):
                 raise ValueError("step does not produce the goal's port")
         return self
 
     def validate_request(self, request: Request) -> None:
         from orca_agent.applicability import validate_scientific_plan
+        from orca_agent.planning import validate_goal_output_contract
         from orca_agent.tools.registry import get_tool
         if (self.request_id, self.request_version) != (request.id, request.version):
             raise ValueError("plan is based on a different request revision")
@@ -280,6 +396,7 @@ class Plan(Record):
                 raise ValueError("step references an unknown requested system")
             # Concrete historical optimized geometry can be outside this Plan.
             # Store validates its Artifact/Attempt lineage before activation.
+        validate_goal_output_contract(request, self)
         validate_scientific_plan(request, self)
 
 
@@ -293,8 +410,9 @@ class Tool(Record):
     effects: list[str] = Field(
         default_factory=lambda: ["read_geometry", "write_attempt", "execute_orca"]
     )
-    max_cores: int = 4
-    max_memory_mb: int = 1024
+    # None means the Run configuration supplies the limit; zero denotes no CPU execution.
+    max_cores: int | None = None
+    max_memory_mb: int | None = None
     check_version: str = LEGACY_CHECK_VERSION
     implementation: str
     required_input_checks: dict[str, str] = Field(default_factory=dict)
@@ -310,12 +428,13 @@ class PermissionSnapshot(Record):
     allowed_tools: list[str] = Field(
         default_factory=lambda: ["orca.sp", "orca.opt"]
     )
-    max_cores: Annotated[int, Field(ge=1, le=4)] = 4
-    max_memory_mb: Annotated[int, Field(ge=256, le=1024)] = 1024
+    max_cores: Annotated[int, Field(strict=True, ge=1)] = 4
+    max_memory_mb: Annotated[int, Field(strict=True, ge=1)] = 1024
     artifact_ids: list[Identifier] = Field(default_factory=list)
     source_ids: list[Identifier] = Field(default_factory=list)
     result_ids: list[Identifier] = Field(default_factory=list)
     model_execution: bool = False
+    code_execution: bool = False
     artifact_writes: bool = False
     allowed_repairs: dict[str, list[int]] = Field(default_factory=dict)
     allow_additional_science: bool = False
@@ -331,27 +450,77 @@ class PermissionSnapshot(Record):
 
 
 class BudgetLimits(Record):
-    attempts_per_step: Annotated[int, Field(ge=1, le=3)] = 3
-    orca_starts: Annotated[int, Field(ge=0, le=4)] = 4
-    extra_orca_starts: Annotated[int, Field(ge=0, le=3)] = 3
-    postprocess_starts: Literal[0] = 0
-    run_seconds: Annotated[float, Field(gt=0, le=1800)] = 1800
-    model_calls: Annotated[int, Field(ge=0, le=8)] = 0
-    plan_revisions: Annotated[int, Field(ge=0, le=2)] = 0
-    model_tokens: Annotated[int, Field(ge=0, le=48000)] = 0
-    input_tokens: Annotated[int, Field(ge=0, le=24000)] = 0
-    output_tokens: Annotated[int, Field(ge=0, le=2000)] = 0
-    decision_rounds: Annotated[int, Field(ge=0, le=12)] = 0
-    evidence_reads: Annotated[int, Field(ge=0, le=24)] = 0
-    analysis_executions: Annotated[int, Field(ge=0, le=8)] = 0
-    corrections_per_proposal: Annotated[int, Field(ge=0, le=1)] = 0
-    transport_retries: Annotated[int, Field(ge=0, le=1)] = 0
-    identity_queries: Annotated[int, Field(strict=True, ge=0, le=4)] = 0
-    structure_preparations: Annotated[int, Field(strict=True, ge=0, le=4)] = 0
-    knowledge_queries: Annotated[int, Field(strict=True, ge=0, le=8)] = 0
+    logical_steps: Annotated[int, Field(strict=True, ge=1)] = 12
+    attempts_per_step: Annotated[int, Field(ge=1)] = 3
+    orca_starts: Annotated[int, Field(ge=0)] = 4
+    extra_orca_starts: Annotated[int, Field(ge=0)] = 3
+    postprocess_starts: Annotated[int, Field(strict=True, ge=0)] = 0
+    run_seconds: Annotated[float, Field(gt=0)] = 1800
+    model_calls: Annotated[int, Field(ge=0)] = 0
+    plan_revisions: Annotated[int, Field(ge=0)] = 0
+    model_tokens: Annotated[int, Field(ge=0)] = 0
+    input_tokens: Annotated[int, Field(ge=0)] = 0
+    output_tokens: Annotated[int, Field(ge=0)] = 0
+    decision_rounds: Annotated[int, Field(ge=0)] = 0
+    evidence_reads: Annotated[int, Field(ge=0)] = 0
+    analysis_executions: Annotated[int, Field(ge=0)] = 0
+    corrections_per_proposal: Annotated[int, Field(ge=0)] = 0
+    transport_retries: Annotated[int, Field(ge=0)] = 0
+    identity_queries: Annotated[int, Field(strict=True, ge=0)] = 0
+    structure_preparations: Annotated[int, Field(strict=True, ge=0)] = 0
+    knowledge_queries: Annotated[int, Field(strict=True, ge=0)] = 0
+
+    internal_work_units: Annotated[int, Field(strict=True, ge=0)] = 0
+    code_retries: Annotated[int, Field(strict=True, ge=0)] = 0
+    artifact_count: Annotated[int, Field(strict=True, ge=0)] = 200
+    artifact_bytes: Annotated[int, Field(strict=True, ge=0)] = 256 * 1024 * 1024
+    artifact_total_bytes: Annotated[int, Field(strict=True, ge=0)] = 256 * 1024 * 1024
+
+
+class ResourceLimits(Record):
+    """One configured environment envelope, independent of scientific parameters."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+    max_cores: Annotated[int, Field(strict=True, ge=1)] = 4
+    total_memory_mb: Annotated[int, Field(strict=True, ge=1)] = 1024
+    maxcore_mb: Annotated[int, Field(strict=True, ge=1)] = 192
+    environment_concurrency: Annotated[int, Field(strict=True, ge=1)] = 1
+    job_timeout_seconds: Annotated[float, Field(gt=0)] = 900
+    script_timeout_seconds: Annotated[float, Field(gt=0)] = 300
+    collection_timeout_seconds: Annotated[float, Field(gt=0)] = 30
+
+
+class ModelLimits(Record):
+    """Transport/context limits; these are distinct from cumulative token budgets."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+    input_tokens: Annotated[int, Field(strict=True, ge=1)] = 24000
+    output_tokens: Annotated[int, Field(strict=True, ge=1)] = 2000
+    timeout_seconds: Annotated[float, Field(gt=0)] = 60
+    response_bytes: Annotated[int, Field(strict=True, ge=1)] = 128 * 1024
+    proposal_bytes: Annotated[int, Field(strict=True, ge=1)] = 32 * 1024
+    messages: Annotated[int, Field(strict=True, ge=1)] = 64
+
+    @model_validator(mode="after")
+    def response_capacity(self):
+        if self.proposal_bytes > self.response_bytes:
+            raise ValueError("proposal byte limit exceeds response byte limit")
+        return self
+
+
+class RunConfiguration(Record):
+    """Credential-free configuration captured at Run creation, never on resume."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    version: Literal[1] = 1
+    resources: ResourceLimits = Field(default_factory=ResourceLimits)
+    model: ModelLimits = Field(default_factory=ModelLimits)
+    model_profile: Literal["disabled", "thinking_low"] = "disabled"
 
 
 class BudgetUsage(Record):
+    internal_work_units: Annotated[int, Field(strict=True, ge=0)] = 0
+    code_retries: Annotated[int, Field(strict=True, ge=0)] = 0
     orca_starts_reserved: Annotated[int, Field(ge=0)] = 0
     orca_starts_actual: Annotated[int, Field(ge=0)] = 0
     # Actual over-budget execution must remain representable as a failure fact.
@@ -462,6 +631,8 @@ class ReportReceipt(Record):
 
 
 class Run(Record):
+    # Missing historical snapshots stay absent; loading does not invent past settings.
+    configuration: RunConfiguration | None = None
     id: Identifier = Field(default_factory=lambda: new_id("run"))
     request_id: Identifier
     request_version: int
@@ -485,6 +656,7 @@ class Run(Record):
     result_ids: list[Identifier] = Field(default_factory=list)
     diagnostics: list[dict[str, Any]] = Field(default_factory=list)
     calls: list[ToolCall] = Field(default_factory=list)
+    internal_calls: list[InternalCall] = Field(default_factory=list)
     model_records: list[dict[str, Any]] = Field(default_factory=list)
     selected_results: dict[str, Identifier] = Field(default_factory=dict)
     goal_evidence: dict[Identifier, EvidenceRef] = Field(default_factory=dict)
@@ -509,6 +681,35 @@ class Check(Record):
     detail: str = ""
     source: dict[str, Any] = Field(default_factory=dict)
     rule_version: str = LEGACY_CHECK_VERSION
+
+
+class ObservationSource(Record):
+    """A source identity and the known location, without inventing missing metadata."""
+
+    artifact_id: Identifier
+    sha256: Digest
+    location: str | None = None
+    attempt_id: Identifier | None = None
+    internal_request_key: Identifier | None = None
+
+
+class Observation(Record):
+    """General reported data, never an implicit QualifiedOutput or success claim."""
+
+    name: ScientificLabel
+    value: JsonValue = None
+    unit: str | None = None
+    actual_conditions: dict[str, Any] = Field(default_factory=dict)
+    sources: list[ObservationSource] = Field(default_factory=list)
+    code_sha256: Digest | None = None
+    checks: list[Check] = Field(default_factory=list)
+    validation_status: Literal["unverified", "partially_checked", "failed"] = "unverified"
+    limitations: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def finite_json_value(self):
+        json.dumps(self.value, allow_nan=False)
+        return self
 
 
 class QualifiedOutput(Record):
@@ -540,6 +741,7 @@ class Result(Record):
     checks: dict[str, list[Check]] = Field(default_factory=dict)
     qualified_outputs: dict[Port, QualifiedOutput] = Field(default_factory=dict)
     observations: dict[str, Any] = Field(default_factory=dict)
+    observation_records: list[Observation] = Field(default_factory=list)
     diagnostics: list[dict[str, Any]] = Field(default_factory=list)
     artifact_ids: list[Identifier] = Field(default_factory=list)
     source: dict[str, Any] = Field(default_factory=dict)
@@ -558,8 +760,20 @@ class Artifact(Record):
     created_at: datetime = Field(default_factory=utc_now)
 
 
+def result_fingerprint_payload(result: Result, *, exclude: set[str] | None = None) -> dict[str, Any]:
+    """Preserve historical evidence identities without discarding old default fields."""
+    payload = result.model_dump(mode="json", exclude=exclude)
+    if not result.observation_records:
+        # Existing consumption receipts bind the historical Result serialization.
+        # An absent/empty additive observation list has no new evidence to hash;
+        # keep all pre-existing defaults and retain every nonempty new observation.
+        payload.pop("observation_records", None)
+    return payload
+
+
 def fingerprint(value: BaseModel | dict[str, Any]) -> str:
-    payload = value.model_dump(mode="json") if isinstance(value, BaseModel) else value
+    payload = (result_fingerprint_payload(value) if isinstance(value, Result) else
+               value.model_dump(mode="json") if isinstance(value, BaseModel) else value)
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
     ).hexdigest()

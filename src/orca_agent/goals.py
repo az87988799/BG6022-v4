@@ -186,6 +186,12 @@ def _validate_goal_evidence(store, run, request, goal, result):
 def goal_evidence_assessment(store, run, request, goal, result):
     reasons = []
     current_use = None
+    if goal.evidence_contract_version == "generic-observation-1":
+        # This contract is expressible before the managed executor and generic
+        # delivery evaluator exist. Script claims cannot fill that coverage gap.
+        return {"status": "unresolved", "reasons": ["generic_delivery_evaluator_unavailable"],
+                "minimum_evidence": assess_minimum_evidence(goal, result, purpose_passed=False),
+                "current_use": None}
     try:
         from orca_agent.input_bindings import resolved_request
         request = resolved_request(store, run, request)

@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from orca_agent.llm import (
+    MAX_INPUT_TOKENS,
     MAX_RAW_CONTENT_BYTES,
     MAX_RESPONSE_BYTES,
     DeepSeekTransport,
@@ -371,7 +372,7 @@ def test_local_bound_errors_precede_reservation(kwargs):
     [{"role": "user", "content": [{"type": "text", "text": "JSON"}]}],
     [{"role": "user", "content": "JSON", "name": "unbounded"}],
     [{"role": "user", "content": "no format requested"}],
-    [{"role": "user", "content": "JSON " + "水" * 4000}],
+    [{"role": "user", "content": "JSON " + "x" * MAX_INPUT_TOKENS}],
     [{"role": "user", "content": "JSON"}] * 65,
     [{"role": "user", "content": "JSON Bearer fake-credential"}],
     [{"role": "user", "content": "JSON sk-abcdefghijklmnopqrs"}],
