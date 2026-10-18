@@ -34,7 +34,7 @@ def _delivery_preflight(store, run, tool_name, parameters, plan, results, *, mod
     require_execution_available(tool_name)
     tool = get_tool(tool_name)
     if not run.agent_enabled or not set(tool.effects) & {
-            "execute_orca", "query_external_identity", "prepare_geometry", "write_analysis"}:
+            "execute_orca", "execute_python", "query_external_identity", "prepare_geometry", "write_analysis"}:
         return
     from orca_agent.context import assess_terminal_capacity
     from orca_agent.delivery import collect_delivery_snapshot
@@ -52,10 +52,19 @@ def _delivery_preflight(store, run, tool_name, parameters, plan, results, *, mod
 
 
 def _science(store, config, run, step, results, batch, fault):
-    from orca_agent.natural import ensure_scientific_environment
-    ensure_scientific_environment(store, config, run)
+    tool = get_tool(step.tool)
+    if (step.tool not in run.permission.allowed_tools
+            or ("execute_orca" in tool.effects and not run.permission.scientific_execution)
+            or ("execute_python" in tool.effects and not run.permission.code_execution)):
+        raise StoreError("managed execution is not authorized")
+    if "execute_orca" in tool.effects:
+        from orca_agent.natural import ensure_scientific_environment
+        ensure_scientific_environment(store, config, run)
     reference = step.geometry
-    if reference.artifact_id:
+    geometry_id = None
+    if reference is None:
+        pass
+    elif reference.artifact_id:
         geometry_id = reference.artifact_id
     else:
         output = results[reference.producer_step_id].qualified_outputs.get(reference.port)
@@ -65,7 +74,10 @@ def _science(store, config, run, step, results, batch, fault):
         if not required or any(check.rule_version != required for check in output.checks):
             raise StoreError("producer geometry rule does not meet the consumer requirement")
         geometry_id = output.artifact_id
-    runner._validate_execution_rules(store, run)
+    if "geometry" in tool.input_roles:
+        runner._validate_execution_rules(store, run)
+    if batch and "geometry" not in tool.input_roles:
+        raise StoreError("generic execution has no formal batch acceptance contract yet")
     if run.batch_category and not batch:
         raise StoreError("acceptance Run requires its shared batch accounting")
     if fault:
@@ -208,6 +220,8 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             for name in run.permission.allowed_tools:
                 effects = set(get_tool(name).effects)
                 if "execute_orca" in effects and not run.permission.scientific_execution:
+                    continue
+                if "execute_python" in effects and not run.permission.code_execution:
                     continue
                 if (effects & {"create_artifact", "write_artifact", "copy_external_artifact",
                                "import_artifact", "write_analysis", "write_input_artifact"} and not run.permission.artifact_writes):
@@ -701,7 +715,7 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                 store.save_run(run)
                 _delivery_preflight(store, run, step.tool, step.parameters, plan, results,
                                     model_profile=config.model_profile)
-                if "execute_orca" in get_tool(step.tool).effects:
+                if set(get_tool(step.tool).effects) & {"execute_orca", "execute_python"}:
                     result, outcome = _science(store, config, run, step, results, batch, fault)
                     if not outcome.get("not_started"):
                         results[step.id] = result

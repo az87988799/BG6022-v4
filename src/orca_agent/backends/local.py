@@ -19,6 +19,23 @@ from pathlib import Path
 
 CLEANUP_TIMEOUT_S = 10.0
 POLL_INTERVAL_S = 0.05
+# Live coordinator-stack callbacks only; never persisted/reused across recovery.
+# A synchronous SDK broker must keep its waiting parent's controls responsive.
+_ACTIVE_CONTROLS: dict[str, Callable[[], tuple[str, str] | None]] = {}
+
+
+def check_active_job(job_name: str) -> None:
+    """Keep active Job controls responsive during bounded coordinator work.
+
+    The callback enforces termination and records whether it was confirmed before
+    reporting an outcome. Only the owning active run_managed call can be checked.
+    """
+    control = _ACTIVE_CONTROLS.get(job_name)
+    if control is None:
+        raise RuntimeError("managed_parent_control: Job is not active in this coordinator stack")
+    outcome = control()
+    if outcome:
+        raise RuntimeError(f"managed_parent_control: {outcome[0]}: {outcome[1]}")
 
 
 def _now() -> str:
@@ -68,26 +85,35 @@ def _configure_job(win, job, cores, total_memory_mb):
     return affinity
 
 
-def _create_suspended(win, executable, args, workdir, job, output_files, environment=None):
+def _create_suspended(win, executable, args, workdir, job, output_files, environment=None,
+                      isolation=None, inherited_handles=(), parent_job=None, argv0=None):
     import msvcrt
 
     size = win.SIZE_T()
-    win.InitializeAttributes(None, 2, 0, c.byref(size))
+    extra = isolation.attributes(win) if isolation is not None else []
+    count = 2 + len(extra)
+    win.InitializeAttributes(None, count, 0, c.byref(size))
     buffer = c.create_string_buffer(size.value)
-    win.check(win.InitializeAttributes(buffer, 2, 0, c.byref(size)),
+    win.check(win.InitializeAttributes(buffer, count, 0, c.byref(size)),
               "InitializeProcThreadAttributeList")
     standard_handles = [msvcrt.get_osfhandle(file.fileno()) for file in output_files]
     try:
-        for handle in standard_handles:
+        all_handles = standard_handles + list(inherited_handles)
+        for handle in all_handles:
             os.set_handle_inheritable(handle, True)
-        jobs = (win.HANDLE * 1)(job)
-        handles = (win.HANDLE * 3)(*standard_handles)
+        job_handles = [parent_job, job] if parent_job else [job]
+        jobs = (win.HANDLE * len(job_handles))(*job_handles)
+        handles = (win.HANDLE * len(all_handles))(*all_handles)
         # JOB_LIST = ProcThreadAttributeValue(13, FALSE, TRUE, FALSE).
         # Failure is fatal: never create then assign, even while suspended.
         win.check(win.UpdateAttribute(buffer, 0, 0x2000D, jobs, c.sizeof(jobs), None, None),
                   "UpdateProcThreadAttribute(JOB_LIST); atomic assignment required")
         win.check(win.UpdateAttribute(buffer, 0, 0x20002, handles, c.sizeof(handles), None, None),
                   "UpdateProcThreadAttribute(HANDLE_LIST)")
+        for identifier, value in extra:
+            win.check(win.UpdateAttribute(buffer, 0, identifier, c.byref(value),
+                                           c.sizeof(value), None, None),
+                      f"UpdateProcThreadAttribute(isolation:{identifier:#x})")
         startup = win.STARTUPINFOEX()
         startup.StartupInfo.cb = c.sizeof(startup)
         startup.StartupInfo.dwFlags = 0x100  # STARTF_USESTDHANDLES
@@ -95,20 +121,27 @@ def _create_suspended(win, executable, args, workdir, job, output_files, environ
          startup.StartupInfo.hStdError) = standard_handles
         startup.lpAttributeList = c.cast(buffer, win.LPVOID)
         process = win.PROCESS_INFORMATION()
-        command_line = c.create_unicode_buffer(subprocess.list2cmdline([str(executable), *args]))
+        command_line = c.create_unicode_buffer(
+            subprocess.list2cmdline([argv0 or str(executable), *args]),
+        )
         environment_block = (c.create_unicode_buffer("\0".join(
             f"{key}={value}" for key, value in sorted(environment.items(), key=lambda item: item[0].upper())
         ) + "\0\0") if environment is not None else None)
         environment_pointer = c.cast(environment_block, win.LPVOID) if environment_block else None
-        # EXTENDED_STARTUPINFO_PRESENT | CREATE_SUSPENDED | CREATE_NO_WINDOW.
+        # Task Python forbids children, including console startup's conhost.exe.
+        # Native tools need the hidden console's standard-handle propagation for
+        # their managed helper processes, so retain CREATE_NO_WINDOW for them.
+        console_flags = (0x8 if isolation is not None and not isolation.allow_children
+                         else 0x8000000)
         win.check(win.CreateProcess(str(executable), command_line, None, None, True,
-                                    0x80000 | 0x4 | 0x8000000 | (0x400 if environment is not None else 0),
+                                    0x80000 | 0x4 | console_flags
+                                    | (0x400 if environment is not None else 0),
                                     environment_pointer, str(workdir),
                                     c.byref(startup), c.byref(process)),
                   "CreateProcessW(atomically job-assigned, suspended)")
         return process
     finally:
-        for handle in standard_handles:
+        for handle in standard_handles + list(inherited_handles):
             os.set_handle_inheritable(handle, False)
         win.DeleteAttributes(buffer)
 
@@ -209,6 +242,11 @@ def run_managed(
     job_name: str | None = None,
     fault: Callable[[str], None] | None = None,
     environment: dict[str, str] | None = None,
+    isolation=None,
+    inherited_handles: tuple[int, ...] = (),
+    parent_job_name: str | None = None,
+    on_poll: Callable[[dict], None] | None = None,
+    argv0: str | None = None,
 ) -> dict:
     """Run one immutable attempt. on_started must durably save before returning.
 
@@ -219,7 +257,7 @@ def run_managed(
     result = {"state": "failed", "exit_code": None, "handle": None,
               "resource_usage": {}, "started_at": started_at, "ended_at": None,
               "reason": None}
-    job = port = None
+    job = port = parent_job = None
     process = None
     win = None
     affinity = 0
@@ -227,6 +265,26 @@ def run_managed(
     observed = {}
     sample_errors = []
     sample_truncated = False
+    control_outcome = None
+    parent_control = None
+
+    def poll_controls():
+        nonlocal control_outcome
+        if control_outcome:
+            return control_outcome
+        inherited = parent_control() if parent_control else None
+        if inherited:
+            control_outcome = (inherited[0], "parent_" + inherited[1])
+        elif _memory_limit_message(win, port):
+            control_outcome = ("failed", "job_memory_limit_exceeded")
+        elif cancel_requested and cancel_requested():
+            control_outcome = ("cancelled", "cancel_requested")
+        elif time.monotonic() - start >= timeout_s:
+            control_outcome = ("timed_out", "deadline_exceeded")
+        if control_outcome and win.accounting(job).ActiveProcesses:
+            if not _terminate_and_confirm(win, job):
+                control_outcome = ("unknown", "process_tree_termination_unconfirmed")
+        return control_outcome
 
     def sample():
         nonlocal sample_truncated
@@ -270,10 +328,31 @@ def run_managed(
             if len({key.upper() for key in environment}) != len(environment):
                 raise ValueError("environment keys must be unique ignoring case")
         executable, workdir = executable.resolve(), workdir.resolve()
+        if argv0 is not None:
+            if (not isinstance(argv0, str) or not argv0 or "\0" in argv0
+                    or Path(argv0).is_absolute()
+                    or (workdir / argv0).resolve() != executable):
+                raise ValueError("argv0 must be a relative path to the exact selected executable")
+        if isolation is not None:
+            if environment is None:
+                raise ValueError("Isolated execution requires an explicit clean environment")
+            isolation.validate_launch(executable, workdir)
+        if inherited_handles and isolation is None:
+            raise ValueError("Extra inherited IPC handles require an isolation policy")
         job_name = job_name or new_job_name()
         if not re.fullmatch(r"Local\\[A-Za-z0-9_-]{1,160}", job_name):
             raise ValueError("job_name must be a unique Local\\ name using letters, digits, _ or -")
         win = _native()
+        if parent_job_name is not None:
+            if not re.fullmatch(r"Local\\[A-Za-z0-9_-]{1,160}", parent_job_name):
+                raise ValueError("parent_job_name must identify the active coordinator Job")
+            if isolation is None:
+                raise ValueError("Nested task jobs require an isolation policy")
+            parent_control = _ACTIVE_CONTROLS.get(parent_job_name)
+            if parent_control is None:
+                raise ValueError("Parent Job must belong to this active coordinator stack")
+            parent_job = win.check(win.OpenJobObject(1 | 4, False, parent_job_name),
+                                    "OpenJobObject(parent aggregate)")
         c.set_last_error(0)
         job = win.check(win.CreateJobObject(None, job_name), "CreateJobObject")
         if c.get_last_error() == 183:
@@ -296,7 +375,10 @@ def run_managed(
             return result
         if fault:
             fault("before_create_process")
-        process = _create_suspended(win, executable, args, workdir, job, files, environment)
+        process = _create_suspended(win, executable, args, workdir, job, files, environment,
+                                    isolation, inherited_handles, parent_job, argv0)
+        if isolation is not None:
+            result["isolation"] = isolation.verify_process(win, process.hProcess)
         ticks, created = win.creation_time(process.hProcess)
         coordinator_ticks, coordinator_created = win.creation_time(win.GetCurrentProcess())
         result["handle"] = {
@@ -307,7 +389,13 @@ def run_managed(
             "coordinator_pid": os.getpid(), "coordinator_create_time": coordinator_created,
             "coordinator_create_time_100ns": str(coordinator_ticks),
             "atomic_job_assignment": True,
+            "parent_job_name": parent_job_name,
+            "argv0": argv0 or str(executable),
         }
+        if isolation is not None:
+            # Persist profile identity with launch intent evidence for future orphan
+            # cleanup after a coordinator crash; cleanup itself requires reconciliation.
+            result["handle"]["isolation"] = result["isolation"].copy()
         sample()
         if fault:
             fault("after_process_created")
@@ -317,14 +405,16 @@ def run_managed(
             fault("after_handle_saved")
         if win.ResumeThread(process.hThread) == 0xFFFFFFFF:
             win.check(False, "ResumeThread")
+        _ACTIVE_CONTROLS[job_name] = poll_controls
         if fault:
             fault("after_resumed")
         win.close(process.hThread)
         process.hThread = None
         while True:
             sample()
-            if _memory_limit_message(win, port):
-                result.update(state="failed", reason="job_memory_limit_exceeded")
+            outcome = poll_controls()
+            if outcome:
+                result.update(state=outcome[0], reason=outcome[1])
                 break
             if win.accounting(job).ActiveProcesses == 0:
                 exit_code = win.w.DWORD()
@@ -335,16 +425,17 @@ def run_managed(
                               reason="process_tree_exited" if exit_code.value == 0
                               else "nonzero_exit_code")
                 break
-            if cancel_requested and cancel_requested():
-                result.update(state="cancelled", reason="cancel_requested")
-                break
-            if time.monotonic() - start >= timeout_s:
-                result.update(state="timed_out", reason="deadline_exceeded")
-                break
+            if on_poll:
+                on_poll(result["handle"].copy())
             time.sleep(POLL_INTERVAL_S)
     except Exception as error:
-        result.update(state="failed", reason=f"backend_error: {type(error).__name__}: {error}")
+        if control_outcome:
+            result.update(state=control_outcome[0], reason=control_outcome[1])
+        else:
+            result.update(state="failed", reason=f"backend_error: {type(error).__name__}: {error}")
     finally:
+        if job_name and _ACTIVE_CONTROLS.get(job_name) is poll_controls:
+            del _ACTIVE_CONTROLS[job_name]
         if job and win:
             try:
                 if win.accounting(job).ActiveProcesses:
@@ -372,6 +463,8 @@ def run_managed(
             win.close(process.hProcess)
         if port and win:
             win.close(port)
+        if parent_job and win:
+            win.close(parent_job)
         for file in files:
             file.close()
         result["ended_at"] = _now()

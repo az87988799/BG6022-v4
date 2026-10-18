@@ -74,7 +74,7 @@ def test_real_science(case_id, expected):
         assert run.state == "completed", run.model_dump()
     else:
         assert run.state == "failed", run.model_dump()
-    workdir = store.path(run.attempts[0].directory)
+    workdir = store.path(run.attempts[0].directory) / "task"
     assert not (workdir / "job.2jsonout").exists(), "unbudgeted GBW JSON conversion"
     assert sha256_file(workdir / "geometry.xyz") == original_hash
     assert store.environment_lease() is None

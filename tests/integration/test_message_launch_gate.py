@@ -6,13 +6,14 @@ import pytest
 
 from orca_agent import agent
 from orca_agent.backends import local
-from orca_agent.tools import calculation
+from orca_agent.tools import calculation, managed
 from tests.integration.test_runner import FIXTURE, make_run
 
 
 def test_persisted_condition_message_after_input_blocks_backend_before_creation(tmp_path, monkeypatch):
     store, config, run = make_run(tmp_path)
     monkeypatch.setattr(calculation, "prepare_input", FIXTURE.prepare_fixture)
+    monkeypatch.setattr(managed, "launch_orca", lambda *a, **k: pytest.fail("launch boundary was reached"))
     monkeypatch.setattr(local, "run_managed", lambda *a, **k: pytest.fail("backend was reached"))
 
     def update(point):
@@ -36,6 +37,7 @@ def test_suspended_python_child_is_recorded_and_terminated_without_resuming(tmp_
     store, config, run = make_run(tmp_path)
     monkeypatch.setattr(calculation, "prepare_input", FIXTURE.prepare_fixture)
     monkeypatch.setattr(calculation, "read_outputs", FIXTURE.read_fixture)
+    monkeypatch.setattr(managed, "launch_orca", FIXTURE.launch_fixture)
     seen = []
 
     def update(point):

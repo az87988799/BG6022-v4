@@ -38,6 +38,12 @@ from orca_agent.versions import CURRENT_CHECK_VERSION
 
 SCIENCE_COMPOSITIONS = {"H2O": {"H": 2, "O": 1}, "CH4": {"C": 1, "H": 4}}
 SCIENCE_IDENTITIES = {"water": "H2O", "methane": "CH4"}
+_LOCAL_ORCA_EXECUTION = {
+    "parallel_execution": False,
+    "parallel_execution_reason": (
+        "MPI_Init fails inside network-disabled Windows LPAC; explicit serial input is required"
+    ),
+}
 
 
 class SinglePointParameters(CalculationParameters):
@@ -92,28 +98,33 @@ def _register(parameters: type[Record], **metadata: Any) -> _Registration:
 TOOLS: dict[str, _Registration] = {
     "python.execute": _register(
         CodeExecutionParameters, name="python.execute",
-        description="Contract for a pinned task Python Artifact and explicit input manifest. Execution is not enabled yet.",
+        description="Execute a pinned Python Artifact in the managed Windows task boundary, with one bounded SDK ORCA call.",
         input_roles=["code", "input_manifest"], output_ports=[],
         observation_outputs=["observations", "artifacts"],
         effects=["read_registered_artifact", "execute_python", "write_artifact"],
         check_version="generic-observation-1",
-        check_contract={"execution_available": False, "generic_observations": True},
-        implementation="orca_agent.tools.registry.execution_unavailable",
+        check_contract={"execution_available": True, "generic_observations": True,
+                        **_LOCAL_ORCA_EXECUTION,
+                        "collector": "orca_agent.tools.managed.collect_result"},
+        implementation="orca_agent.tools.managed.execute",
     ),
     "orca.run": _register(
         NativeOrcaParameters, name="orca.run",
-        description="Contract for pinned native ORCA input and dependencies. Execution is not enabled yet.",
+        description="Execute pinned native ORCA input and dependencies in the managed Windows task boundary; raw evidence is unqualified.",
         input_roles=["native_input", "input_manifest"], output_ports=[],
         observation_outputs=["observations", "artifacts"],
         effects=["read_registered_artifact", "execute_orca", "write_artifact"],
         check_version="generic-observation-1",
-        check_contract={"execution_available": False, "generic_observations": True},
-        implementation="orca_agent.tools.registry.execution_unavailable",
+        check_contract={"execution_available": True, "generic_observations": True,
+                        **_LOCAL_ORCA_EXECUTION,
+                        "collector": "orca_agent.tools.managed.collect_result"},
+        implementation="orca_agent.tools.managed.execute",
     ),
     "orca.sp": _register(
         SinglePointParameters,
         name="orca.sp",
         check_version=CURRENT_CHECK_VERSION,
+        check_contract=_LOCAL_ORCA_EXECUTION,
         description="H2O/CH4 HF/STO-3G neutral singlet single-point electronic energy (Eh) and dipole_moment magnitude (Debye), Cartesian vector in source.",
         output_ports=["energy", "dipole_moment"],
         required_input_checks={"optimized_geometry": CURRENT_CHECK_VERSION, "prepared_geometry": PREPARATION_RULE},
@@ -123,6 +134,7 @@ TOOLS: dict[str, _Registration] = {
         CalculationParameters,
         name="orca.opt",
         check_version=CURRENT_CHECK_VERSION,
+        check_contract=_LOCAL_ORCA_EXECUTION,
         description=(
             "H2O/CH4 unconstrained HF/STO-3G geometry optimization in angstrom. Convergence does not "
             "establish a minimum or its vibrational stability. Also provides final energy and dipole_moment on the qualified optimized structure; no separate SP is needed."

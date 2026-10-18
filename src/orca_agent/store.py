@@ -22,6 +22,9 @@ from orca_agent.models import (
     Artifact,
     Attempt,
     BudgetLimits,
+    CodeRef,
+    InputManifest,
+    InternalCall,
     PermissionSnapshot,
     Plan,
     Request,
@@ -65,11 +68,17 @@ def _id(value: str) -> str:
     return value
 
 
-def sha256_file(path: Path) -> str:
+def sha256_file(path: Path, *, checkpoint: Callable[[], None] | None = None) -> str:
     digest = hashlib.sha256()
+    if checkpoint:
+        checkpoint()
     with path.open("rb") as stream:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
+            if checkpoint:
+                checkpoint()
             digest.update(block)
+    if checkpoint:
+        checkpoint()
     return digest.hexdigest()
 
 
@@ -270,7 +279,7 @@ class Store:
                               ("memory_mb", limits.total_memory_mb),
                               ("maxcore_mb", limits.maxcore_mb),
                               ("timeout_seconds", limits.job_timeout_seconds)):
-            if getattr(parameters, name) > maximum:
+            if getattr(parameters, name, maximum) > maximum:
                 raise StoreError(f"{name} exceeds the frozen Run resource configuration")
 
     def load_request(self, run: Run | str) -> Request:
@@ -370,6 +379,7 @@ class Store:
                 raise StoreError("attempt history cannot be removed")
             for old, new in zip(previous.attempts, run.attempts, strict=False):
                 for field in ("id", "step_id", "logical_id", "number", "tool", "geometry_artifact_id",
+                              "execution_kind",
                               "input_fingerprint", "directory", "created_at", "request_version",
                               "plan_version", "permission_version", "control_generation", "frozen_step", "consumption"):
                     if getattr(old, field) != getattr(new, field):
@@ -393,6 +403,19 @@ class Store:
                         raise StoreError("Tool call identity/input cannot be rewritten")
                 if old.result_id and (old.result_id != new.result_id or old.state != new.state):
                     raise StoreError("settled Tool call cannot be rewritten")
+            if len(run.internal_calls) < len(previous.internal_calls):
+                raise StoreError("internal call history cannot be removed")
+            if len({item.request_key for item in run.internal_calls}) != len(run.internal_calls):
+                raise StoreError("internal request keys must remain unique")
+            for old, new in zip(previous.internal_calls, run.internal_calls, strict=False):
+                for field in ("request_key", "input_fingerprint", "tool", "code", "inputs",
+                              "conditions", "attempt_id", "parent_attempt_id", "work_units", "created_at"):
+                    if getattr(old, field) != getattr(new, field):
+                        raise StoreError(f"internal call identity/input cannot be rewritten: {field}")
+                if old.started and (not new.started or new.execution_handle != old.execution_handle):
+                    raise StoreError("internal process identity cannot be removed or changed")
+                if old.finished_at is not None and new != old:
+                    raise StoreError("settled internal call cannot be rewritten")
             for old, new in zip(previous.model_records, run.model_records, strict=False):
                 if old != new:
                     raise StoreError("model records require dedicated evidence-backed settlement")
@@ -480,6 +503,7 @@ class Store:
         self, path: str | Path, role: str, *, run_id: str | None = None,
         attempt_id: str | None = None, source: dict | None = None,
         expected_sha256: str | None = None,
+        checkpoint: Callable[[], None] | None = None,
     ) -> Artifact:
         original = Path(path)
         if not original.is_file() or _is_link(original):
@@ -500,7 +524,7 @@ class Store:
                 }, immutable=True)
         relative = f"artifacts/{artifact_id}/files/{original.name}"
         destination = self.path(relative)
-        before_hash = sha256_file(original)
+        before_hash = sha256_file(original, checkpoint=checkpoint)
         if expected_sha256 is not None and before_hash != expected_sha256:
             raise StoreError("artifact source differs from its authorized hash")
         destination.parent.mkdir(parents=True, exist_ok=False)
@@ -508,14 +532,22 @@ class Store:
         with original.open("rb") as reader, destination.open("xb") as writer:
             copied_size = 0
             for block in iter(lambda: reader.read(1024 * 1024), b""):
+                if checkpoint:
+                    checkpoint()
                 copied_size += len(block)
                 if copied_size > source_size:
                     raise StoreError("artifact source grew beyond its reserved size")
                 writer.write(block)
+            if checkpoint:
+                checkpoint()
             writer.flush()
+            if checkpoint:
+                checkpoint()
             os.fsync(writer.fileno())
-        copied_hash = sha256_file(destination)
-        if copied_hash != before_hash or sha256_file(original) != before_hash:
+            if checkpoint:
+                checkpoint()
+        copied_hash = sha256_file(destination, checkpoint=checkpoint)
+        if copied_hash != before_hash or sha256_file(original, checkpoint=checkpoint) != before_hash:
             raise StoreError("artifact source changed while creating its immutable snapshot")
         artifact = Artifact(
             id=artifact_id, path=relative, sha256=copied_hash, size=destination.stat().st_size,
@@ -544,7 +576,7 @@ class Store:
         path = controlled_path(self.environment_root, "lease.json")
         return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
 
-    def reserve_attempt(self, run: Run, step: Step, geometry_artifact_id: str, *,
+    def reserve_attempt(self, run: Run, step: Step, geometry_artifact_id: str | None = None, *,
                         before_reserve: Callable[[Attempt], None] | None = None) -> Attempt:
         """Validate before external accounting; lock order is Run, environment, callback.
 
@@ -571,46 +603,76 @@ class Store:
             permission = PermissionSnapshot.model_validate(
                 self._read_json(f"runs/{run.id}/permission.json")
             )
-            if permission != run.permission or not permission.scientific_execution:
-                raise StoreError("scientific execution is not authorized")
+            if permission != run.permission:
+                raise StoreError("execution is not authorized: permission snapshot mismatch")
             if BudgetLimits.model_validate(self._read_json(
                     f"runs/{run.id}/budget.json")) != run.budget:
                 raise StoreError("budget snapshot mismatch")
             params = validate_parameters(step.tool, step.parameters)
-            validate_legacy_profile(params)
+            definition = get_tool(step.tool)
+            effects = set(definition.effects)
+            execution_kind = "python" if "execute_python" in effects else "orca"
+            if not effects.intersection({"execute_python", "execute_orca"}):
+                raise StoreError("Tool has no managed execution effect")
+            if execution_kind == "orca" and not permission.scientific_execution:
+                raise StoreError("scientific execution is not authorized")
+            if execution_kind == "python" and not permission.code_execution:
+                raise StoreError("task code execution is not authorized")
             self.validate_execution_resources(run, params)
             if step.tool not in permission.allowed_tools:
                 raise StoreError("tool is outside the permission snapshot")
-            if params.cores > permission.max_cores or params.memory_mb > permission.max_memory_mb:
+            resources = self.run_configuration(run).resources
+            if (getattr(params, "cores", resources.max_cores) > permission.max_cores
+                    or getattr(params, "memory_mb", resources.total_memory_mb) > permission.max_memory_mb):
                 raise StoreError("resources exceed the permission snapshot")
-            geometry = self.load_artifact(geometry_artifact_id)
-            geometry_path = self.artifact_path(geometry_artifact_id)
-            if geometry.size > 65536:
-                raise StoreError("geometry exceeds the 64 KiB input limit")
-            validate_geometry(geometry_path.read_text(encoding="utf-8"), params)
-            if step.geometry.artifact_id:
-                if geometry_artifact_id != step.geometry.artifact_id:
-                    raise StoreError("geometry differs from the plan binding")
-                if geometry_artifact_id not in permission.artifact_ids:
-                    from orca_agent.input_bindings import prepared_geometry
-                    if prepared_geometry(self, run, self.load_request(run), step.system_id) != geometry_artifact_id:
-                        raise StoreError("geometry is not authorized")
+            if definition.check_contract.get("generic_observations"):
+                if run.configuration is None:
+                    raise StoreError("generic execution requires a frozen Run configuration")
+                if not permission.artifact_writes:
+                    raise StoreError("artifact creation is not authorized")
+                if geometry_artifact_id is not None:
+                    raise StoreError("generic execution cannot substitute a geometry binding")
+                from orca_agent.planning import validate_code_inputs
+                validate_code_inputs(self, permission, step)
+                code = getattr(params, "code", None) or getattr(params, "input", None)
+                consumption = {"code": code.model_dump(mode="json"),
+                               "inputs": params.inputs.model_dump(mode="json")}
+                input_fingerprint = fingerprint({"tool": step.tool, "code_sha256": code.sha256,
+                    "inputs": sorted((item.target_path.casefold(), item.sha256)
+                                     for item in params.inputs.entries)})
             else:
-                self._validate_future_binding(run, step, geometry_artifact_id)
-            from orca_agent.applicability import validate_geometry_consumption
-            try:
-                validate_geometry_consumption(self, run, step, geometry_artifact_id)
-            except ValueError as exc:
-                raise StoreError(str(exc)) from exc
+                validate_legacy_profile(params)
+                if geometry_artifact_id is None or step.geometry is None:
+                    raise StoreError("scientific execution requires its geometry binding")
+                geometry = self.load_artifact(geometry_artifact_id)
+                geometry_path = self.artifact_path(geometry_artifact_id)
+                if geometry.size > 65536:
+                    raise StoreError("geometry exceeds the 64 KiB input limit")
+                validate_geometry(geometry_path.read_text(encoding="utf-8"), params)
+                if step.geometry.artifact_id:
+                    if geometry_artifact_id != step.geometry.artifact_id:
+                        raise StoreError("geometry differs from the plan binding")
+                    if geometry_artifact_id not in permission.artifact_ids:
+                        from orca_agent.input_bindings import prepared_geometry
+                        if prepared_geometry(self, run, self.load_request(run), step.system_id) != geometry_artifact_id:
+                            raise StoreError("geometry is not authorized")
+                else:
+                    self._validate_future_binding(run, step, geometry_artifact_id)
+                from orca_agent.applicability import validate_geometry_consumption
+                try:
+                    validate_geometry_consumption(self, run, step, geometry_artifact_id)
+                except ValueError as exc:
+                    raise StoreError(str(exc)) from exc
+                consumption = {"geometry": {"artifact_id": geometry.id, "sha256": geometry.sha256}}
+                # Preserve the historical science fingerprint exactly.
+                input_fingerprint = fingerprint({"tool": step.tool,
+                    "parameters": params.model_dump(), "geometry_hash": geometry.sha256})
             for dependency in step.depends_on:
                 if not any(a.step_id == dependency and a.result_id for a in run.attempts + run.calls):
                     raise StoreError("dependency has no persisted result")
-            input_fingerprint = fingerprint({
-                "tool": step.tool, "parameters": params.model_dump(), "geometry_hash": geometry.sha256,
-            })
             if utc_now() >= run.deadline:
                 raise BudgetExceeded("run deadline exhausted; resume cannot reset it")
-            if run.usage.orca_starts_reserved >= run.budget.orca_starts:
+            if execution_kind == "orca" and run.usage.orca_starts_reserved >= run.budget.orca_starts:
                 raise BudgetExceeded("total ORCA launch budget exhausted")
             number = run.usage.logical_attempts.get(step.logical_id, 0) + 1
             same_input_number = run.usage.fingerprint_attempts.get(input_fingerprint, 0) + 1
@@ -618,10 +680,16 @@ class Store:
                 raise BudgetExceeded("logical/input attempt budget exhausted")
             baseline = run.initial_science_steps
             extra = number > 1 or (baseline is not None and step.logical_id not in baseline)
+            orca_logical_ids = {item.logical_id for item in run.attempts
+                                if item.execution_kind == "orca"}
             repeated = max(run.usage.extra_orca_starts_reserved,
-                           sum(max(0, count - 1) for count in run.usage.logical_attempts.values()))
-            if extra and repeated >= run.budget.extra_orca_starts:
+                           sum(max(0, count - 1) for identity, count in run.usage.logical_attempts.items()
+                               if identity in orca_logical_ids))
+            if execution_kind == "orca" and extra and repeated >= run.budget.extra_orca_starts:
                 raise BudgetExceeded("extra ORCA launch budget exhausted")
+            code_retry = execution_kind == "python" and max(number, same_input_number) > 1
+            if code_retry and run.usage.code_retries >= run.budget.code_retries:
+                raise BudgetExceeded("code retry budget exhausted")
             for prior in run.attempts:
                 if prior.state in ("intent", "running", "unknown"):
                     raise EnvironmentBusy("previous attempt still needs reconciliation")
@@ -631,12 +699,13 @@ class Store:
                 raise EnvironmentBusy("environment quota is occupied, including unknown old attempts")
             attempt = Attempt(
                 step_id=step.id, logical_id=step.logical_id, number=number, tool=step.tool,
+                execution_kind=execution_kind,
                 geometry_artifact_id=geometry_artifact_id, input_fingerprint=input_fingerprint,
                 directory=f"runs/{run.id}/steps/{step.id}/attempt-{number:03d}",
                 request_version=run.request_version, plan_version=run.plan_version,
                 permission_version=run.permission.version, control_generation=run.control_generation,
                 frozen_step=step.model_copy(deep=True),
-                consumption={"geometry": {"artifact_id": geometry.id, "sha256": geometry.sha256}},
+                consumption=consumption,
             )
             if self.path(attempt.directory).exists():
                 raise StoreError("attempt directory already exists; reconcile its identity before reserving")
@@ -653,13 +722,159 @@ class Store:
                      "created_at": utc_now().isoformat()}
             atomic_write(controlled_path(self.environment_root, "lease.json"), _json_bytes(lease))
             run.attempts.append(attempt)
-            run.usage.orca_starts_reserved += 1
-            run.usage.extra_orca_starts_reserved = repeated + int(extra)
+            if execution_kind == "orca":
+                run.usage.orca_starts_reserved += 1
+                run.usage.extra_orca_starts_reserved = repeated + int(extra)
+            run.usage.code_retries += int(code_retry)
             run.usage.logical_attempts[step.logical_id] = number
             run.usage.fingerprint_attempts[input_fingerprint] = same_input_number
             run.state = "running"
             self.save_run(run)
             return attempt
+
+    def _internal_parent(self, run: Run, parent: Attempt) -> Attempt:
+        current = self.load_run(run.id)
+        if current != run:
+            raise StoreError("stale run snapshot; reload and revalidate")
+        actual = next((item for item in run.attempts if item.id == parent.id), None)
+        if (actual != parent or parent.execution_kind != "python"
+                or parent.state not in {"intent", "running"} or parent.finished_at is not None):
+            raise StoreError("internal ORCA requires the active managed Python attempt")
+        lease = self.environment_lease()
+        if not lease or (lease["run_id"], lease["attempt_id"]) != (run.id, parent.id):
+            raise EnvironmentBusy("Python parent does not own the environment lease")
+        return actual
+
+    def reserve_internal_call(
+        self, run: Run, parent: Attempt, request_key: str, input_fingerprint: str, *,
+        code: CodeRef | None = None, inputs: InputManifest | None = None,
+        conditions: dict | None = None, work_units: int = 1,
+    ) -> InternalCall:
+        """Reserve one brokered call without another coordinator or environment lease.
+
+        The caller is the trusted coordinator, after copying and validating the
+        bounded IPC payload. A task can never call this method directly.
+        """
+        require_execution_available("orca.run")
+        with self.run_lock(run.id), self.control_lock(run.id), self._environment_lock():
+            self._internal_parent(run, parent)
+            if self.read_signal(run.id) in {"pause", "cancel"}:
+                raise StoreError("pause/cancel requested before internal submission")
+            self.check_execution_control(run)
+            permission = PermissionSnapshot.model_validate(
+                self._read_json(f"runs/{run.id}/permission.json"))
+            if (permission != run.permission or not permission.scientific_execution
+                    or not permission.code_execution or not permission.artifact_writes
+                    or "orca.run" not in permission.allowed_tools):
+                raise StoreError("internal ORCA execution is not authorized")
+            if BudgetLimits.model_validate(self._read_json(
+                    f"runs/{run.id}/budget.json")) != run.budget:
+                raise StoreError("budget snapshot mismatch")
+            candidate = InternalCall(request_key=request_key, input_fingerprint=input_fingerprint,
+                code=code, inputs=inputs or InputManifest(), conditions=conditions or {},
+                state="reserved", parent_attempt_id=parent.id, work_units=work_units,
+                attempt_id=new_id("internal"))
+            existing = next((item for item in run.internal_calls if item.request_key == request_key), None)
+            if existing:
+                if existing.input_fingerprint != input_fingerprint:
+                    raise StoreError("internal request key was reused with changed input")
+                if existing.state != "completed":
+                    raise StoreError("internal request already exists; reconcile or inspect its receipt")
+                for artifact_id in existing.artifact_ids:
+                    self.artifact_path(artifact_id)
+                return existing
+            if any(item.parent_attempt_id == parent.id for item in run.internal_calls):
+                raise StoreError("this execution boundary permits only one internal ORCA call per Python attempt")
+            if code is None or code.language != "orca":
+                raise StoreError("internal ORCA requires a pinned native input Artifact")
+            for reference in [code, *candidate.inputs.entries]:
+                artifact = self.load_artifact(reference.artifact_id)
+                self.artifact_path(artifact.id)
+                owned = (artifact.run_id, artifact.attempt_id) == (run.id, parent.id)
+                if artifact.id not in permission.artifact_ids and not owned:
+                    raise StoreError("internal input is outside the parent attempt's authorized files")
+                if artifact.sha256 != reference.sha256:
+                    raise StoreError("internal input differs from its pinned Artifact hash")
+            if utc_now() >= run.deadline:
+                raise BudgetExceeded("run deadline exhausted before internal submission")
+            if run.usage.orca_starts_reserved >= run.budget.orca_starts:
+                raise BudgetExceeded("total ORCA launch budget exhausted")
+            if run.usage.internal_work_units + work_units > run.budget.internal_work_units:
+                raise BudgetExceeded("internal work unit budget exhausted")
+            extra = bool(run.internal_calls) or parent.number > 1
+            if extra and run.usage.extra_orca_starts_reserved >= run.budget.extra_orca_starts:
+                raise BudgetExceeded("extra ORCA launch budget exhausted")
+            relative = f"{parent.directory}/internal/{_id(request_key)}"
+            if self.path(relative).exists():
+                raise StoreError("internal call directory exists; reconcile before another launch")
+            self.path(relative).mkdir(parents=True, exist_ok=False)
+            self._write_json(f"{relative}/intent.json", {
+                "run_id": run.id, "parent_attempt_id": parent.id,
+                "call": candidate.model_dump(mode="json"),
+                "configuration": run.configuration.model_dump(mode="json"),
+                "permission_version": permission.version,
+            }, immutable=True)
+            run.internal_calls.append(candidate)
+            run.usage.orca_starts_reserved += 1
+            run.usage.internal_work_units += work_units
+            run.usage.extra_orca_starts_reserved += int(extra)
+            self.save_run(run)
+            return candidate
+
+    def mark_internal_call_started(
+        self, run: Run, parent: Attempt, request_key: str, handle: dict,
+    ) -> InternalCall:
+        with self.run_lock(run.id), self._environment_lock():
+            self._internal_parent(run, parent)
+            call = next((item for item in run.internal_calls if item.request_key == request_key
+                         and item.parent_attempt_id == parent.id), None)
+            if call is None or call.state not in {"reserved", "running"}:
+                raise StoreError("internal call has no active launch reservation")
+            if call.started:
+                if call.execution_handle != handle:
+                    raise StoreError("internal launch handle cannot be replaced")
+                return call
+            if not handle:
+                raise StoreError("internal process identity is required")
+            self._write_json(f"{parent.directory}/internal/{request_key}/started.json",
+                             handle, immutable=True)
+            call.execution_handle = dict(handle)
+            call.started = True
+            call.state = "running"
+            run.usage.orca_starts_actual += 1
+            self.save_run(run)
+            return call
+
+    def finish_internal_call(
+        self, run: Run, parent: Attempt, request_key: str, *, state: str,
+        artifact_ids: list[str] | None = None, actual_conditions: dict | None = None,
+        resource_usage: dict | None = None,
+    ) -> InternalCall:
+        """Settle receipt only; aggregate Job resource costs belong to the parent."""
+        with self.run_lock(run.id), self._environment_lock():
+            self._internal_parent(run, parent)
+            call = next((item for item in run.internal_calls if item.request_key == request_key
+                         and item.parent_attempt_id == parent.id), None)
+            if call is None or call.finished_at is not None:
+                raise StoreError("internal call is absent or already settled")
+            if state not in {"completed", "failed", "cancelled", "timed_out", "unknown"}:
+                raise StoreError("invalid internal execution outcome")
+            if state == "completed" and not call.started:
+                raise StoreError("an unstarted internal call cannot complete")
+            for artifact_id in artifact_ids or []:
+                artifact = self.load_artifact(artifact_id)
+                self.artifact_path(artifact_id)
+                if (artifact.run_id, artifact.attempt_id) != (run.id, parent.id):
+                    raise StoreError("internal result Artifact has invalid parent provenance")
+            call.state = state
+            call.artifact_ids = list(artifact_ids or [])
+            call.actual_conditions = dict(actual_conditions or {})
+            call.resource_usage = dict(resource_usage or {})
+            call.finished_at = None if state == "unknown" else utc_now()
+            if state == "unknown":
+                run.usage.resource_usage_complete = False
+            self.save_run(run)
+            return call
 
     def recover_unstarted_reservation(self, run: Run, draft: Attempt, *, before: dict,
                                       reservation_sha256: str) -> Attempt:
@@ -862,8 +1077,8 @@ class Store:
                 if ((definition.max_cores or 0) > limits.max_cores
                         or (definition.max_memory_mb or 0) > limits.total_memory_mb):
                     raise StoreError("Tool resources exceed the frozen Run resource configuration")
-            if "execute_orca" in definition.effects:
-                raise StoreError("scientific calls require a Plan/Step/Attempt")
+            if set(definition.effects) & {"execute_orca", "execute_python"}:
+                raise StoreError("managed execution calls require a Plan/Step/Attempt")
             if tool not in run.permission.allowed_tools:
                 raise StoreError("tool is not authorized")
             params = validate_parameters(tool, parameters).model_dump(mode="json")
@@ -1197,7 +1412,8 @@ class Store:
             raise StoreError("attempt was already settled")
         if elapsed_seconds < attempt.elapsed_seconds or cpu_seconds < attempt.cpu_seconds:
             raise StoreError("attempt resource usage cannot decrease during reconciliation")
-        run.usage.orca_starts_actual += int(started and not attempt.started)
+        run.usage.orca_starts_actual += int(
+            attempt.execution_kind == "orca" and started and not attempt.started)
         run.usage.elapsed_seconds += elapsed_seconds - attempt.elapsed_seconds
         run.usage.cpu_seconds += cpu_seconds - attempt.cpu_seconds
         attempt.started = attempt.started or started

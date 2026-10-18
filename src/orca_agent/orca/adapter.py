@@ -23,9 +23,10 @@ from opi.input.structures.structure_file import XyzFile
 from opi.output.core import Output
 from opi.utils.orca_version import OrcaVersion
 
-from orca_agent.models import CalculationParameters
+from orca_agent.models import CalculationParameters, ResourceLimits
 from orca_agent.orca.checks import OPTIMIZATION_STAGE_RULE, check_outputs
 from orca_agent.orca.diagnostics import diagnostic, scientific_diagnostics
+from orca_agent.orca.native import validate_native_input
 from orca_agent.tools.registry import (
     validate_geometry,
     validate_legacy_profile,
@@ -99,10 +100,18 @@ def prepare_input(
     calculator.json_via_input = False
     calculator.input.add_blocks(BlockOutput(jsonpropfile=True, jsongbwfile=False))
     calculator.write_input(force=False)
+    # Both input adapters produce the same declared launch boundary. The legacy
+    # profile check above remains responsible for its narrower scientific scope.
+    launch = validate_native_input(
+        _read(inp), {"geometry.xyz": geometry.read_bytes()},
+        ResourceLimits(max_cores=params.cores, total_memory_mb=params.memory_mb,
+                       maxcore_mb=params.maxcore_mb, job_timeout_seconds=params.timeout_seconds),
+        legacy_optimization=tool_name == "orca.opt",
+    )
     manifest = {
         "tool": tool_name, "parameters": params.model_dump(mode="json"),
         "geometry_sha256": _sha(geometry), "input_sha256": _sha(inp),
-        "input_file": "job.inp", "geometry_file": "geometry.xyz",
+        "input_file": "job.inp", "geometry_file": "geometry.xyz", **launch,
     }
     with manifest_path.open("x", encoding="utf-8") as stream:
         json.dump(manifest, stream, indent=2, allow_nan=False)

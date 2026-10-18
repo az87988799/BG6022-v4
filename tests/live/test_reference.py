@@ -19,6 +19,8 @@ import pytest
 
 from orca_agent import runner
 from orca_agent.config import Config
+from orca_agent.models import ResourceLimits
+from orca_agent.orca.native import validate_native_input
 from orca_agent.store import Store, atomic_write, sha256_file
 from orca_agent.tools import calculation
 
@@ -115,6 +117,8 @@ def test_independent_frozen_reference(case_id, monkeypatch):
     if case["tool"] == "orca.opt":
         assert "optimized_geometry" in product_result.qualified_outputs
     product_workdir = production_store.path(production_attempt.directory)
+    if (product_workdir / "task").is_dir():
+        product_workdir = product_workdir / "task"
     assert sha256_file(product_workdir / "geometry.xyz") == review["geometry_sha256"]
     production_energy, production_line, print_rounding = _independent_energy(product_workdir / "stdout.out")
     assert abs(product_result.qualified_outputs["energy"].value - production_energy) <= print_rounding
@@ -156,10 +160,19 @@ def test_independent_frozen_reference(case_id, monkeypatch):
         assert not inp.exists() and not geometry.exists()
         shutil.copyfile(FIXTURES / case["manual_reference_input"], inp)
         shutil.copyfile(geometry_path, geometry)
+        # Validate the independent frozen bytes against the shared execution
+        # boundary; this does not generate input or supply the reference energy.
+        launch = validate_native_input(
+            inp.read_text(encoding="utf-8"), {"geometry.xyz": geometry.read_bytes()},
+            ResourceLimits(max_cores=parameters.cores, total_memory_mb=parameters.memory_mb,
+                           maxcore_mb=parameters.maxcore_mb,
+                           job_timeout_seconds=parameters.timeout_seconds),
+            legacy_optimization=tool_name == "orca.opt",
+        )
         manifest = {
             "tool": tool_name, "parameters": parameters.model_dump(mode="json"),
             "input_sha256": sha256_file(inp), "geometry_sha256": sha256_file(geometry),
-            "input_file": "job.inp", "geometry_file": "geometry.xyz",
+            "input_file": "job.inp", "geometry_file": "geometry.xyz", **launch,
         }
         atomic_write(directory / "input-manifest.json",
                      (json.dumps(manifest, indent=2) + "\n").encode(), immutable=True)
@@ -182,12 +195,13 @@ def test_independent_frozen_reference(case_id, monkeypatch):
         run = runner.execute(reference_store, config, run.id)
         assert len(run.attempts) == 1
         attempt = run.attempts[0]
-        directory = reference_store.path(attempt.directory)
+        recorddir = reference_store.path(attempt.directory)
+        directory = recorddir / "task"
         summary.update(result_ids=run.result_ids, usage=run.usage.model_dump(mode="json"),
-                       run_state=run.state, execution=_read_json(directory / "execution.json"))
+                       run_state=run.state, execution=_read_json(recorddir / "execution.json"))
         assert run.usage.orca_starts_actual == 1 and run.usage.logical_attempts
         assert not (directory / "job.2jsonout").exists(), "reference unexpectedly invoked JSON conversion"
-        for path in [directory / "job.inp", directory / "stdout.out", directory / "execution.json",
+        for path in [directory / "job.inp", directory / "stdout.out", recorddir / "execution.json",
                      product_workdir / "stdout.out", Path(review["input_path"]), Path(review["geometry_path"])]:
             summary["evidence_files"].append({"path": str(path), "sha256": sha256_file(path)})
         reference_energy, reference_line, _ = _independent_energy(directory / "stdout.out")

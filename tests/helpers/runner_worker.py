@@ -41,6 +41,55 @@ def read_fixture(workdir, parameters, tool, **kwargs):
     } if exists else {}, "observations": {"synthetic_fixture": True}, "diagnostics": []}
 
 
+def launch_fixture(store, run, step, config, prepared, workdir, root, **kwargs):
+    """Test-only replacement for the unified ORCA launch boundary.
+
+    Lifecycle tests deliberately execute Python fixtures through the existing
+    JobObject backend. They do not stage ORCA, claim LPAC isolation or provide
+    scientific evidence; those require the separate real execution tests.
+    """
+    from orca_agent.backends import local
+    from orca_agent.models import utc_now
+    from orca_agent.tools.managed import _control
+
+    if Path(config.orca_path).resolve() != Path(sys.executable).resolve():
+        raise ValueError("synthetic launch fixture only admits this test Python executable")
+    parameters = step.parameters
+    fault = kwargs.pop("fault", None)
+    on_started = kwargs.pop("on_started")
+    control_lock = store.control_lock(run.id)
+    locked = False
+
+    def hook(point):
+        nonlocal locked
+        if point == "after_resumed" and locked:
+            control_lock.release()
+            locked = False
+        if fault:
+            fault(point)
+
+    def started(handle):
+        on_started(handle)
+        _control(store, run, step)
+
+    try:
+        # Mirror the real launch boundary's final control gate through ResumeThread.
+        # Runtime staging and security isolation are deliberately absent here.
+        control_lock.acquire()
+        locked = True
+        _control(store, run, step)
+        return local.run_managed(
+            config.orca_path, [str(prepared["input_path"])], workdir,
+            cores=parameters.cores, total_memory_mb=parameters.memory_mb,
+            timeout_s=min(parameters.timeout_seconds, (run.deadline - utc_now()).total_seconds()),
+            cancel_requested=lambda: store.read_signal(run.id) == "cancel",
+            on_started=started, fault=hook, **kwargs,
+        )
+    finally:
+        if locked:
+            control_lock.release()
+
+
 def task(directory, delay, depth):
     current = psutil.Process()
     publish_json(directory / f"task-{current.pid}.json", {
@@ -72,7 +121,7 @@ def main():
     from orca_agent.backends import local
     from orca_agent.config import Config
     from orca_agent.store import Store
-    from orca_agent.tools import calculation
+    from orca_agent.tools import calculation, managed
 
     data, environment, run_id, mode, crash_point = sys.argv[2:7]
     store = Store(data, environment_root=environment)
@@ -101,6 +150,7 @@ def main():
 
     calculation.prepare_input = prepare_fixture
     calculation.read_outputs = read_fixture
+    managed.launch_orca = launch_fixture
     local.run_managed = managed_fixture
     result = runner.execute(store, config, run_id, fault=fault)
     publish_json(Path(data) / "worker-result.json", result.model_dump(mode="json"))

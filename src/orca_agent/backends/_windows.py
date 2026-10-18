@@ -78,7 +78,13 @@ class COMPLETION_PORT(c.Structure):
     _fields_ = [("CompletionKey", LPVOID), ("CompletionPort", HANDLE)]
 
 
+class SECURITY_CAPABILITIES(c.Structure):
+    _fields_ = [("AppContainerSid", LPVOID), ("Capabilities", LPVOID),
+                ("CapabilityCount", w.DWORD), ("Reserved", w.DWORD)]
+
+
 k32 = c.WinDLL("kernel32", use_last_error=True)
+advapi32 = c.WinDLL("advapi32", use_last_error=True)
 
 
 def _bind(name, result, *args):
@@ -86,6 +92,19 @@ def _bind(name, result, *args):
     function.restype = result
     function.argtypes = args
     return function
+
+
+def _bind_security(name, result, *args):
+    function = getattr(advapi32, name)
+    function.restype = result
+    function.argtypes = args
+    return function
+
+
+OpenProcessToken = _bind_security("OpenProcessToken", w.BOOL, HANDLE, w.DWORD,
+                                 c.POINTER(HANDLE))
+GetTokenInformation = _bind_security("GetTokenInformation", w.BOOL, HANDLE, c.c_int,
+                                    LPVOID, w.DWORD, c.POINTER(w.DWORD))
 
 
 CreateJobObject = _bind("CreateJobObjectW", HANDLE, LPVOID, w.LPCWSTR)

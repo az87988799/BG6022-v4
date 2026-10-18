@@ -134,7 +134,9 @@ def _record_reconciliation(store, run, attempt, reconciliation, observed_usage=N
 
 
 def _recover(store, config, run, plan):
-    from orca_agent.tools.calculation import collect_result
+    import importlib
+
+    from orca_agent.tools.registry import get_tool
 
     for attempt in run.attempts:
         chain = store.result_chain(run, attempt)
@@ -175,6 +177,15 @@ def _recover(store, config, run, plan):
                            "reconciliation": reconciliation}
                 _record_reconciliation(store, run, attempt, reconciliation, outcome["resource_usage"])
         if needs_collection:
+            if (attempt.execution_kind == "python" and any(
+                    call.parent_attempt_id == attempt.id and call.state in {"reserved", "running", "unknown"}
+                    for call in run.internal_calls)):
+                run.state = "unknown"
+                run.usage.resource_usage_complete = False
+                store.record_diagnostic(run, "internal_reconciliation_not_implemented",
+                    "Internal launch receipt is incomplete; raw files and reservation retained. "
+                    "No task replay or new internal execution is permitted.")
+                return False
             if attempt.frozen_step:
                 step = attempt.frozen_step
             else:
@@ -183,7 +194,10 @@ def _recover(store, config, run, plan):
                 version = attempt.plan_version or 1
                 historical = store.load_plan_revision(run, version)
                 step = next(s for s in historical.steps if s.id == attempt.step_id)
-            result = collect_result(store, run, step, attempt, outcome)
+            collector = get_tool(step.tool).check_contract.get(
+                "collector", "orca_agent.tools.calculation.collect_result")
+            module, name = collector.rsplit(".", 1)
+            result = getattr(importlib.import_module(module), name)(store, run, step, attempt, outcome)
             result.supersedes_result_id = current.id if current else None
             store.save_result(result)
             chain.append(result)

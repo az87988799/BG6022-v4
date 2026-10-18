@@ -26,7 +26,7 @@ from orca_agent.models import (
     Step,
 )
 from orca_agent.store import Store, atomic_write, sha256_file
-from orca_agent.tools import calculation
+from orca_agent.tools import calculation, managed
 from orca_agent.versions import CURRENT_CHECK_VERSION
 
 HELPER = Path(__file__).resolve().parents[1] / "helpers" / "runner_worker.py"
@@ -67,6 +67,7 @@ def synthetic(monkeypatch):
     launches = []
     monkeypatch.setattr(calculation, "prepare_input", FIXTURE.prepare_fixture)
     monkeypatch.setattr(calculation, "read_outputs", FIXTURE.read_fixture)
+    monkeypatch.setattr(managed, "launch_orca", FIXTURE.launch_fixture)
 
     def backend(executable, args, workdir, **kwargs):
         launches.append(str(workdir))
@@ -171,7 +172,8 @@ def test_runner_orphan_completion_is_recollected_without_execution(tmp_path, syn
     assert interrupted.state == "unknown"
     assert len(synthetic) == 1
     directory = store.path(interrupted.attempts[0].directory)
-    before = {p.name: sha256_file(p) for p in directory.iterdir() if p.is_file()}
+    before = {p.relative_to(directory).as_posix(): sha256_file(p)
+              for p in directory.rglob("*") if p.is_file()}
     orphans = list(store.path(f"runs/{run.id}/results").glob("*.json"))
     if point == "after_result_saved":
         assert len(orphans) == 1
@@ -184,7 +186,8 @@ def test_runner_orphan_completion_is_recollected_without_execution(tmp_path, syn
     assert store.environment_lease() is None
     if orphans:
         assert recovered.result_ids == [orphans[0].stem]
-    assert {p.name: sha256_file(p) for p in directory.iterdir() if p.is_file()} == before
+    assert {p.relative_to(directory).as_posix(): sha256_file(p)
+            for p in directory.rglob("*") if p.is_file()} == before
     assert runner.execute(store, config, run.id, resume=True).usage.elapsed_seconds == 0.25
 
 
@@ -329,6 +332,7 @@ def test_runner_hard_crash_recovery_does_not_duplicate_calculation(tmp_path, mon
         assert not task_records(store)
     monkeypatch.setattr(calculation, "prepare_input", FIXTURE.prepare_fixture)
     monkeypatch.setattr(calculation, "read_outputs", FIXTURE.read_fixture)
+    monkeypatch.setattr(managed, "launch_orca", lambda *a, **kw: pytest.fail("recovery must not launch"))
     monkeypatch.setattr(local, "run_managed", lambda *a, **kw: pytest.fail("recovery must not launch"))
     recovered = runner.execute(store, config, run.id, resume=True)
     if point in ("after_intent_saved", "after_process_created"):
@@ -491,7 +495,7 @@ def test_preparation_partial_collection_failure_keeps_known_not_started(tmp_path
     assert result.source["execution"]["not_started"] is True
     assert result.source["execution"]["handle"] is None
     assert any(item["category"] == "collection_error" for item in result.diagnostics)
-    assert store.path(f"{failed.attempts[0].directory}/partial.inp").read_text() == "Synthetic partial file"
+    assert store.path(f"{failed.attempts[0].directory}/task/partial.inp").read_text() == "Synthetic partial file"
     assert not result.qualified_outputs
 
 

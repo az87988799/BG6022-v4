@@ -1,10 +1,8 @@
 """One production responsibility chain for registered local scientific tools."""
 
 import json
-import os
 import time
 
-from orca_agent.backends import local
 from orca_agent.models import Check, PermissionSnapshot, QualifiedOutput, Result, utc_now
 from orca_agent.orca.adapter import prepare_input, read_outputs
 from orca_agent.store import ControlChanged, atomic_write, sha256_file
@@ -61,16 +59,14 @@ def revalidate(store, run, step, config):
 
 
 def execute_calculation(store, run, step, attempt, config, fault=None):
-    workdir = store.path(attempt.directory)
-    control_lock = store.control_lock(run.id)
-    locked = False
+    from orca_agent.tools.managed import launch_orca
+
+    recorddir = store.path(attempt.directory)
+    workdir = recorddir / "task"
+    workdir.mkdir()
     startup_control = None
 
     def hook(point):
-        nonlocal locked
-        if point == "after_resumed" and locked:
-            control_lock.release()
-            locked = False
         if fault:
             fault(point)
 
@@ -78,7 +74,7 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
         nonlocal startup_control
         attempt.execution_handle = handle
         attempt.state = "running"
-        _save_json(workdir / "started.json", handle)
+        _save_json(recorddir / "started.json", handle)
         store.update_lease_handle(run.id, attempt.id, handle)
         store.save_run(run)
         # The suspended process exists. Preserve its identity even when the
@@ -95,31 +91,14 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
         # preparation exception proves no process was started; hard crashes do not.
         geometry = store.artifact_path(attempt.geometry_artifact_id)
         prepared = prepare_input(workdir, geometry, step.parameters, step.tool)
-        _save_json(workdir / "prepared.json", prepared)
+        _save_json(recorddir / "prepared.json", prepared)
         if fault:
             fault("after_input_prepared")
-        control_lock.acquire()
-        locked = True
         revalidate(store, run, step, config)
-        remaining = (run.deadline - utc_now()).total_seconds()
-        child_environment = {key.upper(): value for key, value in os.environ.items()}
-        child_environment.pop("DEEPSEEK_API_KEY", None)
-        directories = [str(config.orca_path.parent)]
-        if config.mpi_path:
-            directories.append(str(config.mpi_path.parent))
-        child_environment["PATH"] = os.pathsep.join(directories + [child_environment.get("PATH", "")])
-        child_environment["OMP_NUM_THREADS"] = "1"
-        child_environment["MKL_NUM_THREADS"] = "1"
-        child_environment["OPENBLAS_NUM_THREADS"] = "1"
         invoked = True
-        outcome = local.run_managed(
-            config.orca_path, [str(prepared["input_path"])], workdir,
-            cores=step.parameters.cores, total_memory_mb=step.parameters.memory_mb,
-            timeout_s=min(step.parameters.timeout_seconds, remaining),
-            cancel_requested=lambda: store.read_signal(run.id) == "cancel",
-            on_started=on_started, job_name=attempt.execution_handle["job_name"], fault=hook,
-            environment=child_environment,
-        )
+        outcome = launch_orca(store, run, step, config, prepared, workdir, recorddir,
+                              on_started=on_started, job_name=attempt.execution_handle["job_name"],
+                              fault=hook)
         if startup_control and outcome["state"] != "unknown":
             outcome.update(state="cancelled", control_action=startup_control,
                            reason="control_changed_before_suspended_thread_resumed")
@@ -131,9 +110,6 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
                    "reason": f"prelaunch_rejected: {exc}", "not_started": True,
                    "control_action": signal,
                    "handle": None, "resource_usage": {}, "exit_code": None}
-    finally:
-        if locked:
-            control_lock.release()
     converters = {p["pid"] for p in outcome.get("resource_usage", {}).get("observed_processes", [])
                   if p.get("executable", "").lower().endswith("orca_2json.exe")}
     outcome["postprocess_starts_detected"] = max(len(converters), int((workdir / "job.2jsonout").exists()))
@@ -147,7 +123,7 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
         # stopped. Keep its lease and defer archival until termination is proven.
         if outcome["state"] != "unknown":
             outcome.update(state="failed", reason="unexpected_internal_postprocess_exceeded_zero_budget")
-    _save_json(workdir / "execution.json", outcome)
+    _save_json(recorddir / "execution.json", outcome)
     if fault:
         fault("after_execution_saved")
     return collect_result(store, run, step, attempt, outcome), outcome
@@ -156,7 +132,8 @@ def execute_calculation(store, run, step, attempt, config, fault=None):
 def collect_result(store, run, step, attempt, outcome):
     """Archive completed files before publishing result references; never run conversion."""
     start = time.monotonic()
-    workdir = store.path(attempt.directory)
+    recorddir = store.path(attempt.directory)
+    workdir = recorddir / "task" if (recorddir / "task").is_dir() else recorddir
     # These identities belong to the startup reservation. A later Request or
     # Plan must never relabel old execution; None explicitly records legacy unknowns.
     versions = {name: getattr(attempt, name, None) for name in
@@ -169,7 +146,10 @@ def collect_result(store, run, step, attempt, outcome):
     artifacts = {}
     collection_error = None
     try:
-        files = sorted(path for path in workdir.iterdir() if path.is_file())
+        from orca_agent.backends.task_files import collect_paths
+        files = sorted(collect_paths(workdir, count=run.budget.artifact_count))
+        if workdir != recorddir:
+            files += sorted(path for path in recorddir.glob("*.json") if path.is_file())
         usage = store.artifact_budget_usage(run)
         if not store.cumulative_artifact_budget(run):
             # Original budgets bounded each collection, without a Run-wide quota.
@@ -198,9 +178,12 @@ def collect_result(store, run, step, attempt, outcome):
                   "diagnostics": [{"category": "collection_error" if collection_error else "parse_error",
                                    "detail": str(exc)}]}
     try:
-        current_files = {p.name for p in workdir.iterdir() if p.is_file()}
+        current_paths = {p.name: p for p in collect_paths(workdir, count=run.budget.artifact_count)}
+        if workdir != recorddir:
+            current_paths.update({p.name: p for p in recorddir.glob("*.json") if p.is_file()})
+        current_files = set(current_paths)
         changed = current_files != set(artifacts) or any(
-            not (workdir / name).is_file() or sha256_file(workdir / name) != artifact.sha256
+            not current_paths[name].is_file() or sha256_file(current_paths[name]) != artifact.sha256
             for name, artifact in artifacts.items())
     except Exception as exc:
         changed = True

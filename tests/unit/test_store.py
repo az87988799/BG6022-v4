@@ -72,6 +72,58 @@ def test_artifact_snapshot_is_not_overwritten_and_hash_is_checked(setup_run, tmp
         store.artifact_path(artifact.id)
 
 
+@pytest.mark.parametrize("interruption", ["hash", "copy", "after_fsync"])
+def test_artifact_checkpoint_interruption_keeps_original_and_reservation_without_publication(
+    setup_run, tmp_path, monkeypatch, interruption,
+):
+    store, run, _, _ = setup_run
+    original = tmp_path / "large-raw.bin"
+    content = b"original evidence" * (192 * 1024)
+    original.write_bytes(content)
+    prior_usage = store.artifact_budget_usage(run)
+    prior_metadata = set(store.root.glob("artifacts/*/artifact.json"))
+    synced = False
+    checkpoint_calls = 0
+    original_fsync = os.fsync
+
+    def copied_files():
+        return list(store.root.glob("artifacts/*/files/large-raw.bin"))
+
+    def tracked_fsync(descriptor):
+        nonlocal synced
+        original_fsync(descriptor)
+        copies = copied_files()
+        if copies and copies[0].stat().st_size == len(content):
+            synced = True
+
+    def checkpoint():
+        nonlocal checkpoint_calls
+        checkpoint_calls += 1
+        copies = copied_files()
+        partial = bool(copies and 0 < copies[0].stat().st_size < len(content))
+        if (interruption == "hash" or (interruption == "copy" and partial)
+                or (interruption == "after_fsync" and synced)):
+            raise TimeoutError("coordinator deadline reached during artifact import")
+
+    monkeypatch.setattr(os, "fsync", tracked_fsync)
+    with pytest.raises(TimeoutError, match="coordinator deadline"):
+        store.import_artifact(original, "raw_evidence", run_id=run.id, checkpoint=checkpoint)
+
+    assert checkpoint_calls
+    assert original.read_bytes() == content
+    assert set(store.root.glob("artifacts/*/artifact.json")) == prior_metadata
+    usage = store.artifact_budget_usage(store.load_run(run.id))
+    assert usage["reserved_count"] == prior_usage["reserved_count"] + 1
+    assert usage["reserved_bytes"] == prior_usage["reserved_bytes"] + len(content)
+    copies = copied_files()
+    if interruption == "hash":
+        assert copies == []
+    elif interruption == "copy":
+        assert len(copies) == 1 and 0 < copies[0].stat().st_size < len(content)
+    else:
+        assert synced and len(copies) == 1 and copies[0].read_bytes() == content
+
+
 def test_initial_and_immutable_snapshots_survive_reservation(setup_run):
     store, run, step, artifact = setup_run
     before = store.artifact_path(artifact.id).read_bytes()

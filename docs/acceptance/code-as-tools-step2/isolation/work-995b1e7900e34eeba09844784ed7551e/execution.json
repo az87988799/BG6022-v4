@@ -1,0 +1,98 @@
+{
+  "state": "completed",
+  "exit_code": 0,
+  "handle": {
+    "pid": 12568,
+    "create_time": 1792315289.9203167,
+    "create_time_100ns": "134367888899203158",
+    "job_name": "Local\\ORCAAgent-c5497bb18e3f412c968148091b2a317c",
+    "launch_id": "b2a41a81d4334b5ea450b9f996dbe32c",
+    "executable": "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\runtime\\python.exe",
+    "args": [
+      "-I",
+      "-S",
+      "-c",
+      "\nimport ctypes,json,os,pathlib,socket,struct,subprocess,sys,winreg\nfrom ctypes import wintypes as w\nreport={}\ndef attempt(name,fn):\n    try: fn(); report[name]={'blocked':False}\n    except OSError as error: report[name]={'blocked':True,'winerror':getattr(error,'winerror',None),'errno':error.errno}\nattempt('credential_file', lambda:pathlib.Path('E:\\\\BG6022-V4\\\\data\\\\step2-final-isolation\\\\lpac0\\\\credential-canary.txt').read_bytes())\nattempt('product_source', lambda:pathlib.Path('E:\\\\BG6022-V4\\\\src\\\\orca_agent\\\\store.py').read_bytes())\nattempt('input_write', lambda:pathlib.Path('E:\\\\BG6022-V4\\\\data\\\\step2-final-isolation\\\\lpac0\\\\immutable.txt').write_text('modified'))\nattempt('runtime_write', lambda:pathlib.Path('E:\\\\BG6022-V4\\\\data\\\\step2-final-isolation\\\\lpac0\\\\runtime\\\\python311._pth').write_text('changed'))\nattempt('profile_storage', lambda:list(pathlib.Path('C:\\\\Users\\\\阿妆\\\\AppData\\\\Local\\\\Packages\\\\orcaagent.task.32686103f49e4a2487c098d168b6921b\\\\AC').iterdir()))\nattempt('delete_work_root', lambda:pathlib.Path.cwd().rename(pathlib.Path.cwd().with_name('renamed')))\nattempt('registry_credential', lambda:winreg.OpenKey(winreg.HKEY_CURRENT_USER,'Software\\\\ORCAAgentIsolationCanary\\\\ec42c010684741b087a174408dcba8bf'))\nattempt('child_python', lambda:subprocess.run([sys.executable,'-c','print(123)'],check=True))\nattempt('child_shell', lambda:subprocess.run([os.environ['ComSpec'],'/c','echo forbidden'],check=True))\nfor name,address in [('network_loopback',('127.0.0.1',443)),('network_external',('192.0.2.1',443))]:\n    def connect(address=address):\n        with socket.socket() as sock: sock.settimeout(0.5); sock.connect(address)\n    attempt(name,connect)\nkernel=ctypes.WinDLL('kernel32',use_last_error=True)\nkernel.CreateFileW.argtypes=[w.LPCWSTR,w.DWORD,w.DWORD,w.LPVOID,w.DWORD,w.DWORD,w.HANDLE]\nkernel.CreateFileW.restype=w.HANDLE\nkernel.CloseHandle.argtypes=[w.HANDLE]\ndirectory=kernel.CreateFileW('E:\\\\BG6022-V4\\\\data\\\\step2-final-isolation\\\\lpac0\\\\reparse-mailbox',0x40000000,7,None,3,0x02200000,None)\nassert directory!=w.HANDLE(-1).value\ntarget='E:\\\\BG6022-V4\\\\data\\\\step2-final-isolation\\\\lpac0'\nsub=(chr(92)+'??'+chr(92)+target).encode('utf-16-le');pr=target.encode('utf-16-le')\nbody=struct.pack('<HHHH',0,len(sub),len(sub)+2,len(pr))+sub+bytes(2)+pr+bytes(2)\ndata=struct.pack('<IHH',0xA0000003,len(body),0)+body\nbuffer=ctypes.create_string_buffer(data);returned=w.DWORD()\nkernel.DeviceIoControl.argtypes=[w.HANDLE,w.DWORD,w.LPVOID,w.DWORD,w.LPVOID,w.DWORD,ctypes.POINTER(w.DWORD),w.LPVOID]\nkernel.DeviceIoControl.restype=w.BOOL\nchanged=kernel.DeviceIoControl(directory,0x900A4,buffer,len(data),None,0,ctypes.byref(returned),None)\nreport['root_junction_mutation']={'blocked':not bool(changed),'winerror':ctypes.get_last_error()}\nkernel.CloseHandle(directory)\nkernel.CreateProcessW.argtypes=[w.LPCWSTR,w.LPWSTR,w.LPVOID,w.LPVOID,w.BOOL,w.DWORD,w.LPVOID,w.LPCWSTR,w.LPVOID,w.LPVOID]\nkernel.CreateProcessW.restype=w.BOOL\nstartup=ctypes.create_string_buffer(104);w.DWORD.from_buffer(startup).value=104\nprocess=ctypes.create_string_buffer(24)\ncommand=ctypes.create_unicode_buffer('\"'+sys.executable+'\" -c \"print(1)\"')\ncreated=kernel.CreateProcessW(sys.executable,command,None,None,False,8,None,None,startup,process)\nreport['native_child_bypass']={'blocked':not bool(created),'winerror':ctypes.get_last_error()}\nkernel.ReadFile.argtypes=[w.HANDLE,w.LPVOID,w.DWORD,ctypes.POINTER(w.DWORD),w.LPVOID]\nkernel.ReadFile.restype=w.BOOL\nbuf=ctypes.create_string_buffer(32);count=w.DWORD()\ntry:\n    read=kernel.ReadFile(2148,buf,32,ctypes.byref(count),None)\n    report['inheritable_canary_handle']={'blocked':not bool(read),'winerror':ctypes.get_last_error()}\nexcept OSError as error:\n    report['inheritable_canary_handle']={'blocked':True,'winerror':error.winerror}\nkernel.OpenProcess.argtypes=[w.DWORD,w.BOOL,w.DWORD];kernel.OpenProcess.restype=w.HANDLE\nhandle=kernel.OpenProcess(0x1FFFFF,False,43348)\nreport['parent_process']={'blocked':not bool(handle),'winerror':ctypes.get_last_error()}\nif handle: kernel.CloseHandle(handle)\nreport['secret_environment']={'blocked':'ORCA_FAKE_SECRET' not in os.environ}\nprint(json.dumps(report))\n"
+    ],
+    "workdir": "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\work-995b1e7900e34eeba09844784ed7551e",
+    "started_at": "2026-10-18T09:21:29.911241+00:00",
+    "coordinator_pid": 43348,
+    "coordinator_create_time": 1792315253.714697,
+    "coordinator_create_time_100ns": "134367888537146960",
+    "atomic_job_assignment": true,
+    "parent_job_name": null,
+    "argv0": "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\runtime\\python.exe",
+    "isolation": {
+      "kind": "windows_lpac",
+      "sid": "S-1-15-2-1383275912-2386484627-214760742-3471575493-224630996-1637575095-4227226597",
+      "profile_name": "ORCAAgent.Task.32686103f49e4a2487c098d168b6921b",
+      "appcontainer_confirmed": true,
+      "lpac_confirmed": true,
+      "network_capabilities": [],
+      "profile_created": true,
+      "runtime_capabilities": [
+        "registryRead"
+      ],
+      "profile_storage_denied": true,
+      "child_processes_allowed": false,
+      "read_roots": [
+        "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\runtime",
+        "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\immutable.txt"
+      ],
+      "write_roots": [
+        "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\reparse-mailbox",
+        "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\work-995b1e7900e34eeba09844784ed7551e"
+      ]
+    }
+  },
+  "resource_usage": {
+    "wall_seconds": 0.3129999999946449,
+    "user_cpu_seconds": 0.140625,
+    "kernel_cpu_seconds": 0.09375,
+    "total_processes": 1,
+    "active_processes": 0,
+    "peak_job_commit_bytes": 14594048,
+    "job_commit_limit_bytes": 1073741824,
+    "memory_metric": "Windows Job Object committed virtual memory, not working set",
+    "cpu_affinity_mask": 1,
+    "cores": 1,
+    "observed_processes": [
+      {
+        "pid": 12568,
+        "create_time": 1792315289.9203167,
+        "create_time_100ns": "134367888899203158",
+        "executable": "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\runtime\\python.exe",
+        "job_membership_confirmed": true,
+        "cpu_affinity_mask": 1
+      }
+    ],
+    "process_sampling_errors": [],
+    "process_sampling_truncated": false,
+    "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+  },
+  "started_at": "2026-10-18T09:21:29.911241+00:00",
+  "ended_at": "2026-10-18T09:21:30.232397+00:00",
+  "reason": "process_tree_exited",
+  "isolation": {
+    "kind": "windows_lpac",
+    "sid": "S-1-15-2-1383275912-2386484627-214760742-3471575493-224630996-1637575095-4227226597",
+    "profile_name": "ORCAAgent.Task.32686103f49e4a2487c098d168b6921b",
+    "appcontainer_confirmed": true,
+    "lpac_confirmed": true,
+    "network_capabilities": [],
+    "profile_created": true,
+    "runtime_capabilities": [
+      "registryRead"
+    ],
+    "profile_storage_denied": true,
+    "child_processes_allowed": false,
+    "read_roots": [
+      "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\runtime",
+      "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\immutable.txt"
+    ],
+    "write_roots": [
+      "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\reparse-mailbox",
+      "E:\\BG6022-V4\\data\\step2-final-isolation\\lpac0\\work-995b1e7900e34eeba09844784ed7551e"
+    ]
+  }
+}

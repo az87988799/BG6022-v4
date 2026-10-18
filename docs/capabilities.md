@@ -1,5 +1,13 @@
 # 能力与证据
 
+## 当前执行边界更新（2026-10-18，Code as Tools 步骤 2）
+
+步骤 1 已由用户验收通过。步骤 2 已实现受控 Python、一次 SDK ORCA 转发、原生输入 Artifact/依赖 manifest、原始文件归档与共享资源记账。Windows LPAC 的文件、凭据哨兵、网络、子进程、路径、句柄、期限和内存边界有真实进程测试；最终 SDK、旧 OPI 串行 SP、旧 OPI 串行 Opt 三项真实测试通过。SDK 结果保留为科学未验证观察；SP/Opt 由原有检查器授予对应资格，未放宽检查标准。
+
+**当前新执行链不支持 MPI 科学计算。** 四核真实 ORCA 和独立 MPI_Init 均失败，统一入口在启动前明确拒绝大于 1 核的 ORCA 输入；必须显式请求串行，不自动改写四核请求。下文历史四核执行/取消证据属于此前后端，不能用于宣称新 LPAC 链并行已通过。步骤 2 的完整兼容性仍有阻塞，等待用户验收。
+
+全部 10 次 ORCA 启动（含失败）、4 次独立 MPI 诊断及成本记录见 [步骤 2 报告](acceptance/code-as-tools-step2/report.md) 与 [证据索引](acceptance/code-as-tools-step2/evidence-index.json)。本轮真实模型、远程运行均为 0；没有实施自然语言代码生成、多次 SDK 调用、检查点重放或步骤 3—7。原生优化/频率和未知执行影响仍受明确准入边界限制，见 [输入边界](native-orca-input.md)。
+
 版本：0.1.0；日期：2026-10-07。状态：**阶段 A 已由用户验收通过**，接受代码基线 `236376e`，见[用户验收记录](acceptance/phase-a/user-acceptance.md)。详细验证与失败历史见 [阶段报告](acceptance/phase-a/report.md) 和 [证据索引](acceptance/phase-a/evidence-index.json)。
 
 本轮 R-01～R-05 修复使用 `orca-hf-2`，见 [修复验收记录](acceptance/phase-a-repair/report.md) 与 [真实历史产物只读回放](acceptance/phase-a-repair/replay.json)。既有真实执行证据保持原样；本轮新增科学启动 0 次。当前 ORCA 准入精确限定 `6.1.1`，不因满足 OPI 最低版本就自动启用其他版本。旧规则结果可查看、取消、对账及补收；继续执行或复用于新版目标需要明确的规则复验，本次没有自动迁移流程。

@@ -168,6 +168,11 @@ class InternalCall(Record):
     actual_conditions: dict[str, Any] = Field(default_factory=dict)
     state: Literal["reserved", "running", "completed", "failed", "cancelled", "timed_out", "unknown"]
     attempt_id: Identifier | None = None
+    parent_attempt_id: Identifier | None = None
+    work_units: Annotated[int, Field(strict=True, ge=1)] = 1
+    started: bool = False
+    execution_handle: dict[str, Any] | None = None
+    resource_usage: dict[str, Any] = Field(default_factory=dict)
     result_id: Identifier | None = None
     artifact_ids: list[Identifier] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utc_now)
@@ -554,7 +559,10 @@ class Attempt(Record):
         "intent", "running", "completed", "failed", "cancelled", "timed_out", "unknown",
         "not_started",
     ] = "intent"
-    geometry_artifact_id: Identifier
+    # Historical attempts are ORCA attempts. General execution records the kind
+    # explicitly so starting Python never charges an actual ORCA launch.
+    execution_kind: Literal["orca", "python"] = "orca"
+    geometry_artifact_id: Identifier | None = None
     input_fingerprint: str
     directory: str
     created_at: datetime = Field(default_factory=utc_now)

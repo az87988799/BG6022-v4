@@ -1,4 +1,4 @@
-"""Code-as-tools contracts are persistent intent, not an enabled execution path."""
+"""Code intent preserves goals and requires the managed execution boundary."""
 
 import json
 import shutil
@@ -52,13 +52,13 @@ def code_task(tmp_path, tool="python.execute"):
 
 
 @pytest.mark.parametrize("tool", ["python.execute", "orca.run"])
-def test_generic_goal_and_code_step_persist_but_cannot_execute(tmp_path, tool):
+def test_generic_goal_and_code_step_cannot_bypass_managed_attempt(tmp_path, tool):
     store, request, plan, permission = code_task(tmp_path, tool)
     run = store.create_run(request, plan, permission)
     assert store.load_plan(run) == plan
     assert store.load_request(run).goals[0].port == "excitation_energy"
     before = store.load_run(run.id).model_dump_json()
-    with pytest.raises(ValueError, match="managed_execution_not_implemented"):
+    with pytest.raises(ValueError, match="require a Plan/Step/Attempt"):
         execute_call(store, run, tool, plan.steps[0].parameters.model_dump(), step=plan.steps[0])
     assert store.load_run(run.id).model_dump_json() == before
     coverage = describe_evidence_contract(request.goals[0])
@@ -68,13 +68,16 @@ def test_generic_goal_and_code_step_persist_but_cannot_execute(tmp_path, tool):
 
 
 @pytest.mark.parametrize("tool", ["python.execute", "orca.run"])
-def test_agent_reports_disabled_executor_without_environment_probe_or_launch(tmp_path, tool):
+def test_agent_checks_execution_permission_before_managed_launch(tmp_path, tool, monkeypatch):
     store, request, plan, permission = code_task(tmp_path, tool)
+    permission.code_execution = permission.scientific_execution = False
     run = store.create_run(request, plan, permission)
+    # Admission-only test; no mocked successful process/isolation evidence.
+    monkeypatch.setattr("orca_agent.natural.ensure_scientific_environment", lambda *args: None)
     execute(store, Config(data_root=store.root), run.id)
     finished = store.load_run(run.id)
     assert finished.state == "failed"
-    assert "managed_execution_not_implemented" in json.dumps(finished.diagnostics)
+    assert "not authorized" in json.dumps(finished.diagnostics)
     assert not finished.calls and not finished.attempts
     assert finished.usage.orca_starts_reserved == finished.usage.model_calls == 0
 

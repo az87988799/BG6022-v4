@@ -4,7 +4,7 @@
 >
 > 代码基线：`14a7bf92a7b24f901e46b86714fd50da8bbe349e`
 >
-> 状态：步骤 1 已实施并完成定向验证，等待用户验收；步骤 2—7 尚未实施。详见 [步骤 1 交付记录](acceptance/code-as-tools-step1/report.md)。
+> 状态：步骤 1 已于 2026-10-18 由用户验收通过；步骤 2 的串行底座已实现并取得真实验证，MPI 初始化仍受阻，未标为完整兼容性全部通过，等待用户验收；步骤 3—7 尚未实施。详见 [步骤 1 交付记录](acceptance/code-as-tools-step1/report.md) 与 [步骤 2 交付记录](acceptance/code-as-tools-step2/report.md)。
 >
 > 文档关系：本文是专项实施计划；[总蓝图](ORCA-Agent-Project-Blueprint.md)仍为唯一总版本。第 1 步同步相关契约后，再推进运行时代码。
 >
@@ -127,16 +127,16 @@ Python 可现场实现搜索、循环、筛选、拟合、解析和绘图。项�
 
 实施内容：
 
-- [ ] 建立独立任务目录、代码 Artifact、执行记录及 stdout/stderr 采集。
-- [ ] 验证 Windows 操作系统隔离候选方案（优先评估 AppContainer）对 Python、RDKit、OPI、ORCA、MPI 及 IPC 的兼容性；选定一条实际可用路径。
-- [ ] 只开放任务输入副本、必要运行库、任务写目录和受控 IPC；凭据与源码不可访问，网络查询经可信工具完成。
-- [ ] Python 与 ORCA 均处于受管理边界；验证原生输入不能借外部程序、路径或继承句柄绕过限制。
-- [ ] 复用 JobObject 管理进程树、资源和取消；它本身不作为文件/网络隔离证明。
-- [ ] 实现 `python.execute` 与 `orca.run`，以及最小 SDK 转发；SDK 不包含科学求解算法。
-- [ ] ORCA 适配器支持原生输入 Artifact、几何及其他依赖文件 manifest；校验路径、hash、资源和执行影响。
-- [ ] 不按方法白名单限制全部科学语法；对会触发额外程序、多作业或未知执行影响的输入，只在能够管理和核算时放行，否则返回具体原因。
-- [ ] OPI 输入与原生输入进入同一执行链；现有 SP/Opt 入口改为复用该链，保留其检查范围。
-- [ ] 输出文件按实际存在情况归档，不因缺少固定 JSON 就全局判失败；只读 OPI 不自动生成 JSON。
+- [x] 建立独立任务目录、代码 Artifact、执行记录及 stdout/stderr 采集。
+- [ ] 验证 Windows 操作系统隔离候选方案（优先评估 AppContainer）对 Python、RDKit、OPI、ORCA、MPI 及 IPC 的兼容性；选定一条实际可用路径。**部分完成：LPAC 下 Python、RDKit、OPI、串行 ORCA 与 IPC 已验证；MPI_Init 失败，并行请求启动前明确拒绝，详见本步交付记录。**
+- [x] 只开放任务输入副本、必要运行库、任务写目录和受控 IPC；凭据与源码不可访问，网络查询经可信工具完成。
+- [x] Python 与 ORCA 均处于受管理边界；验证原生输入不能借外部程序、路径或继承句柄绕过限制。
+- [x] 复用 JobObject 管理进程树、资源和取消；它本身不作为文件/网络隔离证明。
+- [x] 实现 `python.execute` 与 `orca.run`，以及最小 SDK 转发；SDK 不包含科学求解算法。
+- [x] ORCA 适配器支持原生输入 Artifact、几何及其他依赖文件 manifest；校验路径、hash、资源和执行影响。
+- [x] 不按方法白名单限制全部科学语法；对会触发额外程序、多作业或未知执行影响的输入，只在能够管理和核算时放行，否则返回具体原因。
+- [x] OPI 输入与原生输入进入同一执行链；现有 SP/Opt 入口改为复用该链，保留其检查范围。
+- [x] 输出文件按实际存在情况归档，不因缺少固定 JSON 就全局判失败；只读 OPI 不自动生成 JSON。
 
 主要修改：`tools/registry.py`、`tools/calculation.py`、`orca/adapter.py`、`backends/local.py`、`store.py`；新增代码执行与薄 SDK 模块，仅实现本步必需功能。
 

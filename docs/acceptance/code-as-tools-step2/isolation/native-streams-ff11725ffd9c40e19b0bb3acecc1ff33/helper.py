@@ -1,0 +1,1 @@
+import sys;print('native-helper-out');print('native-helper-err',file=sys.stderr)

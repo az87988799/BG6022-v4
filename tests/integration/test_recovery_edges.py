@@ -23,8 +23,9 @@ from orca_agent.models import (
     Step,
 )
 from orca_agent.store import Store, StoreError, atomic_write, sha256_file
-from orca_agent.tools import calculation
+from orca_agent.tools import calculation, managed
 from orca_agent.versions import CURRENT_CHECK_VERSION
+from tests.helpers.runner_worker import launch_fixture
 
 
 @pytest.fixture
@@ -46,6 +47,9 @@ def stored_attempt(tmp_path, monkeypatch):
     store.update_lease_handle(run.id, attempt.id, attempt.execution_handle)
     store.save_run(run)
     config = Config(data_root=store.root, orca_path=Path(sys.executable).resolve())
+    # Flat manually-written evidence below intentionally exercises compatibility
+    # with historical attempts. The runner tests cover the current task/ layout.
+    monkeypatch.setattr(managed, "launch_orca", lambda *args, **kwargs: pytest.fail("unexpected launch"))
     monkeypatch.setattr(local, "run_managed", lambda *args, **kwargs: pytest.fail("unexpected launch"))
     return store, config, run, step, attempt
 
@@ -168,6 +172,7 @@ def test_unknown_with_postprocess_violation_keeps_lease_and_recovers_cost_fact(
 
     original_import = store.import_artifact
     monkeypatch.setattr(calculation, "prepare_input", prepare)
+    monkeypatch.setattr(managed, "launch_orca", launch_fixture)
     monkeypatch.setattr(local, "run_managed", unknown_backend)
     monkeypatch.setattr(calculation, "read_outputs", lambda *args, **kwargs: pytest.fail("unknown tree parsed"))
     monkeypatch.setattr(store, "import_artifact", lambda *args, **kwargs: pytest.fail("unknown tree archived"))
@@ -189,6 +194,7 @@ def test_unknown_with_postprocess_violation_keeps_lease_and_recovers_cost_fact(
     run.usage.resource_usage_complete = False
     store.save_run(run)
     monkeypatch.setattr(store, "import_artifact", original_import)
+    monkeypatch.setattr(managed, "launch_orca", lambda *args, **kwargs: pytest.fail("recovery launched science"))
     monkeypatch.setattr(local, "run_managed", lambda *args, **kwargs: pytest.fail("recovery launched science"))
     monkeypatch.setattr(local, "reconcile", lambda handle: {
         "state": "terminated", "active_processes": 0, "reason": "synthetic recorded tree absent",

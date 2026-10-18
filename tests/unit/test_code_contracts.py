@@ -114,7 +114,7 @@ def test_code_step_preserves_pinned_inputs_and_dynamic_quantity_without_executio
     assert loaded.steps[0].parameters.code.sha256 == DIGEST
     assert loaded.goal_map["uvvis"].port == "excitation_energy"
     assert fingerprint(loaded) == fingerprint(plan)
-    assert get_tool("python.execute").check_contract["execution_available"] is False
+    assert get_tool("python.execute").check_contract["execution_available"] is True
     assert get_tool("python.execute").output_ports == []
     with pytest.raises(ValidationError, match="goal's port"):
         Plan(request_id="request", steps=[step], goal_map={
@@ -142,7 +142,7 @@ def test_native_input_has_own_binding_and_cannot_be_used_as_python():
     step = Step(id="frequency", logical_id="frequency", tool="orca.run", parameters=parameters)
     assert step.geometry is None
     assert step.parameters.input.language == "orca"
-    assert get_tool("orca.run").check_contract["execution_available"] is False
+    assert get_tool("orca.run").check_contract["execution_available"] is True
     with pytest.raises(ValidationError, match="Python code"):
         CodeExecutionParameters(code=native)
     with pytest.raises(ValidationError, match="ORCA input"):
