@@ -13,7 +13,8 @@ from orca_agent.applicability import CONDITION_FIELDS, effective_conditions
 # Keep older recorded requests readable without silently upgrading their contract.
 DECISION_CONTRACT_PROMPT_VERSIONS = frozenset({
     "agent-json-v22", "agent-json-v23", "agent-json-v24", "agent-json-v25", "agent-json-v26", "agent-json-v27",
-    "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32", "agent-json-v33", "agent-json-v34"})
+    "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32", "agent-json-v33", "agent-json-v34",
+    "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38"})
 
 
 @dataclass(frozen=True)
@@ -42,13 +43,14 @@ def classify_decision_purpose(actions, *, pending_messages=False, clarification=
 
 def terminal_actions(request, run):
     """Only actual user unknowns justify a clarification instead of delivery."""
-    from orca_agent.semantic import CONDITIONS
+    from orca_agent.semantic import CONDITIONS, selectable_conditions
 
     communication = next((item.get("semantics", {}) for item in reversed(run.decisions)
         if item.get("request_version") == request.version and item.get("semantics")), {})
     if communication.get("awaiting_reply") and communication.get("questions"):
         return ("clarify", "stop")
     explicit_gaps = [*request.unresolved, *(gap for goal in request.goals for gap in goal.unresolved)]
+    selectable = set(selectable_conditions(request))
     fields = CONDITIONS | {"system", "quantity", "geometry_relation"}
     # These are the existing intake field markers, including scoped missing
     # conditions. Optional temperature/standard state require an explicit gap;
@@ -60,9 +62,13 @@ def terminal_actions(request, run):
     for goal in request.goals:
         if goal.minimum_check_version in {"evidence-read-1", "knowledge-answer-1"}:
             continue
+        if (goal.evidence_contract_version == "generic-observation-1"
+                and goal.port in {"artifacts", "observations"}
+                and not request.systems and not goal.system_ids and not request.geometry_artifact_id):
+            continue
         for system_id in goal.system_ids or [None]:
             values = effective_conditions(request, goal, system_id)["conditions"]
-            if any(values.get(field) is None for field in CONDITION_FIELDS):
+            if any(values.get(field) is None for field in CONDITION_FIELDS if field not in selectable):
                 return ("clarify", "stop")
     return ("stop",)
 
@@ -104,6 +110,12 @@ def relevant_result_ids(run, plan=None, *, snapshot=None, feedback_ids=()):
     references remain in the delivery snapshot and are not relabelled as local.
     """
     selected = set(feedback_ids)
+    from orca_agent.tools.registry import get_tool
+    # Authoring receipts contain IDs/hashes, not inline code. Keep those exact
+    # handles available across subsequent revisions without trusting model IDs.
+    selected.update(call.result_id for call in run.calls if call.result_id and call.state == "completed"
+                    and (get_tool(call.tool).check_contract.get("code_authoring")
+                         or "query_external_document" in get_tool(call.tool).effects))
     selected.update(ref.result_id for ref in run.goal_evidence.values() if ref.run_id == run.id)
     for ref in (snapshot or {}).get("references", {}).values():
         if ref.get("run_id") == run.id and ref.get("result_id"):

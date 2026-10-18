@@ -16,7 +16,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from orca_agent.models import NativeOrcaParameters, ResourceLimits
+from orca_agent.models import NativeInputPolicy, NativeOrcaParameters, ResourceLimits
 
 MAX_INPUT_BYTES = 1024 * 1024
 MAX_DEPENDENCY_BYTES = 10 * 1024 * 1024
@@ -124,13 +124,18 @@ def _xyz_file(data: bytes) -> int:
         count = int(lines[0].strip())
     except (UnicodeError, ValueError, IndexError) as error:
         raise ValueError("XYZ dependency has no valid atom count") from error
+    # OPI serializes a terminal blank line. Trim only this validation view;
+    # staging and Request bindings continue to use the exact original bytes.
+    while lines and not lines[-1].strip():
+        lines.pop()
     if count < 1 or len(lines) != count + 2:
         raise ValueError("XYZ dependency must contain exactly one frame and its declared atom count")
     return _xyz_atoms(lines[2:])
 
 
-def _block(name: str, tokens: list[str]) -> dict[str, str]:
-    if name not in _BLOCK_FIELDS:
+def _block(name: str, tokens: list[str], fields=None) -> dict[str, str]:
+    fields = _BLOCK_FIELDS if fields is None else fields
+    if name not in fields:
         raise ValueError(f"unsupported execution impact or input grammar for %{name}")
     tokens = [token for token in tokens if token not in {"=", ";"}]
     if len(tokens) % 2:
@@ -138,14 +143,14 @@ def _block(name: str, tokens: list[str]) -> dict[str, str]:
     values = {}
     for index in range(0, len(tokens), 2):
         key, value = tokens[index].lower(), tokens[index + 1]
-        if key not in _BLOCK_FIELDS[name]:
+        if key not in fields[name]:
             raise ValueError(f"unsupported execution impact or field %{name}.{key}")
         if key in values:
             raise ValueError(f"duplicate %{name}.{key} is ambiguous")
-        if key in _BOOL_FIELDS:
+        if key in _BOOL_FIELDS or key == "autotrah" or (fields is not _BLOCK_FIELDS and key == "convforced"):
             if value.lower() not in {"true", "false", "0", "1"}:
                 raise ValueError(f"%{name}.{key} requires a boolean")
-        elif key in _INT_FIELDS:
+        elif key in _INT_FIELDS or key == "z_maxiter":
             if not re.fullmatch(r"[1-9][0-9]*", value):
                 raise ValueError(f"%{name}.{key} requires a positive integer")
         elif key == "convergence":
@@ -158,16 +163,25 @@ def _block(name: str, tokens: list[str]) -> dict[str, str]:
 
 
 def validate_native_input(text: str, dependencies: Mapping[str, bytes],
-                          resources: ResourceLimits, *, legacy_optimization: bool = False) -> dict:
+                          resources: ResourceLimits, *, legacy_optimization: bool = False,
+                          policy: NativeInputPolicy | None = None, binding: dict | None = None) -> dict:
     """Validate exact staged bytes and return the managed launch's declared impact.
 
     Method/basis keyword spellings are not a product whitelist. Explicit runtime
     operations and scalar block syntax are bounded separately. The legacy-only
     optimization switch is called after the existing RHF adapter profile check.
     """
+    if policy is not None:
+        from orca_agent.orca.native_profile import BLOCK_FIELDS
+        policy = NativeInputPolicy.model_validate(policy)
+        if legacy_optimization:
+            raise ValueError("legacy adapter cannot inherit the new native execution profile")
+        fields = BLOCK_FIELDS
+    else:
+        fields = _BLOCK_FIELDS
     lines = _lines(text)
     keywords, blocks, referenced = [], {}, set()
-    charge = multiplicity = atom_count = None
+    charge = multiplicity = atom_count = geometry_dependency = None
     index = 0
     while index < len(lines):
         line = lines[index]
@@ -188,11 +202,13 @@ def validate_native_input(text: str, dependencies: Mapping[str, bytes],
                     raise ValueError("%maxcore requires one positive integer")
                 blocks[name] = int(tail)
             elif name == "moinp":
+                if policy is not None:
+                    raise ValueError("bounded analytic profile does not admit checkpoint inheritance")
                 dependency = _dependency_name(tail, dependencies, ".gbw")
                 referenced.add(dependency)
                 blocks[name] = dependency
             else:
-                if name not in _BLOCK_FIELDS:
+                if name not in fields:
                     raise ValueError(f"unsupported execution impact or input grammar for %{name}")
                 body = tail
                 while not re.search(r"\bend\s*$", body, flags=re.I):
@@ -202,7 +218,7 @@ def validate_native_input(text: str, dependencies: Mapping[str, bytes],
                     body += " " + lines[index]
                 body = re.sub(r"\bend\s*$", "", body, flags=re.I)
                 tokens = re.findall(r"[^\s=;]+|[=;]", body)
-                blocks[name] = _block(name, tokens)
+                blocks[name] = _block(name, tokens, fields)
         elif line.startswith("*"):
             if atom_count is not None:
                 raise ValueError("multiple coordinate declarations are not admitted")
@@ -214,6 +230,7 @@ def validate_native_input(text: str, dependencies: Mapping[str, bytes],
                 dependency = _dependency_name(match[4] or "", dependencies, ".xyz")
                 referenced.add(dependency)
                 atom_count = _xyz_file(dependencies[dependency])
+                geometry_dependency = dependency
             else:
                 if match[4]:
                     raise ValueError("inline xyz header cannot include a path or trailing control")
@@ -229,7 +246,7 @@ def validate_native_input(text: str, dependencies: Mapping[str, bytes],
             raise ValueError("unsupported native input directive or multi-job control")
         index += 1
     lower = [word.lower() for word in keywords]
-    for word in lower:
+    for word in lower if policy is None else []:
         if word in _BLOCKED_EXACT or any(fragment in word for fragment in _BLOCKED_FRAGMENTS):
             raise ValueError(f"unmanaged external program, dependency or internal workload keyword: {word}")
         if word.startswith("pal"):
@@ -257,7 +274,7 @@ def validate_native_input(text: str, dependencies: Mapping[str, bytes],
         raise ValueError("optimization must declare a finite %geom maxiter")
     if blocks.get("output", {}).get("jsongbwfile", "false").lower() in {"1", "true"}:
         raise ValueError("JSON GBW conversion is not admitted by this execution budget")
-    return {
+    launch = {
         "admission_version": ADMISSION_VERSION,
         "resources": {"cores": cores, "memory_mb": resources.total_memory_mb,
                       "maxcore_mb": maxcore, "timeout_seconds": resources.job_timeout_seconds},
@@ -272,10 +289,15 @@ def validate_native_input(text: str, dependencies: Mapping[str, bytes],
         "dependencies": {name: {"sha256": _digest(dependencies[name]), "bytes": len(dependencies[name])}
                          for name in sorted(referenced)},
     }
+    if policy is not None:
+        from orca_agent.orca.native_profile import admit_profile
+        launch = admit_profile(launch, dependencies, geometry_dependency, policy, binding)
+    return launch
 
 
 def prepare_native_input(workdir: str | Path, parameters: NativeOrcaParameters,
-                         resolve_artifact: Callable[[str], Path], resources: ResourceLimits) -> dict[str, Any]:
+                         resolve_artifact: Callable[[str], Path], resources: ResourceLimits, *,
+                         policy: NativeInputPolicy | None = None, binding: dict | None = None) -> dict[str, Any]:
     """Copy pinned inputs into a fresh attempt after all admission checks succeed."""
     parameters = NativeOrcaParameters.model_validate(parameters)
     code = read_pinned_input(resolve_artifact(parameters.input.artifact_id), parameters.input.sha256,
@@ -295,7 +317,7 @@ def prepare_native_input(workdir: str | Path, parameters: NativeOrcaParameters,
         text = code.decode("ascii")
     except UnicodeError as error:
         raise ValueError("native input must be ASCII") from error
-    launch = validate_native_input(text, dependencies, resources)
+    launch = validate_native_input(text, dependencies, resources, policy=policy, binding=binding)
     directory = Path(workdir).absolute()
     _unlinked(directory)
     directory.mkdir(parents=True, exist_ok=True)

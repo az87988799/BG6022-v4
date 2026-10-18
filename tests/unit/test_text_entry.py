@@ -123,7 +123,7 @@ def test_cli_selects_one_input_and_preserves_exact_text(tmp_path, monkeypatch, c
     store, config = text_environment(tmp_path, enabled=source != "bundle")
     text = "Calculate initial geometry single-point energy of water.\nKeep this original text."
     monkeypatch.setattr(cli, "load_config", lambda _: config)
-    monkeypatch.setattr("orca_agent.store.Store", lambda _: store)
+    monkeypatch.setattr("orca_agent.store.Store", lambda _, *, configuration: store)
     seen = []
     def execute(store, config, run_id, **kwargs):
         run = store.load_run(run_id)
@@ -154,7 +154,7 @@ def test_cli_selects_one_input_and_preserves_exact_text(tmp_path, monkeypatch, c
 def test_cli_invalid_or_conflicting_inputs_do_not_start_coordinator(tmp_path, monkeypatch, arguments):
     store, config = text_environment(tmp_path)
     monkeypatch.setattr(cli, "load_config", lambda _: config)
-    monkeypatch.setattr("orca_agent.store.Store", lambda _: store)
+    monkeypatch.setattr("orca_agent.store.Store", lambda _, *, configuration: store)
     monkeypatch.setattr(runner, "execute", lambda *_args, **_kw: pytest.fail("unexpected execution"))
     assert cli.main(["ask", *arguments]) == 2
     assert not list((store.root / "runs").glob("*/run.json"))
@@ -169,7 +169,7 @@ def test_cli_text_and_stdin_are_argparse_mutually_exclusive():
 def test_cli_oversized_stdin_does_not_start_coordinator(tmp_path, monkeypatch):
     store, config = text_environment(tmp_path)
     monkeypatch.setattr(cli, "load_config", lambda _: config)
-    monkeypatch.setattr("orca_agent.store.Store", lambda _: store)
+    monkeypatch.setattr("orca_agent.store.Store", lambda _, *, configuration: store)
     monkeypatch.setattr(cli.sys, "stdin", io.StringIO("x" * 100000))
     monkeypatch.setattr(runner, "execute", lambda *_args, **_kw: pytest.fail("unexpected execution"))
     assert cli.main(["ask", "--stdin"]) == 2

@@ -29,7 +29,10 @@ from orca_agent.tools import electronic, geometry, structure
 from orca_agent.tools.calculation import collect_result, revalidate
 from tests.helpers import phase_b_repair_cycle as cycle
 from tests.helpers import phase_b_repair_cycle_execution as execution
-from tests.unit.test_decision_purpose_capacity import expand_schema
+from tests.unit.test_decision_purpose_capacity import (
+    assert_native_schemas_equivalent,
+    expand_schema,
+)
 
 
 def _fixed_text(system):
@@ -143,11 +146,30 @@ def run_fixed_e2e(tmp_path, monkeypatch, system, path_shape, *, goal_names=None,
     prepare = context.prepare_request
     source_schemas = []
     source_schema_by_hash = {}
+    native_schemas = []
+    native_schema_by_hash = {}
+    encoded_sources = {}
+    final_native_schemas = []
+    final_native_schema_by_hash = {}
     schema_columns = context._schema_columns
     def capture_schema(schema):
-        source_schemas.append(deepcopy(schema))
-        return schema_columns(schema)
+        if "action" in schema.get("properties", {}):
+            source_schemas.append(deepcopy(schema))
+        encoded = schema_columns(schema)
+        key = json.dumps(encoded, sort_keys=True)
+        if key in encoded_sources:
+            assert encoded_sources[key] == schema
+        encoded_sources[key] = deepcopy(schema)
+        return encoded
     monkeypatch.setattr(context, "_schema_columns", capture_schema)
+    share_strings = context._share_strings
+    def capture_final_schemas(value, **kwargs):
+        if ("ACTION_SCHEMAS" in value
+                and value.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.*")):
+            final_native_schemas.append({name: deepcopy(encoded_sources[json.dumps(schema, sort_keys=True)])
+                for name, schema in value["ACTION_SCHEMAS"].items()})
+        return share_strings(value, **kwargs)
+    monkeypatch.setattr(context, "_share_strings", capture_final_schemas)
     build_context = agent.build_context
     def capture_context(*args, **kwargs):
         before = deepcopy((args, kwargs))
@@ -161,18 +183,27 @@ def run_fixed_e2e(tmp_path, monkeypatch, system, path_shape, *, goal_names=None,
 
     def capture(messages, **kwargs):
         item = _parts(messages)
+        candidate_wire = json.loads(messages[1]["content"])
+        if "ACTION_SCHEMAS" in candidate_wire and "SHARED_STRINGS" not in candidate_wire:
+            native_schemas.append(deepcopy(candidate_wire["ACTION_SCHEMAS"]))
         try:
             prepared = prepare(messages, **kwargs)
         except ValueError as exc:
             attempts.append({**item, "error": str(exc)})
             (tmp_path / "last-overflow.json").write_text(json.dumps({
                 "kind": "offline_synthetic", "messages": messages, "parameters": kwargs,
-                "error": str(exc)}, ensure_ascii=False, indent=2), encoding="utf-8")
+                "error": str(exc)}, ensure_ascii=False, indent=2,
+                default=lambda value: value.model_dump(mode="json")), encoding="utf-8")
             raise
         attempts.append({**item, "request_hash": prepared.request_hash,
                          "input_bound": prepared.input_token_bound, "output_bound": prepared.output_token_bound})
-        if "SCHEMA_COLUMNS" in json.loads(messages[1]["content"]):
+        if "SCHEMA_COLUMNS" in candidate_wire and "PROPOSAL_SCHEMA" in candidate_wire:
             source_schema_by_hash[prepared.request_hash] = deepcopy(source_schemas[-1])
+        if "ACTION_SCHEMAS" in candidate_wire:
+            native_schema_by_hash[prepared.request_hash] = deepcopy(native_schemas[-1])
+            final_native_schema_by_hash[prepared.request_hash] = deepcopy(
+                final_native_schemas[-1] if candidate_wire.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.*")
+                else native_schemas[-1])
         return prepared
 
     monkeypatch.setattr(context, "prepare_request", capture)
@@ -229,7 +260,16 @@ def run_fixed_e2e(tmp_path, monkeypatch, system, path_shape, *, goal_names=None,
     assert report["model_explanation"]["current_status"] == "passed"
     for data, record in zip(transport.sent, ended.model_records, strict=True):
         assert data["AUTHORITY"]["basis"]["permission_version"] == run.permission.version
-        if "SCHEMA_COLUMNS" in data:
+        if data["AUTHORITY"].get("response_contract") == "decision-intent-2":
+            assert set(data["RESPONSE_ENVELOPE"]) == {"action", "parameters", "reason"}
+            assert set(data["RESPONSE_ENVELOPE"]["action"].split(" | ")) == set(data["ACTION_SCHEMAS"])
+            assert data["ACTION_SCHEMAS"] == final_native_schema_by_hash[record["request_hash"]]
+            original = native_schema_by_hash[record["request_hash"]]
+            if "SCHEMA_COLUMNS" in data:
+                assert_native_schemas_equivalent(data["ACTION_SCHEMAS"], original)
+            else:
+                assert data["ACTION_SCHEMAS"] == original
+        elif "SCHEMA_COLUMNS" in data:
             schema = expand_schema(data["PROPOSAL_SCHEMA"])
             assert schema == source_schema_by_hash[record["request_hash"]]
             assert schema["additionalProperties"] is False and schema["minProperties"] == 8

@@ -20,11 +20,20 @@ def _require(condition, message):
 
 
 def _request_revision(prior: Request, proposed: Request, user_update: bool,
-                      authenticated_user_revision: bool = False) -> bool:
+                      authenticated_user_revision: bool = False,
+                      authenticated_selection: bool = False) -> bool:
     _require(proposed.id == prior.id, "Request identity cannot change")
     if proposed == prior:
         return False
     _require(proposed.version == prior.version + 1, "changed Request requires version +1")
+    if authenticated_selection:
+        _require(not user_update and not authenticated_user_revision,
+                 "condition selection cannot impersonate a user revision")
+        mutable = {"version", "method", "basis", "charge", "multiplicity", "conditions",
+                   "conditions_source", "condition_evidence", "selection_reasons"}
+        _require(prior.model_dump(exclude=mutable) == proposed.model_dump(exclude=mutable),
+                 "condition selection must preserve goals, authorization and user history")
+        return True
     _require(user_update, "model cannot replace Request goals or physical conditions")
     _require(proposed.original_text == prior.original_text, "initial user text must be preserved")
     _require(proposed.messages[:len(prior.messages)] == prior.messages,
@@ -89,21 +98,22 @@ def _concrete_reference(reference: EvidenceRef, run: Run) -> None:
                  "concrete Artifact is outside the permission snapshot")
 
 
-def validate_code_inputs(store, permission, step):
+def validate_code_inputs(store, permission, step, *, run=None):
     """Verify pinned task files at consumption; a declaration cannot expand access."""
     tool = get_tool(step.tool)
     if not tool.check_contract.get("generic_observations"):
         return
     code = getattr(step.parameters, "code", None) or getattr(step.parameters, "input", None)
+    authorized = set(permission.artifact_ids) | (store.verified_own_artifacts(run) if run else set())
     for reference in [code, *step.parameters.inputs.entries]:
-        _require(reference.artifact_id in permission.artifact_ids,
+        _require(reference.artifact_id in authorized,
                  "task input is outside the permission snapshot")
         store.artifact_path(reference.artifact_id)
         artifact = store.load_artifact(reference.artifact_id)
         _require(artifact.sha256 == reference.sha256, "task input hash differs from pinned Artifact")
 
 
-def _step_permissions(step: Step, run: Run) -> None:
+def _step_permissions(step: Step, run: Run, *, authorized_artifacts=()) -> None:
     tool = get_tool(step.tool)
     permission = run.permission
     _require(not tool.check_contract.get("immediate_only"),
@@ -119,7 +129,7 @@ def _step_permissions(step: Step, run: Run) -> None:
         _require(permission.code_execution, "task code execution is not authorized")
     if tool.check_contract.get("generic_observations"):
         code = getattr(step.parameters, "code", None) or getattr(step.parameters, "input", None)
-        _require(all(reference.artifact_id in permission.artifact_ids
+        _require(all(reference.artifact_id in set(permission.artifact_ids) | set(authorized_artifacts)
                      for reference in [code, *step.parameters.inputs.entries]),
                  "task input is outside the permission snapshot")
     if "query_external_identity" in tool.effects:
@@ -138,7 +148,7 @@ def _step_permissions(step: Step, run: Run) -> None:
                  "geometry is outside the permission snapshot")
     parameters = step.parameters.model_dump(mode="json")
     if parameters.get("artifact_id") is not None:
-        _require(parameters["artifact_id"] in permission.artifact_ids,
+        _require(parameters["artifact_id"] in set(permission.artifact_ids) | set(authorized_artifacts),
                  f"{step.tool}.parameters.artifact_id must be an authorized registered Artifact ID. "
                  "Step keys are not Artifact IDs; after importing, use the returned ID. "
                  "Keep a query whose Artifact is not yet available as a goal gap.")
@@ -193,6 +203,33 @@ def _repair(prior: Step, proposed: Step, run: Run, logical_by_id, user_change):
         _require(old != new or bool(changed), "renaming unchanged scientific input is not a repair")
 
 
+def _python_repair(prior: Step, proposed: Step, run: Run, logical_by_id):
+    """A code correction retains its inputs and purpose, never its old Step ID."""
+    _require(prior.tool == proposed.tool, "Python repair cannot replace its Tool")
+    attempts = [attempt for attempt in run.attempts if attempt.logical_id == prior.logical_id]
+    if attempts:
+        latest = attempts[-1]
+        _require(latest.execution_kind == "python" and latest.state in {"failed", "timed_out"}
+                 and latest.finished_at is not None and latest.result_id is not None,
+                 "Python repair requires a settled failed attempt with a Result")
+    old, new = _shape(prior, logical_by_id), _shape(proposed, logical_by_id)
+    old_code = old["parameters"].pop("code")
+    new_code = new["parameters"].pop("code")
+    _require(old == new, "Python repair may change code only; inputs, conditions and dependencies are fixed")
+    _require(old_code["sha256"] != new_code["sha256"],
+             "unchanged code is not a Python repair")
+
+
+def additional_code_attempts_used(run: Run) -> int:
+    """Conservative allowance use, including historical renamed code attempts.
+
+    Historical usage counters remain facts; their old counting rule cannot
+    grant new executions when persisted Attempt history proves more usage.
+    """
+    return max(run.usage.code_retries,
+               sum(attempt.execution_kind == "python" for attempt in run.attempts) - 1)
+
+
 def validate_goal_output_contract(request: Request, plan: Plan):
     """Initial and revised Plans have the same scientific evidence boundary."""
     steps = {step.id: step for step in plan.steps}
@@ -209,6 +246,8 @@ def validate_goal_output_contract(request: Request, plan: Plan):
 
 
 def _goal_bindings(request: Request, plan: Plan, run: Run):
+    from orca_agent.input_bindings import input_check_version, required_input_rule
+
     validate_goal_output_contract(request, plan)
     steps = {step.id: step for step in plan.steps}
     for goal in request.goals:
@@ -226,7 +265,8 @@ def _goal_bindings(request: Request, plan: Plan, run: Run):
             tool = get_tool(steps[binding.step_id].tool)
             if tool.check_contract.get("generic_observations"):
                 continue
-            _require(_compatible_rule(goal.minimum_check_version, tool.check_version),
+            _require(_compatible_rule(goal.minimum_check_version,
+                input_check_version(tool, request, steps[binding.step_id].system_id)),
                      "planned output cannot meet the required check version")
             if binding.port in tool.output_ports:
                 _require(not goal.unresolved, "unresolved scientific goal cannot bind a qualified output")
@@ -235,17 +275,24 @@ def _goal_bindings(request: Request, plan: Plan, run: Run):
         for role, reference in step.inputs.items():
             if not reference.producer_step_id:
                 continue
-            producer = get_tool(steps[reference.producer_step_id].tool)
-            required = tool.required_input_checks.get(role, tool.required_input_checks.get(reference.port))
+            producer_step = steps[reference.producer_step_id]
+            producer = get_tool(producer_step.tool)
+            required = (required_input_rule(tool, request, step.system_id, role)
+                        or required_input_rule(tool, request, step.system_id, reference.port))
             if required:
-                _require(_compatible_rule(required, producer.check_version),
+                _require(reference.rule_version in {None, required},
+                         "planned input reference declares a different consumer rule")
+                _require(_compatible_rule(required, input_check_version(
+                    producer, request, producer_step.system_id)),
                          "planned producer does not meet consumer scientific checks")
 
 
 def validate_revision(prior_request: Request, prior_plan: Plan | None,
                       next_request: Request, next_plan: Plan | None, run: Run,
                       *, user_update: bool = False,
-                      authenticated_user_revision: bool = False) -> None:
+                      authenticated_user_revision: bool = False,
+                      authenticated_selection: bool = False,
+                      authorized_artifacts=()) -> None:
     """Validate a candidate against immutable purpose, launch history and permission.
 
     user_update is a caller-authenticated fact, not a model parameter. Even that
@@ -265,7 +312,7 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     if prior_plan and not authenticated_user_revision:
         prior_plan.validate_request(prior_request)
     user_change = _request_revision(prior_request, next_request, user_update,
-                                    authenticated_user_revision)
+                                    authenticated_user_revision, authenticated_selection)
     if next_plan is None:
         _require(prior_plan is None or user_change,
                  "active Plan may only be suspended by a trusted clarification")
@@ -308,13 +355,24 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     logical_by_id = {step.id: step.logical_id for step in [*previous_steps, *next_plan.steps]}
     reserved_ids = {attempt.step_id for attempt in run.attempts} | {
         call.step_id for call in run.calls if call.step_id}
-    pending_science, extra_science = 0, 0
+    pending_science, extra_science, pending_python = 0, 0, 0
     for step in next_plan.steps:
-        _step_permissions(step, run)
+        _step_permissions(step, run, authorized_artifacts=authorized_artifacts)
         if step.id in reserved_ids:
             old = frozen_by_id.get(step.id, previous_by_id.get(step.id))
             _require(old is not None and old == step,
                      "reserved Step inputs and parameters are immutable; use a new repair Step")
+        if "execute_python" in get_tool(step.tool).effects:
+            if step.id not in reserved_ids:
+                pending_python += 1
+                _require(run.usage.logical_attempts.get(step.logical_id, 0) < run.budget.attempts_per_step,
+                         "logical Step attempt budget exhausted")
+                old = previous_by_logical.get(step.logical_id)
+                _require(old is not None or not any(a.logical_id == step.logical_id for a in run.attempts),
+                         "historical Step snapshot is required to validate a Python repair")
+                if old and old != step:
+                    _python_repair(old, step, run, logical_by_id)
+            continue
         if not _science(step):
             continue
         old = previous_by_logical.get(step.logical_id)
@@ -351,6 +409,10 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
              "proposed Plan exceeds the remaining scientific startup budget")
     _require(extra_science <= run.budget.extra_orca_starts - run.usage.extra_orca_starts_reserved,
              "proposed Plan exceeds the remaining extra scientific startup budget")
+    free_first_python = int(not any(a.execution_kind == "python" for a in run.attempts))
+    _require(max(0, pending_python - free_first_python) <= max(
+        0, run.budget.code_retries - additional_code_attempts_used(run)),
+             "proposed Plan exceeds the remaining additional code attempt budget")
     _goal_bindings(next_request, next_plan, run)
     if (run.science_baseline_policy == "first_science_plan" and run.initial_science_steps is None
             and any(_science(step) for step in next_plan.steps)):

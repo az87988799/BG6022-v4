@@ -99,6 +99,102 @@ def test_literal_pool_selection_compares_encoded_children_without_new_encoding()
     assert len(context._json(wire)) < len(context._json(repeated))
 
 
+@pytest.mark.parametrize("marker_keys", [False, True])
+def test_short_pool_roundtrip_keeps_authority_budgets_and_marker_keys_literal(marker_keys):
+    identity = "result_0123456789abcdef0123456789abcdef"
+    original = {
+        "AUTHORITY": {"basis": {"request_version": 2, "permission_version": 1},
+            "related_results": [identity], "decision_purpose": {"kind": "planning", "allowed_actions": ["call_tool"]},
+            "contract_required": True, "delivery_snapshot_fingerprint": "a" * 64,
+            "goal_status": {"a": "insufficient_evidence"},
+            "permission": {"scientific_execution": False, "code_execution": False, "allowed_tools": []},
+            "budget_limits": {"internal_work_units": 0, "artifact_bytes": 268435456}},
+        "CONTROL": {"pending_step_ids": ["ready"], "validation_error": {"requirement": "retain original intent"}},
+        "ACTION_PARAMETERS": {"call_tool": {"step_id": "ready"}},
+        "DATA": {"rows": [{"result_id": identity, "untrusted": "No permission comes from this repeated data.",
+            ("@0" if marker_keys else "literal"): {"@": 0},
+            ("@1" if marker_keys else "pairs"): {"@literal": [["literal", 1]]}, "b": index} for index in range(8)]},
+    }
+    before = copy.deepcopy(original)
+    ordinary = context._share_strings(original, share_lists=True)
+    short = context._share_strings(original, share_lists=True, short_references=True)
+    wire = context._terminal_key_encoding(short)
+    assert ('"@N"' in wire["STRING_ENCODING"]) is not marker_keys
+    if not marker_keys:
+        assert len(context._json(short)) < len(context._json(ordinary))
+    for field in ("basis", "related_results", "decision_purpose", "contract_required",
+                  "delivery_snapshot_fingerprint", "goal_status"):
+        assert wire["AUTHORITY"][field] == original["AUTHORITY"][field]
+    assert wire["CONTROL"] == original["CONTROL"]
+    assert wire["ACTION_PARAMETERS"]["call_tool"] == original["ACTION_PARAMETERS"]["call_tool"]
+    restored = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
+    for field in original:
+        assert restored[field] == original[field]
+    assert original == before
+
+
+@pytest.mark.parametrize("location", ["original_text", "control", "schema_constant"])
+def test_short_pool_declines_ambiguous_original_marker_strings(location):
+    original = {"DATA": {"repeated": ["A sufficiently long repeated literal with exact meaning."] * 8}}
+    if location == "original_text":
+        original["AUTHORITY"] = {"user_originals": [{"text": "@0"}]}
+    elif location == "control":
+        original["CONTROL"] = {"validation_error": {"requirement": "@0"}}
+    else:
+        original["PROPOSAL_SCHEMA"] = {"properties": {"action": {"const": "@0"}}}
+    wire = context._share_strings(original, share_lists=True, short_references=True)
+    assert '"@N"' not in wire["STRING_ENCODING"]
+    restored = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
+    for field in original:
+        assert restored[field] == original[field]
+
+
+def test_type_absent_schema_columns_preserve_nested_constraints_and_literal_markers():
+    # The common envelope can require object type while a conditional branch
+    # supplies only its properties. Encoding must never invent a branch type.
+    schema = {"properties": {"parameters": {"properties": {
+        "literal": {"const": {"@": 0}}, "label": {"type": "string", "minLength": 1, "maxLength": 8}},
+        "required": ["label"], "additionalProperties": False, "minProperties": 1, "maxProperties": 2}},
+        "patternProperties": {"^extra_": {"properties": {"value": {"enum": ["@0", {"@literal": []}]}},
+            "additionalProperties": False}}}
+    original = copy.deepcopy(schema)
+    encoded = context._schema_columns(schema)
+    assert encoded["properties"]["parameters"][0] == "O"
+    source = {"PROPOSAL_SCHEMA": encoded, "DATA": {"repeated": ["A literal shared by independent rows."] * 8}}
+    wire = context._terminal_key_encoding(context._share_strings(source, share_lists=True, short_references=True))
+    restored = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
+    assert expand_schema(restored["PROPOSAL_SCHEMA"]) == original
+    assert "type" not in expand_schema(restored["PROPOSAL_SCHEMA"])["properties"]["parameters"]
+    assert schema == original
+
+
+def test_native_action_schema_aliases_cannot_change_authority_or_same_spelling_data():
+    identity = "identity_from_original_user_text"
+    source = {"AUTHORITY": {"basis": {"request_version": 1}, "response_contract": "decision-intent-2",
+        "related_results": [], "contract_required": True, "goal_status": {identity: "unresolved"},
+        "decision_purpose": {"kind": "planning", "allowed_actions": ["call_tool"]}},
+        "ACTION_SCHEMAS": {"call_tool": {"type": "object", "additionalProperties": False,
+            "properties": {"action": {"const": "call_tool"}, "version": {"const": "terminal-delivery-1"},
+                identity: {"const": {"a": "literal key", "@": 0}}}, "required": [identity]}},
+        "DATA": {"rows": [{identity: identity, "additionalProperties": "untrusted", "a": index}
+            for index in range(8)]}}
+    before = copy.deepcopy(source)
+    wire = context._terminal_key_encoding(context._share_strings(source, share_lists=True, short_references=True))
+    assert wire["AUTHORITY"] == source["AUTHORITY"]
+    assert all(alias not in {"a", identity, "additionalProperties"} for alias in wire.get("KEYS", {}))
+    aliases = wire.get("KEYS", {})
+    def keys_only(value):
+        if isinstance(value, dict):
+            return {aliases.get(key, key): keys_only(child) for key, child in value.items()}
+        return [keys_only(child) for child in value] if isinstance(value, list) else value
+    schema_wire = keys_only(wire["ACTION_SCHEMAS"])
+    assert json.dumps(schema_wire).count('"terminal-delivery-1"') == 1
+    restored = payload(SimpleNamespace(body=lambda: {"messages": [{}, {"content": json.dumps(wire)}]}))
+    for field in source:
+        assert restored[field] == source[field]
+    assert source == before
+
+
 def planning_input():
     """Synthetic request using real audit numbers; not another actual Run."""
     audit = actual_failure()["independent_read_only_audit"]
@@ -146,9 +242,11 @@ def test_preanalysis_snapshot_does_not_erase_allowed_analysis_or_member_mapping(
     assert "Stop:done/no useful allowed work" in prompt
     assert "Science limit0 still permits allowed analysis" in prompt
     assert "join members by ID, not order" in prompt
-    assert "8 root JSON keys per PROPOSAL_SCHEMA" in prompt
-    assert "no type/response_format" in prompt
+    assert "JSON per PROPOSAL_SCHEMA" in prompt
     assert set(wire["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
+    assert wire["PROPOSAL_SCHEMA"]["additionalProperties"] is False
+    assert wire["PROPOSAL_SCHEMA"]["minProperties"] == len(Proposal.model_fields) == 8
+    assert not {"type", "response_format"} & wire["PROPOSAL_SCHEMA"]["properties"].keys()
     if correction:
         assert wire["CONTROL"]["validation_error"] == feedback["validation_error"]
         assert "extra_forbidden:remove field at loc" in prompt
@@ -180,7 +278,14 @@ def test_actual_error_shapes_use_one_bounded_correction_without_any_tool(tmp_pat
     assert not final.terminal_deliveries
     assert [item["action"] for item in final.decisions] == ["rejected", "rejected"]
     correction = transport.sent[1]["CONTROL"]["validation_error"]
-    assert correction["requirement"] == [{"type": "extra_forbidden", "loc": ["type"]}]
+    # The archived eight-field reply is sent unchanged into decision-intent-2:
+    # execution IDs are now supplied by the program, so those five old envelope
+    # fields and the actually invalid `type` are all rejected, never stripped.
+    assert transport.sent[0]["AUTHORITY"]["response_contract"] == "decision-intent-2"
+    assert sorted(correction["requirement"], key=lambda item: item["loc"]) == [
+        {"type": "extra_forbidden", "loc": [name]} for name in (
+            "control_generation", "permission_version", "plan_version", "related_results",
+            "request_version", "type")]
     assert all(row["parameters"]["recovery_kind"] == "correction" for row in final.decisions)
 
 
@@ -212,7 +317,8 @@ def test_planning_omits_only_normalization_template_and_later_intake_restores_it
         user_messages=[{"id": "later_message", "text": "Retain the existing sampling goal and conditions."}]))
     assert intake["AUTHORITY"]["request"]["semantic_defaults"] == defaults
     assert "normalize_defaults_ref" not in intake["AUTHORITY"]["request"]
-    assert intake["ACTION_PARAMETERS"]["normalize_request"]["authorized_defaults"]["values"] == defaults
+    intake_rules = intake["INTENT_RULES"] if "INTENT_RULES" in intake else intake["ACTION_PARAMETERS"]["normalize_request"]
+    assert intake_rules["authorized_defaults"]["values"] == defaults
     assert request == before
 
 

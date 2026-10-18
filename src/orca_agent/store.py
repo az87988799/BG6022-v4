@@ -62,6 +62,34 @@ class EnvironmentBusy(StoreError):
     """An existing lease has not been demonstrably released."""
 
 
+def _extra_orca_reservations_used(run: Run) -> int:
+    """Retained reservations are a floor; historical counters are never reset.
+
+    Attempt order is append-only. An SDK call occurs inside its Python parent's
+    environment lease, before a later direct Attempt can reserve that lease.
+    This preserves free initial direct Steps before the first SDK call rather
+    than retroactively treating every ORCA after the first as an extra.
+    """
+    direct = [(index, item) for index, item in enumerate(run.attempts)
+              if item.execution_kind == "orca"]
+    direct_ids = {item.logical_id for _, item in direct}
+    legacy_floor = sum(max(0, count - 1) for identity, count in run.usage.logical_attempts.items()
+                       if identity in direct_ids)
+    first_sdk = None
+    sdk_extra = 0
+    if run.internal_calls:
+        parents = {item.id: index for index, item in enumerate(run.attempts)
+                   if item.execution_kind == "python"}
+        if any(item.parent_attempt_id not in parents for item in run.internal_calls):
+            raise StoreError("additional scientific reservation requires reconcilable internal parent history")
+        first_sdk = min(parents[item.parent_attempt_id] for item in run.internal_calls)
+        sdk_extra = len(run.internal_calls) - int(not any(index < first_sdk for index, _ in direct))
+    direct_extra = sum(item.number > 1
+        or (run.initial_science_steps is not None and item.logical_id not in run.initial_science_steps)
+        or (first_sdk is not None and index > first_sdk) for index, item in direct)
+    return max(run.usage.extra_orca_starts_reserved, legacy_floor, direct_extra + sdk_extra)
+
+
 def _id(value: str) -> str:
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,95}", value):
         raise StoreError("invalid object identity")
@@ -271,8 +299,10 @@ class Store:
         """Historical Runs retain the enforced old envelope, never today's config."""
         return run.configuration or RunConfiguration(version=1)
 
-    def validate_execution_resources(self, run: Run, parameters) -> None:
-        limits = self.run_configuration(run).resources
+    def validate_execution_resources(self, run: Run | None, parameters) -> None:
+        # Structured intake validates before importing files. Once a Run
+        # exists, only its original snapshot supplies this envelope.
+        limits = (self.run_configuration(run) if run is not None else self.configuration).resources
         if limits.environment_concurrency != 1:
             raise StoreError("environment_concurrency above 1 is not implemented; launch refused")
         for name, maximum in (("cores", limits.max_cores),
@@ -384,6 +414,14 @@ class Store:
                               "plan_version", "permission_version", "control_generation", "frozen_step", "consumption"):
                     if getattr(old, field) != getattr(new, field):
                         raise StoreError(f"attempt identity/input cannot be rewritten: {field}")
+                if old.native_workload is not None and new.native_workload != old.native_workload:
+                    raise StoreError("native workload reservation cannot be rewritten")
+                if old.native_workload is None and new.native_workload is not None:
+                    units = new.native_workload.get("execution_impact", {}).get("internal_work_units")
+                    if (old.state != "intent" or old.started or old.finished_at
+                            or old.execution_kind != "orca" or type(units) is not int or units < 1
+                            or run.usage.internal_work_units - previous.usage.internal_work_units < units):
+                        raise StoreError("native workload must be atomically charged before launch")
             if not set(previous.result_ids).issubset(run.result_ids):
                 raise StoreError("result references cannot be removed")
             if previous.initial_science_steps != run.initial_science_steps:
@@ -557,6 +595,33 @@ class Store:
         self._write_json(f"artifacts/{artifact.id}/artifact.json", artifact, immutable=True)
         return artifact
 
+    def verified_own_artifacts(self, run: Run) -> set[str]:
+        """Derive task inputs from settled producer receipts; never enlarge permission."""
+        allowed = set()
+        for result_id in run.result_ids:
+            result = self.load_result(run.id, result_id)
+            if result.run_id != run.id:
+                raise StoreError("own Result Run binding differs")
+            if result.attempt_id:
+                producer = next((a for a in run.attempts if a.id == result.attempt_id), None)
+            else:
+                producer = next((c for c in run.calls if c.id == result.call_id), None)
+            if (producer is None or producer.state not in {"completed", "failed", "timed_out", "cancelled"}
+                    or producer.result_id != result.id or producer.step_id != result.step_id):
+                continue
+            for artifact_id in result.artifact_ids:
+                artifact = self.load_artifact(artifact_id)
+                if artifact.run_id != run.id:
+                    continue
+                if result.attempt_id:
+                    owned = artifact.attempt_id == result.attempt_id
+                else:
+                    owned = artifact.source.get("call_id") == result.call_id
+                if owned:
+                    self.artifact_path(artifact_id)
+                    allowed.add(artifact_id)
+        return allowed
+
     def load_artifact(self, artifact_id: str) -> Artifact:
         artifact = Artifact.model_validate(
             self._read_json(f"artifacts/{_id(artifact_id)}/artifact.json")
@@ -633,7 +698,7 @@ class Store:
                 if geometry_artifact_id is not None:
                     raise StoreError("generic execution cannot substitute a geometry binding")
                 from orca_agent.planning import validate_code_inputs
-                validate_code_inputs(self, permission, step)
+                validate_code_inputs(self, permission, step, run=run)
                 code = getattr(params, "code", None) or getattr(params, "input", None)
                 consumption = {"code": code.model_dump(mode="json"),
                                "inputs": params.inputs.model_dump(mode="json")}
@@ -680,15 +745,24 @@ class Store:
                 raise BudgetExceeded("logical/input attempt budget exhausted")
             baseline = run.initial_science_steps
             extra = number > 1 or (baseline is not None and step.logical_id not in baseline)
-            orca_logical_ids = {item.logical_id for item in run.attempts
-                                if item.execution_kind == "orca"}
-            repeated = max(run.usage.extra_orca_starts_reserved,
-                           sum(max(0, count - 1) for identity, count in run.usage.logical_attempts.items()
-                               if identity in orca_logical_ids))
+            repeated = 0
+            if execution_kind == "orca":
+                # Once science has used the SDK, changing execution entry points
+                # cannot recover a free initial-Step allowance.
+                if run.internal_calls:
+                    if not permission.allow_additional_science:
+                        raise StoreError("additional scientific execution is not authorized")
+                    extra = True
+                repeated = _extra_orca_reservations_used(run)
             if execution_kind == "orca" and extra and repeated >= run.budget.extra_orca_starts:
                 raise BudgetExceeded("extra ORCA launch budget exhausted")
-            code_retry = execution_kind == "python" and max(number, same_input_number) > 1
-            if code_retry and run.usage.code_retries >= run.budget.code_retries:
+            # This is a Run-wide allowance for additional code attempts, not a
+            # claim that independent analyses are retries of one scientific job.
+            # A new logical ID and edited code must not reset the allowance.
+            code_retry = execution_kind == "python" and any(
+                prior.execution_kind == "python" for prior in run.attempts)
+            from orca_agent.planning import additional_code_attempts_used
+            if code_retry and additional_code_attempts_used(run) >= run.budget.code_retries:
                 raise BudgetExceeded("code retry budget exhausted")
             for prior in run.attempts:
                 if prior.state in ("intent", "running", "unknown"):
@@ -731,6 +805,47 @@ class Store:
             run.state = "running"
             self.save_run(run)
             return attempt
+
+    def reserve_native_workload(self, run: Run, attempt: Attempt, prepared: dict) -> dict:
+        """Charge admitted direct-native work with its identity in one Run write.
+
+        The ORCA start itself was already reserved by reserve_attempt. SDK calls
+        charge their work in reserve_internal_call instead and cannot use this.
+        A repeated identical prelaunch check is idempotent, not permission to
+        launch an unknown or previously started Attempt again.
+        """
+        with self.run_lock(run.id), self.control_lock(run.id), self._environment_lock():
+            if self.load_run(run.id) != run:
+                raise StoreError("stale Run at native workload reservation")
+            actual = next((item for item in run.attempts if item.id == attempt.id), None)
+            policy = self.run_configuration(run).execution.native_input_policy
+            if (actual != attempt or attempt.execution_kind != "orca" or attempt.tool != "orca.run"
+                    or attempt.state != "intent" or attempt.started or attempt.finished_at
+                    or policy is None or prepared.get("admission_version") != "native-orca-input-2"
+                    or prepared.get("native_input_policy") != policy.model_dump(mode="json")
+                    or prepared.get("input_sha256") != attempt.frozen_step.parameters.input.sha256):
+                raise StoreError("native workload requires its admitted, unstarted direct Attempt")
+            self.check_execution_control(run)
+            if self.read_signal(run.id) or utc_now() >= run.deadline:
+                raise BudgetExceeded("native workload control/deadline prevents execution")
+            lease = self.environment_lease()
+            if not lease or (lease["run_id"], lease["attempt_id"]) != (run.id, attempt.id):
+                raise EnvironmentBusy("native Attempt does not own the environment lease")
+            record = {key: prepared[key] for key in (
+                "admission_version", "native_input_policy", "input_sha256", "input_binding", "execution_impact")}
+            if attempt.native_workload is not None:
+                if attempt.native_workload != record:
+                    raise StoreError("native workload reservation differs from its frozen input")
+                return attempt.native_workload
+            units = record["execution_impact"].get("internal_work_units")
+            if type(units) is not int or units < 1:
+                raise StoreError("native workload requires positive declared units")
+            if run.usage.internal_work_units + units > run.budget.internal_work_units:
+                raise BudgetExceeded("internal work unit budget exhausted")
+            attempt.native_workload = record
+            run.usage.internal_work_units += units
+            self.save_run(run)
+            return record
 
     def _internal_parent(self, run: Run, parent: Attempt) -> Attempt:
         current = self.load_run(run.id)
@@ -801,8 +916,12 @@ class Store:
                 raise BudgetExceeded("total ORCA launch budget exhausted")
             if run.usage.internal_work_units + work_units > run.budget.internal_work_units:
                 raise BudgetExceeded("internal work unit budget exhausted")
-            extra = bool(run.internal_calls) or parent.number > 1
-            if extra and run.usage.extra_orca_starts_reserved >= run.budget.extra_orca_starts:
+            extra = bool(run.usage.orca_starts_reserved or run.internal_calls
+                         or any(item.execution_kind == "orca" for item in run.attempts))
+            if extra and not permission.allow_additional_science:
+                raise StoreError("additional scientific execution is not authorized")
+            repeated = _extra_orca_reservations_used(run)
+            if extra and repeated >= run.budget.extra_orca_starts:
                 raise BudgetExceeded("extra ORCA launch budget exhausted")
             relative = f"{parent.directory}/internal/{_id(request_key)}"
             if self.path(relative).exists():
@@ -817,7 +936,7 @@ class Store:
             run.internal_calls.append(candidate)
             run.usage.orca_starts_reserved += 1
             run.usage.internal_work_units += work_units
-            run.usage.extra_orca_starts_reserved += int(extra)
+            run.usage.extra_orca_starts_reserved = repeated + int(extra)
             self.save_run(run)
             return candidate
 
@@ -959,15 +1078,13 @@ class Store:
             self._write_json(proof_path, expected_proof, immutable=True)
             self._write_json(execution_path, outcome, immutable=True)
             if not matches:
+                repeated = max(before["extra_orca_starts_reserved"], _extra_orca_reservations_used(run))
+                extra = bool(run.internal_calls) or draft.number > 1 or (
+                    run.initial_science_steps is not None and draft.logical_id not in run.initial_science_steps)
                 run.attempts.append(attempt)
                 run.usage.orca_starts_reserved += 1
                 run.usage.logical_attempts[draft.logical_id] = draft.number
                 run.usage.fingerprint_attempts[draft.input_fingerprint] = before["fingerprint_attempts"] + 1
-                extra = draft.number > 1 or (run.initial_science_steps is not None
-                                             and draft.logical_id not in run.initial_science_steps)
-                repeated = max(before["extra_orca_starts_reserved"], sum(
-                    max(0, count - 1) for key, count in run.usage.logical_attempts.items()
-                    if key != draft.logical_id) + max(0, draft.number - 2))
                 run.usage.extra_orca_starts_reserved = repeated + int(extra)
             if lease and lease.get("run_id") != run.id:
                 # No lease was acquired for this reservation. Preserve another
@@ -1038,9 +1155,12 @@ class Store:
             if set(result.qualified_outputs) - set(get_tool(call.tool).output_ports):
                 raise StoreError("call publishes an undeclared scientific port")
             definition = get_tool(call.tool)
+            from orca_agent.input_bindings import input_check_version
+            rule = input_check_version(definition, self.load_request_revision(run, call.request_version),
+                                       call.parameters.get("system_id"))
             for port, output in result.qualified_outputs.items():
                 if (output.checks != result.checks.get(port)
-                        or any(c.rule_version != definition.check_version for c in output.checks)
+                        or any(c.rule_version != rule for c in output.checks)
                         or result.operation_status != "completed"):
                     raise StoreError("call output lacks its declared successful checks")
             for artifact_id in result.artifact_ids:
@@ -1221,7 +1341,8 @@ class Store:
                         basis: dict, request: Request | None = None,
                         user_message_ids: list[str] | None = None,
                         related_results: list[str] | None = None, fault=None,
-                        semantic_record: dict | None = None) -> Run:
+                        semantic_record: dict | None = None,
+                        selection_record: dict | None = None) -> Run:
         """Validate, save immutable candidates, then atomically activate one revision."""
         from orca_agent.planning import validate_revision
 
@@ -1246,6 +1367,15 @@ class Store:
             if user_message_ids and not set(user_message_ids).issubset(m["id"] for m in messages):
                 raise StoreError("Request revision lacks trusted user messages")
             next_request = request or prior_request
+            if selection_record is not None:
+                if user_message_ids or semantic_record is not None or plan is not None:
+                    raise StoreError("condition selection cannot grant user authority or replace a Plan")
+                if (PermissionSnapshot.model_validate(self._read_json(f"runs/{run.id}/permission.json"))
+                        != run.permission or BudgetLimits.model_validate(self._read_json(
+                            f"runs/{run.id}/budget.json")) != run.budget):
+                    raise StoreError("condition selection requires unchanged permission and budget snapshots")
+                from orca_agent.condition_selection import validate_selection_revision
+                validate_selection_revision(self, run, prior_request, next_request, selection_record)
             if not user_message_ids and any(m["id"] not in run.processed_messages for m in messages):
                 raise ControlChanged("pending user messages prevent Plan activation")
             if user_message_ids and set(user_message_ids) & set(run.processed_messages):
@@ -1268,11 +1398,13 @@ class Store:
             if not message_only:
                 validate_revision(prior_request, prior_plan, next_request, plan, run,
                                   user_update=bool(user_message_ids),
-                                  authenticated_user_revision=semantic_record is not None)
+                                  authenticated_user_revision=semantic_record is not None,
+                                  authenticated_selection=selection_record is not None,
+                                  authorized_artifacts=self.verified_own_artifacts(run))
             from orca_agent.applicability import validate_direct_geometry
             from orca_agent.planning import validate_code_inputs
             for step in plan.steps if plan else []:
-                validate_code_inputs(self, run.permission, step)
+                validate_code_inputs(self, run.permission, step, run=run)
                 if ("execute_orca" in get_tool(step.tool).effects and step.geometry
                         and step.geometry.artifact_id):
                     try:
@@ -1297,6 +1429,8 @@ class Store:
                       "related_results": related_results, "user_message_ids": user_message_ids or []}
             if semantic_record is not None:
                 record["semantics"] = semantic_record
+            if selection_record is not None:
+                record["condition_selection"] = selection_record
             self._write_json(f"runs/{run.id}/decisions/{decision_id}.json", record, immutable=True)
             if fault:
                 fault("after_revision_saved")
@@ -1322,10 +1456,14 @@ class Store:
                                       "user_message_ids": user_message_ids or []})
             if semantic_record is not None:
                 updated.decisions[-1]["semantics"] = semantic_record
+            if selection_record is not None:
+                updated.decisions[-1]["condition_selection"] = selection_record
             updated.processed_feedback = list(dict.fromkeys(updated.processed_feedback + related_results))
             updated.processed_messages = list(dict.fromkeys(updated.processed_messages + (user_message_ids or [])))
             updated.control_generation = basis["control_generation"]
             updated.state = "ready" if plan else "waiting_user"
+            if selection_record is not None:
+                updated.state = "ready"
             if semantic_record:
                 if semantic_record.get("kind") == "status":
                     updated.state = run.state

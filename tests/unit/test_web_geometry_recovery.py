@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from test_agent import ScriptedTransport
+from test_decision_purpose_capacity import expand_schema
 from test_text_entry import text_environment
 
 from orca_agent import agent
@@ -37,8 +38,14 @@ def test_saved_web_failure_corrects_without_user_xyz_or_execution(tmp_path):
     updated, _, _ = agent._decision(store, run, None, {}, transport, None, None)
     request = store.load_request(updated)
     rejection = transport.sent[1]["CONTROL"]["validation_error"]
-    assert all(isinstance(sent["ACTION_SCHEMAS"]["normalize_request"], dict)
-               for sent in transport.sent)
+    for sent in transport.sent:
+        if "ACTION_SCHEMAS" in sent:
+            parameters = sent["ACTION_SCHEMAS"]["normalize_request"]
+        else:
+            schema = expand_schema(sent["PROPOSAL_SCHEMA"]) if "SCHEMA_COLUMNS" in sent else sent["PROPOSAL_SCHEMA"]
+            parameters = schema["properties"]["parameters"]
+        assert parameters["additionalProperties"] is False
+        assert {"schema_version", "message_ids", "kind", "text_basis"} <= set(parameters["required"])
     assert rejection["requirement"]["inapplicable_notice_choices"] == ["missing_geometry"]
     assert "remove the missing_geometry sentence" in _correction_instruction({"validation_error": rejection})
     assert request.normalization_status == "normalized"
@@ -64,8 +71,8 @@ def test_prepare_contract_names_the_opi_acquisition_path(tmp_path, name):
 
 def test_output_envelope_lists_native_fields_without_transport_wrapper():
     instruction = _output_instruction(intake=True)
-    assert "native JSON per PROPOSAL_SCHEMA" in instruction
-    assert "never response fields" in instruction
+    assert "native JSON per PROPOSAL_SCHEMA" in instruction[0].lower() + instruction[1:]
+    assert "no type/response_format" in instruction
 
 
 def test_container_errors_have_actionable_correction_without_copying_bad_values():

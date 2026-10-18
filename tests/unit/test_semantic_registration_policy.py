@@ -80,7 +80,7 @@ def test_actual_n06_request_rebuilt_with_separate_scope_and_registration_without
     assert "disclose scope and geometry limits via notices" in policy
     assert "without asking for resources/confirmation" in policy
     assert "No execution permission alone is not registration-only intent" in policy
-    assert "critical gaps blocking the requested scope" in policy
+    assert "ask only critical gaps" in policy
     assert data["AUTHORITY"]["user_originals"][0]["text"] == request.original_text
     assert "本轮只登记需求，不启动计算" in request.original_text
     assert data["ACTION_PARAMETERS"]["normalize_request"]["science_scope"]["systems"] == ["H2O", "CH4"]

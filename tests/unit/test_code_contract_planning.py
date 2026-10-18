@@ -140,7 +140,7 @@ def test_script_claims_never_satisfy_generic_or_strict_goal(tmp_path):
                     observations={"excitation_energy": {"value": 4.2, "unit": "eV", "passed": True}})
     assessment = goal_evidence_assessment(store, run, request, request.goals[0], result)
     assert assessment["status"] == "unresolved"
-    assert "generic_delivery_evaluator_unavailable" in assessment["reasons"]
+    assert "generic_observation_requires_current_run_provenance" in assessment["reasons"]
 
 
 @pytest.mark.parametrize("mutation", ["permission", "digest"])

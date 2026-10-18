@@ -16,6 +16,7 @@ from orca_agent.semantic import action_parameters
 from orca_agent.store import Store, sha256_file
 from tests.unit.test_agent import ScriptedTransport
 from tests.unit.test_context import payload
+from tests.unit.test_context_fact_contract import assert_historical_projection
 
 _PROJECT = Path(__file__).resolve().parents[2]
 _REGISTRATION_TEXT = "算一下这个水的单点电子能。采用气相 RHF/STO-3G，中性单重态。本轮只登记需求，不启动计算。"
@@ -199,10 +200,10 @@ def test_real_v5_post_normalization_context_keeps_explicit_scope_and_unknown_uni
     assert prepared.input_token_bound <= 12000
     assert all(part in prepared.body()["messages"][0]["content"] for part in _POLICY)
     assert set(rebuilt["ACTION_PARAMETERS"]) == {"clarify", "stop"}
-    assert rebuilt["AUTHORITY"]["request"] == old["AUTHORITY"]["request"]
+    assert_historical_projection(rebuilt["AUTHORITY"]["request"], old["AUTHORITY"]["request"], "request")
     assert rebuilt["AUTHORITY"]["user_originals"] == old["AUTHORITY"]["user_originals"]
     assert rebuilt["AUTHORITY"]["user_messages"] == old["AUTHORITY"]["user_messages"]
-    assert rebuilt["AUTHORITY"]["permission"] == old["AUTHORITY"]["permission"]
+    assert_historical_projection(rebuilt["AUTHORITY"]["permission"], old["AUTHORITY"]["permission"], "permission")
     assert rebuilt["AUTHORITY"]["goal_status"] == {"goal_energy": "insufficient_evidence"}
     assert not rebuilt["TOOL_CATALOG"] and not rebuilt["DATA"]["results"]
     assert (request.model_dump_json(), run.model_dump_json()) == before

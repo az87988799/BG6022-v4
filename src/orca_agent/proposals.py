@@ -189,8 +189,32 @@ def _schema_error(exc, *, path, tool=None):
 
     errors = [{"type": error["type"], "loc": [*path, *(location(part) for part in error["loc"])]}
               for error in exc.errors(include_input=False, include_context=False, include_url=False)[:8]]
-    return ProposalError("Use the declared parameter schema at each listed path.",
-                         **({"tool": tool} if tool else {}), errors=errors)
+    detail = {"tool": tool} if tool else {}
+    if tool:
+        definition = get_tool(tool)
+        # These roles consume pinned files, unlike declared future output
+        # bindings. Explain the existing boundary without inventing a file or
+        # changing any Goal on the model's behalf.
+        fields = {field for role, field in (("code", "code"), ("native_input", "input"),
+                                            ("input_manifest", "inputs"))
+                  if role in definition.input_roles
+                  and field in definition.parameter_schema.get("properties", {})}
+        affected = sorted({item["loc"][len(path)] for item in errors
+                           if len(item["loc"]) > len(path) and item["loc"][len(path)] in fields})
+        if affected:
+            detail["corrections"] = [{"path": [*path, field],
+                "reason": "concrete_artifact_reference_required",
+                "instruction": (
+                    "code/input and input_manifest (parameters.inputs.entries) require existing registered "
+                    "Artifact IDs and exact sha256 values. Future producer references, Step keys and "
+                    "placeholder hashes cannot supply these parameter values. If the files already exist, "
+                    "inspect their trusted Result/Artifact records for the exact IDs/hashes. If required "
+                    "Artifacts do not yet exist, first submit a partial Plan containing only executable "
+                    "preparation/writing Steps. Retain existing valid goal bindings; use unchanged-port "
+                    "gaps only for pending outputs. Execute the Steps, inspect their returned IDs/hashes, "
+                    "then revise_plan with concrete references. Do not guess hashes or remove or weaken Goals.")}
+                for field in affected]
+    return ProposalError("Use the declared parameter schema at each listed path.", **detail, errors=errors)
 
 
 class ProposedStep(Record):
@@ -353,7 +377,7 @@ def materialize_plan(store, run, parameters):
             geometry = {"producer_step_id": ids[geometry["producer_key"]],
                         "port": geometry.get("port")}
         if geometry is None:
-            if "execute_orca" in get_tool(item.tool).effects:
+            if "geometry" in definition.input_roles and "execute_orca" in definition.effects:
                 system = next((s for s in request.systems if s.id == item.system_id), None)
                 artifact = system.geometry_artifact_id if system else request.geometry_artifact_id
                 if artifact:

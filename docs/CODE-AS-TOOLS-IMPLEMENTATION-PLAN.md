@@ -4,7 +4,7 @@
 >
 > 代码基线：`14a7bf92a7b24f901e46b86714fd50da8bbe349e`
 >
-> 状态：步骤 1 已于 2026-10-18 由用户验收通过；步骤 2 已完成 Windows 串行底座及本地 Linux 四核容器续验，实际边界和 SDK 链路有真实证据，等待用户验收；步骤 3—7 尚未实施。详见 [步骤 1 交付记录](acceptance/code-as-tools-step1/report.md) 、[步骤 2 Windows 交付记录](acceptance/code-as-tools-step2/report.md) 与 [Linux 续验记录](acceptance/code-as-tools-step2-linux/report.md)。
+> 状态：步骤 1 已于 2026-10-18 由用户验收通过；步骤 2 已完成 Windows 串行底座及本地 Linux 四核容器续验，实际边界和 SDK 链路有真实证据，等待用户验收；用户随后授权修复前置问题并进入步骤 3。步骤 3 已实施初版，但真实模型端到端交付及代码错误修正尚未通过，不能记为完成；步骤 4—7 未实施。详见 [步骤 1 交付记录](acceptance/code-as-tools-step1/report.md) 、[步骤 2 Windows 交付记录](acceptance/code-as-tools-step2/report.md) 、[Linux 续验记录](acceptance/code-as-tools-step2-linux/report.md) 与 [步骤 3 当前证据](acceptance/code-as-tools-step3/report.md)。
 >
 > 文档关系：本文是专项实施计划；[总蓝图](ORCA-Agent-Project-Blueprint.md)仍为唯一总版本。第 1 步同步相关契约后，再推进运行时代码。
 >
@@ -154,14 +154,16 @@ Python 可现场实现搜索、循环、筛选、拟合、解析和绘图。项�
 
 实施内容：
 
-- [ ] 扩展 `natural.py`、`semantic.py`，保留一般分子、物理量与条件；清除水/甲烷及固定科学端口的前置阻断。
-- [ ] 复用现有身份查询与结构准备机制，记录名称、SMILES、来源、立体化学和初始几何；身份、质子化或自旋歧义影响目标时澄清。
-- [ ] 允许有来源的自动方法选择；不得凭电子数奇偶性直接确定电子态。
-- [ ] 扩展版本化文档索引，提供输入编写、方法选择、输出诊断三类简短指导；不预写乙醇等任务的完整解法。
-- [ ] 配置模型名称、上下文、输出上限和超时，保持现有单一调用协议；处理代码截断、JSON 错误和有限纠正。
-- [ ] 更新提示和上下文，移除禁止代码的旧约束；代码通过文件 Artifact 引用，按需读取片段。
+- [x] 扩展 `natural.py`、`semantic.py`，保留一般分子、物理量与条件；清除水/甲烷及固定科学端口的前置阻断。
+- [x] 复用现有身份查询与结构准备机制，记录名称、SMILES、来源、立体化学和初始几何；身份、质子化或自旋歧义影响目标时澄清。
+- [x] 允许有来源的自动方法选择；不得凭电子数奇偶性直接确定电子态。
+- [x] 扩展版本化文档索引，提供输入编写、方法选择、输出诊断三类简短指导；不预写乙醇等任务的完整解法。
+- [x] 配置模型名称、上下文、输出上限和超时，保持现有单一调用协议；处理代码截断、JSON 错误和有限纠正。
+- [x] 更新提示和上下文，移除禁止代码的旧约束；代码通过文件 Artifact 引用，按需读取片段。
 - [ ] 模型生成 Plan、Python 和 ORCA 输入，程序校验后执行，将实际结果反馈给同一个 Agent。
-- [ ] 接入最小通用结果交付：实际条件、核心观察、文件来源、检查状态与未完成事项。
+- [x] 接入最小通用结果交付：实际条件、核心观察、文件来源、检查状态与未完成事项。
+
+上述勾选表示实现与局部验证已有证据，不表示本步退出条件通过。八次不同开发候选的真实模型运行均未启动 ORCA；真实计算仅有独立开发者探针，不能替代模型自主交付。当前失败和验证范围见本步报告。
 
 主要修改：`natural.py`、`semantic.py`、`tools/structure.py`、`tools/knowledge.py`、`llm.py`、`context.py`、`readable_context.py`、`proposals.py`、`agent.py`、`planning.py`、`goals.py`、`delivery.py`。
 

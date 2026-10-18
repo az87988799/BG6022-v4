@@ -160,9 +160,20 @@ def test_actual_correction_uses_smaller_existing_projection_and_keeps_final_marg
     repeated_instruction = expected_error["requirement"].pop("requirement")
     assert repeated_instruction == call_tool_instruction()
     assert sent["CONTROL"]["validation_error"] == expected_error
-    prompt = prepared.body()["messages"][0]["content"]
-    assert "Step{step_id} only;no overrides" in prompt
-    assert "Reader{tool,parameters}:tool=catalog.name,not effects" in prompt
+    # The complete transmitted schema replaces repeated prose, with the same
+    # exact disjoint call shapes (and no inline override for a planned Step).
+    schema = sent.get("ACTION_SCHEMAS", {}).get("call_tool", sent.get("PROPOSAL_SCHEMA"))
+    def records(value):
+        if isinstance(value, dict):
+            yield value
+            for child in value.values():
+                yield from records(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from records(child)
+    objects = list(records(schema))
+    assert any(item.get("required") == ["step_id"] and item.get("maxProperties") == 1 for item in objects)
+    assert any(item.get("required") == ["tool", "parameters"] and item.get("maxProperties") == 2 for item in objects)
     goals = {row["id"]: row for row in sent["AUTHORITY"]["request"]["goals"]}
     for goal in document["request"]["goals"]:
         assert goals[goal["id"]]["conditions"] == goal["conditions"]

@@ -16,6 +16,7 @@ from orca_agent.store import BudgetExceeded, Store, sha256_file
 from orca_agent.tools.registry import get_tool
 from tests.unit.test_agent import initial_proposal, make_run
 from tests.unit.test_context import objects, payload
+from tests.unit.test_context_fact_contract import assert_historical_projection
 
 
 def _plan(request, run, tool="evidence.field"):
@@ -191,12 +192,14 @@ def test_pending_read_still_uses_store_cost_gate_when_its_read_budget_is_exhaust
 
 
 def test_budget_projection_does_not_remove_semantic_normalization():
+    from tests.unit.test_decision_purpose_capacity import decoded
+
     request, run = objects(scientific=False)
     request.normalization_status = "pending"
     run.initial_science_steps = []
     run.usage.plan_revisions = run.budget.plan_revisions
     run.usage.evidence_reads = run.budget.evidence_reads
-    data = payload(build_context(request, run, action_parameters=action_parameters(request=request)))
+    data = decoded(build_context(request, run, action_parameters=action_parameters(request=request)))
     assert _actions(data) == {"normalize_request"}
     assert "PLAN_RULES" not in data and "PLAN_REFERENCES" not in data
 
@@ -282,7 +285,10 @@ def test_retained_v06_budget_actions_rebuild_without_changing_history(index):
         assert "PLAN_RULES" not in rebuilt and "PLAN_REFERENCES" not in rebuilt
     assert prepared.input_token_bound <= 12000
     for field in ("budget_limits", "permission", "goal_status", "related_results", "request", "cumulative_usage"):
-        assert rebuilt["AUTHORITY"][field] == authority[field]
+        if field in {"budget_limits", "permission", "request"}:
+            assert_historical_projection(rebuilt["AUTHORITY"][field], authority[field], field)
+        else:
+            assert rebuilt["AUTHORITY"][field] == authority[field]
     assert rebuilt.get("CONTROL", {}) == original["CONTROL"]
     # v13 additionally projects the actual settled Call's registry effects.
     # Every pre-existing data fact must survive, allowing that truthful addition.

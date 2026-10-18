@@ -53,9 +53,9 @@ def test_derived_n05_proposals_require_separate_notice_without_changing_requeste
     data = payload(prepared)
     instruction = data["ACTION_PARAMETERS"]["normalize_request"]["instruction"]
     policy = prepared.body()["messages"][0]["content"]
-    assert "science_scope=capability, not permission/defaults" in instruction
+    assert "science_scope describes legacy qualified checks, not general execution or permission/defaults" in instruction
     assert "new gaps need a question or notice" in policy
-    assert "disclose scope and geometry limits via notices" in policy and "are separate facts" in policy
+    assert "disclose scope and geometry limits via notices" in policy
     assert "without asking for resources/confirmation" in policy
     assert data["CONTROL"]["validation_error"]["requirement"] == error
     assert prepared.input_token_bound <= run.budget.input_tokens == 12000

@@ -181,6 +181,30 @@ def test_null_string_projection_preserves_pattern_and_does_not_accept_numbers():
         assert matches(result, value, result) == matches(schema, value, schema)
 
 
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize("literals", [["fixed_initial", "optimized"], ["qualified", None], [3, {"kind": "literal"}]])
+def test_nullable_enum_projection_preserves_exact_value_set_and_literal_data(reverse, literals):
+    alternatives = [{"enum": literals}, {"type": "null"}]
+    schema = {"anyOf": alternatives[::-1] if reverse else alternatives}
+    before = copy.deepcopy(schema)
+    result = _compact_planning_schema(schema)
+    assert result == {"enum": [*literals, *([] if None in literals else [None])]}
+    for value in (None, *literals, "other", 0, False, [], {}, {"kind": "other"}):
+        assert matches(result, value, result) == matches(schema, value, schema)
+    # The same spelling in an enum/const is data, including a schema-like $ref.
+    data = {"nullable": schema, "reference": {"$ref": "#/$defs/Literal"}}
+    literal_schema = {"$defs": {"Literal": {"type": "string"}}, "const": data}
+    assert _compact_planning_schema(literal_schema) == literal_schema
+    assert schema == before
+
+
+def test_nullable_enum_projection_keeps_additional_branch_constraints():
+    schema = {"anyOf": [{"enum": ["kept", 3], "type": "string"}, {"type": "null"}]}
+    result = _compact_planning_schema(schema)
+    assert result == schema
+    assert not matches(result, 3, result)
+
+
 def planning_envelope():
     schema = _schema(Proposal.model_json_schema())
     schema.pop("required", None)

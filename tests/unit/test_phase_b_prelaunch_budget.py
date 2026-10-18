@@ -3,10 +3,10 @@
 import pytest
 
 from orca_agent import agent
-from orca_agent.config import Config
 from orca_agent.models import Result
 from orca_agent.store import Store, StoreError
 from orca_agent.tools import electronic
+from tests.helpers.offline_runtime import freeze_offline_runtime
 from tests.unit.test_phase_b_budget import bind_model, budget, make_run, record, settle_model
 
 
@@ -17,7 +17,7 @@ def setup(tmp_path, monkeypatch):
     store = Store(tmp_path / "data", environment_root=tmp_path / "isolated-environment")
     book = budget.AcceptanceBudget(store)
     run, step, geometry = make_run(store, science=True)
-    store._write_json(f"runs/{run.id}/environment.json", {"orca": {"version": "6.1.1"}, "offline_fixture_only": True})
+    freeze_offline_runtime(store, run)
     return store, book, run, step, geometry
 
 
@@ -35,6 +35,7 @@ def assert_other_model_reservation_works(book, store):
 
 def test_environment_busy_creates_no_batch_ticket_and_resumes_without_batch_poison(setup, monkeypatch):
     store, book, blocked, step, geometry = setup
+    config = freeze_offline_runtime(store, blocked)
     owner, owner_step, owner_geometry = make_run(store, science=True)
     owner_attempt = store.reserve_attempt(owner, owner_step, owner_geometry.id)
     owner_lease = store.environment_lease()
@@ -48,14 +49,14 @@ def test_environment_busy_creates_no_batch_ticket_and_resumes_without_batch_pois
                       operation_status="failed", source={"execution": outcome}), outcome
 
     monkeypatch.setattr(electronic, "execute", offline_entry)
-    first = agent.execute(store, Config(), blocked.id, batch=book)
+    first = agent.execute(store, config, blocked.id, batch=book)
     assert first.state == "failed" and not first.attempts and not callbacks
     assert first.usage.orca_starts_reserved == 0
     assert not book.snapshot().get("agent_science")
     assert store.environment_lease() == owner_lease
     assert_other_model_reservation_works(book, store)
     store.finish_attempt(owner, owner_attempt.id, state="not_started", started=False, termination_confirmed=True)
-    recovered = agent.execute(store, Config(), blocked.id, batch=book, resume=True)
+    recovered = agent.execute(store, config, blocked.id, batch=book, resume=True)
     assert len(callbacks) == len(recovered.attempts) == 1
     science = book.snapshot()["agent_science"]
     assert len(science) == 1
@@ -139,6 +140,7 @@ def test_prepersistence_crash_restores_exact_attempt_as_not_started_and_keeps_re
 
 def test_agent_resume_twice_collects_no_start_proof_without_new_execution_or_refund(setup, monkeypatch):
     store, book, run, step, geometry = setup
+    config = freeze_offline_runtime(store, run)
     run.budget.orca_starts = 1
     store._write_json(f"runs/{run.id}/budget.json", run.budget)
     store._write_json(f"runs/{run.id}/run.json", run)
@@ -150,7 +152,7 @@ def test_agent_resume_twice_collects_no_start_proof_without_new_execution_or_ref
     monkeypatch.setattr(electronic, "execute", lambda *_args: pytest.fail("no scientific entry may run"))
     monkeypatch.setattr(agent.local, "reconcile", lambda *_args: pytest.fail("no process identity was created"))
     for repetition in range(2):
-        resumed = agent.execute(store, Config(), run.id, batch=book, resume=True)
+        resumed = agent.execute(store, config, run.id, batch=book, resume=True)
         assert resumed.state == "budget_exhausted"
         assert len(resumed.attempts) == len(resumed.result_ids) == 1
         attempt = resumed.attempts[0]

@@ -15,6 +15,7 @@ from orca_agent.llm import input_token_upper_bound
 from orca_agent.models import Plan, Proposal, Request, Result, Run
 from orca_agent.proposals import validate_action_parameters
 from tests.unit.test_context import payload
+from tests.unit.test_context_fact_contract import assert_historical_projection
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/phase_b/v06-feedback-context"
 
@@ -38,17 +39,13 @@ def decoded(messages):
     return payload(SimpleNamespace(body=lambda: {"messages": messages}))
 
 
-def test_actual_failed_context_fits_without_changing_authority_data_or_tool_contract(replay, monkeypatch):
+def test_actual_failed_context_fits_without_changing_authority_data_or_tool_contract(replay):
     data, inputs = replay
     before = copy.deepcopy(data["inputs"])
-    with monkeypatch.context() as patch:
-        patch.setattr(context, "_compact_terminal_response", lambda wire: wire)
-        with pytest.raises(context.ContextLimitError, match="12000 global bound"):
-            context.build_context(**inputs)
     prepared = context.build_context(**inputs)
     old_messages = data["legacy_compact_messages"]
     messages = prepared.body()["messages"]
-    assert input_token_upper_bound({"messages": old_messages}) == 12372
+    assert input_token_upper_bound({"messages": old_messages}) == 12372 > inputs["run"].budget.input_tokens
     assert data["expected"]["corrected_input_token_bound"] == 11983  # Historical v19 bytes stay frozen.
     assert prepared.input_token_bound == input_token_upper_bound({"messages": messages})
     assert prepared.input_token_bound <= inputs["run"].budget.input_tokens == 12000
@@ -63,19 +60,30 @@ def test_actual_failed_context_fits_without_changing_authority_data_or_tool_cont
         data["expected"]["corrected_user_message_sha256"])
     assert hashlib.sha256(messages[1]["content"].encode()).hexdigest() != (
         data["expected"]["corrected_user_message_sha256"])
-    expected = copy.deepcopy(historical)
-    assert "qualified_check_defaults" not in expected["DATA"]
-    expected["DATA"]["projection_rules"] = (
-        "Rows zip columns;null=absent;operation_status defaults completed;full observations=Result.")
-    expected["STRING_ENCODING"] = expected["STRING_ENCODING"].replace("; no recursion", "")
-    assert wire == expected  # Only those two documented representation texts change.
-    for key in ("AUTHORITY", "TOOL_CATALOG", "SHARED_STRINGS"):
-        assert wire[key] == old_wire[key]
     old, new = decoded(old_messages), decoded(messages)
-    for key in ("AUTHORITY", "TOOL_CATALOG"):
-        assert new[key] == old[key]
+    # Current defaults and reversible key/string representations do not change
+    # the archived bytes or grant new authority. Decode with the independent
+    # test reader, then allow only the explicitly enumerated compatibility facts.
+    previous_authority, authority = copy.deepcopy(old["AUTHORITY"]), copy.deepcopy(new["AUTHORITY"])
+    for section in ("request", "permission", "budget_limits"):
+        assert_historical_projection(authority.pop(section), previous_authority.pop(section), section)
+    assert authority == previous_authority
+    assert new["TOOL_CATALOG"] == old["TOOL_CATALOG"]
+    assert new["DATA"]["projection_rules"] == (
+        "Rows zip columns;null=absent;operation_status defaults completed;full observations=Result.")
     assert {key: value for key, value in new["DATA"].items() if key != "projection_rules"} == {
         key: value for key, value in old["DATA"].items() if key != "projection_rules"}
+    expected_schema = copy.deepcopy(old["PROPOSAL_SCHEMA"])
+    expected_schema["oneOf"] = [{"properties": {
+        **branch["if"]["properties"], **branch["then"]["properties"]}}
+        for branch in expected_schema.pop("allOf")]
+    assert new["PROPOSAL_SCHEMA"] == expected_schema
+    assert new.keys() - old.keys() == {"KEYS", "KEY_ENCODING", "REASON_TEMPLATE"}
+    assert old.keys() - new.keys() == {"ACTION_PARAMETERS", "CONTROL", "PARAMETER_SCHEMAS", "RESPONSE_ENVELOPE"}
+    assert old["CONTROL"] == old["PARAMETER_SCHEMAS"] == {}
+    representations = {"AUTHORITY", "DATA", "TOOL_CATALOG", "PROPOSAL_SCHEMA", "STRING_ENCODING", "SHARED_STRINGS"}
+    for key in old.keys() & new.keys() - representations:
+        assert new[key] == old[key]
     assert new["TOOL_CATALOG"][0]["check_contract"] == old["TOOL_CATALOG"][0]["check_contract"]
     assert set(new["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
     assert "RESPONSE_ENVELOPE" not in wire and "ACTION_PARAMETERS" not in wire
@@ -95,7 +103,8 @@ def test_actual_failed_context_fits_without_changing_authority_data_or_tool_cont
         # Historical bytes stay frozen; newly introduced empty local receipt
         # fields are supplied by the same model defaults on both sides.
         assert model == type(model).model_validate(before[key])
-    assert [result.model_dump(mode="json") for result in inputs["results"]] == before["results"]
+    assert [result.model_dump(mode="json") for result in inputs["results"]] == [
+        {"observation_records": [], **result} for result in before["results"]]
     assert inputs["feedback"] == before["feedback"]
 
 

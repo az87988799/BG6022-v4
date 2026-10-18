@@ -33,6 +33,8 @@ def required_notice_kinds(request):
     """
     affected = {}
     for goal in request.goals:
+        if goal.evidence_contract_version == "generic-observation-1":
+            continue
         if goal.port not in _PORTS:
             continue
         names = set(goal.identity.get("canonical_names", []))
@@ -49,6 +51,10 @@ def validate_notices(request, notices):
     """Check exact model selections without editing its notices or reason."""
     choices = notice_choices()
     affected = required_notice_kinds(request)
+    legacy_prefix = choices["unsupported_system"].split(";", 1)[0].casefold()
+    if "unsupported_system" not in affected and any(text.casefold().startswith(legacy_prefix) for text in notices):
+        raise ProposalError("Legacy specialized checker coverage cannot declare a general molecular task unsupported.",
+                            path=["parameters", "notices"], inapplicable_notice_choices=["unsupported_system"])
     selected = {kind for kind, text in choices.items() if text in notices}
     missing = sorted(set(affected) - selected)
     inapplicable = sorted(selected - set(affected))

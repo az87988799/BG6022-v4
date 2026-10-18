@@ -54,15 +54,17 @@ def expand_schema(node):
             return {dict(c="const", e="enum", r="$ref")[tag]: values[0]}
         kind, columns = {
             "o": ("object", ["properties", "required", "additionalProperties", "minProperties", "maxProperties"]),
+            "O": (None, ["properties", "required", "additionalProperties", "minProperties", "maxProperties"]),
             "a": ("array", ["items", "minItems", "maxItems"]),
             "s": ("string", ["minLength", "maxLength"]),
         }[tag]
-        node = {"type": kind, **{key: value for key, value in zip(columns, values) if value is not None}}
+        node = {**({"type": kind} if kind is not None else {}),
+                **{key: value for key, value in zip(columns, values) if value is not None}}
     if not isinstance(node, dict):
         return node
     result = {}
     for key, value in node.items():
-        if key in ("properties", "$defs"):
+        if key in ("properties", "$defs", "patternProperties"):
             value = {name: expand_schema(child) for name, child in value.items()}
         elif key in ("items", "if", "then", "additionalProperties", "propertyNames"):
             value = expand_schema(value)
@@ -72,9 +74,68 @@ def expand_schema(node):
     return result
 
 
+def assert_native_schemas_equivalent(schemas, original_schemas):
+    """Check source and displayed validation languages with independent values."""
+    from tests.unit.test_plan_goal_binding_contract import EVIDENCE, matches
+
+    assert set(schemas) == set(original_schemas)
+    def without_defaults(node):
+        # A default annotation does not validate values. Leave literal
+        # const/enum values and property names untouched.
+        if not isinstance(node, dict):
+            return node
+        result = {key: value for key, value in node.items() if key != "default"}
+        for key, value in result.items():
+            if key in {"properties", "$defs", "patternProperties"}:
+                result[key] = {name: without_defaults(child) for name, child in value.items()}
+            elif key in {"items", "if", "then", "additionalProperties", "propertyNames"}:
+                result[key] = without_defaults(value)
+            elif key in {"anyOf", "oneOf", "allOf"}:
+                result[key] = [without_defaults(child) for child in value]
+        return result
+    delivery = {"version": "terminal-delivery-1", "snapshot_ref": "current", "goal_explanations": [{
+        "goal_ref": "g1", "fact_refs": ["f1"], "explanation_ref": "e1", "blocker_refs": [],
+        "next_action_ref": "n1"}]}
+    examples = {
+        "call_tool": [{"step_id": "pending"}, {"tool": "evidence.value", "parameters": {}}],
+        "clarify": [{"questions": ["Which basis?"], "unresolved": ["basis"]}],
+        "stop": [{"delivery": delivery}, {"delivery": delivery, "reason": "Evidence remains bounded."}],
+        "initial_plan": [{"steps": [{"key": "s", "tool": "orca.sp"}],
+                          "goal_map": {"energy": {"step_key": "s", "port": "energy"}}}],
+        "revise_plan": [{"steps": [{"key": "s", "tool": "orca.sp"}],
+                         "goal_map": {"energy": {"gap": "No evidence.", "port": "energy"}}}],
+    }
+    for action, actual_schema in schemas.items():
+        original_schema = without_defaults(original_schemas[action])
+        valid = examples[action]
+        invalid = [{}, None, [], 0, ""]
+        for example in valid:
+            assert matches(original_schema, example, original_schema)
+            invalid += [{**example, "extra": True}]
+            invalid += [{key: value for key, value in example.items() if key != field} for field in example]
+            invalid += [{**example, field: None} for field in example]
+        if action in {"initial_plan", "revise_plan"}:
+            for target in ({"port": "energy"}, {"port": "energy", "evidence": EVIDENCE, "gap": "both"},
+                           {"port": None, "gap": "missing"}):
+                invalid.append({**valid[0], "goal_map": {"energy": target}})
+            invalid.append({**valid[0], "steps": []})
+        if action == "call_tool":
+            invalid += [{"step_id": "pending", "tool": "evidence.value", "parameters": {}},
+                        {"step_id": "pending", "parameters": {}}, {"tool": "evidence.value"}]
+        if action == "stop":
+            invalid += [{"delivery": {**delivery, "version": "invented"}},
+                        {"delivery": {**delivery, "goal_explanations": []}},
+                        {"delivery": {**delivery, "goal_explanations": [{"goal_ref": "g1"}]}}]
+        if action == "clarify":
+            invalid += [{"questions": [], "unresolved": ["basis"]},
+                        {"questions": ["Which basis?"] * 6, "unresolved": ["basis"]}]
+        for value in [*valid, *invalid]:
+            assert matches(actual_schema, value, actual_schema) == matches(original_schema, value, original_schema)
+
+
 def decoded(prepared):
     value = payload(prepared)
-    if "SCHEMA_COLUMNS" in value:
+    if "SCHEMA_COLUMNS" in value and "PROPOSAL_SCHEMA" in value:
         value["PROPOSAL_SCHEMA"] = expand_schema(value["PROPOSAL_SCHEMA"])
     return value
 
@@ -191,6 +252,26 @@ def test_unmet_goal_uses_last_slot_and_saves_exact_snapshot_without_future_doubl
     raw = store.path(f"runs/{run.id}/model/{record['id']}.delivery.json").read_bytes()
     assert hashlib.sha256(raw).hexdigest() == record["delivery_snapshot_sha256"]
     assert json.loads(raw) == snapshot and run.budget == before_budget
+
+
+def test_snapshot_unknown_token_occupancy_rejects_before_reservation_or_transmission(tmp_path):
+    store, run, request, _ = terminal_run(tmp_path)
+    run.usage.model_tokens_unknown = run.budget.model_tokens - 1
+    store.save_run(run)
+    snapshot = collect_delivery_snapshot(store, run, request)
+    before = run.model_copy(deep=True)
+    durable_before = store.path(f"runs/{run.id}/run.json").read_bytes()
+    prepared = context.build_context(request, run, delivery_snapshot=snapshot)
+    assert prepared.input_token_bound <= run.budget.input_tokens and prepared.reserved_tokens > 1
+    assert run == before
+    transport = ScriptedTransport()
+    with pytest.raises(BudgetExceeded, match="token"):
+        send_model(store, run, prepared, transport, basis=current_basis(store, run), logical_id="unknown_occupied",
+                   delivery_snapshot=snapshot)
+    assert transport.sends == 0 and not run.model_records
+    assert run == before and store.load_run(run.id) == before
+    assert store.path(f"runs/{run.id}/run.json").read_bytes() == durable_before
+    assert not list(store.path(f"runs/{run.id}/model").glob("*.request.json"))
 
 
 @pytest.mark.parametrize("elapsed,allowed", [(0.01, True), (2, False)])
@@ -382,25 +463,66 @@ def test_key_encoding_preserves_native_authority_and_literal_marker_shaped_data(
 
 
 def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decoder(tmp_path, monkeypatch):
+    from orca_agent import config as configuration
     from orca_agent.store import Store
     from tests.unit.test_structure_input_chain import (
         test_text_to_model_plan_to_prepared_input_uses_the_single_feedback_loop,
     )
 
+    # This regression tests its original 12k envelope, independently of the
+    # opt-in example profile's current capacity. It must not silently widen.
+    load = configuration.load_config
+    def frozen_capacity(*args, **kwargs):
+        config = load(*args, **kwargs)
+        config.text.budget.input_tokens = 12000
+        return config
+    monkeypatch.setattr(configuration, "load_config", frozen_capacity)
     requests = []
     prepare = context.prepare_request
     source_schemas = []
     source_schema_by_hash = {}
+    native_schemas = []
+    native_schema_by_hash = {}
+    encoded_sources = {}
+    final_native_schemas = []
+    final_native_schema_by_hash = {}
+    grouped_native_provenance = []
+    grouped_native_by_hash = {}
     schema_columns = context._schema_columns
     def capture_schema(schema):
-        source_schemas.append(copy.deepcopy(schema))
-        return schema_columns(schema)
+        if "action" in schema.get("properties", {}):
+            source_schemas.append(copy.deepcopy(schema))
+        encoded = schema_columns(schema)
+        key = json.dumps(encoded, sort_keys=True)
+        if key in encoded_sources:
+            assert encoded_sources[key] == schema
+        encoded_sources[key] = copy.deepcopy(schema)
+        return encoded
     monkeypatch.setattr(context, "_schema_columns", capture_schema)
+    share_strings = context._share_strings
+    def capture_final_schemas(value, **kwargs):
+        if ("ACTION_SCHEMAS" in value
+                and value.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.*")):
+            final_native_schemas.append({name: copy.deepcopy(encoded_sources[json.dumps(schema, sort_keys=True)])
+                for name, schema in value["ACTION_SCHEMAS"].items()})
+            grouped_native_provenance.append(isinstance(value["AUTHORITY"]["request"].get("condition_evidence"), list))
+        return share_strings(value, **kwargs)
+    monkeypatch.setattr(context, "_share_strings", capture_final_schemas)
     def capture(*args, **kwargs):
+        candidate = json.loads(args[0][1]["content"])
+        if "ACTION_SCHEMAS" in candidate and "SHARED_STRINGS" not in candidate:
+            native_schemas.append(copy.deepcopy(candidate["ACTION_SCHEMAS"]))
         prepared = prepare(*args, **kwargs)
         requests.append(prepared)
-        if "SCHEMA_COLUMNS" in json.loads(prepared.body()["messages"][1]["content"]):
+        if "SCHEMA_COLUMNS" in candidate and "PROPOSAL_SCHEMA" in candidate:
             source_schema_by_hash[prepared.request_hash] = copy.deepcopy(source_schemas[-1])
+        if "ACTION_SCHEMAS" in candidate:
+            native_schema_by_hash[prepared.request_hash] = copy.deepcopy(native_schemas[-1])
+            final_native_schema_by_hash[prepared.request_hash] = copy.deepcopy(
+                final_native_schemas[-1] if candidate.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.*")
+                else native_schemas[-1])
+            grouped_native_by_hash[prepared.request_hash] = (grouped_native_provenance[-1]
+                if candidate.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.*") else False)
         return prepared
     monkeypatch.setattr(context, "prepare_request", capture)
     test_text_to_model_plan_to_prepared_input_uses_the_single_feedback_loop(tmp_path, monkeypatch)
@@ -414,7 +536,7 @@ def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decod
     for prepared in sent:
         assert prepared.input_token_bound <= 12000
         wire = decoded(prepared)  # Only documented wire; no Store in decoder.
-        if "condition_evidence: fields=" not in prepared.body()["messages"][0]["content"]:
+        if not wire["AUTHORITY"].get("request", {}).get("condition_evidence"):
             continue
         current = store.load_request_revision(run, wire["AUTHORITY"]["basis"]["request_version"])
         assert wire["AUTHORITY"]["request"]["condition_evidence"] == current.condition_evidence
@@ -426,9 +548,30 @@ def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decod
         original_conditions = {fact["ref"]: fact["value"] for fact in full["facts"] if fact["kind"] == "conditions"}
         assert {fact["ref"]: fact["value"] for fact in wire["DATA"]["delivery"]["facts"]
                 if fact["kind"] == "conditions"} == original_conditions
-        assert wire["PROPOSAL_SCHEMA"] == source_schema_by_hash[prepared.request_hash]
-        assert wire["PROPOSAL_SCHEMA"]["additionalProperties"] is False
-        assert wire["PROPOSAL_SCHEMA"]["minProperties"] == 8
+        if wire["AUTHORITY"].get("response_contract") == "decision-intent-2":
+            from orca_agent.proposals import DecisionIntent
+
+            raw = json.loads(prepared.body()["messages"][1]["content"])
+            assert raw["AUTHORITY"]["response_contract"] == "decision-intent-2"
+            assert set(wire["RESPONSE_ENVELOPE"]) == {"action", "parameters", "reason"}
+            if grouped_native_by_hash[prepared.request_hash]:
+                assert "condition_evidence: fields=name:value;rest shared." in prepared.body()["messages"][0]["content"]
+            # Exact independent decoding is compared to the actual input of
+            # column encoding, not a second call to the production compactor.
+            assert wire["ACTION_SCHEMAS"] == final_native_schema_by_hash[prepared.request_hash]
+            assert_native_schemas_equivalent(wire["ACTION_SCHEMAS"], native_schema_by_hash[prepared.request_hash])
+            intent_schema = DecisionIntent.model_json_schema()
+            assert intent_schema["additionalProperties"] is False
+            assert set(intent_schema["required"]) == {"action", "parameters", "reason"}
+            intent = {"action": "call_tool", "parameters": {"step_id": "pending"}, "reason": "Audit."}
+            DecisionIntent.model_validate(intent)
+            for invalid in ({**intent, "type": "decision"}, {key: value for key, value in intent.items() if key != "action"}):
+                with pytest.raises(ValueError):
+                    DecisionIntent.model_validate(invalid)
+        else:
+            assert wire["PROPOSAL_SCHEMA"] == source_schema_by_hash[prepared.request_hash]
+            assert wire["PROPOSAL_SCHEMA"]["additionalProperties"] is False
+            assert wire["PROPOSAL_SCHEMA"]["minProperties"] == 8
         grouped.append(prepared.input_token_bound)
     assert grouped and run.usage.structure_preparations == 1
     assert run.usage.orca_starts_actual == run.usage.orca_starts_reserved == 0

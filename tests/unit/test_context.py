@@ -1,6 +1,7 @@
 import hashlib
 import json
 import math
+import re
 from datetime import timedelta
 from pathlib import Path
 
@@ -60,8 +61,11 @@ def payload(prepared):
     value = {key: item if key in {"SHARED_STRINGS", "KEYS"} else decode_keys(item)
              for key, item in value.items()}
     strings = value.get("SHARED_STRINGS", [])
+    short_references = '"@N"' in value.get("STRING_ENCODING", "")
 
     def decode(item):
+        if short_references and isinstance(item, str) and re.fullmatch(r"@[0-9]+", item):
+            return strings[int(item[1:])]
         if isinstance(item, dict):
             if set(item) == {"@"}:
                 return strings[item["@"]]
@@ -80,6 +84,18 @@ def payload(prepared):
     # Pool entries are literal JSON; marker-shaped raw data inside them is not
     # another encoding layer.
     value = {key: item if key == "SHARED_STRINGS" else decode(item) for key, item in value.items()}
+    if value.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.* and TOOLS[].parameters:"):
+        from tests.unit.test_decision_purpose_capacity import expand_schema
+
+        value["ACTION_SCHEMAS"] = {name: expand_schema(schema) for name, schema in value["ACTION_SCHEMAS"].items()}
+        for tool in value.get("TOOLS", []):
+            if "parameters" in tool:
+                tool["parameters"] = expand_schema(tool["parameters"])
+    if value.get("SCHEMA_COLUMNS", "").startswith("PROPOSAL_SCHEMA and PARAMETER_SCHEMAS.*:"):
+        from tests.unit.test_decision_purpose_capacity import expand_schema
+
+        value["PARAMETER_SCHEMAS"] = {name: expand_schema(schema)
+            for name, schema in value["PARAMETER_SCHEMAS"].items()}
     request = value.get("AUTHORITY", {}).get("request", {})
     def restore_quotes(item):
         if isinstance(item, dict):
@@ -135,7 +151,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v34"
+    assert context.prompt_version == "agent-json-v38"
     assert "reason<=1000" in context.body()["messages"][0]["content"]
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
@@ -149,7 +165,10 @@ def test_actual_proposal_schema_and_bounded_default_context():
     assert authority["run_id"] == run.id
     assert authority["request"]["goals"][0]["minimum_evidence"] == ["converged SCF"]
     assert authority["user_originals"][0]["text"] == request.original_text
-    assert len(data["PARAMETER_SCHEMAS"]) == 2  # SP/Opt have distinct actual timeout limits.
+    # Step 1 unified resource types; SP/Opt share the same schema, while the
+    # frozen Run configuration supplies the actual executable resource bounds.
+    assert len(data["PARAMETER_SCHEMAS"]) == 1
+    assert data["TOOL_CATALOG"][0]["parameter_schema"] == data["TOOL_CATALOG"][1]["parameter_schema"]
     assert "implementation" not in str(data["TOOL_CATALOG"])
 
 
@@ -170,7 +189,8 @@ def test_schema_annotations_are_omitted_without_changing_constraints_or_tool_def
     assert tool.parameter_schema == original
     assert projected["additionalProperties"] is False
     assert projected["properties"]["scf_maxiter"]["minimum"] == original["properties"]["scf_maxiter"]["minimum"]
-    assert projected["properties"]["scf_maxiter"]["maximum"] == original["properties"]["scf_maxiter"]["maximum"]
+    assert "maximum" not in original["properties"]["scf_maxiter"]
+    assert "maximum" not in projected["properties"]["scf_maxiter"]
     assert "default" in original["properties"]["scf_maxiter"]
     assert "default" not in projected["properties"]["scf_maxiter"]
     nested = {"oneOf": [{"type": "object", "required": ["kind", "value"], "properties": {
@@ -178,6 +198,48 @@ def test_schema_annotations_are_omitted_without_changing_constraints_or_tool_def
         "discriminator": {"propertyName": "kind"}, "default": {"kind": "key", "value": "x"}}
     assert _schema(nested) == {"oneOf": [{"type": "object", "required": ["kind", "value"], "properties": {
         "kind": {"const": "key"}, "value": {"type": "string", "minLength": 1}}}]}
+
+
+@pytest.mark.parametrize("tool", ["orca.sp", "orca.opt"])
+def test_shared_registry_schema_accepts_configured_resources_but_frozen_run_enforces_limits(tmp_path, tool):
+    """Configuration validation only, not proof of non-default OS/science support."""
+    from pydantic import ValidationError
+
+    from orca_agent.models import ResourceLimits, RunConfiguration
+    from orca_agent.store import Store, StoreError
+    from orca_agent.tools.registry import get_tool, validate_parameters
+
+    values = {"cores": 8, "memory_mb": 4096, "maxcore_mb": 256,
+              "timeout_seconds": 1800, "scf_maxiter": 1001}
+    schema = get_tool(tool).parameter_schema
+    for field in values:
+        assert "maximum" not in schema["properties"][field]
+    parameters = validate_parameters(tool, values)
+    _, run = objects()
+    run.configuration = RunConfiguration(resources=ResourceLimits(
+        max_cores=8, total_memory_mb=4096, maxcore_mb=256, job_timeout_seconds=1800))
+    store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
+    before = run.model_dump_json()
+    store.validate_execution_resources(run, parameters)
+    for field, above in {"cores": 9, "memory_mb": 4097, "maxcore_mb": 257,
+                         "timeout_seconds": 1801}.items():
+        candidate = validate_parameters(tool, {**values, field: above})
+        with pytest.raises(StoreError, match=field + " exceeds the frozen Run resource configuration"):
+            store.validate_execution_resources(run, candidate)
+    for field in values:
+        with pytest.raises(ValidationError):
+            validate_parameters(tool, {**values, field: 0})
+    assert run.model_dump_json() == before
+    # A missing historical snapshot retains v1's original four-core envelope;
+    # today's larger configuration cannot grant a legacy Run larger resources.
+    store.configuration = run.configuration
+    run.configuration = None
+    legacy_before = run.model_dump_json()
+    assert store.run_configuration(run).version == 1
+    assert store.run_configuration(run).resources.max_cores == 4
+    with pytest.raises(StoreError, match="cores exceeds the frozen Run resource configuration"):
+        store.validate_execution_resources(run, parameters)
+    assert run.model_dump_json() == legacy_before
 
 
 def test_native_envelope_and_step_examples_have_no_action_wrapper_or_input_alias():
@@ -359,7 +421,7 @@ def test_large_observation_is_referenced_without_silent_truncation():
 def test_oversized_authority_refused_without_truncating_user_goal():
     request, run = objects()
     request.original_text = "用户指定条件" * 2000
-    with pytest.raises(ContextLimitError, match="12000"):
+    with pytest.raises(ContextLimitError, match="configured global input bound"):
         build_context(request, run)
     assert request.original_text.endswith("用户指定条件")
 

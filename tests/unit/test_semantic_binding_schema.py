@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from test_context import payload
+from test_decision_purpose_capacity import expand_schema
 from test_natural import query_run, store_at
 from test_semantic_control import candidate
 
@@ -31,7 +32,38 @@ def semantic_context(store, run):
         user_messages=store.read_control(run.id)["messages"],
         action_parameters=action_parameters(run.permission.allowed_tools, request=request))
     assert prepared.input_token_bound <= 12000
-    return payload(prepared)
+    data = payload(prepared)
+    if "SCHEMA_COLUMNS" in data:
+        data["PROPOSAL_SCHEMA"] = expand_schema(data["PROPOSAL_SCHEMA"])
+    return data
+
+
+def expanded_references(node, root):
+    """Compare schema semantics independently of definition reuse or defaults."""
+    if isinstance(node, list):
+        return [expanded_references(item, root) for item in node]
+    if not isinstance(node, dict):
+        return node
+    if "$ref" in node:
+        target = root
+        for part in node["$ref"].removeprefix("#/").split("/"):
+            target = target[part]
+        return expanded_references(target, root)
+    output = {key: expanded_references(value, root) for key, value in node.items()
+              if key not in {"$defs", "default"}}
+    literals = [output["const"]] if "const" in output else output.get("enum", [])
+    if output.get("type") == "string" and literals and all(isinstance(value, str) for value in literals):
+        output.pop("type")  # Exact string literals already constrain the value type.
+    alternatives = output.get("anyOf", [])
+    if (set(output) == {"anyOf"} and len(alternatives) == 2
+            and alternatives[1] == {"type": "null"} and set(alternatives[0]) == {"enum"}):
+        return {"enum": [*alternatives[0]["enum"], None]}
+    if (set(output) == {"anyOf"} and len(alternatives) == 2
+            and alternatives[1] == {"type": "null"}
+            and alternatives[0].get("type") == "string"
+            and set(alternatives[0]) <= {"type", "pattern", "minLength", "maxLength"}):
+        return {**alternatives[0], "type": ["string", "null"]}
+    return output
 
 
 def test_parameter_schema_is_direct_single_and_every_definition_reference_resolves(tmp_path):
@@ -40,14 +72,17 @@ def test_parameter_schema_is_direct_single_and_every_definition_reference_resolv
     contract = action_parameters(request=store.load_request(run))
     before = copy.deepcopy(contract)
     prepared = build_context(store.load_request(run), run, relevant_tools=[], action_parameters=contract)
-    schema = payload(prepared)["PROPOSAL_SCHEMA"]
+    data = payload(prepared)
+    schema = expand_schema(data["PROPOSAL_SCHEMA"]) if "SCHEMA_COLUMNS" in data else data["PROPOSAL_SCHEMA"]
     parameters = schema["properties"]["parameters"]
     assert parameters["required"] == ["schema_version", "message_ids", "kind", "text_basis"]
     assert parameters["additionalProperties"] is False and "request_semantics" not in parameters["properties"]
     assert parameters["properties"]["goal_bindings"]["maxProperties"] == 0
     assert "$defs" not in parameters
     assert "schema" not in payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
-    assert set(schema["$defs"]) == {"semantic_FieldEvidence", "semantic_SemanticGoal"}
+    source = contract["normalize_request"]["schema"]
+    assert expanded_references(parameters, schema) == expanded_references(source, source)
+    assert {"identities", "automatic_selection"} <= parameters["properties"].keys()
     pending = [schema]
     references = []
     while pending:

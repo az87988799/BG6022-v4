@@ -1,5 +1,6 @@
 """Context facts stay scoped and truthful; offline replay is not a model rerun."""
 
+import copy
 import json
 from datetime import timedelta
 from pathlib import Path
@@ -16,6 +17,52 @@ from orca_agent.semantic import action_parameters
 from orca_agent.store import Store, sha256_file
 from orca_agent.tools.registry import get_tool
 from tests.unit.test_context import objects, payload
+
+_HISTORICAL_DEFAULTS = {
+    "permission": {"code_execution": False},
+    "budget_limits": {"logical_steps": 12, "knowledge_queries": 0,
+                      "internal_work_units": 0, "code_retries": 0, "artifact_count": 200,
+                      "artifact_bytes": 268435456, "artifact_total_bytes": 268435456},
+    "request": {"automatic_selection": [], "selection_reasons": {}},
+    "goal": {"evidence_contract_version": "legacy-1", "verification": "qualified",
+             "quantity": None, "minimum_evidence_source": {}},
+}
+
+
+def assert_historical_projection(actual, archived, section):
+    """Preserve every recorded fact; allow only explicit, conservative read defaults.
+
+    ADR 0031 permits interpreting missing fields, never rewriting old JSON or
+    granting code permission. This checks exact values, not arbitrary new keys.
+    """
+    expected = copy.deepcopy(archived)
+    for key, default in _HISTORICAL_DEFAULTS[section].items():
+        expected.setdefault(key, copy.deepcopy(default))
+    if section == "request":
+        assert len(actual["goals"]) == len(expected["goals"])
+        for new, old in zip(actual["goals"], expected["goals"], strict=True):
+            assert_historical_projection(new, old, "goal")
+        expected["goals"] = copy.deepcopy(actual["goals"])
+    assert actual == expected
+
+
+@pytest.mark.parametrize("section,archive,change", [
+    ("permission", {"allowed_tools": ["evidence.field"]}, {"code_execution": True}),
+    ("permission", {"allowed_tools": ["evidence.field"]}, {"allowed_tools": ["python.execute"]}),
+    ("permission", {"version": 1}, {"version": 2}),
+    ("permission", {}, {"unknown_permission": False}),
+    ("budget_limits", {"orca_starts": 0}, {"orca_starts": 1}),
+    ("budget_limits", {}, {"internal_work_units": 1}),
+    ("budget_limits", {}, {"artifact_bytes": 268435457}),
+    ("request", {"goals": []}, {"automatic_selection": ["method"]}),
+    ("goal", {"minimum_check_version": "orca-hf-1"}, {"verification": "reported_with_limitations"}),
+    ("goal", {"minimum_check_version": "orca-hf-1"}, {"minimum_check_version": "orca-hf-2"}),
+])
+def test_history_comparison_rejects_new_authority_and_unknown_defaults(section, archive, change):
+    compatible = {**copy.deepcopy(_HISTORICAL_DEFAULTS[section]), **copy.deepcopy(archive)}
+    assert_historical_projection(compatible, archive, section)
+    with pytest.raises(AssertionError):
+        assert_historical_projection({**compatible, **change}, archive, section)
 
 
 @pytest.mark.parametrize("field,value,general,effective", [
@@ -226,8 +273,8 @@ def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evid
     rebuilt = payload(prepared)
     assert prepared.input_token_bound <= 12000
     assert rebuilt["AUTHORITY"]["related_results"] == authority["related_results"]
-    assert rebuilt["AUTHORITY"]["permission"] == authority["permission"]
-    assert rebuilt["AUTHORITY"]["request"]["goals"] == authority["request"]["goals"]
+    for field in ("permission", "budget_limits", "request"):
+        assert_historical_projection(rebuilt["AUTHORITY"][field], authority[field], field)
     assert rebuilt.get("CONTROL", {}) == original["CONTROL"]
     assert rebuilt["DATA"].get("current_goal_use") == original["DATA"].get("current_goal_use")
     if case.startswith("v15_"):
@@ -247,7 +294,7 @@ def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evid
             assert branch["parameters"]["additionalProperties"] == {
                 "type": "array", "minItems": 1, "maxItems": 5,
                 "items": {"type": "string", "minLength": 1, "maxLength": 1000}}
-        assert rebuilt["AUTHORITY"]["request"] == authority["request"]
+        assert_historical_projection(rebuilt["AUTHORITY"]["request"], authority["request"], "request")
         assert rebuilt["AUTHORITY"]["system_condition_overrides"] == authority["system_condition_overrides"]
         for old_result, new_result in zip(original["DATA"]["results"], rebuilt["DATA"]["results"], strict=True):
             assert new_result.get("unqualified_observations") == old_result.get("unqualified_observations")

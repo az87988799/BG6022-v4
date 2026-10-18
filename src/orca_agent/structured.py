@@ -17,7 +17,11 @@ from orca_agent.models import (
     Step,
     new_id,
 )
-from orca_agent.tools.registry import validate_geometry, validate_parameters
+from orca_agent.tools.registry import (
+    validate_geometry,
+    validate_legacy_profile,
+    validate_parameters,
+)
 from orca_agent.versions import CURRENT_CHECK_VERSION
 
 
@@ -66,6 +70,8 @@ def prepare_task(spec_path: Path, store):
         raise ValueError("step aliases must be unique")
     for item in task.steps:
         validate_parameters(item.tool, item.parameters)
+        validate_legacy_profile(item.parameters)
+        store.validate_execution_resources(None, item.parameters)
         validate_geometry(xyz, item.parameters)
         if (item.geometry_from and item.geometry_from not in names
                 or any(dep not in names for dep in item.depends_on)):

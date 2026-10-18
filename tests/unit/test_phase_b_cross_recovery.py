@@ -32,6 +32,7 @@ from orca_agent.store import Store, StoreError, sha256_file
 from orca_agent.tools import calculation, electronic, evidence
 from orca_agent.tools.dispatch import execute_call
 from tests.helpers import phase_b_budget as budget
+from tests.helpers.offline_runtime import freeze_offline_runtime
 
 
 @pytest.mark.parametrize("repetition", (1, 2, 3))
@@ -201,7 +202,7 @@ def test_analysis_feedback_scientific_append_crash_replays_one_reservation_and_c
         analysis_executions=2, plan_revisions=1))
     run.agent_enabled, run.batch_category = True, "formal"
     store._write_json(f"runs/{run.id}/run.json", run)
-    store._write_json(f"runs/{run.id}/environment.json", {"orca": {"version": "6.1.1"}, "offline_fixture_only": True})
+    config = freeze_offline_runtime(store, run)
     feedback = execute_call(store, run, analysis.tool, analysis.parameters.model_dump(), step=analysis)
     assert feedback.observations["analysis"]["reason"] == "missing_required_member"
     book = budget.AcceptanceBudget(store)
@@ -248,13 +249,13 @@ def test_analysis_feedback_scientific_append_crash_replays_one_reservation_and_c
             raise KeyboardInterrupt
 
     transport = ScriptedHTTP(append, analyze)
-    interrupted = agent.execute(store, Config(), run.id, transport=transport, batch=book, fault=crash)
+    interrupted = agent.execute(store, config, run.id, transport=transport, batch=book, fault=crash)
     assert interrupted.state == "unknown" and interrupted.plan_version == 1, interrupted.diagnostics
     assert not interrupted.attempts and not reservations and not callbacks
     assert interrupted.processed_feedback == []
     snapshot = None
     for _ in range(2):
-        completed = agent.execute(store, Config(), run.id, transport=transport, batch=book, resume=True)
+        completed = agent.execute(store, config, run.id, transport=transport, batch=book, resume=True)
         assert completed.state == "completed", completed.diagnostics
         assert completed.goal_status == {goal.id: "satisfied"}
         assert completed.usage.plan_revisions == 1 and completed.plan_version == 2
@@ -288,7 +289,7 @@ def _offline_scientific_case(tmp_path, *, maxiter=100, model_calls=0, explain=Fa
             input_tokens=12000, output_tokens=2000, model_tokens=48000, decision_rounds=4, plan_revisions=2))
     run.agent_enabled = True
     store.save_run(run)
-    store._write_json(f"runs/{run.id}/environment.json", {"orca": {"version": "6.1.1"}, "offline_fixture_only": True})
+    freeze_offline_runtime(store, run)
     return store, run, step, plan, geometry
 
 
@@ -319,6 +320,7 @@ def _archive_as_offline_attempt(store, run, step, attempt, fixture):
 @pytest.mark.parametrize("repetition", (1, 2, 3))
 def test_two_failed_attempts_then_new_logical_id_cannot_create_third_start(tmp_path, monkeypatch, repetition):
     store, run, _, _, _ = _offline_scientific_case(tmp_path, maxiter=1, model_calls=2)
+    config = freeze_offline_runtime(store, run)
     root = Path(__file__).resolve().parents[2]
     callbacks = []
 
@@ -345,7 +347,7 @@ def test_two_failed_attempts_then_new_logical_id_cannot_create_third_start(tmp_p
 
     monkeypatch.setattr(electronic, "execute", offline_science)
     transport = ScriptedHTTP(propose, lambda data: propose(data, launder=True))
-    stopped = agent.execute(store, Config(), run.id, transport=transport)
+    stopped = agent.execute(store, config, run.id, transport=transport)
     assert len(callbacks) == len(stopped.attempts) == 2, stopped.diagnostics
     assert [a.frozen_step.parameters.scf_maxiter for a in stopped.attempts] == [1, 2]
     assert stopped.usage.orca_starts_reserved == stopped.usage.orca_starts_actual == 2
@@ -408,8 +410,15 @@ def test_agent_loads_only_effect_permitted_schemas_without_changing_permission(t
     assert completed.state == "completed", completed.diagnostics
     assert len(transport.sent) == completed.usage.model_calls == completed.usage.evidence_reads == 1
     context = transport.sent[0]
-    assert [tool["name"] for tool in context["TOOL_CATALOG"]] == ["evidence.value"]
-    assert len(context["PARAMETER_SCHEMAS"]) == 1
+    catalog = context.get("TOOLS", context.get("TOOL_CATALOG"))
+    assert [tool["name"] for tool in catalog] == ["evidence.value"]
+    if "TOOLS" in context:
+        assert catalog[0]["parameters_ref"] == "ACTION_SCHEMAS.evidence.value"
+        schema = context["ACTION_SCHEMAS"]["evidence.value"]
+        assert {"artifact_id", "path"} <= set(schema["properties"])
+        assert not {"orca.sp", "analysis.energy_compare", "evidence.import"} & context["ACTION_SCHEMAS"].keys()
+    else:
+        assert len(context["PARAMETER_SCHEMAS"]) == 1
     assert context["AUTHORITY"]["permission"]["allowed_tools"] == permission.allowed_tools
     assert completed.permission == permission and not completed.attempts and not store.environment_lease()
 

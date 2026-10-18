@@ -19,6 +19,7 @@ import time
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Annotated
+from urllib.parse import parse_qs, quote, unquote, urlencode, urlsplit
 
 import httpx
 from pydantic import Field
@@ -27,10 +28,16 @@ from orca_agent.models import ElectronicInteger, Identifier, Record, fingerprint
 
 IDENTITY_RULE = "structure-identity-1"
 PREPARATION_RULE = "structure-prepare-1"
+GENERAL_IDENTITY_RULE = "structure-identity-2"
+GENERAL_PREPARATION_RULE = "structure-prepare-2"
 RECEIPT_SCHEMA = "structure-call-1"
 OPI_VERSION = "2.0.0"
 RDKIT_VERSION = "2025.9.6"
 MAX_RESPONSE_BYTES = 256 * 1024
+MAX_SYNONYM_BYTES = 1024 * 1024
+IDENTITY_TIMEOUT_SECONDS = 120
+WIKIDATA_ROOT = "https://www.wikidata.org/w/api.php"
+IDENTITY_USER_AGENT = "ORCA-Agent/0.1 (https://github.com/az87988799/BG6022-v4; bounded chemical identity lookup)"
 MAX_GEOMETRY_BYTES = 65536
 PREPARE_TIMEOUT_SECONDS = 30
 PREPARE_CORES = 1
@@ -148,6 +155,20 @@ def _requirement(store, run, system_id):
     system = next((item for item in request.systems if item.id == system_id), None)
     identity = getattr(system, "identity", {}) if system else {}
     names = identity.get("canonical_names", [])
+    if identity.get("contract") == "general-identity-2":
+        evidence = identity.get("text_evidence", {})
+        message = next((entry for entry in request.messages
+                        if entry.get("id") == evidence.get("message_id")), None)
+        text = evidence.get("text_basis", "")
+        requested = identity.get("requested_names", [])
+        query = identity.get("query_name")
+        if (system.geometry_source != "prepare" or identity.get("explicitly_unknown")
+                or message is None or not text or message["text"].count(text) != 1
+                or len(requested) != 1 or requested[0] not in text
+                or not isinstance(query, str) or not 0 < len(query) <= 100
+                or any(ord(char) < 32 for char in query)):
+            raise ValueError("general identity requires frozen exact user-name and lookup provenance")
+        return request, system, query, evidence
     if (system is None or getattr(system, "geometry_source", None) != "prepare" or len(names) != 1
             or names[0] not in IDENTITY_PROFILE or identity.get("explicitly_unknown")):
         raise ValueError("structure Tool requires one frozen supported identity and prepare input intent")
@@ -187,8 +208,12 @@ def validate_call_inputs(store, run, parameters, tool, consumption=None):
                 or any("charge" in reason or "multiplicity" in reason
                        for reason in conditions["reasons"])):
             raise ValueError("preparation requires confirmed neutral singlet conditions matching its parameters")
+        if system.identity.get("ambiguities"):
+            raise ValueError("initial geometry cannot silently resolve the frozen identity ambiguities")
         _bound_identity(store, run, consumption or {}, canonical)
-    return {"canonical_name": canonical, "system_id": system.id, "text_evidence": evidence}
+    return {"canonical_name": canonical, "system_id": system.id, "text_evidence": evidence,
+            "general_identity": system.identity.get("contract") == "general-identity-2",
+            "requested_identity": system.identity}
 
 
 def _bound_identity(store, run, consumption, canonical):
@@ -200,11 +225,12 @@ def _bound_identity(store, run, consumption, canonical):
         raise ValueError("identity Result is outside frozen permissions")
     result = store.load_result(source_run, result_id)
     from orca_agent.input_bindings import validate_input_result
-    validate_input_result(store, run, store.load_request(run), result, "resolved_identity")
+    validated = validate_input_result(store, run, store.load_request(run), result, "resolved_identity")
+    rule = validated["rule_version"]
     output = result.qualified_outputs.get("resolved_identity")
     if (result.operation_status != "completed" or output is None
             or output.checks != result.checks.get("resolved_identity")
-            or any(check.status != "passed" or check.rule_version != IDENTITY_RULE for check in output.checks)
+            or any(check.status != "passed" or check.rule_version != rule for check in output.checks)
             or result.source.get("tool") != "structure.resolve"
             or binding.get("result_fingerprint") != fingerprint(result)):
         raise ValueError("identity Result does not carry the required immutable check guarantee")
@@ -213,10 +239,15 @@ def _bound_identity(store, run, consumption, canonical):
     if binding.get("artifact_hashes", {}).get(artifact.id) != artifact.sha256:
         raise ValueError("identity input Artifact changed after reservation")
     document = _read_json(path, MAX_GEOMETRY_BYTES)
-    if (document.get("schema") != IDENTITY_RULE or document.get("canonical_name") != canonical
+    if (document.get("schema") != rule or document.get("canonical_name") != canonical
             or document.get("charge") != 0):
         raise ValueError("identity snapshot conflicts with current requested identity")
-    if document.get("elements") != _validate_smiles(document.get("smiles"), canonical):
+    graph = _general_graph(document.get("smiles")) if rule == GENERAL_IDENTITY_RULE else None
+    if graph and (graph["radical_electrons"] or graph["stereochemistry"]):
+        raise ValueError("current initial-geometry guarantee excludes radicals and stereochemical centers/bonds")
+    if rule == GENERAL_IDENTITY_RULE and document.get("alias_verified") is not True:
+        raise ValueError("lookup alias lacks independently retrieved PubChem name evidence")
+    if document.get("elements") != (graph["elements"] if graph else _validate_smiles(document.get("smiles"), canonical)):
         raise ValueError("identity atom mapping differs from its complete graph")
     return document, artifact
 
@@ -256,7 +287,34 @@ def _validate_smiles(smiles, canonical):
     return [atom.GetSymbol() for atom in explicit.GetAtoms()]
 
 
-def validate_pubchem_response(raw, canonical):
+def _general_graph(smiles):
+    """Bounded graph facts, without inferring multiplicity or a ground state."""
+    from rdkit import Chem
+    from rdkit.Chem import rdMolDescriptors
+    if not isinstance(smiles, str) or not 0 < len(smiles) <= 2048:
+        raise ValueError("bounded isomeric SMILES missing")
+    molecule = Chem.MolFromSmiles(smiles)
+    if molecule is None or len(Chem.GetMolFrags(molecule)) != 1 or molecule.GetNumAtoms() > 128:
+        raise ValueError("identity needs one valid covalent graph of at most 128 non-explicit-H atoms")
+    if not molecule.GetNumAtoms() or any(not 1 <= atom.GetAtomicNum() <= 118 for atom in molecule.GetAtoms()):
+        raise ValueError("identity graph requires concrete chemical elements")
+    explicit = Chem.AddHs(molecule)
+    if explicit.GetNumAtoms() > 384:
+        raise ValueError("explicit hydrogen graph exceeds the preparation bound")
+    stereo = Chem.FindPotentialStereo(molecule)
+    return {"elements": [atom.GetSymbol() for atom in explicit.GetAtoms()],
+            "bonds": [[bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()] for bond in explicit.GetBonds()],
+            "formula": rdMolDescriptors.CalcMolFormula(molecule),
+            "formal_charge": sum(atom.GetFormalCharge() for atom in molecule.GetAtoms()),
+            "radical_electrons": sum(atom.GetNumRadicalElectrons() for atom in molecule.GetAtoms()),
+            "stereochemistry": [str(item.type) + ":" + str(item.centeredOn) for item in stereo],
+            "unspecified_stereochemistry": [str(item.type) + ":" + str(item.centeredOn) for item in stereo
+                if item.specified != Chem.StereoSpecified.Specified],
+            "isomeric_smiles": Chem.MolToSmiles(molecule, isomericSmiles=True),
+            "isotopes": [[atom.GetIdx(), atom.GetIsotope()] for atom in explicit.GetAtoms() if atom.GetIsotope()]}
+
+
+def validate_pubchem_response(raw, canonical, *, general=False):
     if len(raw) > MAX_RESPONSE_BYTES:
         raise ValueError("PubChem response exceeds bounded size")
     payload = json.loads(raw)
@@ -270,6 +328,20 @@ def validate_pubchem_response(raw, canonical):
         raise ValueError("PubChem candidate property object is malformed")
     if type(record.get("CID")) is not int or record["CID"] <= 0:
         raise ValueError("PubChem CID is missing or invalid")
+    if general:
+        metadata = {name: record.get(name) for name in PROPERTIES if name not in {"SMILES", "MolecularFormula"}}
+        if (any(type(value) is not int for value in metadata.values())
+                or any(value < 0 for key, value in metadata.items() if key != "Charge")
+                or metadata["CovalentUnitCount"] != 1):
+            raise ValueError("PubChem graph/state/component metadata is incomplete")
+        graph = _general_graph(record.get("SMILES"))
+        if record.get("MolecularFormula") != graph["formula"] or record["Charge"] != graph["formal_charge"]:
+            raise ValueError("PubChem formula or formal charge differs from the returned complete graph")
+        return {"schema": GENERAL_IDENTITY_RULE, "canonical_name": canonical, "cid": record["CID"],
+            "smiles": record["SMILES"], "formula": record["MolecularFormula"], "charge": record["Charge"],
+            "elements": graph["elements"], "graph": graph, "metadata": metadata,
+            "limitations": ["Name lookup does not establish a unique experimental specimen or electronic ground state.",
+                             "Unspecified stereochemistry is retained and blocks initial-geometry preparation."]}
     expected = {"Charge": 0, "IsotopeAtomCount": 0, "AtomStereoCount": 0,
                 "BondStereoCount": 0, "CovalentUnitCount": 1}
     if any(type(record.get(name)) is not int or record[name] != value for name, value in expected.items()):
@@ -282,17 +354,58 @@ def validate_pubchem_response(raw, canonical):
             "elements": elements, "metadata": {key: record[key] for key in expected}}
 
 
-def _http_get(url, *, send_guard=None):
-    """One exact official endpoint, no redirects/proxies/retries or user payload."""
-    if url not in {PUBCHEM_ROOT + name + "/property/" + ",".join(PROPERTIES) + "/JSON"
-                   for name in IDENTITY_PROFILE}:
+def _wikidata_search_url(name):
+    return WIKIDATA_ROOT + "?" + urlencode({"action": "wbsearchentities", "search": name, "language": "zh",
+                                           "type": "item", "limit": "5", "format": "json"})
+
+
+def _wikidata_entities_url(identifiers):
+    return WIKIDATA_ROOT + "?" + urlencode({"action": "wbgetentities", "ids": "|".join(identifiers),
+        "props": "labels|aliases|claims", "languages": "zh|zh-hans|zh-hant|en", "format": "json"})
+
+
+def _wikidata_endpoint(url):
+    parsed = urlsplit(url)
+    if parsed.scheme + "://" + parsed.netloc + parsed.path != WIKIDATA_ROOT or parsed.fragment:
+        return False
+    query = parse_qs(parsed.query, strict_parsing=True)
+    if any(len(values) != 1 for values in query.values()):
+        return False
+    values = {key: values[0] for key, values in query.items()}
+    if values.get("action") == "wbsearchentities":
+        name = values.get("search", "")
+        return 0 < len(name) <= 100 and not any(ord(char) < 32 for char in name) and url == _wikidata_search_url(name)
+    if values.get("action") == "wbgetentities":
+        ids = values.get("ids", "").split("|")
+        return (1 <= len(ids) <= 5 and len(set(ids)) == len(ids)
+                and all(re.fullmatch(r"Q[1-9][0-9]{0,11}", item) for item in ids)
+                and url == _wikidata_entities_url(ids))
+    return False
+
+
+def _http_get(url, *, send_guard=None, deadline=None):
+    """Fixed public identity endpoints; no redirects, proxies or retries."""
+    suffix = "/property/" + ",".join(PROPERTIES) + "/JSON"
+    parsed = urlsplit(url)
+    encoded_name = url[len(PUBCHEM_ROOT):-len(suffix)] if url.startswith(PUBCHEM_ROOT) and url.endswith(suffix) else ""
+    name = unquote(encoded_name)
+    synonyms = re.fullmatch(r"https://pubchem\.ncbi\.nlm\.nih\.gov/rest/pug/compound/cid/[1-9][0-9]{0,11}/synonyms/JSON", url)
+    wikidata = _wikidata_endpoint(url)
+    if not synonyms and not wikidata and (parsed.scheme != "https" or parsed.netloc != "pubchem.ncbi.nlm.nih.gov"
+            or parsed.query or parsed.fragment or not 0 < len(name) <= 100
+            or any(ord(char) < 32 for char in name) or quote(name, safe="") != encoded_name):
         raise ValueError("unregistered identity query endpoint")
+    response_limit = MAX_SYNONYM_BYTES if synonyms or wikidata else MAX_RESPONSE_BYTES
     started = time.monotonic()
+    remaining = min(20, deadline - started) if deadline is not None else 20
+    if remaining <= 0:
+        raise ValueError("identity retrieval deadline exhausted before HTTP")
     data = bytearray()
     status = 0
     try:
-        with httpx.Client(timeout=httpx.Timeout(10, connect=5), follow_redirects=False, trust_env=False) as client:
-            manager = client.stream("GET", url, headers={"Accept": "application/json", "Accept-Encoding": "identity"})
+        with httpx.Client(timeout=httpx.Timeout(min(10, remaining), connect=min(5, remaining)), follow_redirects=False, trust_env=False) as client:
+            manager = client.stream("GET", url, headers={"Accept": "application/json", "Accept-Encoding": "identity",
+                                                        "User-Agent": IDENTITY_USER_AGENT})
             # The control generation is held stable through request submission,
             # then released for messages/cancel while the bounded body arrives.
             with send_guard or nullcontext():
@@ -301,11 +414,12 @@ def _http_get(url, *, send_guard=None):
                 status = response.status_code
                 # Preserve actual response bytes, never an unbounded decompressor.
                 for chunk in response.iter_raw():
-                    available = MAX_RESPONSE_BYTES - len(data)
+                    available = response_limit - len(data)
                     data.extend(chunk[:available])
-                    if len(chunk) > available or time.monotonic() - started > 20:
+                    if len(chunk) > available or time.monotonic() - started > remaining:
                         return status, bytes(data), False
-                return status, bytes(data), response.headers.get("content-encoding", "identity") == "identity"
+                return status, bytes(data), (response.headers.get("content-encoding", "identity") == "identity"
+                                             and time.monotonic() - started <= remaining)
             finally:
                 manager.__exit__(*sys.exc_info())
     except httpx.HTTPError:
@@ -319,19 +433,79 @@ def _send_guard(store, run):
         yield
 
 
-def _paced_query(store, url, *, run=None):
+def _paced_query(store, url, *, run=None, deadline=None):
     from orca_agent.store import atomic_write, controlled_path
     lock = store._lock(controlled_path(store.environment_root, "identity-query.lock"))
-    with lock.acquire(timeout=30):
+    timeout = min(30, deadline - time.monotonic()) if deadline is not None else 30
+    if timeout <= 0:
+        raise ValueError("identity retrieval deadline exhausted before pacing")
+    with lock.acquire(timeout=timeout):
         pace = controlled_path(store.environment_root, "identity-query-time.json")
         previous = _read_json(pace).get("started_at", 0) if pace.exists() else 0
         delay = previous + 1 - time.time()
         if delay > 2:
             raise ValueError("identity query clock moved backwards; quota cannot be assumed free")
         if delay > 0:
+            if deadline is not None and time.monotonic() + delay >= deadline:
+                raise ValueError("identity retrieval deadline exhausted during pacing")
             time.sleep(delay)
         atomic_write(pace, _json_bytes({"started_at": time.time()}))
-        return _http_get(url, send_guard=_send_guard(store, run)) if run is not None else _http_get(url)
+        options = {"deadline": deadline} if deadline is not None else {}
+        if run is not None:
+            options["send_guard"] = _send_guard(store, run)
+        return _http_get(url, **options)
+
+
+def validate_wikidata_alias(search_raw, entities_raw, original_name, cid):
+    """One exact Chinese label/alias plus one unambiguous P662 cross-reference."""
+    if len(search_raw) > MAX_SYNONYM_BYTES or len(entities_raw) > MAX_SYNONYM_BYTES:
+        raise ValueError("Wikidata identity evidence exceeds its byte bound")
+    search, payload = json.loads(search_raw), json.loads(entities_raw)
+    candidates = search.get("search", []) if isinstance(search, dict) else []
+    if not isinstance(candidates, list) or not 1 <= len(candidates) <= 5:
+        raise ValueError("Wikidata name search lacks bounded candidate entities")
+    ids = [item.get("id") for item in candidates if isinstance(item, dict)]
+    entities = payload.get("entities", {}) if isinstance(payload, dict) else {}
+    if (len(ids) != len(candidates) or len(set(ids)) != len(ids)
+            or any(not isinstance(item, str) or not re.fullmatch(r"Q[1-9][0-9]{0,11}", item) for item in ids)
+            or not isinstance(entities, dict) or set(entities) != set(ids)):
+        raise ValueError("Wikidata entity receipt differs from its exact search selection")
+    matches = []
+    for identifier in ids:
+        entity = entities[identifier]
+        if not isinstance(entity, dict) or entity.get("id") != identifier or entity.get("type") != "item":
+            continue
+        labels, aliases, claims = entity.get("labels", {}), entity.get("aliases", {}), entity.get("claims", {})
+        if not all(isinstance(value, dict) for value in (labels, aliases, claims)):
+            continue
+        names = []
+        for language in ("zh", "zh-hans", "zh-hant"):
+            label = labels.get(language, {})
+            names.extend([label.get("value")] if isinstance(label, dict) else [])
+            entries = aliases.get(language, [])
+            if isinstance(entries, list):
+                names.extend(item.get("value") for item in entries if isinstance(item, dict))
+        if original_name not in names:
+            continue
+        values = set()
+        statements = claims.get("P662", [])
+        for statement in statements if isinstance(statements, list) else []:
+            if not isinstance(statement, dict) or statement.get("rank") == "deprecated":
+                continue
+            snak = statement.get("mainsnak", {})
+            if not isinstance(snak, dict) or snak.get("snaktype") != "value" or snak.get("property") != "P662":
+                continue
+            data = snak.get("datavalue", {})
+            value = data.get("value") if isinstance(data, dict) else None
+            if isinstance(value, str) and re.fullmatch(r"[1-9][0-9]{0,11}", value):
+                values.add(value)
+        if values:
+            matches.append((identifier, values, entity.get("lastrevid")))
+    if len(matches) != 1 or matches[0][1] != {str(cid)}:
+        raise ValueError("original name lacks one unambiguous matching PubChem cross-reference")
+    return {"entity_id": matches[0][0], "entity_revision": matches[0][2], "original_name": original_name,
+            "property": "P662", "pubchem_cid": cid, "source_kind": "community_maintained_cross_reference",
+            "limitation": "A sourced name mapping, not an experimental specimen or electronic-state guarantee."}
 
 
 def _failure(run, call, reason, artifacts=(), *, status="failed", **facts):
@@ -345,23 +519,83 @@ def resolve(store, run, call):
     if recovered := _begin(store, run, call):
         return recovered
     canonical = requirement["canonical_name"]
-    url = PUBCHEM_ROOT + canonical + "/property/" + ",".join(PROPERTIES) + "/JSON"
+    url = PUBCHEM_ROOT + quote(canonical, safe="") + "/property/" + ",".join(PROPERTIES) + "/JSON"
+    rule = GENERAL_IDENTITY_RULE if requirement["general_identity"] else IDENTITY_RULE
     artifacts = []
+    deadline = min(time.monotonic() + IDENTITY_TIMEOUT_SECONDS,
+                   time.monotonic() + max(0, (run.deadline - utc_now()).total_seconds()))
     source = {**requirement, "url": url, "requested_at": utc_now().isoformat(),
-              "normalization_rule": IDENTITY_RULE, "http_requests": 1}
+              "normalization_rule": rule, "http_requests": 0, "timeout_seconds": IDENTITY_TIMEOUT_SECONDS}
     try:
-        status, raw, complete = _paced_query(store, url, run=run)
+        status, raw, complete = _paced_query(store, url, run=run, deadline=deadline)
+        source["http_requests"] += 1
         raw_artifact = _artifact(store, run, call, "pubchem-response.json", "identity_raw_response", raw)
         artifacts.append(raw_artifact.id)
         source.update(http_status=status, response_complete=complete, raw_sha256=raw_artifact.sha256,
                       raw_artifact_id=raw_artifact.id, fetched_at=utc_now().isoformat() if status else None)
         if status != 200 or not complete:
             return _finish(store, run, call, _failure(run, call, "pubchem_http_or_response_bound", artifacts, **source))
-        document = {**validate_pubchem_response(raw, canonical), "query": source}
+        document = {**validate_pubchem_response(raw, canonical, general=requirement["general_identity"]), "query": source}
+        if requirement["general_identity"]:
+            requested_name = requirement["requested_identity"]["requested_names"][0]
+            document["alias_verified"] = canonical == requested_name
+            if not document["alias_verified"]:
+                alias_url = ("https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/"
+                             + str(document["cid"]) + "/synonyms/JSON")
+                alias_status, alias_raw, alias_complete = _paced_query(store, alias_url, run=run, deadline=deadline)
+                source["http_requests"] += 1
+                alias_artifact = _artifact(store, run, call, "pubchem-synonyms.json", "identity_raw_response", alias_raw)
+                artifacts.append(alias_artifact.id)
+                alias_evidence = {"url": alias_url, "http_status": alias_status, "complete": alias_complete,
+                                  "artifact_id": alias_artifact.id, "sha256": alias_artifact.sha256}
+                source["alias_evidence"] = alias_evidence
+                if alias_status == 200 and alias_complete:
+                    alias_payload = json.loads(alias_raw)
+                    listing = alias_payload.get("InformationList", {}) if isinstance(alias_payload, dict) else {}
+                    entries = listing.get("Information", []) if isinstance(listing, dict) else []
+                    if (isinstance(entries, list) and len(entries) == 1 and isinstance(entries[0], dict)
+                            and entries[0].get("CID") == document["cid"]):
+                        synonyms = entries[0].get("Synonym", [])
+                        if isinstance(synonyms, list) and len(synonyms) <= 32768:
+                            document["alias_verified"] = any(isinstance(name, str)
+                                and name.casefold() == requested_name.casefold() for name in synonyms)
+                document["alias_evidence"] = alias_evidence
+                if not document["alias_verified"]:
+                    cross_evidence = []
+                    search_url = _wikidata_search_url(requested_name)
+                    search_status, search_raw, search_complete = _paced_query(store, search_url, run=run, deadline=deadline)
+                    source["http_requests"] += 1
+                    search_artifact = _artifact(store, run, call, "wikidata-search.json", "identity_raw_response", search_raw)
+                    artifacts.append(search_artifact.id)
+                    cross_evidence.append({"url": search_url, "status": search_status, "complete": search_complete,
+                                           "artifact_id": search_artifact.id, "sha256": search_artifact.sha256})
+                    source["cross_reference_evidence"] = cross_evidence
+                    if search_status == 200 and search_complete:
+                        search_payload = json.loads(search_raw)
+                        candidates = search_payload.get("search", []) if isinstance(search_payload, dict) else []
+                        ids = [item.get("id") for item in candidates if isinstance(item, dict)] if isinstance(candidates, list) else []
+                        if (1 <= len(ids) <= 5 and len(set(ids)) == len(ids)
+                                and all(isinstance(item, str) and re.fullmatch(r"Q[1-9][0-9]{0,11}", item) for item in ids)):
+                            entities_url = _wikidata_entities_url(ids)
+                            entity_status, entity_raw, entity_complete = _paced_query(store, entities_url, run=run, deadline=deadline)
+                            source["http_requests"] += 1
+                            entity_artifact = _artifact(store, run, call, "wikidata-entities.json", "identity_raw_response", entity_raw)
+                            artifacts.append(entity_artifact.id)
+                            cross_evidence.append({"url": entities_url, "status": entity_status, "complete": entity_complete,
+                                "artifact_id": entity_artifact.id, "sha256": entity_artifact.sha256})
+                            if entity_status == 200 and entity_complete:
+                                document["name_cross_reference"] = validate_wikidata_alias(
+                                    search_raw, entity_raw, requested_name, document["cid"])
+                                document["alias_verified"] = True
+                                document["limitations"].append(document["name_cross_reference"]["limitation"])
+                    if not document["alias_verified"]:
+                        document["limitations"].append("The inferred lookup alias was not confirmed against the original user name.")
         artifact = _artifact(store, run, call, "identity.json", "resolved_identity", _json_bytes(document))
         artifacts.append(artifact.id)
-        check = {"name": "supported_identity_graph", "status": "passed", "rule_version": IDENTITY_RULE,
-                 "detail": "Name, complete graph, neutral state, one component and no isotope/stereo labels checked.",
+        check = {"name": "supported_identity_graph", "status": "passed", "rule_version": rule,
+                 "detail": ("One returned name candidate and internally consistent graph/formula/charge; ambiguity retained."
+                            if requirement["general_identity"] else
+                            "Name, complete graph, neutral state, one component and no isotope/stereo labels checked."),
                  "source": source}
         data = {"operation_status": "completed", "artifact_ids": artifacts,
                 "qualified_outputs": {"resolved_identity": {"artifact_id": artifact.id,
@@ -372,16 +606,45 @@ def resolve(store, run, call):
         from orca_agent.store import ControlChanged
         cancelled = isinstance(exc, ControlChanged)
         if cancelled:
-            source.update(not_started=True, http_requests=0)
+            source.update(not_started=source["http_requests"] == 0)
         return _finish(store, run, call, _failure(run, call, type(exc).__name__, artifacts,
                                                  status="cancelled" if cancelled else "failed", **source))
 
 
-def validate_prepared_geometry(xyz, canonical, expected_elements):
+def validate_prepared_geometry(xyz, canonical, expected_elements, *, graph=None):
     from orca_agent.models import CalculationParameters
     from orca_agent.tools.registry import validate_geometry
     if len(xyz.encode("utf-8")) > MAX_GEOMETRY_BYTES:
         raise ValueError("prepared geometry exceeds size bound")
+    if graph is not None:
+        from rdkit import Chem
+        lines = xyz.splitlines()
+        # OPI's XYZ serializer adds a terminal blank line. Ignore only trailing
+        # whitespace for validation; preserve the generated bytes and hash.
+        while lines and not lines[-1].strip():
+            lines.pop()
+        if len(lines) != len(expected_elements) + 2 or lines[0].strip() != str(len(expected_elements)):
+            raise ValueError("generated XYZ count or row shape differs")
+        atoms = []
+        for line in lines[2:]:
+            fields = line.split()
+            if len(fields) != 4:
+                raise ValueError("generated XYZ atom needs three coordinates")
+            atom = [fields[0], *map(float, fields[1:])]
+            if any(not math.isfinite(value) for value in atom[1:]):
+                raise ValueError("generated XYZ coordinates must be finite")
+            atoms.append(atom)
+        if [atom[0] for atom in atoms] != expected_elements:
+            raise ValueError("generated atom order/composition differs from the confirmed explicit-H graph")
+        table = Chem.GetPeriodicTable()
+        for first, second in graph["bonds"]:
+            radius = table.GetRcovalent(atoms[first][0]) + table.GetRcovalent(atoms[second][0])
+            if not 0.45 * radius <= math.dist(atoms[first][1:], atoms[second][1:]) <= 1.8 * radius:
+                raise ValueError("generated geometry has a graph bond outside bounded covalent distances")
+        if any(math.dist(atom[1:], other[1:]) < 0.4 for index, atom in enumerate(atoms) for other in atoms[:index]):
+            raise ValueError("generated geometry has an abnormal short distance")
+        return {"elements": expected_elements, "atom_mapping": list(range(len(atoms))), "unit": "angstrom",
+                "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified"}
     atoms = validate_geometry(xyz, CalculationParameters())
     if [atom[0] for atom in atoms] != expected_elements:
         raise ValueError("generated atom order/composition differs from the confirmed explicit-H graph")
@@ -403,7 +666,8 @@ def _generate(store, run, call, document, params):
     directory = _call_directory(store, run, call)
     worker_input = directory / "worker-input.json"
     _publish(worker_input, _json_bytes({"smiles": document["smiles"], "canonical_name": document["canonical_name"],
-                                      "charge": params.charge, "multiplicity": params.multiplicity}))
+                                      "charge": params.charge, "multiplicity": params.multiplicity,
+                                      "identity_rule": document["schema"]}))
     environment = {key: value for key, value in os.environ.items()
                    if key.upper() in {"SYSTEMROOT", "WINDIR", "TEMP", "TMP", "PATH"}}
     environment.update(OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1")
@@ -496,9 +760,11 @@ def prepare(store, run, call):
             raise ValueError("worker geometry hash mismatch")
         if worker.get("versions") != source["versions"]:
             raise ValueError("worker dependency versions differ")
-        geometry = validate_prepared_geometry(xyz, requirement["canonical_name"], document["elements"])
+        geometry = validate_prepared_geometry(xyz, requirement["canonical_name"], document["elements"],
+                                             graph=document.get("graph"))
         source.update(**geometry, sha256=artifact.sha256)
-        check = {"name": "initial_geometry_identity", "status": "passed", "rule_version": PREPARATION_RULE,
+        rule = GENERAL_PREPARATION_RULE if requirement["general_identity"] else PREPARATION_RULE
+        check = {"name": "initial_geometry_identity", "status": "passed", "rule_version": rule,
                  "detail": "Finite angstrom coordinates preserve supported identity and explicit hydrogen atom mapping; not optimized.",
                  "source": source}
         data = {"operation_status": "completed", "artifact_ids": artifacts,
@@ -514,18 +780,24 @@ def prepare(store, run, call):
 
 def _worker(path):
     data = _read_json(Path(path), 4096)
-    params = PrepareParameters(system_id=data["canonical_name"], charge=data["charge"], multiplicity=data["multiplicity"])
+    params = PrepareParameters(system_id="worker", charge=data["charge"], multiplicity=data["multiplicity"])
     if params.charge != 0 or params.multiplicity != 1:
         raise ValueError("worker requires neutral singlet")
     versions = _versions()
-    elements = _validate_smiles(data["smiles"], data["canonical_name"])
+    graph = _general_graph(data["smiles"]) if data.get("identity_rule") == GENERAL_IDENTITY_RULE else None
+    elements = graph["elements"] if graph else _validate_smiles(data["smiles"], data["canonical_name"])
     from opi.input.structures import Structure
     structure = Structure.from_smiles(data["smiles"], charge=params.charge, multiplicity=params.multiplicity)
     xyz = structure.to_xyz_block()
-    validate_prepared_geometry(xyz, data["canonical_name"], elements)
+    raw = xyz.encode("utf-8")
+    if len(raw) > MAX_GEOMETRY_BYTES:
+        raise ValueError("prepared geometry exceeds size bound")
     directory = Path(path).parent
-    _publish(directory / "prepared.xyz", xyz.encode("utf-8"))
-    _publish(directory / "worker-result.json", _json_bytes({"sha256": hashlib.sha256(xyz.encode("utf-8")).hexdigest(),
+    # Retain bounded raw generation evidence even when validation rejects it.
+    # Only successful validation publishes the worker receipt used for input qualification.
+    _publish(directory / "prepared.xyz", raw)
+    validate_prepared_geometry(xyz, data["canonical_name"], elements, graph=graph)
+    _publish(directory / "worker-result.json", _json_bytes({"sha256": hashlib.sha256(raw).hexdigest(),
                                                            "versions": versions}))
 
 

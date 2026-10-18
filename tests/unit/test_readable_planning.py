@@ -59,5 +59,11 @@ def test_intent_cannot_supply_execution_identity_or_override_known_conditions(tm
     store, run = intake(tmp_path)
     values = proposal()
     values["steps"][-1]["parameters"] = {"charge": 1}
-    with pytest.raises(ValueError):
-        materialize_plan(store, run, values)
+    candidate = materialize_plan(store, run, values)
+    # General parameter types can express charge 1. The current Request's
+    # confirmed charge is enforced when the candidate Plan is activated.
+    assert candidate.steps[-1].parameters.charge == 1
+    with pytest.raises(ValueError, match="step changes request condition"):
+        candidate.validate_request(store.load_request(run))
+    assert store.load_plan(run) is None
+    assert not run.attempts and not run.calls

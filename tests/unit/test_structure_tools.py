@@ -340,7 +340,7 @@ def test_managed_generation_records_handle_and_checks_control_before_resume(tmp_
         assert (directory / "worker-handle.json").exists()
         return {"state": "completed"}
     monkeypatch.setattr(local, "run_managed", managed)
-    structure._generate(store, run, call, {"smiles": "O", "canonical_name": "water"},
+    structure._generate(store, run, call, {"smiles": "O", "canonical_name": "water", "schema": structure.IDENTITY_RULE},
                          structure.PrepareParameters.model_validate(call.parameters))
     assert [name for name, _ in events] == ["control", "lease", "control"]
 
@@ -476,6 +476,6 @@ def test_user_message_before_managed_worker_proves_no_start(tmp_path, monkeypatc
     call = tool_call(store, run, "structure.prepare", {"system_id": "water", "charge": 0, "multiplicity": 1})
     store.enqueue_message(run.id, "Do not generate geometry")
     monkeypatch.setattr(local, "run_managed", lambda *_, **__: pytest.fail("unexpected managed generation"))
-    outcome = structure._generate(store, run, call, {"smiles": "O", "canonical_name": "water"},
+    outcome = structure._generate(store, run, call, {"smiles": "O", "canonical_name": "water", "schema": structure.IDENTITY_RULE},
                                    structure.PrepareParameters.model_validate(call.parameters))
     assert outcome["state"] == "cancelled" and outcome["not_started"]

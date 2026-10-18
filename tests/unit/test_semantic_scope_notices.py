@@ -61,9 +61,9 @@ def test_visible_scope_is_registry_profile_data_not_permission_or_registered_sys
     data = payload(prepared)
     visible = data["ACTION_PARAMETERS"]["normalize_request"]
     assert visible["science_scope"] == scope
-    assert "not permission/defaults" in visible["instruction"]
+    assert "science_scope describes legacy qualified checks, not general execution or permission/defaults" in visible["instruction"]
     assert "notices" in prepared.body()["messages"][0]["content"]
-    assert "critical gaps blocking the requested scope" in prepared.body()["messages"][0]["content"]
+    assert "ask only critical gaps" in prepared.body()["messages"][0]["content"]
     # Intake uses a hash/count reference for access IDs, never new authority.
     visible_permission = copy.deepcopy(data["AUTHORITY"]["permission"])
     reference = visible_permission.pop("access_bindings")

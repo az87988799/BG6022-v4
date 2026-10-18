@@ -3,6 +3,20 @@
 from orca_agent.models import fingerprint
 
 
+def input_check_version(tool, request, system_id):
+    system = next((system for system in request.systems if system.id == system_id), None)
+    if system and system.identity.get("contract") == "general-identity-2":
+        return tool.check_contract.get("general_check_version", tool.check_version)
+    return tool.check_version
+
+
+def required_input_rule(tool, request, system_id, port):
+    system = next((system for system in request.systems if system.id == system_id), None)
+    if system and system.identity.get("contract") == "general-identity-2":
+        return tool.check_contract.get("general_input_checks", {}).get(port, tool.required_input_checks.get(port))
+    return tool.required_input_checks.get(port)
+
+
 def input_purpose(request, system_id):
     from orca_agent.applicability import effective_conditions
 
@@ -42,9 +56,10 @@ def validate_input_result(store, run, request, result, port, *, require_bound=Tr
     if call.consumption.get("_input_purpose") != purpose:
         raise ValueError("input_result_purpose_changed")
     output = result.qualified_outputs.get(port)
+    rule = input_check_version(tool, request, call.parameters["system_id"])
     required_names = set(tool.check_contract.get("required_checks", {}).get(port, []))
     if (not output or not output.artifact_id or output.checks != result.checks.get(port)
-            or any(c.status != "passed" or c.rule_version != tool.check_version for c in output.checks)
+            or any(c.status != "passed" or c.rule_version != rule for c in output.checks)
             or not required_names.issubset({c.name for c in output.checks})):
         raise ValueError("input_result_required_checks_missing")
     artifact = store.load_artifact(output.artifact_id)
@@ -70,7 +85,7 @@ def validate_input_result(store, run, request, result, port, *, require_bound=Tr
     return {"request_version": request.version, "system_id": call.parameters["system_id"],
             "purpose_fingerprint": fingerprint(purpose), "call_id": call.id,
             "result_id": result.id, "artifact_id": artifact.id, "sha256": artifact.sha256,
-            "rule_version": tool.check_version, "port": port}
+            "rule_version": rule, "port": port}
 
 
 def bind_input_result(store, run, result):

@@ -20,7 +20,7 @@ from orca_agent.models import (
     require_electronic_integer,
 )
 from orca_agent.store import StoreError, _is_link, sha256_file
-from orca_agent.tools.registry import get_tool
+from orca_agent.tools.registry import catalog, get_tool
 
 _PHYSICAL = ("method", "basis", "charge", "multiplicity")
 _SCIENTIFIC_RULES = {"orca-hf-1", "orca-hf-2"}
@@ -46,8 +46,11 @@ def _missing_information(request):
     """Maintain only program-generated missing markers; preserve user uncertainty."""
     request = request.model_copy(deep=True)
     systems = {system.id: system for system in request.systems}
+    input_ports = {port for tool in catalog() if "write_input_artifact" in tool["effects"]
+                   for port in tool["output_ports"]}
     for goal in request.goals:
-        goal.unresolved = [item for item in goal.unresolved if not item.startswith(("missing:", "applicability:"))]
+        if goal.evidence_contract_version != "generic-observation-1" and goal.port not in input_ports:
+            goal.unresolved = [item for item in goal.unresolved if not item.startswith(("missing:", "applicability:"))]
         if goal.minimum_check_version == "unresolved-1":
             goal.unresolved.append("missing:goal_definition")
         if goal.port in {"sampling", "sampling_check"} and not (
@@ -85,11 +88,18 @@ def _missing_information(request):
                 if value is None:
                     goal.unresolved.append(f"missing:{name}{suffix}")
         goal.unresolved = list(dict.fromkeys(goal.unresolved))
-        from orca_agent.applicability import effective_conditions
+        from orca_agent.applicability import PROFILE, canonical_condition, effective_conditions
         for system_id in selected:
             assessed = effective_conditions(request, goal, system_id)
             goal.unresolved.extend("applicability:" + reason for reason in assessed["reasons"]
                                    if reason.startswith(("unsupported_condition:", "conflicting_")))
+            # General condition representation does not broaden the historical
+            # HF checker's coverage. Keep its missing qualification visible;
+            # generic observation goals never enter this legacy-only branch.
+            goal.unresolved.extend("applicability:unsupported_condition:" + name
+                for name, expected in PROFILE.items()
+                if assessed["conditions"].get(name) is not None
+                and canonical_condition(name, assessed["conditions"][name]) != expected)
         goal.unresolved = list(dict.fromkeys(goal.unresolved))
     request.normalization_status = ("clarification" if request.unresolved
                                     or any(goal.unresolved for goal in request.goals) else "normalized")
@@ -343,9 +353,11 @@ def bind_text_identity(request, run, pending, candidate):
     This only fulfils the input intent of the new text entry. Ordinary bundles
     and old Runs cannot gain geometry acquisition by mentioning a molecule.
     """
-    from orca_agent.semantic import _mentions
+    from orca_agent.semantic import _mentions, bind_general_text_identity
     from orca_agent.tools.registry import SCIENCE_IDENTITIES
 
+    if getattr(candidate, "identities", None):
+        return bind_general_text_identity(request, run, pending, candidate)
     if run.science_baseline_policy != "first_science_plan" or request.systems or not pending:
         return request
     values = candidate.model_dump() if hasattr(candidate, "model_dump") else candidate

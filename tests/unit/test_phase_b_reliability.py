@@ -60,6 +60,11 @@ class ScriptedHTTP:
             proposal = {**data["AUTHORITY"]["basis"],
                         "related_results": data["AUTHORITY"]["related_results"],
                         "reason": "Offline protocol fixture; not real model evidence.", **values}
+            if data["AUTHORITY"].get("response_contract") in {"decision-intent-1", "decision-intent-2"}:
+                # Match the advertised wire protocol for synthetic replies;
+                # explicitly supplied adversarial envelope fields stay intact.
+                proposal = {key: value for key, value in proposal.items()
+                            if key in {"action", "parameters", "reason"} or key in values}
             reply = ModelReply(request_hash=prepared.request_hash, proposal=proposal,
                                usage=ModelUsage(50, 25, 75), response_hash=fingerprint(proposal),
                                response_model="offline-fake", http_status=200)

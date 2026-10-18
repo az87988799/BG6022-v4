@@ -34,6 +34,7 @@ from orca_agent.tools.structure import (
     PrepareParameters,
     ResolveParameters,
 )
+from orca_agent.tools.workspace import WriteParameters
 from orca_agent.versions import CURRENT_CHECK_VERSION
 
 SCIENCE_COMPOSITIONS = {"H2O": {"H": 2, "O": 1}, "CH4": {"C": 1, "H": 4}}
@@ -96,6 +97,15 @@ def _register(parameters: type[Record], **metadata: Any) -> _Registration:
 
 
 TOOLS: dict[str, _Registration] = {
+    "workspace.write": _register(
+        WriteParameters, name="workspace.write",
+        description="Save one bounded UTF-8 task file as an immutable Artifact; returned ID/hash can bind a later code/input Step. No execution.",
+        input_roles=[], output_ports=[], observation_outputs=["written_artifact"],
+        effects=["write_artifact"], max_cores=0, max_memory_mb=0,
+        check_version="workspace-write-1", usage_counter="analysis_executions",
+        check_contract={"code_authoring": True},
+        implementation="orca_agent.tools.workspace.write",
+    ),
     "python.execute": _register(
         CodeExecutionParameters, name="python.execute",
         description="Execute a pinned Python Artifact in the frozen managed task boundary, with one bounded SDK ORCA call.",
@@ -104,6 +114,7 @@ TOOLS: dict[str, _Registration] = {
         effects=["read_registered_artifact", "execute_python", "write_artifact"],
         check_version="generic-observation-1",
         check_contract={"execution_available": True, "generic_observations": True,
+                        "context_dependencies": ["workspace.write", "knowledge.search", "evidence.text", "evidence.search"],
                         **_LOCAL_ORCA_EXECUTION,
                         "collector": "orca_agent.tools.managed.collect_result"},
         implementation="orca_agent.tools.managed.execute",
@@ -116,6 +127,7 @@ TOOLS: dict[str, _Registration] = {
         effects=["read_registered_artifact", "execute_orca", "write_artifact"],
         check_version="generic-observation-1",
         check_contract={"execution_available": True, "generic_observations": True,
+                        "context_dependencies": ["workspace.write", "knowledge.search", "evidence.text", "evidence.search"],
                         **_LOCAL_ORCA_EXECUTION,
                         "collector": "orca_agent.tools.managed.collect_result"},
         implementation="orca_agent.tools.managed.execute",
@@ -168,7 +180,7 @@ TOOLS: dict[str, _Registration] = {
 
 
 TOOLS["knowledge.search"] = _register(
-    SearchParameters, name="knowledge.search", description="Search one versioned official ORCA/OPI document using English terms; retrieves bounded source excerpts. No science execution.",
+    SearchParameters, name="knowledge.search", description="Search versioned ORCA/OPI/RDKit documents and three local input/method/diagnosis guides using English terms; retrieves bounded source excerpts. No science execution.",
     input_roles=[], output_ports=[], observation_outputs=["document_excerpt"],
     effects=["query_external_document"], max_cores=0, max_memory_mb=0,
     check_version="knowledge-answer-1", check_contract={"immediate": True},
@@ -230,7 +242,7 @@ for _name, _schema, _port, _version, _effect, _counter, _check in (
 ):
     TOOLS[_name] = _register(
         _schema, name=_name,
-        description=("Resolve one named water/methane identity using bounded official PubChem evidence."
+        description=("Resolve one frozen molecular name using bounded official PubChem evidence; preserve identity ambiguities."
                      if _effect == "query_external_identity" else
                      "Prepare one initial XYZ with locked OPI from identity input; not optimized geometry."),
         input_roles=["requested_identity"] if _effect == "query_external_identity" else ["identity"],
@@ -240,10 +252,15 @@ for _name, _schema, _port, _version, _effect, _counter, _check in (
         check_version=_version, required_input_checks=({"resolved_identity": IDENTITY_RULE}
                                                       if _effect == "prepare_geometry" else {}),
         check_contract={"required_checks": {_port: [_check]},
+                        "general_check_version": ("structure-identity-2" if _effect == "query_external_identity"
+                                                  else "structure-prepare-2"),
+                        "general_input_checks": ({"resolved_identity": "structure-identity-2"}
+                                                 if _effect == "prepare_geometry" else {}),
                         **({"input_ports": {"identity": "resolved_identity"}}
                            if _effect == "prepare_geometry" else {}),
-                        "max_seconds": PREPARE_TIMEOUT_SECONDS if _effect == "prepare_geometry" else 62,
-                        "max_output_bytes": 65536 if _effect == "prepare_geometry" else 262144},
+                        "max_seconds": PREPARE_TIMEOUT_SECONDS if _effect == "prepare_geometry" else 120,
+                        "max_http_requests": 0 if _effect == "prepare_geometry" else 4,
+                        "max_output_bytes": 65536 if _effect == "prepare_geometry" else 3473408},
         implementation="orca_agent.tools.structure." + ("resolve" if _effect == "query_external_identity" else "prepare"),
         preflight="orca_agent.tools.structure.validate_call_inputs",
         recovery="orca_agent.tools.structure.recover_receipt", usage_counter=_counter,

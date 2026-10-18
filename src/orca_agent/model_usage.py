@@ -44,7 +44,11 @@ _LEGACY_REPLY_FIELDS = {
 }
 
 
-def _cost(prompt, completion):
+def _cost(prompt, completion, model="deepseek-flash"):
+    if model != "deepseek-flash":
+        # No price is guessed for configurable models. Token usage stays exact;
+        # monetary reporting explicitly remains incomplete until a tariff exists.
+        return None
     return str((prompt * INPUT_USD_PER_MILLION + completion * OUTPUT_USD_PER_MILLION)
                / Decimal(1_000_000))
 
@@ -320,7 +324,8 @@ def settled_model_record(record, reply, receipt_hash):
     if reply.usage is not None:
         settled.update(usage=asdict(reply.usage), input_tokens=reply.usage.prompt_tokens,
                        output_tokens=reply.usage.completion_tokens, total_tokens=reply.usage.total_tokens,
-                       cost_known_usd=_cost(reply.usage.prompt_tokens, reply.usage.completion_tokens))
+                       cost_known_usd=_cost(reply.usage.prompt_tokens, reply.usage.completion_tokens,
+                                            record.get("model", "deepseek-flash")))
     return settled
 
 
@@ -436,7 +441,7 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
             record = {"id": ticket, "logical_id": logical_id, "request_hash": request.request_hash,
                       "basis": dict(basis), "input_reserved": request.input_token_bound,
                       "output_reserved": request.output_token_bound,
-                      "cost_reserved_usd": _cost(request.input_token_bound, request.output_token_bound),
+                      "cost_reserved_usd": _cost(request.input_token_bound, request.output_token_bound, request.model),
                       "created_at": utc_now().isoformat(), "status": "reserved",
                       "prompt_version": request.prompt_version, "sdk_version": request.sdk_version,
                       "model": request.model, "token_bound_version": request.token_bound_version,

@@ -284,7 +284,7 @@ def prepare_request(
     if not any("json" in message["content"].lower() for message in clean):
         raise ValueError("the prompt must explicitly request JSON")
     body = {
-        "model": MODEL, "messages": clean, "stream": False, "temperature": 0,
+        "model": limits.model_name or MODEL, "messages": clean, "stream": False, "temperature": 0,
         "max_tokens": max_output_tokens, "response_format": {"type": "json_object"},
         **model_profile_parameters(model_profile),
     }
@@ -297,6 +297,7 @@ def prepare_request(
         request_hash=hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
         input_token_bound=bound, output_token_bound=max_output_tokens,
         timeout_seconds=float(timeout_seconds), prompt_version=prompt_version, limits=limits,
+        model=limits.model_name or MODEL,
     )
 
 

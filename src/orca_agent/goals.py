@@ -141,6 +141,21 @@ def _validate_goal_evidence(store, run, request, goal, result):
     if not output or output.checks != result.checks.get(goal.port) or any(
             c.rule_version != goal.minimum_check_version or c.status != "passed" for c in output.checks):
         return False
+    call = next((entry for entry in run.calls if entry.id == result.call_id), None)
+    if call:
+        from orca_agent.tools.registry import get_tool
+        tool = get_tool(call.tool)
+        if "write_input_artifact" in tool.effects and goal.port in tool.output_ports:
+            from orca_agent.input_bindings import input_purpose, validate_input_result
+            binding = validate_input_result(store, run, request, result, goal.port)
+            if (goal.system_ids != [binding["system_id"]]
+                    or goal.minimum_check_version != binding["rule_version"]):
+                return False
+            conditions = input_purpose(request, binding["system_id"])["conditions"]
+            # These checks qualify an input for this frozen purpose. They do
+            # not establish optimization, convergence or extra physical facts.
+            return all(name in conditions and type(value) is type(conditions[name])
+                       and value == conditions[name] for name, value in goal.conditions.items())
     if goal.port in ("energy", "optimized_geometry", "dipole_moment"):
         return direct_applicability(store, request, goal, result)["status"] == "passed"
     else:
@@ -187,11 +202,8 @@ def goal_evidence_assessment(store, run, request, goal, result):
     reasons = []
     current_use = None
     if goal.evidence_contract_version == "generic-observation-1":
-        # This contract is expressible before the managed executor and generic
-        # delivery evaluator exist. Script claims cannot fill that coverage gap.
-        return {"status": "unresolved", "reasons": ["generic_delivery_evaluator_unavailable"],
-                "minimum_evidence": assess_minimum_evidence(goal, result, purpose_passed=False),
-                "current_use": None}
+        from orca_agent.task_observations import assess
+        return assess(store, run, request, goal, result)
     try:
         from orca_agent.input_bindings import resolved_request
         request = resolved_request(store, run, request)

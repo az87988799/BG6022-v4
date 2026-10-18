@@ -71,7 +71,7 @@ def test_direct_query_path_checks_delivery_before_dispatch(tmp_path, monkeypatch
 
 def test_reference_pause_hook_is_after_geometry_validation_before_any_reservation(tmp_path, monkeypatch):
     store, run, plan, _ = scientific_run(tmp_path, monkeypatch)
-    monkeypatch.setattr("orca_agent.natural.ensure_scientific_environment", lambda *a: None)
+    monkeypatch.setattr("orca_agent.natural.ensure_scientific_environment", lambda *a, require_mpi=False: None)
     monkeypatch.setattr("orca_agent.runner._validate_execution_rules", lambda *a: None)
     stages = []
 

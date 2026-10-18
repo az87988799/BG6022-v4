@@ -66,11 +66,11 @@ def test_actual_v3_placeholder_shape_still_rejects_and_only_test_authored_correc
     assert "PLAN_RULES" not in data and "PLAN_REFERENCES" not in data
     assert "normalize replaces raw_request/missing:goal_definition" in contract[
         "instruction"]
-    assert "No geometry conditions or registration/no-execution Goal" in contract["instruction"]
+    assert "Registration/no-execution is not a Goal" in contract["instruction"]
     assert "Keep unknown/unsupported" in contract["instruction"]
     assert "preserve goals.unresolved" not in contract["instruction"]
     assert "normalize defines raw_request" not in contract["instruction"]
-    assert "Ports/rules:minimum_evidence_rules" in contract["instruction"]
+    assert "Rules:minimum_evidence_rules" in contract["instruction"]
     assert set(contract["minimum_evidence_rules"]["port_rules"]) == set(RULES) - {"unresolved"}
     # Removing the unjustified extra Goal is a developer-authored correction;
     # production must neither silently remove it nor count this as a live pass.
@@ -85,19 +85,20 @@ def test_actual_v3_placeholder_shape_still_rejects_and_only_test_authored_correc
     assert updated.usage.orca_starts_actual == updated.usage.model_calls == 0
 
 
-@pytest.mark.parametrize("uncertainty", ["missing_condition", "unsupported_quantity", "unsupported_minimum"])
+@pytest.mark.parametrize("uncertainty", ["missing_condition", "unsupported_quantity", "general_quantity", "unsupported_minimum"])
 def test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_replacement(tmp_path, uncertainty):
     store = store_at(tmp_path)
     (tmp_path / "water.xyz").write_text("3\nsynthetic geometry\nO 0 0 0\nH 0 0.8 0.6\nH 0 -0.8 0.6\n")
     text = "登记水的单点电子能。采用气相 RHF/STO-3G，中性单重态。本轮只登记，不启动计算。"
     if uncertainty == "missing_condition":
         text = text.replace("中性单重态", "单重态，电荷待确认")
-    elif uncertainty == "unsupported_quantity":
-        text += "还需要水的偶极矩。"
+    elif uncertainty in {"unsupported_quantity", "general_quantity"}:
+        text += "还需要水的磁化率。"
     else:
         text += "还要求实验独立复测。"
     run = initialize_bundle(store, Config(), bundle_at(tmp_path, goals=None, text=text,
         geometries=[{"id": "water", "file": "water.xyz"}], allowed_tools=[]))
+    before_permission, before_usage = run.permission.model_dump(), run.usage.model_dump()
     fields = {"method": ("HF", "RHF"), "basis": ("STO-3G", "STO-3G"),
               "charge": (0, "中性"), "multiplicity": (1, "单重态"),
               "environment": ("gas", "气相"), "electronic_state": ("RHF", "RHF")}
@@ -108,9 +109,11 @@ def test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_repla
     if uncertainty == "missing_condition":
         conditions["charge"] = {"source": "unknown", "value": None}
         expected_gap = "missing:charge:water"
-    elif uncertainty == "unsupported_quantity":
-        goals.append({"key": "dipole", "port": "dipole_moment", "text_basis": "水的偶极矩", "system_refs": ["water"]})
-        expected_gap = "unsupported_quantity:dipole_moment"
+    elif uncertainty in {"unsupported_quantity", "general_quantity"}:
+        goals.append({"key": "susceptibility", "port": "magnetic_susceptibility", "text_basis": "水的磁化率", "system_refs": ["water"]})
+        expected_gap = "unsupported_quantity:magnetic_susceptibility"
+        if uncertainty == "general_quantity":
+            goals[-1].update(quantity="磁化率", verification="reported_with_limitations")
     else:
         goals[0]["minimum_evidence"] = ["实验独立复测"]
         expected_gap = "unsupported_minimum_evidence:实验独立复测"
@@ -120,8 +123,27 @@ def test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_repla
     if uncertainty != "missing_condition":
         proposed["questions"] = []
         proposed["notices"] = ["已登记未支持的用户要求，科学目标仍未满足。"]
+    if uncertainty == "unsupported_quantity":
+        # Freeze the historical whitelist contract. Current v3 may register an
+        # arbitrary quantity without granting execution or scientific status.
+        proposed["schema_version"] = "request-semantics-2"
+    elif uncertainty == "general_quantity":
+        proposed["notices"] = ["已登记用户要求，尚未执行计算，科学目标仍未满足。"]
     updated = commit_candidate(store, run, proposed, decision_id="offline_actual_gap", basis=current_basis(store, run))
     request = store.load_request(updated)
+    if uncertainty == "general_quantity":
+        assert request.normalization_status == "normalized" and not request.unresolved
+        goal = request.goals[1]
+        assert goal.port == "magnetic_susceptibility" and goal.quantity == "磁化率"
+        assert goal.original_text == "水的磁化率" and not goal.unresolved
+        assert goal.evidence_contract_version == "generic-observation-1"
+        assert goal.verification == "reported_with_limitations" and goal.required
+        assert not updated.goal_evidence and not updated.result_ids
+        assert updated.permission.model_dump() == before_permission
+        assert updated.usage.model_dump() == before_usage
+        assert not updated.permission.allowed_tools
+        assert not updated.attempts and not updated.calls and not updated.model_records
+        return
     assert request.normalization_status == "clarification"
     assert "missing:goal_definition" not in request.unresolved
     assert expected_gap in {gap for goal in request.goals for gap in goal.unresolved}
@@ -130,7 +152,7 @@ def test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_repla
         assert request.charge is None and request.conditions_source["charge"] == "unknown"
     elif uncertainty == "unsupported_quantity":
         assert request.goals[1].port == "unresolved" and request.goals[1].required
-        assert request.goals[1].original_text == "水的偶极矩"
+        assert request.goals[1].original_text == "水的磁化率"
         assert "missing:goal_definition" in request.goals[1].unresolved
     else:
         assert request.goals[0].minimum_evidence == ["实验独立复测"]

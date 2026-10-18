@@ -260,7 +260,9 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                                      control_generation=basis["control_generation"],
                                      user_messages=control["messages"],
                                      action_parameters=action_parameters(semantic_tools, request=request,
-                                         text_input=run.science_baseline_policy == "first_science_plan")
+                                         text_input=run.science_baseline_policy == "first_science_plan",
+                                         code_authorized=run.permission.code_execution
+                                             and "python.execute" in semantic_tools)
                                      if has_pending_messages else None,
                                      delivery_snapshot=snapshot,
                                      model_profile=model_profile)
@@ -344,6 +346,11 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                     return run, "stop", None
                 return run, ("stop" if request.normalization_status == "clarification"
                              else "normalized"), None
+            if proposal.action == "select_conditions":
+                from orca_agent.semantic import commit_selections
+                run = commit_selections(store, run, proposal.parameters, decision_id=ticket,
+                                        basis=basis, related_results=feedback, fault=fault)
+                return run, "normalized", None
             if proposal.action in {"initial_plan", "revise_plan"}:
                 if (proposal.action == "initial_plan") != (plan is None):
                     raise StoreError("plan action does not match the current Plan")
@@ -458,7 +465,7 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
 
 
 def _repair_evidence(store, run, plan):
-    """SCF candidates apply only to explicit real SCF failure evidence."""
+    """Check each correction against settled evidence for its execution kind."""
     for step in plan.steps:
         if any(a.step_id == step.id for a in run.attempts):
             continue
@@ -469,6 +476,9 @@ def _repair_evidence(store, run, plan):
         if not attempt.result_id or attempt.state in ("unknown", "running", "intent"):
             raise StoreError("repair requires reconciled failure evidence")
         result = store.load_result(run.id, attempt.result_id)
+        if "execute_python" in get_tool(step.tool).effects:
+            _python_repair_evidence(store, run, attempt, result)
+            continue
         current_request = store.load_request(run)
         if (attempt.request_version is not None and attempt.request_version < run.request_version
                 and current_request.messages and all(m.get("source") == "user"
@@ -502,6 +512,34 @@ def _repair_evidence(store, run, plan):
                     "failed" if c.name == "scf_converged" else "passed") for c in checks)):
             raise StoreError("SCF repair lacks checked input, source or explicit SCF failure evidence")
         _source_hashes(store, run.id, result)
+
+
+def _python_repair_evidence(store, run, attempt, result):
+    """Never turn coordinator loss or an incomplete internal call into replay."""
+    execution = result.source.get("execution", {})
+    code = getattr(attempt.frozen_step.parameters, "code", None) if attempt.frozen_step else None
+    if (attempt.execution_kind != "python" or attempt.state not in {"failed", "timed_out"}
+            or attempt.finished_at is None or not attempt.started
+            or result.operation_status != attempt.state
+            or not isinstance(execution, dict) or execution.get("state") != attempt.state
+            or execution.get("reconciliation") or execution.get("not_started")
+            or result.observations.get("evidence_collection_complete") is not True
+            or any(call.parent_attempt_id == attempt.id and (
+                call.state in {"reserved", "running", "unknown"} or call.finished_at is None)
+                   for call in run.internal_calls)
+            or code is None or result.source.get("code_sha256") != code.sha256
+            or attempt.consumption.get("code") != code.model_dump(mode="json")):
+        raise StoreError("Python repair requires settled execution failure and complete bound evidence")
+    _source_hashes(store, run.id, result)
+    store.artifact_path(code.artifact_id)
+    if store.load_artifact(code.artifact_id).sha256 != code.sha256:
+        raise StoreError("Python repair source code hash differs from the frozen attempt")
+    receipt = result.source.get("files", {}).get("execution.json", {})
+    if not receipt.get("artifact_id") or receipt["artifact_id"] not in result.artifact_ids:
+        raise StoreError("Python repair requires its archived execution receipt")
+    path = store.artifact_path(receipt["artifact_id"])
+    if path.stat().st_size > 1024 * 1024 or json.loads(path.read_text(encoding="utf-8")) != execution:
+        raise StoreError("Python repair execution receipt differs from its Result")
 
 
 def _bind_query_goals(store, run, result):

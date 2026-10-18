@@ -75,7 +75,8 @@ def bind_inputs(store, run, step, results):
         hashes = _source_hashes(store, source_run, result)
         if reference.attempt_id and result.attempt_id != reference.attempt_id:
             raise StoreError("source Attempt differs from its consumption binding")
-        required = get_tool(step.tool).required_input_checks.get(reference.port)
+        from orca_agent.input_bindings import required_input_rule
+        required = required_input_rule(get_tool(step.tool), store.load_request(run), step.system_id, reference.port)
         output = result.qualified_outputs.get(reference.port)
         if (not required
                 or reference.rule_version is not None and reference.rule_version != required):
@@ -282,10 +283,11 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
             # honest successful operation but lacks the requested extracted value.
             found = data.get("status") not in {"missing", "missing_json"}
             checks.update({port: [Check(
-                name=("non_scientific_delivery" if definition.check_version == "knowledge-answer-1"
+                name=("immutable_task_file_write" if "write_artifact" in definition.effects else
+                      "non_scientific_delivery" if definition.check_version == "knowledge-answer-1"
                       else "bounded_evidence_read"), status="passed" if found else "unverified",
                 rule_version=definition.check_version,
-                detail="read operation only; observed values remain scientifically unverified",
+                detail="operation only; content and observed values remain scientifically unverified",
                 source={key: data[key] for key in ("artifact_id", "sha256", "view", "path", "coverage")
                         if key in data},
             )] for port in definition.observation_outputs})

@@ -32,7 +32,8 @@ def describe_evidence_contract(goal):
         known = canonical in REQUIREMENTS or canonical in {goal.port, goal.minimum_check_version}
         requirements.append({"requested": text, "canonical": canonical,
                              "source": goal.minimum_evidence_source.get(text, "unknown"),
-                             "evaluator": "registered" if known and not generic else "unavailable"})
+                             "evaluator": "registered" if known and (
+                                 not generic or canonical == "purpose_preserved@1") else "unavailable"})
     return {"quantity": goal.quantity or goal.port, "port": goal.port,
             "contract_version": goal.evidence_contract_version,
             "verification": goal.verification,

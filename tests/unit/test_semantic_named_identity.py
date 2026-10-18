@@ -79,8 +79,8 @@ def test_named_targets_without_geometry_keep_identity_and_registration_notice(tm
     prepared = build_context(request, run, relevant_tools=[], action_parameters=contract,
         user_messages=store.read_control(run.id)["messages"])
     visible = payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
-    assert "Identity, registered geometry" in prepared.body()["messages"][0]["content"]
-    assert "capability and permission are separate facts" in prepared.body()["messages"][0]["content"]
+    assert "science_scope describes legacy qualified checks" in visible["instruction"]
+    assert visible["science_scope"]["systems"] and not request.systems
     assert "disclose scope and geometry limits via notices" in prepared.body()["messages"][0]["content"]
     assert "without asking for resources/confirmation" in prepared.body()["messages"][0]["content"]
     assert (request.model_dump_json(), run.model_dump_json()) == before
@@ -159,6 +159,7 @@ def test_retained_v12_failure_stays_exact_while_new_context_explains_named_ident
         action_parameters=action_parameters(request=request))
     visible = payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
     assert visible["science_scope"]["names"] == {"H2O": ["水", "water"], "CH4": ["甲烷", "methane"]}
-    assert "Identity, registered geometry, capability and permission are separate facts" in prepared.body()["messages"][0]["content"]
+    assert "science_scope describes legacy qualified checks" in visible["instruction"]
+    assert not payload(prepared)["AUTHORITY"]["request"]["systems"]
     assert prepared.input_token_bound <= 12000
     assert {path: digest(path) for path in before} == before

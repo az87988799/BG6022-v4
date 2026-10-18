@@ -46,6 +46,53 @@ def _control(store, run, step):
         raise ValueError("execution control/deadline prevents launch")
 
 
+def native_input_binding(store, run, step):
+    """Consume current trusted geometry/conditions, never task-authored claims."""
+    from orca_agent.applicability import CONDITION_FIELDS, effective_conditions
+    from orca_agent.input_bindings import prepared_geometry
+    from orca_agent.orca.native_profile import canonical_native_condition
+
+    if store.run_configuration(run).execution.native_input_policy is None:
+        return None
+    request, plan = store.load_request(run), store.load_plan(run)
+    if step not in plan.steps:
+        raise ValueError("native input binding requires the current frozen Step")
+    if len(request.systems) > 1 and step.system_id is None:
+        raise ValueError("native execution requires an explicit requested system")
+    system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
+    system = next((item for item in request.systems if item.id == system_id), None)
+    assessment = effective_conditions(request, system_id=system_id)
+    if assessment["reasons"]:
+        raise ValueError("native conditions unresolved: " + ",".join(assessment["reasons"]))
+    conditions = {name: canonical_native_condition(name, value)
+                  for name, value in assessment["conditions"].items()}
+    if any(value is None for value in conditions.values()):
+        raise ValueError("current Request condition is unsupported by the frozen native execution profile")
+    for name, value in step.parameters.conditions.items():
+        if name in CONDITION_FIELDS and canonical_native_condition(name, value) != conditions[name]:
+            raise ValueError("Step condition conflicts with current Request: " + name)
+    for goal in request.goals:
+        target = plan.goal_map.get(goal.id)
+        if (target and target.step_id == step.id) or system_id in goal.system_ids:
+            for name, value in goal.conditions.items():
+                if name in CONDITION_FIELDS and canonical_native_condition(name, value) != conditions[name]:
+                    raise ValueError("Goal condition conflicts with native execution: " + name)
+    if system and system.geometry_source == "prepare":
+        geometry_id = prepared_geometry(store, run, request, system_id)
+    else:
+        geometry_id = system.geometry_artifact_id if system else request.geometry_artifact_id
+        if geometry_id not in run.permission.artifact_ids:
+            raise ValueError("registered native geometry is outside the frozen permission")
+    if geometry_id is None:
+        raise ValueError("native execution requires current prepared or registered geometry")
+    geometry = store.load_artifact(geometry_id)
+    read_pinned_input(store.artifact_path(geometry_id), geometry.sha256, limit=65536)
+    return {"request_id": request.id, "request_version": request.version,
+            "step_id": step.id, "system_id": system_id, "conditions": conditions,
+            "condition_sources": assessment["sources"], "geometry_artifact_id": geometry_id,
+            "geometry_sha256": geometry.sha256}
+
+
 def launch_orca(store, run, step, config, prepared, workdir, root, *,
                 on_started, job_name=None, parent_job_name=None, fault=None, deadline=None,
                 boundary=None, execution_handle=None, on_prepared=None, parent_handle=None,
@@ -312,9 +359,16 @@ def collect_result(store, run, step, attempt, outcome):
     if outcome["state"] != "completed":
         diagnostics.append({"category": outcome["state"], "detail": outcome.get("reason")})
     reference = getattr(step.parameters, "code", None) or getattr(step.parameters, "input", None)
+    observation_records = []
+    if getattr(step.parameters, "code", None) and outcome["state"] != "unknown":
+        from orca_agent.task_observations import collect
+        try:
+            observation_records = collect(store, run, step, attempt, files)
+        except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
+            diagnostics.append({"category": "observation_manifest_rejected", "detail": str(exc)})
     return Result(run_id=run.id, step_id=step.id, attempt_id=attempt.id,
                   operation_status=outcome["state"], artifact_ids=[v["artifact_id"] for v in files.values()],
-                  diagnostics=diagnostics,
+                  diagnostics=diagnostics, observation_records=observation_records,
                   observations={"execution_completed": outcome["state"] == "completed",
                                 "evidence_collection_complete": not any(
                                     item["category"] in {"collection_error", "execution_unknown"}
@@ -410,12 +464,17 @@ class _Broker:
                                           inputs=InputManifest(entries=entries))
         # Admission precedes ORCA reservation; failed source preparations remain recorded.
         prepare_root = self.native_boundary["workdir"]
+        configuration = self.store.run_configuration(self.run)
         prepared = prepare_native_input(prepare_root, parameters, self.store.artifact_path,
-                                         self.store.run_configuration(self.run).resources)
+            configuration.resources, policy=configuration.execution.native_input_policy,
+            binding=native_input_binding(self.store, self.run, self.step))
         _control(self.store, self.run, self.step)
         receipt = self.store.reserve_internal_call(
             self.run, self.attempt, value["request_key"], fingerprint(value),
             code=parameters.input, inputs=parameters.inputs,
+            conditions={"admission_version": prepared["admission_version"],
+                        "execution_impact": prepared["execution_impact"],
+                        "input_binding": prepared.get("input_binding")},
             work_units=prepared["execution_impact"]["internal_work_units"])
         if receipt.state == "completed":
             raise ValueError("completed SDK receipt already exists; task replay is not enabled")
@@ -638,8 +697,12 @@ def execute(store, run, step, attempt, config, fault=None):
     try:
         _control(store, run, step)
         if "execute_python" not in get_tool(step.tool).effects:
-            prepared = prepare_native_input(task, step.parameters, store.artifact_path, resources)
+            prepared = prepare_native_input(task, step.parameters, store.artifact_path, resources,
+                policy=store.run_configuration(run).execution.native_input_policy,
+                binding=native_input_binding(store, run, step))
             _save_json(root / "prepared.json", prepared)
+            if store.run_configuration(run).execution.native_input_policy is not None:
+                store.reserve_native_workload(run, attempt, prepared)
             invoked = True
             outcome = launch_orca(store, run, step, config, prepared, task, root,
                                   on_started=started, job_name=attempt.execution_handle.get("job_name"),

@@ -12,10 +12,19 @@ from typing import Any, Literal, get_args
 from pydantic import Field, ValidationError
 
 from orca_agent.applicability import PROFILE, canonical_condition
+from orca_agent.condition_selection import (
+    commit_selections as commit_selections,
+)
+from orca_agent.condition_selection import (
+    selectable_conditions as selectable_conditions,
+)
+from orca_agent.condition_selection import (
+    selection_action_parameters as selection_action_parameters,
+)
 from orca_agent.minimum_evidence import LEGACY_NAMES, REQUIREMENTS
 from orca_agent.minimum_evidence import RULE_VERSION as MINIMUM_EVIDENCE_VERSION
 from orca_agent.model_usage import current_basis
-from orca_agent.models import Goal, Identifier, Record, Request
+from orca_agent.models import Goal, Identifier, Record, Request, ScientificLabel, SystemInput
 from orca_agent.natural import _authorized_geometry, _missing_information
 from orca_agent.proposals import ProposalError, _schema_error
 from orca_agent.schema_projection import project_schema as _schema
@@ -29,12 +38,16 @@ from orca_agent.tools.registry import (
     validate_parameters,
 )
 
-VERSION = "request-semantics-2"
+VERSION = "request-semantics-3"
 LEGACY_VERSION = "request-semantics-1"
 ConditionName = Literal["method", "basis", "charge", "multiplicity", "electronic_state", "environment",
                         "temperature_K", "standard_state"]
 CONDITIONS = frozenset(get_args(ConditionName))
 PHYSICAL = CONDITIONS - {"temperature_K", "standard_state"}
+SELECTION_LABELS = {"method": r"方法|method", "basis": r"基组|basis", "charge": r"电荷|charge",
+    "multiplicity": r"多重度|multiplicity|spin", "electronic_state": r"电子态|electronic state|reference",
+    "environment": r"环境|溶剂|environment|solvent", "temperature_K": r"温度|temperature",
+    "standard_state": r"标准态|standard state"}
 LEXICAL_ALIASES = {
     ("charge", 0): ("中性", "neutral", "电荷为零", "电荷零"),
     ("multiplicity", 1): ("单重态", "单重", "singlet"),
@@ -49,6 +62,8 @@ SYSTEM_ALIASES = {"water": ("水", "h2o"), "methane": ("甲烷", "ch4"),
 READ_TOOLS = {port: tool["name"] for tool in catalog()
               if tool["effects"] == ["read_registered_artifact"] or tool["check_version"] == "knowledge-answer-1"
               for port in tool["observation_outputs"]}
+INPUT_TOOLS = {port: tool["name"] for tool in catalog() if "write_input_artifact" in tool["effects"]
+               for port in tool["output_ports"]}
 RULES = {port: tool["check_version"] for tool in catalog()
          for port in tool["output_ports"] + (tool["observation_outputs"]
              if tool["effects"] == ["read_registered_artifact"] or tool["check_version"] == "knowledge-answer-1" else [])}
@@ -83,11 +98,27 @@ class SemanticGoal(Record):
     unresolved: list[str] = Field(default_factory=list, max_length=8)
     message_id: Identifier | None = None
     analysis_goal_ref: Identifier | None = None
+    quantity: ScientificLabel | None = None
+    verification: Literal["qualified", "reported_with_limitations"] | None = None
+
+
+class SemanticIdentity(Record):
+    key: Identifier = Field(max_length=48)
+    name: str = Field(min_length=1, max_length=100)
+    query_name: str | None = Field(default=None, min_length=1, max_length=100)
+    text_basis: str = Field(min_length=1, max_length=1000)
+    message_id: Identifier
+    ambiguities: list[str] = Field(default_factory=list, max_length=8)
+
+
+class SelectionAuthorization(Record):
+    text_basis: str = Field(min_length=1, max_length=1000)
+    message_id: Identifier
 
 
 class SemanticCandidate(Record):
     # Historical candidates remain parseable, but never activate under old rules.
-    schema_version: Literal["request-semantics-1", "request-semantics-2"]
+    schema_version: Literal["request-semantics-1", "request-semantics-2", "request-semantics-3"]
     message_ids: list[Identifier] = Field(min_length=1, max_length=24)
     kind: Literal["normalize", "amend", "replace_goals", "clarify", "continue", "status"]
     text_basis: str = Field(min_length=1, max_length=1000)
@@ -101,6 +132,8 @@ class SemanticCandidate(Record):
     questions: list[str] = Field(default_factory=list, max_length=5)
     notices: list[str] = Field(default_factory=list, max_length=5)
     question_gaps: dict[str, list[str]] = Field(default_factory=dict, max_length=5)
+    identities: list[SemanticIdentity] = Field(default_factory=list, max_length=5)
+    automatic_selection: dict[ConditionName, SelectionAuthorization] = Field(default_factory=dict, max_length=8)
 
 
 def pending_messages(store, run):
@@ -117,7 +150,7 @@ def _goal_binding_contract(request, *, defines_goals=False):
     return identifiers, schema
 
 
-def action_parameters(allowed_tools=(), *, request=None, text_input=False):
+def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_authorized=False):
     schema = _schema(SemanticCandidate.model_json_schema())
     schema["properties"]["schema_version"] = {"const": VERSION, "type": "string"}
     binding_ids, binding_schema = _goal_binding_contract(request)
@@ -135,17 +168,21 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
                            {"properties": {"goal_bindings": new_goal_binding_schema}}]
     port_rules = {port: rule for port, rule in RULES.items() if port != "unresolved"}
     contract = {"normalize_request": {
-        "instruction": "Ports/rules:minimum_evidence_rules; queries:query_schemas[port]; [] keeps basic checks. "
-        "minimum_evidence=[rule ID strings], not registry objects. Empty arrays=[]; empty objects={}, not null. "
-        "Omit unused optional fields instead of filling placeholders. replaces is an array of old Goal IDs. "
+        "instruction": "Rules:minimum_evidence_rules; queries:query_schemas[port]; [] keeps basic checks. "
         "Lexicon lists canonical values; quote original user wording. environment=gas/solvent; electronic_state=RHF/UHF. "
         "Keep unknown/unsupported and explain_results; unknown/inferred belong in conditions/system_conditions. "
-        "Ordinary chemistry concepts/questions use knowledge_answer Goal (not scientific energy); no geometry or physical conditions needed. Version/manual/source questions require knowledge.search before knowledge.answer. Energy needs energy Goal, not key/reason/geometry; fixed_initial=SP, optimized=after Opt. "
+        "Chemistry questions use knowledge_answer, not energy; no geometry/physical conditions needed. "
+        "Version/manual/source questions: knowledge.search before knowledge.answer. Energy needs its own Goal; fixed_initial=SP, optimized=after Opt. "
         "temperature/standard_state only if requested; absent unit=unknown, no question. "
         "Copy pending IDs; unique verbatim text_basis must match field/target. "
         "normalize replaces raw_request/missing:goal_definition; amend keeps goals; replace_goals needs explicit replacement+all old IDs. "
-        "NewGoal system_refs; existingGoal goal_bindings keyed by Goal.id. No geometry conditions or registration/no-execution Goal. "
-        "science_scope=capability, not permission/defaults. resolves=answered field:<field>/system:<goal_id>; question_gaps=questions to gaps.",
+        "NewGoal system_refs; existingGoal goal_bindings[Goal.id]. Registration/no-execution is not a Goal. "
+        "science_scope describes legacy qualified checks, not general execution or permission/defaults. "
+        "New target identities: exact name/text_basis/message_id; key binds system_refs. query_name stays inferred until source-checked. "
+        "General quantity quotes user; verification=reported_with_limitations unless user requires qualified evidence. "
+        "automatic_selection[field]={text_basis,message_id}: explicit authorization only, not unknown. "
+        "Retrieve sources -> select_conditions -> resolve/prepare. Never infer spin from parity. "
+        "resolves=answered field:<field>/system:<goal_id>; question_gaps=questions to gaps.",
         "notice_contract_version": NOTICE_CONTRACT_VERSION,
         "notice_choices": notice_choices(),
         "science_scope": {"systems": list(SCIENCE_COMPOSITIONS), "conditions": dict(PROFILE),
@@ -180,6 +217,29 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False):
             "sampling_check checks existing criterion (false may complete); sampling requires satisfying it. "
             "Preserve each intent. analysis_goal_ref inherits frozen spec; absent=missing:sampling_specification. "
             "Never invent thresholds/candidates.")
+    if code_authorized:
+        current = contract["normalize_request"]
+        current["instruction"] = current["instruction"].replace(
+            "Lexicon lists canonical values; quote original user wording. environment=gas/solvent; electronic_state=RHF/UHF.",
+            "Lexicon lists known spelling aliases, not all permitted values; retain frozen authorized_defaults and exact user wording.")
+        current["legacy_qualified_scope"] = {"applies_to": "Legacy specialized scientific guarantees only; not a general molecule or execution whitelist.",
+                                              **current.pop("science_scope")}
+        current["notice_choices"].pop("unsupported_system", None)
+        current["minimum_evidence_rules"]["legacy_qualified_port_rules"] = current["minimum_evidence_rules"].pop("port_rules")
+        current["generated_task_intent"] = (
+            "For a general identity, every scientific Goal uses the general observation contract even if its port name "
+            "also exists in a legacy qualified Tool. Registered input ports retain their input checks; preparation is not optimization. "
+            "Supply quantity as an exact user phrase and a stable port identifier "
+            "chosen for that quantity; absence of a registered property port/checker is not an unresolved user fact. "
+            "Default verification=reported_with_limitations; qualified requires an explicit user minimum-evidence demand. "
+            "Preserve a text-grounded geometry_relation (optimized/fixed_initial) explicitly; silence or mixed relations cannot select one. "
+            "Preserve an explicitly requested unit verbatim in minimum_evidence; an absent unit is not proof of compliance. "
+            "Preserve every requested quantity and genuine ambiguity. Do not declare a molecule unsupported from the legacy_qualified_scope. "
+            "If the user delegates a condition choice, put its exact authorization in automatic_selection[field]={text_basis,message_id}, "
+            "omit that field from conditions, and do not mark it unknown/inferred or add a pending-source gap. "
+            "Then knowledge.search -> select_conditions -> structure.resolve/prepare. These are available actions, not missing user answers. "
+            "identities[].name is exact user text; key binds system_refs; query_name is an inferred lookup alias until source-checked. "
+            "No identity, port, method, basis or spin is filled in by the program on correction.")
     return contract
 
 
@@ -204,6 +264,255 @@ def _locate(text, messages, message_id=None):
     if len(matches) != 1:
         raise StoreError("semantic evidence quote is repeated; supply a unique fuller quote or message ID")
     return matches[0]
+
+
+def bind_general_text_identity(request, run, pending, candidate):
+    """Freeze quoted target names; a translated lookup term stays an inference."""
+    if not candidate.identities:
+        return request
+    if (candidate.schema_version != VERSION or run.science_baseline_policy != "first_science_plan"
+            or request.systems or request.normalization_status != "pending"):
+        raise StoreError("new general identities require an unbound current text intake")
+    updated = request.model_copy(deep=True)
+    mapping = {}
+    for item in candidate.identities:
+        if item.key in mapping:
+            raise StoreError("identity keys must be unique")
+        message, start, end = _locate(item.text_basis, pending, item.message_id)
+        if item.name not in item.text_basis or any(ord(char) < 32 for char in item.name):
+            raise StoreError("identity name must occur literally in the authenticated user quote")
+        identifier = "system_" + item.key
+        mapping[item.key] = identifier
+        query = item.query_name or item.name
+        if any(ord(char) < 32 for char in query):
+            raise StoreError("identity lookup name contains control characters")
+        updated.systems.append(SystemInput(id=identifier, label=item.name, geometry_source="prepare",
+            identity={"contract": "general-identity-2", "requested_names": [item.name],
+                "canonical_names": [], "query_name": query,
+                "query_name_source": "explicit" if query == item.name else "inferred_translation_or_alias",
+                "ambiguities": item.ambiguities,
+                "text_evidence": {"message_id": message["id"], "start": start, "end": end,
+                    "text_basis": item.text_basis, "schema": VERSION}}))
+    for goal in candidate.goals or []:
+        goal.system_refs = [mapping.get(identifier, identifier) for identifier in goal.system_refs]
+    candidate.system_conditions = {mapping.get(key, key): value for key, value in candidate.system_conditions.items()}
+    return updated
+
+
+def _authorize_selection(candidate, request, messages, values):
+    for name, authorization in candidate.automatic_selection.items():
+        if candidate.schema_version != VERSION:
+            raise StoreError("automatic selection requires the current semantic contract")
+        message, start, end = _locate(authorization.text_basis, messages, authorization.message_id)
+        text = authorization.text_basis
+        surrounding = ";".join(part for left, right, part in _propositions(message["text"])
+                               if left < end and right > start)
+        if (not re.search(SELECTION_LABELS[name], text, re.I)
+                or not re.search(r"选择|选用|推荐|决定|自行|自动|choose|select|recommend|decide", text, re.I)
+                or re.search(r"不要|禁止|不能|不得|不许|do not|don't|never", surrounding, re.I)):
+            raise StoreError("automatic selection requires an affirmative field-specific user authorization")
+        values["automatic_selection"] = list(dict.fromkeys([*values["automatic_selection"], name]))
+        values["condition_evidence"]["automatic_selection." + name] = {
+            "text_basis": text, "message_id": message["id"], "start": start, "end": end,
+            "source": "explicit", "schema": VERSION}
+
+
+def _qualification_quotes(text):
+    pattern = (r"科学合格|科学验证通过|严格验证|证明[^。；;]{0,30}极小|确认[^。；;]{0,30}极小|无虚频|"
+               r"qualified|certif|prove[^.;]{0,30}minimum|verify[^.;]{0,30}minimum|no imaginary")
+    return [part for _, _, part in _propositions(text) if re.search(pattern, part, re.I)
+            and not re.search(r"不要|不得|无需|不必|do not|don't|not required|need not", part, re.I)]
+
+
+def _unit_requirements(text):
+    """Explicit unit phrases only; no default units or quantity-based inference."""
+    patterns = (r"单位(?:为|是|用|采用|使用|[:：])\s*([^，。；;\n]{1,32})",
+                r"以\s*([^，。；;\n]{1,24}?)\s*为单位",
+                r"\b(?:units?\s*(?:of|is|are|=|:)\s*)([^,.;\n]{1,32})")
+    return list(dict.fromkeys(match.group(0).strip() for pattern in patterns
+                             for match in re.finditer(pattern, text, re.I)))
+
+
+def _validate_general_intake(candidate, request, messages, run):
+    """Reject a mistaken proposal; never manufacture its missing goal or choice."""
+    if (candidate.schema_version != VERSION or candidate.kind not in {"normalize", "replace_goals"}
+            or not run.permission.code_execution or "python.execute" not in run.permission.allowed_tools):
+        return
+    delegated = {}
+    for message in messages:
+        for _, _, text in _propositions(message["text"]):
+            if (not re.search(r"选择|选用|推荐|决定|自行|自动|choose|select|recommend|decide", text, re.I)
+                    or re.search(r"不要|禁止|不能|不得|不许|也许|可能|是否|do not|don't|never|maybe|perhaps", text, re.I)):
+                continue
+            for name in ("method", "basis"):
+                if re.search(SELECTION_LABELS[name], text, re.I):
+                    field = candidate.conditions.get(name)
+                    if field is None or field.source in {"unknown", "inferred"}:
+                        delegated[name] = {"text_basis": text, "message_id": message["id"]}
+    corrections = []
+    for name, evidence in delegated.items():
+        if name not in candidate.automatic_selection or name in candidate.conditions:
+            corrections.append({"path": ["automatic_selection", name], "reason": "delegated_choice_is_not_unknown",
+                "instruction": "Preserve the user authorization here; omit the field from conditions until select_conditions.",
+                "user_evidence": evidence})
+    general_ids = {system.id for system in request.systems if system.identity.get("contract") == "general-identity-2"}
+    has_general = False
+    for index, item in enumerate(candidate.goals or []):
+        if item.port in READ_TOOLS or item.port in INPUT_TOOLS or item.port in {"knowledge_answer", "sampling", "sampling_check"}:
+            continue
+        if not (set(item.system_refs) & general_ids or item.quantity is not None or item.port not in RULES):
+            continue
+        has_general = True
+        message, _, _ = _locate(item.text_basis, messages, item.message_id)
+        if item.quantity is None or item.quantity not in item.text_basis:
+            corrections.append({"path": ["goals", index, "quantity"],
+                "reason": "general_quantity_requires_exact_user_phrase"})
+        if item.port == "unresolved" and not re.search(
+                r"物理量.{0,8}(?:未知|不确定)|什么性质|quantity.{0,12}(?:unknown|uncertain)", message["text"], re.I):
+            corrections.append({"path": ["goals", index, "port"], "reason": "no_registered_checker_does_not_make_quantity_unknown",
+                "instruction": "Choose a stable identifier for the requested quantity; retain the exact quantity phrase."})
+        if item.verification == "qualified" and not _qualification_quotes(message["text"]):
+            corrections.append({"path": ["goals", index, "verification"], "reason": "no_user_demand_for_specialized_qualification",
+                "instruction": "Use reported_with_limitations unless the user explicitly demands a stronger evidence guarantee."})
+        relation = _text_geometry_relation(request, [message], item.system_refs)
+        if relation is not None and item.geometry_relation != relation:
+            corrections.append({"path": ["goals", index, "geometry_relation"],
+                "reason": "preserve_explicit_geometry_relation", "required_relation": relation,
+                "instruction": "State the text-grounded relation explicitly; the program will not fill it in."})
+        elif item.geometry_relation is not None and relation is None:
+            corrections.append({"path": ["goals", index, "geometry_relation"],
+                "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text"})
+        single_scientific_goal = sum(goal.port not in READ_TOOLS and goal.port not in INPUT_TOOLS
+            and goal.port not in {"knowledge_answer", "sampling", "sampling_check"}
+            for goal in candidate.goals or []) == 1
+        unit_text = message["text"] if single_scientific_goal else item.text_basis
+        for requirement in _unit_requirements(unit_text):
+            if requirement not in item.minimum_evidence:
+                corrections.append({"path": ["goals", index, "minimum_evidence"],
+                    "reason": "preserve_explicit_unit_requirement", "user_evidence": requirement})
+        for gap_index, gap in enumerate(item.unresolved):
+            if (not _qualification_quotes(message["text"]) and re.search(
+                    r"(?:unregistered|registered).*(?:port|checker)|(?:port|checker).*unregistered|unsupported_(?:system|quantity)", gap, re.I)):
+                corrections.append({"path": ["goals", index, "unresolved", gap_index], "reason": "checker_coverage_is_a_delivery_limitation_not_a_user_gap"})
+    for gap_index, gap in enumerate(candidate.unresolved):
+        if (not any(_qualification_quotes(message["text"]) for message in messages)
+                and re.search(r"(?:unregistered|registered).*(?:port|checker)|(?:port|checker).*unregistered", gap, re.I)
+                or any(name in gap and re.search(r"select|pending|retriev", gap, re.I) for name in delegated)):
+            corrections.append({"path": ["unresolved", gap_index], "reason": "available_selection_or_observation_action_is_not_a_missing_user_answer"})
+    legacy_prefix = notice_choices()["unsupported_system"].split(";", 1)[0].casefold()
+    if has_general:
+        for notice_index, notice in enumerate(candidate.notices):
+            if notice.casefold().startswith(legacy_prefix):
+                corrections.append({"path": ["notices", notice_index], "reason": "legacy_qualified_scope_is_not_a_general_molecule_whitelist"})
+    if corrections:
+        instructions = {
+            "delegated_choice_is_not_unknown":
+                "Keep the exact user authorization in this automatic_selection field and omit the corresponding conditions field until select_conditions. Do not invent a selected value or mark the delegated choice unknown.",
+            "general_quantity_requires_exact_user_phrase":
+                "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity.",
+            "no_registered_checker_does_not_make_quantity_unknown":
+                "Replace this unresolved port with a stable identifier for the already stated quantity. Keep its exact quantity phrase and minimum evidence; missing checker coverage does not make the user's quantity unknown.",
+            "no_user_demand_for_specialized_qualification":
+                "Use reported_with_limitations here when the user has not required qualified evidence. Keep all actual user minimum-evidence requirements; do not invent stronger requirements or waive existing ones.",
+            "preserve_explicit_geometry_relation":
+                "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation.",
+            "geometry_relation_is_unknown_or_ambiguous_in_user_text":
+                "Omit this geometry_relation or set it to null when the user text does not unambiguously select one. Preserve a genuine ambiguity for clarification instead of choosing a relation from the port name.",
+            "preserve_explicit_unit_requirement":
+                "Add the supplied exact user_evidence unit phrase to this minimum_evidence array without removing other requirements. Retain it as an obligation; an unverified unit does not satisfy it.",
+            "checker_coverage_is_a_delivery_limitation_not_a_user_gap":
+                "Remove this unresolved entry that only describes missing checker coverage for an allowed general observation. Keep the Goal, quantity, genuine user unknowns and minimum evidence; report validation limits separately.",
+            "available_selection_or_observation_action_is_not_a_missing_user_answer":
+                "Remove this unresolved entry: authorized source retrieval and condition selection are subsequent Agent actions, not missing user answers. Keep automatic_selection, all Goals and minimum evidence unchanged; do not fill method/basis values. If no genuine user unknown remains, use unresolved=[] or omit unresolved. After normalization, retrieve sources and call select_conditions before structure preparation.",
+            "legacy_qualified_scope_is_not_a_general_molecule_whitelist":
+                "Remove or correct this notice that declares a general molecule unsupported solely from the legacy qualified-checker scope. Preserve genuine execution limits, user unknowns and minimum evidence; do not claim scientific qualification.",
+        }
+        for correction in corrections:
+            correction["path"] = ["parameters", *correction["path"]]
+            correction["instruction"] = instructions[correction["reason"]]
+        raise ProposalError("Correct general intake without changing the user's quantities or minimum evidence; no values were filled in.",
+                            path=["parameters"], corrections=corrections)
+
+
+def _input_goal(item, request, messages, goal_index):
+    """Preserve an input-acquisition Goal under its existing registered checks."""
+    from orca_agent.input_bindings import input_check_version
+
+    message, start, end = _locate(item.text_basis, messages, item.message_id)
+    systems = {system.id: system for system in request.systems}
+    if len(item.system_refs) != 1 or item.system_refs[0] not in systems:
+        raise ProposalError("Input acquisition requires one exact registered target.",
+                            path=["parameters", "goals", goal_index, "system_refs"])
+    if item.geometry_relation is not None:
+        raise ProposalError("Input preparation does not establish a scientific geometry relation; "
+                            "omit this field and retain any separate optimization/scientific Goal.",
+                            path=["parameters", "goals", goal_index, "geometry_relation"])
+    if item.quantity is not None and item.quantity not in item.text_basis:
+        raise ProposalError("Input quantity must retain an exact user phrase.",
+                            path=["parameters", "goals", goal_index, "quantity"])
+    if item.quantity and _text_geometry_relation(request, [{"text": item.quantity}], item.system_refs) == "optimized":
+        raise ProposalError("An optimized quantity requires its separate scientific Goal; "
+                            "an input preparation Goal cannot substitute for it.",
+                            path=["parameters", "goals", goal_index, "quantity"])
+    system = systems[item.system_refs[0]]
+    rule = input_check_version(get_tool(INPUT_TOOLS[item.port]), request, system.id)
+    conditions, evidence = {}, {}
+    for name, field in item.conditions.items():
+        if field.source in {"unknown", "inferred"}:
+            raise StoreError("unknown input Goal conditions must remain Request gaps")
+        value, _, source = _field(name, field, request, messages, system=system)
+        conditions[name], evidence[name] = value, source
+    unresolved = list(item.unresolved)
+    for index, requirement in enumerate(item.minimum_evidence):
+        if LEGACY_NAMES.get(requirement, requirement) not in REQUIREMENTS and requirement not in {item.port, rule}:
+            if not requirement.strip() or requirement not in message["text"]:
+                raise ProposalError("Input minimum evidence requires a registered rule or exact user quote.",
+                                    path=["parameters", "goals", goal_index, "minimum_evidence", index])
+            unresolved.append("unsupported_minimum_evidence:" + requirement)
+    return Goal(id="goal_" + item.key, port=item.port, quantity=item.quantity, required=item.required,
+        minimum_check_version=rule, verification=item.verification or "qualified",
+        original_text=item.text_basis, system_ids=item.system_refs, conditions=conditions,
+        minimum_evidence=item.minimum_evidence, unresolved=unresolved,
+        identity=deepcopy(system.identity), text_evidence={"message_id": message["id"],
+            "start": start, "end": end, "text_basis": item.text_basis, "schema": VERSION,
+            **({"conditions": evidence} if evidence else {})})
+
+
+def _general_goal(item, request, messages):
+    message, start, end = _locate(item.text_basis, messages, item.message_id)
+    systems = {system.id: system for system in request.systems}
+    if (not item.system_refs or len(item.system_refs) != len(set(item.system_refs))
+            or set(item.system_refs) - systems.keys()):
+        raise StoreError("general molecular goals require exact registered target bindings")
+    if item.quantity is not None and item.quantity not in item.text_basis:
+        raise StoreError("general quantity must retain an exact user phrase")
+    qualification_quotes = _qualification_quotes(message["text"])
+    explicit_qualification = bool(qualification_quotes)
+    if explicit_qualification and item.verification == "reported_with_limitations":
+        raise StoreError("explicit scientific qualification cannot be downgraded to an observation")
+    verification = "qualified" if explicit_qualification or item.verification == "qualified" else "reported_with_limitations"
+    for requirement in item.minimum_evidence:
+        if LEGACY_NAMES.get(requirement, requirement) not in REQUIREMENTS and requirement not in message["text"]:
+            raise StoreError("general minimum evidence must use registered requirements or exact user wording")
+    minimum = list(item.minimum_evidence)
+    minimum.extend(quote for quote in qualification_quotes if quote not in minimum)
+    conditions = {}
+    for name, field in item.conditions.items():
+        if field.source in {"unknown", "inferred"}:
+            raise StoreError("unknown general conditions must remain Request gaps")
+        conditions[name] = _field(name, field, request, messages,
+            system=systems[item.system_refs[0]] if len(item.system_refs) == 1 else None)[0]
+    if item.geometry_relation:
+        conditions["geometry_relation"] = item.geometry_relation
+    return Goal(id="goal_" + item.key, port=item.port, quantity=item.quantity or item.text_basis[:160],
+        required=item.required, minimum_check_version="generic-observation-1",
+        evidence_contract_version="generic-observation-1", verification=verification,
+        original_text=item.text_basis, system_ids=item.system_refs, conditions=conditions,
+        minimum_evidence=minimum, minimum_evidence_source=dict.fromkeys(minimum, "explicit"),
+        unresolved=item.unresolved, identity={"requested_names": [name for identifier in item.system_refs
+            for name in systems[identifier].identity.get("requested_names", [systems[identifier].label])]},
+        text_evidence={"message_id": message["id"], "start": start, "end": end,
+            "text_basis": item.text_basis, "schema": VERSION})
 
 
 IDENTITIES = {"water": ("water", "h2o", "水"), "methane": ("methane", "ch4", "甲烷"),
@@ -788,6 +1097,17 @@ def _goals(candidate, request, messages, *, text_input=False):
     systems = {s.id for s in request.systems}
     goals = []
     for goal_index, item in enumerate(candidate.goals or []):
+        if candidate.schema_version == VERSION and item.port in INPUT_TOOLS:
+            goals.append(_input_goal(item, request, messages, goal_index))
+            continue
+        general = (candidate.schema_version == VERSION and item.port not in READ_TOOLS
+                   and item.port not in {"knowledge_answer", "sampling", "sampling_check"}
+                   and (item.port not in RULES or item.quantity is not None
+                        or any(system.identity.get("contract") == "general-identity-2"
+                               for system in request.systems if system.id in item.system_refs)))
+        if general:
+            goals.append(_general_goal(item, request, messages))
+            continue
         if item.port == "knowledge_answer":
             message, start, end = _locate(item.text_basis, messages, item.message_id)
             identity = {}
@@ -994,9 +1314,12 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
                                      allowed_condition_keys=list(get_args(ConditionName)))
             raise correction from None
         raise _schema_error(exc, path=["parameters"]) from None
-    if candidate.schema_version != VERSION:
-        raise ProposalError("Legacy semantic candidates are read-only; submit request-semantics-2 with current evidence.",
+    if candidate.schema_version == LEGACY_VERSION:
+        raise ProposalError("Legacy semantic candidates are read-only; submit request-semantics-3 with current evidence.",
                             path=["parameters", "schema_version"])
+    if candidate.schema_version != VERSION and (candidate.identities or candidate.automatic_selection
+            or any(goal.quantity is not None or goal.verification is not None for goal in candidate.goals or [])):
+        raise StoreError("general identities, quantities and selection authorization require current semantics")
     request = store.load_request(run)
     binding_ids, _ = _goal_binding_contract(request, defines_goals=candidate.goals is not None)
     invalid_binding_ids = set(candidate.goal_bindings) - set(binding_ids)
@@ -1016,7 +1339,8 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
         if any(m["text"].strip().casefold() not in allowed for m in pending):
             raise StoreError("control-only semantics require an exact unambiguous user command")
         if (candidate.conditions or candidate.system_conditions or candidate.goals or candidate.unresolved
-                or candidate.goal_bindings or candidate.resolves or candidate.replaces):
+                or candidate.goal_bindings or candidate.resolves or candidate.replaces
+                or candidate.identities or candidate.automatic_selection):
             raise StoreError("control-only message cannot change Request fields")
         return store.commit_revision(run, store.load_plan(run), decision_id=decision_id, basis=basis,
                                      user_message_ids=candidate.message_ids, fault=fault,
@@ -1044,6 +1368,7 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
             raise StoreError("goal replacement requires an explicit user replacement phrase")
     from orca_agent.natural import bind_text_identity
     request = bind_text_identity(request, run, pending, candidate)
+    _validate_general_intake(candidate, request, pending, run)
     values = request.model_dump(mode="json")
     grounding = request.messages + pending if initial else pending
     for scope, fields in [(None, candidate.conditions), *candidate.system_conditions.items()]:
@@ -1059,6 +1384,7 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
                 target[name] = value
             values["condition_evidence"][f"{scope or 'request'}.{name}"] = {
                 **evidence, "message_ids": candidate.message_ids, "schema": VERSION}
+    _authorize_selection(candidate, request, grounding, values)
     question_gaps = active_question["unresolved"] if active_question else []
     known_gaps = set(request.unresolved) | set(question_gaps) | {gap for g in request.goals for gap in g.unresolved}
     resolved_relations = set()

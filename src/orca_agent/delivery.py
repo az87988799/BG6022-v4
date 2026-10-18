@@ -58,6 +58,7 @@ def _source_integrity(store, result):
     try:
         _source_references(result.source, references)
         _source_references(result.observations, references)
+        _source_references([item.model_dump(mode="json") for item in result.observation_records], references)
         for output in result.qualified_outputs.values():
             _source_references(output.source, references)
             if output.artifact_id:
@@ -111,6 +112,10 @@ def _value(value, *, limit=2048):
 
 def goal_fact_rows(request, run, selections):
     """Render current purpose, source facts and eligible answers without I/O."""
+    from orca_agent.tools.registry import catalog
+
+    input_ports = {port for tool in catalog() if "write_input_artifact" in tool["effects"]
+                   for port in tool["output_ports"]}
     rows = []
     for goal in request.goals:
         selection = selections.get(goal.id, {})
@@ -122,6 +127,9 @@ def goal_fact_rows(request, run, selections):
         applicable = assessment.get("status") == "passed" and not gaps
         output = result.qualified_outputs.get(goal.port) if result and applicable else None
         observation = result.observations.get(goal.port) if result else None
+        if result and goal.evidence_contract_version == "generic-observation-1":
+            matches = [item for item in result.observation_records if item.name == goal.port]
+            observation = matches[0].model_dump(mode="json") if len(matches) == 1 else None
         systems = goal.system_ids or ([request.systems[0].id] if len(request.systems) == 1 else [None])
         current = ({identifier or "request": effective_conditions(request, goal, identifier)
                     for identifier in systems}
@@ -134,10 +142,14 @@ def goal_fact_rows(request, run, selections):
             source = {key: value for key, value in source.items() if value is not None}
         answer = None
         if output:
-            answer = {"kind": "qualified_scientific_output", "value": _value(output.value),
+            answer = {"kind": "qualified_input_artifact" if goal.port in input_ports else "qualified_scientific_output",
+                      "value": _value(output.value),
                       "unit": output.unit, "artifact_id": output.artifact_id,
                       "check_versions": sorted({check.rule_version for check in output.checks})}
-        elif applicable and goal.minimum_check_version in {"evidence-read-1", "knowledge-answer-1"} and observation is not None:
+            if goal.port in input_ports:
+                answer["scientific_qualification"] = False
+        elif applicable and (goal.minimum_check_version in {"evidence-read-1", "knowledge-answer-1"}
+                or goal.evidence_contract_version == "generic-observation-1") and observation is not None:
             # The read Tool already bounds returned lines/elements/bytes. The
             # requested answer cannot be replaced by a hash: actual matches,
             # values, units and partial-read facts are needed for delivery.
@@ -204,7 +216,7 @@ def _science_resources(run):
     # An actual new grant must still change the immutable delivery snapshot.
     if not run.permission.code_execution:
         permission.pop("code_execution", None)
-    return {"permission": permission,
+    resources = {"permission": permission,
             "remaining": {name: max(0, getattr(run.budget, name) - getattr(run.usage, counter))
                 for name, counter in (("orca_starts", "orca_starts_reserved"),
                     ("extra_orca_starts", "extra_orca_starts_reserved"),
@@ -219,6 +231,36 @@ def _science_resources(run):
             "unsettled_attempt_ids": [item.id for item in run.attempts
                 if item.state in {"intent", "running", "unknown"}],
             "unsettled_call_ids": [item.id for item in run.calls if item.state in {"reserved", "unknown"}]}
+    managed = (run.permission.code_execution or "orca.run" in run.permission.allowed_tools
+               or run.internal_calls or any(item.execution_kind == "python" for item in run.attempts))
+    if managed:
+        # New execution facts must be visible at the final decision too. Keep the
+        # historical terminal snapshot unchanged when this contract was unused.
+        for name in ("internal_work_units", "code_retries", "postprocess_starts"):
+            resources["limits"][name] = getattr(run.budget, name)
+            resources["usage"][name] = getattr(run.usage, name)
+            resources["remaining"][name] = max(0, getattr(run.budget, name) - getattr(run.usage, name))
+        from orca_agent.planning import additional_code_attempts_used
+        effective = additional_code_attempts_used(run)
+        resources["code_attempt_allowance"] = {"recorded": run.usage.code_retries,
+            "effective_used": effective,
+            "basis": "max(recorded, python_attempt_count - 1)",
+            "meaning": "every Python execution after the first, including distinct scripts"}
+        resources["remaining"]["code_retries"] = max(0, run.budget.code_retries - effective)
+        resources["unsettled_internal_request_keys"] = [item.request_key for item in run.internal_calls
+            if item.state in {"reserved", "running", "unknown"}]
+        resources["execution_cost"] = {
+            "python_attempts": sum(item.execution_kind == "python" for item in run.attempts),
+            "cpu_seconds": run.usage.cpu_seconds,
+            "elapsed_seconds": run.usage.elapsed_seconds,
+            "complete": run.usage.resource_usage_complete,
+        }
+        resources["artifact_limits"] = {name: getattr(run.budget, name) for name in (
+            "artifact_count", "artifact_bytes", "artifact_total_bytes")}
+        # The immutable import ledger lives in Store, not BudgetUsage. The
+        # pure snapshot cannot manufacture its cumulative totals or disk quota.
+        resources["artifact_usage"] = {"status": "not_in_snapshot", "disk_hard_quota": False}
+    return resources
 
 
 def _criterion_facts(result):

@@ -271,7 +271,9 @@ def test_public_plan_structure_changes_only_two_expansion_layers_and_declares_sc
     assert projected == expected
     assert action_parameter_schema("initial_plan") == original == full_before
     assert original["properties"]["steps"]["minItems"] == projected["properties"]["steps"]["minItems"] == 1
-    assert original["properties"]["steps"]["maxItems"] == projected["properties"]["steps"]["maxItems"] == 8
+    # Step-count permission is the frozen Run budget, not a second schema cap.
+    assert "maxItems" not in original["properties"]["steps"]
+    assert "maxItems" not in projected["properties"]["steps"]
     assert projected["properties"]["goal_map"] == original["properties"]["goal_map"]
     for name in ("FutureGoalTarget", "EvidenceGoalTarget", "GapGoalTarget"):
         assert projected["$defs"][name] == original["$defs"][name]
@@ -298,6 +300,6 @@ def test_structural_projection_retains_step_count_and_target_exclusivity(count):
     schema = _schema(plan_structure_schema())
     proposed = single()
     proposed["steps"] *= count
-    assert matches(schema, proposed, schema) is (1 <= count <= 8)
+    assert matches(schema, proposed, schema) is (count >= 1)
     proposed["goal_map"]["energy"]["gap"] = "mixed shape is forbidden even in the structural projection"
     assert not matches(schema, proposed, schema)

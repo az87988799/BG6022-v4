@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from test_context import payload
+from test_decision_purpose_capacity import expand_schema
 from test_natural import bundle_at, store_at
 from test_semantic_control import candidate
 
@@ -25,8 +26,12 @@ REJECTED = json.loads(FIXTURE.read_text(encoding="utf-8"))["proposals"]
 
 def condition_key_sets(schema):
     parameters = schema["properties"]["parameters"]
+    goals = parameters["properties"]["goals"]
+    goal = next(item for item in goals.get("anyOf", [goals]) if item.get("type") == "array")["items"]
+    if "$ref" in goal:
+        goal = schema["$defs"][goal["$ref"].removeprefix("#/$defs/")]
     return [set(parameters["properties"]["conditions"]["propertyNames"]["enum"]),
-            set(schema["$defs"]["semantic_SemanticGoal"]["properties"]["conditions"]["propertyNames"]["enum"]),
+            set(goal["properties"]["conditions"]["propertyNames"]["enum"]),
             set(next(iter(parameters["properties"]["system_conditions"]["patternProperties"].values()))[
                 "propertyNames"]["enum"])]
 
@@ -56,9 +61,10 @@ def test_real_rejected_shapes_get_specific_key_errors_and_bounded_correction_con
     data = payload(context)
     contract = data["ACTION_PARAMETERS"]["normalize_request"]
     assert "schema" not in contract
-    assert all(keys == CONDITIONS for keys in condition_key_sets(data["PROPOSAL_SCHEMA"]))
+    schema = expand_schema(data["PROPOSAL_SCHEMA"]) if "SCHEMA_COLUMNS" in data else data["PROPOSAL_SCHEMA"]
+    assert all(keys == CONDITIONS for keys in condition_key_sets(schema))
     assert "environment=gas/solvent" in contract["instruction"]
-    assert "No geometry conditions" in contract["instruction"]
+    assert "Registration/no-execution is not a Goal" in contract["instruction"]
     assert "Keep unknown/unsupported and explain_results" in contract["instruction"]
     assert "[] keeps basic checks" in contract["instruction"]
     assert contract["minimum_evidence_rules"]["version"] == RULE_VERSION

@@ -2,6 +2,7 @@
 
 import pytest
 from test_context import payload
+from test_decision_purpose_capacity import expand_schema
 from test_natural import bundle_at, store_at
 from test_semantic_control import candidate
 
@@ -32,7 +33,7 @@ from tests.helpers.phase_b_model_cases import (
 def test_query_schemas_come_from_registry_and_only_permitted_read_tools():
     contract = action_parameters(["evidence.text", "orca.sp"])["normalize_request"]
     assert contract["query_schemas"] == {"text_window": _schema(get_tool("evidence.text").parameter_schema)}
-    assert "Ports/rules:minimum_evidence_rules" in contract["instruction"]
+    assert "Rules:minimum_evidence_rules" in contract["instruction"]
     assert set(contract["minimum_evidence_rules"]["port_rules"]) == set(RULES) - {"unresolved"}
     assert contract["minimum_evidence_rules"]["port_rules"] == {
         port: rule for port, rule in RULES.items() if port != "unresolved"}
@@ -51,7 +52,8 @@ def test_raw_driver_intake_context_fits_and_exposes_the_parameter_contract(tmp_p
         feedback={"new_result_ids": [], "pending_step_ids": [], "allowed_repairs": run.permission.allowed_repairs})
     data = payload(prepared)
     assert prepared.input_token_bound <= run.budget.input_tokens == 12000
-    assert data["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"] == ["normalize_request"]
+    schema = expand_schema(data["PROPOSAL_SCHEMA"]) if "SCHEMA_COLUMNS" in data else data["PROPOSAL_SCHEMA"]
+    assert schema["properties"]["action"]["enum"] == ["normalize_request"]
     contract = data["ACTION_PARAMETERS"]["normalize_request"]
     assert "fixed_initial=SP, optimized=after Opt" in contract["instruction"]
     assert "queries:query_schemas[port]" in contract["instruction"]

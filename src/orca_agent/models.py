@@ -13,7 +13,15 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Annotated, Any, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, JsonValue, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    JsonValue,
+    model_serializer,
+    model_validator,
+)
 
 from orca_agent.versions import LEGACY_CHECK_VERSION
 
@@ -424,7 +432,7 @@ class Tool(Record):
     check_contract: dict[str, Any] = Field(default_factory=dict)
     preflight: str | None = None
     recovery: str | None = None
-    usage_counter: Literal["identity_queries", "structure_preparations", "knowledge_queries"] | None = None
+    usage_counter: Literal["identity_queries", "structure_preparations", "knowledge_queries", "analysis_executions"] | None = None
 
 
 class PermissionSnapshot(Record):
@@ -499,6 +507,7 @@ class ModelLimits(Record):
     """Transport/context limits; these are distinct from cumulative token budgets."""
 
     model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+    model_name: Literal["deepseek-flash", "deepseek-v4-pro"] | None = None
     input_tokens: Annotated[int, Field(strict=True, ge=1)] = 24000
     output_tokens: Annotated[int, Field(strict=True, ge=1)] = 2000
     timeout_seconds: Annotated[float, Field(gt=0)] = 60
@@ -506,11 +515,29 @@ class ModelLimits(Record):
     proposal_bytes: Annotated[int, Field(strict=True, ge=1)] = 32 * 1024
     messages: Annotated[int, Field(strict=True, ge=1)] = 64
 
+    @model_serializer(mode="wrap")
+    def preserve_historical_shape(self, handler):
+        value = handler(self)
+        if self.model_name is None:
+            value.pop("model_name", None)
+        return value
+
     @model_validator(mode="after")
     def response_capacity(self):
         if self.proposal_bytes > self.response_bytes:
             raise ValueError("proposal byte limit exceeds response byte limit")
         return self
+
+
+class NativeInputPolicy(Record):
+    """Frozen execution compatibility, never a scientific qualification rule."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    profile: Literal["bounded-analytic-1"] = "bounded-analytic-1"
+    max_atoms: Annotated[int, Field(strict=True, ge=1, le=32)] = 32
+    max_geom_iterations: Annotated[int, Field(strict=True, ge=1, le=128)] = 128
+    max_scf_iterations: Annotated[int, Field(strict=True, ge=1, le=256)] = 256
+    max_response_iterations: Annotated[int, Field(strict=True, ge=1, le=128)] = 128
 
 
 class ExecutionConfiguration(Record):
@@ -523,6 +550,14 @@ class ExecutionConfiguration(Record):
     docker_context: Annotated[str, Field(strict=True,
         pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")] | None = None
     docker_path: Path | None = None
+    native_input_policy: NativeInputPolicy | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_shape(self, handler):
+        value = handler(self)
+        if self.native_input_policy is None:
+            value.pop("native_input_policy", None)
+        return value
 
     @model_validator(mode="after")
     def explicit_backend_identity(self):
@@ -530,6 +565,8 @@ class ExecutionConfiguration(Record):
         if self.backend == "windows-lpac":
             if any(value is not None for value in fields):
                 raise ValueError("Windows execution cannot carry Linux container configuration")
+            if self.native_input_policy is not None:
+                raise ValueError("bounded native analytic execution requires the Linux container runtime")
         elif any(value is None for value in fields):
             raise ValueError("Linux container execution requires an immutable image, manifest, context and Docker path")
         if self.docker_path is not None:
@@ -622,6 +659,14 @@ class Attempt(Record):
     control_generation: int | None = None
     frozen_step: Step | None = None
     consumption: dict[str, Any] = Field(default_factory=dict)
+    native_workload: dict[str, Any] | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_shape(self, handler):
+        value = handler(self)
+        if self.native_workload is None:
+            value.pop("native_workload", None)
+        return value
 
 
 class ToolCall(Record):
@@ -640,7 +685,7 @@ class ToolCall(Record):
 
 
 class Proposal(Record):
-    action: Literal["clarify", "initial_plan", "revise_plan", "call_tool", "stop", "normalize_request"]
+    action: Literal["clarify", "initial_plan", "revise_plan", "call_tool", "stop", "normalize_request", "select_conditions"]
     request_version: int
     plan_version: int | None = None
     permission_version: int

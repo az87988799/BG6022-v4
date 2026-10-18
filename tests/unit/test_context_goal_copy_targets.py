@@ -4,14 +4,16 @@ import copy
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from uuid import uuid4
 
 import pytest
 
 from orca_agent import context
 from orca_agent.delivery import delivery_snapshot
-from orca_agent.models import Goal, Request, Run
+from orca_agent.models import Goal, InputRef, OutputBinding, Plan, Request, Run, Step
 from orca_agent.semantic import action_parameters
-from tests.unit.test_context import payload
+from orca_agent.tools.registry import get_tool
+from tests.unit.test_context import objects, payload
 from tests.unit.test_decision_purpose_capacity import decoded
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/phase_b/repair-cycle-v23-rejections.json"
@@ -70,10 +72,17 @@ def test_planning_prompt_uses_request_ids_when_status_contains_retired_goal():
     prepared = context.build_context(request, run,
         delivery_snapshot=delivery_snapshot(request, run, {}), now=run.created_at)
     prompt = prepared.body()["messages"][0]["content"]
-    assert "Goal IDs=AUTHORITY.request.goals[].id." in prompt
-    assert "Goal IDs=AUTHORITY.goal_status keys" not in prompt
-    current = decoded(prepared)["AUTHORITY"]
+    wire = decoded(prepared)
+    if wire["AUTHORITY"].get("response_contract") == "decision-intent-2":
+        assert "Map every required Goal ID/port." in prompt
+        assert set(wire["RESPONSE_ENVELOPE"]) == {"action", "parameters", "reason"}
+        assert "initial_plan" in wire["ACTION_SCHEMAS"]
+    else:
+        assert "Goal IDs=AUTHORITY.request.goals[].id." in prompt
+    assert "Goal IDs=AUTHORITY.goal_status keys" not in prompt and "Goal IDs=goal_status keys" not in prompt
+    current = wire["AUTHORITY"]
     assert {goal["id"] for goal in current["request"]["goals"]} == {goal.id for goal in request.goals}
+    assert all(json.dumps(goal.id) in prepared.body()["messages"][1]["content"] for goal in request.goals)
     assert current["goal_status"]["retired_goal"] == "satisfied"
     assert (request, run) == before
 
@@ -115,10 +124,52 @@ def test_v23_actual_goal_and_both_correction_requirements_fit_current_context(re
     assert wire["AUTHORITY"]["request"]["goals"][0]["id"] == "finite_sample_internal_minimum"
     assert wire["AUTHORITY"]["request"]["conditions"]["available_evidence"] == (
         request.conditions["available_evidence"])
-    assert set(wire["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"]) == {
-        "initial_plan", "clarify", "stop"}
+    actions = {"initial_plan", "clarify", "stop"}
+    assert set(wire["AUTHORITY"]["decision_purpose"]["allowed_actions"]) == actions
+    if wire["AUTHORITY"].get("response_contract") == "decision-intent-2":
+        assert set(wire["ACTION_SCHEMAS"]) == actions
+        assert set(wire["RESPONSE_ENVELOPE"]) == {"action", "parameters", "reason"}
+        assert set(wire["RESPONSE_ENVELOPE"]["action"].split(" | ")) == actions
+    else:
+        assert set(wire["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"]) == actions
+    if rejection is not None:
+        assert wire["CONTROL"]["validation_error"] == feedback["validation_error"]
     assert wire["AUTHORITY"]["permission"]["scientific_execution"] is False
     assert wire["AUTHORITY"]["budget_limits"]["orca_starts"] == 0
+
+
+@pytest.mark.parametrize("revision_available", [False, True])
+def test_ready_step_schema_remains_visible_when_revision_can_change_parameters(revision_available):
+    request, run = objects()
+    run.permission.allowed_tools = ["orca.sp"]
+    run.budget.orca_starts = 1
+    step = Step(id="ready", logical_id="ready", tool="orca.sp", geometry=InputRef(artifact_id="geometry1"))
+    plan = Plan(request_id=request.id, steps=[step],
+                goal_map={request.goals[0].id: OutputBinding(step_id=step.id, port="energy")})
+    run.plan_id, run.plan_version = plan.id, plan.version
+    run.initial_science_steps = [step.logical_id]
+    if not revision_available:
+        run.usage.plan_revisions = run.budget.plan_revisions
+    before = copy.deepcopy((request, run, plan))
+    prepared = context.build_context(request, run, plan,
+        feedback={"pending_step_ids": [step.id]}, delivery_snapshot=delivery_snapshot(request, run, {}))
+    wire = decoded(prepared)
+    actions = wire["AUTHORITY"]["decision_purpose"]["allowed_actions"]
+    assert ("revise_plan" in actions) is revision_available and "call_tool" in actions
+    assert wire["CONTROL"]["pending_step_ids"] == [step.id]
+    if revision_available:
+        if "TOOLS" in wire:
+            tool, = [tool for tool in wire["TOOLS"] if tool["name"] == step.tool]
+            schema = tool["parameters"]
+        else:
+            tool, = [tool for tool in wire["TOOL_CATALOG"] if tool["name"] == step.tool]
+            schema = wire["PARAMETER_SCHEMAS"][tool["parameter_schema"]]
+        original = get_tool(step.tool).parameter_schema
+        assert set(schema["properties"]) == set(original["properties"])
+        assert schema["additionalProperties"] is False
+        for field in ("cores", "memory_mb", "scf_maxiter"):
+            assert schema["properties"][field]["minimum"] == original["properties"][field]["minimum"]
+    assert (request, run, plan) == before
 
 
 def test_sampling_intake_defers_inputs_but_preserves_specification_and_restores_planning_evidence():
@@ -183,3 +234,32 @@ def test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goa
     planning = decoded(context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at))
     assert planning["AUTHORITY"]["request"]["conditions"]["available_evidence"] == evidence
     assert (request, run) == before
+
+
+@pytest.mark.parametrize("identity_width", [32, 48, 64])
+def test_intake_capacity_preserves_conditions_across_bounded_identity_variants(monkeypatch, identity_width):
+    # Different legal IDs change only identity bytes, not the old 12k limit or
+    # any authority/conditions. Reuse the full original assertions for each
+    # scope, including independently decoded model messages and planning data.
+    import sys
+
+    original = _actual_sampling_objects
+    prepared_requests = []
+    build = context.build_context
+    def fresh_objects():
+        request, run = original()
+        suffix = (uuid4().hex + uuid4().hex)[:identity_width]
+        request.id = "request_" + suffix
+        run.request_id = request.id
+        run.id = "run_" + (uuid4().hex + uuid4().hex)[:identity_width]
+        return request, run
+    def capture(*args, **kwargs):
+        prepared = build(*args, **kwargs)
+        prepared_requests.append(prepared)
+        return prepared
+    monkeypatch.setattr(sys.modules[__name__], "_actual_sampling_objects", fresh_objects)
+    monkeypatch.setattr(context, "build_context", capture)
+    for scope in ("mixed_energy", "missing_spec", "empty_candidates"):
+        test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals(scope)
+    assert len(prepared_requests) == 6
+    assert all(prepared.input_token_bound <= 12000 for prepared in prepared_requests)
