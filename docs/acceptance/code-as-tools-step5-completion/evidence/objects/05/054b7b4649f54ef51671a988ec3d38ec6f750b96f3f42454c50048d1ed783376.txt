@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "/opt/orca-agent-runtime/python_task.py", line 21, in <module>
+    runpy.run_path(sys.argv[0], run_name="__main__")
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/work/sealed/task.py", line 307, in <module>
+    main()
+  File "/work/sealed/task.py", line 183, in main
+    atoms = read_xyz(INITIAL)
+            ^^^^^^^^^^^^^^^^^
+  File "/work/sealed/task.py", line 11, in read_xyz
+    lines = path.read_text().splitlines()
+            ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/pathlib.py", line 1059, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/pathlib.py", line 1045, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/work/task/coords.xyz'

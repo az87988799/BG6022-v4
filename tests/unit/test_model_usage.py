@@ -1,19 +1,23 @@
+import hashlib
 import json
 from dataclasses import replace
 from decimal import Decimal
 
 import pytest
 
+from orca_agent.delivery import MAX_DELIVERY_SNAPSHOT_BYTES, delivery_snapshot
 from orca_agent.llm import (
     MAX_RAW_CONTENT_BYTES,
     ModelReply,
     ModelUsage,
+    _canonical,
     _parse_response,
     prepare_request,
 )
 from orca_agent.model_usage import current_basis, read_model_reply, recover_models, send_model
 from orca_agent.models import BudgetLimits, Goal, PermissionSnapshot, Request
 from orca_agent.store import BudgetExceeded, Store, StoreError
+from orca_agent.terminal import read_delivery_snapshot
 
 
 class ScriptedTransport:
@@ -74,6 +78,44 @@ def test_reservation_is_durable_before_transmission_and_known_usage_settles_once
     assert invoke(setup, transport) == reply
     assert transport.sends == 1
     assert store.path(f"runs/{run.id}/run.json").read_bytes() == before
+
+
+def test_delivery_snapshot_local_capacity_is_shared_and_bounded(setup):
+    store, run, _ = setup
+    snapshot = delivery_snapshot(store.load_request(run), run, {})
+
+    def prepared_snapshot(size):
+        snapshot["facts"][0]["value"]["source_excerpt"] = "x" * size
+        snapshot["fingerprint"] = hashlib.sha256(_canonical({
+            key: value for key, value in snapshot.items() if key != "fingerprint"
+        }).encode("utf-8")).hexdigest()
+        return prepare_request([{"role": "system", "content": "Return JSON."},
+            {"role": "user", "content": json.dumps({"AUTHORITY": {
+            "contract_required": True,
+            "delivery_snapshot_fingerprint": snapshot["fingerprint"],
+        }})}], max_output_tokens=100)
+
+    prepared = prepared_snapshot(300 * 1024)
+    transport = ScriptedTransport()
+    invoke((store, run, prepared), transport, delivery_snapshot=snapshot)
+    record = run.model_records[0]
+    path = store.path(f"runs/{run.id}/model/{record['id']}.delivery.json")
+    assert 256 * 1024 < path.stat().st_size <= MAX_DELIVERY_SNAPSHOT_BYTES
+    assert read_delivery_snapshot(store, run, record) == snapshot
+    before = store.path(f"runs/{run.id}/run.json").read_bytes()
+
+    oversized = prepared_snapshot(MAX_DELIVERY_SNAPSHOT_BYTES)
+    refused = ScriptedTransport()
+    with pytest.raises(StoreError, match="delivery snapshot exceeds its size bound"):
+        invoke((store, run, oversized), refused, logical_id="oversized_snapshot",
+               delivery_snapshot=snapshot)
+    assert refused.sends == 0 and transport.sends == 1
+    assert store.path(f"runs/{run.id}/run.json").read_bytes() == before
+
+    # A tampered on-disk snapshot must also respect the reader's same hard bound.
+    path.write_bytes(b" " * (MAX_DELIVERY_SNAPSHOT_BYTES + 1))
+    with pytest.raises(StoreError, match="outside its size bound"):
+        read_delivery_snapshot(store, run, record)
 
 
 @pytest.mark.parametrize("category", [None, "timeout", "authentication", "rate_limit"])

@@ -1,0 +1,17 @@
+# 授权续作独立证据导出准备
+
+状态：方案草稿；续作和独立审计结束前不导出、不改原报告或历史导出物。
+
+新报告建议位于 `docs/acceptance/code-as-tools-step5-completion/report.md`，本地草稿为本目录 `continuation-report.md`。原 `docs/acceptance/code-as-tools-step5/report.md` 的六次失败、原限额和已发生验证保持历史事实，最终只在开头增加新续作报告链接及“此后获明确新授权，原 live006 继续”的日期说明；不能把原有有界失败改写成第一次成功。
+
+导出到全新 `docs/acceptance/code-as-tools-step5-completion/evidence/`，不覆盖原 evidence。保留对应 validation：本次预算测试开发输出摘录、输入修复定向结果、最终累计成本、独立科学核对、导出后 hash 复核。模型响应、授权/续作原文、0040 不可变修订和 before Run、初始结构、每个 Python/ORCA 输入输出、全候选/失败表格和最终报告进入索引；二进制/大文件按既有策略保留本地并记录 hash 和省略原因。
+
+最终可使用既有只读 `scripts/container_runtime/export_acceptance.py`，继续 `--hash-only-contexts`，公开总上限仍 10 MiB，单文本上限仍 1 MiB；不为导出调用模型、Docker、ORCA 或任务代码。推荐先将稳定来源复制到独立 `data/code-as-tools-step5-completion/export-input/` 冻结目录，并记录源→副本 hash，以免以后同 Run 继续使验收索引的 local_path 指向变动账本：
+
+- `live-store-final/`：最终六个唯一 Run 与 Artifact 的冻结快照，仅此目录用于成本 Run 统计。预算修订 before 副本是历史证据，不另算 Run。
+- `continuation-001/`：驱动、freeze、授权与续作消息、outcome、报告。旧的 `run-before-continuation.json` 只证明保留旧消耗，不另加到最终累计。
+- `validation/`：最终审计 JSON、测试输出摘录、成本脚本/结果、独立验证规则与逐源索引；没有生成的 JUnit 不补造。
+
+在最终源稳定且快照逐字节 hash 一致后，才执行导出和同参数 `--verify-only`。发布对象保持内容寻址，目录使用不同 batch 名避免覆盖既有索引。原导出曾通过的历史事实保持；其 local_path 若因合法同 Run 续作发生变化，应通过保留的旧 Run before/hash 对应说明，不伪称旧 local_path 当前仍具有旧 hash。
+
+最终报告分别说明：运行期间冻结源码检查、最终源码 hash、独立科学核对、成本总账及续作实际增量、可公开与仅本地保留的证据。真实 ORCA 的执行成功、科学输出检查和用户退出条件分别判断。最终完成后再更新当前状态文档并提交推送，等待用户验收；步骤 6/7 不在本轮范围。

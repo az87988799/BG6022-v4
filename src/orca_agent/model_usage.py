@@ -12,6 +12,7 @@ from orca_agent.decision_purpose import (
     prepared_authority,
     prepared_decision_purpose,
 )
+from orca_agent.delivery import MAX_DELIVERY_SNAPSHOT_BYTES
 from orca_agent.llm import (
     ModelReply,
     ModelUsage,
@@ -411,7 +412,7 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
             snapshot_bytes = None
             if delivery_snapshot is not None:
                 snapshot_bytes = _json_bytes(delivery_snapshot)
-                if len(snapshot_bytes) > 256 * 1024:
+                if len(snapshot_bytes) > MAX_DELIVERY_SNAPSHOT_BYTES:
                     raise StoreError("delivery snapshot exceeds its size bound")
                 snapshot_basis = {key: delivery_snapshot.get("basis", {}).get(key) for key in basis}
                 fingerprint = hashlib.sha256(_canonical({key: value for key, value in delivery_snapshot.items()

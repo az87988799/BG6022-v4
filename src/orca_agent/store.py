@@ -8,10 +8,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import stat
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path, PureWindowsPath
 from typing import Any, Callable
 
@@ -52,7 +53,7 @@ class StoreError(ValueError):
 
 
 class BudgetExceeded(StoreError):
-    """An immutable cumulative budget prevents a new launch."""
+    """The explicitly authorized cumulative budget prevents a new launch."""
 
 
 class ControlChanged(StoreError):
@@ -294,7 +295,188 @@ class Store:
             if not path.is_file() or RunConfiguration.model_validate(
                     self._read_json(f"runs/{run.id}/configuration.json")) != run.configuration:
                 raise StoreError("immutable Run configuration snapshot is missing or changed")
+        if run.budget_revision is not None:
+            self.validate_budget_snapshot(run)
         return run
+
+    @staticmethod
+    def _amended_budget(before: Run, message: dict) -> tuple[BudgetLimits, datetime]:
+        """Only authenticated structured user fields can specify new ceilings."""
+        allowed = {"model_calls", "model_tokens", "decision_rounds", "evidence_reads",
+                   "analysis_executions", "code_retries", "attempts_per_step", "artifact_count"}
+        update = message.get("update")
+        if (message.get("source") != "user" or not isinstance(update, dict)
+                or set(update) != {"budget_amendment"}):
+            raise StoreError("budget amendment requires an explicit trusted user update")
+        amendment = update["budget_amendment"]
+        if (not isinstance(amendment, dict) or not {"limits", "deadline"} <= set(amendment)
+                or set(amendment) - {"limits", "deadline", "archive_timeout_seconds"}):
+            raise StoreError("budget amendment requires limits and an absolute deadline; "
+                             "only archive_timeout_seconds is additionally allowed")
+        if "archive_timeout_seconds" in amendment:
+            seconds = amendment["archive_timeout_seconds"]
+            original = (before.configuration or RunConfiguration(version=1)).resources.collection_timeout_seconds
+            if (type(seconds) not in {int, float} or not math.isfinite(seconds) or seconds <= 0
+                    or seconds < original):
+                raise StoreError("archive timeout must be finite, positive and not below the original configuration")
+        limits = amendment["limits"]
+        if (not isinstance(limits, dict) or set(limits) - allowed
+                or any(type(value) is not int for value in limits.values())):
+            raise StoreError("budget amendment contains undeclared or non-integer limits")
+        if any(value < getattr(before.budget, name) for name, value in limits.items()):
+            raise StoreError("budget amendment cannot decrease an existing limit")
+        try:
+            if not isinstance(amendment["deadline"], str):
+                raise ValueError("deadline must be a string")
+            deadline = datetime.fromisoformat(amendment["deadline"].replace("Z", "+00:00"))
+            authorized_at = datetime.fromisoformat(message["created_at"].replace("Z", "+00:00"))
+            if deadline.utcoffset() is None or authorized_at.utcoffset() is None:
+                raise ValueError("deadline and authorization need timezones")
+            if deadline <= before.deadline or deadline <= authorized_at:
+                raise ValueError("deadline must extend the old deadline and authorization time")
+        except (KeyError, TypeError, ValueError) as exc:
+            raise StoreError(f"invalid authorized budget deadline: {exc}") from exc
+        values = {**before.budget.model_dump(), **limits,
+                  "run_seconds": (deadline - before.created_at).total_seconds()}
+        if values["run_seconds"] < before.budget.run_seconds:
+            raise StoreError("budget amendment cannot decrease the cumulative time limit")
+        return BudgetLimits.model_validate(values), deadline
+
+    def _budget_revisions(self, run: Run) -> list[dict]:
+        """Validate only the active immutable chain; orphan records grant nothing."""
+        original = BudgetLimits.model_validate(self._read_json(f"runs/{run.id}/budget.json"))
+        if run.budget_revision is None:
+            if original != run.budget:
+                raise StoreError("budget snapshot mismatch")
+            return []
+        fields = {"version", "id", "run_id", "previous_revision", "budget", "deadline",
+                  "authorization_message", "authorization_sha256", "before_sha256",
+                  "original_budget_sha256", "permission_sha256", "configuration_sha256"}
+        messages = {item["id"]: item for item in self.read_control(run.id)["messages"]}
+        original_hash = sha256_file(self.path(f"runs/{run.id}/budget.json"))
+        permission_hash = sha256_file(self.path(f"runs/{run.id}/permission.json"))
+        config_path = self.path(f"runs/{run.id}/configuration.json")
+        config_hash = sha256_file(config_path) if config_path.exists() else None
+        revision_id, budget, deadline = run.budget_revision, run.budget, run.deadline
+        records, seen = [], set()
+        while revision_id is not None:
+            _id(revision_id)
+            if revision_id in seen or len(seen) >= 64:
+                raise StoreError("invalid or excessive budget revision chain")
+            seen.add(revision_id)
+            relative = f"runs/{run.id}/budget-revisions/{revision_id}"
+            record = self._read_json(relative + ".json")
+            if (not isinstance(record, dict) or set(record) != fields
+                    or type(record["version"]) is not int or record["version"] != 1
+                    or record["id"] != revision_id or record["run_id"] != run.id
+                    or record["original_budget_sha256"] != original_hash
+                    or record["permission_sha256"] != permission_hash
+                    or record["configuration_sha256"] != config_hash
+                    or sha256_file(self.path(relative + ".before.json")) != record["before_sha256"]):
+                raise StoreError("immutable budget revision identity or snapshot changed")
+            before = Run.model_validate(self._read_json(relative + ".before.json"))
+            message = record["authorization_message"]
+            if (not isinstance(message, dict)
+                    or messages.get(message.get("id")) != message
+                    or message.get("id") not in run.processed_messages
+                    or hashlib.sha256(_json_bytes(message)).hexdigest() != record["authorization_sha256"]
+                    or before.id != run.id or before.created_at != run.created_at
+                    or before.permission != run.permission or before.configuration != run.configuration
+                    or before.budget_revision != record["previous_revision"]):
+                raise StoreError("budget revision lacks its unchanged trusted authorization")
+            approved_budget, approved_deadline = self._amended_budget(before, message)
+            if (approved_budget != budget or approved_deadline != deadline
+                    or BudgetLimits.model_validate(record["budget"]) != budget
+                    or record["deadline"] != deadline.isoformat()):
+                raise StoreError("active budget or deadline differs from its authorized revision")
+            records.append(record)
+            revision_id, budget, deadline = before.budget_revision, before.budget, before.deadline
+        if budget != original:
+            raise StoreError("budget revision chain differs from the original budget snapshot")
+        self._archive_timeout_from_revisions(run, records)
+        return records
+
+    def _archive_timeout_from_revisions(self, run: Run, records: list[dict]) -> float:
+        seconds = self.run_configuration(run).resources.collection_timeout_seconds
+        for record in reversed(records):
+            amendment = record["authorization_message"]["update"]["budget_amendment"]
+            if "archive_timeout_seconds" in amendment:
+                value = amendment["archive_timeout_seconds"]
+                if value < seconds:
+                    raise StoreError("archive timeout cannot decrease the current authorized value")
+                seconds = value
+        return seconds
+
+    def archive_timeout(self, run: Run) -> float:
+        """Host registration only; inherit explicitly authorized active revisions."""
+        return self._archive_timeout_from_revisions(run, self._budget_revisions(run))
+
+    def validate_budget_snapshot(self, run: Run) -> None:
+        self._budget_revisions(run)
+
+    def amend_budget(self, run_id: str, *, message_id: str, amendment_id: str, fault=None) -> Run:
+        """Trusted control entry point, deliberately absent from model/Tool schemas."""
+        _id(amendment_id)
+        _id(message_id)
+        with self.run_lock(run_id), self.control_lock(run_id):
+            run = self.load_run(run_id)
+            control = self.read_control(run_id)
+            message = next((m for m in control["messages"] if m["id"] == message_id), None)
+            if message is None:
+                raise StoreError("budget amendment requires a retained trusted user message")
+            revisions = self._budget_revisions(run)
+            prior = next((item for item in revisions if item["id"] == amendment_id), None)
+            if prior is not None:
+                if prior["authorization_message"] != message:
+                    raise StoreError("budget amendment ID already names another authorization")
+                return run
+            if message_id in run.processed_messages:
+                raise StoreError("budget amendment user message was already consumed")
+            if (any(a.state in {"intent", "running", "unknown"} for a in run.attempts)
+                    or any(c.state in {"reserved", "running", "unknown"} for c in run.calls)
+                    or any(c.state in {"reserved", "running", "unknown"} for c in run.internal_calls)
+                    or any(r.get("status") == "reserved" for r in run.model_records)):
+                raise StoreError("unfinished work requires reconciliation before budget amendment")
+            if PermissionSnapshot.model_validate(self._read_json(
+                    f"runs/{run.id}/permission.json")) != run.permission:
+                raise StoreError("budget amendment cannot change the permission snapshot")
+            budget, deadline = self._amended_budget(run, message)
+            archive_seconds = message["update"]["budget_amendment"].get("archive_timeout_seconds")
+            if (archive_seconds is not None
+                    and archive_seconds < self._archive_timeout_from_revisions(run, revisions)):
+                raise StoreError("archive timeout cannot decrease the current authorized value")
+            if utc_now() >= deadline:
+                raise StoreError("authorized budget amendment deadline has already expired")
+            relative = f"runs/{run.id}/budget-revisions/{amendment_id}"
+            before_path = self.path(f"runs/{run.id}/run.json")
+            before_bytes = before_path.read_bytes()
+            config_path = self.path(f"runs/{run.id}/configuration.json")
+            record = {"version": 1, "id": amendment_id, "run_id": run.id,
+                "previous_revision": run.budget_revision, "budget": budget.model_dump(mode="json"),
+                "deadline": deadline.isoformat(), "authorization_message": message,
+                "authorization_sha256": hashlib.sha256(_json_bytes(message)).hexdigest(),
+                "before_sha256": hashlib.sha256(before_bytes).hexdigest(),
+                "original_budget_sha256": sha256_file(self.path(f"runs/{run.id}/budget.json")),
+                "permission_sha256": sha256_file(self.path(f"runs/{run.id}/permission.json")),
+                "configuration_sha256": sha256_file(config_path) if config_path.exists() else None}
+            before_copy = self.path(relative + ".before.json")
+            if before_copy.exists():
+                if before_copy.read_bytes() != before_bytes:
+                    raise StoreError("budget amendment before snapshot already names another Run state")
+            else:
+                atomic_write(before_copy, before_bytes, immutable=True)
+            self._write_json(relative + ".json", record, immutable=True)
+            if fault:
+                fault("after_budget_revision_saved")
+            updated = run.model_copy(deep=True)
+            updated.budget, updated.deadline, updated.budget_revision = budget, deadline, amendment_id
+            updated.processed_messages.append(message_id)
+            if not any(m["id"] not in updated.processed_messages for m in control["messages"]):
+                updated.control_generation = control["generation"]
+            updated.diagnostics.append({"category": "budget_amendment", "amendment_id": amendment_id,
+                                        "user_message_id": message_id})
+            self._write_json(f"runs/{run.id}/run.json", updated)
+            return self.load_run(run.id)
 
     def run_configuration(self, run: Run) -> RunConfiguration:
         """Historical Runs retain the enforced old envelope, never today's config."""
@@ -389,7 +571,7 @@ class Store:
             previous = self.load_run(run.id)
             for field in ("request_id", "request_version", "plan_id", "plan_version", "permission",
                           "science_baseline_policy",
-                          "budget", "configuration", "created_at", "deadline"):
+                          "budget", "budget_revision", "configuration", "created_at", "deadline"):
                 if getattr(run, field) != getattr(previous, field):
                     raise StoreError(f"fixed run field cannot be changed: {field}")
             for field in ("orca_starts_reserved", "orca_starts_actual", "postprocess_starts",
@@ -674,9 +856,7 @@ class Store:
             )
             if permission != run.permission:
                 raise StoreError("execution is not authorized: permission snapshot mismatch")
-            if BudgetLimits.model_validate(self._read_json(
-                    f"runs/{run.id}/budget.json")) != run.budget:
-                raise StoreError("budget snapshot mismatch")
+            self.validate_budget_snapshot(run)
             params = validate_parameters(step.tool, step.parameters)
             definition = get_tool(step.tool)
             effects = set(definition.effects)
@@ -896,9 +1076,7 @@ class Store:
                     or not permission.code_execution or not permission.artifact_writes
                     or "orca.run" not in permission.allowed_tools):
                 raise StoreError("internal ORCA execution is not authorized")
-            if BudgetLimits.model_validate(self._read_json(
-                    f"runs/{run.id}/budget.json")) != run.budget:
-                raise StoreError("budget snapshot mismatch")
+            self.validate_budget_snapshot(run)
             candidate = InternalCall(request_key=request_key, input_fingerprint=input_fingerprint,
                 code=code, inputs=inputs or InputManifest(), conditions=conditions or {},
                 purpose=purpose, retry_of=retry_of, goal=goal or {}, resources=resources or {},
@@ -1469,9 +1647,9 @@ class Store:
                 if user_message_ids or semantic_record is not None or plan is not None:
                     raise StoreError("condition selection cannot grant user authority or replace a Plan")
                 if (PermissionSnapshot.model_validate(self._read_json(f"runs/{run.id}/permission.json"))
-                        != run.permission or BudgetLimits.model_validate(self._read_json(
-                            f"runs/{run.id}/budget.json")) != run.budget):
+                        != run.permission):
                     raise StoreError("condition selection requires unchanged permission and budget snapshots")
+                self.validate_budget_snapshot(run)
                 from orca_agent.condition_selection import validate_selection_revision
                 validate_selection_revision(self, run, prior_request, next_request, selection_record)
             if not user_message_ids and any(m["id"] not in run.processed_messages for m in messages):

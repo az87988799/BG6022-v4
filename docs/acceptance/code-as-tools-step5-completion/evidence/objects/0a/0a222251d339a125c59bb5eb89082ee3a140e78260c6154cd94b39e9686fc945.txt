@@ -1,0 +1,181 @@
+import csv
+import json
+import math
+import re
+from pathlib import Path
+
+HARTREE_TO_KJ = 2625.4996394799
+HARTREE_TO_EV = 27.211386245988
+CANDIDATES = [
+    ("candidate_08", "inputs/sp_candidate_08.out", "sp_candidate_08.stdout.out"),
+    ("candidate_04", "inputs/sp_candidate_04.out", "sp_candidate_04.stdout.out"),
+    ("candidate_09", "inputs/sp_candidate_09.out", "sp_candidate_09.stdout.out"),
+    ("candidate_11", "inputs/sp_candidate_11.out", "sp_candidate_11.stdout.out"),
+]
+PREPARED = "inputs/prepared.xyz"
+
+
+def parse_orca(path):
+    p = Path(path)
+    text = p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
+    energies = [float(m.group(1)) for m in re.finditer(r"FINAL SINGLE POINT ENERGY\s+([-+]?\d+(?:\.\d+)?)", text)]
+    energy = energies[-1] if energies else None
+    coords = []
+    marker = "CARTESIAN COORDINATES (ANGSTROEM)"
+    idx = text.rfind(marker)
+    if idx != -1:
+        lines = text[idx:].splitlines()
+        start = None
+        for i, line in enumerate(lines):
+            if re.match(r"^\s*-{5,}", line):
+                start = i + 1
+                break
+        if start is not None:
+            for line in lines[start:]:
+                if not line.strip():
+                    break
+                parts = line.split()
+                if len(parts) >= 4 and re.fullmatch(r"[A-Za-z]{1,3}", parts[0]):
+                    try:
+                        coords.append([parts[0], float(parts[1]), float(parts[2]), float(parts[3])])
+                    except ValueError:
+                        pass
+    return energy, coords
+
+
+def write_xyz(path, coords):
+    lines = [str(len(coords)), "archived ORCA final geometry; not optimized for this report"]
+    for sym, x, y, z in coords:
+        lines.append(f"{sym} {x:.8f} {y:.8f} {z:.8f}")
+    Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+records = []
+for cid, path, original in CANDIDATES:
+    energy, coords = parse_orca(path)
+    if energy is not None:
+        records.append({"candidate_id": cid, "path": path, "original_filename": original, "energy_hartree": energy, "coords": coords})
+
+records.sort(key=lambda r: r["energy_hartree"])
+min_energy = records[0]["energy_hartree"] if records else None
+for r in records:
+    r["relative_energy_kj_mol"] = (r["energy_hartree"] - min_energy) * HARTREE_TO_KJ if min_energy is not None else None
+    r["relative_energy_ev"] = (r["energy_hartree"] - min_energy) * HARTREE_TO_EV if min_energy is not None else None
+
+artifacts = []
+with open("ranking.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f)
+    w.writerow(["candidate_id", "orca_energy_hartree", "relative_energy_kj_mol", "relative_energy_ev", "orca_stdout_file"])
+    for r in records:
+        w.writerow([r["candidate_id"], r["energy_hartree"], r["relative_energy_kj_mol"], r["relative_energy_ev"], r["original_filename"]])
+artifacts.append("ranking.csv")
+
+structures = []
+for r in records:
+    xyz_name = f'{r["candidate_id"]}.xyz'
+    if r["coords"]:
+        write_xyz(xyz_name, r["coords"])
+        artifacts.append(xyz_name)
+    structures.append({"candidate_id": r["candidate_id"], "xyz_file": xyz_name if r["coords"] else None, "energy_hartree": r["energy_hartree"], "coordinates": r["coords"]})
+
+prepared_text = Path(PREPARED).read_text(encoding="utf-8", errors="replace") if Path(PREPARED).exists() else ""
+
+energy_sources = [{"filename": r["original_filename"], "location": "FINAL SINGLE POINT ENERGY"} for r in records]
+observations = [
+    {
+        "name": "conformer_search",
+        "value": {
+            "smiles": "CCCCCC",
+            "generated_count": 12,
+            "evaluated_count": len(records),
+            "pre_ranking": "MMFF pre-ranking as recorded in the archived ranking table",
+            "method": "B3LYP",
+            "basis": "6-31G",
+            "environment": "gas_phase",
+            "charge": 0,
+            "multiplicity": 1,
+            "search_scope": "Finite RDKit conformer generation followed by MMFF pre-ranking; only the four lowest pre-ranked candidates were evaluated by ORCA single points because the 4-ORCA cap was reached.",
+            "not_global": True,
+        },
+        "unit": None,
+        "sources": energy_sources,
+        "formula": None,
+        "artifacts": [],
+        "limitations": ["Finite search only; this does not establish a global minimum.", "Only four of the twelve generated candidates were evaluated."],
+    },
+    {
+        "name": "candidate_structures",
+        "value": {
+            "generated_count": 12,
+            "evaluated_count": len(records),
+            "structures": structures,
+            "scope_note": "Coordinates are available only for the four evaluated candidates from archived ORCA final geometries; eight generated candidates have no archived coordinates in the available sources.",
+        },
+        "unit": "angstrom (coordinates); hartree (single-point energies)",
+        "sources": energy_sources,
+        "formula": None,
+        "artifacts": [a for a in artifacts if a.endswith('.xyz')],
+        "limitations": ["Not all twelve generated candidates have archived coordinates.", "Coordinates are not geometry-optimized for this report."],
+    },
+    {
+        "name": "failed_members",
+        "value": {
+            "failed_evaluations": [],
+            "excluded_members": [{"reason": "not evaluated due to the 4-ORCA cap", "count": 8}],
+            "evaluated_count": len(records),
+            "generated_count": 12,
+        },
+        "unit": None,
+        "sources": energy_sources,
+        "formula": None,
+        "artifacts": [],
+        "limitations": ["The eight excluded generated candidates have no saved coordinates or identifiers beyond the aggregate count in the available ranking record."],
+    },
+    {
+        "name": "structural_scope_energy",
+        "value": {
+            "search_scope": "Finite RDKit conformer generation from SMILES CCCC, MMFF pre-ranking, and B3LYP/6-31G gas-phase single-point evaluation of the four lowest pre-ranked candidates.",
+            "energy_formula": "Delta E_i(kJ/mol) = (E_i - E_min) * 2625.4996394799",
+            "energy_unit": "kJ/mol (relative); hartree (absolute)",
+            "relative_energy_values_kj_mol": [{"candidate_id": r["candidate_id"], "relative_energy_kj_mol": r["relative_energy_kj_mol"]} for r in records],
+        },
+        "unit": "kJ/mol; hartree",
+        "sources": energy_sources,
+        "formula": "Delta E_i(kJ/mol) = (E_i - E_min) * 2625.4996394799",
+        "artifacts": [],
+        "limitations": ["Ranking is only among evaluated single-point candidates.", "No ORCA geometry optimization or frequency validation was performed."],
+    },
+    {
+        "name": "downloadable_validation",
+        "value": {
+            "artifacts": artifacts,
+            "validated": "Single-point energies were parsed from archived ORCA stdout files; file identity is source-bound.",
+            "unvalidated": ["global minimum status", "geometry optimization", "frequency validation", "eight generated but unevaluated candidates"],
+            "disclaimer": "No claim of global minimum is made.",
+        },
+        "unit": None,
+        "sources": energy_sources,
+        "formula": None,
+        "artifacts": artifacts,
+        "limitations": ["Only archived file identity and parsed single-point energies are bounded by the available sources."],
+    },
+    {
+        "name": "reporting_requirements",
+        "value": {
+            "initial_structure_preserved": True,
+            "prepared_xyz_present": bool(prepared_text),
+            "actual_geometry_relation": "The four evaluated structures are final geometries from archived ORCA single-point inputs; they are not optimized for this report.",
+            "validated_items": ["archived ORCA single-point energies", "evaluated candidate coordinates when present in ORCA output"],
+            "unvalidated_items": ["global coverage", "geometry optimization", "frequency validation", "all twelve generated candidate structures"],
+            "search_boundary": "Four ORCA single points; twelve RDKit-generated candidates; no global minimum claim.",
+        },
+        "unit": None,
+        "sources": [{"filename": "prepared.xyz", "location": "initial structure"}] + energy_sources,
+        "formula": None,
+        "artifacts": [],
+        "limitations": ["Actual geometry relations, evaluation method, and search boundary are reported with the available archived evidence only."],
+    },
+]
+
+Path("observations.json").write_text(json.dumps({"version": 1, "observations": observations}, indent=2), encoding="utf-8")
+print(json.dumps({"records": len(records), "artifacts": artifacts, "observations": [o["name"] for o in observations]}))

@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 
+from orca_agent.delivery import MAX_DELIVERY_SNAPSHOT_BYTES
 from orca_agent.model_usage import current_basis
 from orca_agent.models import ReportReceipt, TerminalReceipt, fingerprint
 from orca_agent.proposals import ContractStopParameters, ProposalError
@@ -77,7 +78,7 @@ def read_delivery_snapshot(store, run, record):
     if not digest:
         _reject("terminal_snapshot_missing", ["parameters", "delivery"])
     path = store.path(f"runs/{run.id}/model/{record['id']}.delivery.json")
-    if not path.is_file() or path.stat().st_size > 256 * 1024:
+    if not path.is_file() or path.stat().st_size > MAX_DELIVERY_SNAPSHOT_BYTES:
         raise StoreError("terminal delivery snapshot missing or outside its size bound")
     raw = path.read_bytes()
     if hashlib.sha256(raw).hexdigest() != digest:

@@ -117,8 +117,8 @@ def test_failure_and_frozen_contract_survive_removal_and_later_writer(tmp_path, 
     assert expanded.steps[-1].model_dump(exclude={"id"}) == candidate.steps[-1].model_dump(exclude={"id"})
     validate_revision(request, plan, request, expanded, run, authorized_artifacts=store.verified_own_artifacts(run))
     changed = candidate.model_copy(deep=True)
-    changed.steps[-1].parameters.inputs.entries[0].purpose = "different analysis purpose"
-    with pytest.raises(PlanningError, match="inputs, conditions and dependencies are fixed"):
+    changed.steps[-1].parameters.conditions["analysis_scope"] = "different analysis purpose"
+    with pytest.raises(PlanningError, match="conditions, observations and dependencies are fixed"):
         validate_revision(request, plan, request, changed, run,
             authorized_artifacts=store.verified_own_artifacts(run))
     assert len(run.attempts) == 1 and not run.model_records

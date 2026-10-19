@@ -1,0 +1,405 @@
+"""Audit six unique final Run ledgers after the authorized same-Run continuation.
+
+No product imports, API calls, generated code or computations. Run with --finalize
+only after the coordinator declares the continuation finished. Historical outcome
+snapshots are baselines, never additional Runs or additional consumption.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.util
+import json
+import re
+from collections import Counter
+from datetime import datetime
+from decimal import Decimal
+from pathlib import Path
+
+LIMITS = {"runs": 6, "model_calls": 96, "model_tokens": 4_400_000, "orca_starts": 12}
+BASELINE_SHA256 = "4265516958a1635ee6426f49940348350216fdb095c74c91670c7acb0807aade"
+CONTINUED_RUN = "run_4a5877907dbd4c7fbcfae9bdbd8f608e"
+BASE_AMENDMENT = "continuation_0040_budget"
+AMENDABLE = {"model_calls", "model_tokens", "decision_rounds", "evidence_reads",
+             "analysis_executions", "code_retries", "attempts_per_step", "artifact_count"}
+
+
+def encode_json(value):
+    return (json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
+
+
+def digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def instant(value):
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.utcoffset() is None:
+        raise RuntimeError("Unzoned audit time: " + value)
+    return parsed
+
+
+def load_legacy(path):
+    spec = importlib.util.spec_from_file_location("step5_read_only_cost_audit", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.LIMITS = LIMITS
+    return module
+
+
+def delta_number(current, previous):
+    if current is None or previous is None:
+        return None
+    difference = Decimal(str(current)) - Decimal(str(previous))
+    return int(difference) if isinstance(current, int) and isinstance(previous, int) else str(difference)
+
+
+def budget_chain(legacy, run, run_path, sources):
+    folder = run_path.parent
+
+    def read(path):
+        value, source = legacy.read_json(path)
+        sources.append(source)
+        return value, source
+
+    original, original_source = read(folder / "budget.json")
+    permission, permission_source = read(folder / "permission.json")
+    config, config_source = read(folder / "configuration.json")
+    control, _ = read(folder / "control.json")
+    messages = {message["id"]: message for message in control["messages"]}
+    records, seen = [], set()
+    reference, expected_budget = run.get("budget_revision"), run["budget"]
+    expected_deadline = instant(run["deadline"])
+    if reference is None:
+        raise RuntimeError("Continuation lacks its explicitly authorized budget chain")
+    while reference is not None:
+        if reference in seen or len(seen) >= 64 or not reference.replace("_", "").replace("-", "").isalnum():
+            raise RuntimeError("Invalid budget chain")
+        seen.add(reference)
+        record, source = read(folder / "budget-revisions" / (reference + ".json"))
+        before, before_source = read(folder / "budget-revisions" / (reference + ".before.json"))
+        message = record["authorization_message"]
+        if (record["id"] != reference or record["run_id"] != run["id"]
+                or record["before_sha256"] != before_source["sha256"]
+                or record["original_budget_sha256"] != original_source["sha256"]
+                or record["permission_sha256"] != permission_source["sha256"]
+                or record["configuration_sha256"] != config_source["sha256"]
+                or messages.get(message["id"]) != message or message["source"] != "user"
+                or message["id"] not in run["processed_messages"]
+                or digest(encode_json(message)) != record["authorization_sha256"]
+                or before["id"] != run["id"] or before["created_at"] != run["created_at"]
+                or before["permission"] != permission or run["permission"] != permission
+                or before["configuration"] != config or run["configuration"] != config
+                or before.get("budget_revision") != record["previous_revision"]):
+            raise RuntimeError("Budget authorization, snapshot or permission mismatch")
+        update = message["update"]
+        if set(update) != {"budget_amendment"}:
+            raise RuntimeError("Unexpected authorization fields")
+        amendment = update["budget_amendment"]
+        if (not {"limits", "deadline"} <= set(amendment)
+                or set(amendment) - {"limits", "deadline", "archive_timeout_seconds"}):
+            raise RuntimeError("Unexpected budget or host archive authorization fields")
+        archive_timeout = amendment.get("archive_timeout_seconds")
+        if "archive_timeout_seconds" in amendment and (
+                type(archive_timeout) not in (int, float) or legacy.nonnegative(archive_timeout) is None
+                or archive_timeout <= 0):
+            raise RuntimeError("Authorized host archive timeout must be a finite positive number")
+        changes = amendment["limits"]
+        if (set(changes) - AMENDABLE or any(type(value) is not int for value in changes.values())
+                or any(value < before["budget"][name] for name, value in changes.items())):
+            raise RuntimeError("Unauthorized or decreasing budget limit")
+        deadline = instant(amendment["deadline"])
+        approved = {**before["budget"], **changes,
+                    "run_seconds": (deadline - instant(before["created_at"])).total_seconds()}
+        if (approved != expected_budget or record["budget"] != expected_budget
+                or deadline != expected_deadline or instant(record["deadline"]) != expected_deadline
+                or deadline <= instant(before["deadline"]) or deadline <= instant(message["created_at"])):
+            raise RuntimeError("Active budget/deadline differs from its authorized amendment")
+        records.append({"id": reference, "revision_source": source,
+            "before_run_source": before_source, "previous_revision": record["previous_revision"],
+            "authorization_message_id": message["id"], "authorization_text": message["text"],
+            "authorization_sha256": record["authorization_sha256"], "authorized_at": message["created_at"],
+            "previous_budget": before["budget"], "approved_budget": record["budget"],
+            "previous_deadline": before["deadline"], "approved_deadline": record["deadline"],
+            "archive_timeout_seconds_explicitly_authorized": archive_timeout,
+            "usage_at_authorization": before["usage"], "unchanged_permission_configuration": True})
+        reference, expected_budget = before.get("budget_revision"), before["budget"]
+        expected_deadline = instant(before["deadline"])
+    if expected_budget != original or BASE_AMENDMENT not in seen:
+        raise RuntimeError("Budget chain does not end at the original immutable budget")
+    initial_archive = config["resources"]["collection_timeout_seconds"]
+    archive_timeout = initial_archive
+    for record in reversed(records):
+        record["host_archive_timeout_seconds_before"] = archive_timeout
+        declared = record["archive_timeout_seconds_explicitly_authorized"]
+        if declared is not None:
+            if declared < archive_timeout:
+                raise RuntimeError("Authorized host archive timeout decreased")
+            archive_timeout = declared
+        record["host_archive_timeout_seconds_after"] = archive_timeout
+    return {"active_revision": run["budget_revision"], "verified": True,
+            "original_budget_source": original_source, "permission_source": permission_source,
+            "configuration_source": config_source, "original_deadline": records[-1]["previous_deadline"],
+            "effective_deadline": run["deadline"], "records": records,
+            "host_archive_timeout_seconds_original_config": initial_archive,
+            "host_archive_timeout_seconds_authorized_effective": archive_timeout,
+            "archive_timeout_is_BudgetLimits_or_configuration_change": False,
+            "orphan_records_counted_or_activated": False}
+
+
+def actual_compute(run):
+    attempts = run.get("attempts", [])
+    python = [item for item in attempts if item.get("execution_kind", "orca") == "python"]
+    direct = [item for item in attempts if item.get("execution_kind", "orca") == "orca"]
+    internal = run.get("internal_calls", [])
+    orca = direct + internal
+    usage = run["usage"]
+    facts = [{key: item[key] for key in ("id", "request_key", "logical_id", "number", "execution_kind",
+        "purpose", "retry_of", "state", "started", "result_id", "parent_attempt_id", "finished_at")
+        if key in item} for item in attempts + internal]
+    return {"python_attempts": len(python),
+            "python_started": sum(item.get("started") is True for item in python),
+            "python_not_started": sum(item.get("started") is not True for item in python),
+            "python_attempt_states": dict(Counter(item.get("state") for item in python)),
+            "code_retries_recorded": usage.get("code_retries"),
+            "additional_code_attempts_effective": max(usage.get("code_retries", 0), len(python) - 1, 0),
+            "effective_attempt_basis": "max(recorded_code_retries, retained_Python_attempts_minus_one, 0)",
+            "orca_actual": usage.get("orca_starts_actual"),
+            "orca_reserved": usage.get("orca_starts_reserved"),
+            "orca_started_flags": sum(item.get("started") is True for item in orca),
+            "orca_failed_actual": sum(item.get("started") is True and item.get("state") in {
+                "failed", "cancelled", "timed_out", "killed"} for item in orca),
+            "orca_completed_execution": sum(item.get("started") is True and item.get("state") == "completed"
+                                             for item in orca),
+            "orca_unstarted_reserved": sum(item.get("started") is not True for item in orca),
+            "orca_state_counts": dict(Counter(item.get("state") for item in orca)),
+            "scientific_pass_inferred": False, "attempt_and_internal_facts": facts}
+
+
+def continuation_phases(legacy, batch, repo, final_run, sources, authorized_budget):
+    """Keep intermediate failures and version freezes separate from final totals."""
+    names = sorted(path.name for path in batch.iterdir()
+                   if path.is_dir() and re.fullmatch(r"continuation-[0-9]{3}", path.name))
+    if not names or names != [f"continuation-{number:03}" for number in range(1, len(names) + 1)]:
+        raise RuntimeError("Continuation phases must form an uninterrupted ordered chain from 001")
+    phases, prior_usage, prior_revision = [], None, None
+    revisions = {item["id"]: item for item in authorized_budget["records"]}
+    source_names = {path.relative_to(repo).as_posix() for path in (repo / "src").rglob("*")
+                    if path.is_file() and path.suffix in {".py", ".js", ".css", ".html"}}
+    for name in names:
+        evidence = batch / name
+        values = {}
+        for filename in ("freeze.json", "run-before-continuation.json", "outcome.json"):
+            if not (evidence / filename).is_file():
+                raise RuntimeError("Wait for completed continuation evidence: " + name + "/" + filename)
+            value, source = legacy.read_json(evidence / filename)
+            values[filename] = value, source
+            sources.append(source)
+        freeze, freeze_source = values["freeze.json"]
+        before, before_source = values["run-before-continuation.json"]
+        outcome, outcome_source = values["outcome.json"]
+        if (freeze["run_id"] != final_run["id"] or before["id"] != final_run["id"]
+                or freeze["previous_run_sha256"] != before_source["sha256"]
+                or freeze["limits"] != LIMITS
+                or before["permission"] != final_run["permission"]
+                or before["configuration"] != final_run["configuration"]
+                or prior_usage is not None and before["usage"] != prior_usage
+                or before.get("budget_revision") != prior_revision):
+            raise RuntimeError("Continuation phase does not retain the preceding same-Run facts")
+        before_revision = before.get("budget_revision")
+        if before_revision is not None:
+            approved = revisions.get(before_revision)
+            if (approved is None or before["budget"] != approved["approved_budget"]
+                    or instant(before["deadline"]) != instant(approved["approved_deadline"])):
+                raise RuntimeError("Phase before snapshot uses an unverified budget revision")
+        changes, facts = [], []
+        for relative, expected in freeze["source_files"].items():
+            path = (repo / relative).resolve()
+            if not path.is_relative_to(repo.resolve()):
+                raise RuntimeError("Frozen source escapes this repository")
+            actual = digest(path.read_bytes()) if path.is_file() else None
+            facts.append({"path": relative, "frozen_sha256": expected, "current_sha256": actual})
+            if actual is not None:
+                sources.append({"path": str(path), "sha256": actual, "bytes": path.stat().st_size})
+            if actual != expected:
+                changes.append(relative)
+        start_calls = before["usage"]["model_calls"]
+        end_calls = outcome["usage"]["model_calls"]
+        if end_calls < start_calls:
+            raise RuntimeError("Continuation reset cumulative model use")
+        phase_records = final_run["model_records"][start_calls:end_calls]
+        if len(phase_records) != end_calls - start_calls:
+            raise RuntimeError("Continuation model record range is incomplete")
+        if name != names[0]:
+            retained, retained_source = legacy.read_json(evidence / "retained-budget.json")
+            sources.append(retained_source)
+            if (retained["budget_revision"] != before_revision or retained["budget"] != before["budget"]
+                    or retained["usage_preserved"] != before["usage"]
+                    or instant(retained["deadline"]) != instant(before["deadline"])):
+                raise RuntimeError("Later continuation changed the retained budget")
+        authorization_path = evidence / "authorized-budget.json"
+        authorization_source = None
+        if authorization_path.is_file():
+            authorization, authorization_source = legacy.read_json(authorization_path)
+            sources.append(authorization_source)
+            revision = revisions.get(authorization["budget_revision"])
+            if (revision is None or revision["previous_revision"] != before_revision
+                    or revision["before_run_source"]["sha256"] != before_source["sha256"]
+                    or authorization["budget"] != revision["approved_budget"]
+                    or instant(authorization["deadline"]) != instant(revision["approved_deadline"])
+                    or authorization["usage_preserved"] != before["usage"]):
+                raise RuntimeError("Phase budget grant differs from its immutable authorization")
+            prior_revision = revision["id"]
+        phase_delta = {field: delta_number(outcome["usage"][field], before["usage"][field]) for field in (
+            "model_calls", "model_tokens_used", "model_tokens_unknown", "orca_starts_actual",
+            "orca_starts_reserved", "code_retries", "internal_work_units", "cpu_seconds", "elapsed_seconds")}
+        phases.append({"name": name, "run_id": final_run["id"], "freeze_source": freeze_source,
+            "before_run_source": before_source, "outcome_source": outcome_source,
+            "driver_sha256": freeze["driver_sha256"], "scope": freeze["scope"],
+            "developer_assisted": freeze.get("developer_assisted") is True or outcome.get("developer_assisted") is True,
+            "authorization_text": freeze.get("authorization_text"), "error": outcome.get("error"),
+            "state_at_phase_end": outcome["state"], "delivery_status_at_phase_end": outcome["delivery_status"],
+            "goals_at_phase_end": outcome["goals"], "finished_at": outcome["finished_at"],
+            "usage_before": before["usage"], "usage_at_phase_end": outcome["usage"],
+            "actual_phase_delta": phase_delta, "new_model_record_ids": [r["id"] for r in phase_records],
+            "counts_as_an_additional_Run": False, "is_final_phase": name == names[-1],
+            "budget_revision_before": before_revision, "budget_revision_after": prior_revision,
+            "host_archive_timeout_seconds_before": (revisions[before_revision]["host_archive_timeout_seconds_after"]
+                if before_revision else authorized_budget["host_archive_timeout_seconds_original_config"]),
+            "host_archive_timeout_seconds_after": revisions[prior_revision]["host_archive_timeout_seconds_after"],
+            "new_budget_grant": authorization_source is not None,
+            "authorized_budget_source": authorization_source,
+            "source_files": facts, "changed_since_this_phase_freeze": sorted(changes),
+            "source_files_added_since_this_phase_freeze": sorted(source_names - set(freeze["source_files"])),
+            "coordinator_source_changed_during_run": outcome.get("source_changed_during_run"),
+            "meaning": "Each phase retains its own outcome and frozen source; later repairs do not rewrite it."})
+        prior_usage = outcome["usage"]
+    if (prior_usage != final_run["usage"] or phases[-1]["state_at_phase_end"] != final_run["state"]
+            or prior_revision != final_run["budget_revision"]):
+        raise RuntimeError("Latest continuation outcome and final unique Run ledger differ")
+    return phases
+
+
+def aggregate(batch):
+    repo = batch.parent.parent
+    previous_batch = repo / "data/code-as-tools-step5"
+    legacy_path = previous_batch / "aggregate_final_costs.py"
+    legacy = load_legacy(legacy_path)
+    baseline, baseline_source = legacy.read_json(previous_batch / "cumulative-costs-final.json")
+    if (baseline_source["sha256"] != BASELINE_SHA256
+            or baseline["totals"]["model_calls"] != 71
+            or baseline["totals"]["model_tokens_known"] != 1_312_336):
+        raise RuntimeError("Historical delivered cost baseline differs")
+    result = legacy.aggregate(previous_batch)
+    sources = result["sources"]
+    sources.append(baseline_source)
+    legacy_source = {
+        "path": str(legacy_path.resolve()), "sha256": digest(legacy_path.read_bytes()),
+        "bytes": legacy_path.stat().st_size}
+    sources.append(legacy_source)
+    old_rows = {row["run_id"]: row for row in baseline["runs"]}
+    delta_rows, actual_rows = [], []
+    continued = None
+    for row in result["runs"]:
+        old = old_rows[row["run_id"]]
+        run_path = Path(row["run_source"]["path"])
+        run, run_source = legacy.read_json(run_path)
+        if run_source["sha256"] != row["run_source"]["sha256"]:
+            raise RuntimeError("Run changed between accounting and amendment audit")
+        old_records = {item["id"]: item for item in old["model"]["record_facts"]}
+        current_records = {item["id"]: item for item in row["model"]["record_facts"]}
+        if any(current_records.get(identity) != fact for identity, fact in old_records.items()):
+            raise RuntimeError("A historical settled model record changed or disappeared")
+        if row["run_id"] != CONTINUED_RUN and run_source["sha256"] != old["run_source"]["sha256"]:
+            raise RuntimeError("Unrelated historical Run changed")
+        row["effective_deadline"] = run["deadline"]
+        row["original_deadline"] = old["original_deadline"]
+        compute = actual_compute(run)
+        row["compute_details"] = compute
+        actual_rows.append(compute)
+        new_ids = sorted(set(current_records) - set(old_records))
+        delta = {"run_id": run["id"], "label": row["label"], "new_model_record_ids": new_ids,
+            "model_calls": delta_number(row["model"]["calls"], old["model"]["calls"]),
+            "model_tokens_known": delta_number(row["model"]["tokens_known"], old["model"]["tokens_known"]),
+            "model_tokens_unknown_reserved": delta_number(row["model"]["tokens_unknown_reserved"],
+                                                           old["model"]["tokens_unknown_reserved"]),
+            "known_token_fee_upper_bound_usd": delta_number(row["model"]["known_token_fee_upper_bound"],
+                                                           old["model"]["known_token_fee_upper_bound"]),
+            "orca_actual": delta_number(compute["orca_actual"], old["compute"]["orca_actual"]),
+            "orca_reserved": delta_number(compute["orca_reserved"], old["compute"]["orca_reserved"]),
+            "python_attempts": delta_number(compute["python_attempts"], old["compute"]["python_attempts"]),
+            "code_retries_recorded": delta_number(compute["code_retries_recorded"], old["compute"]["code_retries_recorded"]),
+            "additional_code_attempts_effective": delta_number(compute["additional_code_attempts_effective"],
+                                                               old["compute"]["additional_python_attempts_effective"]),
+            "cpu_seconds_recorded_lower_bound": delta_number(row["resources"]["cpu_seconds_recorded_lower_bound"],
+                                                             old["resources"]["cpu_seconds_recorded_lower_bound"]),
+            "elapsed_seconds_recorded_lower_bound": delta_number(row["resources"]["elapsed_seconds_recorded_lower_bound"],
+                                                                 old["resources"]["elapsed_seconds_recorded_lower_bound"])}
+        if delta["model_calls"] != len(new_ids):
+            raise RuntimeError("New model calls do not match new unique accounting records")
+        delta_rows.append(delta)
+        if run["id"] == CONTINUED_RUN:
+            continued = {"run": run, "row": row, "budget": budget_chain(legacy, run, run_path, sources)}
+    if continued is None or len(old_rows) != len(result["runs"]):
+        raise RuntimeError("Six unique historical Runs were not preserved")
+    phases = continuation_phases(legacy, batch, repo, continued["run"], sources, continued["budget"])
+    if phases[0]["before_run_source"]["sha256"] != old_rows[CONTINUED_RUN]["run_source"]["sha256"]:
+        raise RuntimeError("First continuation does not start at the delivered historical Run snapshot")
+    last_phase = phases[-1]
+    delta_totals = {field: delta_number(result["totals"][field], baseline["totals"][field]) for field in (
+        "model_calls", "model_tokens_known", "model_tokens_unknown_reserved", "known_token_fee_upper_bound_usd",
+        "orca_actual", "orca_reserved", "python_attempts", "code_retries_recorded",
+        "internal_work_units_reserved", "internal_call_count", "cpu_seconds_recorded_lower_bound",
+        "elapsed_seconds_recorded_lower_bound")}
+    delta_totals["additional_code_attempts_effective"] = sum(row["additional_code_attempts_effective"]
+                                                            for row in delta_rows)
+    result.update(schema_version=2,
+        scope="six unique final Run ledgers including same-Run006 authorized continuation; baseline never re-added",
+        historical_baseline={"source": baseline_source, "totals": baseline["totals"],
+            "model_calls": 71, "model_tokens_known": 1_312_336, "unique_run_count": 6},
+        actual_delta={"totals": delta_totals, "per_run": delta_rows,
+            "meaning": "final unique ledgers minus delivered historical unique-ledger totals"},
+        continuation_phases=phases,
+        developer_assistance={"declared": any(phase["developer_assisted"] for phase in phases),
+            "phases": [phase["name"] for phase in phases if phase["developer_assisted"]],
+            "meaning": "Developer-assisted stages remain separate from model autonomy; all consumption stays in the same Run."},
+        authorized_budget=continued["budget"],
+        source_freeze={"phase": last_phase["name"], "freeze_source": last_phase["freeze_source"],
+            "driver_sha256": last_phase["driver_sha256"], "source_files": last_phase["source_files"],
+            "changed_since_freeze": last_phase["changed_since_this_phase_freeze"],
+            "source_files_added_since_freeze": last_phase["source_files_added_since_this_phase_freeze"],
+            "coordinator_source_changed_during_run": last_phase["coordinator_source_changed_during_run"],
+            "meaning": "during-Run coordinator observation and current-file comparison are distinct"})
+    result["totals"].update(orca_failed_actual=sum(row["orca_failed_actual"] for row in actual_rows),
+        orca_completed_execution=sum(row["orca_completed_execution"] for row in actual_rows),
+        python_started=sum(row["python_started"] for row in actual_rows),
+        additional_code_attempts_effective=sum(row["additional_code_attempts_effective"] for row in actual_rows))
+    result["limitations"][-1] = "Authorized amendment changes only explicit ceilings/deadline; original snapshots and cumulative use remain."
+    result["limitations"].append("Successful ORCA execution is not scientific qualification or goal completion.")
+    for source in sources:
+        if digest(Path(source["path"]).read_bytes()) != source["sha256"]:
+            raise RuntimeError("Source changed during final audit: " + source["path"])
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--finalize", action="store_true", help="Coordinator confirmed final continuation outcome")
+    parser.add_argument("--output", default="cumulative-costs-final.json")
+    args = parser.parse_args()
+    if not args.finalize:
+        parser.error("Wait for the coordinator's final notification, then pass --finalize")
+    batch = Path(__file__).resolve().parent
+    output = (batch / args.output).resolve()
+    if output.parent != batch or output.exists():
+        raise RuntimeError("Choose a new output filename in this completion directory")
+    result = aggregate(batch)
+    with output.open("x", encoding="utf-8") as stream:
+        stream.write(encode_json(result).decode("utf-8"))
+    print(json.dumps({"output": str(output), "totals": result["totals"],
+        "actual_delta": result["actual_delta"]["totals"], "batch_budget": result["batch_budget"]}, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

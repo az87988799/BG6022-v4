@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="1.225" timestamp="2026-10-20T00:29:29.909600+08:00" hostname="AZ"><testcase classname="tests.unit.test_bounded_live_observation_context" name="test_actual_multirecord_preview_keeps_all_sources_and_explicit_manifest_lookup" time="0.012" /><testcase classname="tests.unit.test_bounded_live_observation_context" name="test_real_multirecord_values_fit_complete_request_and_keep_small_numeric_tables" time="0.004"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for Run&#10;request_version&#10;  Field required [type=missing, input_value={'id': 'run_4a5877907dbd4..._total_bytes=268435456)}, input_type=dict]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/missing">def test_real_multirecord_values_fit_complete_request_and_keep_small_numeric_tables():
+        result = feedback()
+        goals = [Goal(id=f"goal_{i}", port=row.name,
+            minimum_check_version="generic-observation-1", evidence_contract_version="generic-observation-1",
+            verification="reported_with_limitations") for i, row in enumerate(result.observation_records)]
+        request = Request(goals=goals, conditions={"explain_results": True})
+        step = Step(id=result.step_id, logical_id="analysis", tool="python.execute", parameters={
+            "code": {"artifact_id": "script_artifact", "sha256": result.observation_records[0].code_sha256},
+            "observation_names": [row.name for row in result.observation_records]})
+        plan = Plan(request_id=request.id, steps=[step], goal_map={goal.id:
+            OutputBinding(step_id=step.id, port=goal.port) for goal in goals})
+&gt;       run = Run(id=result.run_id, request_id=request.id, plan_id=plan.id, plan_version=plan.version,
+            result_ids=[result.id], permission=PermissionSnapshot(model_execution=True,
+                code_execution=True, artifact_writes=True, allowed_tools=["python.execute", "workspace.write"]),
+            budget=BudgetLimits(model_calls=4, model_tokens=200000, input_tokens=32000, output_tokens=2000))
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Run
+E       request_version
+E         Field required [type=missing, input_value={'id': 'run_4a5877907dbd4..._total_bytes=268435456)}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+tests\unit\test_bounded_live_observation_context.py:57: ValidationError</failure></testcase></testsuite></testsuites>

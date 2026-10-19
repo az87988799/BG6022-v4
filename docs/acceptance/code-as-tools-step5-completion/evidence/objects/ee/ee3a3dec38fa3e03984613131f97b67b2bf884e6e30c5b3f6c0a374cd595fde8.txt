@@ -1,0 +1,71 @@
+"""Read-only production HTTP API verification; no model or scientific execution."""
+import hashlib
+import json
+from pathlib import Path
+
+from fastapi.testclient import TestClient
+
+from orca_agent.config import Config
+from orca_agent.entrypoints import artifact_ids
+from orca_agent.store import Store
+from orca_agent.web import create_app
+
+
+def main():
+    root = Path.cwd()
+    config = Config.model_validate_json((root / "data/code-as-tools-step5/config-final-v65.json").read_bytes())
+    store = Store(config.data_root, configuration=config.run_configuration())
+    run_id = "run_4a5877907dbd4c7fbcfae9bdbd8f608e"
+    run = store.load_run(run_id)
+    before = store.path(f"runs/{run_id}/run.json").read_bytes()
+    checks = []
+    artifacts = [store.load_artifact(aid) for aid in artifact_ids(store, run_id)]
+    science_attempt = "attempt_0a37c319d9bd43acb1063dd7e2bcadcf"
+    delivery_attempt = run.attempts[-1]
+    code_ids = {"artifact_24f855cb1d0747a7bda591823952da90",
+                delivery_attempt.frozen_step.parameters.code.artifact_id}
+    candidates = [a for a in artifacts if (
+        a.attempt_id in {science_attempt, delivery_attempt.id}
+        or a.id in code_ids | {"artifact_f93b76a761ff4f45b02b5a47f81b8c4d"}
+    ) and (
+        Path(a.path).suffix in {".xyz", ".csv", ".py"}
+        or Path(a.path).name in {"summary.json", "observations.json"}
+        or a.id in code_ids
+        or (a.attempt_id and Path(a.path).name == "stdout.out")
+    )]
+    # Identical copied bytes are one download check; retained history is not re-tested.
+    selected = list({a.sha256: a for a in sorted(candidates, key=lambda item: item.id)}.values())
+    with TestClient(create_app(config, store=store), base_url="http://127.0.0.1:8765") as client:
+        bootstrap = client.get("/api/bootstrap")
+        assert bootstrap.status_code == 200
+        headers = {"x-local-token": bootstrap.json()["token"]}
+        for suffix in ("", "/report"):
+            response = client.get(f"/api/runs/{run_id}{suffix}", headers=headers)
+            assert response.status_code == 200
+            value = response.json()
+            checks.append({"endpoint": f"/api/runs/{run_id}{suffix}", "status": 200,
+                           "response_bytes": len(response.content), "response_sha256": hashlib.sha256(response.content).hexdigest()})
+            if not suffix:
+                assert value["state"] == run.state
+                assert value["goal_status"] == run.goal_status
+        for artifact in sorted(selected, key=lambda a: a.id):
+            response = client.get(f"/api/runs/{run_id}/artifacts/{artifact.id}/download", headers=headers)
+            digest = hashlib.sha256(response.content).hexdigest()
+            assert response.status_code == 200
+            assert digest == artifact.sha256 == response.headers["X-Artifact-SHA256"]
+            assert response.content == store.artifact_path(artifact.id).read_bytes()
+            checks.append({"artifact_id": artifact.id, "filename": Path(artifact.path).name,
+                           "status": 200, "bytes": len(response.content), "sha256": digest})
+    assert store.path(f"runs/{run_id}/run.json").read_bytes() == before
+    output = root / "data/code-as-tools-step5-completion/validation/delivery-api.json"
+    output.parent.mkdir(exist_ok=True)
+    with output.open("x", encoding="utf-8") as stream:
+        json.dump({"run_id": run_id, "state": run.state, "delivery_status": run.delivery_status,
+            "goals": run.goal_status, "all_passed": True, "checks": checks,
+            "download_count": len(selected), "run_bytes_unchanged": True,
+            "model_calls_added": 0, "orca_starts_added": 0}, stream, ensure_ascii=False, indent=2)
+    print(json.dumps({"passed": True, "downloads": len(selected), "run_unchanged": True}))
+
+
+if __name__ == "__main__":
+    main()

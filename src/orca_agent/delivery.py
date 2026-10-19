@@ -15,6 +15,7 @@ from orca_agent.goals import current_goal_evidence
 from orca_agent.models import fingerprint, result_fingerprint_payload
 
 DELIVERY_VERSION = "terminal-delivery-1"
+MAX_DELIVERY_SNAPSHOT_BYTES = 2 * 1024 * 1024
 
 
 def _digest(value):
@@ -300,6 +301,57 @@ def _criterion_facts(result):
     return {key: deepcopy(analysis[key]) for key in fields if key in analysis}
 
 
+def _existing_evidence_repair(request, run, goal, selection, resources):
+    """Describe a possible repair; the original Tool still validates every source."""
+    missing_source = {"requested_observation_lacks_completed_native_source",
+                      "scientific_system_observation_lacks_native_evidence",
+                      "scientific_geometry_observation_lacks_native_evidence"}
+    reasons = set((selection.get("assessment") or {}).get("reasons", []))
+    harmless_purpose_gap = {"minimum_evidence_missing_failed_or_wrong_version:purpose_preserved@1",
+                           "minimum_evidence_missing_failed_or_wrong_version:original purpose and conditions must be preserved"}
+    permission = run.permission
+    result = selection.get("result")
+    if (goal.evidence_contract_version != "generic-observation-1"
+            or goal.verification != "reported_with_limitations" or not reasons.intersection(missing_source)
+            or reasons - missing_source - harmless_purpose_gap
+            or result is None or result.operation_status != "completed"
+            or selection.get("source_integrity", {}).get("status") != "verified"
+            or not permission.code_execution or not permission.artifact_writes
+            or not {"workspace.write", "python.execute"} <= set(permission.allowed_tools)
+            or resources["remaining"].get("analysis_executions", 0) <= 0
+            or resources["remaining"].get("code_retries", 0) <= 0
+            or any(resources.get(name) for name in ("unsettled_attempt_ids", "unsettled_call_ids",
+                                                   "unsettled_internal_request_keys"))):
+        return None
+    systems = goal.system_ids or [system.id for system in request.systems]
+    if len(systems) > 1:
+        return None
+    system_id = systems[0] if systems else None
+    parents = {attempt.id: attempt for attempt in run.attempts}
+    sources = []
+    for call in run.internal_calls:
+        parent = parents.get(call.parent_attempt_id)
+        if (call.state != "completed" or call.finished_at is None or not call.response or parent is None
+                or parent.state != "completed" or parent.finished_at is None
+                or parent.request_version != request.version
+                or call.actual_conditions.get("request_version") != request.version
+                or call.actual_conditions.get("system_id") != system_id):
+            continue
+        files = {name: deepcopy(reference) for name, reference in call.response.get("files", {}).items()
+                 if name == "stdout.out" and isinstance(reference, dict) and reference.get("artifact_id") in call.artifact_ids
+                 and isinstance(reference.get("sha256"), str)}
+        if files:
+            sources.append({"internal_request_key": call.request_key, "source_attempt_id": parent.id,
+                "files": files})
+    if not sources:
+        return None
+    return {"source_candidates": sources,
+            "analysis_executions_remaining": resources["remaining"]["analysis_executions"],
+            "code_attempts_remaining": resources["remaining"]["code_retries"],
+            "new_orca_starts_required": 0,
+            "validation": "Planning suggestion only; source hashes, Request binding and minimum evidence must still pass the existing Tool checks."}
+
+
 def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_generation=None):
     """Pure versioned facts/relations for Context, contract validation and report.
 
@@ -370,6 +422,9 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
                 refs.append(fact(goal_ref, "members", members, source_ref))
         if row["answer"] is not None:
             refs.append(fact(goal_ref, "answer", row["answer"], source_ref))
+        repair = _existing_evidence_repair(request, run, goal, selection, resources) if not row["goal_complete"] else None
+        if repair:
+            refs.append(fact(goal_ref, "existing_evidence_repair", repair, source_ref))
         blockers = []
 
         def block(code, value, text):
@@ -391,7 +446,8 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
                 for name in ("orca_starts", "extra_orca_starts"):
                     if resources["remaining"][name] == 0:
                         block(name + "_exhausted", {"limit": resources["limits"][name], "remaining": 0},
-                              name + " remaining is zero; a larger batch budget does not override this Run.")
+                              name + " remaining is zero; a larger batch budget does not override this Run."
+                              + (" This blocks new calculations, not an authorized analysis of existing evidence." if repair else ""))
             if resources["unsettled_attempt_ids"] or resources["unsettled_call_ids"]:
                 block("execution_unsettled", {key: resources[key] for key in (
                     "unsettled_attempt_ids", "unsettled_call_ids")}, "Reconcile unsettled execution before new work.")
@@ -402,14 +458,19 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
                 "Registration is complete; this does not complete the unmet scientific goal.", "stop_after_registration")
         elif communication["awaiting_reply"] and communication["questions"]:
             relation, text, action = "current_goal_unmet", "Current goal remains unmet; the stated questions require user input.", "clarify"
+        elif repair:
+            relation, text, action = ("current_goal_unmet",
+                "Current source binding remains incomplete; archived native evidence can be reused in an explicit analysis Step without another calculation.",
+                "repair_existing_evidence")
         else:
             relation, text, action = "current_goal_unmet", "Current goal remains unmet; qualified members or a completed operation do not complete it.", "stop_with_partial_results"
         if allowed_actions and action == "clarify" and "clarify" not in allowed_actions:
             action = "stop_with_partial_results"
         action_ref, explanation_ref = "n" + str(index), "e" + str(index)
         snapshot["next_actions"].append({"ref": action_ref, "kind": action, "goal_refs": [goal_ref],
-            "requires": [], "text": "Deliver current facts without starting additional work." if action != "clarify"
-                                        else "Ask only the recorded unresolved questions."})
+            "requires": [], "text": ("Revise the Plan if no analysis Step is ready. Use pinned task-file copies and completed native source candidates to repair the observation manifest; preserve values and conditions, update Goal bindings, and do not start ORCA."
+                if repair and action == "repair_existing_evidence" else "Ask only the recorded unresolved questions."
+                if action == "clarify" else "Deliver current facts without starting additional work.")})
         snapshot["explanations"].append({"ref": explanation_ref, "goal_ref": goal_ref,
             "fact_refs": refs, "relation": relation, "text": text,
             "blocker_refs": blockers, "next_action_refs": [action_ref]})

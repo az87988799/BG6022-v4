@@ -1,0 +1,113 @@
+"""Explicit developer-assisted metadata repair through the existing Tool chain."""
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+from orca_agent import agent, runner
+from orca_agent.config import Config
+from orca_agent.entrypoints import execute
+from orca_agent.models import utc_now
+from orca_agent.proposals import materialize_plan
+from orca_agent.report import build_report, render_report
+from orca_agent.store import Store, atomic_write
+from orca_agent.tools.dispatch import execute_call
+from scripts.code_tools_development import snapshot
+
+root = Path.cwd()
+batch = root / "data/code-as-tools-step5-completion"
+evidence = batch / "continuation-005"
+evidence.mkdir(exist_ok=False)
+config = Config.model_validate_json((root / "data/code-as-tools-step5/config-final-v65.json").read_bytes())
+store = Store(config.data_root, configuration=config.run_configuration())
+run_id = "run_4a5877907dbd4c7fbcfae9bdbd8f608e"
+
+def write(name, value):
+    atomic_write(evidence / name, (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode(), immutable=True)
+
+def sources():
+    result = snapshot(root)
+    for path in (root / "src").rglob("*"):
+        if path.is_file() and path.suffix in {".js", ".css", ".html"}:
+            result[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+run = store.load_run(run_id)
+before = store.path(f"runs/{run_id}/run.json").read_bytes()
+atomic_write(evidence / "run-before-continuation.json", before, immutable=True)
+frozen = {"created_at": utc_now().isoformat(), "git_head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+    "source_files": sources(), "configuration": config.model_dump(mode="json"), "run_id": run_id,
+    "authorization_text": "User authorized direct completion and changes to obstructing old rules; explicit developer-assisted metadata-only intervention per 0043.",
+    "scope": "developer-assisted metadata copy/source binding; original model search/selection/ORCA untouched",
+    "developer_assisted": True, "previous_run_sha256": hashlib.sha256(before).hexdigest(),
+    "limits": {"runs": 6, "model_calls": 96, "model_tokens": 4_400_000, "orca_starts": 12},
+    "driver_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+write("freeze.json", frozen)
+write("run-location.json", {"run_id": run_id, "data_root": str(store.root), "environment_root": str(store.environment_root)})
+write("retained-budget.json", {"budget": run.budget.model_dump(mode="json"), "budget_revision": run.budget_revision,
+    "deadline": run.deadline.isoformat(), "usage_preserved": run.usage.model_dump(mode="json")})
+error = None
+try:
+    with store.run_lock(run_id):
+        run = store.load_run(run_id)
+        assert not any(a.finished_at is None for a in run.attempts)
+        assert not any(c.state in {"reserved", "running", "unknown"} for c in [*run.calls, *run.internal_calls])
+        with store.control_lock(run_id):
+            store.signal(run_id, None)
+            run.control_generation = store.read_control(run_id)["generation"]
+            run.state = "ready"
+            run.diagnostics.append({"category": "developer_assisted_metadata_repair", "decision": "0043",
+                "scientific_values_changed": False, "new_orca_starts_authorized": 0})
+            store.save_run(run)
+        original = store.load_result(run_id, "result_16178be0b3c2499abd8264b29fbf56f7")
+        script = batch / "deterministic_metadata_repair.py"
+        written = execute_call(store, run, "workspace.write", {"name": script.name,
+            "content": script.read_text(encoding="utf-8"), "role": "python"})
+        code = written.observations["written_artifact"]
+        request = store.load_request(run)
+        key = "metadata_provenance_delivery"
+        entries = [{"artifact_id": ref["artifact_id"], "sha256": ref["sha256"],
+                    "target_path": "original/" + name.split("/", 1)[1],
+                    "purpose": "immutable original task evidence; metadata-only provenance repair"}
+                   for name, ref in original.source["files"].items()
+                   if name.startswith("task/") and name not in {"task/stdout.out", "task/stderr.txt"}]
+        ports = [item.name for item in original.observation_records]
+        proposal = {"steps": [{"key": key, "tool": "python.execute", "system_id": request.systems[0].id,
+            "parameters": {"code": {"artifact_id": code["artifact_id"], "sha256": code["sha256"]},
+                "inputs": {"version": 1, "entries": entries}, "observation_names": ports}}],
+            "goal_map": {goal.id: {"step_key": key, "port": goal.port} for goal in request.goals
+                         if run.goal_status[goal.id] != "satisfied"}}
+        write("operator-proposal.json", proposal)
+        plan = materialize_plan(store, run, proposal)
+        basis = {"request_version": run.request_version, "plan_version": run.plan_version,
+                 "permission_version": run.permission.version, "control_generation": run.control_generation}
+        run = store.commit_revision(run, plan, decision_id="developer_metadata_plan_0043", basis=basis,
+            related_results=[original.id, written.id])
+        step = next(s for s in plan.steps if getattr(s.parameters, "code", None)
+                    and s.parameters.code.artifact_id == code["artifact_id"])
+        results = runner._step_results(store, run)
+        run.state = "running"
+        store.save_run(run)
+        result, outcome = agent._science(store, config, run, step, results, None, None)
+        write("metadata-execution.json", {"result_id": result.id, "outcome": outcome})
+        assert outcome["state"] == "completed"
+        results[step.id] = result
+        assert runner._goals(store, run, plan, results), run.goal_status
+        assert run.usage.orca_starts_actual == 4
+        run.state = "ready"
+        store.save_run(run)
+        write("metadata-goals.json", {"goals": run.goal_status, "usage": run.usage.model_dump(mode="json"),
+                                     "developer_assisted": True, "scientific_values_changed": False})
+    print("Metadata Tool completed; all eight Goals satisfy the unchanged gate. Requesting final model delivery.", flush=True)
+    run = execute(store, config, run_id, resume=True)
+except Exception as exc:
+    error = {"type": type(exc).__name__, "message": str(exc)}
+    run = store.load_run(run_id)
+changed = sorted(key for key, value in sources().items() if frozen["source_files"].get(key) != value)
+report = build_report(store, run)
+write("report.json", report)
+atomic_write(evidence / "report.txt", render_report(report).encode(), immutable=True)
+write("outcome.json", {"state": run.state, "goals": run.goal_status, "delivery_status": run.delivery_status,
+    "usage": run.usage.model_dump(mode="json"), "error": error, "source_changed_during_run": changed,
+    "developer_assisted": True, "finished_at": utc_now().isoformat()})
+print(json.dumps({"state": run.state, "goals": run.goal_status, "error": error, "changed": changed}), flush=True)

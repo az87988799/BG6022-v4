@@ -1,0 +1,83 @@
+{
+  "request_hash": "da502e6caea1bf9eed1f6b4108be4739e825b8c753786a48ae56022419b30fea",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve",
+          "tool": "structure.resolve",
+          "system_id": "system_nhexane"
+        },
+        {
+          "key": "prepare",
+          "tool": "structure.prepare",
+          "system_id": "system_nhexane",
+          "depends_on": [
+            "resolve"
+          ],
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve",
+              "port": "resolved_identity"
+            }
+          }
+        }
+      ],
+      "goal_map": {
+        "goal_initial_geometry": {
+          "step_key": "prepare",
+          "port": "prepared_geometry"
+        },
+        "goal_search_scope": {
+          "gap": "conformer_search_not_yet_executed",
+          "port": "sampling"
+        },
+        "goal_lowest_candidate": {
+          "gap": "conformer_search_not_yet_executed",
+          "port": "energy"
+        },
+        "goal_candidate_ranking": {
+          "gap": "conformer_search_not_yet_executed",
+          "port": "energy_difference"
+        },
+        "goal_candidate_structures": {
+          "gap": "conformer_search_not_yet_executed",
+          "port": "member_table"
+        },
+        "goal_failed_members": {
+          "gap": "conformer_search_not_yet_executed",
+          "port": "sampling_check"
+        },
+        "goal_structural_relationships": {
+          "gap": "conformer_search_not_yet_executed",
+          "port": "member_table"
+        },
+        "goal_energy_difference_formula_units": {
+          "gap": "conformer_search_not_yet_executed",
+          "port": "energy_difference"
+        }
+      }
+    },
+    "reason": "Start with identity resolution and locked initial XYZ preparation for n-hexane. Conformer generation/ranking requires prepared geometry first and will be planned after input receipts; no scientific evidence exists yet."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve\",\"tool\":\"structure.resolve\",\"system_id\":\"system_nhexane\"},{\"key\":\"prepare\",\"tool\":\"structure.prepare\",\"system_id\":\"system_nhexane\",\"depends_on\":[\"resolve\"],\"inputs\":{\"identity\":{\"producer_key\":\"resolve\",\"port\":\"resolved_identity\"}}}],\"goal_map\":{\"goal_initial_geometry\":{\"step_key\":\"prepare\",\"port\":\"prepared_geometry\"},\"goal_search_scope\":{\"gap\":\"conformer_search_not_yet_executed\",\"port\":\"sampling\"},\"goal_lowest_candidate\":{\"gap\":\"conformer_search_not_yet_executed\",\"port\":\"energy\"},\"goal_candidate_ranking\":{\"gap\":\"conformer_search_not_yet_executed\",\"port\":\"energy_difference\"},\"goal_candidate_structures\":{\"gap\":\"conformer_search_not_yet_executed\",\"port\":\"member_table\"},\"goal_failed_members\":{\"gap\":\"conformer_search_not_yet_executed\",\"port\":\"sampling_check\"},\"goal_structural_relationships\":{\"gap\":\"conformer_search_not_yet_executed\",\"port\":\"member_table\"},\"goal_energy_difference_formula_units\":{\"gap\":\"conformer_search_not_yet_executed\",\"port\":\"energy_difference\"}}},\"reason\":\"Start with identity resolution and locked initial XYZ preparation for n-hexane. Conformer generation/ranking requires prepared geometry first and will be planned after input receipts; no scientific evidence exists yet.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 13289,
+    "completion_tokens": 1831,
+    "total_tokens": 15120,
+    "prompt_cache_hit_tokens": 2304,
+    "prompt_cache_miss_tokens": 10985
+  },
+  "response_hash": "bb7a992f2852059483faaba33837b0f8d7a616b6ebe3bbebf14924384af0dcd2",
+  "response_bytes": 9163,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "ea04d636-1bdf-422d-9799-a53d005e2209",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 10.046999999998661
+}

@@ -241,7 +241,7 @@ def _repair(prior: Step, proposed: Step, run: Run, logical_by_id, user_change):
 
 
 def _python_repair(prior: Step, proposed: Step, run: Run, logical_by_id):
-    """A code correction retains its inputs and purpose, never its old Step ID."""
+    """Explicit code/input-copy repair retains the scientific purpose and graph."""
     _require(prior.tool == proposed.tool, "Python repair cannot replace its Tool")
     attempts = [attempt for attempt in run.attempts if attempt.logical_id == prior.logical_id]
     if attempts:
@@ -252,9 +252,12 @@ def _python_repair(prior: Step, proposed: Step, run: Run, logical_by_id):
     old, new = _shape(prior, logical_by_id), _shape(proposed, logical_by_id)
     old_code = old["parameters"].pop("code")
     new_code = new["parameters"].pop("code")
-    _require(old == new, "Python repair may change code only; inputs, conditions and dependencies are fixed")
-    _require(old_code["sha256"] != new_code["sha256"],
-             "unchanged code is not a Python repair")
+    old_inputs = old["parameters"].pop("inputs")
+    new_inputs = new["parameters"].pop("inputs")
+    _require(old == new, "Python repair may change code and explicit input copies only; "
+             "conditions, observations and dependencies are fixed")
+    _require(old_code["sha256"] != new_code["sha256"] or old_inputs != new_inputs,
+             "unchanged code and input copies are not a Python repair")
 
 
 def additional_code_attempts_used(run: Run) -> int:

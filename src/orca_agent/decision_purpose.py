@@ -16,7 +16,7 @@ DECISION_CONTRACT_PROMPT_VERSIONS = frozenset({
     "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32", "agent-json-v33", "agent-json-v34",
     "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41",
     "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47",
-    "agent-json-v48", "agent-json-v49", "agent-json-v50", "agent-json-v51", "agent-json-v52", "agent-json-v53", "agent-json-v54", "agent-json-v55", "agent-json-v56", "agent-json-v57", "agent-json-v58", "agent-json-v59", "agent-json-v60", "agent-json-v61", "agent-json-v62", "agent-json-v63", "agent-json-v64", "agent-json-v65"})
+    "agent-json-v48", "agent-json-v49", "agent-json-v50", "agent-json-v51", "agent-json-v52", "agent-json-v53", "agent-json-v54", "agent-json-v55", "agent-json-v56", "agent-json-v57", "agent-json-v58", "agent-json-v59", "agent-json-v60", "agent-json-v61", "agent-json-v62", "agent-json-v63", "agent-json-v64", "agent-json-v65", "agent-json-v66", "agent-json-v67", "agent-json-v68", "agent-json-v69"})
 
 
 @dataclass(frozen=True)
@@ -136,22 +136,32 @@ def settled_failed_python_attempts(run):
                 == (attempt.step_id, attempt.logical_id, attempt.tool)]
 
 
-def relevant_result_ids(run, plan=None, *, snapshot=None, feedback_ids=()):
+def terminal_results_only(request, snapshot, *, pending_messages=False):
+    """Only a settled complete explanation can omit authoring/read history."""
+    if pending_messages or request.conditions.get("explain_results") is not True or not snapshot:
+        return False
+    goals = {row.get("goal_id"): row for row in snapshot.get("goals", [])}
+    return all(goals.get(goal.id, {}).get("goal_complete") is True
+               for goal in request.goals if goal.required)
+
+
+def relevant_result_ids(run, plan=None, *, snapshot=None, feedback_ids=(), terminal_only=False):
     """Select by current bindings, feedback and dependencies, never recency.
 
     The caller loads these identities before building context. Cross-Run source
     references remain in the delivery snapshot and are not relabelled as local.
     """
-    selected = set(feedback_ids)
-    selected.update(retained_read_result_ids(run))
-    if run.permission.code_execution:
-        selected.update(attempt.result_id for attempt in settled_failed_python_attempts(run))
+    selected = set()
     from orca_agent.tools.registry import get_tool
-    # Authoring receipts contain IDs/hashes, not inline code. Keep those exact
-    # handles available across subsequent revisions without trusting model IDs.
-    selected.update(call.result_id for call in run.calls if call.result_id and call.state == "completed"
-                    and (get_tool(call.tool).check_contract.get("code_authoring")
-                         or "query_external_document" in get_tool(call.tool).effects))
+    if not terminal_only:
+        selected.update(feedback_ids)
+        selected.update(retained_read_result_ids(run))
+        if run.permission.code_execution:
+            selected.update(attempt.result_id for attempt in settled_failed_python_attempts(run))
+        # Authoring handles stay available while planning, never by recency.
+        selected.update(call.result_id for call in run.calls if call.result_id and call.state == "completed"
+                        and (get_tool(call.tool).check_contract.get("code_authoring")
+                             or "query_external_document" in get_tool(call.tool).effects))
     selected.update(ref.result_id for ref in run.goal_evidence.values() if ref.run_id == run.id)
     for ref in (snapshot or {}).get("references", {}).values():
         if ref.get("run_id") == run.id and ref.get("result_id"):
@@ -164,11 +174,33 @@ def relevant_result_ids(run, plan=None, *, snapshot=None, feedback_ids=()):
                 selected.add(binding.evidence.result_id)
             if binding.step_id in completed:
                 selected.add(completed[binding.step_id])
-        for step in plan.steps:
-            if step.id in completed:
-                continue
-            selected.update(completed[identifier] for identifier in step.depends_on if identifier in completed)
-            for ref in step.inputs.values():
-                if ref.run_id in (None, run.id) and ref.result_id:
-                    selected.add(ref.result_id)
+        if terminal_only:
+            steps = {step.id: step for step in plan.steps}
+            pending = [identifier for identifier, result_id in completed.items() if result_id in selected]
+            visited = set()
+            while pending:
+                identifier = pending.pop()
+                if identifier in visited or identifier not in steps:
+                    continue
+                visited.add(identifier)
+                if identifier in completed:
+                    selected.add(completed[identifier])
+                step = steps[identifier]
+                for dependency in step.depends_on:
+                    if dependency in completed:
+                        selected.add(completed[dependency])
+                    pending.append(dependency)
+                for ref in step.inputs.values():
+                    if ref.run_id in (None, run.id) and ref.result_id:
+                        selected.add(ref.result_id)
+                    if ref.producer_step_id:
+                        pending.append(ref.producer_step_id)
+        else:
+            for step in plan.steps:
+                if step.id in completed:
+                    continue
+                selected.update(completed[identifier] for identifier in step.depends_on if identifier in completed)
+                for ref in step.inputs.values():
+                    if ref.run_id in (None, run.id) and ref.result_id:
+                        selected.add(ref.result_id)
     return [identifier for identifier in run.result_ids if identifier in selected]

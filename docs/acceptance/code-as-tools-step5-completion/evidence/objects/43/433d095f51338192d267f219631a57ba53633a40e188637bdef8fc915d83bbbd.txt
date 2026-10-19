@@ -1,0 +1,66 @@
+"""Authorized same-Run continuation. No scientific Plan, input or solver is injected."""
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from orca_agent.config import Config
+from orca_agent.entrypoints import execute, message
+from orca_agent.models import utc_now
+from orca_agent.report import build_report, render_report
+from orca_agent.store import Store, atomic_write
+from scripts.code_tools_development import snapshot
+
+root = Path.cwd()
+batch = root / "data/code-as-tools-step5-completion"
+evidence = batch / "continuation-004"
+evidence.mkdir(exist_ok=False)
+config = Config.model_validate_json((root / "data/code-as-tools-step5/config-final-v65.json").read_bytes())
+store = Store(config.data_root, configuration=config.run_configuration())
+run_id = "run_4a5877907dbd4c7fbcfae9bdbd8f608e"
+run = store.load_run(run_id)
+text = "继续把步骤5真正做完，先修好输入绑定并执行修复脚本，再完成真实ORCA计算和完整交付。阻碍目标的旧规则直接改，只做必要定向测试和API验证，不跑全量回归，完成后提交推送。"
+
+def write(name, value):
+    atomic_write(evidence / name, (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode(), immutable=True)
+
+def sources():
+    result = snapshot(root)
+    for path in (root / "src").rglob("*"):
+        if path.is_file() and path.suffix in {".js", ".css", ".html"}:
+            result[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+before = store.path(f"runs/{run_id}/run.json").read_bytes()
+atomic_write(evidence / "run-before-continuation.json", before, immutable=True)
+frozen = {"created_at": utc_now().isoformat(), "git_head": subprocess.check_output(
+    ["git", "rev-parse", "HEAD"], text=True).strip(), "source_files": sources(),
+    "configuration": config.model_dump(mode="json"), "run_id": run_id, "authorization_text": text,
+    "scope": "continue existing live006 after bounded observation feedback repair; reuse four completed ORCA calls; no injected Plan/input/code",
+    "previous_run_sha256": hashlib.sha256(before).hexdigest(),
+    "limits": {"runs": 6, "model_calls": 96, "model_tokens": 4_400_000, "orca_starts": 12},
+    "driver_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+write("freeze.json", frozen)
+write("run-location.json", {"run_id": run_id, "data_root": str(store.root), "environment_root": str(store.environment_root)})
+write("retained-budget.json", {"budget": run.budget.model_dump(mode="json"),
+    "budget_revision": run.budget_revision, "deadline": run.deadline.isoformat(),
+    "usage_preserved": run.usage.model_dump(mode="json")})
+write("continue-message.json", message(store, run_id, "继续", message_id="continuation_0042_continue_v69"))
+print(json.dumps({"run_id": run_id, "budget_revision": run.budget_revision,
+                  "usage_before": run.usage.model_dump(mode="json"), "deadline": run.deadline.isoformat()}), flush=True)
+error = None
+try:
+    run = execute(store, config, run_id, resume=True)
+except Exception as exc:
+    error = {"type": type(exc).__name__, "message": str(exc)}
+    run = store.load_run(run_id)
+changed = sorted(key for key, value in sources().items() if frozen["source_files"].get(key) != value)
+report = build_report(store, run)
+write("report.json", report)
+atomic_write(evidence / "report.txt", render_report(report).encode(), immutable=True)
+write("outcome.json", {"state": run.state, "goals": run.goal_status,
+    "delivery_status": run.delivery_status, "usage": run.usage.model_dump(mode="json"),
+    "error": error, "source_changed_during_run": changed, "finished_at": utc_now().isoformat()})
+print(json.dumps({"state": run.state, "goals": run.goal_status, "error": error, "changed": changed}), flush=True)

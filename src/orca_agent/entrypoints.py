@@ -165,6 +165,11 @@ def control(store, run_id, action):
             "confirmation": "requested; inspect Run state for acknowledgement"}
 
 
+def amend_budget(store, run_id, *, message_id, amendment_id):
+    """Apply an explicitly structured, retained user authorization without execution."""
+    return store.amend_budget(run_id, message_id=message_id, amendment_id=amendment_id)
+
+
 def execute(store, config, run_id, *, resume=False, **kwargs):
     return runner.execute(store, config, run_id, resume=resume, **kwargs)
 

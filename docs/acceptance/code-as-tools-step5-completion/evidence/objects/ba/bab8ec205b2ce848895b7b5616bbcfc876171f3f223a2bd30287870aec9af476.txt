@@ -1,0 +1,241 @@
+"""Add final, read-only evidence review to the existing stdlib raw audit.
+
+This script reads archived bytes and JSON only. It does not import product code,
+execute task code, call an API, run ORCA, or modify the Run.
+"""
+from __future__ import annotations
+
+import datetime
+import hashlib
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = ROOT / "data/code-as-tools-step5-completion"
+STORE = ROOT / "data/code-as-tools-step5/live-store"
+RUN_ID = "run_4a5877907dbd4c7fbcfae9bdbd8f608e"
+RUN = STORE / "runs" / RUN_ID
+AUDIT = OUT / "independent-final006-continuation.json"
+ORIGINAL = "result_16178be0b3c2499abd8264b29fbf56f7"
+METADATA = "result_b4e1782e9c994f0b968141863ff9e501"
+MODEL = "model_69cd94ab9f834252a7592499237c4577"
+controls = []
+
+
+def digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def read_json(path, role=None):
+    raw = path.read_bytes()
+    if role:
+        controls.append({"path": str(path), "sha256": digest(raw), "role": role})
+    return json.loads(raw)
+
+
+def artifact(ref):
+    meta = read_json(STORE / "artifacts" / ref["artifact_id"] / "artifact.json")
+    raw = (STORE / meta["path"]).read_bytes()
+    assert digest(raw) == meta["sha256"] == ref["sha256"], ref
+    assert meta["run_id"] == RUN_ID
+    return raw
+
+
+def main():
+    audit = read_json(AUDIT)
+    f = audit["facts"]
+    assert not audit.get("audit_error")
+    assert f["run_state"] == "completed"
+    assert not f["run_snapshot_changed_during_audit"]
+    before = digest((RUN / "run.json").read_bytes())
+    assert before == f["run_snapshot_sha256"]
+    original = read_json(RUN / "results" / (ORIGINAL + ".json"), "original_science_Result")
+    metadata = read_json(RUN / "results" / (METADATA + ".json"), "final_metadata_Result")
+    oldfiles, newfiles = original["source"]["files"], metadata["source"]["files"]
+    oldmanifest = json.loads(artifact(oldfiles["task/observations.json"]))
+    newmanifest = json.loads(artifact(newfiles["task/observations.json"]))
+    assert artifact(newfiles["task/source-observations.json"]) == artifact(oldfiles["task/observations.json"])
+    oldobs = {o["name"]: o for o in oldmanifest["observations"]}
+    newobs = {o["name"]: o for o in newmanifest["observations"]}
+    assert len(newobs) == 6 and set(newobs) == set(oldobs) - {"lowest_candidate_energy_ranking"}
+    native = {c["request_key"]: c for c in f["native_calls"]}
+    assert len(native) == f["eligible_native_energy_count"] == 4
+    assert all(c["eligible_as_energy_evidence"] for c in native.values())
+    assert f["uniform_actual_conditions"] and f["actual_matches_requested_conditions"]
+    native_refs = {key: {"artifact_id": c["stdout_artifact"], "sha256": read_json(STORE / "artifacts" / c["stdout_artifact"] / "artifact.json")["sha256"]} for key, c in native.items()}
+    copied = []
+    names = [f"candidate_{i:02d}.xyz" for i in range(1, 13)] + ["candidate_structures.csv", "candidate_structures.json", "lowest_candidate_energy_ranking.csv", "lowest_candidate_energy_ranking.json", "failed_members.csv", "failed_members.json", "summary.json", "coords.xyz"]
+    for name in names:
+        old, new = oldfiles["task/" + name], newfiles["task/" + name]
+        assert artifact(old) == artifact(new), name
+        copied.append({"basename": name, "original_artifact_id": old["artifact_id"], "metadata_artifact_id": new["artifact_id"], "sha256": old["sha256"], "byte_identical": True})
+    alias_names = {"orca_candidate_" + key.removeprefix("sp_candidate_") + ".stdout.out" for key in native}
+    comparisons = []
+    records = {o["name"]: o for o in metadata["observation_records"]}
+    assert len(records) == 6
+    for name, new in newobs.items():
+        old = oldobs[name]
+        assert all(new.get(k) == old.get(k) for k in ["value", "unit", "formula"]), name
+        local = lambda o: [s for s in o["sources"] if not s.get("internal_request_key")]
+        assert local(new) == local(old), name
+        added = [s for s in new["sources"] if s.get("internal_request_key")]
+        assert len(added) == 4 and {s["internal_request_key"] for s in added} == set(native)
+        assert all(s["filename"] == "stdout.out" for s in added)
+        expected_artifacts = old.get("artifacts", [])
+        removed = []
+        if name == "downloadable_validation":
+            removed = [n for n in expected_artifacts if n in alias_names]
+            assert set(removed) == alias_names
+            expected_artifacts = [n for n in expected_artifacts if n not in alias_names]
+        assert new.get("artifacts", []) == expected_artifacts, name
+        assert new["limitations"][:len(old["limitations"])] == old["limitations"]
+        assert any("MMFF convergence is unverified" in s for s in new["limitations"])
+        assert any("all-candidate distinctness is unverified" in s for s in new["limitations"])
+        bound = [s for s in records[name]["sources"] if s.get("internal_request_key")]
+        assert len(bound) == 4
+        for s in bound:
+            key = s["internal_request_key"]
+            assert all(s[k] == native_refs[key][k] for k in ["artifact_id", "sha256"])
+            assert s["attempt_id"] == original["attempt_id"]
+            artifact(s)
+        comparisons.append({"observation": name, "value_unit_formula_unchanged": True, "local_source_declarations_unchanged": True, "artifacts_unchanged_except_declared_alias_removal": True, "removed_download_aliases": removed, "native_sources_appended": [dict(request_key=k, **v) for k, v in native_refs.items()], "native_sources_bound_to_original_scientific_attempt": True, "MMFF_and_uniqueness_limitations_present": True})
+    aliases = []
+    for key, ref in native_refs.items():
+        alias = "orca_candidate_" + key.removeprefix("sp_candidate_") + ".stdout.out"
+        old = oldfiles["task/" + alias]
+        alias_raw, native_raw = artifact(old), artifact(ref)
+        assert alias_raw.decode("utf-8").splitlines() == native_raw.decode("utf-8").splitlines()
+        candidate = "task/candidate_" + key.removeprefix("sp_candidate_") + ".xyz"
+        assert native[key]["input_geometries"][0]["sha256"] == oldfiles[candidate]["sha256"]
+        aliases.append({"alias": alias, "original_alias_artifact_id": old["artifact_id"], "original_alias_sha256": old["sha256"], "native_stdout_artifact_id": ref["artifact_id"], "native_stdout_sha256": ref["sha256"], "original_alias_and_native_bytes_identical": alias_raw == native_raw, "original_alias_and_native_decoded_lines_identical": True, "alias_bytes": len(alias_raw), "native_raw_bytes": len(native_raw), "interpretation": "Original generated Python rewrote the text copy with newline normalization; authoritative science audit uses the native raw artifact, not the alias hash.", "omitted_only_from_new_downloadable_validation_artifacts": True})
+    tasks = {t["result_id"]: t for t in f["task_results"]}
+    science = tasks[ORIGINAL]
+    assert science["XYZ_candidate_count"] == tasks[METADATA]["XYZ_candidate_count"] == 12
+    assert all(x["formula"] == {"C": 6, "H": 14} and x["ordered_elements_match_initial"] and x["finite_coordinates"] and x["distance_inferred_bonds_match_identity"] for x in science["XYZ_structures"])
+    tables = {Path(t["task_path"]).name: t for t in science["tables"]}
+    inventory, ranking, excluded = (tables[n] for n in ["candidate_structures.csv", "lowest_candidate_energy_ranking.csv", "failed_members.csv"])
+    assert [len(t["rows"]) for t in [inventory, ranking, excluded]] == [12, 4, 8]
+    inv = {r["candidate_id"] for r in inventory["rows"]}
+    ranked = {r["candidate_id"] for r in ranking["rows"]}
+    omitted = {r["candidate_id"] for r in excluded["rows"]}
+    assert ranked.isdisjoint(omitted) and ranked | omitted == inv
+    assert ranking["energy_rows_ascending"] and excluded["all_failed_excluded_have_reason"]
+    assert all(c["energy_matches_raw_within_tolerance"] and c["raw_SCF_termination_eligible"] and c["relative_energy_kj_mol"]["within_tolerance"] and c["relative_energy_ev"]["within_tolerance"] for c in ranking["energy_checks"])
+    outcome = read_json(OUT / "continuation-013/outcome.json", "final_outcome")
+    report = read_json(OUT / "continuation-013/report.json", "final_structured_report")
+    response = read_json(RUN / "model" / (MODEL + ".response.json"), "final_model_HTTP_response")
+    delivery = read_json(RUN / "model" / (MODEL + ".delivery.json"), "final_model_delivery_snapshot")
+    assert outcome["state"] == "completed" and outcome["delivery_status"] == "complete" and outcome["error"] is None
+    assert len(outcome["goals"]) == 8 and set(outcome["goals"].values()) == {"satisfied"}
+    assert outcome["source_changed_during_run"] == [] and outcome["developer_assisted"]
+    assert report["user_goal_complete"] and report["report_delivery_status"] == "complete"
+    assert response["http_status"] == 200 and response["error_category"] is None and response["finish_reason"] == "stop"
+    assert response["proposal"]["action"] == "stop" and response["usage"]["total_tokens"] == 10946
+    assert len(response["proposal"]["parameters"]["delivery"]["goal_explanations"]) == 8
+    assert report["model_explanation"]["current"] and report["model_explanation"]["current_status"] == "passed"
+    assert report["model_explanation"]["decision_id"] == MODEL
+    assert len(f["active_terminal_deliveries"]) == 1 and f["active_terminal_deliveries"][0]["decision_id"] == MODEL
+    report_path = STORE / report["report_artifact"]["path"]
+    raw_report = report_path.read_bytes()
+    assert digest(raw_report) == report["report_artifact"]["sha256"] == f["deterministic_report"]["sha256"]
+    controls.append({"path": str(report_path), "sha256": digest(raw_report), "role": "accepted_deterministic_report"})
+    goal_rows = []
+    for g in report["goal_facts"]:
+        assert g["goal_complete"] and g["recorded_status"] == "satisfied" and not g["gaps"]
+        if g["port"] in newobs:
+            assert g["source"]["result_id"] == METADATA
+        elif g["port"] == "lowest_candidate_energy_ranking":
+            assert g["source"]["result_id"] == ORIGINAL
+        goal_rows.append({"goal_id": g["goal_id"], "port": g["port"], "recorded_status": g["recorded_status"], "current_evidence_status": g["current_evidence_status"], "goal_complete": g["goal_complete"], "source": g["source"], "answer_kind": g["answer"]["kind"], "minimum_check_version": g["minimum_check_version"]})
+    freezes = []
+    previous = None
+    for p in sorted(OUT.glob("continuation-*/freeze.json")):
+        v = read_json(p, "continuation_source_freeze")
+        changed = [] if previous is None else [n for n in sorted(set(previous) | set(v["source_files"])) if previous.get(n) != v["source_files"].get(n)]
+        record = {"continuation": p.parent.name, "created_at": v.get("created_at"), "source_files": v["source_files"], "changed_from_previous_freeze": changed, "freeze_sha256": digest(p.read_bytes())}
+        op = p.parent / "outcome.json"
+        if op.exists():
+            ov = read_json(op, "continuation_outcome")
+            record["outcome"] = {k: ov.get(k) for k in ["state", "delivery_status", "error", "source_changed_during_run", "developer_assisted", "finished_at"]}
+        freezes.append(record)
+        previous = v["source_files"]
+    current_mismatches = [n for n, sha in previous.items() if not (ROOT / n).is_file() or digest((ROOT / n).read_bytes()) != sha]
+    assert not current_mismatches, current_mismatches
+    revisions = []
+    for p in sorted((RUN / "budget-revisions").glob("*.json")):
+        revisions.append({"filename": p.name, "record": read_json(p, "immutable_budget_revision")})
+    for number in ["0040", "0044", "0045", "0047"]:
+        p = next((ROOT / "docs/decisions").glob(number + "-*.md"))
+        controls.append({"path": str(p), "sha256": digest(p.read_bytes()), "role": "authorized_budget_or_storage_contract"})
+    authorized = read_json(OUT / "continuation-013/authorized-budget.json", "final_authorized_budget")
+    retained = read_json(OUT / "continuation-013/retained-budget.json", "final_retained_usage_and_prior_budget")
+    assert outcome["usage"] == f["budget_usage"]
+    assert authorized["budget"] == f["budget_limits"]
+    assert authorized["budget_revision"] == f["budget_revision"] == "continuation_0047_final_deadline"
+    assert outcome["usage"]["model_calls"] == 38 and outcome["usage"]["model_tokens_used"] == 854725 and outcome["usage"]["orca_starts_actual"] == 4
+    assert retained["usage_preserved"] == authorized["usage_preserved"]
+    assert outcome["usage"]["model_calls"] - authorized["usage_preserved"]["model_calls"] == 1
+    assert outcome["usage"]["model_tokens_used"] - authorized["usage_preserved"]["model_tokens_used"] == 10946
+    assert datetime.datetime.fromisoformat(outcome["finished_at"]) < datetime.datetime.fromisoformat(authorized["deadline"])
+    assert digest((RUN / "run.json").read_bytes()) == before
+    assert f["generated_python_results_all_have_empty_qualified_outputs"]
+    assert not f["scientific_qualification_granted"]
+    historical_claim = oldobs["structural_scope_energy"]["value"]
+    assert any("all-candidate distinctness is unverified" in s for s in newobs["structural_scope_energy"]["limitations"])
+    audit["run_id"] = RUN_ID
+    audit["final_reviewed_at_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    audit["final_review"] = {
+        "status": "exit_conditions_met_with_explicit_limitations",
+        "scope": "Finite 12-candidate inventory, four actual single-point calculations, source-qualified reporting and file delivery. This is not global-minimum, geometry-optimization, frequency, or all-conformer uniqueness certification.",
+        "developer_assisted": True,
+        "fully_autonomous_completion": False,
+        "assistance": "Original product Agent generated and ran the conformer search, screening, scientific task code and all four ORCA calculations. Developer-written deterministic metadata v1-v3 scripts only preserved archived bytes/values, bound six report observations to the existing native sources, and added explicit limitations; collection retries and budget/storage amendments were also assisted.",
+        "original_science_Result": ORIGINAL,
+        "final_metadata_Result": METADATA,
+        "original_candidate_count": 12,
+        "actual_ORCA_count": 4,
+        "ranked_candidate_ids": [r["candidate_id"] for r in ranking["rows"]],
+        "ranking_rows": ranking["rows"],
+        "excluded_count": 8,
+        "excluded_ids": sorted(omitted),
+        "exclusions_are_budget_omissions_not_failed_ORCA": True,
+        "inventory_equals_disjoint_union_of_ranked_and_excluded": True,
+        "initial_geometry_preserved": True,
+        "all_12_XYZ_have_C6H14_order_and_distance_inferred_identity_bonds": True,
+        "at_least_two_nonrigid_geometries_recorded_atom_order": {"pair": "candidate_01/candidate_02", "maximum_internal_distance_difference_A": science["XYZ_pairwise_internal_distance_differences_A"]["task/candidate_01.xyz/task/candidate_02.xyz"], "scope": "Internal-distance comparison under archived atom order; no exhaustive symmetry-aware uniqueness claim for all twelve."},
+        "all_four_native_inputs_bound_to_original_candidate_bytes": True,
+        "all_four_raw_stdout_unique_energy_SCF_normal_and_uniform_conditions": True,
+        "energy_rank_and_delta_kJ_eV_match_raw_within_rules": True,
+        "preserved_task_files": copied,
+        "metadata_comparisons": comparisons,
+        "download_alias_scope": aliases,
+        "original_AllDistinct_text": historical_claim,
+        "original_AllDistinct_verification": "unverified historical generated statement; retained unchanged, explicitly limited by the added all-candidate distinctness warning. It is not adopted as an independent scientific fact.",
+        "goal_report_source_rows": goal_rows,
+        "all_eight_goals_current_and_satisfied": True,
+        "final_model": {"decision_id": MODEL, "http_status": response["http_status"], "error_category": response["error_category"], "finish_reason": response["finish_reason"], "usage": response["usage"], "response_hash": response["response_hash"], "action": response["proposal"]["action"], "structured_goal_explanation_count": 8, "contract_receipt_passed": True, "report_sha256": digest(raw_report), "interpretation": "Verified delivery-fact references; not an award of scientific qualification."},
+        "Run_cumulative_cost": outcome["usage"],
+        "cost_scope": "This Run only. Earlier live Runs and task-wide costs are separate; resource_usage_complete is false and the sampled CPU/wall figures are not complete end-to-end costs.",
+        "authorized_budget": authorized,
+        "immutable_budget_revisions": revisions,
+        "continuation_source_freezes": freezes,
+        "current_sources_match_final_013_freeze": True,
+        "historical_freeze_interpretation": "Each continuation was checked against its own immutable freeze; historical source revisions are retained explicitly. Different historical freezes are not treated as source changes during one execution or silently upgraded evidence.",
+        "historical_attempts": [{k: t.get(k) for k in ["result_id", "attempt_id", "script_filename", "developer_assisted_metadata_execution", "operation_status", "attempt_state", "evidence_collection_complete", "accepted_observation_record_count", "diagnostics"]} for t in f["task_results"]],
+        "limitations": ["MMFF minimizer return status was not recorded; MMFF convergence is unknown.", "Complete post-MMFF symmetry-aware uniqueness for all twelve candidates was not established.", "Only four finite-search candidates received ORCA single-point energies; no global minimum claim.", "No ORCA geometry optimization or frequency/thermal correction was performed.", "Connectivity audit uses an explicit distance heuristic and archived identity graph; it is not a new electronic-structure qualification chain.", "Generic Python observations and source integrity do not create QualifiedOutput; all generated Python QualifiedOutput maps remain empty.", "Original first coords.xyz input failure and metadata collection/quota failures remain in their original Attempts and outcomes.", "Final metadata completion was explicitly developer assisted.", "Bundled download/ZIP bytes and Git push are outside this audit and must be verified by their own delivery record."],
+        "audit_artifact_hash_records": len(audit["source_artifacts"]),
+        "control_sources": controls,
+        "Run_sha256_before_final_review": before,
+        "Run_sha256_after_final_review": digest((RUN / "run.json").read_bytes()),
+        "Run_unchanged_during_final_review": True,
+        "user_acceptance": "awaiting_user_acceptance",
+    }
+    f["full_task_pass"] = True
+    f["interpretation"] = "Independent final evidence review confirms the finite-search/reporting exit conditions with explicit limitations and developer assistance. This does not grant scientific qualification or user acceptance."
+    AUDIT.write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"path": str(AUDIT), "sha256": digest(AUDIT.read_bytes()), "artifact_hash_records": len(audit["source_artifacts"]), "control_hash_records": len(controls), "metadata_comparisons": len(comparisons), "preserved_files": len(copied), "status": audit["final_review"]["status"]}))
+
+
+if __name__ == "__main__":
+    main()

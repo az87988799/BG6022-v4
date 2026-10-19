@@ -13,6 +13,7 @@ from orca_agent.decision_purpose import (
     prepared_decision_purpose,
     relevant_result_ids,
     terminal_actions,
+    terminal_results_only,
 )
 from orca_agent.delivery import collect_delivery_snapshot
 from orca_agent.llm import prepare_request
@@ -208,6 +209,46 @@ def test_unrelated_processed_history_does_not_grow_terminal_context(replay):
     assert after.canonical_body == before.canonical_body
     assert relevant_result_ids(replay["run"], replay["plan"], snapshot=replay["delivery_snapshot"],
                                feedback_ids=replay["feedback"]["new_result_ids"]) == [result.id]
+
+
+def test_complete_explanation_selects_only_current_sources_after_large_read_authoring_history():
+    from types import SimpleNamespace as NS
+
+    request, _ = objects()
+    request.conditions["explain_results"] = True
+    reads = [NS(tool="evidence.text", step_id=f"read_{i}", result_id=f"read_result_{i}", state="completed")
+             for i in range(34)]
+    writer = NS(tool="workspace.write", step_id="writer", result_id="writer_result", state="completed")
+    current = [NS(tool="python.execute", step_id=name, result_id=name + "_result", state="completed")
+               for name in ("main", "producer", "other")]
+    failed_step = NS(id="failed", logical_id="failed_logical", tool="python.execute")
+    failed = NS(step_id="failed", logical_id="failed_logical", tool="python.execute",
+        execution_kind="python", state="failed", finished_at=datetime.now(),
+        result_id="failed_result", frozen_step=failed_step)
+    ids = [row.result_id for row in [*reads, writer]] + ["failed_result", "irrelevant_feedback"] + [
+        row.result_id for row in current]
+    run = NS(id="run", permission=NS(code_execution=True, allowed_tools=["python.execute"]),
+        calls=[*reads, writer, *current], attempts=[failed], result_ids=ids,
+        goal_evidence={request.goals[0].id: NS(run_id="run", result_id="main_result")})
+    producer_ref = NS(run_id=None, result_id=None, producer_step_id="producer")
+    plan = NS(goal_map={request.goals[0].id: NS(evidence=None, step_id="main")}, steps=[
+        NS(id="main", depends_on=[], inputs={"source": producer_ref}),
+        NS(id="producer", depends_on=[], inputs={}),
+        NS(id="unrelated_pending", depends_on=["writer"], inputs={})])
+    snapshot = {"goals": [{"goal_id": request.goals[0].id, "goal_complete": True}],
+        "references": {"s0": {"run_id": "run", "result_id": "other_result"}}}
+    before = copy.deepcopy((run, plan))
+    assert terminal_results_only(request, snapshot)
+    assert not terminal_results_only(request, snapshot, pending_messages=True)
+    selected = relevant_result_ids(run, plan, snapshot=snapshot,
+        feedback_ids=["irrelevant_feedback"], terminal_only=True)
+    assert selected == ["main_result", "producer_result", "other_result"]
+    original = relevant_result_ids(run, plan, snapshot=snapshot, feedback_ids=["irrelevant_feedback"])
+    assert len(original) > 32
+    assert {"read_result_0", "writer_result", "failed_result", "irrelevant_feedback"} <= set(original)
+    snapshot["goals"][0]["goal_complete"] = False
+    assert not terminal_results_only(request, snapshot)
+    assert (run, plan) == before
 
 
 def test_capacity_overflow_refuses_instead_of_summarizing_required_original(replay):

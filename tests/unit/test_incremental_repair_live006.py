@@ -1,6 +1,7 @@
 """Replay the final live006 rejection structurally, without execution or API calls."""
 
 import copy
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -9,7 +10,7 @@ import pytest
 from pydantic import ValidationError
 
 from orca_agent.models import Plan, Request, Result, Run
-from orca_agent.planning import validate_revision
+from orca_agent.planning import PlanningError, validate_code_inputs, validate_revision
 from orca_agent.proposals import ProposalError, materialize_plan
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/incremental_repair_live006.json"
@@ -105,3 +106,75 @@ def test_repair_still_requires_the_exact_settled_failed_attempt(change):
     with pytest.raises(ProposalError) as rejected:
         materialize_plan(store, run, parameters)
     assert rejected.value.detail["code"] == "invalid_code_repair_reference"
+
+
+def input_repair_case(tmp_path, *, same_code=False):
+    store, run, request, prior, parameters = replay()
+    source = next(step for step in prior.steps if step.id == SOURCE)
+    geometry = json.loads(FIXTURE.read_bytes())["prepared_geometry"]
+    repair = parameters["steps"][0]
+    if same_code:
+        repair["code"] = source.parameters.code.model_dump(mode="json")
+    repair["inputs"] = {"entries": [{
+        "artifact_id": geometry["artifact_id"], "sha256": geometry["sha256"],
+        "target_path": "coords.xyz", "purpose": "prepared initial geometry for the same search"}]}
+    bodies = {hashlib.sha256(step.parameters.content.encode()).hexdigest():
+              step.parameters.content.encode() for step in prior.steps if step.tool == "workspace.write"}
+    bodies[geometry["sha256"]] = geometry["content"].encode()
+    references = [repair["code"], geometry]
+    archived = {}
+    for index, reference in enumerate(references):
+        content = bodies[reference["sha256"]]
+        assert hashlib.sha256(content).hexdigest() == reference["sha256"]
+        path = tmp_path / f"archived-{index}"
+        path.write_bytes(content)
+        archived[reference["artifact_id"]] = SimpleNamespace(sha256=reference["sha256"], path=path)
+    authorized = set(archived)
+    store.verified_own_artifacts = lambda _: authorized
+    store.load_artifact = lambda identifier: archived[identifier]
+    store.artifact_path = lambda identifier: archived[identifier].path
+    return store, run, request, prior, parameters, authorized
+
+
+@pytest.mark.parametrize("same_code", [False, True])
+def test_real006_explicit_coords_manifest_repairs_input_without_changing_old_attempt(tmp_path, same_code):
+    store, run, request, prior, parameters, authorized = input_repair_case(tmp_path, same_code=same_code)
+    before = copy.deepcopy((run, request, prior, parameters))
+    candidate = materialize_plan(store, run, parameters)
+    validate_revision(request, prior, request, candidate, run, authorized_artifacts=authorized)
+    repair = next(step for step in candidate.steps if step.tool == "python.execute")
+    validate_code_inputs(store, run.permission, repair, run=run)
+    assert repair.parameters.inputs.entries[0].target_path == "coords.xyz"
+    assert repair.parameters.inputs.entries[0].artifact_id == "artifact_f93b76a761ff4f45b02b5a47f81b8c4d"
+    assert not run.attempts[0].frozen_step.parameters.inputs.entries
+    assert repair.parameters.conditions == run.attempts[0].frozen_step.parameters.conditions
+    assert repair.parameters.observation_names == run.attempts[0].frozen_step.parameters.observation_names
+    assert repair.depends_on == run.attempts[0].frozen_step.depends_on
+    assert (run, request, prior, parameters) == before
+
+
+@pytest.mark.parametrize("change", ["unauthorized_input", "wrong_hash", "unchanged_inputs", "conditions"])
+def test_explicit_input_repair_preserves_original_admission_gates(tmp_path, change):
+    store, run, request, prior, parameters, authorized = input_repair_case(tmp_path, same_code=True)
+    proposed = parameters["steps"][0]
+    if change == "unauthorized_input":
+        proposed["inputs"]["entries"][0]["artifact_id"] = "foreign_or_unsettled_artifact"
+    elif change == "wrong_hash":
+        proposed["inputs"]["entries"][0]["sha256"] = "f" * 64
+    elif change == "unchanged_inputs":
+        proposed["inputs"] = {"entries": []}
+    else:
+        source = next(step for step in prior.steps if step.id == SOURCE)
+        full = source.model_dump(mode="json")
+        full.update(key=proposed["key"], logical_key=full.pop("logical_id"))
+        full.pop("id")
+        full["parameters"]["inputs"] = proposed["inputs"]
+        full["parameters"]["conditions"] = {"analysis_scope": "different task purpose"}
+        parameters["steps"] = [full]
+    before = copy.deepcopy((run, request, prior, parameters))
+    with pytest.raises(PlanningError):
+        candidate = materialize_plan(store, run, parameters)
+        validate_revision(request, prior, request, candidate, run, authorized_artifacts=authorized)
+        repair = next(step for step in candidate.steps if step.tool == "python.execute")
+        validate_code_inputs(store, run.permission, repair, run=run)
+    assert (run, request, prior, parameters) == before

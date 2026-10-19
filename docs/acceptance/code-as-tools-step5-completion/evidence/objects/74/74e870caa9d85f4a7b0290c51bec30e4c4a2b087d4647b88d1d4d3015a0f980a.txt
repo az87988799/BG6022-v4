@@ -1,0 +1,73 @@
+"""Explicit developer-assisted metadata repair through the existing Tool chain."""
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+from orca_agent.config import Config
+from orca_agent.entrypoints import execute
+from orca_agent.models import utc_now
+from orca_agent.report import build_report, render_report
+from orca_agent.store import Store, atomic_write
+from scripts.code_tools_development import snapshot
+
+root = Path.cwd()
+batch = root / "data/code-as-tools-step5-completion"
+evidence = batch / "continuation-012"
+evidence.mkdir(exist_ok=False)
+config = Config.model_validate_json((root / "data/code-as-tools-step5/config-final-v65.json").read_bytes())
+store = Store(config.data_root, configuration=config.run_configuration())
+run_id = "run_4a5877907dbd4c7fbcfae9bdbd8f608e"
+
+def write(name, value):
+    atomic_write(evidence / name, (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode(), immutable=True)
+
+def sources():
+    result = snapshot(root)
+    for path in (root / "src").rglob("*"):
+        if path.is_file() and path.suffix in {".js", ".css", ".html"}:
+            result[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+run = store.load_run(run_id)
+before = store.path(f"runs/{run_id}/run.json").read_bytes()
+atomic_write(evidence / "run-before-continuation.json", before, immutable=True)
+frozen = {"created_at": utc_now().isoformat(), "git_head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+    "source_files": sources(), "configuration": config.model_dump(mode="json"), "run_id": run_id,
+    "authorization_text": "User authorized direct completion and changes to obstructing old rules; explicit developer-assisted metadata-only intervention per 0043.",
+    "scope": "only final model explanation; completed science and metadata are not rerun",
+    "developer_assisted": True, "previous_run_sha256": hashlib.sha256(before).hexdigest(),
+    "limits": {"runs": 6, "model_calls": 96, "model_tokens": 4_400_000, "orca_starts": 12},
+    "driver_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+write("freeze.json", frozen)
+write("run-location.json", {"run_id": run_id, "data_root": str(store.root), "environment_root": str(store.environment_root)})
+write("retained-budget.json", {"budget": run.budget.model_dump(mode="json"), "budget_revision": run.budget_revision,
+    "deadline": run.deadline.isoformat(), "usage_preserved": run.usage.model_dump(mode="json")})
+error = None
+try:
+    with store.run_lock(run_id):
+        run = store.load_run(run_id)
+        assert not any(a.finished_at is None for a in run.attempts)
+        assert not any(c.state in {"reserved", "running", "unknown"} for c in [*run.calls, *run.internal_calls])
+        with store.control_lock(run_id):
+            store.signal(run_id, None)
+            run.control_generation = store.read_control(run_id)["generation"]
+            run.state = "ready"
+            run.diagnostics.append({"category": "developer_final_delivery_resume", "decision": "0043",
+                "scientific_values_changed": False, "new_orca_starts_authorized": 0})
+            store.save_run(run)
+        assert all(value == "satisfied" for value in run.goal_status.values())
+        assert run.usage.orca_starts_actual == 4
+    print("All eight Goals already complete; requesting only final model delivery with bounded Result selection.", flush=True)
+    run = execute(store, config, run_id, resume=True)
+except Exception as exc:
+    error = {"type": type(exc).__name__, "message": str(exc)}
+    run = store.load_run(run_id)
+changed = sorted(key for key, value in sources().items() if frozen["source_files"].get(key) != value)
+report = build_report(store, run)
+write("report.json", report)
+atomic_write(evidence / "report.txt", render_report(report).encode(), immutable=True)
+write("outcome.json", {"state": run.state, "goals": run.goal_status, "delivery_status": run.delivery_status,
+    "usage": run.usage.model_dump(mode="json"), "error": error, "source_changed_during_run": changed,
+    "developer_assisted": True, "finished_at": utc_now().isoformat()})
+print(json.dumps({"state": run.state, "goals": run.goal_status, "error": error, "changed": changed}), flush=True)

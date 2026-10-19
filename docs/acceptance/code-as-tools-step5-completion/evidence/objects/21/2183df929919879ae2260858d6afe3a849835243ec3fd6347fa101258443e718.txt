@@ -1,0 +1,908 @@
+{
+  "id": "result_311021a1956b4f26bc525e91ea087344",
+  "run_id": "run_4a5877907dbd4c7fbcfae9bdbd8f608e",
+  "step_id": null,
+  "attempt_id": null,
+  "call_id": "call_e40986d9867f47149cac2f69cdf1617a",
+  "supersedes_result_id": null,
+  "operation_status": "completed",
+  "checks": {
+    "text_window": [
+      {
+        "name": "bounded_evidence_read",
+        "status": "passed",
+        "detail": "operation only; content and observed values remain scientifically unverified",
+        "source": {
+          "artifact_id": "artifact_24f855cb1d0747a7bda591823952da90",
+          "sha256": "7bee4f34006996a70581d13ffa18b019b37754c70cea93e8dc75aeb318414f0e",
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        },
+        "rule_version": "evidence-read-1"
+      }
+    ]
+  },
+  "qualified_outputs": {},
+  "observations": {
+    "text_window": {
+      "artifact_id": "artifact_24f855cb1d0747a7bda591823952da90",
+      "sha256": "7bee4f34006996a70581d13ffa18b019b37754c70cea93e8dc75aeb318414f0e",
+      "role": "code",
+      "file": "artifacts/artifact_24f855cb1d0747a7bda591823952da90/files/conformer_search_repair_v2.py",
+      "source": {
+        "call_id": "call_44a34bd40cc94d53bfe42ba7c8bbd883",
+        "role": "python",
+        "name": "conformer_search_repair_v2.py"
+      },
+      "view": {
+        "type": "raw_text",
+        "version": "1"
+      },
+      "path": [],
+      "geometry_indices": [],
+      "stage": "unknown",
+      "units": null,
+      "conditions": "unknown",
+      "scientific_status": "unverified",
+      "validation": "unverified observation; not a scientific qualification",
+      "lines": [
+        {
+          "line": 1,
+          "text": "import csv"
+        },
+        {
+          "line": 2,
+          "text": "import json"
+        },
+        {
+          "line": 3,
+          "text": "import math"
+        },
+        {
+          "line": 4,
+          "text": "from pathlib import Path"
+        },
+        {
+          "line": 5,
+          "text": ""
+        },
+        {
+          "line": 6,
+          "text": "from rdkit import Chem"
+        },
+        {
+          "line": 7,
+          "text": "from rdkit.Chem import AllChem"
+        },
+        {
+          "line": 8,
+          "text": "from orca_task_sdk import run_orca"
+        },
+        {
+          "line": 9,
+          "text": ""
+        },
+        {
+          "line": 10,
+          "text": "SMILES = 'CCCCCC'"
+        },
+        {
+          "line": 11,
+          "text": "NUM_GEN = 24"
+        },
+        {
+          "line": 12,
+          "text": "NUM_EVAL = 4"
+        },
+        {
+          "line": 13,
+          "text": "HARTREE_TO_KJ = 2625.4996394799"
+        },
+        {
+          "line": 14,
+          "text": "HARTREE_TO_EV = 27.211386245988"
+        },
+        {
+          "line": 15,
+          "text": "RANDOM_SEED = 20261019"
+        },
+        {
+          "line": 16,
+          "text": ""
+        },
+        {
+          "line": 17,
+          "text": ""
+        },
+        {
+          "line": 18,
+          "text": "def finite_or_none(value):"
+        },
+        {
+          "line": 19,
+          "text": "    try:"
+        },
+        {
+          "line": 20,
+          "text": "        out = float(value)"
+        },
+        {
+          "line": 21,
+          "text": "    except Exception:"
+        },
+        {
+          "line": 22,
+          "text": "        return None"
+        },
+        {
+          "line": 23,
+          "text": "    if math.isfinite(out):"
+        },
+        {
+          "line": 24,
+          "text": "        return out"
+        },
+        {
+          "line": 25,
+          "text": "    return None"
+        },
+        {
+          "line": 26,
+          "text": ""
+        },
+        {
+          "line": 27,
+          "text": ""
+        },
+        {
+          "line": 28,
+          "text": "def xyz_block(mol, cid):"
+        },
+        {
+          "line": 29,
+          "text": "    conf = mol.GetConformer(cid)"
+        },
+        {
+          "line": 30,
+          "text": "    lines = [str(mol.GetNumAtoms()), 'candidate from ' + SMILES]"
+        },
+        {
+          "line": 31,
+          "text": "    for atom in mol.GetAtoms():"
+        },
+        {
+          "line": 32,
+          "text": "        p = conf.GetAtomPosition(atom.GetIdx())"
+        },
+        {
+          "line": 33,
+          "text": "        lines.append(atom.GetSymbol() + ' ' + format(p.x, '.10f') + ' ' + format(p.y, '.10f') + ' ' + format(p.z, '.10f'))"
+        },
+        {
+          "line": 34,
+          "text": "    return chr(10).join(lines) + chr(10)"
+        },
+        {
+          "line": 35,
+          "text": ""
+        },
+        {
+          "line": 36,
+          "text": ""
+        },
+        {
+          "line": 37,
+          "text": "def mmff_optimize(mol, cid):"
+        },
+        {
+          "line": 38,
+          "text": "    props = AllChem.MMFFGetMoleculeProperties(mol, mmffVariant='MMFF94s')"
+        },
+        {
+          "line": 39,
+          "text": "    if props is None:"
+        },
+        {
+          "line": 40,
+          "text": "        return None, 'MMFF94s properties unavailable'"
+        },
+        {
+          "line": 41,
+          "text": "    ff = AllChem.MMFFGetMoleculeForceField(mol, props, confId=cid)"
+        },
+        {
+          "line": 42,
+          "text": "    if ff is None:"
+        },
+        {
+          "line": 43,
+          "text": "        return None, 'MMFF94s force field unavailable'"
+        },
+        {
+          "line": 44,
+          "text": "    try:"
+        },
+        {
+          "line": 45,
+          "text": "        ff.Minimize(maxIts=1000)"
+        },
+        {
+          "line": 46,
+          "text": "        energy = finite_or_none(ff.CalcEnergy())"
+        },
+        {
+          "line": 47,
+          "text": "        if energy is None:"
+        },
+        {
+          "line": 48,
+          "text": "            return None, 'MMFF94s energy was not finite'"
+        },
+        {
+          "line": 49,
+          "text": "        return energy, None"
+        },
+        {
+          "line": 50,
+          "text": "    except Exception as exc:"
+        },
+        {
+          "line": 51,
+          "text": "        return None, 'MMFF94s optimization failed: ' + type(exc).__name__ + ': ' + str(exc)"
+        },
+        {
+          "line": 52,
+          "text": ""
+        },
+        {
+          "line": 53,
+          "text": ""
+        },
+        {
+          "line": 54,
+          "text": "def orca_input(xyz_name):"
+        },
+        {
+          "line": 55,
+          "text": "    return ('! B3LYP 6-31G RKS NORI NoAutoStart TightSCF SP' + chr(10) +"
+        },
+        {
+          "line": 56,
+          "text": "            '%maxcore 192' + chr(10) +"
+        },
+        {
+          "line": 57,
+          "text": "            '%pal nprocs 4 end' + chr(10) +"
+        },
+        {
+          "line": 58,
+          "text": "            '%scf MaxIter 128 ConvForced true AutoTRAH false end' + chr(10) +"
+        },
+        {
+          "line": 59,
+          "text": "            '* xyzfile 0 1 ' + xyz_name + chr(10))"
+        },
+        {
+          "line": 60,
+          "text": ""
+        },
+        {
+          "line": 61,
+          "text": ""
+        },
+        {
+          "line": 62,
+          "text": "def parse_energy(text):"
+        },
+        {
+          "line": 63,
+          "text": "    value = None"
+        },
+        {
+          "line": 64,
+          "text": "    for line in text.splitlines():"
+        },
+        {
+          "line": 65,
+          "text": "        if line.strip().startswith('FINAL SINGLE POINT ENERGY'):"
+        },
+        {
+          "line": 66,
+          "text": "            parts = line.replace(':', ' ').split()"
+        },
+        {
+          "line": 67,
+          "text": "            for token in reversed(parts):"
+        },
+        {
+          "line": 68,
+          "text": "                candidate = finite_or_none(token)"
+        },
+        {
+          "line": 69,
+          "text": "                if candidate is not None:"
+        },
+        {
+          "line": 70,
+          "text": "                    value = candidate"
+        },
+        {
+          "line": 71,
+          "text": "                    break"
+        },
+        {
+          "line": 72,
+          "text": "    return value"
+        },
+        {
+          "line": 73,
+          "text": ""
+        },
+        {
+          "line": 74,
+          "text": ""
+        },
+        {
+          "line": 75,
+          "text": "def read_file_text(path):"
+        },
+        {
+          "line": 76,
+          "text": "    try:"
+        },
+        {
+          "line": 77,
+          "text": "        return Path(path).read_text(encoding='utf-8', errors='replace')"
+        },
+        {
+          "line": 78,
+          "text": "    except Exception:"
+        },
+        {
+          "line": 79,
+          "text": "        return ''"
+        },
+        {
+          "line": 80,
+          "text": ""
+        },
+        {
+          "line": 81,
+          "text": ""
+        },
+        {
+          "line": 82,
+          "text": "def receipt_files(receipt):"
+        },
+        {
+          "line": 83,
+          "text": "    if isinstance(receipt, dict):"
+        },
+        {
+          "line": 84,
+          "text": "        files = receipt.get('files')"
+        },
+        {
+          "line": 85,
+          "text": "        return files if isinstance(files, dict) else {}"
+        },
+        {
+          "line": 86,
+          "text": "    files = getattr(receipt, 'files', None)"
+        },
+        {
+          "line": 87,
+          "text": "    return files if isinstance(files, dict) else {}"
+        },
+        {
+          "line": 88,
+          "text": ""
+        },
+        {
+          "line": 89,
+          "text": ""
+        },
+        {
+          "line": 90,
+          "text": "def receipt_request_key(receipt, fallback):"
+        },
+        {
+          "line": 91,
+          "text": "    if isinstance(receipt, dict):"
+        },
+        {
+          "line": 92,
+          "text": "        return receipt.get('request_key') or fallback"
+        },
+        {
+          "line": 93,
+          "text": "    return getattr(receipt, 'request_key', None) or fallback"
+        },
+        {
+          "line": 94,
+          "text": ""
+        },
+        {
+          "line": 95,
+          "text": ""
+        },
+        {
+          "line": 96,
+          "text": "def write_csv(path, rows, fieldnames):"
+        },
+        {
+          "line": 97,
+          "text": "    with open(path, 'w', newline='', encoding='utf-8') as handle:"
+        },
+        {
+          "line": 98,
+          "text": "        writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction='ignore')"
+        },
+        {
+          "line": 99,
+          "text": "        writer.writeheader()"
+        },
+        {
+          "line": 100,
+          "text": "        for row in rows:"
+        },
+        {
+          "line": 101,
+          "text": "            writer.writerow(row)"
+        },
+        {
+          "line": 102,
+          "text": ""
+        },
+        {
+          "line": 103,
+          "text": ""
+        },
+        {
+          "line": 104,
+          "text": "base = Chem.MolFromSmiles(SMILES)"
+        },
+        {
+          "line": 105,
+          "text": "if base is None:"
+        },
+        {
+          "line": 106,
+          "text": "    raise RuntimeError('Could not build n-hexane from SMILES')"
+        },
+        {
+          "line": 107,
+          "text": "mol = Chem.AddHs(base)"
+        },
+        {
+          "line": 108,
+          "text": "params = AllChem.ETKDGv3()"
+        },
+        {
+          "line": 109,
+          "text": "params.randomSeed = RANDOM_SEED"
+        },
+        {
+          "line": 110,
+          "text": "params.pruneRmsThresh = 0.15"
+        },
+        {
+          "line": 111,
+          "text": "params.numThreads = 1"
+        },
+        {
+          "line": 112,
+          "text": "params.useRandomCoords = True"
+        },
+        {
+          "line": 113,
+          "text": "cids = list(AllChem.EmbedMultipleConfs(mol, numConfs=NUM_GEN, params=params))"
+        },
+        {
+          "line": 114,
+          "text": ""
+        },
+        {
+          "line": 115,
+          "text": "records = []"
+        },
+        {
+          "line": 116,
+          "text": "for idx, cid in enumerate(cids, start=1):"
+        },
+        {
+          "line": 117,
+          "text": "    candidate_id = 'candidate_' + format(idx, '02d')"
+        },
+        {
+          "line": 118,
+          "text": "    xyz_name = candidate_id + '.xyz'"
+        },
+        {
+          "line": 119,
+          "text": "    mmff_energy, mmff_issue = mmff_optimize(mol, cid)"
+        },
+        {
+          "line": 120,
+          "text": "    Path(xyz_name).write_text(xyz_block(mol, cid), encoding='utf-8')"
+        },
+        {
+          "line": 121,
+          "text": "    atoms = [atom.GetSymbol() for atom in mol.GetAtoms()]"
+        },
+        {
+          "line": 122,
+          "text": "    records.append({"
+        },
+        {
+          "line": 123,
+          "text": "        'candidate_id': candidate_id,"
+        },
+        {
+          "line": 124,
+          "text": "        'xyz_file': xyz_name,"
+        },
+        {
+          "line": 125,
+          "text": "        'smiles': SMILES,"
+        },
+        {
+          "line": 126,
+          "text": "        'generator': 'RDKit ETKDGv3',"
+        },
+        {
+          "line": 127,
+          "text": "        'random_seed': RANDOM_SEED,"
+        },
+        {
+          "line": 128,
+          "text": "        'atom_count': mol.GetNumAtoms(),"
+        },
+        {
+          "line": 129,
+          "text": "        'elements': ' '.join(atoms),"
+        },
+        {
+          "line": 130,
+          "text": "        'mmff_energy_kcal_per_mol': mmff_energy,"
+        },
+        {
+          "line": 131,
+          "text": "        'mmff_issue': mmff_issue,"
+        },
+        {
+          "line": 132,
+          "text": "        'selected_for_orca': False,"
+        },
+        {
+          "line": 133,
+          "text": "        'pre_ranking_by_mmff': None,"
+        },
+        {
+          "line": 134,
+          "text": "        'orca_energy_hartree': None,"
+        },
+        {
+          "line": 135,
+          "text": "        'relative_energy_kj_mol': None,"
+        },
+        {
+          "line": 136,
+          "text": "        'relative_energy_ev': None,"
+        },
+        {
+          "line": 137,
+          "text": "        'orca_request_key': None,"
+        },
+        {
+          "line": 138,
+          "text": "        'orca_stdout_file': None"
+        },
+        {
+          "line": 139,
+          "text": "    })"
+        },
+        {
+          "line": 140,
+          "text": ""
+        },
+        {
+          "line": 141,
+          "text": "ranked = sorted(records, key=lambda r: (r['mmff_energy_kcal_per_mol'] is None, r['mmff_energy_kcal_per_mol'] if r['mmff_energy_kcal_per_mol'] is not None else 0.0))"
+        },
+        {
+          "line": 142,
+          "text": "for rank, record in enumerate(ranked, start=1):"
+        },
+        {
+          "line": 143,
+          "text": "    record['pre_ranking_by_mmff'] = rank"
+        },
+        {
+          "line": 144,
+          "text": ""
+        },
+        {
+          "line": 145,
+          "text": "failed_members = []"
+        },
+        {
+          "line": 146,
+          "text": "for record in records:"
+        },
+        {
+          "line": 147,
+          "text": "    if record['mmff_issue'] is not None:"
+        },
+        {
+          "line": 148,
+          "text": "        failed_members.append({"
+        },
+        {
+          "line": 149,
+          "text": "            'candidate_id': record['candidate_id'],"
+        },
+        {
+          "line": 150,
+          "text": "            'xyz_file': record['xyz_file'],"
+        },
+        {
+          "line": 151,
+          "text": "            'stage': 'MMFF94s optimization',"
+        },
+        {
+          "line": 152,
+          "text": "            'reason': record['mmff_issue'],"
+        },
+        {
+          "line": 153,
+          "text": "            'orca_request_key': None,"
+        },
+        {
+          "line": 154,
+          "text": "            'files_available': '',"
+        },
+        {
+          "line": 155,
+          "text": "            'stderr_excerpt': ''"
+        },
+        {
+          "line": 156,
+          "text": "        })"
+        },
+        {
+          "line": 157,
+          "text": "for record in ranked[NUM_EVAL:]:"
+        },
+        {
+          "line": 158,
+          "text": "    failed_members.append({"
+        },
+        {
+          "line": 159,
+          "text": "        'candidate_id': record['candidate_id'],"
+        },
+        {
+          "line": 160,
+          "text": "        'xyz_file': record['xyz_file'],"
+        },
+        {
+          "line": 161,
+          "text": "        'stage': 'ORCA single point',"
+        },
+        {
+          "line": 162,
+          "text": "        'reason': 'not evaluated because the ORCA start limit for this request is 4',"
+        },
+        {
+          "line": 163,
+          "text": "        'orca_request_key': None,"
+        },
+        {
+          "line": 164,
+          "text": "        'files_available': '',"
+        },
+        {
+          "line": 165,
+          "text": "        'stderr_excerpt': ''"
+        },
+        {
+          "line": 166,
+          "text": "    })"
+        },
+        {
+          "line": 167,
+          "text": ""
+        },
+        {
+          "line": 168,
+          "text": "evaluated = []"
+        },
+        {
+          "line": 169,
+          "text": "for rank, record in enumerate(ranked[:NUM_EVAL], start=1):"
+        },
+        {
+          "line": 170,
+          "text": "    record['selected_for_orca'] = True"
+        },
+        {
+          "line": 171,
+          "text": "    xyz_name = record['xyz_file']"
+        },
+        {
+          "line": 172,
+          "text": "    input_name = 'orca_sp_' + format(rank, '02d') + '_' + record['candidate_id'] + '.inp'"
+        },
+        {
+          "line": 173,
+          "text": "    Path(input_name).write_text(orca_input(xyz_name), encoding='utf-8')"
+        },
+        {
+          "line": 174,
+          "text": "    request_key = 'sp_' + record['candidate_id']"
+        },
+        {
+          "line": 175,
+          "text": "    record['orca_request_key'] = request_key"
+        },
+        {
+          "line": 176,
+          "text": "    try:"
+        },
+        {
+          "line": 177,
+          "text": "        receipt = run_orca(input_name, dependencies=[xyz_name], request_key=request_key, purpose='new_candidate')"
+        },
+        {
+          "line": 178,
+          "text": "    except Exception as exc:"
+        },
+        {
+          "line": 179,
+          "text": "        failed_members.append({"
+        },
+        {
+          "line": 180,
+          "text": "            'candidate_id': record['candidate_id'],"
+        },
+        {
+          "line": 181,
+          "text": "            'xyz_file': xyz_name,"
+        },
+        {
+          "line": 182,
+          "text": "            'stage': 'ORCA SDK call',"
+        },
+        {
+          "line": 183,
+          "text": "            'reason': 'ORCA SDK call failed: ' + type(exc).__name__ + ': ' + str(exc),"
+        },
+        {
+          "line": 184,
+          "text": "            'orca_request_key': request_key,"
+        },
+        {
+          "line": 185,
+          "text": "            'files_available': '',"
+        },
+        {
+          "line": 186,
+          "text": "            'stderr_excerpt': ''"
+        },
+        {
+          "line": 187,
+          "text": "        })"
+        },
+        {
+          "line": 188,
+          "text": "        continue"
+        },
+        {
+          "line": 189,
+          "text": "    files = receipt_files(receipt)"
+        },
+        {
+          "line": 190,
+          "text": "    file_keys = sorted(files.keys())"
+        },
+        {
+          "line": 191,
+          "text": "    stdout_text = read_file_text(files.get('stdout.out')) if 'stdout.out' in files else ''"
+        },
+        {
+          "line": 192,
+          "text": "    stderr_text = read_file_text(files.get('stderr.txt')) if 'stderr.txt' in files else ''"
+        },
+        {
+          "line": 193,
+          "text": "    saved_stdout = 'orca_' + record['candidate_id'] + '.stdout.out'"
+        },
+        {
+          "line": 194,
+          "text": "    if stdout_text:"
+        },
+        {
+          "line": 195,
+          "text": "        Path(saved_stdout).write_text(stdout_text, encoding='utf-8')"
+        },
+        {
+          "line": 196,
+          "text": "    energy = parse_energy(stdout_text)"
+        },
+        {
+          "line": 197,
+          "text": "    if energy is None:"
+        },
+        {
+          "line": 198,
+          "text": "        saved_stderr = 'orca_' + record['candidate_id'] + '.stderr.txt'"
+        },
+        {
+          "line": 199,
+          "text": "        if stderr_text:"
+        },
+        {
+          "line": 200,
+          "text": "            Path(saved_stderr).write_text(stderr_text, encoding='utf-8')"
+        }
+      ],
+      "returned_bytes": 6989,
+      "status": "observed",
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      }
+    }
+  },
+  "observation_records": [],
+  "diagnostics": [],
+  "artifact_ids": [
+    "artifact_24f855cb1d0747a7bda591823952da90"
+  ],
+  "source": {
+    "call_id": "call_44a34bd40cc94d53bfe42ba7c8bbd883",
+    "role": "python",
+    "name": "conformer_search_repair_v2.py",
+    "tool": "evidence.text",
+    "consumption": {
+      "_decision_id": "model_01fbdf6575e2404c9d0a7a0cff521cb8"
+    },
+    "request_version": 3,
+    "plan_version": 3
+  },
+  "created_at": "2026-10-19T15:29:25.901085Z"
+}

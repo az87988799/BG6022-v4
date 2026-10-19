@@ -1,0 +1,30 @@
+0040 预算修订定向验证——已执行开发工具输出摘录
+
+存档时间：2026-10-19T16:01:46.917011Z
+来源：续作冻结前的实际开发对话 tools.exec_command 输出。
+没有原始独立终端日志文件或 JUnit；未为存档重跑测试，也未补造 JUnit。
+原输出只记录耗时，精确执行时间未单独持久化；不猜测时间。
+下列可见输出仅规范化空格和换行。
+
+命令：
+.\.venv\Scripts\python.exe -m pytest tests/unit/test_authorized_run_budget_amendment.py -q
+输出：
+..... [100%]
+5 passed in 7.05s
+进程退出码：0
+
+命令：
+.\.venv\Scripts\python.exe -m pytest tests/unit/test_store.py::test_budget_and_permission_cannot_be_enlarged_after_creation tests/unit/test_store.py::test_fixed_plan_and_cumulative_budget_cannot_be_relabelled -q
+输出：
+.. [100%]
+2 passed in 1.29s
+进程退出码：0
+
+最终 Ruff 命令：
+.\.venv\Scripts\python.exe -m ruff check src/orca_agent/models.py src/orca_agent/store.py src/orca_agent/entrypoints.py src/orca_agent/tools/managed.py tests/unit/test_authorized_run_budget_amendment.py
+最终输出：
+All checks passed!
+前次仅新测试文件 import 排序 I001，Ruff --fix 修正后检查通过。
+
+5 项新测试、2 项既有严格预算反例均通过。未运行全量回归；未调用模型、ORCA或执行任务代码；未改真实 Run。
+测试名称、文件 hash 和限定范围见同目录 budget-amendment-tests.json。

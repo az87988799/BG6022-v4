@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="4" time="3.565" timestamp="2026-10-20T00:29:18.801976+08:00" hostname="AZ"><testcase classname="tests.unit.test_bounded_live_observation_context" name="test_actual_multirecord_preview_keeps_all_sources_and_explicit_manifest_lookup" time="0.006"><failure message="AssertionError: assert [{'artifact_i...bcadcf', ...}] == [{'artifact_i...bcadcf', ...}]&#10;  &#10;  At index 0 diff: {'artifact_id': 'artifact_2a8fd61c10784e09bbb9ed3c555815f7', 'sha256': 'd3bb8970d8058df64530a367a48d7e7fde5a63ec7496f9e5731a29ed08a9e4ea', 'location': 'FINAL SINGLE POINT ENERGY for candidate_08', 'attempt_id': 'attempt_0a37c319d9bd43acb1063dd7e2bcadcf', 'internal_request_key': 'sp_candidate_08', 'actual_conditions': {'observation_actual_conditions_ref': '.', 'additional_fields': {'geometry_sha256': '292877de2a07e4dd71f90a829c143efc04d7f721197797aa07aaf4b32a9ed54d', 'input_geometry_sha256': '292877de2a07e4dd71f90a829c143efc04d7f721197797aa07aaf4b32a9ed5...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">def test_actual_multirecord_preview_keeps_all_sources_and_explicit_manifest_lookup():
+        result = feedback()
+        before = result.model_copy(deep=True)
+        projected = context._result(result, 256)
+        rows = projected["unqualified_observation_records"]
+        assert [row["name"] for row in rows] == [row.name for row in result.observation_records]
+        for row, original in zip(rows, result.observation_records, strict=True):
+            assert row["validation_status"] == original.validation_status == "unverified"
+            assert row["limitations"] == original.limitations
+&gt;           assert row["sources"] == original.model_dump(mode="json")["sources"]
+E           AssertionError: assert [{'artifact_i...bcadcf', ...}] == [{'artifact_i...bcadcf', ...}]
+E             
+E             At index 0 diff: {'artifact_id': 'artifact_2a8fd61c10784e09bbb9ed3c555815f7', 'sha256': 'd3bb8970d8058df64530a367a48d7e7fde5a63ec7496f9e5731a29ed08a9e4ea', 'location': 'FINAL SINGLE POINT ENERGY for candidate_08', 'attempt_id': 'attempt_0a37c319d9bd43acb1063dd7e2bcadcf', 'internal_request_key': 'sp_candidate_08', 'actual_conditions': {'observation_actual_conditions_ref': '.', 'additional_fields': {'geometry_sha256': '292877de2a07e4dd71f90a829c143efc04d7f721197797aa07aaf4b32a9ed54d', 'input_geometry_sha256': '292877de2a07e4dd71f90a829c143efc04d7f721197797aa07aaf4b32a9ed5...
+E             
+E             ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests\unit\test_bounded_live_observation_context.py:28: AssertionError</failure></testcase><testcase classname="tests.unit.test_bounded_live_observation_context" name="test_real_multirecord_values_fit_complete_request_and_keep_small_numeric_tables" time="0.003"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for Step&#10;logical_id&#10;  Field required [type=missing, input_value={'id': 'step_31cb76d699be...porting_requirements']}}, input_type=dict]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/missing">def test_real_multirecord_values_fit_complete_request_and_keep_small_numeric_tables():
+        result = feedback()
+        goals = [Goal(id=f"goal_{i}", port=row.name,
+            minimum_check_version="generic-observation-1", evidence_contract_version="generic-observation-1",
+            verification="reported_with_limitations") for i, row in enumerate(result.observation_records)]
+        request = Request(goals=goals, conditions={"explain_results": True})
+&gt;       step = Step(id=result.step_id, tool="python.execute", parameters={
+            "code": {"artifact_id": "script_artifact", "sha256": result.observation_records[0].code_sha256},
+            "observation_names": [row.name for row in result.observation_records]})
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Step
+E       logical_id
+E         Field required [type=missing, input_value={'id': 'step_31cb76d699be...porting_requirements']}}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+tests\unit\test_bounded_live_observation_context.py:47: ValidationError</failure></testcase><testcase classname="tests.unit.test_code_context" name="test_generic_observation_feedback_preserves_values_and_unverified_sources_at_small_preview_budget" time="0.001" /><testcase classname="tests.unit.test_code_context" name="test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_history_survives" time="0.005" /></testsuite></testsuites>

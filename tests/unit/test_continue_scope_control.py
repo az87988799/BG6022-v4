@@ -36,3 +36,27 @@ def test_continue_candidate_cannot_smuggle_changed_condition(tmp_path):
     with pytest.raises(StoreError, match="cannot change Request fields"):
         commit_candidate(store, run, proposed, decision_id="changed", basis=current_basis(store, run))
     assert not run.processed_messages
+
+
+def test_explicit_continue_requests_fresh_decision_without_ready_work_or_new_feedback(tmp_path, monkeypatch):
+    from orca_agent import agent
+    from orca_agent.config import Config
+
+    store, run, _, _ = query_run(tmp_path)
+    run.state = "failed"
+    store.save_run(run)
+    before = run.budget.model_dump(), run.usage.model_dump(), run.deadline
+    message_id = store.enqueue_message(run.id, "继续")
+    decisions = []
+
+    def decide(store, current, *args, **kwargs):
+        decisions.append(current.id)
+        current.state = "failed"
+        return current, "stop", None
+
+    monkeypatch.setattr(agent, "_ready", lambda *args: [])
+    monkeypatch.setattr(agent, "_decision", decide)
+    updated = agent.execute(store, Config(), run.id, resume=True)
+    assert decisions == [run.id] and message_id in updated.processed_messages
+    assert not updated.calls and not updated.attempts
+    assert (updated.budget.model_dump(), updated.usage.model_dump(), updated.deadline) == before

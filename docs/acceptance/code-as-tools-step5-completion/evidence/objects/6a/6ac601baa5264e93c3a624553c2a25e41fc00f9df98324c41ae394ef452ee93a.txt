@@ -1,0 +1,101 @@
+"""Explicit developer-assisted metadata repair through the existing Tool chain."""
+import hashlib
+import json
+import subprocess
+from datetime import timedelta
+from pathlib import Path
+
+from orca_agent import agent, runner
+from orca_agent.config import Config
+from orca_agent.entrypoints import amend_budget, execute, message
+from orca_agent.models import utc_now
+from orca_agent.report import build_report, render_report
+from orca_agent.store import Store, atomic_write
+from scripts.code_tools_development import snapshot
+
+root = Path.cwd()
+batch = root / "data/code-as-tools-step5-completion"
+evidence = batch / "continuation-011"
+evidence.mkdir(exist_ok=False)
+config = Config.model_validate_json((root / "data/code-as-tools-step5/config-final-v65.json").read_bytes())
+store = Store(config.data_root, configuration=config.run_configuration())
+run_id = "run_4a5877907dbd4c7fbcfae9bdbd8f608e"
+
+def write(name, value):
+    atomic_write(evidence / name, (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode(), immutable=True)
+
+def sources():
+    result = snapshot(root)
+    for path in (root / "src").rglob("*"):
+        if path.is_file() and path.suffix in {".js", ".css", ".html"}:
+            result[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+run = store.load_run(run_id)
+before = store.path(f"runs/{run_id}/run.json").read_bytes()
+atomic_write(evidence / "run-before-continuation.json", before, immutable=True)
+frozen = {"created_at": utc_now().isoformat(), "git_head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+    "source_files": sources(), "configuration": config.model_dump(mode="json"), "run_id": run_id,
+    "authorization_text": "User authorized direct completion and changes to obstructing old rules; explicit developer-assisted metadata-only intervention per 0043.",
+    "scope": "developer-assisted metadata copy/source binding; original model search/selection/ORCA untouched",
+    "developer_assisted": True, "previous_run_sha256": hashlib.sha256(before).hexdigest(),
+    "limits": {"runs": 6, "model_calls": 96, "model_tokens": 4_400_000, "orca_starts": 12},
+    "driver_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+write("freeze.json", frozen)
+write("run-location.json", {"run_id": run_id, "data_root": str(store.root), "environment_root": str(store.environment_root)})
+write("retained-budget.json", {"budget": run.budget.model_dump(mode="json"), "budget_revision": run.budget_revision,
+    "deadline": run.deadline.isoformat(), "usage_preserved": run.usage.model_dump(mode="json")})
+error = None
+try:
+    authorization_text = "继续把步骤5真正做完，先修好输入绑定并执行修复脚本，再完成真实ORCA计算和完整交付。阻碍目标的旧规则直接改，只做必要定向测试和API验证，不跑全量回归，完成后提交推送。"
+    write("authorization-message.json", message(store, run_id, authorization_text,
+        update={"budget_amendment": {"limits": {}, "archive_timeout_seconds": 300,
+                "deadline": (run.deadline + timedelta(minutes=5)).isoformat()}},
+        message_id="continuation_0045_authorization"))
+    run = amend_budget(store, run_id, message_id="continuation_0045_authorization",
+                       amendment_id="continuation_0045_archive_deadline")
+    write("authorized-budget.json", {"budget": run.budget.model_dump(mode="json"),
+        "budget_revision": run.budget_revision, "deadline": run.deadline.isoformat(),
+        "usage_preserved": run.usage.model_dump(mode="json")})
+    with store.run_lock(run_id):
+        run = store.load_run(run_id)
+        assert not any(a.finished_at is None for a in run.attempts)
+        assert not any(c.state in {"reserved", "running", "unknown"} for c in [*run.calls, *run.internal_calls])
+        with store.control_lock(run_id):
+            store.signal(run_id, None)
+            run.control_generation = store.read_control(run_id)["generation"]
+            run.state = "ready"
+            run.diagnostics.append({"category": "developer_assisted_metadata_repair", "decision": "0043",
+                "scientific_values_changed": False, "new_orca_starts_authorized": 0})
+            store.save_run(run)
+        plan = store.load_plan(run)
+        latest = run.attempts[-1]
+        step = next(s for s in plan.steps if s.id == latest.step_id)
+        assert step.parameters.code.artifact_id == latest.frozen_step.parameters.code.artifact_id
+        assert store.artifact_path(step.parameters.code.artifact_id).name == "deterministic_metadata_repair_v3.py"
+        results = runner._step_results(store, run)
+        run.state = "running"
+        store.save_run(run)
+        result, outcome = agent._science(store, config, run, step, results, None, None)
+        write("metadata-execution.json", {"result_id": result.id, "outcome": outcome})
+        assert outcome["state"] == "completed"
+        results[step.id] = result
+        assert runner._goals(store, run, plan, results), run.goal_status
+        assert run.usage.orca_starts_actual == 4
+        run.state = "ready"
+        store.save_run(run)
+        write("metadata-goals.json", {"goals": run.goal_status, "usage": run.usage.model_dump(mode="json"),
+                                     "developer_assisted": True, "scientific_values_changed": False})
+    print("Metadata Tool completed; all eight Goals satisfy the unchanged gate. Requesting final model delivery.", flush=True)
+    run = execute(store, config, run_id, resume=True)
+except Exception as exc:
+    error = {"type": type(exc).__name__, "message": str(exc)}
+    run = store.load_run(run_id)
+changed = sorted(key for key, value in sources().items() if frozen["source_files"].get(key) != value)
+report = build_report(store, run)
+write("report.json", report)
+atomic_write(evidence / "report.txt", render_report(report).encode(), immutable=True)
+write("outcome.json", {"state": run.state, "goals": run.goal_status, "delivery_status": run.delivery_status,
+    "usage": run.usage.model_dump(mode="json"), "error": error, "source_changed_during_run": changed,
+    "developer_assisted": True, "finished_at": utc_now().isoformat()})
+print(json.dumps({"state": run.state, "goals": run.goal_status, "error": error, "changed": changed}), flush=True)

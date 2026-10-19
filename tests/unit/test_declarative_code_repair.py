@@ -10,7 +10,7 @@ from pydantic import Field, ValidationError
 
 from orca_agent import agent
 from orca_agent.model_usage import current_basis
-from orca_agent.models import Attempt, CodeRef, OutputBinding, Plan, Step
+from orca_agent.models import Attempt, CodeRef, OutputBinding, Plan, Result, Step, utc_now
 from orca_agent.planning import (
     PlanningError,
     _python_repair,
@@ -27,8 +27,37 @@ from orca_agent.proposals import (
     proposed_plan_schema,
     validate_action_parameters,
 )
+from tests.unit.test_context import objects
 from tests.unit.test_failed_python_history import failed_then_writer
 from tests.unit.test_python_repair_budget import case, settle
+
+
+def test_python_omitted_inputs_cannot_inherit_legacy_calculation_parameters():
+    request, run = objects()
+    legacy = Step(id="legacy", logical_id="legacy_logical", tool="orca.sp",
+        parameters={}, geometry={"artifact_id": request.geometry_artifact_id})
+    prior = Plan(request_id=request.id, steps=[legacy],
+        goal_map={"energy": OutputBinding(step_id=legacy.id, port="energy")})
+    run.plan_id, run.plan_version = prior.id, prior.version
+    run.permission.code_execution = True
+    attempt = Attempt(step_id=legacy.id, logical_id=legacy.logical_id, number=1,
+        tool=legacy.tool, state="failed", input_fingerprint="legacy_input", directory="attempts/legacy",
+        finished_at=utc_now(), result_id="legacy_result", frozen_step=legacy)
+    result = Result(id="legacy_result", run_id=run.id, step_id=legacy.id,
+        attempt_id=attempt.id, operation_status="failed")
+    run.attempts, run.result_ids = [attempt], [result.id]
+    store = SimpleNamespace(load_plan=lambda _: prior, load_request=lambda _: request,
+        load_result=lambda *_: result)
+    parameters = {"steps": [{"key": "repair", "logical_key": legacy.logical_id,
+        "tool": "python.execute", "parameters": {"code": {"artifact_id": "script", "sha256": "a" * 64},
+            "observation_names": ["energy"]}}],
+        "goal_map": {"energy": {"step_key": "repair", "port": "energy"}}}
+    before = copy.deepcopy((request, run, prior, parameters))
+    with pytest.raises(ProposalError) as caught:
+        materialize_plan(store, run, parameters)
+    assert caught.value.detail["code"] == "invalid_code_repair_source_tool"
+    assert caught.value.detail["path"] == ["parameters", "steps", 0, "logical_key"]
+    assert (request, run, prior, parameters) == before
 
 
 def proposal(attempt, code, *, retained=()):
@@ -64,16 +93,43 @@ def test_historical_failure_reference_copies_full_contract_without_mutation(tmp_
     assert values == before and (run, request, prior) == original
 
 
-def test_reference_does_not_insert_missing_dependency(tmp_path, monkeypatch):
+@pytest.mark.parametrize("settled", [True, False])
+def test_reference_carries_only_verified_settled_dependencies(tmp_path, monkeypatch, settled):
     store, run, _, _, attempt, _, _, code = failed_then_writer(tmp_path, monkeypatch)
+    if not settled:
+        next(call for call in run.calls if call.step_id == attempt.frozen_step.depends_on[0]).state = "unknown"
     values = proposal(attempt, code)
     before = copy.deepcopy((values, run))
-    with pytest.raises(ProposalError) as caught:
-        materialize_plan(store, run, values)
-    assert caught.value.detail["code"] == "missing_step_reference"
-    assert caught.value.detail["missing_step_keys"] == attempt.frozen_step.depends_on
-    assert caught.value.detail["path"] == ["parameters", "steps", 0, "repair_of"]
+    if settled:
+        candidate = materialize_plan(store, run, values)
+        assert set(attempt.frozen_step.depends_on) <= {step.id for step in candidate.steps}
+        dependency = next(call.frozen_step for call in run.calls
+                          if call.step_id == attempt.frozen_step.depends_on[0])
+        assert dependency in candidate.steps
+    else:
+        with pytest.raises(ProposalError) as caught:
+            materialize_plan(store, run, values)
+        assert caught.value.detail["code"] == "missing_step_reference"
+        assert caught.value.detail["missing_step_keys"] == attempt.frozen_step.depends_on
+        assert caught.value.detail["path"] == ["parameters", "steps", 0, "repair_of"]
     assert (values, run) == before
+
+
+def test_full_repair_omitting_manifest_preserves_the_original_input_copies(tmp_path, monkeypatch):
+    store, run, request, prior, attempt, _, _, code = failed_then_writer(tmp_path, monkeypatch)
+    values = proposal(attempt, code, retained=prior.steps)
+    source = attempt.frozen_step
+    parameters = source.parameters.model_dump(mode="json", exclude={"inputs"})
+    parameters["code"] = code
+    values["steps"][-1] = {"key": "repair", "logical_key": source.logical_id,
+        "tool": source.tool, "parameters": parameters, "system_id": source.system_id,
+        "depends_on": source.depends_on,
+        "inputs": {name: ref.model_dump(mode="json") for name, ref in source.inputs.items()}}
+    candidate = materialize_plan(store, run, values)
+    repaired = candidate.steps[-1]
+    assert repaired.parameters.inputs == source.parameters.inputs
+    validate_revision(request, prior, request, candidate, run,
+                      authorized_artifacts=store.verified_own_artifacts(run))
 
 
 @pytest.mark.parametrize("change", ["unauthorized", "unknown", "current_key", "completed", "running", "unknown_state",
@@ -111,7 +167,7 @@ def test_invalid_reference_never_materializes_or_changes_history(tmp_path, monke
 
 
 @pytest.mark.parametrize("field,value", [("tool", "python.execute"), ("logical_key", "new"),
-    ("parameters", {}), ("depends_on", []), ("inputs", {}), ("conditions", {}), ("system_id", "system")])
+    ("parameters", {}), ("depends_on", []), ("conditions", {}), ("system_id", "system")])
 def test_closed_reference_cannot_override_frozen_fields(field, value):
     values = {"steps": [{"key": "repair", "repair_of": "failed", "code": {
         "artifact_id": "new", "sha256": "a" * 64}, field: value}], "goal_map": {}}
@@ -184,9 +240,13 @@ def test_actual_live037_remains_rejected_and_explicit_reference_preserves_manife
     bad = Step(id="bad", logical_id=frozen.logical_id, tool=submitted["tool"],
         parameters=submitted["parameters"], depends_on=submitted["depends_on"],
         system_id=submitted["system_id"])
-    with pytest.raises(PlanningError, match="code only"):
-        _python_repair(frozen, bad, SimpleNamespace(attempts=[attempt]), {})
+    # The original live037 rejection stays historical. Under the explicitly
+    # adopted input-repair contract this shape can be proposed, but its files
+    # must still pass the same independent authorization/hash boundary.
+    _python_repair(frozen, bad, SimpleNamespace(attempts=[attempt]), {})
     store, run, _ = case(tmp_path, monkeypatch)
+    with pytest.raises(PlanningError, match="outside the permission snapshot"):
+        validate_code_inputs(store, run.permission, bad, run=run)
     request = store.load_request(run)
     dependencies = [Step(id=identifier, logical_id="dependency_" + str(index), tool="workspace.write",
         parameters={"name": f"input{index}.txt", "content": "offline fixture", "role": "text"})
@@ -251,7 +311,7 @@ def test_mixed_shape_errors_use_each_actual_step_and_do_not_consume_other_branch
     assert errors == [{"type": "missing", "loc": ["parameters", "steps", 0, "key"]},
         {"type": "extra_forbidden", "loc": ["parameters", "steps", 0, "id"]},
         {"type": "extra_forbidden", "loc": ["parameters", "steps", 1, "depends_on"]}]
-    assert caught.value.detail["code_repair_fields"] == ["key", "repair_of", "code"]
+    assert caught.value.detail["code_repair_fields"] == ["key", "repair_of", "code", "inputs"]
     assert values == before
 
 

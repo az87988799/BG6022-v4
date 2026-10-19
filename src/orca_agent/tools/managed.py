@@ -33,15 +33,14 @@ from orca_agent.tools.registry import get_tool
 
 
 def _control(store, run, step):
-    from orca_agent.models import BudgetLimits, PermissionSnapshot
+    from orca_agent.models import PermissionSnapshot
 
     if store.load_run(run.id) != run or step not in store.load_plan(run).steps:
         raise ValueError("Run or Plan changed before managed execution")
-    for name, model, expected in (("permission", PermissionSnapshot, run.permission),
-                                   ("budget", BudgetLimits, run.budget)):
-        snapshot = json.loads(store.path(f"runs/{run.id}/{name}.json").read_text("utf-8"))
-        if model.model_validate(snapshot) != expected:
-            raise ValueError(f"immutable {name} changed before managed execution")
+    snapshot = json.loads(store.path(f"runs/{run.id}/permission.json").read_text("utf-8"))
+    if PermissionSnapshot.model_validate(snapshot) != run.permission:
+        raise ValueError("immutable permission changed before managed execution")
+    store.validate_budget_snapshot(run)
     store.check_execution_control(run)
     if store.read_signal(run.id) or utc_now() >= run.deadline:
         raise ValueError("execution control/deadline prevents launch")
@@ -321,16 +320,21 @@ def _prepare_native_boundary(config, root, workdir):
 
 def _archive(store, run, attempt, folder, prefix, artifacts=None, *, checkpoint=None):
     artifacts = {} if artifacts is None else artifacts
-    start = time.monotonic()
-    for path in collect_paths(folder, count=run.budget.artifact_count):
+    seconds = min(store.archive_timeout(run), max(0, (run.deadline - utc_now()).total_seconds()))
+    deadline = time.monotonic() + seconds
+
+    def archive_checkpoint():
         if checkpoint:
             checkpoint()
-        if time.monotonic() - start > store.run_configuration(run).resources.collection_timeout_seconds:
+        if time.monotonic() >= deadline:
             raise TimeoutError("task artifact collection deadline exhausted")
+
+    for path in collect_paths(folder, count=run.budget.artifact_count):
+        archive_checkpoint()
         name = prefix + path.relative_to(folder).as_posix()
         artifact = store.import_artifact(path, "raw_evidence", run_id=run.id,
                                          attempt_id=attempt.id, source={"task_path": name},
-                                         checkpoint=checkpoint)
+                                         checkpoint=archive_checkpoint)
         artifacts[name] = {"artifact_id": artifact.id, "sha256": artifact.sha256}
     return artifacts
 

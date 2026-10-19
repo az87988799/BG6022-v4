@@ -230,9 +230,11 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             snapshot = collect_delivery_snapshot(store, run, request, plan, results,
                                                  control_generation=basis["control_generation"])
             data["delivery_snapshot"] = snapshot
-            from orca_agent.decision_purpose import relevant_result_ids
+            from orca_agent.decision_purpose import relevant_result_ids, terminal_results_only
+            has_pending_messages = any(m["id"] not in run.processed_messages for m in control["messages"])
             selected = [store.load_result(run.id, identifier) for identifier in relevant_result_ids(
-                run, plan, snapshot=snapshot, feedback_ids=feedback)]
+                run, plan, snapshot=snapshot, feedback_ids=feedback,
+                terminal_only=terminal_results_only(request, snapshot, pending_messages=has_pending_messages))]
             current_use = []
             for goal in request.goals:
                 selection = current_goal_evidence(store, run, request, goal, plan, results)
@@ -267,7 +269,6 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                 # evidence exists; future queries can remain explicit gaps.
                 semantic_tools = [name for name in relevant_tools
                                   if get_tool(name).effects != ["read_registered_artifact"]]
-            has_pending_messages = any(m["id"] not in run.processed_messages for m in control["messages"])
             prepared = build_context(store.load_request(run), run, plan, results=selected,
                                      feedback=data, relevant_tools=[] if has_pending_messages else relevant_tools,
                                      control_generation=basis["control_generation"],
@@ -672,6 +673,8 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     run, message_action = deterministic_message(store, run, fault=fault)
                     if message_action == "status":
                         break
+                    if message_action == "continue":
+                        force_redecision = True
                     if message_action:
                         continue
                 signal = store.read_signal(run.id)

@@ -1,0 +1,79 @@
+"""Developer-assisted provenance repair; no scientific calculation or parsing.
+
+Run only as an explicit managed Python Step with immutable task-file copies
+staged under original/. The existing Tool validates reused native sources.
+"""
+
+import copy
+import hashlib
+import json
+import re
+from pathlib import Path
+
+original = Path(".")
+if not original.is_dir() or original.is_symlink():
+    raise ValueError("Missing managed original/ input directory")
+original_manifest_bytes = (original / "source-observations.json").read_bytes()
+payload = json.loads(original_manifest_bytes)
+if payload.get("version") != 1 or not isinstance(payload.get("observations"), list):
+    raise ValueError("Unexpected original observation manifest")
+original_observations = copy.deepcopy(payload["observations"])
+
+native_sources = {}
+for observation in original_observations:
+    for source in observation.get("sources", []):
+        key = source.get("internal_request_key")
+        if key:
+            if source.get("filename") != "stdout.out":
+                raise ValueError("Expected original native stdout source")
+            if key in native_sources and native_sources[key] != source:
+                raise ValueError("Conflicting original native source declarations")
+            native_sources[key] = copy.deepcopy(source)
+if len(native_sources) != 4:
+    raise ValueError("Expected the four existing native stdout declarations")
+
+copied = []
+for source in sorted(original.iterdir(), key=lambda path: path.name):
+    if source.is_symlink() or not source.is_file():
+        raise ValueError("Original task inputs must be regular flat files")
+    if source.name in {"source-observations.json", "observations.json", "stdout.out", "stderr.txt"}:
+        continue
+    # The managed InputManifest already made and hash-verified these flat copies.
+    raw = source.read_bytes()
+    copied.append({"filename": source.name, "sha256": hashlib.sha256(raw).hexdigest()})
+
+candidate_files = [item for item in copied if re.fullmatch(r"candidate_\d+\.xyz", item["filename"])]
+if len(candidate_files) != 12:
+    raise ValueError("Expected all twelve archived candidate XYZ files")
+if not any(item["filename"] == "coords.xyz" for item in copied):
+    raise ValueError("Original initial-geometry input copy is missing")
+
+extra_limitations = [
+    "The original generated script did not record the MMFF minimizer return status; MMFF convergence is unverified.",
+    "A complete post-MMFF uniqueness check accounting for molecular symmetry was not performed; all-candidate distinctness is unverified.",
+]
+repaired = []
+for observation, before in zip(payload["observations"], original_observations):
+    local_sources = copy.deepcopy(observation.get("sources", []))
+    if not any(source.get("internal_request_key") for source in local_sources):
+        observation["sources"] = local_sources + copy.deepcopy(list(native_sources.values()))
+        repaired.append(observation["name"])
+    limitations = observation.setdefault("limitations", [])
+    for limitation in extra_limitations:
+        if limitation not in limitations:
+            limitations.append(limitation)
+    # Preserve every scientific/data declaration and every original source.
+    if ({key: value for key, value in observation.items() if key not in {"sources", "limitations"}}
+            != {key: value for key, value in before.items() if key not in {"sources", "limitations"}}):
+        raise ValueError("A protected original observation field changed")
+    if observation["sources"][:len(local_sources)] != local_sources:
+        raise ValueError("An original source declaration changed")
+if len(repaired) != 6:
+    raise ValueError("Expected six source-only declaration repairs")
+
+Path("observations.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+print(json.dumps({"operation": "metadata_source_repair", "developer_assisted": True,
+    "original_manifest_sha256": hashlib.sha256(original_manifest_bytes).hexdigest(),
+    "copied_files": copied, "candidate_XYZ_count": len(candidate_files),
+    "repaired_observations": repaired, "existing_native_request_keys": list(native_sources),
+    "scientific_values_changed": False, "scientific_calculations_started": 0}, ensure_ascii=False))

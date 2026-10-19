@@ -1,0 +1,90 @@
+{
+  "request_hash": "06f2a5c7e8fdbd67e55b3a6487947c18d8c4897fd5020d37ecec2cf97eb5f4fc",
+  "proposal": {
+    "action": "revise_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "step_6364e42ec1084a8192d47e3602355609"
+        },
+        {
+          "key": "run_conformer_search_v2",
+          "depends_on": [
+            "step_6364e42ec1084a8192d47e3602355609"
+          ],
+          "system_id": "system_n_hexane",
+          "tool": "python.execute",
+          "parameters": {
+            "code": {
+              "artifact_id": "artifact_86ffe626c22542f6ac2287a169576c51",
+              "sha256": "1a1cfee8745f37032c2b19bc98b654e36ddbb9d3f0663eee36fa7292b1261525",
+              "language": "python",
+              "version": 1
+            },
+            "observation_names": [
+              "sampling",
+              "energy",
+              "energy_difference",
+              "member_table",
+              "sampling_check"
+            ]
+          }
+        }
+      ],
+      "goal_map": {
+        "goal_conformer_search": {
+          "gap": "corrected conformer-search code is registered but not yet executed; no sampling observation exists",
+          "port": "sampling"
+        },
+        "goal_lowest_candidate": {
+          "gap": "no ORCA candidate energies yet; lowest candidate undetermined",
+          "port": "energy"
+        },
+        "goal_energy_ranking": {
+          "gap": "no uniform-condition ORCA energies yet; ranking pending",
+          "port": "energy_difference"
+        },
+        "goal_candidate_structures": {
+          "gap": "candidate CSV table and all-conformer SDF not yet generated",
+          "port": "member_table"
+        },
+        "goal_failed_members": {
+          "gap": "failed-member and exclusion-reason record not yet generated",
+          "port": "sampling_check"
+        },
+        "goal_search_report": {
+          "gap": "search scope, candidate relationships, energy-difference formula and units not yet produced",
+          "port": "sampling"
+        },
+        "goal_verification_report": {
+          "gap": "verification coverage and unverified items not yet produced",
+          "port": "sampling_check"
+        },
+        "goal_artifacts_report": {
+          "gap": "downloadable CSV/SDF/XYZ deliverables not yet produced",
+          "port": "member_table"
+        }
+      }
+    },
+    "reason": "Correcting CONTROL.validation_error missing_step_reference: the new python.execute Step depends on the completed frozen Step step_6364e42ec1084a8192d47e3602355609, so that Step is retained explicitly as {key:...} in the proposed Plan. The new Step executes the already-registered corrected script artifact_86ffe626c22542f6ac2287a169576c51 (sha256 1a1cfee...) under system_n_hexane and emits sampling, energy, energy_difference, member_table and sampling_check from the finite ETKDGv3/MMFF94 search plus exactly the four remaining B3LYP/6-31G single points; no extra ORCA starts are requested."
+  },
+  "raw_content": "{\"action\":\"revise_plan\",\"parameters\":{\"steps\":[{\"key\":\"step_6364e42ec1084a8192d47e3602355609\"},{\"key\":\"run_conformer_search_v2\",\"depends_on\":[\"step_6364e42ec1084a8192d47e3602355609\"],\"system_id\":\"system_n_hexane\",\"tool\":\"python.execute\",\"parameters\":{\"code\":{\"artifact_id\":\"artifact_86ffe626c22542f6ac2287a169576c51\",\"sha256\":\"1a1cfee8745f37032c2b19bc98b654e36ddbb9d3f0663eee36fa7292b1261525\",\"language\":\"python\",\"version\":1},\"observation_names\":[\"sampling\",\"energy\",\"energy_difference\",\"member_table\",\"sampling_check\"]}}],\"goal_map\":{\"goal_conformer_search\":{\"gap\":\"corrected conformer-search code is registered but not yet executed; no sampling observation exists\",\"port\":\"sampling\"},\"goal_lowest_candidate\":{\"gap\":\"no ORCA candidate energies yet; lowest candidate undetermined\",\"port\":\"energy\"},\"goal_energy_ranking\":{\"gap\":\"no uniform-condition ORCA energies yet; ranking pending\",\"port\":\"energy_difference\"},\"goal_candidate_structures\":{\"gap\":\"candidate CSV table and all-conformer SDF not yet generated\",\"port\":\"member_table\"},\"goal_failed_members\":{\"gap\":\"failed-member and exclusion-reason record not yet generated\",\"port\":\"sampling_check\"},\"goal_search_report\":{\"gap\":\"search scope, candidate relationships, energy-difference formula and units not yet produced\",\"port\":\"sampling\"},\"goal_verification_report\":{\"gap\":\"verification coverage and unverified items not yet produced\",\"port\":\"sampling_check\"},\"goal_artifacts_report\":{\"gap\":\"downloadable CSV/SDF/XYZ deliverables not yet produced\",\"port\":\"member_table\"}}},\"reason\":\"Correcting CONTROL.validation_error missing_step_reference: the new python.execute Step depends on the completed frozen Step step_6364e42ec1084a8192d47e3602355609, so that Step is retained explicitly as {key:...} in the proposed Plan. The new Step executes the already-registered corrected script artifact_86ffe626c22542f6ac2287a169576c51 (sha256 1a1cfee...) under system_n_hexane and emits sampling, energy, energy_difference, member_table and sampling_check from the finite ETKDGv3/MMFF94 search plus exactly the four remaining B3LYP/6-31G single points; no extra ORCA starts are requested.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 19646,
+    "completion_tokens": 3946,
+    "total_tokens": 23592,
+    "prompt_cache_hit_tokens": 2304,
+    "prompt_cache_miss_tokens": 17342
+  },
+  "response_hash": "d82b40d258b689bffa329e5ad4e017fd85350b5697e9b21bb2ed185c6a8cfe86",
+  "response_bytes": 16402,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "b367b227-de07-49a4-8a11-7d80738c1fbf",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 17.4529999999977
+}

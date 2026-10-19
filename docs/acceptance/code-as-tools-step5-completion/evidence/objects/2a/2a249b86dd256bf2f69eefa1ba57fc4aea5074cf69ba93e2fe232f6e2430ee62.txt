@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "observations": [
+    {
+      "name": "sampling",
+      "value": {
+        "search_scope": "RDKit ETKDGv3 100 requested conformers; MMFF94 optimize; RMSD dedup; up to 4 lowest-MMFF candidates sent to ORCA single point",
+        "n_embedded": 13,
+        "n_selected_orca": 4,
+        "orca_starts_used": 4,
+        "method": "B3LYP",
+        "basis": "3-21G",
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "initial_structure": "initial.xyz",
+        "global_minimum_claim": false
+      },
+      "unit": null,
+      "sources": [],
+      "formula": null,
+      "artifacts": [
+        "initial.xyz",
+        "candidates.csv",
+        "observations.json"
+      ],
+      "limitations": [
+        "Finite conformer search; not exhaustive.",
+        "MMFF preselection may omit higher-MMFF but lower-DFT conformers.",
+        "ORCA energies are single points on MMFF geometries, not DFT-optimized.",
+        "No global minimum claim."
+      ]
+    },
+    {
+      "name": "energy",
+      "value": {
+        "lowest_candidate_in_scope": null,
+        "lowest_energy_hartree": null,
+        "ranking": []
+      },
+      "unit": "hartree",
+      "sources": [],
+      "formula": "E_i from ORCA FINAL SINGLE POINT ENERGY",
+      "artifacts": [
+        "candidates.csv",
+        "observations.json"
+      ],
+      "limitations": [
+        "Ranking only among computed candidates; finite search."
+      ]
+    },
+    {
+      "name": "energy_difference",
+      "value": {
+        "formula": "relative_energy = (E_i - E_min) * conversion_factor",
+        "E_unit": "hartree",
+        "conversion_factor_kcal_mol": 627.5094740631,
+        "conversion_factor_kj_mol": 2625.4996394799,
+        "output_units": "kcal/mol and kJ/mol"
+      },
+      "unit": "kcal/mol; kJ/mol",
+      "sources": [],
+      "formula": "delta_E_i = E_i - E_min; 1 Eh = 627.5094740631 kcal/mol = 2625.4996394799 kJ/mol",
+      "artifacts": [
+        "candidates.csv"
+      ],
+      "limitations": [
+        "Energy differences are relative to the lowest computed candidate in this finite set."
+      ]
+    },
+    {
+      "name": "member_table",
+      "value": [
+        {
+          "member_id": "initial",
+          "status": "initial_structure_preserved",
+          "dihedrals_deg": null,
+          "source_xyz": "initial.xyz"
+        },
+        {
+          "member_id": "candidate_1",
+          "status": "failed",
+          "mmff_energy_kcal_mol": -5.474436871342536,
+          "dihedrals_deg": [
+            179.9999203407035,
+            -179.99979985646112,
+            179.99971909836327
+          ],
+          "source_xyz": "candidate_1.xyz",
+          "error": "managed_sdk_request_rejected: bounded analytic profile requires exactly one explicit restricted wavefunction type"
+        },
+        {
+          "member_id": "candidate_2",
+          "status": "failed",
+          "mmff_energy_kcal_mol": -4.64707172460509,
+          "dihedrals_deg": [
+            -65.64666098590135,
+            -175.6600402871948,
+            -179.87248787064323
+          ],
+          "source_xyz": "candidate_2.xyz",
+          "error": "managed_sdk_request_rejected: bounded analytic profile requires exactly one explicit restricted wavefunction type"
+        },
+        {
+          "member_id": "candidate_3",
+          "status": "failed",
+          "mmff_energy_kcal_mol": -4.647071722459902,
+          "dihedrals_deg": [
+            179.87273184992893,
+            175.65986983258296,
+            65.64675984564397
+          ],
+          "source_xyz": "candidate_3.xyz",
+          "error": "managed_sdk_request_rejected: bounded analytic profile requires exactly one explicit restricted wavefunction type"
+        },
+        {
+          "member_id": "candidate_4",
+          "status": "failed",
+          "mmff_energy_kcal_mol": -4.592929490156334,
+          "dihedrals_deg": [
+            175.36592824042737,
+            66.04091213452963,
+            175.36555291096616
+          ],
+          "source_xyz": "candidate_4.xyz",
+          "error": "managed_sdk_request_rejected: bounded analytic profile requires exactly one explicit restricted wavefunction type"
+        }
+      ],
+      "unit": null,
+      "sources": [],
+      "formula": null,
+      "artifacts": [
+        "candidates.csv",
+        "observations.json"
+      ],
+      "limitations": [
+        "Coordinates in candidate_*.xyz are MMFF geometries used for ORCA SP.",
+        "Initial structure preserved separately as initial.xyz."
+      ]
+    },
+    {
+      "name": "sampling_check",
+      "value": {
+        "failed_members": [
+          {
+            "member_id": "candidate_1",
+            "status": "failed",
+            "error": "managed_sdk_request_rejected: bounded analytic profile requires exactly one explicit restricted wavefunction type"
+          },
+          {
+            "member_id": "candidate_2",
+            "status": "failed",
+            "error": "managed_sdk_request_rejected: bounded analytic profile requires exactly one explicit restricted wavefunction type"
+          },
+          {
+            "member_id": "candidate_3",
+            "status": "failed",
+            "error": "managed_sdk_request_rejected: bounded analytic profile requires exactly one explicit restricted wavefunction type"
+          },
+          {
+            "member_id": "candidate_4",
+            "status": "failed",
+            "error": "managed_sdk_request_rejected: bounded analytic profile requires exactly one explicit restricted wavefunction type"
+          }
+        ],
+        "excluded_members": "Only candidates without converged MMFF optimization were excluded before ORCA selection.",
+        "n_failed": 4
+      },
+      "unit": null,
+      "sources": [],
+      "formula": null,
+      "artifacts": [
+        "candidates.csv"
+      ],
+      "limitations": [
+        "Failure reasons reflect ORCA/receipt status available at runtime."
+      ]
+    }
+  ]
+}

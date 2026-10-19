@@ -810,6 +810,7 @@ class Run(Record):
     plan_version: int | None = None
     permission: PermissionSnapshot = Field(default_factory=PermissionSnapshot)
     budget: BudgetLimits = Field(default_factory=BudgetLimits)
+    budget_revision: Identifier | None = None
     usage: BudgetUsage = Field(default_factory=BudgetUsage)
     attempts: list[Attempt] = Field(default_factory=list)
     state: Literal[
@@ -844,6 +845,13 @@ class Run(Record):
     batch_category: Literal["formal", "development"] | None = None
     input_bindings: dict[Identifier, dict[str, Any]] = Field(default_factory=dict)
     science_baseline_policy: Literal["legacy", "first_science_plan"] = "legacy"
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_budget_shape(self, handler):
+        value = handler(self)
+        if self.budget_revision is None:
+            value.pop("budget_revision", None)
+        return value
 
 
 class Check(Record):

@@ -10,6 +10,7 @@ from orca_agent.models import (
     CodeRef,
     EvidenceRef,
     Identifier,
+    InputManifest,
     InputRef,
     OutputBinding,
     Plan,
@@ -260,11 +261,12 @@ class ProposedStep(Record):
 
 
 class ProposedCodeRepair(Record):
-    """Explicitly reuse a failed task's frozen contract with model-chosen code."""
+    """Reuse a failed contract with explicit code and optional input-copy repair."""
 
     key: ShortRef
     repair_of: Identifier
     code: CodeRef
+    inputs: InputManifest | None = None
 
 
 class FutureGoalTarget(Record):
@@ -341,8 +343,10 @@ def _validate_plan_parameters(parameters):
             if any(len(item["loc"]) > 2 and item["loc"][2] in repair_indexes for item in step_errors):
                 error.detail["code_repair_fields"] = list(ProposedCodeRepair.model_fields)
                 error.detail["code_repair_instruction"] = (
-                    "Use only {key:new_key,repair_of:failed_step_id,code:CodeRef}. This explicit reference reuses "
-                    "the latest settled failed Python Attempt's frozen contract. Verified settled dependencies "
+                    "Use {key:new_key,repair_of:failed_step_id,code:CodeRef,inputs?:InputManifest}. "
+                    "Omitted inputs retain the frozen manifest; explicit inputs replace only authorized task copies. "
+                    "Code or input copies must change. The latest settled failed Python Attempt's other "
+                    "contract fields stay frozen. Verified settled dependencies "
                     "are carried automatically; declare any unsettled dependencies explicitly. "
                     "It still requires code permission and every existing repair gate.")
         target_errors = [item for item in errors if item["loc"][1:2] == ["goal_map"]]
@@ -572,6 +576,8 @@ def materialize_plan(store, run, parameters):
             values = source.model_dump(mode="json")
             values["id"] = ids[item.key]
             values["parameters"]["code"] = item.code.model_dump(mode="json")
+            if item.inputs is not None:
+                values["parameters"]["inputs"] = item.inputs.model_dump(mode="json")
             try:
                 steps.append(Step.model_validate(values))
             except ValidationError as exc:
@@ -607,6 +613,15 @@ def materialize_plan(store, run, parameters):
         except ValueError:
             raise ProposalError("Choose a Tool from the current permitted catalog.",
                                 path=["parameters", "steps", index, "tool"]) from None
+        if item.tool == "python.execute" and "inputs" not in item.parameters:
+            source = next((attempt.frozen_step for attempt in reversed(run.attempts)
+                           if attempt.logical_id == logical[item.key]), None)
+            if source:
+                if source.tool != "python.execute":
+                    raise ProposalError("Python input inheritance requires an existing Python Step; "
+                        "a repair cannot replace its Tool.", code="invalid_code_repair_source_tool",
+                        path=["parameters", "steps", index, "logical_key"])
+                item.parameters["inputs"] = source.parameters.inputs.model_dump(mode="json")
         # The model chooses the operation and references. Repeating already
         # confirmed Request conditions is not a second scientific decision.
         # Only declared fields are inherited; explicit proposal values remain

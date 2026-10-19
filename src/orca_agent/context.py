@@ -47,7 +47,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v65"
+PROMPT_VERSION = "agent-json-v69"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -109,6 +109,7 @@ _CODE_GUIDANCE = (
     "State sourced physical units even for strings/coordinate files. Unknown units stay null with explicit "
     "limitations, never guessed; label justified dimensionless quantities explicitly. "
     "For derived quantities retain the formula, all original sources, actual method and geometry relationships. "
+    "Scientific-task report records cite both local data files and original SDK outputs establishing actual calculation conditions. "
     "Preserve all candidates, failed members, exclusion reasons, search scope and initial structures in data/files. "
     "Save every generated member's structure, not only members selected for evaluation. "
     "Different candidate geometries are distinct sources; do not claim a global optimum from a finite search. "
@@ -118,15 +119,18 @@ _CODE_GUIDANCE = (
 
 _CODE_REPAIR_GUIDANCE = (
     "AUTHORITY.failed_python_attempts preserves failure history outside the current Plan; not ready/permission. "
-    "After workspace.write completes, prefer a repair Step with exactly key:new_key, "
-    "repair_of:failed frozen_step.id, code:new CodeRef. The program copies that frozen Step, "
-    "retaining logical_id and every non-code field; existing repair/permission/budget gates still apply. "
+    "After workspace.write completes, prefer a repair Step with key:new_key, "
+    "repair_of:failed frozen_step.id, code:new CodeRef, inputs:optional replacement InputManifest. "
+    "The program retains logical_id, system, conditions, observation names and dependencies. "
+    "Omitted inputs preserve the old manifest. Explicit inputs may correct missing task file bindings; "
+    "target_path is relative to Path.cwd(), and each existing Artifact needs its exact ID/hash. "
+    "A changed input manifest alone can repair unchanged code. All original Artifact/permission/budget checks still apply. "
     "This form has no tool/logical_key/parameters/depends_on overrides. "
     "Settled dependencies may be omitted; the program retains their exact closure. "
     "Do not add the replacement writer as a dependency. "
     "Route a repaired output with step_key+unchanged port only; do not mix that binding with gap/evidence. "
     "Preserve unrelated Goals' valid bindings. "
-    "The full new-Step form remains accepted only with the same logical_key and unchanged non-code contract.")
+    "The full new-Step form remains accepted with the same logical_key; only code and explicitly declared input manifest may change.")
 
 _CODE_NATIVE_GUIDANCE = (
     "orca.run.input needs an ORCA program, never XYZ. Geometry belongs in parameters.inputs=manifest. "
@@ -551,10 +555,16 @@ def _evidence_observation(value, budget):
         if not isinstance(value.get(key), list):
             continue
         visible = []
+        window = max(4096, budget) if key == "artifacts" else max(512, budget)
         for item in value[key]:
-            if visible and len(_json([*visible, item]).encode("utf-8")) > max(512, budget):
+            if key == "artifacts" and isinstance(item, dict):
+                # File discovery needs copyable identities, not the complete
+                # producer provenance repeated on every inventory row.
+                item = {name: item[name] for name in ("id", "basename", "sha256", "role", "size", "integrity")
+                        if name in item}
+            if visible and len(_json([*visible, item]).encode("utf-8")) > window:
                 break
-            if len(_json(item).encode("utf-8")) > max(512, budget):
+            if len(_json(item).encode("utf-8")) > window:
                 # A long line may be shortened explicitly; an addressable path
                 # cannot be shortened into a different field.
                 if isinstance(item, dict) and isinstance(item.get("text"), str):
@@ -574,6 +584,42 @@ def _evidence_observation(value, budget):
     if set(value) - set(projected):
         projected["projection_sha256"] = _hash(value)
     return projected
+
+
+def _reference_observation_source_conditions(record):
+    """Factor an exact repeated condition map; retain every source difference."""
+    conditions = record.get("actual_conditions")
+    if not isinstance(conditions, dict) or not conditions:
+        return
+    for source in record.get("sources", []):
+        actual = source.get("actual_conditions")
+        if (isinstance(actual, dict) and all(key in actual and actual[key] == value
+                for key, value in conditions.items()) and len(_json(conditions)) > 256):
+            source["actual_conditions"] = {"observation_actual_conditions_ref": ".",
+                "additional_fields": {key: value for key, value in actual.items() if key not in conditions}}
+
+
+def _observation_records(result, budget):
+    """Keep every output and source, with explicit windows into large values."""
+    records = []
+    manifest = result.source.get("files", {}).get("task/observations.json")
+    for index, record in enumerate(result.observation_records):
+        row = _safe(record.model_dump(mode="json"))
+        full_value = row["value"]
+        row["value"], projection = _value_prefix(row["value"], max(128, budget))
+        if projection:
+            row["value_projection"] = {**projection, "complete": False, "record_index": index}
+            if isinstance(manifest, dict):
+                row["value_projection"]["source_ref"] = "observation_record_source"
+            else:
+                row["value_projection"]["source_ref"] = "immutable Result.observation_records[name]"
+            if len(_json(row["value"])) + len(_json(row["value_projection"])) >= len(_json(full_value)):
+                row["value"] = full_value
+                row.pop("value_projection")
+        records.append(row)
+        if budget <= 256:
+            _reference_observation_source_conditions(row)
+    return records
 
 
 def _analysis_observation(value):
@@ -623,6 +669,16 @@ def _observations(value, budget):
         return _bounded_data(safe, budget)
     structured = {}
     for name, observation in safe.items():
+        if isinstance(observation, dict) and isinstance(observation.get("artifacts"), list):
+            # Only the last path component is a file label. Host directories
+            # remain redacted, including when an inventory uses absolute paths.
+            original = value[name].get("artifacts", [])
+            for row, raw in zip(observation["artifacts"], original, strict=True):
+                path = raw.get("path") if isinstance(raw, dict) else None
+                if isinstance(row, dict) and isinstance(path, str):
+                    basename = path.replace("\\", "/").rsplit("/", 1)[-1]
+                    if basename not in {"", ".", ".."} and ":" not in basename:
+                        row["basename"] = _safe(basename)
         if name == "analysis" and isinstance(observation, dict) and observation.get("rule_version") in {
                 "finite-sampling-1", "energy-compare-1"}:
             structured[name] = _analysis_observation(observation)
@@ -739,14 +795,22 @@ def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
         "attempt_id": result.attempt_id, "operation_status": result.operation_status,
         "qualified_outputs": outputs, "checks": checks,
         "unqualified_observations": _observations(result.observations, observation_bytes),
-        # These are already bounded by the task manifest. Preserve declared
-        # numbers and all provenance/limitations for the next decision; a
-        # successful process or archive check is not scientific qualification.
-        "unqualified_observation_records": _safe([item.model_dump(mode="json") for item in result.observation_records]),
+        # Preserve each output's provenance/status/limits. Oversized values use
+        # explicit previews into immutable evidence, never implied completeness.
+        "unqualified_observation_records": _observation_records(result, observation_bytes),
         "untrusted_diagnostics": _bounded_data(result.diagnostics, observation_bytes),
         "artifact_ids": result.artifact_ids[:3], "artifact_count": len(result.artifact_ids),
         "source": _source_summary(result.source),
     }
+    if any("value_projection" in row for row in summary["unqualified_observation_records"]):
+        manifest = result.source.get("files", {}).get("task/observations.json")
+        if isinstance(manifest, dict):
+            summary["observation_record_source"] = _safe({**manifest,
+                "path": [{"kind": "key", "key": "observations"}]})
+        summary["observation_projection_rules"] = (
+            "value_projection is a partial preview, not full value/search coverage. "
+            "source_ref resolves in this Result; query original observations list by name. "
+            "record_index addresses Result records, not the original manifest list.")
     # Keep the two task-log addresses even beyond the generic three-Artifact
     # preview. These are existing source records, not validated file contents;
     # the next Tool read still authorizes the Artifact and verifies its hash.
@@ -802,6 +866,10 @@ def _reference_delivery_facts(projected, result, snapshot):
             if observation is not None and fact["value"].get("observation") == observation:
                 projected.setdefault("unqualified_observations", {})[port] = {
                     "delivery_fact_ref": fact["ref"], "field": "observation"}
+            for index, record in enumerate(result.observation_records):
+                if record.name == port and fact["value"].get("observation") == record.model_dump(mode="json"):
+                    projected["unqualified_observation_records"][index] = {
+                        "name": record.name, "delivery_fact_ref": fact["ref"], "field": "observation"}
         if fact["kind"] == "checks":
             for port, checks in fact["value"].items():
                 if checks == [check.model_dump(mode="json") for check in result.checks.get(port, ())]:
@@ -958,7 +1026,7 @@ def _share_strings(value, *, share_lists=False, short_references=False, _compare
         elif isinstance(item, dict):
             literal = _json(item)
             size = len(literal.encode("utf-8"))
-            if path not in native_ancestors and (minimum_literal <= size <= 1024
+            if path not in native_ancestors and (minimum_literal <= size <= 16384
                                                 if share_lists else size >= 100):
                 object_counts[literal] = object_counts.get(literal, 0) + 1
             for key, child in item.items():
@@ -966,7 +1034,7 @@ def _share_strings(value, *, share_lists=False, short_references=False, _compare
         elif isinstance(item, list):
             literal = _json(item)
             if (share_lists and path not in native_ancestors
-                    and (1 if short_references else 16 if small_literals else 100) <= len(literal.encode("utf-8")) <= 1024):
+                    and (1 if short_references else 16 if small_literals else 100) <= len(literal.encode("utf-8")) <= 16384):
                 object_counts[literal] = object_counts.get(literal, 0) + 1
             for child in item:
                 count(child, (*path, "[]"))
@@ -1250,10 +1318,11 @@ def _call_execution(run, result):
 
 
 def _reuse_read_windows(run, originals, projected):
-    """Share identical returned text only among Results visible in this view.
+    """Share identical returned windows only among Results visible in this view.
 
     Query bounds and receipt IDs remain per invocation. Different windows,
-    hashes, sources, failed reads and non-text observations are never merged.
+    hashes, sources and failed reads are never merged. Inventory sharing binds
+    the complete returned rows as well as the immutable inventory fingerprint.
     """
     seen = {}
     reused = False
@@ -1264,6 +1333,24 @@ def _reuse_read_windows(run, originals, projected):
         call = next(item for item in run.calls if item.id == original.call_id)
         for name, observation in original.observations.items():
             if not isinstance(observation, dict):
+                continue
+            shown = view.get("unqualified_observations", {}).get(name)
+            if (isinstance(shown, dict) and isinstance(shown.get("artifacts"), list)
+                    and isinstance(observation.get("artifacts"), list)
+                    and isinstance(observation.get("inventory_sha256"), str)
+                    and re.fullmatch(r"[a-f0-9]{64}", observation["inventory_sha256"])
+                    and observation.get("run_id") == call.parameters.get("source_run_id", run.id)):
+                key = _hash({"tool": call.tool, "name": name, "run_id": observation["run_id"],
+                    "inventory_sha256": observation["inventory_sha256"],
+                    "offset": observation.get("offset"), "returned": observation.get("coverage", {}).get("returned"),
+                    "artifacts": observation["artifacts"], "shown": shown["artifacts"],
+                    "context_page": shown.get("context_page")})
+                if key in seen:
+                    shown.pop("artifacts")
+                    shown["artifacts_ref"] = {"result_id": seen[key], "observation": name, "field": "artifacts"}
+                    reused = True
+                else:
+                    seen[key] = original.id
                 continue
             artifact = observation.get("artifact_id")
             digest = observation.get("sha256")
@@ -1277,7 +1364,6 @@ def _reuse_read_windows(run, originals, projected):
                                for field in ("artifact_id", "sha256", "view", "path", "coverage"))
                                for check in original.checks.get(name, []))):
                 continue
-            shown = view.get("unqualified_observations", {}).get(name)
             if not isinstance(shown, dict) or "lines" not in shown:
                 continue
             key = _hash({"tool": call.tool, "name": name, "artifact_id": artifact, "sha256": digest,
@@ -1290,6 +1376,43 @@ def _reuse_read_windows(run, originals, projected):
             else:
                 seen[key] = original.id
     return reused
+
+
+def _consumed_read_previews(run, originals, projected):
+    """Retain recent read bodies; older consumed reads keep exact query receipts.
+
+    This is a display window, not history deletion or another evidence read.
+    New feedback, failed reads, qualified outputs and task observations stay.
+    """
+    query_effects = {"read_registered_artifact", "query_external_document", "query_external_identity"}
+    eligible = [result for result in originals if result.id in run.processed_feedback
+        and result.operation_status == "completed"
+        and (effects := _call_execution(run, result).get("effects"))
+        and set(effects) <= query_effects]
+    # Fresh task observations supersede old query previews, not their receipts.
+    # Otherwise keep two recent windows so ordinary read/inspect loops remain
+    # useful. No new or failed feedback is ever elided here.
+    recent = 0 if any(result.id not in run.processed_feedback and result.observation_records
+                      for result in originals) else 2
+    older = {result.id for result in (eligible[:-recent] if recent else eligible)}
+    for original, view in zip(originals, projected, strict=True):
+        if original.id not in older:
+            continue
+        call = next(item for item in run.calls if item.id == original.call_id)
+        if (original.qualified_outputs or any(check.status != "passed"
+                for checks in original.checks.values() for check in checks)):
+            continue
+        coverages = {}
+        for name, value in original.observations.items():
+            if isinstance(value, dict) and value.get("coverage"):
+                coverages[name] = _safe(value["coverage"])
+        # A completed read's source digest, exact query and returned coverage
+        # remain auditable. Full checks/body remain immutable in its own Result.
+        retained = {key: view[key] for key in ("result_id", "run_id", "operation_status", "source") if key in view}
+        retained["consumed_read"] = {"call_id": call.id, "tool": call.tool,
+            "observation_names": list(original.observations), "coverage": coverages, "complete": False}
+        view.clear()
+        view.update(retained)
 
 
 def _conditions(value: Any) -> Any:
@@ -1550,7 +1673,8 @@ def _relevant_schema_catalog(catalog, schemas, request, run, plan, frozen, pendi
             goal.evidence_contract_version == "generic-observation-1" for goal in request.goals):
         needed_names.update(tool["name"] for tool in catalog
                             if tool.get("check_contract", {}).get("generic_observations"))
-        if any("write_input_artifact" in tool["effects"] for tool in catalog):
+        if (run.usage.orca_starts_reserved < run.budget.orca_starts
+                and any("write_input_artifact" in tool["effects"] for tool in catalog)):
             needed_names.update(tool["name"] for tool in catalog
                                 if "write_input_artifact" in tool["effects"])
     if selectable_conditions(request):
@@ -1744,12 +1868,14 @@ def _public_delivery(snapshot, *, resources_in_authority=False, reference_arrays
                 for key in metadata:
                     observation.pop(key)
                 observation["snapshot_fields"] = metadata
-            array = observation.get("value")
-            if isinstance(array, list) and len(_json(array).encode("utf-8")) > 1024:
-                observation["value"] = {
-                    "snapshot_path": ".",
-                    "type": "array", "length": len(array), "bytes": len(_json(array).encode("utf-8")),
-                    "sha256": _hash(array), "displayed": False}
+            value = observation.get("value")
+            preview, projection = _value_prefix(value, 2048)
+            if projection:
+                observation["value"] = preview
+                observation["value_projection"] = {**projection, "complete": False,
+                    "snapshot_path": ".", "field": "value",
+                    "meaning": "partial context preview; full value remains in this immutable snapshot fact"}
+            _reference_observation_source_conditions(observation)
     return _safe({**{key: value for key, value in snapshot.items()
                     if key not in {"snapshot_ref", "basis", "fingerprint", "goals", "references", "resources", "blockers", "next_actions", "explanations", "facts", "communication"}},
                   "communication": {key: value for key, value in snapshot["communication"].items() if value not in ([], {})},
@@ -1821,6 +1947,17 @@ def _reference_original_quotes(value, original):
                 reference(child)
     reference(value)
     return changed
+
+
+def _planning_condition_provenance(request):
+    """Planning sees frozen values/origins; full quote evidence stays immutable."""
+    evidence = request.get("condition_evidence")
+    if not isinstance(evidence, dict) or not evidence:
+        return
+    request["condition_evidence_ref"] = {"source": "immutable Request.condition_evidence", "sha256": _hash(evidence)}
+    request["condition_evidence"] = {name: {key: value for key, value in item.items()
+        if key in {"value", "source", "default_rule", "assumptions", "selection_status"}}
+        for name, item in evidence.items()}
 
 
 def _terminal_key_encoding(wire, *, literal_paths=()):
@@ -2445,6 +2582,8 @@ def build_context(
     }
     if delivery_snapshot:
         authority["decision_purpose"] = purpose.as_dict()
+    if delivery_snapshot and purpose.kind == "planning" and not semantic_intake:
+        _planning_condition_provenance(authority["request"])
     if run.permission.code_execution and plan is not None and feedback is not None and "pending_step_ids" in feedback:
         # The coordinator supplied an actual readiness snapshot. Empty is an
         # explicit fact; absence (historical/unscheduled contexts) is different.
@@ -2646,6 +2785,15 @@ def build_context(
     }
     if code_context:
         template["TASK_CODE_RULES"] = _CODE_GUIDANCE
+        template["TASK_CODE_RULES"] += (
+            " Exhausted ORCA starts prohibit new calculations only. Missing native source declarations in "
+            "report observations can be repaired by a new authorized analysis Step using archived task files "
+            "and existing completed SDK sources (original filename+internal_request_key), without run_orca. "
+            "Retain values, units, formulas, structures, exclusions and local sources; cite the original outputs "
+            "that establish actual conditions. No ready Step does not mean no recovery: revise_plan to add "
+            "the analysis when its permission/budget and saved sources suffice. Bind future outputs with "
+            "step_key+unchanged port; a gap is only for a Goal with no chosen producer or evidence. "
+            "Existing Attempts and scientific requirements stay unchanged.")
         if authority.get("failed_python_attempts"):
             template["TASK_CODE_RULES"] += " " + _CODE_REPAIR_GUIDANCE
         if run.permission.scientific_execution and "orca.run" in run.permission.allowed_tools:
@@ -2693,6 +2841,42 @@ def build_context(
     retained_failures = {row["result_id"] for row in authority.get("failed_python_attempts", [])}
     views = ([(16384, False), (16384, True)] if retained_reads else []) + [(1024, False), (1024, True), (256, True)]
     for observation_bytes, compact in views:
+        if (compact and observation_bytes == 256 and run.usage.orca_starts_reserved >= run.budget.orca_starts
+                and "native_input_contract" in authority):
+            # No new native input can execute under the unchanged cumulative
+            # start cap. Keep the frozen contract identity; display receipt
+            # reuse/source guidance instead of inactive submission instructions.
+            contract = authority["native_input_contract"]
+            authority["native_input_contract"] = {"sha256": _hash(contract), "new_start_capacity": 0}
+            template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
+                _CODE_NATIVE_GUIDANCE,
+                "ORCA start cap exhausted; native admission details omitted, frozen hash retained. "
+                "Completed stable request_key+identical input may reuse receipts; reconcile unknown work. "
+                "Existing receipts retain actual_conditions and files mapping original filenames to read-only copies. "
+                "Inspect files keys; never guess names. Sources need original filename+internal_request_key; "
+                "copied inputs are not outputs. Receipts remain unverified. No new starts or key changes to regain quota.")
+            template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
+                _CODE_REPAIR_GUIDANCE,
+                "Repair history is not ready work/permission. Use a new key, repair_of:failed frozen_step.id, "
+                "code:new CodeRef, inputs:optional replacement InputManifest. Omitted inputs inherit. "
+                "Only code/explicit inputs may change; logical_id, system, conditions, observation names and dependencies stay frozen. "
+                "Do not add the replacement writer as a dependency. Full new-Step form uses the same logical_key. "
+                "Keep unrelated Goal bindings and repaired port; all Artifact/permission/budget checks still apply.")
+            template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
+                _CODE_GUIDANCE,
+                "Stage workspace.write then revise_plan using real Artifact ID/hash; no placeholders/future values. "
+                "Python CodeRef must contain Python. parameters.inputs=InputManifest; Step.inputs binds evidence ports. "
+                "Future outputs use step_key+unchanged port; otherwise declare a gap. No shell/subprocess/network/host paths. "
+                "Write observations.json={version:1,observations:[{name:Goal.port,value:finite JSON,unit:string|null,"
+                "sources:[{internal_request_key:SDK key,filename:original files key,location:string|null}],"
+                "formula:string|null,artifacts:[task-relative filename],limitations:[]}]} "
+                "Names=observation_names; local sources omit internal_request_key. "
+                "Keep full parsed sequences including negative/near-zero; label filtered subsets/omissions, never replace originals "
+                "or prove absence from subsets. Source physical units even for strings/coordinates; unknown=null+limitations. "
+                "Derived values keep formula, all local+original SDK sources, actual method and geometry relations. "
+                "Preserve every candidate structure, failures/exclusions, search scope and initial structures; finite search is not global. "
+                "Never write checks/status/actual_conditions. Observations unqualified; execution!=science. "
+                "Extra Python attempts cost code_retries. Scientific Goals require completed SDK provenance; file tasks need no ORCA.")
         if compact and semantic_intake:
             template["PROPOSAL_SCHEMA"] = _schema_columns(proposal_schema)
             template["SCHEMA_COLUMNS"] = SCHEMA_COLUMNS
@@ -2750,6 +2934,8 @@ def build_context(
         if compact and delivery_snapshot:
             projected_results = [_reference_delivery_facts(projected, original, delivery_snapshot)
                                  for projected, original in zip(projected_results, visible_results, strict=True)]
+        if compact:
+            _consumed_read_previews(run, visible_results, projected_results)
         reused_windows = _reuse_read_windows(run, visible_results, projected_results)
         tool_effects = {}
         for original, result in zip(visible_results, projected_results, strict=True):
@@ -2773,10 +2959,11 @@ def build_context(
         if retained_reads:
             template["DATA"]["read_window_rules"] = (
                 "Previously requested reads only. coverage describes Tool return; context_page describes visible preview. "
+                "consumed_read omits prior body/checks/query parameters; immutable Result/Call retains them. "
                 "Different windows remain separate; no automatic file reads.")
             if reused_windows:
                 template["DATA"]["read_window_rules"] += (
-                    " lines_ref points to DATA.results[result_id].unqualified_observations[observation].lines; "
+                    " lines_ref/artifacts_ref points to the named field of DATA.results[result_id].unqualified_observations[observation]; "
                     "the referenced preview and its omissions apply, not unseen original lines.")
         if rejected_view is not None:
             template["DATA"]["rejected_proposal"] = (rejected_view if not compact else

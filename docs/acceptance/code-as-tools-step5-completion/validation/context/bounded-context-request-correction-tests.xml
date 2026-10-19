@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.425" timestamp="2026-10-20T00:29:37.140564+08:00" hostname="AZ"><testcase classname="tests.unit.test_bounded_live_observation_context" name="test_real_multirecord_values_fit_complete_request_and_keep_small_numeric_tables" time="0.013"><failure message="KeyError: 'explanation_refs'">def test_real_multirecord_values_fit_complete_request_and_keep_small_numeric_tables():
+        result = feedback()
+        goals = [Goal(id=f"goal_{i}", port=row.name,
+            minimum_check_version="generic-observation-1", evidence_contract_version="generic-observation-1",
+            verification="reported_with_limitations") for i, row in enumerate(result.observation_records)]
+        request = Request(goals=goals, conditions={"explain_results": True})
+        step = Step(id=result.step_id, logical_id="analysis", tool="python.execute", parameters={
+            "code": {"artifact_id": "script_artifact", "sha256": result.observation_records[0].code_sha256},
+            "observation_names": [row.name for row in result.observation_records]})
+        plan = Plan(request_id=request.id, steps=[step], goal_map={goal.id:
+            OutputBinding(step_id=step.id, port=goal.port) for goal in goals})
+        run = Run(id=result.run_id, request_id=request.id, request_version=request.version,
+            plan_id=plan.id, plan_version=plan.version,
+            result_ids=[result.id], permission=PermissionSnapshot(model_execution=True,
+                code_execution=True, artifact_writes=True, allowed_tools=["python.execute", "workspace.write"]),
+            budget=BudgetLimits(model_calls=4, model_tokens=200000, input_tokens=32000, output_tokens=2000))
+        run.goal_status = dict.fromkeys((goal.id for goal in goals), "insufficient_evidence")
+        snapshot = {"version": "test-bounded-feedback", "fingerprint": "a" * 64,
+            "basis": {"request_id": request.id, "request_version": request.version, "plan_id": plan.id,
+                "plan_version": plan.version, "permission_version": run.permission.version, "control_generation": 0},
+            "request_text": request.original_text, "communication": {},
+            "resources": {"permission": {}, "limits": {}, "remaining": {}, "usage": {}},
+            "references": {"s0": {"run_id": run.id, "result_id": result.id}},
+            "goals": [{"goal_id": goal.id, "ref": f"g{i}", "port": goal.port,
+                "required_fact_refs": [f"f{i}"]} for i, goal in enumerate(goals)],
+            "facts": [{"ref": f"f{i}", "goal_ref": f"g{i}", "source_ref": "s0", "kind": "answer",
+                "value": {"kind": "evidence_observation", "observation": row.model_dump(mode="json")}}
+                for i, row in enumerate(result.observation_records)],
+            "explanations": [], "blockers": [], "next_actions": []}
+        before = copy.deepcopy((request, run, plan, result, snapshot))
+&gt;       prepared = context.build_context(request, run, plan, results=[result], delivery_snapshot=snapshot,
+            feedback={"new_result_ids": [result.id], "pending_step_ids": []})
+
+tests\unit\test_bounded_live_observation_context.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\orca_agent\context.py:2415: in build_context
+    return _terminal_context(request, run, delivery_snapshot, purpose, feedback or {},
+src\orca_agent\context.py:2187: in _terminal_context
+    "reason": "Audit only; delivery selects program facts.", "parameters": _terminal_example(snapshot)}
+                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\context.py:1896: in _terminal_example
+    "goal_explanations": [{"goal_ref": goal["ref"], "fact_refs": goal["required_fact_refs"],
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+.0 = &lt;list_iterator object at 0x00000193DB374580&gt;
+
+    "goal_explanations": [{"goal_ref": goal["ref"], "fact_refs": goal["required_fact_refs"],
+&gt;       "explanation_ref": goal["explanation_refs"][0],
+                           ^^^^^^^^^^^^^^^^^^^^^^^^
+        "blocker_refs": goal["required_blocker_refs"], "next_action_ref": goal["next_action_refs"][0]}
+        for goal in snapshot["goals"]]}}
+E       KeyError: 'explanation_refs'
+
+src\orca_agent\context.py:1897: KeyError</failure></testcase></testsuite></testsuites>

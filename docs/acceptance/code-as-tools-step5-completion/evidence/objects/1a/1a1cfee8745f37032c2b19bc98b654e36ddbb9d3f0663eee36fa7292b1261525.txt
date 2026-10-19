@@ -1,0 +1,248 @@
+from pathlib import Path
+import json, csv
+from rdkit import Chem
+from rdkit.Chem import AllChem, rdMolAlign
+from orca_task_sdk import run_orca
+
+W = Path.cwd()
+HARTREE_TO_KCAL = 627.5094740631
+
+def find(name):
+    p = W / name
+    if p.exists():
+        return p
+    hits = list(W.rglob(name))
+    return hits[0] if hits else None
+
+initial = find('initial.xyz')
+preserved = 'preserved_initial.xyz'
+if initial is not None:
+    (W / preserved).write_text(initial.read_text())
+
+mol = Chem.AddHs(Chem.MolFromSmiles('CCCCCC'))
+params = AllChem.ETKDGv3()
+params.randomSeed = 20261019
+params.pruneRmsThresh = 0.25
+params.numThreads = 1
+params.useRandomCoords = True
+requested = 200
+cids = list(AllChem.EmbedMultipleConfs(mol, numConfs=requested, params=params))
+opt = AllChem.MMFFOptimizeMoleculeConfs(mol, maxIters=1000, numThreads=1)
+
+recs = []
+for i, cid in enumerate(cids):
+    nc, e = opt[i] if i < len(opt) else (1, None)
+    recs.append({'candidate_id': 'cand_%03d' % i, 'conf_id': cid,
+                 'mmff_energy_kcal_mol': e, 'mmff_converged': int(nc) == 0})
+
+valid = [r for r in recs if r['mmff_energy_kcal_mol'] is not None]
+valid.sort(key=lambda r: r['mmff_energy_kcal_mol'])
+sel = []
+for r in valid:
+    if len(sel) >= 4:
+        break
+    ok = True
+    for s in sel:
+        try:
+            rms = rdMolAlign.GetBestRMS(mol, mol, r['conf_id'], s['conf_id'])
+        except Exception:
+            rms = 999.0
+        if rms < 0.5:
+            ok = False
+            break
+    if ok:
+        sel.append(r)
+if len(sel) < 4:
+    for r in valid:
+        if r not in sel:
+            sel.append(r)
+        if len(sel) >= 4:
+            break
+
+for r in recs:
+    r['selected_for_orca'] = r in sel
+    r['orca_status'] = 'not_selected'
+    r['exclusion_reason'] = None if r in sel else 'not selected; limited to four ORCA single-point calculations'
+    r['orca_energy_hartree'] = None
+    r['relative_energy_kcal_mol'] = None
+    r['orca_request_key'] = None
+    r['orca_out_key'] = None
+
+sel_files = []
+for i, r in enumerate(sel):
+    xyz = 'selected_%02d_%s.xyz' % (i, r['candidate_id'])
+    (W / xyz).write_text(Chem.MolToXYZBlock(mol, confId=r['conf_id']))
+    sel_files.append(xyz)
+    inp = 'job_%02d_%s.inp' % (i, r['candidate_id'])
+    txt = ('! B3LYP 6-31G RKS TightSCF NORI NoAutoStart\n'
+           '%maxcore 192\n'
+           '%pal nprocs 4 end\n'
+           '%scf MaxIter 256 ConvForced true AutoTRAH false end\n'
+           '* xyzfile 0 1 ' + xyz + '\n')
+    (W / inp).write_text(txt)
+    key = 'cand_%02d_%s' % (i, r['candidate_id'])
+    try:
+        rc = run_orca(str(W / inp), dependencies=(str(W / xyz),), request_key=key,
+                      purpose='new_candidate', retry_of=None)
+        files = rc.get('files', {}) or {}
+        out = None
+        for k in files:
+            lk = k.lower()
+            if lk.endswith('.out') and ('stdout' in lk or 'output' in lk):
+                out = k
+                break
+        if out is None:
+            for k in files:
+                if k.lower().endswith('.out'):
+                    out = k
+                    break
+        e = None
+        if out is not None:
+            t = Path(files[out]).read_text(errors='replace')
+            for line in t.splitlines():
+                if 'FINAL SINGLE POINT ENERGY' in line:
+                    for tok in reversed(line.split()):
+                        try:
+                            e = float(tok)
+                            break
+                        except Exception:
+                            pass
+                    if e is not None:
+                        break
+        r['orca_energy_hartree'] = e
+        r['orca_request_key'] = rc.get('request_key', key)
+        r['orca_out_key'] = out
+        r['orca_status'] = 'completed' if e is not None else 'no_energy_parsed'
+        if e is None:
+            r['exclusion_reason'] = 'ORCA run completed but no FINAL SINGLE POINT ENERGY was parsed'
+    except Exception as ex:
+        r['orca_status'] = 'failed'
+        r['exclusion_reason'] = 'ORCA failed: ' + repr(ex)
+
+energies = [r['orca_energy_hartree'] for r in sel if r['orca_energy_hartree'] is not None]
+emin = min(energies) if energies else None
+for r in sel:
+    if r['orca_energy_hartree'] is not None and emin is not None:
+        r['relative_energy_kcal_mol'] = (r['orca_energy_hartree'] - emin) * HARTREE_TO_KCAL
+
+fields = ['candidate_id', 'mmff_energy_kcal_mol', 'mmff_converged', 'selected_for_orca',
+          'orca_energy_hartree', 'relative_energy_kcal_mol', 'orca_status',
+          'exclusion_reason', 'orca_request_key', 'orca_out_key']
+with (W / 'candidates_table.csv').open('w', newline='') as f:
+    w = csv.DictWriter(f, fieldnames=fields)
+    w.writeheader()
+    for r in recs:
+        w.writerow({k: r.get(k) for k in fields})
+
+sd = Chem.SDWriter(str(W / 'candidates_all.sdf'))
+for r in recs:
+    mol.SetProp('_Name', r['candidate_id'])
+    sd.write(mol, confId=r['conf_id'])
+sd.close()
+
+rank = []
+for i, r in enumerate(sorted([x for x in sel if x['orca_energy_hartree'] is not None],
+                             key=lambda x: x['orca_energy_hartree'])):
+    rank.append({'rank': i + 1, 'candidate_id': r['candidate_id'],
+                 'orca_energy_hartree': r['orca_energy_hartree'],
+                 'relative_energy_kcal_mol': r['relative_energy_kcal_mol'],
+                 'orca_request_key': r['orca_request_key'],
+                 'orca_out_key': r['orca_out_key']})
+low = rank[0] if rank else None
+
+all_rows = []
+for r in recs:
+    all_rows.append({'candidate_id': r['candidate_id'],
+                     'mmff_energy_kcal_mol': r['mmff_energy_kcal_mol'],
+                     'mmff_converged': r['mmff_converged'],
+                     'selected_for_orca': r['selected_for_orca'],
+                     'orca_energy_hartree': r['orca_energy_hartree'],
+                     'relative_energy_kcal_mol': r['relative_energy_kcal_mol'],
+                     'orca_status': r['orca_status'],
+                     'exclusion_reason': r['exclusion_reason']})
+
+failed = [r for r in recs if (not r['mmff_converged']) or r['orca_status'] in ('failed', 'no_energy_parsed')]
+excluded = [r for r in recs if not r['selected_for_orca']]
+
+lim = ['finite ETKDGv3/MMFF94 ensemble; not exhaustive conformational sampling and not a global-minimum claim',
+       'ORCA values are single-point B3LYP/6-31G RKS gas-phase neutral singlet energies on MMFF94-optimized geometries',
+       'no ORCA geometry optimization, frequency or thermochemistry verification',
+       'only four selected candidates were evaluated with ORCA because of the stated four-calculation limit',
+       'the prepared initial geometry is preserved but not included in the ORCA energy ranking',
+       'RDKit conformer generation and MMFF94 energies are not independently verified']
+
+sampling_artifacts = ['candidates_table.csv', 'candidates_all.sdf'] + sel_files
+if initial is not None:
+    sampling_artifacts.append(preserved)
+
+obs = []
+obs.append({'name': 'sampling',
+            'value': {'system': 'n-hexane',
+                      'initial_structure_preserved': preserved if initial is not None else 'initial file not found in workspace',
+                      'search_method': 'RDKit ETKDGv3 embedding followed by MMFF94 optimization',
+                      'requested_conformers': requested,
+                      'generated_conformers': len(recs),
+                      'selected_for_orca': [r['candidate_id'] for r in sel],
+                      'search_scope': 'finite RDKit ETKDGv3 ensemble, randomSeed 20261019, pruneRmsThresh 0.25 A, MMFF94 optimization maxIters 1000, single thread',
+                      'relationships': 'all candidates share the same n-hexane connectivity (CCCCCC with explicit hydrogens); the selected set is the lowest-MMFF94-energy subset with pairwise best-RMS >= 0.5 A; the prepared initial geometry is kept separately and is not part of the ORCA set',
+                      'energy_difference_formula': 'DeltaE_i = (E_i - E_min) * 627.5094740631 kcal/mol per hartree',
+                      'units': {'orca_energy': 'hartree', 'relative_energy': 'kcal/mol', 'mmff_energy': 'kcal/mol'}},
+            'unit': None,
+            'sources': [{'filename': 'candidates_table.csv', 'location': 'all rows'},
+                        {'filename': 'candidates_all.sdf', 'location': 'all conformers'}],
+            'formula': None,
+            'artifacts': sampling_artifacts,
+            'limitations': lim})
+
+energy_sources = ([{'internal_request_key': low['orca_request_key'],
+                    'filename': low['orca_out_key'],
+                    'location': 'FINAL SINGLE POINT ENERGY'}] if low else
+                  [{'filename': 'candidates_table.csv', 'location': 'all rows'}])
+obs.append({'name': 'energy',
+            'value': low if low is not None else {},
+            'unit': 'hartree' if low is not None else None,
+            'sources': energy_sources,
+            'formula': 'E_min = minimum parsed ORCA FINAL SINGLE POINT ENERGY among the four selected candidates',
+            'artifacts': ['candidates_table.csv'] + sel_files,
+            'limitations': lim})
+
+obs.append({'name': 'energy_difference',
+            'value': {'ranking': rank,
+                      'formula': 'DeltaE_i = (E_i - E_min) * 627.5094740631 kcal/mol per hartree',
+                      'unit': 'kcal/mol'},
+            'unit': 'kcal/mol',
+            'sources': ([{'internal_request_key': r['orca_request_key'],
+                          'filename': r['orca_out_key'],
+                          'location': 'FINAL SINGLE POINT ENERGY'} for r in rank] +
+                        [{'filename': 'candidates_table.csv', 'location': 'all rows'}]),
+            'formula': 'DeltaE_i = (E_i - E_min) * 627.5094740631 kcal/mol per hartree',
+            'artifacts': ['candidates_table.csv'],
+            'limitations': lim})
+
+obs.append({'name': 'member_table',
+            'value': {'columns': fields, 'rows': all_rows,
+                      'artifact': 'candidates_table.csv',
+                      'structures_artifact': 'candidates_all.sdf'},
+            'unit': None,
+            'sources': [{'filename': 'candidates_table.csv', 'location': 'all rows'},
+                        {'filename': 'candidates_all.sdf', 'location': 'all conformers'}],
+            'formula': None,
+            'artifacts': ['candidates_table.csv', 'candidates_all.sdf'] + sel_files,
+            'limitations': lim})
+
+n_ok = len([r for r in sel if r['orca_energy_hartree'] is not None])
+obs.append({'name': 'sampling_check',
+            'value': {'failed_members': [{'candidate_id': r['candidate_id'],
+                                          'reason': r['exclusion_reason'] or 'MMFF94 optimization did not converge'} for r in failed],
+                      'excluded_by_budget': [{'candidate_id': r['candidate_id'],
+                                              'reason': r['exclusion_reason']} for r in excluded],
+                      'verification_coverage': 'ORCA single-point energies parsed for %d of %d selected candidates; no ORCA geometry optimization or frequencies; RDKit conformer generation not independently verified' % (n_ok, len(sel)),
+                      'unverified': ['global minimum status', 'DFT-optimized geometries', 'frequency and thermochemistry', 'completeness of the conformational space']},
+            'unit': None,
+            'sources': [{'filename': 'candidates_table.csv', 'location': 'all rows'}],
+            'formula': None,
+            'artifacts': ['candidates_table.csv'],
+            'limitations': lim})
+
+(W / 'observations.json').write_text(json.dumps({'version': 1, 'observations': obs}, indent=2))
+print('WROTE observations.json')

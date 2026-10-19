@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-19T16:01:46.917011Z",
+  "record_kind": "development_tool_transcript_excerpt",
+  "scope": "0040 trusted same-Run budget amendment; offline directed verification",
+  "tests_rerun_for_archiving": false,
+  "junit_created": false,
+  "original_terminal_log_file_available": false,
+  "provenance": "Actual tools.exec_command results in the development conversation before continuation-001 freeze; visible output transcribed with whitespace normalized. This is not a newly executed test or reconstructed JUnit.",
+  "execution_timestamp_utc": null,
+  "execution_timestamp_note": "The original command outputs reported durations but did not persist an ISO execution timestamp. Both executions preceded continuation-001 freeze; no exact test timestamp is invented.",
+  "batches": [
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -m pytest tests/unit/test_authorized_run_budget_amendment.py -q",
+      "exit_code": 0,
+      "passed": 5,
+      "failed": 0,
+      "duration_seconds_reported_by_pytest": 7.05,
+      "visible_output_excerpt": "..... [100%]\n5 passed in 7.05s\n",
+      "tests": [
+        "test_trusted_amendment_preserves_originals_usage_and_managed_admission",
+        "test_amendment_needs_exact_user_fields_and_cannot_lower_or_expand_other_limits",
+        "test_orphan_record_grants_nothing_and_same_authorization_replays_once",
+        "test_old_run_shape_direct_mutation_and_active_chain_tampering_are_rejected",
+        "test_second_authorization_links_history_and_old_idempotent_replay_stays_current"
+      ],
+      "test_source": "tests/unit/test_authorized_run_budget_amendment.py",
+      "test_source_sha256_at_archiving": "2110ca51dbc8e853afcb865ac879dc8028d8464220c528a7cf469b3e238ea3ef"
+    },
+    {
+      "command": ".\\.venv\\Scripts\\python.exe -m pytest tests/unit/test_store.py::test_budget_and_permission_cannot_be_enlarged_after_creation tests/unit/test_store.py::test_fixed_plan_and_cumulative_budget_cannot_be_relabelled -q",
+      "exit_code": 0,
+      "passed": 2,
+      "failed": 0,
+      "duration_seconds_reported_by_pytest": 1.29,
+      "visible_output_excerpt": ".. [100%]\n2 passed in 1.29s\n",
+      "tests": [
+        "test_budget_and_permission_cannot_be_enlarged_after_creation",
+        "test_fixed_plan_and_cumulative_budget_cannot_be_relabelled"
+      ],
+      "test_source": "tests/unit/test_store.py",
+      "test_source_sha256_at_archiving": "2fabbfb57dc0efc35b39066cc72d01846a7c715196e2baa6a3d97739068fe510"
+    }
+  ],
+  "lint": {
+    "command": ".\\.venv\\Scripts\\python.exe -m ruff check src/orca_agent/models.py src/orca_agent/store.py src/orca_agent/entrypoints.py src/orca_agent/tools/managed.py tests/unit/test_authorized_run_budget_amendment.py",
+    "final_result": "All checks passed!",
+    "initial_issue": "I001 import ordering in the new test file only; fixed with Ruff --fix before the final lint result. No test behavior changed and tests were not rerun solely for import ordering."
+  },
+  "execution_boundaries": {
+    "model_API_calls": 0,
+    "ORCA_starts": 0,
+    "generated_task_code_executed": false,
+    "real_Run_modified_by_tests": false,
+    "full_regression_run": false
+  }
+}

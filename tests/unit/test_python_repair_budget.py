@@ -152,7 +152,7 @@ def test_changed_code_repair_retains_logical_identity_and_frozen_failure(tmp_pat
     assert not result.qualified_outputs
 
 
-@pytest.mark.parametrize("change", ["conditions", "observations", "manifest", "same_hash", "same_step"])
+@pytest.mark.parametrize("change", ["conditions", "observations", "same_hash", "same_step"])
 def test_python_repair_cannot_change_purpose_or_rename_unchanged_code(tmp_path, monkeypatch, change):
     store, run, codes = case(tmp_path, monkeypatch)
     settle(store, run)
@@ -162,10 +162,6 @@ def test_python_repair_cannot_change_purpose_or_rename_unchanged_code(tmp_path, 
         step.parameters.conditions["analysis_mode"] = "different"
     elif change == "observations":
         step.parameters.observation_names.append("different_quantity")
-    elif change == "manifest":
-        step.parameters.inputs.entries.append(InputManifestEntry(
-            artifact_id=codes[2].artifact_id, sha256=codes[2].sha256,
-            target_path="different.py", purpose="new_input"))
     elif change == "same_hash":
         step.parameters.code = codes[0]
     else:
@@ -173,6 +169,27 @@ def test_python_repair_cannot_change_purpose_or_rename_unchanged_code(tmp_path, 
         candidate.goal_map["report"].step_id = step.id
     with pytest.raises(PlanningError):
         validate_revision(store.load_request(run), store.load_plan(run), store.load_request(run), candidate, run)
+
+
+def test_input_only_repair_freezes_new_copy_and_consumes_existing_retry_budget(tmp_path, monkeypatch):
+    store, run, codes = case(tmp_path, monkeypatch)
+    attempt, result = settle(store, run)
+    original = attempt.model_dump(mode="json")
+    candidate = revision(store, run, codes[0])
+    candidate.steps[0].parameters.inputs.entries.append(InputManifestEntry(
+        artifact_id=codes[2].artifact_id, sha256=codes[2].sha256,
+        target_path="coords.xyz", purpose="corrected task input copy"))
+    agent._repair_evidence(store, run, candidate)
+    updated = store.commit_revision(run, candidate, decision_id="explicit_input_repair",
+        basis=current_basis(store, run), related_results=[result.id])
+    repaired = store.reserve_attempt(updated, candidate.steps[0])
+    assert repaired.number == 2 and repaired.logical_id == attempt.logical_id
+    assert repaired.frozen_step.parameters.code == attempt.frozen_step.parameters.code
+    assert repaired.frozen_step.parameters.inputs.entries[0].target_path == "coords.xyz"
+    assert repaired.input_fingerprint != attempt.input_fingerprint
+    assert updated.usage.code_retries == 1 and updated.usage.orca_starts_reserved == 0
+    assert updated.attempts[0].model_dump(mode="json") == original
+    assert not repaired.started
 
 
 def test_plan_preflight_counts_new_logical_code_against_run_wide_allowance(tmp_path, monkeypatch):
