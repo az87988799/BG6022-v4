@@ -21,7 +21,7 @@ from pathlib import Path
 SCHEMA_VERSION = 1
 TEXT_SUFFIXES = {
     ".json", ".py", ".inp", ".xyz", ".out", ".txt", ".md", ".xml",
-    ".log", ".bibtex", ".opt", ".engrad", ".densitiesinfo", ".toml",
+    ".log", ".bibtex", ".opt", ".engrad", ".densitiesinfo", ".toml", ".csv", ".tsv", ".sdf",
 }
 MAX_TEXT_BYTES = 1024 * 1024
 MAX_TOTAL_BYTES = 10 * 1024 * 1024
@@ -341,7 +341,7 @@ def junit_summary(path: Path) -> dict:
     }
 
 
-def prepare_batch(root: Path, batch: str) -> tuple[dict, dict[str, bytes]]:
+def prepare_batch(root: Path, batch: str, *, hash_only_contexts: bool = False) -> tuple[dict, dict[str, bytes]]:
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.-]*", batch):
         raise ValueError("Batch must be a single plain directory name")
     directory = root / batch
@@ -356,7 +356,11 @@ def prepare_batch(root: Path, batch: str) -> tuple[dict, dict[str, bytes]]:
             "source": ref(path, root), "local_path": path.absolute().as_posix(),
             "sha256": digest, "bytes": size,
         }
-        raw, reason, removed = public_bytes(path, size)
+        if hash_only_contexts and (path.name == "run-before.json" or (
+                path.parent.name == "model" and path.name.endswith(".request.json"))):
+            raw, reason, removed = None, "large context snapshot retained locally; original hash indexed", []
+        else:
+            raw, reason, removed = public_bytes(path, size)
         record["publication_reason"] = reason
         if raw is None:
             record["published"] = None
@@ -429,6 +433,8 @@ def main() -> None:
     parser.add_argument("--source-root", type=Path, default=Path("data/container-proof-20261018"))
     parser.add_argument("--destination", type=Path, default=Path("docs/acceptance/code-as-tools-step2-linux/production"))
     parser.add_argument("--max-total-bytes", type=int, default=MAX_TOTAL_BYTES)
+    parser.add_argument("--hash-only-contexts", action="store_true",
+                        help="Index original model request and pre-resume context hashes; retain their bytes locally")
     parser.add_argument("--verify-only", action="store_true")
     args = parser.parse_args()
     root = args.source_root.resolve(strict=True)
@@ -443,7 +449,7 @@ def main() -> None:
             index = read_json(destination / index_path)
             verify_index(index, destination)
         else:
-            index, objects = prepare_batch(root, batch)
+            index, objects = prepare_batch(root, batch, hash_only_contexts=args.hash_only_contexts)
             pending.update(objects)
             pending[index_path] = encode(index)
         prepared.append(index)

@@ -2,6 +2,7 @@
 const $ = id => document.getElementById(id);
 const pretty = value => JSON.stringify(value, null, 2);
 const labels = {ready:'已就绪',running:'运行中',paused:'已暂停',cancelled:'已取消',completed:'已完成',failed:'失败',unknown:'状态待核对',budget_exhausted:'预算已耗尽',waiting_user:'等待补充',unreadable:'记录不可读'};
+const checkLabels = {passed:'通过',failed:'未通过',unverified:'未验证',partially_checked:'部分检查',not_applicable:'不适用',source_unverified:'来源未通过核对'};
 let loaded=null, historyExpanded=false;
 let token, current = localStorage.getItem('orca:selected'), polling = false, runPage = 0, artifactPage = 0, messagePage = 0;
 function notice(text='') { $('notice').textContent = text; }
@@ -11,7 +12,7 @@ async function api(path, body) {
   const response=await fetch('/api/'+path,{method:body===undefined?'GET':'POST',headers:{'X-Local-Token':token||'','Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});
   const data=await response.json(); if(!response.ok) throw new Error(data.error==='local_token_required'?'服务已重启，请刷新页面重新连接；已保存任务不会自动恢复。':data.message||data.error||'本地服务请求失败'); return data;
 }
-function select(id) { $('ask').hidden=!id; current=id;loaded=null;historyExpanded=false; if(id) localStorage.setItem('orca:selected',id); else localStorage.removeItem('orca:selected'); $('task').hidden=true; $('welcome').hidden=!!id; $('input-label').textContent=id?'补充条件或追问当前任务':'描述新的计算目标'; $('send').textContent=id?'发送消息 ↑':'提交任务 ↑'; $('send-hint').textContent=id?'消息保存在当前任务中；协调者停止时，点击“继续处理”。费用和预算不会重置。':'提交将按本地配置中的许可与有限预算执行。支持优化、偶极矩与概念解释；上传暂未开放。'; $('artifacts').replaceChildren(); $('evidence-navigation').replaceChildren(); $('evidence').hidden=true; $('more-artifacts').hidden=true; $('conversation').replaceChildren(); messagePage=0; artifactPage=0; notice(); $('runs').querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.dataset.runId===id)); if(id){notice('正在读取所选任务…');refresh().catch(e=>notice(e.message));} }
+function select(id) { $('ask').hidden=!id; current=id;loaded=null;historyExpanded=false; if(id) localStorage.setItem('orca:selected',id); else localStorage.removeItem('orca:selected'); $('task').hidden=true; $('welcome').hidden=!!id; $('input-label').textContent=id?'补充条件或追问当前任务':'描述新的计算目标'; $('send').textContent=id?'发送消息 ↑':'提交任务 ↑'; $('send-hint').textContent=id?'消息保存在当前任务中；协调者停止时，点击“继续处理”。费用和预算不会重置。':'提交将按本地配置中的许可与有限预算执行。支持受管理的代码计算与分析；上传暂未开放。'; $('artifacts').replaceChildren(); $('evidence-navigation').replaceChildren(); $('evidence').hidden=true; $('more-artifacts').hidden=true; $('conversation').replaceChildren(); messagePage=0; artifactPage=0; notice(); $('runs').querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.dataset.runId===id)); if(id){notice('正在读取所选任务…');refresh().catch(e=>notice(e.message));} }
 async function listRuns(append=false) { const data=await api('runs?offset='+(append?runPage:0)); if(!append) $('runs').replaceChildren(); for(const run of data.items){const b=action('',()=>select(run.run_id));b.append(element('span',run.text||run.run_id),element('small',(labels[run.state]||run.state)+' · '+new Date(run.created_at).toLocaleString())); b.dataset.runId=run.run_id;if(run.run_id===current)b.classList.add('selected');$('runs').append(b);}runPage=data.next_offset;$('more-runs').hidden=runPage===null; }
 async function history(older=false) {
  const id=current;let page;
@@ -24,6 +25,57 @@ async function history(older=false) {
  messagePage=page.offset;$('more-messages').hidden=messagePage===0;$('more-messages').textContent='读取更早消息（共 '+page.total+' 条）';
 }
 
+function recordedState(value) { return labels[value]||({intent:'已登记待启动',reserved:'已预约',timed_out:'超时',not_started:'未启动'}[value])||value; }
+function renderExecution(state, report) {
+ const view=state.execution||{}, active=view.current_actions||[];
+ $('current-action').textContent=active.length?active.map(item=>`${item.tool||item.kind} · ${item.request_key||item.step_id||item.call_id||item.attempt_id} · ${recordedState(item.state)}`).join('\n'):(state.coordinator_active?'协调者正在处理；当前尚无运行中的工具或计算记录。':'协调者未运行；当前显示已保存进度。');
+ const counts=view.internal_call_counts||{}, progress=$('execution-progress');progress.replaceChildren();
+ progress.append(element('p',`内部 ORCA：已登记 ${view.internal_calls?.length??report.execution?.progress?.total??0} 次；完成 ${counts.completed??0} 次；失败 ${(counts.failed||0)+(counts.timed_out||0)} 次；待核对 ${counts.unknown??0} 次。`));
+ progress.append(element('p',`脚本/计算尝试 ${view.attempts?.length??state.attempts?.length??0} 次；检查点 ${view.checkpoint_count??0} 个。未来计算次数由后续决策确定，当前记录不代表总搜索范围。`,'muted'));
+ if(view.latest_checkpoint?.requires_decision)progress.append(element('p','检查点等待反馈决策：'+(view.latest_checkpoint.reason||'原因未记录'),'question'));
+ $('internal-calls').textContent=pretty({internal_calls:view.internal_calls||report.execution?.internal_calls||[],checkpoints:report.execution?.checkpoints||[],latest_checkpoint:view.latest_checkpoint});
+}
+async function downloadArtifact(id, artifact) {
+ const artifactId=artifact.artifact_id||artifact.id;
+ const response=await fetch(`/api/runs/${id}/artifacts/${artifactId}/download`,{headers:{'X-Local-Token':token}});
+ if(!response.ok)throw new Error('文件未通过完整性核对、无当前任务访问许可或超过下载上限');
+ const url=URL.createObjectURL(await response.blob()),link=element('a');link.href=url;link.download=(artifact.path||artifactId).split(/[\\/]/).pop();link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function artifactRow(id, artifact, label) {
+ const artifactId=artifact.artifact_id||artifact.id,row=element('div',undefined,'file'),info=element('div'),controls=element('div');
+ info.append(element('span',(label||artifact.role||'文件')+' · '+(artifact.path||artifactId)),element('small',artifactId+' · '+(artifact.status||artifact.integrity?.status||'完整性状态未知')),element('small','SHA256 '+(artifact.sha256||'未知')));
+ if(artifactId)controls.append(action('查看前 80 行',()=>readEvidence(id,'evidence.text',{artifact_id:artifactId,start_line:1,lines:80})),action('下载',()=>downloadArtifact(id,artifact)));
+ row.append(info,controls);return row;
+}
+function renderScripts(id, report) {
+ const scripts=$('scripts');scripts.replaceChildren();
+ const files=new Map();for(const item of report.generated_scripts||[])files.set(item.artifact_id||item.id,item);
+ for(const item of report.artifact_index||[]){if(item.purposes?.includes('actual_input')||['orca_input','native_input','input'].includes(item.role))files.set(item.artifact_id||item.id,item);}
+ for(const item of files.values())scripts.append(artifactRow(id,item,item.language==='orca'?'ORCA 输入':item.role==='code'||item.language==='python'?'Python 脚本':item.role));
+ if(!files.size)scripts.append(element('p','尚无已登记的生成脚本或实际输入。历史文件可通过下方原始证据清单读取。','muted'));
+}
+function renderObservations(report) {
+ const container=$('observations');container.replaceChildren();let count=0;
+ for(const result of report.results||[]){
+  const records=result.observation_records||[],validation=result.output_validation||[];
+  if(validation.length){const table=element('table'),head=element('tr');for(const label of ['输出 / 结果','检查状态','科学资格'])head.append(element('th',label));table.append(head);
+   for(const output of validation){const row=element('tr');row.append(element('td',output.name+' · '+result.result_id),element('td',checkLabels[output.status]||output.status||'未知'),element('td',output.scientific_qualification===true?'仅此输出通过适用科学检查':'未授予科学资格'));const details=element('details');details.append(element('summary','检查覆盖与来源'),element('pre',pretty({checks:output.checks,source_integrity:output.source_integrity})));row.children[1].append(details);table.append(row);}container.append(table);count+=validation.length;}
+  for(const observation of records){const box=element('details',undefined,'observation');box.open=true;box.append(element('summary',observation.name+' · '+(checkLabels[observation.validation_status]||'未验证')));
+   box.append(element('p',(observation.value===null?'值未知':pretty(observation.value))+' · '+(observation.unit||'单位未知'),'observation-value'),element('p','通用观察；来源或格式检查不等于完整科学检查。','muted'));
+   if(observation.formula)box.append(element('p','公式：'+observation.formula));
+   box.append(element('pre',pretty({result_id:result.result_id,attempt_id:result.attempt_id,actual_conditions:observation.actual_conditions,sources:observation.sources,code_sha256:observation.code_sha256,checks:observation.checks,source_integrity:observation.source_integrity,limitations:observation.limitations})));
+   container.append(box);count++;}
+  if(!records.length&&Object.keys(result.observations?.data||{}).length){const box=element('details');box.append(element('summary','已有原始观察 · '+result.result_id+' · 未宣称科学资格'),element('pre',pretty(result.observations.data)));container.append(box);count++;}
+ }
+ if(!count)container.append(element('p','尚无逐项分析记录。缺失的数值、单位、来源或检查保持未知。','muted'));
+}
+function renderDiagnostics(state, report) {
+ const container=$('diagnostics');container.replaceChildren();const failures=[...(report.diagnostics||[])];
+ for(const result of report.results||[])for(const item of result.diagnostics||[])failures.push({...item,result_id:result.result_id});
+ for(const item of failures.slice(-10))container.append(element('div',(item.category||'诊断')+'：'+(item.message==='bounded proposal correction or transport retry exhausted'?'模型建议连续未通过校验，已达到纠正上限；任务停止，已有证据保留。':item.message||pretty(item))+(item.result_id?' · '+item.result_id:''),'question'));
+ const stop=report.stop_reason;if(stop&&['failed','budget_exhausted','unknown','cancelled','paused'].includes(state.state)){const box=element('details');box.append(element('summary','停止原因与模型失败记录'),element('pre',pretty(stop)));container.append(box);}
+}
+
 async function refresh() {
  if(!current||polling)return;polling=true;const id=current;
  try {const [state, report]=await Promise.all([api(`runs/${id}`),api(`runs/${id}/report`)]);if(id!==current)return;loaded=id;if($('notice').textContent==='正在读取所选任务…')notice();
@@ -33,7 +85,8 @@ async function refresh() {
  const knowledgeOnly=report.goal_facts?.length&&report.goal_facts.every(f=>f.port==='knowledge_answer'); const boundedAnswer=report.goal_facts?.some(f=>f.answer?.observation?.limitations?.length); $('goal-state').textContent=report.user_goal_complete?(knowledgeOnly?(boundedAnswer?'回答已交付 · 范围有限':'回答已交付'):'已满足'):'尚未全部满足';$('science-cost').textContent=`${state.usage.orca_starts_actual} / ${state.budget.orca_starts}`;$('model-cost').textContent=`${state.usage.model_calls} 次 / ${state.usage.model_tokens_used} tokens`;
  const money=report.budget?.model_cost;$('money').textContent=money?.known_cost??'—';
  $('steps').textContent=pretty({steps:state.steps,attempts:state.attempts});$('conditions').textContent=pretty(report.request);$('report').textContent=pretty(report);
- $('diagnostics').replaceChildren();if(['failed','budget_exhausted','unknown'].includes(state.state)){const failures=report.diagnostics||[];for(const d of failures.slice(-5))$('diagnostics').append(element('div',(d.category||'诊断')+'：'+(d.message==='bounded proposal correction or transport retry exhausted'?'模型建议连续未通过校验，已达到纠正上限；任务停止，已有证据保留。':d.message||'模型建议未通过程序校验；原始记录已保留。'),'question'));} $('questions').replaceChildren();for(const q of [...(report.communication?.questions||[]),...(report.communication?.notices||[])])$('questions').append(element('div',q,'question'));
+ const deliveryLabels={complete:'完整',partial:'部分完成',pending:'待生成',rendered:'已生成',failed:'失败',not_recorded:'未记录'};$('delivery-state').textContent='用户目标：'+(report.user_goal_complete?'已满足':'尚未全部满足')+'；交付内容：'+(deliveryLabels[report.report_delivery_status]||report.report_delivery_status||'未知')+'；报告文件：'+(deliveryLabels[report.report_artifact?.status]||report.report_artifact?.status||'未知')+'。科学检查见每个输出。';
+ renderExecution(state,report);renderScripts(id,report);renderObservations(report);renderDiagnostics(state,report); $('questions').replaceChildren();for(const q of [...(report.communication?.questions||[]),...(report.communication?.notices||[])])$('questions').append(element('div',q,'question'));
  if(state.clarification?.questions)for(const q of state.clarification.questions)$('questions').append(element('div',q,'question'));
  const table=element('table');const head=element('tr');for(const t of ['目标 / 物理量','值与单位','资格与来源'])head.append(element('th',t));table.append(head);
  const facts=report.goal_facts||[];for(const fact of facts){const row=element('tr');row.append(element('td',fact.goal_id));const answer=fact.answer;if(answer?.kind==='qualified_scientific_output'){row.append(element('td',(answer.value===null?'结构文件 '+answer.artifact_id:pretty(answer.value)+' '+(answer.unit||'单位未知'))),element('td','科学检查通过 · '+(answer.check_versions||[]).join(', ')));}else if(answer?.observation?.status==='answered'){row.append(element('td',answer.observation.answer),element('td','知识解释 · 非科学验证'));for(const limitation of answer.observation.limitations||[])row.children[1].append(element('p','范围说明：'+limitation,'muted'));for(const source of answer.observation.sources||[]){if(source.url){const link=element('a',source.title);link.href=source.url;link.target='_blank';link.rel='noopener noreferrer';row.lastChild.append(link);}else{const detail=element('details');detail.append(element('summary','原文件读取来源 · '+source.result_id),element('pre',pretty(source.observations)));row.lastChild.append(detail);}}const saved=answer.observation.source_facts;if(saved?.length){const detail=element('details');detail.append(element('summary','原计算的数值、结构及来源'));for(const f of saved){const v=f.answer;if(v?.kind==='qualified_scientific_output')detail.append(element('p',f.port+'：'+(v.value===null?v.artifact_id:v.value+' '+v.unit)+'；结构 '+f.source_geometry_artifact_id));}row.children[1].append(detail);}}else if(answer){row.append(element('td',pretty(answer.observation)),element('td','原始证据观察 · 单位 '+(answer.unit||'未知')+' · 未宣称科学资格'));}else{row.append(element('td','暂无可交付结果'),element('td','证据不足或尚未完成'));}table.append(row);}

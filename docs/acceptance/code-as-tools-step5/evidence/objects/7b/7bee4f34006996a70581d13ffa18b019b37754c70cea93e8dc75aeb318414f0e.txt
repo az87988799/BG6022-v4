@@ -1,0 +1,334 @@
+import csv
+import json
+import math
+from pathlib import Path
+
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from orca_task_sdk import run_orca
+
+SMILES = 'CCCCCC'
+NUM_GEN = 24
+NUM_EVAL = 4
+HARTREE_TO_KJ = 2625.4996394799
+HARTREE_TO_EV = 27.211386245988
+RANDOM_SEED = 20261019
+
+
+def finite_or_none(value):
+    try:
+        out = float(value)
+    except Exception:
+        return None
+    if math.isfinite(out):
+        return out
+    return None
+
+
+def xyz_block(mol, cid):
+    conf = mol.GetConformer(cid)
+    lines = [str(mol.GetNumAtoms()), 'candidate from ' + SMILES]
+    for atom in mol.GetAtoms():
+        p = conf.GetAtomPosition(atom.GetIdx())
+        lines.append(atom.GetSymbol() + ' ' + format(p.x, '.10f') + ' ' + format(p.y, '.10f') + ' ' + format(p.z, '.10f'))
+    return chr(10).join(lines) + chr(10)
+
+
+def mmff_optimize(mol, cid):
+    props = AllChem.MMFFGetMoleculeProperties(mol, mmffVariant='MMFF94s')
+    if props is None:
+        return None, 'MMFF94s properties unavailable'
+    ff = AllChem.MMFFGetMoleculeForceField(mol, props, confId=cid)
+    if ff is None:
+        return None, 'MMFF94s force field unavailable'
+    try:
+        ff.Minimize(maxIts=1000)
+        energy = finite_or_none(ff.CalcEnergy())
+        if energy is None:
+            return None, 'MMFF94s energy was not finite'
+        return energy, None
+    except Exception as exc:
+        return None, 'MMFF94s optimization failed: ' + type(exc).__name__ + ': ' + str(exc)
+
+
+def orca_input(xyz_name):
+    return ('! B3LYP 6-31G RKS NORI NoAutoStart TightSCF SP' + chr(10) +
+            '%maxcore 192' + chr(10) +
+            '%pal nprocs 4 end' + chr(10) +
+            '%scf MaxIter 128 ConvForced true AutoTRAH false end' + chr(10) +
+            '* xyzfile 0 1 ' + xyz_name + chr(10))
+
+
+def parse_energy(text):
+    value = None
+    for line in text.splitlines():
+        if line.strip().startswith('FINAL SINGLE POINT ENERGY'):
+            parts = line.replace(':', ' ').split()
+            for token in reversed(parts):
+                candidate = finite_or_none(token)
+                if candidate is not None:
+                    value = candidate
+                    break
+    return value
+
+
+def read_file_text(path):
+    try:
+        return Path(path).read_text(encoding='utf-8', errors='replace')
+    except Exception:
+        return ''
+
+
+def receipt_files(receipt):
+    if isinstance(receipt, dict):
+        files = receipt.get('files')
+        return files if isinstance(files, dict) else {}
+    files = getattr(receipt, 'files', None)
+    return files if isinstance(files, dict) else {}
+
+
+def receipt_request_key(receipt, fallback):
+    if isinstance(receipt, dict):
+        return receipt.get('request_key') or fallback
+    return getattr(receipt, 'request_key', None) or fallback
+
+
+def write_csv(path, rows, fieldnames):
+    with open(path, 'w', newline='', encoding='utf-8') as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction='ignore')
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
+base = Chem.MolFromSmiles(SMILES)
+if base is None:
+    raise RuntimeError('Could not build n-hexane from SMILES')
+mol = Chem.AddHs(base)
+params = AllChem.ETKDGv3()
+params.randomSeed = RANDOM_SEED
+params.pruneRmsThresh = 0.15
+params.numThreads = 1
+params.useRandomCoords = True
+cids = list(AllChem.EmbedMultipleConfs(mol, numConfs=NUM_GEN, params=params))
+
+records = []
+for idx, cid in enumerate(cids, start=1):
+    candidate_id = 'candidate_' + format(idx, '02d')
+    xyz_name = candidate_id + '.xyz'
+    mmff_energy, mmff_issue = mmff_optimize(mol, cid)
+    Path(xyz_name).write_text(xyz_block(mol, cid), encoding='utf-8')
+    atoms = [atom.GetSymbol() for atom in mol.GetAtoms()]
+    records.append({
+        'candidate_id': candidate_id,
+        'xyz_file': xyz_name,
+        'smiles': SMILES,
+        'generator': 'RDKit ETKDGv3',
+        'random_seed': RANDOM_SEED,
+        'atom_count': mol.GetNumAtoms(),
+        'elements': ' '.join(atoms),
+        'mmff_energy_kcal_per_mol': mmff_energy,
+        'mmff_issue': mmff_issue,
+        'selected_for_orca': False,
+        'pre_ranking_by_mmff': None,
+        'orca_energy_hartree': None,
+        'relative_energy_kj_mol': None,
+        'relative_energy_ev': None,
+        'orca_request_key': None,
+        'orca_stdout_file': None
+    })
+
+ranked = sorted(records, key=lambda r: (r['mmff_energy_kcal_per_mol'] is None, r['mmff_energy_kcal_per_mol'] if r['mmff_energy_kcal_per_mol'] is not None else 0.0))
+for rank, record in enumerate(ranked, start=1):
+    record['pre_ranking_by_mmff'] = rank
+
+failed_members = []
+for record in records:
+    if record['mmff_issue'] is not None:
+        failed_members.append({
+            'candidate_id': record['candidate_id'],
+            'xyz_file': record['xyz_file'],
+            'stage': 'MMFF94s optimization',
+            'reason': record['mmff_issue'],
+            'orca_request_key': None,
+            'files_available': '',
+            'stderr_excerpt': ''
+        })
+for record in ranked[NUM_EVAL:]:
+    failed_members.append({
+        'candidate_id': record['candidate_id'],
+        'xyz_file': record['xyz_file'],
+        'stage': 'ORCA single point',
+        'reason': 'not evaluated because the ORCA start limit for this request is 4',
+        'orca_request_key': None,
+        'files_available': '',
+        'stderr_excerpt': ''
+    })
+
+evaluated = []
+for rank, record in enumerate(ranked[:NUM_EVAL], start=1):
+    record['selected_for_orca'] = True
+    xyz_name = record['xyz_file']
+    input_name = 'orca_sp_' + format(rank, '02d') + '_' + record['candidate_id'] + '.inp'
+    Path(input_name).write_text(orca_input(xyz_name), encoding='utf-8')
+    request_key = 'sp_' + record['candidate_id']
+    record['orca_request_key'] = request_key
+    try:
+        receipt = run_orca(input_name, dependencies=[xyz_name], request_key=request_key, purpose='new_candidate')
+    except Exception as exc:
+        failed_members.append({
+            'candidate_id': record['candidate_id'],
+            'xyz_file': xyz_name,
+            'stage': 'ORCA SDK call',
+            'reason': 'ORCA SDK call failed: ' + type(exc).__name__ + ': ' + str(exc),
+            'orca_request_key': request_key,
+            'files_available': '',
+            'stderr_excerpt': ''
+        })
+        continue
+    files = receipt_files(receipt)
+    file_keys = sorted(files.keys())
+    stdout_text = read_file_text(files.get('stdout.out')) if 'stdout.out' in files else ''
+    stderr_text = read_file_text(files.get('stderr.txt')) if 'stderr.txt' in files else ''
+    saved_stdout = 'orca_' + record['candidate_id'] + '.stdout.out'
+    if stdout_text:
+        Path(saved_stdout).write_text(stdout_text, encoding='utf-8')
+    energy = parse_energy(stdout_text)
+    if energy is None:
+        saved_stderr = 'orca_' + record['candidate_id'] + '.stderr.txt'
+        if stderr_text:
+            Path(saved_stderr).write_text(stderr_text, encoding='utf-8')
+        failed_members.append({
+            'candidate_id': record['candidate_id'],
+            'xyz_file': xyz_name,
+            'stage': 'ORCA result parsing',
+            'reason': 'No FINAL SINGLE POINT ENERGY found in ORCA stdout',
+            'orca_request_key': receipt_request_key(receipt, request_key),
+            'files_available': ' '.join(file_keys),
+            'stderr_excerpt': stderr_text[:1000]
+        })
+        continue
+    actual_key = receipt_request_key(receipt, request_key)
+    record['orca_energy_hartree'] = energy
+    record['orca_request_key'] = actual_key
+    record['orca_stdout_file'] = saved_stdout
+    evaluated.append({
+        'candidate_id': record['candidate_id'],
+        'xyz_file': xyz_name,
+        'orca_energy_hartree': energy,
+        'relative_energy_kj_mol': None,
+        'relative_energy_ev': None,
+        'mmff_energy_kcal_per_mol': record['mmff_energy_kcal_per_mol'],
+        'pre_ranking_by_mmff': record['pre_ranking_by_mmff'],
+        'orca_request_key': actual_key,
+        'input_file': input_name,
+        'orca_stdout_file': saved_stdout
+    })
+
+by_id = {record['candidate_id']: record for record in records}
+if evaluated:
+    evaluated.sort(key=lambda row: row['orca_energy_hartree'])
+    lowest_energy = evaluated[0]['orca_energy_hartree']
+    for row in evaluated:
+        delta = row['orca_energy_hartree'] - lowest_energy
+        row['relative_energy_kj_mol'] = delta * HARTREE_TO_KJ
+        row['relative_energy_ev'] = delta * HARTREE_TO_EV
+        record = by_id[row['candidate_id']]
+        record['relative_energy_kj_mol'] = row['relative_energy_kj_mol']
+        record['relative_energy_ev'] = row['relative_energy_ev']
+
+candidate_fields = ['candidate_id', 'xyz_file', 'smiles', 'generator', 'random_seed', 'atom_count', 'elements', 'mmff_energy_kcal_per_mol', 'mmff_issue', 'selected_for_orca', 'pre_ranking_by_mmff', 'orca_energy_hartree', 'relative_energy_kj_mol', 'relative_energy_ev', 'orca_request_key', 'orca_stdout_file']
+ranking_fields = ['candidate_id', 'xyz_file', 'orca_energy_hartree', 'relative_energy_kj_mol', 'relative_energy_ev', 'mmff_energy_kcal_per_mol', 'pre_ranking_by_mmff', 'orca_request_key', 'input_file', 'orca_stdout_file']
+failed_fields = ['candidate_id', 'xyz_file', 'stage', 'reason', 'orca_request_key', 'files_available', 'stderr_excerpt']
+
+write_csv('candidate_structures.csv', records, candidate_fields)
+write_csv('lowest_candidate_energy_ranking.csv', evaluated, ranking_fields)
+write_csv('failed_members.csv', failed_members, failed_fields)
+Path('candidate_structures.json').write_text(json.dumps({'count': len(records), 'candidates': records}, indent=2), encoding='utf-8')
+Path('lowest_candidate_energy_ranking.json').write_text(json.dumps({'count': len(evaluated), 'ranking': evaluated, 'energy_unit': 'hartree', 'relative_energy_unit': 'kJ/mol', 'relative_energy_formula': 'Delta E_i(kJ/mol) = (E_i - E_min) * 2625.4996394799'}, indent=2), encoding='utf-8')
+Path('failed_members.json').write_text(json.dumps({'count': len(failed_members), 'members': failed_members}, indent=2), encoding='utf-8')
+
+candidate_artifacts = [record['xyz_file'] for record in records] + ['candidate_structures.json', 'candidate_structures.csv']
+ranking_artifacts = ['lowest_candidate_energy_ranking.csv', 'lowest_candidate_energy_ranking.json'] + [row['orca_stdout_file'] for row in evaluated if row['orca_stdout_file']]
+failed_artifacts = ['failed_members.csv', 'failed_members.json']
+
+evaluated_sources = []
+for row in evaluated:
+    evaluated_sources.append({'internal_request_key': row['orca_request_key'], 'filename': 'stdout.out', 'location': 'FINAL SINGLE POINT ENERGY for ' + row['candidate_id']})
+
+summary = {
+    'request_conditions': {'charge': 0, 'multiplicity': 1, 'electronic_state': 'RKS', 'environment': 'gas_phase', 'method': 'B3LYP', 'basis': '6-31G'},
+    'search': {'smiles': SMILES, 'generator': 'RDKit ETKDGv3', 'random_seed': RANDOM_SEED, 'requested_conformers': NUM_GEN, 'generated_conformers': len(records), 'mmff_optimization': 'MMFF94s', 'orca_start_limit': NUM_EVAL, 'orca_evaluated_count': len(evaluated)},
+    'energy_difference_formula': 'Delta E_i(kJ/mol) = (E_i - E_min) * 2625.4996394799',
+    'units': {'absolute_energy': 'hartree', 'relative_energy': 'kJ/mol and eV', 'mmff_energy': 'kcal/mol'},
+    'geometry_relation': 'ORCA single points on RDKit ETKDGv3 plus MMFF94s optimized candidate geometries; no ORCA geometry optimization and no global minimum claim.',
+    'files': candidate_artifacts + ranking_artifacts + failed_artifacts
+}
+Path('summary.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
+
+observations = [
+    {
+        'name': 'conformer_search',
+        'value': {'smiles': SMILES, 'generator': 'RDKit ETKDGv3', 'random_seed': RANDOM_SEED, 'requested_conformers': NUM_GEN, 'generated_conformers': len(records), 'mmff_optimization': 'MMFF94s', 'orca_start_limit': NUM_EVAL, 'orca_evaluated_count': len(evaluated), 'selection': 'first candidates by MMFF94s energy up to the ORCA start limit'},
+        'unit': None,
+        'sources': [{'filename': 'candidate_structures.json', 'location': 'RDKit ETKDGv3 and MMFF94s candidate inventory'}],
+        'formula': None,
+        'artifacts': candidate_artifacts,
+        'limitations': ['finite conformer search only; no global minimum claim']
+    },
+    {
+        'name': 'lowest_candidate_energy_ranking',
+        'value': {'evaluated_count': len(evaluated), 'generated_count': len(records), 'method': 'B3LYP', 'basis': '6-31G', 'charge': 0, 'multiplicity': 1, 'electronic_state': 'RKS', 'environment': 'gas_phase', 'energy_unit': 'hartree', 'relative_energy_unit': 'kJ/mol', 'relative_energy_formula': 'Delta E_i(kJ/mol) = (E_i - E_min) * 2625.4996394799', 'ranking': evaluated},
+        'unit': 'hartree (absolute); kJ/mol and eV (relative)',
+        'sources': evaluated_sources + [{'filename': 'lowest_candidate_energy_ranking.csv', 'location': 'ranking table'}],
+        'formula': 'Delta E_i(kJ/mol) = (E_i - E_min) * 2625.4996394799',
+        'artifacts': ranking_artifacts,
+        'limitations': ['ranking is only among evaluated single-point candidates', 'no ORCA geometry optimization', 'no frequency validation']
+    },
+    {
+        'name': 'candidate_structures',
+        'value': {'count': len(records), 'candidates': records},
+        'unit': None,
+        'sources': [{'filename': 'candidate_structures.json', 'location': 'all generated candidate records and XYZ files'}],
+        'formula': None,
+        'artifacts': candidate_artifacts,
+        'limitations': ['all generated candidates are preserved, including members not evaluated by ORCA']
+    },
+    {
+        'name': 'failed_members',
+        'value': {'count': len(failed_members), 'members': failed_members},
+        'unit': None,
+        'sources': [{'filename': 'failed_members.json', 'location': 'excluded members and failure reasons'}],
+        'formula': None,
+        'artifacts': failed_artifacts,
+        'limitations': ['members not evaluated due to the ORCA start limit are reported as excluded, not as failed calculations']
+    },
+    {
+        'name': 'structural_scope_energy',
+        'value': {'structural_relation': 'All candidates are distinct conformers of the same n-hexane connectivity from SMILES ' + SMILES + '; atom count and ordered elements are preserved in every XYZ file.', 'search_scope': 'RDKit ETKDGv3 generated ' + str(len(records)) + ' MMFF94s-optimized candidates; ORCA B3LYP/6-31G single points were run for ' + str(len(evaluated)) + ' candidates under the ORCA start limit of ' + str(NUM_EVAL) + '.', 'evaluated_geometries': 'MMFF94s-optimized candidate geometries; ORCA single-point energies only, without ORCA geometry optimization.', 'energy_difference_formula': 'Delta E_i(kJ/mol) = (E_i - E_min) * 2625.4996394799', 'units': {'absolute_energy': 'hartree', 'relative_energy': 'kJ/mol and eV', 'mmff_energy': 'kcal/mol'}},
+        'unit': None,
+        'sources': [{'filename': 'summary.json', 'location': 'search scope and energy definition'}],
+        'formula': 'Delta E_i(kJ/mol) = (E_i - E_min) * 2625.4996394799',
+        'artifacts': ['summary.json', 'candidate_structures.csv', 'lowest_candidate_energy_ranking.csv'],
+        'limitations': ['no global minimum claim', 'no ORCA optimization or frequency validation', 'relative energies apply only within this evaluated set']
+    },
+    {
+        'name': 'downloadable_validation',
+        'value': {'tables': ['candidate_structures.csv', 'lowest_candidate_energy_ranking.csv', 'failed_members.csv'], 'structures': 'candidate_XX.xyz for every generated candidate', 'coverage': 'B3LYP/6-31G RKS single points for up to four MMFF94s-selected candidates under neutral singlet gas-phase conditions.', 'unvalidated': ['no ORCA geometry optimization', 'no vibrational frequency validation', 'no solvent model', 'no global minimum claim', 'only four ORCA single-point starts']},
+        'unit': None,
+        'sources': [{'filename': 'summary.json', 'location': 'coverage and limitations'}],
+        'formula': None,
+        'artifacts': ['summary.json', 'candidate_structures.csv', 'lowest_candidate_energy_ranking.csv', 'failed_members.csv', 'candidate_structures.json', 'lowest_candidate_energy_ranking.json', 'failed_members.json'] + candidate_artifacts + ranking_artifacts,
+        'limitations': ['downloadable structures and tables are provided, but the finite search does not establish a global optimum']
+    },
+    {
+        'name': 'reporting_requirements',
+        'value': {'actual_geometry_relation': 'ORCA single points were evaluated on RDKit ETKDGv3 plus MMFF94s optimized geometries; the ORCA step did not optimize geometry.', 'evaluation_method': 'B3LYP/6-31G RKS single points, neutral singlet, gas phase; relative energies use E_i minus E_min in hartree multiplied by 2625.4996394799 for kJ/mol.', 'search_boundary': 'Finite RDKit conformer generation with random seed ' + str(RANDOM_SEED) + '; ORCA starts limited to ' + str(NUM_EVAL) + '.', 'limitations': ['not a global minimum claim', 'only evaluated candidates are ranked', 'failed or excluded members and reasons are preserved']},
+        'unit': None,
+        'sources': [{'filename': 'summary.json', 'location': 'reported geometry relation, method, search boundary and limitations'}],
+        'formula': 'Delta E_i(kJ/mol) = (E_i - E_min) * 2625.4996394799',
+        'artifacts': ['summary.json', 'candidate_structures.csv', 'lowest_candidate_energy_ranking.csv', 'failed_members.csv'],
+        'limitations': ['actual geometry relationship and search boundaries are reported without claiming global coverage']
+    }
+]
+Path('observations.json').write_text(json.dumps({'version': 1, 'observations': observations}, indent=2), encoding='utf-8')

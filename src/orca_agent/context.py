@@ -47,7 +47,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v59"
+PROMPT_VERSION = "agent-json-v65"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -89,7 +89,8 @@ Report settles final token costs, unknown now.
 
 _PLAN_RULES = (
     "Unique key=id; map required Goal.port/gap; artifact_id!=key. "
-    "Retain satisfied Goals' original bindings and completed producer Steps when revising.")
+    "Revisions may omit unchanged completed Goal bindings and settled dependencies; the program retains their exact definitions. "
+    "Declare new work and changed bindings explicitly; unknown references and frozen edits are rejected.")
 
 _CODE_GUIDANCE = (
     "Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. "
@@ -100,12 +101,17 @@ _CODE_GUIDANCE = (
     "Step.inputs[role]={producer_key,port} binds evidence ports, not manifest. "
     "Reads:evidence.text/search. No shell/subprocess/network/host paths. "
     "Write observations.json={version:1,observations:[{name:Goal.port,value:finite JSON,unit:string|null,"
-    "sources:[{internal_request_key:SDK request_key,filename:files key,location:string|null}],limitations:[]}]} "
+    "sources:[{internal_request_key:SDK request_key,filename:files key,location:string|null}],"
+    "formula:string|null,artifacts:[task-relative filename],limitations:[]}]} "
     "Names=Step.parameters.observation_names; task-local files omit internal_request_key. "
     "Deliver full parsed sequences, including negative/near-zero values. Additional filtered subsets must label "
     "filtering/omissions; they cannot replace full data or prove absence of anomalies. "
     "State sourced physical units even for strings/coordinate files. Unknown units stay null with explicit "
     "limitations, never guessed; label justified dimensionless quantities explicitly. "
+    "For derived quantities retain the formula, all original sources, actual method and geometry relationships. "
+    "Preserve all candidates, failed members, exclusion reasons, search scope and initial structures in data/files. "
+    "Save every generated member's structure, not only members selected for evaluation. "
+    "Different candidate geometries are distinct sources; do not claim a global optimum from a finite search. "
     "No checks/status/actual_conditions. Observations unqualified; execution!=science. "
     "Extra Python attempts cost code_retries. "
     "Scientific Goals need a completed SDK native receipt with verified original provenance; pure file tasks need no ORCA.")
@@ -116,7 +122,8 @@ _CODE_REPAIR_GUIDANCE = (
     "repair_of:failed frozen_step.id, code:new CodeRef. The program copies that frozen Step, "
     "retaining logical_id and every non-code field; existing repair/permission/budget gates still apply. "
     "This form has no tool/logical_key/parameters/depends_on overrides. "
-    "Retain dependency Steps separately with key only; do not add the replacement writer as a dependency. "
+    "Settled dependencies may be omitted; the program retains their exact closure. "
+    "Do not add the replacement writer as a dependency. "
     "Route a repaired output with step_key+unchanged port only; do not mix that binding with gap/evidence. "
     "Preserve unrelated Goals' valid bindings. "
     "The full new-Step form remains accepted only with the same logical_key and unchanged non-code contract.")
@@ -125,6 +132,7 @@ _CODE_NATIVE_GUIDANCE = (
     "orca.run.input needs an ORCA program, never XYZ. Geometry belongs in parameters.inputs=manifest. "
     "Before run_orca, satisfy every applicable required block in AUTHORITY.native_input_contract, "
     "using its frozen numeric bounds; missing controls are rejected, never filled in. "
+    "Include exactly one explicit RHF or RKS keyword matching the selected electronic_state. "
     "Compute+parse through managed SDK receipts; preserve each original Attempt and source binding. "
     "orca.run only archives raw outputs; separate Python parsing imported stdout lacks scientific Goal condition provenance. "
     "Python: from orca_task_sdk import run_orca; "
@@ -134,7 +142,10 @@ _CODE_NATIVE_GUIDANCE = (
     "same key+changed input is rejected. New candidate/plan addition/failure retry need distinct keys and "
     "purpose='new_candidate'/'plan_addition'/'failure_retry'; retry_of=prior failed key for retries. "
     "All attempts share cumulative budgets. "
-    "unknown work:reconcile first. Declared relative dependencies. "
+    "On SDK rejection preserve the exact error in the failed-member record; requested calls are not actual starts. "
+    "unknown work:reconcile first. dependencies must be task-relative paths, e.g. ['coords.xyz']; "
+    "use a relative string or Path.name, never Path.cwd()/name or Path.resolve() as a dependency target. "
+    "The input may reference only that same XYZ basename. "
     "from orca_task_sdk import checkpoint; "
     "checkpoint(state, request_key='batch_1', requires_decision=True, reason='Assess the new observations') "
     "persists JSON state and completed keys, then normally exits Python to return feedback to this Agent. "

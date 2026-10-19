@@ -208,19 +208,19 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
             prompt += ("For basic knowledge select knowledge.answer; for sources/version details "
                 "first select knowledge.search, then cite its Result ID in knowledge.answer. No calculation for knowledge. ")
         if not compact or planning:
-            prompt += ("Keep Goal IDs/ports/satisfied bindings. "
+            prompt += ("Keep Goal IDs/ports; unchanged settled bindings are retained. "
                        if compact else
-                       "Map every required Goal ID/port. Retain satisfied Goals' original bindings "
-                       "and completed producer Steps when revising; do not replace them with gaps. ")
+                       "Map new or changed Goal bindings with their exact IDs/ports. "
+                       "Unchanged bindings to settled evidence are retained by the program; do not replace them with gaps. ")
         if planning and authority.get("plan"):
             prompt += ("Reuse Step:{key:Step.id}; Goal step_key=key; omit id/logical_id/immutable_frozen. "
                        if compact else
                        "Retain an existing Step as {key:existing Step.id}; omit runtime id/logical_id/immutable_frozen. "
                        "Goal bindings use step_key=that key, not runtime step_id. ")
             if complete_contract:
-                prompt += ("Retain depends_on transitively, including completed Steps. " if compact else
-                           "Reusing a Step preserves its depends_on; retain those Steps and their dependencies too. "
-                           "A completed Step's dependencies still belong in the revised Plan. ")
+                prompt += ("Settled dependency closure is retained automatically; unknown refs are rejected. " if compact else
+                           "Reusing a settled Step preserves its depends_on; the program retains its settled dependency closure. "
+                           "Declare all new or unsettled execution Steps explicitly; unknown references remain invalid. ")
         prompt += ("call_tool {step_id}:pending_step_ids only. Inspect each Result; "
                    "qualification!=applicability. Stop:delivery refs." if compact else
             "Execute existing Step: call_tool {step_id} from pending_step_ids. "

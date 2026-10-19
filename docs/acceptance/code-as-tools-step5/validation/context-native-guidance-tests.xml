@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="49" time="13.212" timestamp="2026-10-19T22:25:35.856920+08:00" hostname="AZ"><testcase classname="tests.unit.test_native_block_guidance" name="test_actual_live027_bare_output_flag_is_still_rejected_without_changing_evidence" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_synthetic_true_scalar_only_correction_passes_existing_admission_not_execution" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_disclosed_optional_output_values_match_existing_admission[true]" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_disclosed_optional_output_values_match_existing_admission[false]" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_disclosed_optional_output_values_match_existing_admission[0]" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_disclosed_optional_output_values_match_existing_admission[1]" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_disclosed_output_block_is_optional_and_does_not_create_a_requirement" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_guidance_does_not_relax_boolean_duplicate_or_nested_block_rejections[jsonpropfile yes]" time="0.001" /><testcase classname="tests.unit.test_native_block_guidance" name="test_guidance_does_not_relax_boolean_duplicate_or_nested_block_rejections[jsonpropfile true jsonpropfile false]" time="0.001" /><testcase classname="tests.unit.test_native_block_guidance" name="test_guidance_does_not_relax_boolean_duplicate_or_nested_block_rejections[jsonpropfile true\n  %scf MaxIter 1 end]" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_actual_live038_omitted_response_bound_still_rejects_and_old_guidance_was_visible" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_only_synthetic_missing_method_block_addition_passes_existing_admission" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_required_iteration_guidance_tracks_frozen_policy_and_actual_bound[scf-MaxIter-max_scf_iterations-31]" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_required_iteration_guidance_tracks_frozen_policy_and_actual_bound[geom-MaxIter-max_geom_iterations-5]" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_required_iteration_guidance_tracks_frozen_policy_and_actual_bound[method-Z_MaxIter-max_response_iterations-17]" time="0.002" /><testcase classname="tests.unit.test_native_block_guidance" name="test_single_point_prohibits_response_block_instead_of_making_it_unconditionally_required" time="0.002" /><testcase classname="tests.unit.test_code_context" name="test_settled_failed_python_retains_repair_schema_and_frozen_code_identity[12000]" time="1.063" /><testcase classname="tests.unit.test_code_context" name="test_settled_failed_python_retains_repair_schema_and_frozen_code_identity[64000]" time="0.947" /><testcase classname="tests.unit.test_code_context" name="test_python_catalog_requires_execution_permission[False]" time="0.001" /><testcase classname="tests.unit.test_code_context" name="test_python_catalog_requires_execution_permission[True]" time="0.001" /><testcase classname="tests.unit.test_code_context" name="test_written_code_feedback_retains_reference_hash_and_size_without_content" time="0.001" /><testcase classname="tests.unit.test_code_context" name="test_generic_observation_feedback_preserves_values_and_unverified_sources_at_small_preview_budget" time="0.001" /><testcase classname="tests.unit.test_code_context" name="test_actual_live028_disclosure_gaps_remain_visible_without_rewriting_results" time="0.003"><failure message="AssertionError: assert [{'name': 'op...1, ...}, ...}] == [{'name': 'op...1, ...}, ...}]&#10;  &#10;  At index 0 diff: {'name': 'optimized_geometry', 'value': '9\nCoordinates from ORCA-job job E -154.828249797040\n  C          -0.91686440818592      0.07147422424429      0.04148705783117\n  C           0.51874560129175     -0.41707482841267     -0.11802519883160\n  O           1.45989751873920      0.40295082168290      0.54506463634138\n  H          -1.05389170505105      1.06266205975960     -0.42636260963335\n  H          -1.62962285520748     -0.62128557687717     -0.43646647211416\n  H          -1.17880672970809      0.16144396160104      1.10790153433231\n  H     ...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">def test_actual_live028_disclosure_gaps_remain_visible_without_rewriting_results():
+        path = Path(__file__).parents[1] / "fixtures/code_contracts/live028-observation-disclosure-gap.json"
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+            "34d36cc70d3a9f67d5eff4471ed01d1163e8e33fee5bed34d2e0e2a79b8cd378")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        result = Result.model_validate(data["result"])
+        before = result.model_copy(deep=True)
+        view = context._result(result, 1)
+        records = {record["name"]: record for record in view["unqualified_observation_records"]}
+        geometry, frequencies = records["optimized_geometry"], records["vibrational_frequencies"]
+        assert isinstance(geometry["value"], str) and geometry["unit"] is None
+        assert len(data["raw_frequency_values"]) == 27
+        assert len(frequencies["value"]) == 21
+        assert frequencies["value"] == [value for value in data["raw_frequency_values"] if value &gt; 1e-6]
+        assert not any("filter" in text.casefold() for text in frequencies["limitations"])
+        assert all(record["validation_status"] == "unverified" for record in records.values())
+&gt;       assert view["unqualified_observation_records"] == data["result"]["observation_records"]
+E       AssertionError: assert [{'name': 'op...1, ...}, ...}] == [{'name': 'op...1, ...}, ...}]
+E         
+E         At index 0 diff: {'name': 'optimized_geometry', 'value': '9\nCoordinates from ORCA-job job E -154.828249797040\n  C          -0.91686440818592      0.07147422424429      0.04148705783117\n  C           0.51874560129175     -0.41707482841267     -0.11802519883160\n  O           1.45989751873920      0.40295082168290      0.54506463634138\n  H          -1.05389170505105      1.06266205975960     -0.42636260963335\n  H          -1.62962285520748     -0.62128557687717     -0.43646647211416\n  H          -1.17880672970809      0.16144396160104      1.10790153433231\n  H     ...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests\unit\test_code_context.py:111: AssertionError</failure></testcase><testcase classname="tests.unit.test_code_context" name="test_settled_writer_receipt_remains_after_feedback_without_inlining_task_source[12000]" time="0.571" /><testcase classname="tests.unit.test_code_context" name="test_settled_writer_receipt_remains_after_feedback_without_inlining_task_source[64000]" time="0.538" /><testcase classname="tests.unit.test_code_context" name="test_actual_collected_observation_returns_to_same_loop_with_unverified_value[12000]" time="1.468" /><testcase classname="tests.unit.test_code_context" name="test_actual_collected_observation_returns_to_same_loop_with_unverified_value[64000]" time="1.427" /><testcase classname="tests.unit.test_code_context" name="test_authorized_selection_exposes_sources_code_tools_and_exact_frozen_native_contract" time="0.117"><failure message="AssertionError: assert 'request_key unique per Run' in 'Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. Unmet Goals use goa...e remains unsupported. ORCA %maxcore uses AUTHORITY.execution_resources.maxcore_mb per process, never total_memory_mb.'">tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1726/test_authorized_selection_expo0')
+
+    def test_authorized_selection_exposes_sources_code_tools_and_exact_frozen_native_contract(tmp_path):
+        request, run, prepared, wire = selection_context(tmp_path)
+        assert prepared.input_token_bound &lt;= run.budget.input_tokens
+        assert "select_conditions" in wire["AUTHORITY"]["decision_purpose"]["allowed_actions"]
+        selection = wire["ACTION_SCHEMAS"]["select_conditions"]
+        from orca_agent.readable_context import native_schema
+        assert selection == native_schema(selection_action_parameters(request))
+        assert selection["properties"]["request_version"]["const"] == request.version
+        assert selection["properties"]["choices"]["propertyNames"]["enum"] == ["method", "basis"]
+        tools = {tool["name"]: tool for tool in wire["TOOLS"]}
+        assert {"python.execute", "orca.run", "workspace.write", "knowledge.search",
+                "structure.resolve", "structure.prepare", "evidence.text", "evidence.search"} &lt;= tools.keys()
+        assert set(tools["python.execute"]["parameters"]["properties"]) == {
+            "code", "inputs", "observation_names", "conditions"}
+        assert set(tools["workspace.write"]["parameters"]["properties"]) == {"name", "content", "role"}
+        assert wire["AUTHORITY"]["native_input_contract"] == profile_contract(run.configuration.execution.native_input_policy)
+        assert wire["AUTHORITY"]["native_input_contract"]["scientific_validation"] == "unverified"
+        native = wire["AUTHORITY"]["native_input_contract"]
+        raw_content = prepared.body()["messages"][1]["content"]
+        for block in ("scf", "geom", "method"):
+            # Actual wire strings remain self-contained even if surrounding keys
+            # are compacted: a decoder cannot hide a missing native block name.
+            assert f"%{block} " in native["required_blocks"][block]
+            assert native["required_blocks"][block] in raw_content
+        assert "1..128" in native["required_blocks"]["method"]
+        assert "Every field needs a value" in native["block_syntax"]
+        assert native["optional_blocks"]["output"]["example"] == "%output JsonPropFile true end"
+        assert native["optional_blocks"]["output"]["fields"] == {"jsonpropfile": ["true", "false", "0", "1"]}
+        assert native["optional_blocks"]["output"]["required"] is False
+        rules = wire["TASK_CODE_RULES"]
+        assert "from orca_task_sdk import run_orca" in rules and "Step.parameters.observation_names" in rules
+        assert "missing controls are rejected, never filled in" in rules
+&gt;       assert "request_key unique per Run" in rules
+E       AssertionError: assert 'request_key unique per Run' in 'Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. Unmet Goals use goa...e remains unsupported. ORCA %maxcore uses AUTHORITY.execution_resources.maxcore_mb per process, never total_memory_mb.'
+
+tests\unit\test_code_context.py:258: AssertionError</failure></testcase><testcase classname="tests.unit.test_code_context" name="test_observation_guidance_requires_full_sequences_and_sourced_units_without_task_algorithm" time="0.127" /><testcase classname="tests.unit.test_code_context" name="test_execution_resource_projection_uses_frozen_nondefault_values_without_permission_changes[False]" time="0.138" /><testcase classname="tests.unit.test_code_context" name="test_execution_resource_projection_uses_frozen_nondefault_values_without_permission_changes[True]" time="0.150" /><testcase classname="tests.unit.test_code_context" name="test_sdk_guidance_exposes_readonly_filename_mapping_and_repair_constraints" time="0.106" /><testcase classname="tests.unit.test_code_context" name="test_native_only_permission_keeps_authoring_and_bounded_read_schemas_without_python" time="0.101" /><testcase classname="tests.unit.test_code_context" name="test_staged_code_guidance_preserves_science_goals_without_future_artifacts" time="0.115" /><testcase classname="tests.unit.test_code_context" name="test_scientific_sdk_guidance_declares_current_source_and_resource_limits" time="0.092"><failure message="AssertionError: assert 'Compute+parse in one Python task' in 'Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. Unmet Goals use goa...e remains unsupported. ORCA %maxcore uses AUTHORITY.execution_resources.maxcore_mb per process, never total_memory_mb.'">tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1726/test_scientific_sdk_guidance_d0')
+
+    def test_scientific_sdk_guidance_declares_current_source_and_resource_limits(tmp_path):
+        _, run, _, wire = selection_context(tmp_path)
+        rules = wire["TASK_CODE_RULES"]
+&gt;       assert "Compute+parse in one Python task" in rules
+E       AssertionError: assert 'Compute+parse in one Python task' in 'Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. Unmet Goals use goa...e remains unsupported. ORCA %maxcore uses AUTHORITY.execution_resources.maxcore_mb per process, never total_memory_mb.'
+
+tests\unit\test_code_context.py:380: AssertionError</failure></testcase><testcase classname="tests.unit.test_code_context" name="test_python_without_native_authorization_does_not_advertise_sdk_execution[False]" time="0.418" /><testcase classname="tests.unit.test_code_context" name="test_python_without_native_authorization_does_not_advertise_sdk_execution[True]" time="0.385"><failure message="AssertionError: assert 'Scientific Goals need a same-Attempt SDK native receipt' in 'Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. Unmet Goals use goa... Scientific Goals need a completed SDK native receipt with verified original provenance; pure file tasks need no ORCA.'">tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1726/test_python_without_native_aut1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002150C31B550&gt;
+permission = True
+
+    @pytest.mark.parametrize("permission", [False, True])
+    def test_python_without_native_authorization_does_not_advertise_sdk_execution(tmp_path, monkeypatch, permission):
+        store, original, _ = case(tmp_path, monkeypatch)
+        request, plan = store.load_request(original), store.load_plan(original)
+        run = store.create_run(request, plan, original.permission.model_copy(update={
+            "model_execution": True, "scientific_execution": permission}),
+            original.budget.model_copy(update={"model_calls": 4, "model_tokens": 48000,
+                "input_tokens": 12000, "output_tokens": 2000, "decision_rounds": 12}))
+        snapshot = collect_delivery_snapshot(store, run, request, plan)
+        prepared = context.build_context(request, run, plan, delivery_snapshot=snapshot)
+        rules = decoded(prepared)["TASK_CODE_RULES"]
+        assert "full parsed sequences" in rules and "Unknown units stay null" in rules
+        if permission:
+&gt;           assert "Scientific Goals need a same-Attempt SDK native receipt" in rules
+E           AssertionError: assert 'Scientific Goals need a same-Attempt SDK native receipt' in 'Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. Unmet Goals use goa... Scientific Goals need a completed SDK native receipt with verified original provenance; pure file tasks need no ORCA.'
+
+tests\unit\test_code_context.py:403: AssertionError</failure></testcase><testcase classname="tests.unit.test_code_context" name="test_missing_conditions_do_not_become_selectable_without_usable_user_authorization[unknown-True]" time="0.068" /><testcase classname="tests.unit.test_code_context" name="test_missing_conditions_do_not_become_selectable_without_usable_user_authorization[None-False]" time="0.073" /><testcase classname="tests.unit.test_code_context" name="test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_history_survives" time="0.005"><failure message="AssertionError: assert 'agent-json-v60' == 'agent-json-v58'&#10;  &#10;  - agent-json-v58&#10;  ?             ^^&#10;  + agent-json-v60&#10;  ?             ^^">def test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_history_survives():
+        request, run = objects()
+        prepared = context.build_context(request, run)
+        wire = decoded(prepared)
+&gt;       assert prepared.prompt_version == "agent-json-v58"
+E       AssertionError: assert 'agent-json-v60' == 'agent-json-v58'
+E         
+E         - agent-json-v58
+E         ?             ^^
+E         + agent-json-v60
+E         ?             ^^
+
+tests\unit\test_code_context.py:423: AssertionError</failure></testcase><testcase classname="tests.unit.test_code_context" name="test_context_code_allowance_counts_historical_attempts_without_rewriting_usage" time="0.815" /><testcase classname="tests.unit.test_code_context" name="test_prior_source_receipts_remain_available_after_multiple_searches" time="0.518" /><testcase classname="tests.unit.test_code_context" name="test_mixed_identity_rules_are_visible_per_system_without_upgrading_legacy_contract" time="0.114" /><testcase classname="tests.unit.test_code_context" name="test_current_generated_intake_uses_single_source_scope_and_v3_schema[False]" time="0.154" /><testcase classname="tests.unit.test_code_context" name="test_current_generated_intake_uses_single_source_scope_and_v3_schema[True]" time="0.137" /><testcase classname="tests.unit.test_code_context" name="test_actual_decision_passes_code_permission_and_eligible_tool_to_intake[False-True]" time="0.311" /><testcase classname="tests.unit.test_code_context" name="test_actual_decision_passes_code_permission_and_eligible_tool_to_intake[True-False]" time="0.327" /><testcase classname="tests.unit.test_code_context" name="test_actual_decision_passes_code_permission_and_eligible_tool_to_intake[True-True]" time="0.317" /><testcase classname="tests.unit.test_code_context" name="test_compact_intake_keeps_complete_source_schema_and_literal_authority" time="0.041" /></testsuite></testsuites>

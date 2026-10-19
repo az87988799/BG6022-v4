@@ -1,0 +1,80 @@
+{
+  "request_hash": "773fa2b7796c29a113016f2d35c4ddd53a7a2c0cf93796590942af5c5e420471",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_hexane",
+          "tool": "structure.resolve",
+          "system_id": "system_n_hexane"
+        },
+        {
+          "key": "prepare_hexane",
+          "tool": "structure.prepare",
+          "system_id": "system_n_hexane",
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_hexane",
+              "port": "resolved_identity"
+            }
+          }
+        }
+      ],
+      "goal_map": {
+        "goal_hexane_identity": {
+          "step_key": "resolve_hexane",
+          "port": "resolved_identity"
+        },
+        "goal_hexane_initial_geometry": {
+          "step_key": "prepare_hexane",
+          "port": "prepared_geometry"
+        },
+        "goal_hexane_conformer_sampling": {
+          "gap": "awaiting prepared initial geometry and a budgeted search implementation",
+          "port": "sampling"
+        },
+        "goal_hexane_energy_ranking": {
+          "gap": "awaiting prepared geometry and ORCA candidate computations",
+          "port": "member_table"
+        },
+        "goal_hexane_energy_difference": {
+          "gap": "awaiting computed candidate energies and formula/unit reporting",
+          "port": "energy_difference"
+        },
+        "goal_hexane_structure_relationships": {
+          "gap": "awaiting candidate structures from bounded search",
+          "port": "structure_relationships"
+        },
+        "goal_hexane_search_scope": {
+          "gap": "awaiting documented search implementation and scope",
+          "port": "search_scope"
+        },
+        "goal_hexane_sampling_check": {
+          "gap": "awaiting completed search and validation coverage",
+          "port": "sampling_check"
+        }
+      }
+    },
+    "reason": "No plan exists and no Step is pending. Start with identity resolution and initial XYZ preparation as required input preparation. Fixed conditions remain B3LYP/6-31g, charge 0, multiplicity 1, RKS, gas phase, with at most 4 ORCA starts. Python/ORCA Steps are deferred because their CodeRefs and geometry manifests must use real returned artifact IDs/hashes, not placeholders. Remaining Goals are explicitly marked as gaps until prepared geometry and bounded search results exist; no global minimum will be claimed."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_hexane\",\"tool\":\"structure.resolve\",\"system_id\":\"system_n_hexane\"},{\"key\":\"prepare_hexane\",\"tool\":\"structure.prepare\",\"system_id\":\"system_n_hexane\",\"inputs\":{\"identity\":{\"producer_key\":\"resolve_hexane\",\"port\":\"resolved_identity\"}}}],\"goal_map\":{\"goal_hexane_identity\":{\"step_key\":\"resolve_hexane\",\"port\":\"resolved_identity\"},\"goal_hexane_initial_geometry\":{\"step_key\":\"prepare_hexane\",\"port\":\"prepared_geometry\"},\"goal_hexane_conformer_sampling\":{\"gap\":\"awaiting prepared initial geometry and a budgeted search implementation\",\"port\":\"sampling\"},\"goal_hexane_energy_ranking\":{\"gap\":\"awaiting prepared geometry and ORCA candidate computations\",\"port\":\"member_table\"},\"goal_hexane_energy_difference\":{\"gap\":\"awaiting computed candidate energies and formula/unit reporting\",\"port\":\"energy_difference\"},\"goal_hexane_structure_relationships\":{\"gap\":\"awaiting candidate structures from bounded search\",\"port\":\"structure_relationships\"},\"goal_hexane_search_scope\":{\"gap\":\"awaiting documented search implementation and scope\",\"port\":\"search_scope\"},\"goal_hexane_sampling_check\":{\"gap\":\"awaiting completed search and validation coverage\",\"port\":\"sampling_check\"}}},\"reason\":\"No plan exists and no Step is pending. Start with identity resolution and initial XYZ preparation as required input preparation. Fixed conditions remain B3LYP/6-31g, charge 0, multiplicity 1, RKS, gas phase, with at most 4 ORCA starts. Python/ORCA Steps are deferred because their CodeRefs and geometry manifests must use real returned artifact IDs/hashes, not placeholders. Remaining Goals are explicitly marked as gaps until prepared geometry and bounded search results exist; no global minimum will be claimed.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 14078,
+    "completion_tokens": 2780,
+    "total_tokens": 16858,
+    "prompt_cache_hit_tokens": 1792,
+    "prompt_cache_miss_tokens": 12286
+  },
+  "response_hash": "49925f3df4b2ccc9055fc9ce5babf5aea5f9034e648979793b68377df89639f7",
+  "response_bytes": 13544,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "daa434a8-03ff-480b-befd-59fb1cf3d981",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 14.328000000001339
+}

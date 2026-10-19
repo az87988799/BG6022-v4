@@ -21,6 +21,28 @@ class PlanningError(ValueError):
         self.detail = detail
 
 
+def settled_step_snapshots(store, run):
+    """Exact latest settled execution facts eligible for structural Plan carry."""
+    latest = {item.step_id: item for item in [*run.calls, *run.attempts] if item.step_id}
+    settled = {}
+    for identifier, record in latest.items():
+        step = record.frozen_step
+        if (step is None or step.id != identifier or step.tool != record.tool
+                or record.state not in {"completed", "failed", "cancelled", "timed_out"}
+                or not record.result_id or record.result_id not in run.result_ids
+                or hasattr(record, "finished_at") and record.finished_at is None):
+            continue
+        try:
+            result = store.load_result(run.id, record.result_id)
+            source_id = result.attempt_id if hasattr(record, "finished_at") else result.call_id
+            if ((result.run_id, result.id, result.step_id, source_id, result.operation_status)
+                    == (run.id, record.result_id, identifier, record.id, record.state)):
+                settled[identifier] = step
+        except (KeyError, ValueError, OSError, RuntimeError):
+            continue
+    return settled
+
+
 def _require(condition, message):
     if not condition:
         raise PlanningError(message)

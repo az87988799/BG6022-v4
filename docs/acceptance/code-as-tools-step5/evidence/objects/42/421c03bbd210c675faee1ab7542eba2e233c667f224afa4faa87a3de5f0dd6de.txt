@@ -1,0 +1,83 @@
+{
+  "request_hash": "c34eadceb86cd6e287b17b4fbabfb917230090661b5e74dd6cbd0c236a1b4bfc",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_n_hexane",
+          "tool": "structure.resolve",
+          "system_id": "system_n_hexane"
+        },
+        {
+          "key": "prepare_n_hexane",
+          "tool": "structure.prepare",
+          "system_id": "system_n_hexane",
+          "depends_on": [
+            "resolve_n_hexane"
+          ],
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_n_hexane",
+              "port": "resolved_identity"
+            }
+          }
+        }
+      ],
+      "goal_map": {
+        "goal_conformer_search": {
+          "gap": "n-hexane identity and prepared initial geometry not yet available; conformer-search code not staged",
+          "port": "sampling"
+        },
+        "goal_lowest_candidate": {
+          "gap": "n-hexane identity and prepared initial geometry not yet available; no ORCA candidate energies",
+          "port": "energy"
+        },
+        "goal_energy_ranking": {
+          "gap": "n-hexane identity and prepared initial geometry not yet available; no uniform-condition ORCA ranking",
+          "port": "energy_difference"
+        },
+        "goal_candidate_structures": {
+          "gap": "n-hexane identity and prepared initial geometry not yet available; no candidate structures table",
+          "port": "member_table"
+        },
+        "goal_failed_members": {
+          "gap": "n-hexane identity and prepared initial geometry not yet available; no failed-member record",
+          "port": "sampling_check"
+        },
+        "goal_search_report": {
+          "gap": "n-hexane identity and prepared initial geometry not yet available; search scope and relationships not yet recorded",
+          "port": "sampling"
+        },
+        "goal_verification_report": {
+          "gap": "n-hexane identity and prepared initial geometry not yet available; verification coverage not yet assessed",
+          "port": "sampling_check"
+        },
+        "goal_artifacts_report": {
+          "gap": "n-hexane identity and prepared initial geometry not yet available; downloadable tables and structures not yet produced",
+          "port": "member_table"
+        }
+      }
+    },
+    "reason": "No plan exists and CONTROL.pending_step_ids is empty; all Goals are insufficient_evidence. Stage required input-preparation first: resolve n-hexane identity and prepare the initial XYZ under neutral singlet/gas-phase conditions. This avoids premature ORCA starts and leaves the remaining normal ORCA budget (4) for the bounded conformer search. After receipts, revise the plan to write conformer-search code and add Python/ORCA steps. No global-minimum claim will be made."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_n_hexane\",\"tool\":\"structure.resolve\",\"system_id\":\"system_n_hexane\"},{\"key\":\"prepare_n_hexane\",\"tool\":\"structure.prepare\",\"system_id\":\"system_n_hexane\",\"depends_on\":[\"resolve_n_hexane\"],\"inputs\":{\"identity\":{\"producer_key\":\"resolve_n_hexane\",\"port\":\"resolved_identity\"}}}],\"goal_map\":{\"goal_conformer_search\":{\"gap\":\"n-hexane identity and prepared initial geometry not yet available; conformer-search code not staged\",\"port\":\"sampling\"},\"goal_lowest_candidate\":{\"gap\":\"n-hexane identity and prepared initial geometry not yet available; no ORCA candidate energies\",\"port\":\"energy\"},\"goal_energy_ranking\":{\"gap\":\"n-hexane identity and prepared initial geometry not yet available; no uniform-condition ORCA ranking\",\"port\":\"energy_difference\"},\"goal_candidate_structures\":{\"gap\":\"n-hexane identity and prepared initial geometry not yet available; no candidate structures table\",\"port\":\"member_table\"},\"goal_failed_members\":{\"gap\":\"n-hexane identity and prepared initial geometry not yet available; no failed-member record\",\"port\":\"sampling_check\"},\"goal_search_report\":{\"gap\":\"n-hexane identity and prepared initial geometry not yet available; search scope and relationships not yet recorded\",\"port\":\"sampling\"},\"goal_verification_report\":{\"gap\":\"n-hexane identity and prepared initial geometry not yet available; verification coverage not yet assessed\",\"port\":\"sampling_check\"},\"goal_artifacts_report\":{\"gap\":\"n-hexane identity and prepared initial geometry not yet available; downloadable tables and structures not yet produced\",\"port\":\"member_table\"}}},\"reason\":\"No plan exists and CONTROL.pending_step_ids is empty; all Goals are insufficient_evidence. Stage required input-preparation first: resolve n-hexane identity and prepare the initial XYZ under neutral singlet/gas-phase conditions. This avoids premature ORCA starts and leaves the remaining normal ORCA budget (4) for the bounded conformer search. After receipts, revise the plan to write conformer-search code and add Python/ORCA steps. No global-minimum claim will be made.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 13319,
+    "completion_tokens": 12129,
+    "total_tokens": 25448,
+    "prompt_cache_hit_tokens": 1920,
+    "prompt_cache_miss_tokens": 11399
+  },
+  "response_hash": "c28a89cd248fb1c29d39cf0e5dac949e47a81620efeb28d2a2f0829cf5b8578a",
+  "response_bytes": 51533,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "04892749-b6b0-43c6-a5bc-2d5ba3ef6903",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 53.78099999999904
+}

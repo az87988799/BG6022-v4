@@ -1,0 +1,908 @@
+{
+  "id": "result_d77e18b40cce402b83d52d31f221cc43",
+  "run_id": "run_a3606aa93843451ea56f6f7bda5e8ebf",
+  "step_id": null,
+  "attempt_id": null,
+  "call_id": "call_29418a1181ac4b4fa9a40126bc284a77",
+  "supersedes_result_id": null,
+  "operation_status": "completed",
+  "checks": {
+    "text_window": [
+      {
+        "name": "bounded_evidence_read",
+        "status": "passed",
+        "detail": "operation only; content and observed values remain scientifically unverified",
+        "source": {
+          "artifact_id": "artifact_86ffe626c22542f6ac2287a169576c51",
+          "sha256": "1a1cfee8745f37032c2b19bc98b654e36ddbb9d3f0663eee36fa7292b1261525",
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        },
+        "rule_version": "evidence-read-1"
+      }
+    ]
+  },
+  "qualified_outputs": {},
+  "observations": {
+    "text_window": {
+      "artifact_id": "artifact_86ffe626c22542f6ac2287a169576c51",
+      "sha256": "1a1cfee8745f37032c2b19bc98b654e36ddbb9d3f0663eee36fa7292b1261525",
+      "role": "code",
+      "file": "artifacts/artifact_86ffe626c22542f6ac2287a169576c51/files/conformer_search_and_orca_v2.py",
+      "source": {
+        "call_id": "call_92b5fcf447204e3ea5702ba49eb337b2",
+        "role": "python",
+        "name": "conformer_search_and_orca_v2.py"
+      },
+      "view": {
+        "type": "raw_text",
+        "version": "1"
+      },
+      "path": [],
+      "geometry_indices": [],
+      "stage": "unknown",
+      "units": null,
+      "conditions": "unknown",
+      "scientific_status": "unverified",
+      "validation": "unverified observation; not a scientific qualification",
+      "lines": [
+        {
+          "line": 1,
+          "text": "from pathlib import Path"
+        },
+        {
+          "line": 2,
+          "text": "import json, csv"
+        },
+        {
+          "line": 3,
+          "text": "from rdkit import Chem"
+        },
+        {
+          "line": 4,
+          "text": "from rdkit.Chem import AllChem, rdMolAlign"
+        },
+        {
+          "line": 5,
+          "text": "from orca_task_sdk import run_orca"
+        },
+        {
+          "line": 6,
+          "text": ""
+        },
+        {
+          "line": 7,
+          "text": "W = Path.cwd()"
+        },
+        {
+          "line": 8,
+          "text": "HARTREE_TO_KCAL = 627.5094740631"
+        },
+        {
+          "line": 9,
+          "text": ""
+        },
+        {
+          "line": 10,
+          "text": "def find(name):"
+        },
+        {
+          "line": 11,
+          "text": "    p = W / name"
+        },
+        {
+          "line": 12,
+          "text": "    if p.exists():"
+        },
+        {
+          "line": 13,
+          "text": "        return p"
+        },
+        {
+          "line": 14,
+          "text": "    hits = list(W.rglob(name))"
+        },
+        {
+          "line": 15,
+          "text": "    return hits[0] if hits else None"
+        },
+        {
+          "line": 16,
+          "text": ""
+        },
+        {
+          "line": 17,
+          "text": "initial = find('initial.xyz')"
+        },
+        {
+          "line": 18,
+          "text": "preserved = 'preserved_initial.xyz'"
+        },
+        {
+          "line": 19,
+          "text": "if initial is not None:"
+        },
+        {
+          "line": 20,
+          "text": "    (W / preserved).write_text(initial.read_text())"
+        },
+        {
+          "line": 21,
+          "text": ""
+        },
+        {
+          "line": 22,
+          "text": "mol = Chem.AddHs(Chem.MolFromSmiles('CCCCCC'))"
+        },
+        {
+          "line": 23,
+          "text": "params = AllChem.ETKDGv3()"
+        },
+        {
+          "line": 24,
+          "text": "params.randomSeed = 20261019"
+        },
+        {
+          "line": 25,
+          "text": "params.pruneRmsThresh = 0.25"
+        },
+        {
+          "line": 26,
+          "text": "params.numThreads = 1"
+        },
+        {
+          "line": 27,
+          "text": "params.useRandomCoords = True"
+        },
+        {
+          "line": 28,
+          "text": "requested = 200"
+        },
+        {
+          "line": 29,
+          "text": "cids = list(AllChem.EmbedMultipleConfs(mol, numConfs=requested, params=params))"
+        },
+        {
+          "line": 30,
+          "text": "opt = AllChem.MMFFOptimizeMoleculeConfs(mol, maxIters=1000, numThreads=1)"
+        },
+        {
+          "line": 31,
+          "text": ""
+        },
+        {
+          "line": 32,
+          "text": "recs = []"
+        },
+        {
+          "line": 33,
+          "text": "for i, cid in enumerate(cids):"
+        },
+        {
+          "line": 34,
+          "text": "    nc, e = opt[i] if i < len(opt) else (1, None)"
+        },
+        {
+          "line": 35,
+          "text": "    recs.append({'candidate_id': 'cand_%03d' % i, 'conf_id': cid,"
+        },
+        {
+          "line": 36,
+          "text": "                 'mmff_energy_kcal_mol': e, 'mmff_converged': int(nc) == 0})"
+        },
+        {
+          "line": 37,
+          "text": ""
+        },
+        {
+          "line": 38,
+          "text": "valid = [r for r in recs if r['mmff_energy_kcal_mol'] is not None]"
+        },
+        {
+          "line": 39,
+          "text": "valid.sort(key=lambda r: r['mmff_energy_kcal_mol'])"
+        },
+        {
+          "line": 40,
+          "text": "sel = []"
+        },
+        {
+          "line": 41,
+          "text": "for r in valid:"
+        },
+        {
+          "line": 42,
+          "text": "    if len(sel) >= 4:"
+        },
+        {
+          "line": 43,
+          "text": "        break"
+        },
+        {
+          "line": 44,
+          "text": "    ok = True"
+        },
+        {
+          "line": 45,
+          "text": "    for s in sel:"
+        },
+        {
+          "line": 46,
+          "text": "        try:"
+        },
+        {
+          "line": 47,
+          "text": "            rms = rdMolAlign.GetBestRMS(mol, mol, r['conf_id'], s['conf_id'])"
+        },
+        {
+          "line": 48,
+          "text": "        except Exception:"
+        },
+        {
+          "line": 49,
+          "text": "            rms = 999.0"
+        },
+        {
+          "line": 50,
+          "text": "        if rms < 0.5:"
+        },
+        {
+          "line": 51,
+          "text": "            ok = False"
+        },
+        {
+          "line": 52,
+          "text": "            break"
+        },
+        {
+          "line": 53,
+          "text": "    if ok:"
+        },
+        {
+          "line": 54,
+          "text": "        sel.append(r)"
+        },
+        {
+          "line": 55,
+          "text": "if len(sel) < 4:"
+        },
+        {
+          "line": 56,
+          "text": "    for r in valid:"
+        },
+        {
+          "line": 57,
+          "text": "        if r not in sel:"
+        },
+        {
+          "line": 58,
+          "text": "            sel.append(r)"
+        },
+        {
+          "line": 59,
+          "text": "        if len(sel) >= 4:"
+        },
+        {
+          "line": 60,
+          "text": "            break"
+        },
+        {
+          "line": 61,
+          "text": ""
+        },
+        {
+          "line": 62,
+          "text": "for r in recs:"
+        },
+        {
+          "line": 63,
+          "text": "    r['selected_for_orca'] = r in sel"
+        },
+        {
+          "line": 64,
+          "text": "    r['orca_status'] = 'not_selected'"
+        },
+        {
+          "line": 65,
+          "text": "    r['exclusion_reason'] = None if r in sel else 'not selected; limited to four ORCA single-point calculations'"
+        },
+        {
+          "line": 66,
+          "text": "    r['orca_energy_hartree'] = None"
+        },
+        {
+          "line": 67,
+          "text": "    r['relative_energy_kcal_mol'] = None"
+        },
+        {
+          "line": 68,
+          "text": "    r['orca_request_key'] = None"
+        },
+        {
+          "line": 69,
+          "text": "    r['orca_out_key'] = None"
+        },
+        {
+          "line": 70,
+          "text": ""
+        },
+        {
+          "line": 71,
+          "text": "sel_files = []"
+        },
+        {
+          "line": 72,
+          "text": "for i, r in enumerate(sel):"
+        },
+        {
+          "line": 73,
+          "text": "    xyz = 'selected_%02d_%s.xyz' % (i, r['candidate_id'])"
+        },
+        {
+          "line": 74,
+          "text": "    (W / xyz).write_text(Chem.MolToXYZBlock(mol, confId=r['conf_id']))"
+        },
+        {
+          "line": 75,
+          "text": "    sel_files.append(xyz)"
+        },
+        {
+          "line": 76,
+          "text": "    inp = 'job_%02d_%s.inp' % (i, r['candidate_id'])"
+        },
+        {
+          "line": 77,
+          "text": "    txt = ('! B3LYP 6-31G RKS TightSCF NORI NoAutoStart\\n'"
+        },
+        {
+          "line": 78,
+          "text": "           '%maxcore 192\\n'"
+        },
+        {
+          "line": 79,
+          "text": "           '%pal nprocs 4 end\\n'"
+        },
+        {
+          "line": 80,
+          "text": "           '%scf MaxIter 256 ConvForced true AutoTRAH false end\\n'"
+        },
+        {
+          "line": 81,
+          "text": "           '* xyzfile 0 1 ' + xyz + '\\n')"
+        },
+        {
+          "line": 82,
+          "text": "    (W / inp).write_text(txt)"
+        },
+        {
+          "line": 83,
+          "text": "    key = 'cand_%02d_%s' % (i, r['candidate_id'])"
+        },
+        {
+          "line": 84,
+          "text": "    try:"
+        },
+        {
+          "line": 85,
+          "text": "        rc = run_orca(str(W / inp), dependencies=(str(W / xyz),), request_key=key,"
+        },
+        {
+          "line": 86,
+          "text": "                      purpose='new_candidate', retry_of=None)"
+        },
+        {
+          "line": 87,
+          "text": "        files = rc.get('files', {}) or {}"
+        },
+        {
+          "line": 88,
+          "text": "        out = None"
+        },
+        {
+          "line": 89,
+          "text": "        for k in files:"
+        },
+        {
+          "line": 90,
+          "text": "            lk = k.lower()"
+        },
+        {
+          "line": 91,
+          "text": "            if lk.endswith('.out') and ('stdout' in lk or 'output' in lk):"
+        },
+        {
+          "line": 92,
+          "text": "                out = k"
+        },
+        {
+          "line": 93,
+          "text": "                break"
+        },
+        {
+          "line": 94,
+          "text": "        if out is None:"
+        },
+        {
+          "line": 95,
+          "text": "            for k in files:"
+        },
+        {
+          "line": 96,
+          "text": "                if k.lower().endswith('.out'):"
+        },
+        {
+          "line": 97,
+          "text": "                    out = k"
+        },
+        {
+          "line": 98,
+          "text": "                    break"
+        },
+        {
+          "line": 99,
+          "text": "        e = None"
+        },
+        {
+          "line": 100,
+          "text": "        if out is not None:"
+        },
+        {
+          "line": 101,
+          "text": "            t = Path(files[out]).read_text(errors='replace')"
+        },
+        {
+          "line": 102,
+          "text": "            for line in t.splitlines():"
+        },
+        {
+          "line": 103,
+          "text": "                if 'FINAL SINGLE POINT ENERGY' in line:"
+        },
+        {
+          "line": 104,
+          "text": "                    for tok in reversed(line.split()):"
+        },
+        {
+          "line": 105,
+          "text": "                        try:"
+        },
+        {
+          "line": 106,
+          "text": "                            e = float(tok)"
+        },
+        {
+          "line": 107,
+          "text": "                            break"
+        },
+        {
+          "line": 108,
+          "text": "                        except Exception:"
+        },
+        {
+          "line": 109,
+          "text": "                            pass"
+        },
+        {
+          "line": 110,
+          "text": "                    if e is not None:"
+        },
+        {
+          "line": 111,
+          "text": "                        break"
+        },
+        {
+          "line": 112,
+          "text": "        r['orca_energy_hartree'] = e"
+        },
+        {
+          "line": 113,
+          "text": "        r['orca_request_key'] = rc.get('request_key', key)"
+        },
+        {
+          "line": 114,
+          "text": "        r['orca_out_key'] = out"
+        },
+        {
+          "line": 115,
+          "text": "        r['orca_status'] = 'completed' if e is not None else 'no_energy_parsed'"
+        },
+        {
+          "line": 116,
+          "text": "        if e is None:"
+        },
+        {
+          "line": 117,
+          "text": "            r['exclusion_reason'] = 'ORCA run completed but no FINAL SINGLE POINT ENERGY was parsed'"
+        },
+        {
+          "line": 118,
+          "text": "    except Exception as ex:"
+        },
+        {
+          "line": 119,
+          "text": "        r['orca_status'] = 'failed'"
+        },
+        {
+          "line": 120,
+          "text": "        r['exclusion_reason'] = 'ORCA failed: ' + repr(ex)"
+        },
+        {
+          "line": 121,
+          "text": ""
+        },
+        {
+          "line": 122,
+          "text": "energies = [r['orca_energy_hartree'] for r in sel if r['orca_energy_hartree'] is not None]"
+        },
+        {
+          "line": 123,
+          "text": "emin = min(energies) if energies else None"
+        },
+        {
+          "line": 124,
+          "text": "for r in sel:"
+        },
+        {
+          "line": 125,
+          "text": "    if r['orca_energy_hartree'] is not None and emin is not None:"
+        },
+        {
+          "line": 126,
+          "text": "        r['relative_energy_kcal_mol'] = (r['orca_energy_hartree'] - emin) * HARTREE_TO_KCAL"
+        },
+        {
+          "line": 127,
+          "text": ""
+        },
+        {
+          "line": 128,
+          "text": "fields = ['candidate_id', 'mmff_energy_kcal_mol', 'mmff_converged', 'selected_for_orca',"
+        },
+        {
+          "line": 129,
+          "text": "          'orca_energy_hartree', 'relative_energy_kcal_mol', 'orca_status',"
+        },
+        {
+          "line": 130,
+          "text": "          'exclusion_reason', 'orca_request_key', 'orca_out_key']"
+        },
+        {
+          "line": 131,
+          "text": "with (W / 'candidates_table.csv').open('w', newline='') as f:"
+        },
+        {
+          "line": 132,
+          "text": "    w = csv.DictWriter(f, fieldnames=fields)"
+        },
+        {
+          "line": 133,
+          "text": "    w.writeheader()"
+        },
+        {
+          "line": 134,
+          "text": "    for r in recs:"
+        },
+        {
+          "line": 135,
+          "text": "        w.writerow({k: r.get(k) for k in fields})"
+        },
+        {
+          "line": 136,
+          "text": ""
+        },
+        {
+          "line": 137,
+          "text": "sd = Chem.SDWriter(str(W / 'candidates_all.sdf'))"
+        },
+        {
+          "line": 138,
+          "text": "for r in recs:"
+        },
+        {
+          "line": 139,
+          "text": "    mol.SetProp('_Name', r['candidate_id'])"
+        },
+        {
+          "line": 140,
+          "text": "    sd.write(mol, confId=r['conf_id'])"
+        },
+        {
+          "line": 141,
+          "text": "sd.close()"
+        },
+        {
+          "line": 142,
+          "text": ""
+        },
+        {
+          "line": 143,
+          "text": "rank = []"
+        },
+        {
+          "line": 144,
+          "text": "for i, r in enumerate(sorted([x for x in sel if x['orca_energy_hartree'] is not None],"
+        },
+        {
+          "line": 145,
+          "text": "                             key=lambda x: x['orca_energy_hartree'])):"
+        },
+        {
+          "line": 146,
+          "text": "    rank.append({'rank': i + 1, 'candidate_id': r['candidate_id'],"
+        },
+        {
+          "line": 147,
+          "text": "                 'orca_energy_hartree': r['orca_energy_hartree'],"
+        },
+        {
+          "line": 148,
+          "text": "                 'relative_energy_kcal_mol': r['relative_energy_kcal_mol'],"
+        },
+        {
+          "line": 149,
+          "text": "                 'orca_request_key': r['orca_request_key'],"
+        },
+        {
+          "line": 150,
+          "text": "                 'orca_out_key': r['orca_out_key']})"
+        },
+        {
+          "line": 151,
+          "text": "low = rank[0] if rank else None"
+        },
+        {
+          "line": 152,
+          "text": ""
+        },
+        {
+          "line": 153,
+          "text": "all_rows = []"
+        },
+        {
+          "line": 154,
+          "text": "for r in recs:"
+        },
+        {
+          "line": 155,
+          "text": "    all_rows.append({'candidate_id': r['candidate_id'],"
+        },
+        {
+          "line": 156,
+          "text": "                     'mmff_energy_kcal_mol': r['mmff_energy_kcal_mol'],"
+        },
+        {
+          "line": 157,
+          "text": "                     'mmff_converged': r['mmff_converged'],"
+        },
+        {
+          "line": 158,
+          "text": "                     'selected_for_orca': r['selected_for_orca'],"
+        },
+        {
+          "line": 159,
+          "text": "                     'orca_energy_hartree': r['orca_energy_hartree'],"
+        },
+        {
+          "line": 160,
+          "text": "                     'relative_energy_kcal_mol': r['relative_energy_kcal_mol'],"
+        },
+        {
+          "line": 161,
+          "text": "                     'orca_status': r['orca_status'],"
+        },
+        {
+          "line": 162,
+          "text": "                     'exclusion_reason': r['exclusion_reason']})"
+        },
+        {
+          "line": 163,
+          "text": ""
+        },
+        {
+          "line": 164,
+          "text": "failed = [r for r in recs if (not r['mmff_converged']) or r['orca_status'] in ('failed', 'no_energy_parsed')]"
+        },
+        {
+          "line": 165,
+          "text": "excluded = [r for r in recs if not r['selected_for_orca']]"
+        },
+        {
+          "line": 166,
+          "text": ""
+        },
+        {
+          "line": 167,
+          "text": "lim = ['finite ETKDGv3/MMFF94 ensemble; not exhaustive conformational sampling and not a global-minimum claim',"
+        },
+        {
+          "line": 168,
+          "text": "       'ORCA values are single-point B3LYP/6-31G RKS gas-phase neutral singlet energies on MMFF94-optimized geometries',"
+        },
+        {
+          "line": 169,
+          "text": "       'no ORCA geometry optimization, frequency or thermochemistry verification',"
+        },
+        {
+          "line": 170,
+          "text": "       'only four selected candidates were evaluated with ORCA because of the stated four-calculation limit',"
+        },
+        {
+          "line": 171,
+          "text": "       'the prepared initial geometry is preserved but not included in the ORCA energy ranking',"
+        },
+        {
+          "line": 172,
+          "text": "       'RDKit conformer generation and MMFF94 energies are not independently verified']"
+        },
+        {
+          "line": 173,
+          "text": ""
+        },
+        {
+          "line": 174,
+          "text": "sampling_artifacts = ['candidates_table.csv', 'candidates_all.sdf'] + sel_files"
+        },
+        {
+          "line": 175,
+          "text": "if initial is not None:"
+        },
+        {
+          "line": 176,
+          "text": "    sampling_artifacts.append(preserved)"
+        },
+        {
+          "line": 177,
+          "text": ""
+        },
+        {
+          "line": 178,
+          "text": "obs = []"
+        },
+        {
+          "line": 179,
+          "text": "obs.append({'name': 'sampling',"
+        },
+        {
+          "line": 180,
+          "text": "            'value': {'system': 'n-hexane',"
+        },
+        {
+          "line": 181,
+          "text": "                      'initial_structure_preserved': preserved if initial is not None else 'initial file not found in workspace',"
+        },
+        {
+          "line": 182,
+          "text": "                      'search_method': 'RDKit ETKDGv3 embedding followed by MMFF94 optimization',"
+        },
+        {
+          "line": 183,
+          "text": "                      'requested_conformers': requested,"
+        },
+        {
+          "line": 184,
+          "text": "                      'generated_conformers': len(recs),"
+        },
+        {
+          "line": 185,
+          "text": "                      'selected_for_orca': [r['candidate_id'] for r in sel],"
+        },
+        {
+          "line": 186,
+          "text": "                      'search_scope': 'finite RDKit ETKDGv3 ensemble, randomSeed 20261019, pruneRmsThresh 0.25 A, MMFF94 optimization maxIters 1000, single thread',"
+        },
+        {
+          "line": 187,
+          "text": "                      'relationships': 'all candidates share the same n-hexane connectivity (CCCCCC with explicit hydrogens); the selected set is the lowest-MMFF94-energy subset with pairwise best-RMS >= 0.5 A; the prepared initial geometry is kept separately and is not part of the ORCA set',"
+        },
+        {
+          "line": 188,
+          "text": "                      'energy_difference_formula': 'DeltaE_i = (E_i - E_min) * 627.5094740631 kcal/mol per hartree',"
+        },
+        {
+          "line": 189,
+          "text": "                      'units': {'orca_energy': 'hartree', 'relative_energy': 'kcal/mol', 'mmff_energy': 'kcal/mol'}},"
+        },
+        {
+          "line": 190,
+          "text": "            'unit': None,"
+        },
+        {
+          "line": 191,
+          "text": "            'sources': [{'filename': 'candidates_table.csv', 'location': 'all rows'},"
+        },
+        {
+          "line": 192,
+          "text": "                        {'filename': 'candidates_all.sdf', 'location': 'all conformers'}],"
+        },
+        {
+          "line": 193,
+          "text": "            'formula': None,"
+        },
+        {
+          "line": 194,
+          "text": "            'artifacts': sampling_artifacts,"
+        },
+        {
+          "line": 195,
+          "text": "            'limitations': lim})"
+        },
+        {
+          "line": 196,
+          "text": ""
+        },
+        {
+          "line": 197,
+          "text": "energy_sources = ([{'internal_request_key': low['orca_request_key'],"
+        },
+        {
+          "line": 198,
+          "text": "                    'filename': low['orca_out_key'],"
+        },
+        {
+          "line": 199,
+          "text": "                    'location': 'FINAL SINGLE POINT ENERGY'}] if low else"
+        },
+        {
+          "line": 200,
+          "text": "                  [{'filename': 'candidates_table.csv', 'location': 'all rows'}])"
+        }
+      ],
+      "returned_bytes": 8737,
+      "status": "observed",
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      }
+    }
+  },
+  "observation_records": [],
+  "diagnostics": [],
+  "artifact_ids": [
+    "artifact_86ffe626c22542f6ac2287a169576c51"
+  ],
+  "source": {
+    "call_id": "call_92b5fcf447204e3ea5702ba49eb337b2",
+    "role": "python",
+    "name": "conformer_search_and_orca_v2.py",
+    "tool": "evidence.text",
+    "consumption": {
+      "_decision_id": "model_e3b9a67b59f34fbdb881162bc9060c09"
+    },
+    "request_version": 3,
+    "plan_version": 3
+  },
+  "created_at": "2026-10-19T14:51:41.235782Z"
+}

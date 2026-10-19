@@ -607,8 +607,10 @@ def resolve(store, run, call):
         cancelled = isinstance(exc, ControlChanged)
         if cancelled:
             source.update(not_started=source["http_requests"] == 0)
-        return _finish(store, run, call, _failure(run, call, type(exc).__name__, artifacts,
-                                                 status="cancelled" if cancelled else "failed", **source))
+        failure = _failure(run, call, type(exc).__name__, artifacts,
+                           status="cancelled" if cancelled else "failed", **source)
+        failure["diagnostics"][0]["detail"] = str(exc)[:1000]
+        return _finish(store, run, call, failure)
 
 
 def validate_prepared_geometry(xyz, canonical, expected_elements, *, graph=None):

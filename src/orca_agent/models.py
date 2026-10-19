@@ -599,6 +599,14 @@ class NativeInputPolicy(Record):
     max_geom_iterations: Annotated[int, Field(strict=True, ge=1, le=128)] = 128
     max_scf_iterations: Annotated[int, Field(strict=True, ge=1, le=256)] = 256
     max_response_iterations: Annotated[int, Field(strict=True, ge=1, le=128)] = 128
+    allow_task_geometry: Annotated[bool, Field(strict=True)] = False
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_shape(self, handler):
+        value = handler(self)
+        if not self.allow_task_geometry:
+            value.pop("allow_task_geometry", None)
+        return value
 
 
 class ExecutionConfiguration(Record):
@@ -854,6 +862,14 @@ class ObservationSource(Record):
     location: str | None = None
     attempt_id: Identifier | None = None
     internal_request_key: Identifier | None = None
+    actual_conditions: dict[str, Any] = Field(default_factory=dict)
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_shape(self, handler):
+        value = handler(self)
+        if not self.actual_conditions:
+            value.pop("actual_conditions", None)
+        return value
 
 
 class Observation(Record):
@@ -865,9 +881,20 @@ class Observation(Record):
     actual_conditions: dict[str, Any] = Field(default_factory=dict)
     sources: list[ObservationSource] = Field(default_factory=list)
     code_sha256: Digest | None = None
+    formula: str | None = Field(default=None, max_length=4000)
+    artifact_ids: list[Identifier] = Field(default_factory=list)
     checks: list[Check] = Field(default_factory=list)
     validation_status: Literal["unverified", "partially_checked", "failed"] = "unverified"
     limitations: list[str] = Field(default_factory=list)
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_shape(self, handler):
+        value = handler(self)
+        if self.formula is None:
+            value.pop("formula", None)
+        if not self.artifact_ids:
+            value.pop("artifact_ids", None)
+        return value
 
     @model_validator(mode="after")
     def finite_json_value(self):
@@ -931,6 +958,16 @@ def result_fingerprint_payload(result: Result, *, exclude: set[str] | None = Non
         # An absent/empty additive observation list has no new evidence to hash;
         # keep all pre-existing defaults and retain every nonempty new observation.
         payload.pop("observation_records", None)
+    else:
+        # Additive traceability metadata must not change historical Result
+        # identities when an old observation did not contain these fields.
+        for observation in payload.get("observation_records", []):
+            for name, empty in (("formula", None), ("artifact_ids", [])):
+                if observation.get(name) == empty:
+                    observation.pop(name, None)
+            for source in observation.get("sources", []):
+                if not source.get("actual_conditions"):
+                    source.pop("actual_conditions", None)
     return payload
 
 

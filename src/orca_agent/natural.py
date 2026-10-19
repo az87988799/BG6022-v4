@@ -53,7 +53,8 @@ def _missing_information(request):
             goal.unresolved = [item for item in goal.unresolved if not item.startswith(("missing:", "applicability:"))]
         if goal.minimum_check_version == "unresolved-1":
             goal.unresolved.append("missing:goal_definition")
-        if goal.port in {"sampling", "sampling_check"} and not (
+        if (goal.evidence_contract_version != "generic-observation-1"
+                and goal.port in {"sampling", "sampling_check"}) and not (
                 goal.conditions.get("sampling") and goal.conditions.get("candidates")):
             goal.unresolved.append("missing:sampling_specification")
         if goal.minimum_check_version not in _SCIENTIFIC_RULES:

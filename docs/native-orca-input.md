@@ -78,6 +78,10 @@ ORCA 私有运行库只复制已安装主程序以及 `orca_startup`、`orca_gue
 
 上述 Windows 私有模块集并非完整 ORCA 安装，也未验证所有方法组合。需要其他计算模块、转换程序或外部程序的输入可能被准入器拒绝，或由 ORCA 返回缺失模块的真实失败；程序不得自动复制未知助手、调用宿主未隔离安装或模拟结果作为回退。Windows MPI 服务与系统运行库依赖必须单独验证，复制 `_mpi.exe` 不能证明并行科学路径已可用。库导入烟测仅证明执行底座兼容性，不证明 Agent 自主解题。
 
+## 任务派生候选几何
+
+新 Run 可通过冻结的 `execution.native_input_policy.allow_task_geometry = true` 允许 Python SDK 提交不同候选坐标，默认 false。仅在 Request、System、Step 与相关 Goal 均未限制 `geometry_relation` 时启用，直接 `orca.run` 仍要求初始几何的准确字节。候选须保持初始原子数与有序元素；初始 Artifact/hash、每次候选输入与实际几何 hash 分别保留。该准入不检查同元素原子映射、连接关系、立体化学或坐标质量，不构成科学验证。固定初始几何或特定优化来源要求不能因此绕过；历史 Run 不自动获得此开关。
+
 ## Linux 容器运行库与已验证范围
 
 `linux-container` 是新 Run 可显式选择的本地后端，使用固定 Linux CPython 3.11.2、OPI 2.0.0、ORCA 6.1.1 与 Open MPI 4.1.8。配置入口见 [config.container.example.toml](../config.container.example.toml)，私有镜像构建、依赖锁和许可证说明见[运行镜像 README](../scripts/container_runtime/README.md)。执行绑定不可变 image ID、manifest hash 与本地 Docker daemon 身份，不自动拉取镜像，不把宿主 ORCA、Store 或用户目录挂入容器。旧 Run 的环境快照不会自动迁移到新后端。

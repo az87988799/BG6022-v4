@@ -1,0 +1,146 @@
+import json, math, pathlib
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from orca_task_sdk import run_orca
+NL=chr(10)
+base=pathlib.Path('.')
+initial_path=base/'initial.xyz'
+initial_text=initial_path.read_text() if initial_path.exists() else ''
+def write_xyz(mol,cid,path):
+    conf=mol.GetConformer(cid)
+    lines=[str(mol.GetNumAtoms()),'n-hexane conformer']
+    for i,atom in enumerate(mol.GetAtoms()):
+        p=conf.GetAtomPosition(i)
+        lines.append('%2s %12.6f %12.6f %12.6f'%(atom.GetSymbol(),p.x,p.y,p.z))
+    path.write_text(NL.join(lines)+NL)
+def dihedrals_from_xyz(text):
+    lines=[ln.strip() for ln in text.splitlines() if ln.strip()]
+    if len(lines)<3: return None
+    try: n=int(lines[0])
+    except Exception: return None
+    atoms=[]
+    for ln in lines[2:2+n]:
+        p=ln.split()
+        if len(p)>=4:
+            try: atoms.append((p[0],float(p[1]),float(p[2]),float(p[3])))
+            except Exception: pass
+    if len(atoms)<6: return None
+    def sub(a,b): return (a[0]-b[0],a[1]-b[1],a[2]-b[2])
+    def dot(a,b): return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
+    def cross(a,b): return (a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])
+    def norm(a): return math.sqrt(dot(a,a))
+    def angle(p0,p1,p2,p3):
+        b0=sub(p0,p1); b1=sub(p2,p1); b2=sub(p3,p2); b1n=norm(b1)
+        if b1n==0: return None
+        x=dot(b0,b1)/b1n; y=dot(b2,b1)/b1n
+        v=(b0[0]-x*b1[0]/b1n,b0[1]-x*b1[1]/b1n,b0[2]-x*b1[2]/b1n)
+        w=(b2[0]-y*b1[0]/b1n,b2[1]-y*b1[1]/b1n,b2[2]-y*b1[2]/b1n)
+        return math.degrees(math.atan2(dot(cross(v,w),b1)/b1n,dot(v,w)))
+    c=[(a[1],a[2],a[3]) for a in atoms]
+    return [angle(c[i],c[i+1],c[i+2],c[i+3]) for i in range(3)]
+mol=Chem.AddHs(Chem.MolFromSmiles('CCCCCC'))
+params=AllChem.ETKDGv3()
+params.randomSeed=20261019
+params.pruneRmsThresh=0.5
+params.numThreads=1
+cids=list(AllChem.EmbedMultipleConfs(mol,numConfs=100,params=params))
+mmff=AllChem.MMFFOptimizeMoleculeConfs(mol,maxIters=2000,numThreads=1)
+pairs=[]
+for cid,res in zip(cids,mmff):
+    conv,en=res
+    if conv==0: pairs.append((float(en),cid))
+pairs.sort()
+mmff_by_cid={cid:en for en,cid in pairs}
+chosen=[]
+for en,cid in pairs:
+    ok=True
+    for c2 in chosen:
+        try:
+            if AllChem.GetConformerRMS(mol,cid,c2,prealigned=False)<0.5:
+                ok=False; break
+        except Exception:
+            pass
+    if ok: chosen.append(cid)
+    if len(chosen)>=4: break
+if len(chosen)<4:
+    for en,cid in pairs:
+        if cid not in chosen: chosen.append(cid)
+        if len(chosen)>=4: break
+records=[]
+for i,cid in enumerate(chosen[:4]):
+    xyz_name='candidate_%d.xyz'%(i+1)
+    xyz_path=base/xyz_name
+    write_xyz(mol,cid,xyz_path)
+    inp_name='candidate_%d.inp'%(i+1)
+    inp_path=base/inp_name
+    inp='! B3LYP 3-21G NORI NoAutoStart TightSCF'+NL+'%maxcore 192'+NL+'%pal nprocs 1 end'+NL+'%scf MaxIter 256 ConvForced true AutoTRAH false end'+NL+'* xyzfile 0 1 '+xyz_name+NL
+    inp_path.write_text(inp)
+    rec={'member_id':'candidate_%d'%(i+1),'source_xyz':xyz_name,'input':inp_name,'mmff_energy_kcal_mol':mmff_by_cid.get(cid),'status':'pending','dihedrals_deg':dihedrals_from_xyz(xyz_path.read_text())}
+    try:
+        receipt=run_orca(str(inp_path),dependencies=[xyz_name],request_key='candidate_%d'%(i+1),purpose='new_candidate')
+        rec['receipt_request_key']=receipt.get('request_key')
+        rec['receipt_input_fingerprint']=receipt.get('input_fingerprint')
+        rec['receipt_operation_status']=receipt.get('operation_status')
+        rec['receipt_scientific_validation']=receipt.get('scientific_validation')
+        files=receipt.get('files') or {}
+        rec['files_keys']=list(files.keys())
+        stdout_key=None
+        for k in files.keys():
+            if str(k).endswith('stdout.out'):
+                stdout_key=k; break
+        energy=None; text=''
+        if stdout_key:
+            try: text=pathlib.Path(files[stdout_key]).read_text(errors='replace')
+            except Exception: text=''
+            for line in text.splitlines():
+                if 'FINAL SINGLE POINT ENERGY' in line:
+                    try: energy=float(line.split()[-1])
+                    except Exception: pass
+        rec['energy_hartree']=energy
+        rec['source_filename']=stdout_key
+        rec['source_internal_request_key']=receipt.get('request_key')
+        rec['status']='energy_parsed' if energy is not None else 'no_energy_parsed'
+    except Exception as e:
+        rec['status']='failed'
+        rec['error']=str(e)
+    records.append(rec)
+energies=[r['energy_hartree'] for r in records if r.get('energy_hartree') is not None]
+emin=min(energies) if energies else None
+for r in records:
+    if r.get('energy_hartree') is not None and emin is not None:
+        de=r['energy_hartree']-emin
+        r['relative_energy_hartree']=de
+        r['relative_energy_kcal_mol']=de*627.5094740631
+        r['relative_energy_kj_mol']=de*2625.4996394799
+ranked=sorted([r for r in records if r.get('energy_hartree') is not None],key=lambda x:x['energy_hartree'])
+for idx,r in enumerate(ranked,1): r['rank']=idx
+initial_info={'member_id':'initial','source_xyz':'initial.xyz','status':'initial_structure_preserved','dihedrals_deg':dihedrals_from_xyz(initial_text) if initial_text else None}
+def fmt(v):
+    if v is None: return ''
+    if isinstance(v,float): return '%.10g'%v
+    return str(v)
+csv_lines=['member_id,status,rank,mmff_energy_kcal_mol,energy_hartree,relative_energy_kcal_mol,relative_energy_kj_mol,d1_deg,d2_deg,d3_deg,source_xyz,source_stdout']
+allm=[initial_info]+records
+for r in allm:
+    d=r.get('dihedrals_deg') or [None,None,None]
+    csv_lines.append(','.join([fmt(r.get('member_id')),fmt(r.get('status')),fmt(r.get('rank')),fmt(r.get('mmff_energy_kcal_mol')),fmt(r.get('energy_hartree')),fmt(r.get('relative_energy_kcal_mol')),fmt(r.get('relative_energy_kj_mol')),fmt(d[0]),fmt(d[1]),fmt(d[2]),fmt(r.get('source_xyz')),fmt(r.get('source_filename'))]))
+(base/'candidates.csv').write_text(NL.join(csv_lines)+NL)
+sources=[]
+for r in ranked:
+    if r.get('source_filename'):
+        sources.append({'internal_request_key':r.get('source_internal_request_key'),'filename':r.get('source_filename'),'location':'FINAL SINGLE POINT ENERGY','formula':'E_hartree','artifacts':[r.get('source_xyz')]})
+pub=[]
+for r in allm:
+    q={}
+    for k in ['member_id','status','rank','mmff_energy_kcal_mol','energy_hartree','relative_energy_kcal_mol','relative_energy_kj_mol','dihedrals_deg','source_xyz','source_filename','error']:
+        if k in r: q[k]=r.get(k)
+    pub.append(q)
+obs=[]
+obs.append({'name':'sampling','value':{'search_scope':'RDKit ETKDGv3 100 requested conformers; MMFF94 optimize; RMSD dedup; up to 4 lowest-MMFF candidates sent to ORCA single point','n_embedded':len(cids),'n_selected_orca':len(records),'orca_starts_used':len(records),'method':'B3LYP','basis':'3-21G','charge':0,'multiplicity':1,'environment':'gas_phase','initial_structure':'initial.xyz','global_minimum_claim':False},'unit':None,'sources':[],'formula':None,'artifacts':['initial.xyz','candidates.csv','observations.json'],'limitations':['Finite conformer search; not exhaustive.','MMFF preselection may omit higher-MMFF but lower-DFT conformers.','ORCA energies are single points on MMFF geometries, not DFT-optimized.','No global minimum claim.']})
+low=ranked[0] if ranked else None
+obs.append({'name':'energy','value':{'lowest_candidate_in_scope':low.get('member_id') if low else None,'lowest_energy_hartree':low.get('energy_hartree') if low else None,'ranking':[{'rank':r.get('rank'),'member_id':r.get('member_id'),'energy_hartree':r.get('energy_hartree')} for r in ranked]},'unit':'hartree','sources':sources,'formula':'E_i from ORCA FINAL SINGLE POINT ENERGY','artifacts':['candidates.csv','observations.json'],'limitations':['Ranking only among computed candidates; finite search.']})
+obs.append({'name':'energy_difference','value':{'formula':'relative_energy = (E_i - E_min) * conversion_factor','E_unit':'hartree','conversion_factor_kcal_mol':627.5094740631,'conversion_factor_kj_mol':2625.4996394799,'output_units':'kcal/mol and kJ/mol'},'unit':'kcal/mol; kJ/mol','sources':sources,'formula':'delta_E_i = E_i - E_min; 1 Eh = 627.5094740631 kcal/mol = 2625.4996394799 kJ/mol','artifacts':['candidates.csv'],'limitations':['Energy differences are relative to the lowest computed candidate in this finite set.']})
+obs.append({'name':'member_table','value':pub,'unit':None,'sources':sources,'formula':None,'artifacts':['candidates.csv','observations.json'],'limitations':['Coordinates in candidate_*.xyz are MMFF geometries used for ORCA SP.','Initial structure preserved separately as initial.xyz.']})
+failed=[r for r in records if r.get('status')!='energy_parsed']
+obs.append({'name':'sampling_check','value':{'failed_members':[{'member_id':r.get('member_id'),'status':r.get('status'),'error':r.get('error')} for r in failed],'excluded_members':'Only candidates without converged MMFF optimization were excluded before ORCA selection.','n_failed':len(failed)},'unit':None,'sources':[],'formula':None,'artifacts':['candidates.csv'],'limitations':['Failure reasons reflect ORCA/receipt status available at runtime.']})
+json.dump({'version':1,'observations':obs},open('observations.json','w',encoding='utf-8'),indent=2)

@@ -78,6 +78,26 @@ PAUSE = {"不要继续", "暂停", "pause", "do not continue"}
 CANCEL = {"取消", "cancel"}
 
 
+def _continue_command(text):
+    """Finite original-scope control grammar; no requested change is inferred."""
+    text = text.strip().casefold()
+    if text in CONTINUE:
+        return True
+    clauses = [part.strip() for part in re.split(r"[；;。\n]+", text) if part.strip()]
+    if not clauses or not re.fullmatch(r"(?:请)?继续(?:完成)?(?:当前|原)(?:已授权)?任务", clauses[0]):
+        return False
+    for clause in clauses[1:]:
+        if re.fullmatch(r"已有(?:脚本和证据|证据和脚本|脚本|证据)继续使用(?:[，,]允许按必要反馈修复)?", clause):
+            continue
+        if clause.startswith(("保持原", "保持既有")):
+            names = re.sub(r"^保持(?:原|既有)|不变$", "", clause)
+            fields = re.split(r"[、，,与和及]", names)
+            if fields and all(field in {"目标", "条件", "最低证据", "权限", "累计预算"} for field in fields):
+                continue
+        return False
+    return True
+
+
 class FieldEvidence(Record):
     value: Any = None
     source: Literal["explicit", "default", "inherited", "inferred", "unknown", "not_applicable"]
@@ -219,6 +239,12 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
             "Null XYZ is NOT missing:geometry; omit missing_geometry; no user XYZ or invented artifacts. "
             "Keep system_refs. Permission still gates execution. Unknown/unsupported unresolved; "
             "ask SP vs Opt only when absent (ambiguous_geometry_relation).")
+        if code_authorized:
+            contract["normalize_request"]["input_acquisition"] = contract["normalize_request"]["input_acquisition"].replace(
+                "ask SP vs Opt only when absent (ambiguous_geometry_relation).",
+                "legacy scalar energy goals still require their geometry relation; preserve explicit single relations. "
+                "For general tasks with delegated routine steps, "
+                "omit an unspecified scalar geometry_relation instead of asking the user to choose SP versus Opt.")
     if (set(allowed_tools) & {"analysis.finite_sampling", "analysis.sampling_check"}
             or request and any(g.port in {"sampling", "sampling_check"} for g in request.goals)):
         contract["normalize_request"]["sampling_intent"] = (
@@ -241,9 +267,13 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
             "Input Goals omit geometry_relation; preparing initial geometry is not a scientific fixed_initial or optimized result. "
             "Every general scientific Goal must supply quantity as an exact user phrase and a stable port identifier "
             "chosen for that quantity; absence of a registered property port/checker is not an unresolved user fact. "
+            "Keep requested delivery contents in quantities, Goals and result data; do not turn each content item into "
+            "an additional scientific minimum_evidence guarantee. Preserve every explicitly demanded scientific minimum. "
             "Default verification=reported_with_limitations; qualified requires an explicit user minimum-evidence demand. "
-            "Scientific Goals preserve a text-grounded geometry_relation (optimized/fixed_initial) explicitly; "
-            "silence or mixed relations cannot select one. "
+            "Preserve geometry_relation only when the user explicitly requires one unambiguous optimized/fixed_initial relation. "
+            "General tasks may use multiple geometries. When routine steps are delegated and no scalar relation is specified, "
+            "omit geometry_relation, choose the program steps within budget and record each source's actual geometry relation; "
+            "do not require a user SP-versus-Opt choice. Never change an explicit geometry requirement. "
             "Preserve an explicitly requested unit verbatim in minimum_evidence; an absent unit is not proof of compliance. "
             "Preserve every requested quantity and genuine ambiguity. Do not declare a molecule unsupported from the legacy_qualified_scope. "
             "If the user delegates a condition choice, put its exact authorization in automatic_selection[field]={text_basis,message_id}, "
@@ -348,13 +378,33 @@ def _unit_requirements(text):
                              for match in re.finditer(pattern, text, re.I)))
 
 
+def _uses_general_goal(candidate, item, request):
+    """Contract selection precedes legacy scientific port-name special cases."""
+    if item.analysis_goal_ref is not None:
+        return False  # An explicit frozen analysis reference must be validated.
+    if item.port in {"sampling", "sampling_check"} and any(
+            goal.evidence_contract_version != "generic-observation-1"
+            and goal.port in {"sampling", "sampling_check"}
+            and goal.conditions.get("sampling") and goal.conditions.get("candidates")
+            and (not goal.system_ids or not item.system_refs or set(goal.system_ids) & set(item.system_refs))
+            for goal in request.goals):
+        return False  # Adding a quantity cannot discard a frozen criterion.
+    return (candidate.schema_version == VERSION and item.port not in INPUT_TOOLS
+            and item.port not in READ_TOOLS and item.port != "knowledge_answer"
+            and (item.port not in RULES or item.quantity is not None
+                 or any(system.identity.get("contract") == "general-identity-2"
+                        for system in request.systems if system.id in item.system_refs)))
+
+
 def _omitted_default_corrections(candidate, request, messages):
     """Ask for an explicit decision; the existing provenance gate owns eligibility."""
     missing = {}
     systems = {system.id: system for system in request.systems}
     for goal in candidate.goals or []:
         if (not goal.required or goal.port in READ_TOOLS or goal.port in INPUT_TOOLS
-                or goal.port in {"knowledge_answer", "sampling", "sampling_check", "unresolved", "artifacts", "observations"}
+                or goal.port == "knowledge_answer"
+                or goal.port in {"sampling", "sampling_check", "unresolved", "artifacts", "observations"}
+                    and not _uses_general_goal(candidate, goal, request)
                 or not (goal.system_refs or systems or request.geometry_artifact_id)):
             continue
         scopes = goal.system_refs or (list(systems) if len(systems) == 1 else [None])
@@ -407,7 +457,6 @@ def _validate_general_intake(candidate, request, messages, run):
             corrections.append({"path": ["automatic_selection", name], "reason": "delegated_choice_is_not_unknown",
                 "instruction": "Preserve the user authorization here; omit the field from conditions until select_conditions.",
                 "user_evidence": evidence})
-    general_ids = {system.id for system in request.systems if system.identity.get("contract") == "general-identity-2"}
     has_general = False
     for index, item in enumerate(candidate.goals or []):
         if item.port in INPUT_TOOLS:
@@ -418,9 +467,7 @@ def _validate_general_intake(candidate, request, messages, run):
                 corrections.append({"path": ["goals", index, "geometry_relation"],
                     "reason": "input_preparation_has_no_scientific_geometry_relation"})
             continue
-        if item.port in READ_TOOLS or item.port in {"knowledge_answer", "sampling", "sampling_check"}:
-            continue
-        if not (set(item.system_refs) & general_ids or item.quantity is not None or item.port not in RULES):
+        if not _uses_general_goal(candidate, item, request):
             continue
         has_general = True
         message, _, _ = _locate(item.text_basis, messages, item.message_id)
@@ -443,7 +490,8 @@ def _validate_general_intake(candidate, request, messages, run):
             corrections.append({"path": ["goals", index, "geometry_relation"],
                 "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text"})
         single_scientific_goal = sum(goal.port not in READ_TOOLS and goal.port not in INPUT_TOOLS
-            and goal.port not in {"knowledge_answer", "sampling", "sampling_check"}
+            and goal.port != "knowledge_answer" and (goal.port not in {"sampling", "sampling_check"}
+                or _uses_general_goal(candidate, goal, request))
             for goal in candidate.goals or []) == 1
         unit_text = message["text"] if single_scientific_goal else item.text_basis
         for requirement in _unit_requirements(unit_text):
@@ -541,7 +589,7 @@ def _input_goal(item, request, messages, goal_index):
             **({"conditions": evidence} if evidence else {})})
 
 
-def _general_goal(item, request, messages):
+def _general_goal(item, request, messages, goal_index):
     message, start, end = _locate(item.text_basis, messages, item.message_id)
     systems = {system.id: system for system in request.systems}
     if (not item.system_refs or len(item.system_refs) != len(set(item.system_refs))
@@ -554,9 +602,14 @@ def _general_goal(item, request, messages):
     if explicit_qualification and item.verification == "reported_with_limitations":
         raise StoreError("explicit scientific qualification cannot be downgraded to an observation")
     verification = "qualified" if explicit_qualification or item.verification == "qualified" else "reported_with_limitations"
-    for requirement in item.minimum_evidence:
+    for requirement_index, requirement in enumerate(item.minimum_evidence):
         if LEGACY_NAMES.get(requirement, requirement) not in REQUIREMENTS and requirement not in message["text"]:
-            raise StoreError("general minimum evidence must use registered requirements or exact user wording")
+            raise ProposalError("General minimum evidence must use registered requirements or exact user wording. "
+                                "Keep requested delivery contents in quantities, Goals and result data; do not invent "
+                                "extra scientific guarantees or remove explicit user minimum evidence.",
+                path=["parameters", "goals", goal_index, "minimum_evidence", requirement_index],
+                invalid_value=requirement, registered_requirements=sorted(REQUIREMENTS),
+                user_text=message["text"])
     minimum = list(item.minimum_evidence)
     minimum.extend(quote for quote in qualification_quotes if quote not in minimum)
     conditions = {}
@@ -1163,13 +1216,8 @@ def _goals(candidate, request, messages, *, text_input=False):
         if candidate.schema_version == VERSION and item.port in INPUT_TOOLS:
             goals.append(_input_goal(item, request, messages, goal_index))
             continue
-        general = (candidate.schema_version == VERSION and item.port not in READ_TOOLS
-                   and item.port not in {"knowledge_answer", "sampling", "sampling_check"}
-                   and (item.port not in RULES or item.quantity is not None
-                        or any(system.identity.get("contract") == "general-identity-2"
-                               for system in request.systems if system.id in item.system_refs)))
-        if general:
-            goals.append(_general_goal(item, request, messages))
+        if _uses_general_goal(candidate, item, request):
+            goals.append(_general_goal(item, request, messages, goal_index))
             continue
         if item.port == "knowledge_answer":
             message, start, end = _locate(item.text_basis, messages, item.message_id)
@@ -1398,12 +1446,13 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
     if any(m.get("request_version", request.version) != request.version for m in pending):
         raise StoreError("answer refers to an older Request; clarify against the current version")
     if candidate.kind in {"continue", "status"}:
-        allowed = CONTINUE if candidate.kind == "continue" else STATUS
-        if any(m["text"].strip().casefold() not in allowed for m in pending):
+        if any(not _continue_command(m["text"]) if candidate.kind == "continue" else
+               m["text"].strip().casefold() not in STATUS for m in pending):
             raise StoreError("control-only semantics require an exact unambiguous user command")
         if (candidate.conditions or candidate.system_conditions or candidate.goals or candidate.unresolved
                 or candidate.goal_bindings or candidate.resolves or candidate.replaces
-                or candidate.identities or candidate.automatic_selection):
+                or candidate.identities or candidate.automatic_selection
+                or candidate.questions or candidate.notices or candidate.question_gaps):
             raise StoreError("control-only message cannot change Request fields")
         return store.commit_revision(run, store.load_plan(run), decision_id=decision_id, basis=basis,
                                      user_message_ids=candidate.message_ids, fault=fault,
@@ -1583,7 +1632,7 @@ def deterministic_message(store, run, *, fault=None):
             return run, None
         return apply_user_update(store, run.id, message["id"], message["update"]), "changed"
     texts = [m["text"].strip().casefold() for m in pending]
-    if all(text in CONTINUE for text in texts):
+    if all(_continue_command(text) for text in texts):
         kind = "continue"
     elif all(text in STATUS for text in texts):
         kind = "status"

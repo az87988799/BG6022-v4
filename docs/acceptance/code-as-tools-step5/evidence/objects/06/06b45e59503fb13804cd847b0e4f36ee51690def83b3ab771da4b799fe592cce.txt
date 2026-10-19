@@ -1,0 +1,307 @@
+from __future__ import annotations
+import csv, json, math, re
+from itertools import product
+from pathlib import Path
+from orca_task_sdk import run_orca
+
+WORK = Path.cwd()
+INITIAL = WORK / 'coords.xyz'
+
+def read_xyz(path):
+    lines = path.read_text().splitlines()
+    n = int(lines[0].strip())
+    atoms = []
+    for line in lines[2:2+n]:
+        p = line.split()
+        atoms.append((p[0], float(p[1]), float(p[2]), float(p[3])))
+    if len(atoms) != n:
+        raise ValueError('atom count mismatch')
+    return atoms
+
+def write_xyz(path, atoms, comment='generated'):
+    lines = [str(len(atoms)), comment]
+    for s, x, y, z in atoms:
+        lines.append(f'{s} {x:.10f} {y:.10f} {z:.10f}')
+    path.write_text(chr(10).join(lines) + chr(10))
+
+def sub(a,b): return (a[0]-b[0], a[1]-b[1], a[2]-b[2])
+def add(a,b): return (a[0]+b[0], a[1]+b[1], a[2]+b[2])
+def mul(a,s): return (a[0]*s, a[1]*s, a[2]*s)
+def dot(a,b): return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
+def cross(a,b): return (a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0])
+def norm(a): return math.sqrt(dot(a,a))
+def unit(a):
+    n = norm(a)
+    if n < 1e-12:
+        raise ValueError('zero vector')
+    return mul(a, 1.0/n)
+def dist(a,b): return norm(sub(a,b))
+
+def rotate_point(p, origin, axis, angle):
+    v = sub(p, origin)
+    k = unit(axis)
+    c = math.cos(angle)
+    s = math.sin(angle)
+    return add(origin, add(add(mul(v,c), mul(cross(k,v),s)), mul(k, dot(k,v)*(1-c))))
+
+def build_adj(atoms):
+    n = len(atoms)
+    adj = [set() for _ in range(n)]
+    for i in range(n):
+        for j in range(i+1,n):
+            d = dist(atoms[i][1:], atoms[j][1:])
+            cutoff = 1.25 if (atoms[i][0] == 'H' or atoms[j][0] == 'H') else 1.85
+            if d <= cutoff:
+                adj[i].add(j)
+                adj[j].add(i)
+    return adj
+
+def carbon_chain(atoms, adj):
+    carbons = [i for i,a in enumerate(atoms) if a[0] == 'C']
+    if len(carbons) != 6:
+        return carbons
+    cadj = {i:[j for j in adj[i] if atoms[j][0] == 'C'] for i in carbons}
+    endpoints = [i for i in carbons if len(cadj[i]) == 1]
+    if not endpoints:
+        return carbons
+    start = endpoints[0]
+    chain = [start]
+    prev = None
+    cur = start
+    while True:
+        nxt = [j for j in cadj[cur] if j != prev and j not in chain]
+        if not nxt:
+            break
+        prev, cur = cur, nxt[0]
+        chain.append(cur)
+        if len(chain) == len(carbons):
+            break
+    return chain if len(chain) == len(carbons) else carbons
+
+def reachable(adj, start, blocked):
+    seen = {start}
+    stack = [start]
+    while stack:
+        u = stack.pop()
+        for v in adj[u]:
+            if v == blocked or v in seen:
+                continue
+            seen.add(v)
+            stack.append(v)
+    return seen
+
+def rotate_torsion(atoms, adj, i, j, angle_deg):
+    axis = sub(atoms[j][1:], atoms[i][1:])
+    moved = reachable(adj, j, i)
+    out = []
+    for k,(s,x,y,z) in enumerate(atoms):
+        if k in moved:
+            p = rotate_point((x,y,z), atoms[i][1:], axis, math.radians(angle_deg))
+            out.append((s,p[0],p[1],p[2]))
+        else:
+            out.append((s,x,y,z))
+    return out
+
+def clash_score(atoms, adj):
+    score = 0.0
+    for i in range(len(atoms)):
+        for j in range(i+1,len(atoms)):
+            if j in adj[i]:
+                continue
+            d = dist(atoms[i][1:], atoms[j][1:])
+            si, sj = atoms[i][0], atoms[j][0]
+            if si == 'H' and sj == 'H':
+                min_d = 1.7
+            elif si == 'H' or sj == 'H':
+                min_d = 2.0
+            else:
+                min_d = 2.4
+            if d < min_d:
+                score += (min_d-d)**2
+    c = [sum(a[k] for a in atoms)/len(atoms) for k in (1,2,3)]
+    rg = sum(dist(a[1:], c)**2 for a in atoms)/len(atoms)
+    return score + 0.02*rg
+
+def rmsd_like(a,b):
+    return math.sqrt(sum(dist(a[i][1:], b[i][1:])**2 for i in range(len(a)))/len(a))
+
+def generate_candidates(atoms, adj):
+    chain = carbon_chain(atoms, adj)
+    selected = []
+    if len(chain) >= 5:
+        selected = [(chain[1],chain[2]), (chain[2],chain[3]), (chain[3],chain[4])]
+    out = [atoms]
+    angles = [60,180,300]
+    for combo in product(angles, repeat=len(selected)):
+        cur = atoms
+        for (i,j), ang in zip(selected, combo):
+            cur = rotate_torsion(cur, adj, i, j, ang)
+        out.append(cur)
+    uniq = []
+    for c in out:
+        if not any(rmsd_like(c,u) < 0.05 for u in uniq):
+            uniq.append(c)
+    return uniq
+
+def make_orca_input(path, xyz_name):
+    lines = [
+        '! B3LYP 6-31G RKS TightSCF NORI NoAutoStart',
+        '%maxcore 192',
+        '%pal nprocs 1 end',
+        '%scf MaxIter 256 ConvForced true AutoTRAH false end',
+        '%output JsonPropFile true end',
+        f'* xyzfile 0 1 {xyz_name}',
+    ]
+    path.write_text(chr(10).join(lines) + chr(10))
+
+def run_one(cid, xyz_path):
+    inp = WORK / f'candidate_{cid:03d}.inp'
+    make_orca_input(inp, xyz_path.name)
+    key = f'hexane_candidate_{cid:03d}'
+    try:
+        receipt = run_orca(str(inp), dependencies=(xyz_path.name,), request_key=key, purpose='new_candidate')
+    except Exception as exc:
+        return {'candidate_id': cid, 'status': 'failed', 'reason': f'SDK/ORCA error: {type(exc).__name__}: {exc}', 'request_key': key}
+    files = receipt.get('files', {}) or {}
+    stdout_path = files.get('stdout.out')
+    if stdout_path is None:
+        for k, v in files.items():
+            if str(k).endswith('.out'):
+                stdout_path = v
+                break
+    energy = None
+    if stdout_path:
+        txt = Path(stdout_path).read_text(errors='replace')
+        m = re.findall(r'FINAL SINGLE POINT ENERGY +([-+]?[0-9.]+(?:[Ee][-+]?[0-9]+)?)', txt)
+        if m:
+            energy = float(m[-1])
+    if energy is None:
+        return {'candidate_id': cid, 'status': 'failed', 'reason': 'FINAL SINGLE POINT ENERGY not found in ORCA output', 'request_key': key, 'files': sorted(files.keys())}
+    return {'candidate_id': cid, 'status': 'completed', 'energy_hartree': energy, 'request_key': key, 'files': sorted(files.keys())}
+
+def main():
+    atoms = read_xyz(INITIAL)
+    adj = build_adj(atoms)
+    candidates = generate_candidates(atoms, adj)
+    gen_dir = WORK / 'generated_structures'
+    gen_dir.mkdir(exist_ok=True)
+    records = []
+    for idx, c in enumerate(candidates):
+        fn = gen_dir / f'generated_{idx:03d}.xyz'
+        write_xyz(fn, c, comment=f'generated conformer {idx}')
+        records.append({'candidate_id': idx, 'filename': str(fn.relative_to(WORK)), 'score': clash_score(c, adj), 'selected': False})
+    scored = sorted([(r['score'], r['candidate_id'], candidates[r['candidate_id']]) for r in records], key=lambda x: x[0])
+    selected = []
+    for sc, cid, c in scored:
+        if len(selected) >= 4:
+            break
+        if all(rmsd_like(c, s[2]) >= 0.15 for s in selected):
+            selected.append((sc, cid, c))
+    for sc, cid, c in scored:
+        if len(selected) >= 4:
+            break
+        if not any(cid == s[1] for s in selected):
+            selected.append((sc, cid, c))
+    selected = selected[:4]
+    selected_ids = {cid for _, cid, _ in selected}
+    for r in records:
+        r['selected'] = r['candidate_id'] in selected_ids
+    results = []
+    for _, cid, c in selected:
+        xyz_path = WORK / f'candidate_{cid:03d}.xyz'
+        write_xyz(xyz_path, c, comment=f'candidate {cid}')
+        results.append(run_one(cid, xyz_path))
+    success = [r for r in results if r.get('status') == 'completed' and isinstance(r.get('energy_hartree'), (int,float))]
+    success.sort(key=lambda r: r['energy_hartree'])
+    min_e = success[0]['energy_hartree'] if success else None
+    for rank, r in enumerate(success, 1):
+        r['rank'] = rank
+        r['relative_kj_mol'] = (r['energy_hartree'] - min_e) * 2625.499639
+    status_by_id = {r['candidate_id']: r for r in results}
+    failed = []
+    for r in results:
+        if r.get('status') != 'completed':
+            failed.append({'candidate_id': r['candidate_id'], 'status': r['status'], 'reason': r.get('reason', 'unknown')})
+    excluded = []
+    for r in records:
+        if not r['selected']:
+            excluded.append({'candidate_id': r['candidate_id'], 'status': 'excluded_from_orca_budget', 'reason': 'not among the four lowest cheap-score diverse candidates'})
+    ranking_csv = WORK / 'candidate_ranking.csv'
+    with ranking_csv.open('w', newline='') as f:
+        w = csv.writer(f)
+        w.writerow(['candidate_id','filename','score','selected','orca_status','rank','energy_hartree','relative_kj_mol'])
+        for r in records:
+            s = status_by_id.get(r['candidate_id'], {})
+            w.writerow([r['candidate_id'], r['filename'], r['score'], r['selected'], s.get('status','not_run'), s.get('rank',''), s.get('energy_hartree',''), s.get('relative_kj_mol','')])
+    generated_artifacts = [r['filename'] for r in records] + ['candidate_ranking.csv']
+    obs = []
+    obs.append({
+        'name': 'conformer_search',
+        'value': {'generated_count': len(records), 'selected_count': len(selected), 'selection_rule': 'cheap clash/compactness score, diverse by coordinate RMS threshold 0.15 A, at most four ORCA single points', 'torsion_angles_deg': [60,180,300], 'rotated_bonds': 'three internal backbone C-C bonds', 'search_scope': 'finite torsion enumeration from the prepared initial structure; not exhaustive'},
+        'unit': None,
+        'formula': None,
+        'sources': [{'filename': r['filename'], 'location': 'generated coordinates'} for r in records],
+        'artifacts': generated_artifacts,
+        'limitations': ['Finite torsion grid only; no global minimum claim.', 'Cheap score is not an energy.']
+    })
+    ranking = [{'rank': r['rank'], 'candidate_id': r['candidate_id'], 'energy_hartree': r['energy_hartree'], 'relative_kj_mol': r['relative_kj_mol'], 'formula': 'E_rel = (E_i - E_min) * 2625.499639'} for r in success]
+    obs.append({
+        'name': 'lowest_candidate_energy_ranking',
+        'value': {'lowest_candidate_id': success[0]['candidate_id'] if success else None, 'ranking': ranking},
+        'unit': None,
+        'formula': 'E_rel = (E_i - E_min) * 2625.499639',
+        'sources': [{'internal_request_key': r['request_key'], 'filename': 'stdout.out', 'location': 'FINAL SINGLE POINT ENERGY'} for r in success],
+        'artifacts': [f'candidate_{r["candidate_id"]:03d}.xyz' for r in success],
+        'limitations': ['Ranking is limited to the evaluated candidates and the finite search scope.', 'No global minimum claim.']
+    })
+    obs.append({
+        'name': 'candidate_structures',
+        'value': [{'candidate_id': r['candidate_id'], 'filename': r['filename'], 'selected': r['selected'], 'cheap_score': r['score'], 'orca_status': status_by_id.get(r['candidate_id'], {}).get('status', 'not_run')} for r in records],
+        'unit': None,
+        'formula': None,
+        'sources': [{'filename': r['filename'], 'location': 'all generated coordinates'} for r in records],
+        'artifacts': generated_artifacts,
+        'limitations': ['All generated members are preserved, including those not selected for ORCA.']
+    })
+    obs.append({
+        'name': 'failed_members',
+        'value': {'orca_failed': failed, 'excluded_from_orca_budget': excluded},
+        'unit': None,
+        'formula': None,
+        'sources': [{'filename': 'candidate_ranking.csv', 'location': 'status columns'}],
+        'artifacts': ['candidate_ranking.csv'],
+        'limitations': ['Excluded members were not evaluated by ORCA; exclusion is a budget decision, not a scientific failure.']
+    })
+    obs.append({
+        'name': 'structural_scope_energy',
+        'value': {'method': 'B3LYP', 'basis': '6-31G', 'charge': 0, 'multiplicity': 1, 'electronic_state': 'RKS', 'environment': 'gas_phase', 'energy_unit': 'hartree', 'relative_energy_unit': 'kJ/mol', 'energy_difference_formula': 'E_rel = (E_i - E_min) * 2625.499639', 'geometry_relationship': 'single-point ORCA evaluations on candidate geometries generated by rigid torsion rotations of the prepared initial structure; atom count and element order preserved; no bond breaking/forming intended'},
+        'unit': None,
+        'formula': 'E_rel = (E_i - E_min) * 2625.499639',
+        'sources': [{'filename': 'coords.xyz', 'location': 'prepared initial geometry'}],
+        'artifacts': generated_artifacts,
+        'limitations': ['Finite torsion grid; not a global search.', 'Single-point energies only; no thermal or standard-state corrections.']
+    })
+    obs.append({
+        'name': 'downloadable_validation',
+        'value': {'ranking_table': 'candidate_ranking.csv', 'structures_directory': 'generated_structures', 'covered': ['all generated structures', 'selected ORCA members', 'failed and excluded members'], 'unverified': ['global minimum', 'complete conformational space', 'thermal corrections', 'standard-state free energies']},
+        'unit': None,
+        'formula': None,
+        'sources': [{'filename': 'candidate_ranking.csv', 'location': 'table'}, {'filename': 'generated_structures', 'location': 'directory'}],
+        'artifacts': ['candidate_ranking.csv', 'generated_structures'],
+        'limitations': ['Validation coverage is limited to the reported finite search and evaluated members.']
+    })
+    obs.append({
+        'name': 'reporting_requirements',
+        'value': {'search_boundary': 'finite torsion enumeration of three internal backbone C-C bonds with angles 60, 180, 300 degrees from the prepared initial structure', 'evaluation_method': 'B3LYP/6-31G RKS single-point ORCA calculations in gas phase for up to four selected candidates', 'energy_units': {'absolute': 'hartree', 'relative': 'kJ/mol'}, 'geometry_relationship': 'candidates are related by rigid torsion rotations; atom count and element order preserved', 'limitations': ['No global minimum claim.', 'Cheap scoring is not an energy.', 'Only four ORCA evaluations permitted by the development budget.']},
+        'unit': None,
+        'formula': None,
+        'sources': [{'filename': 'candidate_ranking.csv', 'location': 'reporting table'}, {'filename': 'observations.json', 'location': 'this record'}],
+        'artifacts': ['candidate_ranking.csv', 'observations.json'],
+        'limitations': ['Actual coverage and unverified items are reported as limitations.']
+    })
+    payload = {'version': 1, 'observations': obs}
+    (WORK / 'observations.json').write_text(json.dumps(payload, indent=2, sort_keys=True))
+    print(json.dumps({'status': 'completed', 'generated': len(records), 'selected': len(selected), 'orca_success': len(success), 'orca_failed': len(failed)}, sort_keys=True))
+
+if __name__ == '__main__':
+    main()

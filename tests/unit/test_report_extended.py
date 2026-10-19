@@ -13,6 +13,9 @@ from orca_agent.models import (
     EvidenceRef,
     Goal,
     InputRef,
+    InternalCall,
+    Observation,
+    ObservationSource,
     OutputBinding,
     PermissionSnapshot,
     QualifiedOutput,
@@ -309,6 +312,19 @@ def test_output_check_failure_does_not_hide_another_independently_qualified_outp
     assert report["user_goal_complete"]
 
 
+def test_broken_sibling_output_source_does_not_erase_independent_energy(source):
+    good = source.result.qualified_outputs["energy"]
+    other = good.model_copy(deep=True, update={"source": {"artifact_id": "missing", "sha256": "a" * 64}})
+    source.result.qualified_outputs["other"] = other
+    source.result.checks["other"] = other.checks
+    report = build_report(source.store, source.run)
+    assert report["user_goal_complete"]
+    assert set(report["results"][0]["qualified_outputs"]) == {"energy"}
+    status = {item["name"]: item for item in report["results"][0]["output_validation"]}
+    assert status["energy"]["status"] == "passed" and status["other"]["status"] == "source_unverified"
+    assert report["results"][0]["scientific_status"] == "partially_checked"
+
+
 def test_immediate_query_evidence_binding_works_without_a_plan(source):
     source.run.plan_id = source.run.plan_version = None
     source.request.goals = [Goal(id="g_energy", port="field_observation", minimum_check_version="evidence-read-1")]
@@ -354,3 +370,83 @@ def test_invalid_decimal_money_stays_unknown(source, amount):
     source.run.model_records = [{"id": "bad", "status": "known", "cost_known_usd": amount}]
     cost = build_report(source.store, source.run)["budget"]["model_cost"]
     assert cost["known_cost"] is None and not cost["cost_records_complete"]
+
+
+def test_mixed_outputs_keep_good_energy_and_report_each_validation_boundary(source):
+    source.result.checks["frequencies"] = [Check(name="minimum", status="failed", detail="imaginary mode")]
+    source.result.observation_records = [Observation(name="novel_property", value=3.14, unit="synthetic",
+        sources=[ObservationSource(artifact_id=source.artifact.id, sha256=source.artifact.sha256,
+                                   location="line 1")], code_sha256="a" * 64,
+        actual_conditions={"method": "HF", "basis": "STO-3G"},
+        limitations=["No dedicated scientific check for this synthetic property."])]
+    report = build_report(source.store, source.run)
+    result = report["results"][0]
+    assert result["scientific_status"] == "partially_checked"
+    assert result["qualified_outputs"]["energy"]["value"] == -74.96299
+    outputs = {row["name"]: row for row in result["output_validation"]}
+    assert outputs["energy"]["scientific_qualification"]
+    assert outputs["frequencies"]["status"] == "failed"
+    assert not outputs["novel_property"]["scientific_qualification"]
+    assert outputs["novel_property"]["source_integrity"] == "verified"
+    text = render_report(report)
+    assert "3.14" in text and "synthetic" in text and "line 1" in text and "a" * 64 in text
+    assert "imaginary mode" in text and "No dedicated scientific check" in text
+
+
+def test_general_collection_preserves_every_candidate_failure_exclusion_and_scope(source):
+    members = [{"candidate_id": f"candidate_{index:03}", "status": "observed",
+                "geometry_artifact_id": "geometry", "energy_eh": -100 + index / 100}
+               for index in range(83)]
+    members[-1].update(status="failed", reason="SCF failure retained")
+    members[-2].update(status="excluded", reason="duplicate", duplicate_of="candidate_000")
+    value = {"members": members, "search_scope": {"sampled": 83, "global_minimum_proven": False},
+             "comparison": {"method": "HF", "basis": "STO-3G", "geometry_relation": "conformers"}}
+    source.result.observation_records = [Observation(name="candidate_ranking", value=value, unit="Eh",
+        sources=[ObservationSource(artifact_id=source.artifact.id, sha256=source.artifact.sha256)],
+        limitations=["Lowest of the sampled candidates only."])]
+    report = build_report(source.store, source.run)
+    assert report["results"][0]["observation_records"][0]["value"] == value
+    text = render_report(report)
+    assert all(member["candidate_id"] in text for member in members)
+    assert "SCF failure retained" in text and "duplicate_of" in text
+    assert "global_minimum_proven" in text and "conformers" in text and "STO-3G" in text
+    assert "Lowest of the sampled candidates only." in text
+
+
+def test_report_indexes_initial_geometry_and_original_script_after_failed_attempt(source, tmp_path):
+    from orca_agent.models import CodeRef
+
+    path = tmp_path / "task.py"
+    path.write_text("raise ValueError('synthetic failure')\n", encoding="utf-8")
+    script = Artifact(id="script", path=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+                      size=path.stat().st_size, role="python", run_id=source.run.id)
+    source.artifacts[script.id] = script
+    attempt = source.run.attempts[0].model_copy(deep=True, update={"id": "failed_script", "state": "failed"})
+    attempt.frozen_step = Step(id="python", logical_id="python", tool="python.execute",
+        parameters={"code": CodeRef(artifact_id=script.id, sha256=script.sha256)})
+    source.run.attempts.append(attempt)
+    report = build_report(source.store, source.run)
+    indexed = {row["artifact_id"]: row for row in report["artifact_index"]}
+    assert indexed["geometry"]["purposes"] == ["initial_geometry", "attempt_geometry"]
+    assert report["generated_scripts"][0]["artifact_id"] == script.id
+    assert indexed["script"]["sha256"] == script.sha256
+    text = render_report(report)
+    assert script.sha256 in text and "failed_script" in text and "failed" in text
+
+
+def test_budget_and_model_failure_report_retains_prior_results_and_internal_call_facts(source):
+    source.run.state = "budget_exhausted"
+    source.run.diagnostics.append({"category": "BudgetExceeded", "message": "model calls exhausted"})
+    source.run.model_records = [{"id": "last_model", "status": "unknown", "error_category": "timeout"}]
+    source.run.internal_calls = [InternalCall(request_key="candidate_one", input_fingerprint="a" * 64,
+        state="completed", started=True, actual_conditions={"method": "HF", "basis": "STO-3G"},
+        result_id=source.result.id), InternalCall(request_key="candidate_failed", input_fingerprint="b" * 64,
+        state="failed", actual_conditions={"method": "HF", "basis": "STO-3G"})]
+    before = source.run.model_dump(mode="json")
+    report = build_report(source.store, source.run)
+    assert source.run.model_dump(mode="json") == before
+    assert report["results"][0]["qualified_outputs"]["energy"]["value"] == -74.96299
+    assert report["execution"]["progress"] == {"total": 2, "completed": 1, "failed": 1, "running": 0}
+    assert report["stop_reason"]["categories"] == ["budget_exhausted", "BudgetExceeded"]
+    text = render_report(report)
+    assert "model calls exhausted" in text and "timeout" in text and "candidate_failed" in text

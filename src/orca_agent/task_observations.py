@@ -19,12 +19,14 @@ class _Declared(Record):
     value: object
     unit: str | None = Field(default=None, max_length=128)
     sources: list[_Source] = Field(min_length=1, max_length=16)
+    formula: str | None = Field(default=None, max_length=4000)
+    artifacts: list[str] = Field(default_factory=list, max_length=64)
     limitations: list[str] = Field(default_factory=list, max_length=16)
 
 
 class _Manifest(Record):
     version: int
-    observations: list[_Declared] = Field(max_length=32)
+    observations: list[object] = Field(max_length=32)
 
 
 def _receipt_parent(run, receipt, attempt):
@@ -43,7 +45,90 @@ def _receipt_parent(run, receipt, attempt):
     return parent
 
 
-def collect(store, run, step, attempt, files):
+def _task_relative(name):
+    if (not isinstance(name, str) or not name or PurePosixPath(name).is_absolute()
+            or "\\" in name or ":" in name
+            or any(p in {"", ".", ".."} for p in name.split("/"))):
+        raise ValueError("observation source is not a task-relative file")
+    return name
+
+
+def _record(store, run, step, attempt, files, item):
+    sources, native_conditions = [], []
+    for declaration in item.sources:
+        name = _task_relative(declaration.filename)
+        admitted = {}
+        if declaration.internal_request_key:
+            receipt = next((r for r in run.internal_calls
+                if r.request_key == declaration.internal_request_key), None)
+            if receipt is None or receipt.state not in {"completed", "failed", "timed_out", "cancelled"}:
+                raise ValueError("observation internal source has no settled receipt")
+            parent = _receipt_parent(run, receipt, attempt)
+            if parent.id != attempt.id:
+                native_input = store.load_artifact(receipt.code.artifact_id)
+                store.artifact_path(native_input.id)
+                if ((native_input.run_id, native_input.attempt_id) != (run.id, parent.id)
+                        or native_input.sha256 != receipt.code.sha256):
+                    raise ValueError("reused observation native input provenance changed")
+            candidates = [store.load_artifact(a) for a in receipt.artifact_ids]
+            candidates = [a for a in candidates if PurePosixPath(a.path).name == name]
+            if len(candidates) != 1:
+                raise ValueError("internal source filename is missing or ambiguous")
+            artifact = candidates[0]
+            admitted = dict(receipt.actual_conditions)
+            native_conditions.append(admitted)
+        else:
+            parent = attempt
+            selected = files.get("task/" + name)
+            if selected is None:
+                raise ValueError("observation task source was not archived")
+            artifact = store.load_artifact(selected["artifact_id"])
+        store.artifact_path(artifact.id)
+        if artifact.run_id != run.id or artifact.attempt_id != parent.id:
+            raise ValueError("observation source does not belong to its original Attempt")
+        sources.append(ObservationSource(artifact_id=artifact.id, sha256=artifact.sha256,
+            location=declaration.location, attempt_id=parent.id,
+            internal_request_key=declaration.internal_request_key, actual_conditions=admitted))
+    artifacts = []
+    for name in item.artifacts:
+        selected = files.get("task/" + _task_relative(name))
+        if selected is None:
+            raise ValueError("observation analysis artifact was not archived")
+        artifact = store.load_artifact(selected["artifact_id"])
+        store.artifact_path(artifact.id)
+        if (artifact.run_id, artifact.attempt_id) != (run.id, attempt.id):
+            raise ValueError("observation analysis artifact belongs to a different Attempt")
+        artifacts.append(artifact.id)
+    # Different candidate geometries are expected in a comparison. Preserve
+    # every actual input binding; the summary contains only shared conditions.
+    conditions = dict(native_conditions[0]) if native_conditions else {}
+    for admitted in native_conditions[1:]:
+        conditions = {name: value for name, value in conditions.items()
+                      if name in admitted and type(value) is type(admitted[name]) and value == admitted[name]}
+    comparable = {"method", "basis", "charge", "multiplicity", "electronic_state", "environment",
+                  "origin", "request_version", "system_id", "run_type", "atom_count",
+                  "input_keywords", "input_blocks"}
+    conflicts = sorted(name for name in comparable if native_conditions and any(
+        type(admitted.get(name)) is not type(native_conditions[0].get(name))
+        or admitted.get(name) != native_conditions[0].get(name) for admitted in native_conditions[1:]))
+    checks = [Check(name="archived_source_binding", status="passed", rule_version="generic-observation-1",
+                    detail="file identity/hash only; value, units and scientific interpretation are unverified")]
+    limitations = [
+        "Generated code parsed these values; no registered scientific checker qualified them.",
+        "Source locations and interpretation are task declarations; only archived file identity is checked.",
+        "Conditions describe admitted input, not independent output verification.", *item.limitations]
+    if conflicts:
+        detail = "Source conditions or calculation stages conflict: " + ", ".join(conflicts)
+        checks.append(Check(name="source_conditions_consistent", status="failed",
+                            rule_version="generic-observation-1", detail=detail))
+        limitations.append(detail)
+    return Observation(name=item.name, value=item.value, unit=item.unit, actual_conditions=conditions,
+        sources=sources, code_sha256=step.parameters.code.sha256, formula=item.formula,
+        artifact_ids=list(dict.fromkeys(artifacts)), checks=checks,
+        validation_status="failed" if conflicts else "unverified", limitations=limitations)
+
+
+def collect(store, run, step, attempt, files, *, diagnostics=None):
     entry = files.get("task/observations.json")
     if entry is None:
         return []
@@ -58,60 +143,24 @@ def collect(store, run, step, attempt, files):
     manifest = _Manifest.model_validate(raw)
     records = []
     names = set()
-    for item in manifest.observations:
-        if item.name not in step.parameters.observation_names or item.name in names:
-            raise ValueError("observation name is duplicate or outside the frozen Step")
-        names.add(item.name)
-        json.dumps(item.value, allow_nan=False)
-        sources, conditions = [], None
-        for declaration in item.sources:
-            name = declaration.filename
-            if (PurePosixPath(name).is_absolute() or "\\" in name or ":" in name
-                    or any(p in {"", ".", ".."} for p in name.split("/"))):
-                raise ValueError("observation source is not a task-relative file")
-            if declaration.internal_request_key:
-                receipt = next((r for r in run.internal_calls
-                    if r.request_key == declaration.internal_request_key), None)
-                if receipt is None or receipt.state not in {"completed", "failed", "timed_out", "cancelled"}:
-                    raise ValueError("observation internal source has no settled receipt")
-                parent = _receipt_parent(run, receipt, attempt)
-                if parent.id != attempt.id:
-                    native_input = store.load_artifact(receipt.code.artifact_id)
-                    store.artifact_path(native_input.id)
-                    if ((native_input.run_id, native_input.attempt_id) != (run.id, parent.id)
-                            or native_input.sha256 != receipt.code.sha256):
-                        raise ValueError("reused observation native input provenance changed")
-                candidates = [store.load_artifact(a) for a in receipt.artifact_ids]
-                # Native output names are task relative. Only unique basenames are
-                # supported here; subdirectory/ambiguous declarations are rejected.
-                candidates = [a for a in candidates if PurePosixPath(a.path).name == name]
-                if len(candidates) != 1:
-                    raise ValueError("internal source filename is missing or ambiguous")
-                artifact = candidates[0]
-                admitted = dict(receipt.actual_conditions)
-                if conditions is not None and conditions != admitted:
-                    raise ValueError("observation combines different admitted conditions")
-                conditions = admitted
-            else:
-                parent = attempt
-                selected = files.get("task/" + name)
-                if selected is None:
-                    raise ValueError("observation task source was not archived")
-                artifact = store.load_artifact(selected["artifact_id"])
-            store.artifact_path(artifact.id)
-            if artifact.run_id != run.id or artifact.attempt_id != parent.id:
-                raise ValueError("observation source does not belong to its original Attempt")
-            sources.append(ObservationSource(artifact_id=artifact.id, sha256=artifact.sha256,
-                location=declaration.location, attempt_id=parent.id,
-                internal_request_key=declaration.internal_request_key))
-        records.append(Observation(name=item.name, value=item.value, unit=item.unit,
-            actual_conditions=conditions or {}, sources=sources, code_sha256=step.parameters.code.sha256,
-            checks=[Check(name="archived_source_binding", status="passed", rule_version="generic-observation-1",
-                          detail="file identity/hash only; value, units and scientific interpretation are unverified")],
-            validation_status="unverified", limitations=[
-                "Generated code parsed these values; no registered scientific checker qualified them.",
-                "Source locations and interpretation are task declarations; only archived file identity is checked.",
-                "Conditions describe admitted input, not independent output verification.", *item.limitations]))
+    duplicates = {item.get("name") for item in manifest.observations if isinstance(item, dict)
+                  and isinstance(item.get("name"), str)
+                  and sum(isinstance(other, dict) and other.get("name") == item.get("name")
+                          for other in manifest.observations) > 1}
+    for index, declaration in enumerate(manifest.observations):
+        try:
+            item = _Declared.model_validate(declaration)
+            if (item.name not in step.parameters.observation_names or item.name in names
+                    or item.name in duplicates):
+                raise ValueError("observation name is duplicate or outside the frozen Step")
+            names.add(item.name)
+            json.dumps(item.value, allow_nan=False)
+            records.append(_record(store, run, step, attempt, files, item))
+        except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
+            if diagnostics is None:
+                raise
+            diagnostics.append({"category": "observation_manifest_rejected", "index": index,
+                "name": declaration.get("name") if isinstance(declaration, dict) else None, "detail": str(exc)})
     return records
 
 
@@ -274,6 +323,22 @@ def _declared_scientific_conditions(request, goal):
     return sorted(declared.intersection(CONDITION_FIELDS))
 
 
+def _same_archived_observations(rebuilt, recorded):
+    """Compare evidence without adding metadata to a historical observation."""
+    if len(rebuilt) != len(recorded):
+        return False
+    for current, historical in zip(rebuilt, recorded, strict=True):
+        current_value, old_value = current.model_dump(mode="json"), historical.model_dump(mode="json")
+        if len(current.sources) != len(historical.sources):
+            return False
+        for source, old_source in zip(current_value["sources"], historical.sources, strict=True):
+            if "actual_conditions" not in old_source.model_fields_set:
+                source.pop("actual_conditions", None)
+        if current_value != old_value:
+            return False
+    return True
+
+
 def assess(store, run, request, goal, result):
     """Assess only a sourced delivery contract; scientific requirements stay hard."""
     from orca_agent.minimum_evidence import assess_minimum_evidence
@@ -303,13 +368,16 @@ def assess(store, run, request, goal, result):
         store.artifact_path(step.parameters.code.artifact_id)
         if store.load_artifact(step.parameters.code.artifact_id).sha256 != step.parameters.code.sha256:
             raise ValueError("generic_observation_code_hash_mismatch")
-        rebuilt = collect(store, run, step, attempt, result.source["files"])
-        if rebuilt != result.observation_records:
-            raise ValueError("generic_observation_differs_from_archived_manifest")
+        rebuilt = collect(store, run, step, attempt, result.source["files"], diagnostics=[])
         selected = [item for item in rebuilt if item.name == goal.port]
+        recorded = [item for item in result.observation_records if item.name == goal.port]
+        if not _same_archived_observations(selected, recorded):
+            raise ValueError("generic_observation_differs_from_archived_manifest")
         if len(selected) != 1 or selected[0].value is None:
             raise ValueError("requested_observation_missing")
         observation = selected[0]
+        if observation.validation_status == "failed" or any(check.status == "failed" for check in observation.checks):
+            raise ValueError("requested_observation_has_failed_consistency_checks")
         conditions = observation.actual_conditions
         source_keys = {source.internal_request_key for source in observation.sources
                        if source.internal_request_key}

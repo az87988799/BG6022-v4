@@ -52,19 +52,34 @@ def _result_bindings(value, found, depth=0):
             _result_bindings(child, found, depth + 1)
 
 
-def _source_integrity(store, result):
-    """Recheck observation provenance too, even when a scientific check failed."""
-    references = {identifier: set() for identifier in result.artifact_ids}
+def _source_integrity(store, result, *, observation=None, code=None, port=None):
+    """Check the selected output's provenance without promoting sibling data."""
+    references = ({} if observation else {identifier: set() for identifier in result.artifact_ids})
     try:
-        _source_references(result.source, references)
-        _source_references(result.observations, references)
-        _source_references([item.model_dump(mode="json") for item in result.observation_records], references)
-        for output in result.qualified_outputs.values():
-            _source_references(output.source, references)
-            if output.artifact_id:
-                references.setdefault(output.artifact_id, set())
+        if observation:
+            _source_references(observation.model_dump(mode="json"), references)
+            for identifier in getattr(observation, "artifact_ids", []):
+                references.setdefault(identifier, set())
+            if code:
+                _source_references(code.model_dump(mode="json"), references)
+            manifest = result.source.get("files", {}).get("task/observations.json")
+            if manifest:
+                _source_references(manifest, references)
+        else:
+            _source_references(result.source, references)
+            _source_references(result.observations, references)
+            # Legacy scientific outputs retain their original whole-Result
+            # evidence contract. Added generic records do not extend that
+            # contract to unrelated observations' external source files.
+            outputs = ([result.qualified_outputs[port]] if port in result.qualified_outputs
+                       else result.qualified_outputs.values())
+            for output in outputs:
+                _source_references(output.source, references)
+                if output.artifact_id:
+                    references.setdefault(output.artifact_id, set())
         artifacts, errors, bound_results = [], [], []
-        _result_bindings(result.source, bound_results)
+        if observation is None:
+            _result_bindings(result.source, bound_results)
         for binding in bound_results:
             try:
                 original = store.load_result(binding["run_id"], binding["result_id"])
@@ -97,7 +112,15 @@ def collect_goal_selections(store, run, request, plan=None, results=None):
     for goal in request.goals:
         selection = current_goal_evidence(store, run, request, goal, plan, results)
         if selection.get("result"):
-            selection["source_integrity"] = _source_integrity(store, selection["result"])
+            result = selection["result"]
+            observed, code = None, None
+            if goal.evidence_contract_version == "generic-observation-1":
+                matches = [item for item in result.observation_records if item.name == goal.port]
+                observed = matches[0] if len(matches) == 1 else None
+                attempt = next((item for item in run.attempts if item.id == result.attempt_id), None)
+                code = getattr(attempt.frozen_step.parameters, "code", None) if attempt and attempt.frozen_step else None
+            selection["source_integrity"] = _source_integrity(store, result, observation=observed, code=code,
+                                                              port=goal.port)
         selections[goal.id] = selection
     return selections
 

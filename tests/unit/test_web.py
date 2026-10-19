@@ -10,7 +10,17 @@ from test_llm import socket_free_fake_client_loop  # noqa: F401
 from test_text_entry import text_environment
 
 from orca_agent import entrypoints
-from orca_agent.models import Goal, Request
+from orca_agent.models import (
+    Attempt,
+    CodeRef,
+    Goal,
+    InputManifest,
+    InputManifestEntry,
+    InternalCall,
+    Request,
+    Step,
+    utc_now,
+)
 from orca_agent.store import BudgetExceeded, StoreError, _json_bytes
 from orca_agent.web import Coordinator, create_app
 
@@ -126,6 +136,39 @@ def test_read_endpoints_leave_run_bytes_and_cost_unchanged(env, client, monkeypa
     assert all(store.path(path).read_bytes() == value for path, value in before.items())
 
 
+def test_saved_progress_preserves_failed_and_unknown_calls_without_execution(env, client, monkeypatch):
+    store, _ = env
+    run = new_run(env)
+    parent = Attempt(id="python_parent", step_id="analysis", logical_id="analysis", number=1,
+        tool="python.execute", execution_kind="python", state="unknown", started=True,
+        input_fingerprint="a" * 64, directory=f"runs/{run.id}/attempts/python_parent")
+    run.attempts = [parent]
+    run.internal_calls = [
+        InternalCall(request_key="candidate_failed", input_fingerprint="b" * 64,
+            parent_attempt_id=parent.id, state="failed", started=True),
+        InternalCall(request_key="candidate_unknown", input_fingerprint="c" * 64,
+            parent_attempt_id=parent.id, state="unknown", started=True,
+            actual_conditions={"method": "PBE", "api_key": "should-not-be-shown"}),
+    ]
+    # A saved interrupted Run is read as historical evidence; no new job is reserved.
+    store._write_json(f"runs/{run.id}/run.json", run)
+    before = store.path(f"runs/{run.id}/run.json").read_bytes()
+    monkeypatch.setattr(entrypoints, "execute", lambda *a, **k: pytest.fail("read started work"))
+    response = client.get(f"/api/runs/{run.id}")
+    assert response.status_code == 200
+    progress = response.json()["execution"]
+    assert progress["internal_call_counts"]["failed"] == 1
+    assert progress["internal_call_counts"]["unknown"] == 1
+    assert progress["internal_call_counts"]["completed"] == 0
+    assert any(item.get("request_key") == "candidate_unknown"
+               for item in progress["current_actions"])
+    assert "candidate_failed" not in {item.get("request_key")
+                                      for item in progress["current_actions"]}
+    assert "should-not-be-shown" not in response.text
+    assert progress["internal_calls"][1]["actual_conditions"]["api_key"] == "[redacted]"
+    assert store.path(f"runs/{run.id}/run.json").read_bytes() == before
+
+
 @pytest.mark.parametrize("headers", [
     {"Host": "attacker.example:8765"}, {"Origin": "https://attacker.example"},
     {"Sec-Fetch-Site": "cross-site"}, {"X-Local-Token": "wrong"},
@@ -200,6 +243,60 @@ def test_download_and_queries_bound_to_run_hash_and_typed_path(env, client, tmp_
     assert client.post(f"{url}/evidence", json={"tool": "orca.sp", "parameters": {}}).status_code == 409
     store.artifact_path(artifact.id).write_text("changed")
     assert client.get(f"{url}/artifacts/{artifact.id}/download").status_code == 409
+
+
+def test_internal_inputs_and_settled_outputs_are_downloadable_without_exposing_live_outputs(env, client, tmp_path):
+    store, _ = env
+    run = new_run(env)
+    attempt = Attempt(step_id="python", logical_id="python", number=1, tool="python.execute",
+        execution_kind="python", input_fingerprint="a" * 64, directory="offline", state="running",
+        frozen_step=Step(id="python", logical_id="python", tool="python.execute", parameters={
+            "code": {"artifact_id": "script", "sha256": "b" * 64}}))
+    run.attempts.append(attempt)
+    artifacts = []
+    for name in ("native.inp", "candidate.xyz", "settled.out", "active.out"):
+        path = tmp_path / name
+        path.write_text("offline archived " + name, encoding="ascii")
+        artifacts.append(store.import_artifact(path, "raw_evidence", run_id=run.id, attempt_id=attempt.id))
+    native, geometry, settled, active = artifacts
+    run.internal_calls = [InternalCall(request_key="settled", input_fingerprint="c" * 64,
+        parent_attempt_id=attempt.id, state="completed", finished_at=utc_now(),
+        code=CodeRef(artifact_id=native.id, sha256=native.sha256, language="orca"),
+        inputs=InputManifest(entries=[InputManifestEntry(artifact_id=geometry.id, sha256=geometry.sha256,
+            target_path="candidate.xyz", purpose="native_dependency")]), artifact_ids=[settled.id]),
+        InternalCall(request_key="active", input_fingerprint="d" * 64, parent_attempt_id=attempt.id,
+                     state="running", artifact_ids=[active.id])]
+    store.save_run(run)
+    url = f"/api/runs/{run.id}/artifacts"
+    for artifact in (native, geometry, settled):
+        response = client.get(f"{url}/{artifact.id}/download")
+        assert response.status_code == 200
+        assert hashlib.sha256(response.content).hexdigest() == artifact.sha256
+    assert client.get(f"{url}/{active.id}/download").status_code == 409
+
+
+def test_internal_download_rejects_cross_run_and_wrong_input_hash(env, client, tmp_path):
+    store, _ = env
+    run = new_run(env)
+    other = new_run(env, key="other_run")
+    attempt = Attempt(step_id="python", logical_id="python", number=1, tool="python.execute",
+        execution_kind="python", input_fingerprint="a" * 64, directory="offline", state="running",
+        frozen_step=Step(id="python", logical_id="python", tool="python.execute", parameters={
+            "code": {"artifact_id": "script", "sha256": "b" * 64}}))
+    run.attempts.append(attempt)
+    source = tmp_path / "private.inp"
+    source.write_text("offline input\n", encoding="ascii")
+    foreign = store.import_artifact(source, "native_input", run_id=other.id, attempt_id=attempt.id)
+    own = store.import_artifact(source, "native_input", run_id=run.id, attempt_id=attempt.id)
+    run.internal_calls = [InternalCall(request_key="foreign", input_fingerprint="c" * 64,
+        parent_attempt_id=attempt.id, state="completed", finished_at=utc_now(),
+        code=CodeRef(artifact_id=foreign.id, sha256=foreign.sha256, language="orca"), artifact_ids=[foreign.id]),
+        InternalCall(request_key="wrong_hash", input_fingerprint="d" * 64, parent_attempt_id=attempt.id,
+            state="running", code=CodeRef(artifact_id=own.id, sha256="f" * 64, language="orca"))]
+    store.save_run(run)
+    url = f"/api/runs/{run.id}/artifacts"
+    assert client.get(f"{url}/{foreign.id}/download").status_code == 409
+    assert client.get(f"{url}/{own.id}/download").status_code == 409
 
 
 def test_coordinator_refresh_restart_shutdown_and_duplicate_start(env, monkeypatch):

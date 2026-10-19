@@ -207,6 +207,41 @@ def artifact_ids(store, run_id):
         ids.add(request.geometry_artifact_id)
     for result_id in run.result_ids:
         ids.update(store.load_result(run.id, result_id).artifact_ids)
+    attempts = {attempt.id: attempt for attempt in run.attempts}
+
+    def include_owned(identifier, parent, expected=None):
+        # A saved receipt may expose only its own immutable archive. Content is
+        # checked by the requested read/download, rather than hashing every
+        # unrelated large output merely to enumerate the allowed identities.
+        try:
+            artifact = store.load_artifact(identifier)
+            if ((artifact.run_id, artifact.attempt_id) == (run.id, parent.id)
+                    and expected in {None, artifact.sha256}):
+                ids.add(identifier)
+        except (ValueError, OSError, RuntimeError):
+            pass
+
+    for attempt in run.attempts:
+        if attempt.frozen_step is None:
+            continue
+        for field in ("code", "input"):
+            reference = getattr(attempt.frozen_step.parameters, field, None)
+            if reference:
+                include_owned(reference.artifact_id, attempt, reference.sha256)
+    for call in run.internal_calls:
+        parent = attempts.get(call.parent_attempt_id)
+        if (parent is None or parent.execution_kind != "python" or parent.frozen_step is None
+                or not getattr(parent.frozen_step.parameters, "code", None)):
+            continue
+        # Inputs are sealed before launch and can be inspected during an
+        # active calculation. Outputs require a settled original receipt.
+        if call.code:
+            include_owned(call.code.artifact_id, parent, call.code.sha256)
+        for entry in call.inputs.entries:
+            include_owned(entry.artifact_id, parent, entry.sha256)
+        if call.state in {"completed", "failed", "cancelled", "timed_out"} and call.finished_at is not None:
+            for identifier in call.artifact_ids:
+                include_owned(identifier, parent)
     return ids
 
 

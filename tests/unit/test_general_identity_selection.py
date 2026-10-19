@@ -295,11 +295,14 @@ def test_name_cross_reference_cannot_confirm_approximate_or_ambiguous_identity(m
         structure.validate_wikidata_alias(search_raw, json.dumps(entities).encode(), "乙醇", 123)
 
 
-def test_general_alias_uses_independent_named_entity_and_same_pubchem_cid(tmp_path, monkeypatch):
+@pytest.mark.parametrize("valid_mapping", [True, False])
+def test_general_alias_uses_independent_named_entity_and_same_pubchem_cid(tmp_path, monkeypatch, valid_mapping):
     store, run, parameters = intake(tmp_path, name="乙醇", automatic=False)
     parameters["identities"][0]["query_name"] = "ethanol"
     run = commit_candidate(store, run, parameters, decision_id="normalize", basis=current_basis(store, run))
     search, entities = wikidata()
+    if not valid_mapping:
+        entities["entities"]["Q123"]["claims"]["P662"][0]["mainsnak"]["datavalue"]["value"] = "124"
     responses = [pubchem("CCO", "C2H6O"), json.dumps({"InformationList": {"Information": [
         {"CID": 123, "Synonym": ["ethanol"]}]}}).encode(), json.dumps(search).encode(), json.dumps(entities).encode()]
     urls = []
@@ -310,6 +313,13 @@ def test_general_alias_uses_independent_named_entity_and_same_pubchem_cid(tmp_pa
     monkeypatch.setattr(structure, "_paced_query", query)
     call = tool_call(store, run, "structure.resolve", {"system_id": "system_target"})
     result = structure.resolve(store, run, call)
+    if not valid_mapping:
+        assert result["operation_status"] == "failed" and not result["qualified_outputs"]
+        assert "unambiguous matching PubChem cross-reference" in result["diagnostics"][0]["detail"]
+        assert len(result["artifact_ids"]) == 4 and result["source"]["http_requests"] == 4
+        for response, artifact_id in zip(responses, result["artifact_ids"], strict=True):
+            assert store.artifact_path(artifact_id).read_bytes() == response
+        return
     assert result["operation_status"] == "completed" and result["source"]["http_requests"] == 4
     assert len(result["artifact_ids"]) == 5
     assert result["identity"]["alias_verified"] is True

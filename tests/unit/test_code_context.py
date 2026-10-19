@@ -255,10 +255,12 @@ def test_authorized_selection_exposes_sources_code_tools_and_exact_frozen_native
     rules = wire["TASK_CODE_RULES"]
     assert "from orca_task_sdk import run_orca" in rules and "Step.parameters.observation_names" in rules
     assert "missing controls are rejected, never filled in" in rules
-    assert "request_key unique per Run" in rules
-    assert "prior receipts cannot replay" in rules and "same cumulative budgets" in rules
+    assert "stable request_key per computation within the Run" in rules
+    assert "Same key+input reuses a completed receipt" in rules and "share cumulative budgets" in rules
     assert "unknown work:reconcile first" in rules
-    assert "separately authorized" in rules and "Observations unqualified" in rules
+    assert "new authorized code Step" in rules and "Observations unqualified" in rules
+    assert "formula:string|null,artifacts:[task-relative filename]" in rules
+    assert "failed members, exclusion reasons, search scope" in rules
     assert "exact excerpt quote" in wire["CONDITION_SELECTION_RULES"]
     assert str(run.configuration.execution.docker_path) not in prepared.body()["messages"][1]["content"]
     assert not any(recipe in rules.lower() for recipe in ("ethanol", "cco", "乙醇"))
@@ -311,7 +313,11 @@ def test_sdk_guidance_exposes_readonly_filename_mapping_and_repair_constraints(t
     assert "Inspect files.keys()" in rules
     assert "stdout.out/stderr.txt" in rules and "check existence before reading" in rules
     assert "Never infer output names from input_path" in rules
-    assert "Declared relative dependencies" in rules
+    assert "dependencies must be task-relative paths" in rules
+    assert "never Path.cwd()/name or Path.resolve() as a dependency target" in rules
+    assert "exactly one explicit RHF or RKS keyword" in rules
+    assert "preserve the exact error in the failed-member record" in rules
+    assert "requested calls are not actual starts" in rules
     assert "Cite outputs, not copied inputs" in rules
     assert "filename=original files key and internal_request_key=receipt.request_key" in rules
     assert "never the copy path" in rules
@@ -377,8 +383,8 @@ def test_staged_code_guidance_preserves_science_goals_without_future_artifacts(t
 def test_scientific_sdk_guidance_declares_current_source_and_resource_limits(tmp_path):
     _, run, _, wire = selection_context(tmp_path)
     rules = wire["TASK_CODE_RULES"]
-    assert "Compute+parse in one Python task" in rules
-    assert "SDK native receipt must be completed in that same Attempt" in rules
+    assert "Compute+parse through managed SDK receipts" in rules
+    assert "completed SDK native receipt with verified original provenance" in rules
     assert "orca.run only archives raw outputs" in rules
     assert "separate Python parsing imported stdout lacks scientific Goal condition provenance" in rules
     assert "ORCA %maxcore uses AUTHORITY.execution_resources.maxcore_mb per process, never total_memory_mb" in rules
@@ -400,7 +406,7 @@ def test_python_without_native_authorization_does_not_advertise_sdk_execution(tm
     rules = decoded(prepared)["TASK_CODE_RULES"]
     assert "full parsed sequences" in rules and "Unknown units stay null" in rules
     if permission:
-        assert "Scientific Goals need a same-Attempt SDK native receipt" in rules
+        assert "Scientific Goals need a completed SDK native receipt with verified original provenance" in rules
         assert "pure file tasks need no ORCA" in rules
     else:
         assert "File tasks need no ORCA." in rules
@@ -420,7 +426,7 @@ def test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_hist
     request, run = objects()
     prepared = context.build_context(request, run)
     wire = decoded(prepared)
-    assert prepared.prompt_version == "agent-json-v58"
+    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v65"
     assert {"agent-json-v22", "agent-json-v34", "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41", "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47"} <= DECISION_CONTRACT_PROMPT_VERSIONS
     assert "TASK_CODE_RULES" not in wire and "native_input_contract" not in wire["AUTHORITY"]
     assert run.permission.code_execution is False

@@ -294,7 +294,7 @@ class ProposedPlan(Record):
     steps: list[ProposedStep | ProposedCodeRepair] = Field(min_length=1)
     # Keys are checked against this Request's IDs, not merely an identifier
     # regex; only the target shape is a context-independent schema contract.
-    goal_map: dict[str, FutureGoalTarget | EvidenceGoalTarget | GapGoalTarget]
+    goal_map: dict[str, FutureGoalTarget | EvidenceGoalTarget | GapGoalTarget] = Field(default_factory=dict)
 
 
 def _validate_plan_parameters(parameters):
@@ -342,7 +342,8 @@ def _validate_plan_parameters(parameters):
                 error.detail["code_repair_fields"] = list(ProposedCodeRepair.model_fields)
                 error.detail["code_repair_instruction"] = (
                     "Use only {key:new_key,repair_of:failed_step_id,code:CodeRef}. This explicit reference reuses "
-                    "the latest settled failed Python Attempt's frozen contract; retain dependencies separately. "
+                    "the latest settled failed Python Attempt's frozen contract. Verified settled dependencies "
+                    "are carried automatically; declare any unsettled dependencies explicitly. "
                     "It still requires code permission and every existing repair gate.")
         target_errors = [item for item in errors if item["loc"][1:2] == ["goal_map"]]
         if target_errors:
@@ -353,8 +354,9 @@ def _validate_plan_parameters(parameters):
                 binding_shapes=goal_target_shapes())
             error.detail["step_target_instruction"] = (
                 "A stored Goal route uses step_id; the equivalent proposal route uses step_key "
-                "with that same existing Step ID and unchanged port. Keep the referenced Step "
-                "in steps with {key:existing_step_id}. Do not copy step_id into goal_map.")
+                "with that same existing Step ID and unchanged port. Verified settled Steps may be carried; "
+                "retain an unsettled referenced Step explicitly with {key:existing_step_id}. "
+                "Do not copy step_id into goal_map.")
             # Union validation also reports a missing 'evidence' for a malformed
             # Step route. Explain EvidenceRef only when one was actually supplied.
             targets = parameters.get("goal_map", {})
@@ -375,7 +377,7 @@ def _validate_plan_parameters(parameters):
 
 
 def _resolve_step_keys(keys, ids, history, *, path, indexed=False):
-    """Resolve declared graph references without inventing or inserting Steps."""
+    """Resolve graph references after verified settled history was carried."""
     paths = [path + [index] if indexed else path for index in range(len(keys))]
     for key, location in zip(keys, paths, strict=True):
         if not isinstance(key, str):
@@ -386,9 +388,9 @@ def _resolve_step_keys(keys, ids, history, *, path, indexed=False):
         missing_keys = list(dict.fromkeys(key for key, _ in missing))
         historical = [key for key in missing_keys if key in history]
         raise ProposalError(
-            "Every referenced Step must be included in this proposed Plan. Reuse frozen Steps with only "
-            "{key:existing_step_id}; include their dependency closure too. Their original dependencies stay "
-            "with the retained Steps, but the program does not insert missing Steps. Declare a new Step "
+            "Every referenced Step must exist in the complete Plan. Verified settled history and its closure "
+            "may be carried automatically; retain unsettled Steps explicitly with {key:existing_step_id}. "
+            "Their original dependencies remain unchanged. Declare a new Step "
             "with its Tool and parameters instead of referring to an unknown key.",
             code="missing_step_reference", path=missing[0][1],
             missing_step_keys=missing_keys, known_history_step_keys=historical,
@@ -430,6 +432,95 @@ def _code_repair_source(store, run, item, history, *, index):
     return attempt.frozen_step
 
 
+def _complete_incremental_plan(store, run, proposal, prior, request, history):
+    """Carry exact settled history; never insert an omitted pending operation."""
+    from orca_agent.planning import settled_step_snapshots
+
+    settled = settled_step_snapshots(store, run)
+    supplied = {item.key for item in proposal.steps}
+    replaced = {item.repair_of for item in proposal.steps if isinstance(item, ProposedCodeRepair)}
+    latest_attempts = {item.logical_id: item for item in run.attempts}
+    for item in proposal.steps:
+        if (not isinstance(item, ProposedStep) or item.tool != "python.execute"
+                or item.key in history):
+            continue
+        source = latest_attempts.get(item.logical_key)
+        frozen = settled.get(source.step_id) if source else None
+        if (source and frozen and source.execution_kind == "python"
+                and source.state in {"failed", "timed_out"} and source.finished_at is not None
+                and (frozen.id, frozen.logical_id, frozen.tool)
+                == (source.step_id, source.logical_id, "python.execute")):
+            # The full repair form has the same existing validation boundary:
+            # validate_revision still permits changing only the code reference.
+            replaced.add(source.step_id)
+    carried = set()
+
+    def carry(identifier):
+        if (not isinstance(identifier, str) or identifier in supplied or identifier in carried
+                or identifier in replaced or identifier not in settled):
+            return
+        carried.add(identifier)
+        for dependency in settled[identifier].depends_on:
+            carry(dependency)
+
+    requested = {goal.id: goal for goal in request.goals}
+    if prior:
+        for step in prior.steps:
+            carry(step.id)
+        for identifier, binding in prior.goal_map.items():
+            if identifier in proposal.goal_map or identifier not in requested or binding.port != requested[identifier].port:
+                continue
+            if binding.step_id in replaced or (binding.evidence
+                    and binding.evidence.producer_step_id in replaced):
+                continue  # A replacement needs an explicit new Goal route.
+            if binding.gap is not None:
+                proposal.goal_map[identifier] = GapGoalTarget(gap=binding.gap, port=binding.port)
+            elif binding.step_id in settled:
+                proposal.goal_map[identifier] = FutureGoalTarget(step_key=binding.step_id, port=binding.port)
+                carry(binding.step_id)
+            elif binding.evidence:
+                reference = binding.evidence
+                if reference.producer_step_id in settled:
+                    proposal.goal_map[identifier] = EvidenceGoalTarget(evidence=reference, port=binding.port)
+                    carry(reference.producer_step_id)
+                elif reference.result_id and (reference.result_id in run.permission.result_ids
+                        or reference.run_id == run.id and reference.result_id in run.result_ids):
+                    try:
+                        result = store.load_result(reference.run_id, reference.result_id)
+                        if result.run_id == run.id and result.step_id in replaced:
+                            continue
+                        terminal = {"completed", "failed", "cancelled", "timed_out"}
+                        own_settled = any(record.result_id == result.id and record.state == result.operation_status
+                            and record.state in terminal and (not hasattr(record, "finished_at") or record.finished_at is not None)
+                            and (result.attempt_id if hasattr(record, "finished_at") else result.call_id) == record.id
+                            for record in [*run.calls, *run.attempts])
+                        if ((result.run_id, result.id) == (reference.run_id, reference.result_id)
+                                and result.operation_status in terminal
+                                and (reference.run_id != run.id or own_settled)):
+                            proposal.goal_map[identifier] = EvidenceGoalTarget(evidence=reference, port=binding.port)
+                    except (KeyError, ValueError, OSError, RuntimeError):
+                        pass
+    for item in proposal.steps:
+        if isinstance(item, ProposedCodeRepair):
+            if item.repair_of in history:
+                for dependency in history[item.repair_of].depends_on:
+                    carry(dependency)
+            continue
+        for dependency in item.depends_on:
+            carry(dependency)
+        if item.key in history:
+            for dependency in history[item.key].depends_on:
+                carry(dependency)
+        for reference in [item.geometry, *item.inputs.values()]:
+            if isinstance(reference, dict):
+                carry(reference.get("producer_key") or reference.get("producer_step_id"))
+    for target in proposal.goal_map.values():
+        carry(target.step_key if isinstance(target, FutureGoalTarget) else
+              target.evidence.producer_step_id if isinstance(target, EvidenceGoalTarget) else None)
+    proposal.steps.extend(ProposedStep(key=identifier) for identifier in sorted(carried))
+    return settled
+
+
 def materialize_plan(store, run, parameters):
     proposal = _validate_plan_parameters(parameters)
     prior = store.load_plan(run)
@@ -437,6 +528,11 @@ def materialize_plan(store, run, parameters):
     if run.input_bindings:
         from orca_agent.input_bindings import resolved_request
         request = resolved_request(store, run, request)
+    existing = {s.id: s for s in prior.steps} if prior else {}
+    history = {a.frozen_step.id: a.frozen_step for a in run.attempts if a.frozen_step}
+    history.update({c.frozen_step.id: c.frozen_step for c in run.calls if c.frozen_step})
+    history.update(existing)
+    settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
     missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]
     unknown = set(proposal.goal_map) - {goal.id for goal in request.goals}
     if missing:
@@ -452,10 +548,6 @@ def materialize_plan(store, run, parameters):
         raise ProposalError("Use only current Request Goal IDs; a Plan cannot introduce a Goal.",
                             code="unknown_goal_id", path=["parameters", "goal_map"],
                             allowed_goal_ids=[goal.id for goal in request.goals])
-    existing = {s.id: s for s in prior.steps} if prior else {}
-    history = {a.frozen_step.id: a.frozen_step for a in run.attempts if a.frozen_step}
-    history.update({c.frozen_step.id: c.frozen_step for c in run.calls if c.frozen_step})
-    history.update(existing)
     keys = [s.key for s in proposal.steps]
     if len(set(keys)) != len(keys):
         raise ValueError("proposal Step keys must be unique")
@@ -495,17 +587,17 @@ def materialize_plan(store, run, parameters):
                 raise ProposalError(
                     "A retained Step must use only {key:existing_step_id}, without other fields. "
                     "For every frozen Step being reused, omit depends_on, tool and parameters; its original "
-                    "dependencies remain unchanged. Include those dependency Steps separately by key too; "
-                    "the program does not insert them or remove submitted fields.",
+                    "dependencies remain unchanged. Verified settled dependencies may be carried automatically; "
+                    "retain unsettled dependencies explicitly. Submitted fields are not silently removed.",
                     code="retained_step_has_fields", path=["parameters", "steps", index],
                     step_key=item.key, unexpected_fields=unexpected, retained_step_shape={"key": item.key})
             missing_dependencies = [dependency for dependency in history[item.key].depends_on
                                     if dependency not in ids]
             if missing_dependencies:
                 raise ProposalError(
-                    "Reusing a Step preserves its dependencies. Include each missing existing Step with "
-                    "{key:existing_step_id} and retain its dependency closure; the program does not automatically "
-                    "insert Steps or change the proposed Plan.",
+                    "Reusing a Step preserves its dependencies. Only verified settled dependencies may be carried "
+                    "automatically. Include each remaining dependency explicitly with {key:existing_step_id}; "
+                    "unknown or unsettled dependencies cannot be inserted implicitly.",
                     code="missing_retained_dependency", path=["parameters", "steps", index, "key"],
                     retained_step_id=item.key, missing_dependency_step_ids=missing_dependencies)
             steps.append(history[item.key].model_copy(deep=True))
@@ -592,6 +684,14 @@ def materialize_plan(store, run, parameters):
             raise ProposalError("A goal binding must preserve its requested physical quantity or query port. "
                 "If that output is not yet available, use {gap,port} with the same port.",
                 path=["parameters", "goal_map", goal_id, "port"], expected=requested_goals[goal_id].port)
+        evidence = value.get("evidence", {})
+        if (evidence.get("producer_step_id") in settled
+                and evidence.get("port") == value["port"]):
+            from orca_agent.planning import _compatible_rule
+
+            rule = evidence.get("rule_version")
+            if rule is None or _compatible_rule(requested_goals[goal_id].minimum_check_version, rule):
+                value = {"port": value["port"], "step_key": evidence["producer_step_id"]}
         if "step_key" in value:
             if value["step_key"] not in ids:
                 raise ProposalError("Use an exact key from this proposed Plan's Steps.",

@@ -55,8 +55,12 @@ def profile_contract(policy: NativeInputPolicy) -> dict:
             "optional_blocks": {"output": {"required": False,
                 "fields": {field: ["true", "false", "0", "1"] for field in sorted(BLOCK_FIELDS["output"])},
                 "example": "%output JsonPropFile true end"}},
-            "geometry": "One line: * xyzfile <charge> 1 <basename.xyz>; no closing *. Pass the exact current prepared/registered XYZ via SDK dependencies",
-            "dependencies": "only the referenced task-local XYZ basename; its bytes must equal the trusted current geometry hash",
+            "geometry": "One line: * xyzfile <charge> 1 <basename.xyz>; no closing *. Pass the current prepared/registered XYZ via SDK dependencies",
+            "dependencies": "only the referenced task-local XYZ basename; exact trusted geometry bytes required unless task_geometry explicitly permits a derived candidate",
+            "task_geometry": {"enabled": policy.allow_task_geometry,
+                "scope": "Python SDK only, with no Request/System/Step/Goal geometry_relation restriction; "
+                    "preserve initial atom count and ordered elements; retain initial and candidate hashes. "
+                    "Connectivity, atom mapping within equal elements, stereochemistry and geometry quality remain unverified."},
             "request_binding": "method/basis/charge/multiplicity/electronic_state/environment must match current Request and Step",
             "work_units": "SP:1; Opt+Freq:(geom MaxIter+1)+1+3*atom_count; conservative declared slots, not actual iteration counts",
             "unknown_syntax": "rejected; no fallback to input-1", "scientific_validation": "unverified"}
@@ -163,8 +167,13 @@ def admit_profile(launch: dict, dependencies: dict, geometry_name: str | None,
         if expected is None or expected != value:
             raise ValueError("admitted native input differs from current Request/Step condition: " + name)
     geometry_sha256 = hashlib.sha256(dependencies[geometry_name]).hexdigest()
+    geometry_relation = "exact_initial"
     if binding.get("geometry_sha256") != geometry_sha256:
-        raise ValueError("native xyzfile bytes differ from current Request prepared/registered geometry")
+        if not (policy.allow_task_geometry and binding.get("allow_task_geometry") is True):
+            raise ValueError("native xyzfile bytes differ from current Request prepared/registered geometry")
+        if symbols != binding.get("initial_atom_symbols"):
+            raise ValueError("task candidate must preserve initial atom count and ordered elements")
+        geometry_relation = "task_generated_candidate"
     evaluation_slots = geom_iterations + 1 if optimization else 1
     response_slots = 3 * facts["atom_count"] if frequency else 0
     hessian_slots = int(bool(frequency))
@@ -176,6 +185,10 @@ def admit_profile(launch: dict, dependencies: dict, geometry_name: str | None,
                 "run_type": "optimization_and_analytic_frequencies" if optimization else "single_point",
                 "origin": "admitted_native_input", "geometry_sha256": geometry_sha256,
                 "input_geometry_sha256": geometry_sha256,
+                **({"input_geometry_relation": geometry_relation,
+                    "initial_geometry_sha256": binding.get("geometry_sha256"),
+                    "geometry_validation": "atom count and ordered elements only; topology and quality unverified"}
+                   if policy.allow_task_geometry else {}),
                 "request_version": binding.get("request_version"),
                 "system_id": binding.get("system_id"),
                 "scientific_validation": "unverified"},

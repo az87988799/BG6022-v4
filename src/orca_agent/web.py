@@ -23,6 +23,39 @@ from orca_agent.store import Store, StoreError
 STATIC = Path(__file__).with_name("static")
 
 
+def _execution_view(run):
+    """Expose recorded progress only; a plan size is not a predicted job total."""
+    pending = {"intent", "reserved", "running", "unknown"}
+    attempts = [{"attempt_id": item.id, "step_id": item.step_id, "tool": item.tool,
+                 "state": item.state, "number": item.number,
+                 "execution_kind": item.execution_kind, "started": item.started,
+                 "result_id": item.result_id} for item in run.attempts]
+    calls = [{"request_key": item.request_key, "parent_attempt_id": item.parent_attempt_id,
+              "purpose": item.purpose, "retry_of": item.retry_of, "state": item.state,
+              "started": item.started, "result_id": item.result_id,
+              "actual_conditions": item.actual_conditions} for item in run.internal_calls]
+    actions = [{"kind": "attempt", **item} for item in attempts if item["state"] in pending]
+    actions.extend({"kind": "tool_call", "tool": item.tool, "call_id": item.id,
+                    "step_id": item.step_id, "state": item.state}
+                   for item in run.calls if item.state in pending)
+    actions.extend({"kind": "internal_call", "tool": "orca.run", **item}
+                   for item in calls if item["state"] in pending)
+    return _safe({
+        "current_actions": actions,
+        "attempts": attempts,
+        "internal_calls": calls,
+        "internal_call_counts": {status: sum(item["state"] == status for item in calls)
+                                 for status in ("reserved", "running", "completed", "failed",
+                                                "cancelled", "timed_out", "unknown")},
+        "checkpoint_count": len(run.task_checkpoints),
+        "latest_checkpoint": ({"name": run.task_checkpoints[-1].name,
+                               "requires_decision": run.task_checkpoints[-1].requires_decision,
+                               "reason": run.task_checkpoints[-1].reason}
+                              if run.task_checkpoints else None),
+        "progress_basis": "recorded_calls_only; future_calculation_count_unknown",
+    }, bounded=False)
+
+
 class Submission(Record):
     text: Annotated[str, Field(strict=True, min_length=1, max_length=8192)]
     submission_id: Identifier
@@ -204,9 +237,9 @@ def create_app(config, *, store=None, port=8765):
                 "defaults": config.text.defaults,
                 "permission": config.text.permission.model_dump(mode="json"),
                 "budget": config.text.budget.model_dump(mode="json"),
-                "scope": "H₂O / CH₄ · RHF/STO-3G · SP / 优化 / 偶极矩",
-                "limitations": ["支持水优化后偶极矩、化学概念解释和官方文档检索；上传暂未开放。",
-                                "知识解释与科学结果分别标记；更广分子和方法仍待扩展。"]}
+                "scope": "自然语言目标 · 受管理的 Python / ORCA · 可追溯分析与交付",
+                "limitations": ["实际执行范围由当前 Run 的许可、依赖、资源与预算决定；上传暂未开放。",
+                                "通用观察逐项显示验证覆盖，缺少专用科学检查时不会标为科学通过。"]}
 
     @app.get("/api/runs")
     def runs(offset: int = 0, limit: int = 40):
@@ -258,6 +291,7 @@ def create_app(config, *, store=None, port=8765):
     @app.get("/api/runs/{run_id}")
     def state(run_id: str):
         data = entrypoints.status(store, run_id)
+        data["execution"] = _execution_view(store.load_run(run_id))
         data["coordinator_active"] = coordinator.active(run_id)
         path = f"web-operations/{run_id}.json"
         data["web_operation"] = store._read_json(path) if store.path(path).exists() else None

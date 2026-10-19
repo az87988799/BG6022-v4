@@ -67,35 +67,52 @@ def _references(value, found, *, depth=0):
         raise ValueError("source binding count exceeds report bound")
 
 
+def _artifact_report(store, artifact_id, expected=()):
+    try:
+        artifact = store.load_artifact(artifact_id)
+        if expected and set(expected) != {artifact.sha256}:
+            raise ValueError("source hash binding differs")
+        path = store.artifact_path(artifact_id)
+        return {"artifact_id": artifact.id, "sha256": artifact.sha256,
+                "path": str(path.resolve()), "role": artifact.role,
+                "run_id": artifact.run_id, "attempt_id": artifact.attempt_id,
+                "status": "verified"}
+    except (KeyError, TypeError, ValueError, OSError, RuntimeError):
+        return {"artifact_id": artifact_id, "status": "unverified"}
+
+
 def _result_report(store, result):
     references = {artifact_id: set() for artifact_id in result.artifact_ids}
     failures, artifacts = [], []
     try:
         _references(result.source, references)
-        for output in result.qualified_outputs.values():
-            _references(output.source, references)
-            if output.artifact_id:
-                references.setdefault(output.artifact_id, set())
     except (TypeError, ValueError):
         failures.append("source_binding_unreadable")
     for artifact_id, expected in references.items():
-        try:
-            artifact = store.load_artifact(artifact_id)
-            if expected and expected != {artifact.sha256}:
-                raise ValueError("source hash binding differs")
-            path = store.artifact_path(artifact_id)
-            artifacts.append({"artifact_id": artifact.id, "sha256": artifact.sha256,
-                              "path": str(path.resolve()), "role": artifact.role,
-                              "run_id": artifact.run_id, "attempt_id": artifact.attempt_id,
-                              "status": "verified"})
-        except (KeyError, TypeError, ValueError, OSError, RuntimeError):
+        artifact = _artifact_report(store, artifact_id, expected)
+        if artifact["status"] != "verified":
             failures.append(f"source_unverified:{artifact_id}")
-            artifacts.append({"artifact_id": artifact_id, "status": "unverified"})
+        artifacts.append(artifact)
     integrity_failed = bool(failures)
-    qualified = {}
+    qualified, output_integrity = {}, {}
     for port, output in result.qualified_outputs.items():
+        own_references, own_errors = {}, []
+        try:
+            _references(output.source, own_references)
+            if output.artifact_id:
+                own_references.setdefault(output.artifact_id, set())
+        except (TypeError, ValueError):
+            own_errors.append("source_binding_unreadable:" + port)
+        for artifact_id, expected in own_references.items():
+            artifact = _artifact_report(store, artifact_id, expected)
+            if artifact["status"] != "verified":
+                own_errors.append(f"source_unverified:{artifact_id}")
+            if artifact not in artifacts:
+                artifacts.append(artifact)
+        failures.extend(own_errors)
+        output_integrity[port] = not integrity_failed and not own_errors
         checks = result.checks.get(port)
-        valid = bool(not integrity_failed and artifacts and result.operation_status == "completed"
+        valid = bool(output_integrity[port] and artifacts and result.operation_status == "completed"
                      and checks == output.checks and checks
                      and all(c.status == "passed" for c in checks))
         if not valid:
@@ -103,19 +120,109 @@ def _result_report(store, result):
             continue
         # Numeric values come solely from the qualified output, never observations.
         qualified[port] = _safe(output)
+    output_validation = []
+    for port in sorted(result.checks.keys() | result.qualified_outputs.keys()):
+        checks = result.checks.get(port, [])
+        verified = output_integrity.get(port, not integrity_failed)
+        status = ("passed" if port in qualified else "source_unverified" if not verified
+                  else "failed" if any(c.status == "failed" for c in checks) else "unverified")
+        output_validation.append({"name": port,
+            "kind": "qualified_output" if port in result.qualified_outputs else "checked_output",
+            "status": status, "scientific_qualification": port in qualified,
+            "checks": _safe(checks), "source_integrity": "verified" if verified else "unverified"})
+    observation_records = []
+    for observed in result.observation_records:
+        record = _safe(observed, bounded=False)
+        sources = [_artifact_report(store, source.artifact_id, [source.sha256]) for source in observed.sources]
+        sources.extend(_artifact_report(store, identifier) for identifier in getattr(observed, "artifact_ids", [])
+                       if identifier not in {item["artifact_id"] for item in sources})
+        known_ids = {item["artifact_id"] for item in artifacts}
+        artifacts.extend(item for item in sources if item["artifact_id"] not in known_ids)
+        verified = bool(sources) and all(item["status"] == "verified" for item in sources)
+        record.update(source_integrity="verified" if verified else "unverified", scientific_qualification=False)
+        observation_records.append(record)
+        output_validation.append({"name": observed.name, "kind": "observation",
+            "status": observed.validation_status, "scientific_qualification": False,
+            "checks": _safe(observed.checks), "source_integrity": record["source_integrity"]})
+        if not verified:
+            failures.append("observation_source_unverified:" + observed.name)
+    scientific_status = ("passed" if qualified and all(item["scientific_qualification"] for item in output_validation)
+                         else "partially_checked" if qualified else "no_currently_verified_scientific_output")
     observations = {"classification": "evidence_observation_only", "scientific_qualification": False,
                     "data": _safe(result.observations)}
     return {
         "run_id": result.run_id, "result_id": result.id, "step_id": result.step_id,
         "attempt_id": result.attempt_id, "call_id": getattr(result, "call_id", None),
         "operation_status": result.operation_status,
-        "scientific_status": "passed" if qualified else "no_currently_verified_scientific_output",
+        "scientific_status": scientific_status, "output_validation": output_validation,
         "qualified_outputs": qualified, "checks": _safe(result.checks),
-        "observations": observations, "artifacts": artifacts,
+        "observations": observations, "observation_records": observation_records, "artifacts": artifacts,
         "conditions": _safe(result.source.get("conditions", {})),
         "source": _safe(result.source), "diagnostics": _safe(result.diagnostics),
         "gaps": failures,
     }
+
+
+def _delivery_index(store, run, request, results):
+    """Index saved artifacts, including initial geometries and every code attempt."""
+    index = {item["artifact_id"]: {**item, "purposes": ["result_evidence"]}
+             for result in results for item in result.get("artifacts", [])}
+
+    def include(identifier, purpose, expected=()):
+        if not identifier:
+            return
+        if identifier not in index:
+            index[identifier] = {**_artifact_report(store, identifier, expected), "purposes": []}
+        elif expected and set(expected) != {index[identifier].get("sha256")}:
+            index[identifier]["status"] = "unverified"
+        if purpose not in index[identifier]["purposes"]:
+            index[identifier]["purposes"].append(purpose)
+
+    if request:
+        include(request.geometry_artifact_id, "initial_geometry")
+        for system in request.systems:
+            include(system.geometry_artifact_id, "initial_geometry")
+    for attempt in run.attempts:
+        include(attempt.geometry_artifact_id, "attempt_geometry")
+        step = attempt.frozen_step
+        if step:
+            for field in ("code", "input"):
+                ref = getattr(step.parameters, field, None)
+                if ref:
+                    include(ref.artifact_id, "generated_script" if ref.language == "python" else "actual_input", [ref.sha256])
+    for call in run.internal_calls:
+        if call.code:
+            include(call.code.artifact_id, "actual_input", [call.code.sha256])
+        for identifier in call.artifact_ids:
+            include(identifier, "internal_call_evidence")
+    for item in index.values():
+        if item.get("role") in {"python", "code"} and "generated_script" not in item["purposes"]:
+            item["purposes"].append("generated_script")
+    return list(index.values())
+
+
+def _execution_report(run):
+    fields = ("request_key", "purpose", "retry_of", "state", "attempt_id", "parent_attempt_id",
+              "input_fingerprint", "conditions", "actual_conditions", "goal", "resources",
+              "work_units", "started", "result_id", "artifact_ids", "resource_usage")
+    calls = [{key: _safe(getattr(item, key), bounded=False) for key in fields} for item in run.internal_calls]
+    return {"internal_calls": calls, "checkpoints": _safe(run.task_checkpoints, bounded=False),
+        "progress": {"total": len(calls), "completed": sum(item["state"] == "completed" for item in calls),
+            "failed": sum(item["state"] in {"failed", "cancelled", "timed_out"} for item in calls),
+            "running": sum(item["state"] in {"reserved", "running", "unknown"} for item in calls)}}
+
+
+def _stop_reason(run):
+    stopped = run.state in {"completed", "failed", "budget_exhausted", "cancelled", "paused", "unknown", "waiting_user"}
+    diagnostics = [{key: item[key] for key in ("category", "message", "error_category", "model_id") if key in item}
+                   for item in run.diagnostics if isinstance(item, dict)]
+    model_errors = [{key: item[key] for key in ("id", "status", "error_category") if key in item}
+                    for item in run.model_records if item.get("error_category")]
+    categories = list(dict.fromkeys(item["category"] for item in diagnostics if item.get("category")))
+    if stopped:
+        categories.insert(0, run.state)
+    return _safe({"state": run.state, "categories": categories, "diagnostics": diagnostics,
+                  "model_errors": model_errors}, bounded=False)
 
 
 def _money(records):
@@ -213,11 +320,16 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
             integrity = selection.get("source_integrity", {})
             if integrity.get("status") == "unverified":
                 selected["gaps"] = list(dict.fromkeys([*selected.get("gaps", []), *integrity.get("gaps", [])]))
-                selected["qualified_outputs"] = {}
-                selected["scientific_status"] = "source_unverified"
+                selected["qualified_outputs"].pop(goal.port, None)
+                selected["scientific_status"] = "partially_checked" if selected["qualified_outputs"] else "source_unverified"
+                for output in selected.get("output_validation", []):
+                    if output["name"] == goal.port:
+                        output.update(status="source_unverified", source_integrity="unverified", scientific_qualification=False)
         support = "insufficient_evidence"
         if row["answer"] and row["answer"]["kind"] == "qualified_scientific_output":
             support = "scientific_output_verified"
+        elif row["answer"] and goal.evidence_contract_version == "generic-observation-1":
+            support = "generic_observation_reported_with_limitations"
         elif row["answer"]:
             support = "query_evidence_read_verified"
         applicability = selection["assessment"]
@@ -280,11 +392,14 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                                                           if a.state in {"intent", "running", "unknown"}],
                    "model_cost": _money(run.model_records)},
         "diagnostics": _safe(run.diagnostics), "gaps": gaps,
+        "execution": _execution_report(run), "stop_reason": _stop_reason(run),
         "limitations": ["Evidence reading, scientific output qualification, and user goal completion are distinct.",
                         "Electronic energy and its difference are not free energy or thermochemical corrections.",
                         "Finite sampling describes only the sampled discrete geometries.",
                         "An optimized geometry alone does not establish vibrational stability or a global minimum."],
     }
+    report["artifact_index"] = _delivery_index(store, run, request, report["results"])
+    report["generated_scripts"] = [item for item in report["artifact_index"] if "generated_script" in item["purposes"]]
     snapshot = delivery_snapshot(request, run, selections,
         control_generation=store.read_control(run.id)["generation"]) if request else None
     if snapshot:
@@ -336,8 +451,8 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
     return report
 
 
-def _cell(value):
-    return str(_safe(value)).replace("|", "\\|").replace("\r", " ").replace("\n", " ")
+def _cell(value, *, bounded=True):
+    return str(_safe(value, bounded=bounded)).replace("|", "\\|").replace("\r", " ").replace("\n", " ")
 
 
 def render_report(report: dict[str, Any]) -> str:
@@ -347,6 +462,11 @@ def render_report(report: dict[str, Any]) -> str:
              + ("是。" if report["user_goal_complete"] else "否。"), "",
              "| 目标 | 物理量/查询 | 必需 | 记录状态 | 当前证据 |",
              "| --- | --- | --- | --- | --- |"]
+    stop = report.get("stop_reason", {})
+    if stop.get("categories"):
+        lines.insert(4, "停止/当前状态原因：" + _cell(stop["categories"]) + "。")
+        if stop.get("diagnostics") or stop.get("model_errors"):
+            lines.insert(5, "停止诊断：" + _cell({"diagnostics": stop["diagnostics"], "model_errors": stop["model_errors"]}) + "。")
     for goal in report["goals"]:
         lines.append("| " + " | ".join(_cell(goal[key]) for key in (
             "goal_id", "port", "required", "recorded_status", "evidence_status")) + " |")
@@ -368,7 +488,7 @@ def render_report(report: dict[str, Any]) -> str:
             lines.append(f"{label}：{displayed}；"
                          f"检查版本：{_cell(answer['check_versions'])}。")
         elif answer:
-            lines.append("本目标观察（不宣称科学资格）：" + _cell(answer["observation"])
+            lines.append("本目标观察（不宣称科学资格）：" + _cell(answer["observation"], bounded=False)
                          + "；单位：" + _cell(answer["unit"] if answer["unit"] is not None else "unknown") + "。")
     delivery = report.get("delivery", {})
     for fact in delivery.get("facts", []):
@@ -428,6 +548,26 @@ def render_report(report: dict[str, Any]) -> str:
             lines.append(f"来源 Run `{_cell(result['run_id'])}` / Attempt `{_cell(result['attempt_id'])}`。")
         if result.get("conditions"):
             lines.append("结果条件：" + _cell(result["conditions"]) + "。")
+        for output in result.get("output_validation", []):
+            lines.append(f"- 输出 `{_cell(output['name'])}`：{_cell(output['kind'])}；"
+                         f"验证状态 {_cell(output['status'])}；科学资格 {_cell(output['scientific_qualification'])}；"
+                         f"来源 {_cell(output['source_integrity'])}；检查 {_cell(output['checks'])}。")
+        for observed in result.get("observation_records", []):
+            lines.append(f"\n通用观察 `{_cell(observed['name'])}`（不宣称科学资格）："
+                         + _cell(observed["value"], bounded=False) + "；单位 "
+                         + _cell(observed["unit"] if observed["unit"] is not None else "unknown") + "。")
+            lines.append("验证覆盖：" + _cell(observed["validation_status"]) + "；来源完整性："
+                         + _cell(observed["source_integrity"]) + "；检查：" + _cell(observed["checks"]) + "。")
+            lines.append("实际条件：" + _cell(observed["actual_conditions"], bounded=False) + "；脚本 SHA256："
+                         + _cell(observed["code_sha256"]) + "。")
+            if observed.get("formula"):
+                lines.append("公式：" + _cell(observed["formula"]) + "。")
+            for reference in observed["sources"]:
+                lines.append("来源：" + _cell(reference, bounded=False) + "。")
+            if observed.get("artifact_ids"):
+                lines.append("派生产物：" + _cell(observed["artifact_ids"], bounded=False) + "。")
+            if observed["limitations"]:
+                lines.append("验证限制：" + _cell(observed["limitations"], bounded=False) + "。")
         for port, output in result.get("qualified_outputs", {}).items():
             value = output.get("value")
             if value is not None:
@@ -456,6 +596,10 @@ def render_report(report: dict[str, Any]) -> str:
                                      f"required={_cell(member.get('required'))}；"
                                      f"status={_cell(status)}；"
                                      f"missing={_cell(member.get('missing_reason'))}。")
+                        context = {key: value for key, value in member.items()
+                                   if key not in {"member_id", "id", "required", "status", "energy_eh", "missing_reason"}}
+                        if context:
+                            lines.append("  成员条件、结构关系与排除记录：" + _cell(context, bounded=False) + "。")
                         energy = member.get("energy_eh")
                         if isinstance(energy, (int, float)) and not isinstance(energy, bool) and math.isfinite(energy):
                             if result.get("gaps"):
@@ -470,6 +614,9 @@ def render_report(report: dict[str, Any]) -> str:
                     lines.append("分析判据：" + _cell(summary["reason"]) + "。")
                 if summary.get("limitation"):
                     lines.append(_cell(summary["limitation"]))
+                context = {key: value for key, value in summary.items() if key != "members"}
+                if context:
+                    lines.append("已保存的比较条件与搜索范围：" + _cell(context, bounded=False) + "。")
             else:
                 lines.append(f"- {_cell(data)}")
         for artifact in result.get("artifacts", []):
@@ -488,6 +635,21 @@ def render_report(report: dict[str, Any]) -> str:
                          f"输入指纹 `{_cell(attempt['input_fingerprint'])}`。")
             if attempt["parameter_changes"]:
                 lines.append("  参数变化：" + _cell(attempt["parameter_changes"]))
+    execution = report.get("execution", {})
+    if execution.get("internal_calls"):
+        lines.append("\n逐计算进度：" + _cell(execution["progress"]) + "。")
+        for call in execution["internal_calls"]:
+            lines.append("- 内部计算记录：" + _cell(call, bounded=False))
+    if execution.get("checkpoints"):
+        lines.append("\n已保存检查点：" + _cell(execution["checkpoints"], bounded=False))
+    if report.get("artifact_index"):
+        lines.append("\n文件交付索引（包含初始结构、各次脚本、输入和结果）：")
+        for artifact in report["artifact_index"]:
+            if artifact["status"] == "verified":
+                lines.append(f"- [{_cell(artifact['artifact_id'])}](<{artifact['path']}>)；"
+                             f"用途 {_cell(artifact['purposes'])}；SHA256 `{artifact['sha256']}`。")
+            else:
+                lines.append(f"- `{_cell(artifact['artifact_id'])}`：来源未核验；用途 {_cell(artifact['purposes'])}。")
     usage = report["budget"]["usage"]
     money = report["budget"]["model_cost"]
     lines.extend(["", f"累计成本：ORCA 已预约 {usage['orca_starts_reserved']}，"

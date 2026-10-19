@@ -7,6 +7,7 @@ permission, command line, scientific success assertion or execution handle.
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import time
@@ -86,11 +87,27 @@ def native_input_binding(store, run, step):
     if geometry_id is None:
         raise ValueError("native execution requires current prepared or registered geometry")
     geometry = store.load_artifact(geometry_id)
-    read_pinned_input(store.artifact_path(geometry_id), geometry.sha256, limit=65536)
+    geometry_bytes = read_pinned_input(store.artifact_path(geometry_id), geometry.sha256, limit=65536)
+    policy = store.run_configuration(run).execution.native_input_policy
+    related_goals = [goal for goal in request.goals if (
+        (plan.goal_map.get(goal.id) and plan.goal_map[goal.id].step_id == step.id)
+        or system_id in goal.system_ids or not goal.system_ids)]
+    relations = [scope.get("geometry_relation") for scope in (
+        request.conditions, system.conditions if system else {}, step.parameters.conditions,
+        *(goal.conditions for goal in related_goals))]
+    candidate_binding = {}
+    if (policy.allow_task_geometry and step.tool == "python.execute"
+            and not any(relation is not None for relation in relations)):
+        from orca_agent.orca.native import _xyz_file
+
+        count = _xyz_file(geometry_bytes)
+        candidate_binding = {"allow_task_geometry": True,
+            "initial_atom_symbols": [line.split()[0] for line in
+                geometry_bytes.decode("ascii").splitlines()[2:2 + count]]}
     return {"request_id": request.id, "request_version": request.version,
             "step_id": step.id, "system_id": system_id, "conditions": conditions,
             "condition_sources": assessment["sources"], "geometry_artifact_id": geometry_id,
-            "geometry_sha256": geometry.sha256}
+            "geometry_sha256": geometry.sha256, **candidate_binding}
 
 
 def launch_orca(store, run, step, config, prepared, workdir, root, *,
@@ -318,6 +335,66 @@ def _archive(store, run, attempt, folder, prefix, artifacts=None, *, checkpoint=
     return artifacts
 
 
+def _collect_sdk_errors(store, run, attempt, root, files, diagnostics):
+    """Expose only bounded error data from the coordinator's response mailbox."""
+    from orca_agent.llm import _has_credential
+    from orca_agent.task_sdk import MAX_RESPONSE_BYTES
+
+    responses = root / "responses"
+    if not responses.is_dir():
+        return
+    paths = sorted(responses.glob("response-*.json"))
+    legacy = responses / "response.json"
+    if legacy.is_file():
+        paths.insert(0, legacy)
+    retained, rejected, unreadable = 0, 0, 0
+    for path in paths[:32]:
+        if not path.resolve().is_relative_to(root.resolve()):
+            unreadable += 1
+            continue
+        try:
+            with path.open("rb") as stream:
+                raw = stream.read(MAX_RESPONSE_BYTES + 1)
+            if len(raw) > MAX_RESPONSE_BYTES:
+                raise ValueError("SDK response exceeds its transport bound")
+            response = json.loads(raw)
+        except (ValueError, OSError):
+            unreadable += 1
+            continue
+        error = response.get("error") if isinstance(response, dict) else None
+        if not isinstance(error, str) or not error.strip():
+            continue
+        rejected += 1
+        if retained >= 8:
+            continue
+        detail = "[redacted credential-bearing SDK error]" if _has_credential(error) else error
+        encoded = detail.encode("utf-8")
+        truncated = len(encoded) > 2048
+        if truncated:
+            detail = encoded[:2037].decode("utf-8", errors="ignore") + "[truncated]"
+        projection = {"error": detail, "detail_truncated": truncated,
+                      "raw_response_sha256": hashlib.sha256(raw).hexdigest(),
+                      "classification": "bounded_error_only_projection"}
+        target = root / "sdk_diagnostics" / path.name
+        if target.exists():
+            if json.loads(target.read_bytes()) != projection:
+                raise ValueError("Archived SDK error projection changed")
+        else:
+            _save_json(target, projection)
+        artifact = store.import_artifact(target, "execution_record", run_id=run.id, attempt_id=attempt.id,
+            source={"sdk_response_name": path.name, "raw_response_sha256": projection["raw_response_sha256"],
+                    "projection": "bounded_error_only"})
+        files["sdk_responses/" + path.name] = {"artifact_id": artifact.id, "sha256": artifact.sha256}
+        diagnostics.append({"category": "managed_sdk_request_rejected", "detail": detail,
+            "response_name": path.name, "artifact_id": artifact.id, "sha256": artifact.sha256,
+            "raw_response_sha256": projection["raw_response_sha256"], "detail_truncated": truncated})
+        retained += 1
+    if rejected > retained or len(paths) > 32 or unreadable:
+        diagnostics.append({"category": "managed_sdk_diagnostics_bounded", "retained_errors": retained,
+            "additional_scanned_errors": rejected - retained, "unreadable_responses": unreadable,
+            "unscanned_response_files": max(0, len(paths) - 32)})
+
+
 def collect_result(store, run, step, attempt, outcome):
     """Keep actual files; no fixed JSON requirement or implicit scientific parser."""
     root = store.path(attempt.directory)
@@ -326,6 +403,7 @@ def collect_result(store, run, step, attempt, outcome):
         diagnostics.append({"category": "collection_error", "detail": outcome["collection_error"]})
     if outcome["state"] != "unknown":
         try:
+            _collect_sdk_errors(store, run, attempt, root, files, diagnostics)
             for folder in ("sealed", "task", "checkpoints"):
                 if (root / folder).exists():
                     _archive(store, run, attempt, root / folder, folder + "/", files)
@@ -366,7 +444,7 @@ def collect_result(store, run, step, attempt, outcome):
     if getattr(step.parameters, "code", None) and outcome["state"] != "unknown":
         from orca_agent.task_observations import collect
         try:
-            observation_records = collect(store, run, step, attempt, files)
+            observation_records = collect(store, run, step, attempt, files, diagnostics=diagnostics)
         except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
             diagnostics.append({"category": "observation_manifest_rejected", "detail": str(exc)})
     return Result(run_id=run.id, step_id=step.id, attempt_id=attempt.id,

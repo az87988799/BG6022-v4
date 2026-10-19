@@ -140,11 +140,11 @@ def test_legacy_configuration_and_attempt_serialization_preserve_exact_shape():
         ExecutionConfiguration(native_input_policy=POLICY)
 
 
-def setup_native(tmp_path, monkeypatch, *, units=12, tool="orca.run"):
+def setup_native(tmp_path, monkeypatch, *, units=12, tool="orca.run", policy=POLICY):
     monkeypatch.setattr("orca_agent.store.require_execution_available", lambda _: None)
     execution = ExecutionConfiguration(backend="linux-container", image_id="sha256:" + "a" * 64,
         manifest_sha256="b" * 64, docker_context="desktop-linux", docker_path="E:/docker.exe",
-        native_input_policy=POLICY)
+        native_input_policy=policy)
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment",
                   configuration=RunConfiguration(execution=execution))
     source, geometry_path = tmp_path / "input.inp", tmp_path / "initial.xyz"
@@ -168,8 +168,43 @@ def setup_native(tmp_path, monkeypatch, *, units=12, tool="orca.run"):
         scientific_execution=True, code_execution=True, artifact_writes=True, artifact_ids=[code.id, geometry.id]),
         BudgetLimits(orca_starts=2, extra_orca_starts=1, internal_work_units=units))
     prepared = prepare_native_input(tmp_path / "staged", params, store.artifact_path, ResourceLimits(),
-        policy=POLICY, binding=native_input_binding(store, run, step))
+        policy=policy, binding=native_input_binding(store, run, step))
     return store, run, step, prepared, params
+
+
+def test_task_candidate_geometry_requires_both_frozen_policy_and_trusted_binding():
+    policy = POLICY.model_copy(update={"allow_task_geometry": True})
+    bound = {**binding(), "allow_task_geometry": True, "initial_atom_symbols": ["H", "H"]}
+    changed = XYZ.replace(b"0.74", b"0.75")
+    result = admit(data=changed, policy=policy, bound=bound)
+    facts = result["actual_conditions"]
+    assert result["input_binding"]["geometry_sha256"] == sha(XYZ)
+    assert facts["input_geometry_sha256"] == sha(changed)
+    assert facts["initial_geometry_sha256"] == sha(XYZ)
+    assert facts["input_geometry_relation"] == "task_generated_candidate"
+    assert facts["scientific_validation"] == "unverified"
+    for denied_policy, denied_binding in ((POLICY, bound), (policy, binding())):
+        with pytest.raises(ValueError, match="xyzfile bytes"):
+            admit(data=changed, policy=denied_policy, bound=denied_binding)
+    with pytest.raises(ValueError, match="ordered elements"):
+        admit(data=changed.replace(b"H 0 0 0", b"He 0 0 0").replace(b"H 0 0 0.75", b"He 0 0 0.75"),
+              policy=policy, bound=bound)
+
+
+@pytest.mark.parametrize("tool,restricted", [("python.execute", False), ("orca.run", False),
+                                           ("python.execute", True)])
+def test_only_unrestricted_python_receives_candidate_geometry_binding(tmp_path, monkeypatch, tool, restricted):
+    policy = POLICY.model_copy(update={"allow_task_geometry": True})
+    store, run, step, _, _ = setup_native(tmp_path, monkeypatch, tool=tool, policy=policy)
+    if restricted:
+        request = store.load_request(run)
+        request.goals[0].conditions["geometry_relation"] = "fixed_initial"
+        original = store.load_request
+        monkeypatch.setattr(store, "load_request", lambda current: request if current.id == run.id else original(current))
+    bound = native_input_binding(store, run, step)
+    assert bound.get("allow_task_geometry", False) is (tool == "python.execute" and not restricted)
+    if bound.get("allow_task_geometry"):
+        assert bound["initial_atom_symbols"] == ["H", "H"]
 
 
 def test_direct_reservation_is_atomic_idempotent_and_survives_reopen(tmp_path, monkeypatch):

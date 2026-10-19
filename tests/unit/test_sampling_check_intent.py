@@ -6,7 +6,7 @@ import pytest
 
 from orca_agent.goals import validate_goal_evidence
 from orca_agent.model_usage import current_basis
-from orca_agent.models import OutputBinding, Plan, Request, Step
+from orca_agent.models import OutputBinding, Plan, Request, Step, SystemInput
 from orca_agent.report import build_report
 from orca_agent.semantic import commit_candidate
 from orca_agent.tools.analysis import SAMPLING_CHECK_VERSION, finite_sampling, sampling_check
@@ -152,6 +152,36 @@ def test_new_check_inherits_only_registered_sampling_specification(tmp_path):
     assert new.port == "sampling_check" and new.conditions == original
     assert new.text_evidence["sampling_specification"]["source"] == "inherited"
     assert store.load_request_revision(changed, 1).goals[0].port == "sampling"
+
+
+@pytest.mark.parametrize("with_reference", [True, False])
+def test_quantity_cannot_downgrade_registered_sampling_specification(tmp_path, with_reference):
+    store, old_run, original, _, _ = sampling_run(tmp_path)
+    source = original.goals[0].model_copy(deep=True, update={"system_ids": ["water"]})
+    request = Request(original_text=original.original_text, goals=[source], systems=[SystemInput(
+        id="water", label="water", geometry_source="prepare", identity={"canonical_names": ["water"]})])
+    run = store.create_run(request, None, old_run.permission, old_run.budget)
+    text = "将目标改为检查有限采样是否达标。"
+    message_id = store.enqueue_message(run.id, text)
+    proposed = {"key": "check", "port": "sampling_check", "quantity": "有限采样",
+                "verification": "reported_with_limitations", "system_refs": ["water"],
+                "text_basis": text, "message_id": message_id}
+    if with_reference:
+        proposed["analysis_goal_ref"] = source.id
+    values = candidate(store, run, kind="replace_goals", replaces=[source.id], goals=[proposed],
+                       notices=["The registered finite sampling criterion remains required."])
+    updated = commit_candidate(store, run, values, decision_id="check_with_quantity", basis=current_basis(store, run))
+    goal = store.load_request(updated).goals[0]
+    assert goal.evidence_contract_version == "legacy-1"
+    assert goal.minimum_check_version == SAMPLING_CHECK_VERSION
+    assert goal.verification == "qualified"
+    if with_reference:
+        assert goal.conditions == source.conditions
+        assert goal.text_evidence["sampling_specification"]["goal_id"] == source.id
+    else:
+        assert "missing:sampling_specification" in goal.unresolved
+        assert not goal.conditions
+    assert store.load_request_revision(updated, 1).goals[0] == source
 
 
 def test_multiple_registered_checks_cannot_omit_or_borrow_a_specification(tmp_path):

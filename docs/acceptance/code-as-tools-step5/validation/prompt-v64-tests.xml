@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="2.425" timestamp="2026-10-19T23:11:00.416349+08:00" hostname="AZ"><testcase classname="tests.unit.test_code_context" name="test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_history_survives" time="0.005" /><testcase classname="tests.unit.test_code_context" name="test_sdk_guidance_exposes_readonly_filename_mapping_and_repair_constraints" time="0.104"><failure message="AssertionError: assert 'Declared relative dependencies' in 'Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. Unmet Goals use goa...e remains unsupported. ORCA %maxcore uses AUTHORITY.execution_resources.maxcore_mb per process, never total_memory_mb.'">tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1739/test_sdk_guidance_exposes_read0')
+
+    def test_sdk_guidance_exposes_readonly_filename_mapping_and_repair_constraints(tmp_path):
+        _, _, _, wire = selection_context(tmp_path)
+        rules = wire["TASK_CODE_RULES"]
+        assert "Return dict keys:request_key,input_fingerprint,operation_status,scientific_validation,actual_conditions,files" in rules
+        assert "files maps original filenames to readable read-only copy paths, not Artifact metadata" in rules
+        assert "includes inputs/dependencies" in rules
+        assert "Suffix or mapping order cannot identify outputs" in rules
+        assert "Input=job.inp; OptFreq final geometry=job.xyz; Hessian=job.hess" in rules
+        assert "Inspect files.keys()" in rules
+        assert "stdout.out/stderr.txt" in rules and "check existence before reading" in rules
+        assert "Never infer output names from input_path" in rules
+&gt;       assert "Declared relative dependencies" in rules
+E       AssertionError: assert 'Declared relative dependencies' in 'Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. Unmet Goals use goa...e remains unsupported. ORCA %maxcore uses AUTHORITY.execution_resources.maxcore_mb per process, never total_memory_mb.'
+
+tests\unit\test_code_context.py:316: AssertionError</failure></testcase></testsuite></testsuites>

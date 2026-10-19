@@ -1,0 +1,3361 @@
+{
+  "version": "terminal-delivery-1",
+  "snapshot_ref": "current",
+  "basis": {
+    "request_id": "request_821e11fc3e0f4f2a82865ac9ab91e69f",
+    "request_version": 3,
+    "plan_id": "plan_5e4e2c104da94fa492714d2ecaf558d9",
+    "plan_version": 3,
+    "permission_version": 1,
+    "control_generation": 3
+  },
+  "request_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。由你选择低成本方法和基组、编写搜索筛选及分析代码；中性单重态、气相。保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。为控制本次开发验证成本，最多进行4次ORCA计算，其余搜索和筛选规模自行合理选择；不能满足时保留已有结果和停止原因。\n常规计算步骤也由你在预算内自主决定，无须另行确认；实际几何关系、评价方法和搜索边界必须如实报告，固定条件与交付标准不变。",
+  "communication": {
+    "delivery_scope": "science",
+    "awaiting_reply": false,
+    "notices": [],
+    "questions": [],
+    "question_gaps": {}
+  },
+  "resources": {
+    "permission": {
+      "version": 1,
+      "scientific_execution": true,
+      "allowed_tools": [
+        "structure.resolve",
+        "structure.prepare",
+        "workspace.write",
+        "python.execute",
+        "orca.run",
+        "evidence.list",
+        "evidence.discover",
+        "evidence.search",
+        "evidence.value",
+        "evidence.text",
+        "knowledge.search",
+        "knowledge.answer"
+      ],
+      "max_cores": 4,
+      "max_memory_mb": 1024,
+      "artifact_ids": [],
+      "source_ids": [],
+      "result_ids": [],
+      "model_execution": true,
+      "code_execution": true,
+      "artifact_writes": true,
+      "allowed_repairs": {},
+      "allow_additional_science": true,
+      "external_identity_queries": true,
+      "geometry_preparation": true
+    },
+    "remaining": {
+      "orca_starts": 4,
+      "extra_orca_starts": 3,
+      "evidence_reads": 8,
+      "analysis_executions": 3,
+      "identity_queries": 1,
+      "structure_preparations": 0,
+      "knowledge_queries": 1,
+      "internal_work_units": 400,
+      "code_retries": 2,
+      "postprocess_starts": 0
+    },
+    "limits": {
+      "orca_starts": 4,
+      "extra_orca_starts": 3,
+      "evidence_reads": 12,
+      "analysis_executions": 4,
+      "identity_queries": 2,
+      "structure_preparations": 1,
+      "knowledge_queries": 3,
+      "internal_work_units": 400,
+      "code_retries": 2,
+      "postprocess_starts": 0
+    },
+    "usage": {
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "extra_orca_starts_reserved": 0,
+      "evidence_reads": 4,
+      "analysis_executions": 1,
+      "identity_queries": 1,
+      "structure_preparations": 1,
+      "knowledge_queries": 2,
+      "internal_work_units": 0,
+      "code_retries": 0,
+      "postprocess_starts": 0
+    },
+    "unsettled_attempt_ids": [],
+    "unsettled_call_ids": [],
+    "code_attempt_allowance": {
+      "recorded": 0,
+      "effective_used": 0,
+      "basis": "max(recorded, python_attempt_count - 1)",
+      "meaning": "every Python execution after the first, including distinct scripts"
+    },
+    "unsettled_internal_request_keys": [],
+    "execution_cost": {
+      "python_attempts": 1,
+      "cpu_seconds": 2.548034,
+      "elapsed_seconds": 9.68699999999808,
+      "complete": false
+    },
+    "artifact_limits": {
+      "artifact_count": 200,
+      "artifact_bytes": 268435456,
+      "artifact_total_bytes": 268435456
+    },
+    "artifact_usage": {
+      "status": "not_in_snapshot",
+      "disk_hard_quota": false
+    }
+  },
+  "goals": [
+    {
+      "goal_id": "goal_initial_geometry",
+      "port": "prepared_geometry",
+      "required": true,
+      "system_ids": [
+        "system_nhexane"
+      ],
+      "requested_identity": {
+        "contract": "general-identity-2",
+        "requested_names": [
+          "n-hexane"
+        ],
+        "canonical_names": [],
+        "query_name": "n-hexane",
+        "query_name_source": "explicit",
+        "ambiguities": [],
+        "text_evidence": {
+          "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+          "start": 3,
+          "end": 11,
+          "text_basis": "n-hexane",
+          "schema": "request-semantics-3"
+        }
+      },
+      "current_conditions": {
+        "system_nhexane": {
+          "method": "B3LYP",
+          "basis": "3-21G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_nhexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "satisfied",
+      "current_evidence_status": "passed",
+      "goal_complete": true,
+      "answer": {
+        "kind": "qualified_input_artifact",
+        "value": null,
+        "unit": "angstrom",
+        "artifact_id": "artifact_6d77c84bd7304f3488d0c9c082e53f44",
+        "check_versions": [
+          "structure-prepare-2"
+        ],
+        "scientific_qualification": false
+      },
+      "source": {
+        "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+        "result_id": "result_76abc6988fe34d98bb3b7b177529a452",
+        "call_id": "call_b2dae39dfc7449f5b91be7085cf13a34",
+        "artifact_ids": [
+          "artifact_8a0f6159c1034f708ac11df3fc8b7ebc",
+          "artifact_54654503b90042d582b6e38670fe5478",
+          "artifact_7c73706a639b4778accdb10283777fa8",
+          "artifact_6d77c84bd7304f3488d0c9c082e53f44"
+        ]
+      },
+      "minimum_check_version": "structure-prepare-2",
+      "gaps": [],
+      "next_action": "deliver",
+      "ref": "g1",
+      "original_text": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+      "text_evidence": {
+        "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+        "start": 96,
+        "end": 160,
+        "text_basis": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f1",
+        "f2",
+        "f3",
+        "f4",
+        "f5"
+      ],
+      "required_blocker_refs": [],
+      "explanation_refs": [
+        "e1"
+      ],
+      "next_action_refs": [
+        "n1"
+      ]
+    },
+    {
+      "goal_id": "goal_search_scope",
+      "port": "sampling",
+      "required": true,
+      "system_ids": [
+        "system_nhexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_nhexane": {
+          "method": "B3LYP",
+          "basis": "3-21G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_nhexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "source_condition_evidence": {
+        "origin": "unknown",
+        "scientific_output_verification": "unverified"
+      },
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": {
+        "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+        "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+        "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+        "artifact_ids": [
+          "artifact_4cdcef951da345ceb035571948d9caac",
+          "artifact_5ad7c915d39545d7bb414008a8076285",
+          "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+          "artifact_0ea083677fa449d9afe4637d4203d877",
+          "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+          "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+          "artifact_89391857ac724e44827936f6720bbe9e",
+          "artifact_f3d72b8ab415483bb01087048edd1430",
+          "artifact_23f784e042f248479a75f3ef21e9418f",
+          "artifact_4d38f1984f8e4b749fcb7087a124360c",
+          "artifact_6162d320fd1940a4b404f9891ef267b7",
+          "artifact_294153fb3eda47ebafa90a4a181c4015",
+          "artifact_c93639e38e534460aa52bf67d948fc6b",
+          "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+          "artifact_9208f06cfa8a454195f46de318eb2f83",
+          "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+          "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+          "artifact_75651b7befaf4055a71890f7164d3697",
+          "artifact_b51feee8449e49528438aeace17b367f",
+          "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+          "artifact_b2d9d975d5814819be8615e494629734",
+          "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+          "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+          "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+          "artifact_ebe019faad944bdd9b574c1eb38074c1",
+          "artifact_f354253cbf2744798d7e4101de1c372b",
+          "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+          "artifact_cf8a86acb6244db6b98530d8054c2f82"
+        ]
+      },
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "requested_observation_missing"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g2",
+      "original_text": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+      "text_evidence": {
+        "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+        "start": 96,
+        "end": 160,
+        "text_basis": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f6",
+        "f7",
+        "f8",
+        "f9"
+      ],
+      "required_blocker_refs": [
+        "b1"
+      ],
+      "explanation_refs": [
+        "e2"
+      ],
+      "next_action_refs": [
+        "n2"
+      ]
+    },
+    {
+      "goal_id": "goal_lowest_candidate",
+      "port": "energy",
+      "required": true,
+      "system_ids": [
+        "system_nhexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_nhexane": {
+          "method": "B3LYP",
+          "basis": "3-21G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_nhexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "source_condition_evidence": {
+        "origin": "unknown",
+        "scientific_output_verification": "unverified"
+      },
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": {
+        "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+        "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+        "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+        "artifact_ids": [
+          "artifact_4cdcef951da345ceb035571948d9caac",
+          "artifact_5ad7c915d39545d7bb414008a8076285",
+          "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+          "artifact_0ea083677fa449d9afe4637d4203d877",
+          "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+          "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+          "artifact_89391857ac724e44827936f6720bbe9e",
+          "artifact_f3d72b8ab415483bb01087048edd1430",
+          "artifact_23f784e042f248479a75f3ef21e9418f",
+          "artifact_4d38f1984f8e4b749fcb7087a124360c",
+          "artifact_6162d320fd1940a4b404f9891ef267b7",
+          "artifact_294153fb3eda47ebafa90a4a181c4015",
+          "artifact_c93639e38e534460aa52bf67d948fc6b",
+          "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+          "artifact_9208f06cfa8a454195f46de318eb2f83",
+          "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+          "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+          "artifact_75651b7befaf4055a71890f7164d3697",
+          "artifact_b51feee8449e49528438aeace17b367f",
+          "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+          "artifact_b2d9d975d5814819be8615e494629734",
+          "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+          "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+          "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+          "artifact_ebe019faad944bdd9b574c1eb38074c1",
+          "artifact_f354253cbf2744798d7e4101de1c372b",
+          "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+          "artifact_cf8a86acb6244db6b98530d8054c2f82"
+        ]
+      },
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "requested_observation_missing"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g3",
+      "original_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+      "text_evidence": {
+        "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+        "start": 0,
+        "end": 62,
+        "text_basis": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f10",
+        "f11",
+        "f12",
+        "f13"
+      ],
+      "required_blocker_refs": [
+        "b2"
+      ],
+      "explanation_refs": [
+        "e3"
+      ],
+      "next_action_refs": [
+        "n3"
+      ]
+    },
+    {
+      "goal_id": "goal_candidate_ranking",
+      "port": "energy_difference",
+      "required": true,
+      "system_ids": [
+        "system_nhexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_nhexane": {
+          "method": "B3LYP",
+          "basis": "3-21G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_nhexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "source_condition_evidence": {
+        "origin": "unknown",
+        "scientific_output_verification": "unverified"
+      },
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": {
+        "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+        "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+        "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+        "artifact_ids": [
+          "artifact_4cdcef951da345ceb035571948d9caac",
+          "artifact_5ad7c915d39545d7bb414008a8076285",
+          "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+          "artifact_0ea083677fa449d9afe4637d4203d877",
+          "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+          "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+          "artifact_89391857ac724e44827936f6720bbe9e",
+          "artifact_f3d72b8ab415483bb01087048edd1430",
+          "artifact_23f784e042f248479a75f3ef21e9418f",
+          "artifact_4d38f1984f8e4b749fcb7087a124360c",
+          "artifact_6162d320fd1940a4b404f9891ef267b7",
+          "artifact_294153fb3eda47ebafa90a4a181c4015",
+          "artifact_c93639e38e534460aa52bf67d948fc6b",
+          "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+          "artifact_9208f06cfa8a454195f46de318eb2f83",
+          "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+          "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+          "artifact_75651b7befaf4055a71890f7164d3697",
+          "artifact_b51feee8449e49528438aeace17b367f",
+          "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+          "artifact_b2d9d975d5814819be8615e494629734",
+          "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+          "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+          "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+          "artifact_ebe019faad944bdd9b574c1eb38074c1",
+          "artifact_f354253cbf2744798d7e4101de1c372b",
+          "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+          "artifact_cf8a86acb6244db6b98530d8054c2f82"
+        ]
+      },
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "requested_observation_missing"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g4",
+      "original_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+      "text_evidence": {
+        "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+        "start": 0,
+        "end": 62,
+        "text_basis": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f14",
+        "f15",
+        "f16",
+        "f17"
+      ],
+      "required_blocker_refs": [
+        "b3"
+      ],
+      "explanation_refs": [
+        "e4"
+      ],
+      "next_action_refs": [
+        "n4"
+      ]
+    },
+    {
+      "goal_id": "goal_candidate_structures",
+      "port": "member_table",
+      "required": true,
+      "system_ids": [
+        "system_nhexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_nhexane": {
+          "method": "B3LYP",
+          "basis": "3-21G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_nhexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "source_condition_evidence": {
+        "origin": "unknown",
+        "scientific_output_verification": "unverified"
+      },
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": {
+        "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+        "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+        "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+        "artifact_ids": [
+          "artifact_4cdcef951da345ceb035571948d9caac",
+          "artifact_5ad7c915d39545d7bb414008a8076285",
+          "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+          "artifact_0ea083677fa449d9afe4637d4203d877",
+          "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+          "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+          "artifact_89391857ac724e44827936f6720bbe9e",
+          "artifact_f3d72b8ab415483bb01087048edd1430",
+          "artifact_23f784e042f248479a75f3ef21e9418f",
+          "artifact_4d38f1984f8e4b749fcb7087a124360c",
+          "artifact_6162d320fd1940a4b404f9891ef267b7",
+          "artifact_294153fb3eda47ebafa90a4a181c4015",
+          "artifact_c93639e38e534460aa52bf67d948fc6b",
+          "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+          "artifact_9208f06cfa8a454195f46de318eb2f83",
+          "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+          "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+          "artifact_75651b7befaf4055a71890f7164d3697",
+          "artifact_b51feee8449e49528438aeace17b367f",
+          "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+          "artifact_b2d9d975d5814819be8615e494629734",
+          "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+          "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+          "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+          "artifact_ebe019faad944bdd9b574c1eb38074c1",
+          "artifact_f354253cbf2744798d7e4101de1c372b",
+          "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+          "artifact_cf8a86acb6244db6b98530d8054c2f82"
+        ]
+      },
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "requested_observation_missing"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g5",
+      "original_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+      "text_evidence": {
+        "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+        "start": 0,
+        "end": 62,
+        "text_basis": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f18",
+        "f19",
+        "f20",
+        "f21"
+      ],
+      "required_blocker_refs": [
+        "b4"
+      ],
+      "explanation_refs": [
+        "e5"
+      ],
+      "next_action_refs": [
+        "n5"
+      ]
+    },
+    {
+      "goal_id": "goal_failed_members",
+      "port": "sampling_check",
+      "required": true,
+      "system_ids": [
+        "system_nhexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_nhexane": {
+          "method": "B3LYP",
+          "basis": "3-21G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_nhexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "source_condition_evidence": {
+        "origin": "unknown",
+        "scientific_output_verification": "unverified"
+      },
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": {
+        "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+        "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+        "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+        "artifact_ids": [
+          "artifact_4cdcef951da345ceb035571948d9caac",
+          "artifact_5ad7c915d39545d7bb414008a8076285",
+          "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+          "artifact_0ea083677fa449d9afe4637d4203d877",
+          "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+          "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+          "artifact_89391857ac724e44827936f6720bbe9e",
+          "artifact_f3d72b8ab415483bb01087048edd1430",
+          "artifact_23f784e042f248479a75f3ef21e9418f",
+          "artifact_4d38f1984f8e4b749fcb7087a124360c",
+          "artifact_6162d320fd1940a4b404f9891ef267b7",
+          "artifact_294153fb3eda47ebafa90a4a181c4015",
+          "artifact_c93639e38e534460aa52bf67d948fc6b",
+          "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+          "artifact_9208f06cfa8a454195f46de318eb2f83",
+          "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+          "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+          "artifact_75651b7befaf4055a71890f7164d3697",
+          "artifact_b51feee8449e49528438aeace17b367f",
+          "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+          "artifact_b2d9d975d5814819be8615e494629734",
+          "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+          "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+          "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+          "artifact_ebe019faad944bdd9b574c1eb38074c1",
+          "artifact_f354253cbf2744798d7e4101de1c372b",
+          "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+          "artifact_cf8a86acb6244db6b98530d8054c2f82"
+        ]
+      },
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "requested_observation_missing"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g6",
+      "original_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+      "text_evidence": {
+        "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+        "start": 0,
+        "end": 62,
+        "text_basis": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f22",
+        "f23",
+        "f24",
+        "f25"
+      ],
+      "required_blocker_refs": [
+        "b5"
+      ],
+      "explanation_refs": [
+        "e6"
+      ],
+      "next_action_refs": [
+        "n6"
+      ]
+    },
+    {
+      "goal_id": "goal_structural_relationships",
+      "port": "member_table",
+      "required": true,
+      "system_ids": [
+        "system_nhexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_nhexane": {
+          "method": "B3LYP",
+          "basis": "3-21G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_nhexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "source_condition_evidence": {
+        "origin": "unknown",
+        "scientific_output_verification": "unverified"
+      },
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": {
+        "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+        "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+        "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+        "artifact_ids": [
+          "artifact_4cdcef951da345ceb035571948d9caac",
+          "artifact_5ad7c915d39545d7bb414008a8076285",
+          "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+          "artifact_0ea083677fa449d9afe4637d4203d877",
+          "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+          "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+          "artifact_89391857ac724e44827936f6720bbe9e",
+          "artifact_f3d72b8ab415483bb01087048edd1430",
+          "artifact_23f784e042f248479a75f3ef21e9418f",
+          "artifact_4d38f1984f8e4b749fcb7087a124360c",
+          "artifact_6162d320fd1940a4b404f9891ef267b7",
+          "artifact_294153fb3eda47ebafa90a4a181c4015",
+          "artifact_c93639e38e534460aa52bf67d948fc6b",
+          "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+          "artifact_9208f06cfa8a454195f46de318eb2f83",
+          "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+          "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+          "artifact_75651b7befaf4055a71890f7164d3697",
+          "artifact_b51feee8449e49528438aeace17b367f",
+          "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+          "artifact_b2d9d975d5814819be8615e494629734",
+          "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+          "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+          "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+          "artifact_ebe019faad944bdd9b574c1eb38074c1",
+          "artifact_f354253cbf2744798d7e4101de1c372b",
+          "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+          "artifact_cf8a86acb6244db6b98530d8054c2f82"
+        ]
+      },
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "requested_observation_missing"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g7",
+      "original_text": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+      "text_evidence": {
+        "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+        "start": 96,
+        "end": 160,
+        "text_basis": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f26",
+        "f27",
+        "f28",
+        "f29"
+      ],
+      "required_blocker_refs": [
+        "b6"
+      ],
+      "explanation_refs": [
+        "e7"
+      ],
+      "next_action_refs": [
+        "n7"
+      ]
+    },
+    {
+      "goal_id": "goal_energy_difference_formula_units",
+      "port": "energy_difference",
+      "required": true,
+      "system_ids": [
+        "system_nhexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_nhexane": {
+          "method": "B3LYP",
+          "basis": "3-21G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_nhexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "source_condition_evidence": {
+        "origin": "unknown",
+        "scientific_output_verification": "unverified"
+      },
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": {
+        "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+        "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+        "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+        "artifact_ids": [
+          "artifact_4cdcef951da345ceb035571948d9caac",
+          "artifact_5ad7c915d39545d7bb414008a8076285",
+          "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+          "artifact_0ea083677fa449d9afe4637d4203d877",
+          "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+          "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+          "artifact_89391857ac724e44827936f6720bbe9e",
+          "artifact_f3d72b8ab415483bb01087048edd1430",
+          "artifact_23f784e042f248479a75f3ef21e9418f",
+          "artifact_4d38f1984f8e4b749fcb7087a124360c",
+          "artifact_6162d320fd1940a4b404f9891ef267b7",
+          "artifact_294153fb3eda47ebafa90a4a181c4015",
+          "artifact_c93639e38e534460aa52bf67d948fc6b",
+          "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+          "artifact_9208f06cfa8a454195f46de318eb2f83",
+          "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+          "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+          "artifact_75651b7befaf4055a71890f7164d3697",
+          "artifact_b51feee8449e49528438aeace17b367f",
+          "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+          "artifact_b2d9d975d5814819be8615e494629734",
+          "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+          "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+          "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+          "artifact_ebe019faad944bdd9b574c1eb38074c1",
+          "artifact_f354253cbf2744798d7e4101de1c372b",
+          "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+          "artifact_cf8a86acb6244db6b98530d8054c2f82"
+        ]
+      },
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "requested_observation_missing"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g8",
+      "original_text": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+      "text_evidence": {
+        "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+        "start": 96,
+        "end": 160,
+        "text_basis": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f30",
+        "f31",
+        "f32",
+        "f33"
+      ],
+      "required_blocker_refs": [
+        "b7"
+      ],
+      "explanation_refs": [
+        "e8"
+      ],
+      "next_action_refs": [
+        "n8"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "ref": "f1",
+      "goal_ref": "g1",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "satisfied",
+        "complete": true,
+        "current_evidence": "passed",
+        "gaps": []
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f2",
+      "goal_ref": "g1",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_nhexane": {
+            "method": "B3LYP",
+            "basis": "3-21G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_nhexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {},
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f3",
+      "goal_ref": "g1",
+      "kind": "operation",
+      "value": {
+        "status": "completed",
+        "source_integrity": "verified",
+        "qualified_ports": [
+          "prepared_geometry"
+        ]
+      },
+      "source_ref": "s1"
+    },
+    {
+      "ref": "f4",
+      "goal_ref": "g1",
+      "kind": "checks",
+      "value": {
+        "prepared_geometry": [
+          {
+            "name": "initial_geometry_identity",
+            "status": "passed",
+            "detail": "Finite angstrom coordinates preserve supported identity and explicit hydrogen atom mapping; not optimized.",
+            "source": {
+              "canonical_name": "n-hexane",
+              "system_id": "system_nhexane",
+              "text_evidence": {
+                "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+                "start": 3,
+                "end": 11,
+                "text_basis": "n-hexane",
+                "schema": "request-semantics-3"
+              },
+              "general_identity": true,
+              "requested_identity": {
+                "contract": "general-identity-2",
+                "requested_names": [
+                  "n-hexane"
+                ],
+                "canonical_names": [],
+                "query_name": "n-hexane",
+                "query_name_source": "explicit",
+                "ambiguities": [],
+                "text_evidence": {
+                  "message_id": "message_58e4eaea9c5d410d95cc93783a77a6b0",
+                  "start": 3,
+                  "end": 11,
+                  "text_basis": "n-hexane",
+                  "schema": "request-semantics-3"
+                }
+              },
+              "identity_artifact_id": "artifact_591f386708354ee9a23978f3b84affef",
+              "identity_sha256": "1855cd04e4af06033a5321a0751d91a3d5e3707f0035d5975de374cc22b54d53",
+              "smiles": "CCCCCC",
+              "charge": 0,
+              "multiplicity": 1,
+              "generator": "opi.Structure.from_smiles",
+              "random_seed": null,
+              "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+              "timeout_seconds": 30,
+              "versions": {
+                "orca-pi": "2.0.0",
+                "rdkit": "2025.9.6",
+                "python": "3.11.4"
+              },
+              "execution": {
+                "state": "completed",
+                "exit_code": 0,
+                "handle": {
+                  "pid": 32476,
+                  "create_time": 1792422093.9533024,
+                  "create_time_100ns": "134368956939533028",
+                  "job_name": "Local\\ORCAAgent-633781bc430442ce9a10233dd98cfbd8",
+                  "launch_id": "094a550f98d148d6ac04ddb01e340923",
+                  "executable": "E:\\BG6022-V4\\.venv\\Scripts\\python.exe",
+                  "args": [
+                    "-m",
+                    "orca_agent.tools.structure",
+                    "--worker",
+                    "E:\\BG6022-V4\\data\\code-as-tools-step5\\live-store\\runs\\run_27b25c07ada4468e83e2c76571139fb1\\calls\\call_b2dae39dfc7449f5b91be7085cf13a34\\worker-input.json"
+                  ],
+                  "workdir": "E:\\BG6022-V4\\data\\code-as-tools-step5\\live-store\\runs\\run_27b25c07ada4468e83e2c76571139fb1\\calls\\call_b2dae39dfc7449f5b91be7085cf13a34",
+                  "started_at": "2026-10-19T15:01:33.942471+00:00",
+                  "coordinator_pid": 47484,
+                  "coordinator_create_time": 1792421970.167078,
+                  "coordinator_create_time_100ns": "134368955701670784",
+                  "atomic_job_assignment": true,
+                  "parent_job_name": null,
+                  "argv0": "E:\\BG6022-V4\\.venv\\Scripts\\python.exe"
+                },
+                "resource_usage": {
+                  "wall_seconds": 1.9689999999973224,
+                  "user_cpu_seconds": 0.625,
+                  "kernel_cpu_seconds": 0.921875,
+                  "total_processes": 3,
+                  "active_processes": 0,
+                  "peak_job_commit_bytes": 65716224,
+                  "job_commit_limit_bytes": 1073741824,
+                  "memory_metric": "Windows Job Object committed virtual memory, not working set",
+                  "cpu_affinity_mask": 1,
+                  "cores": 1,
+                  "observed_processes": [
+                    {
+                      "pid": 32476,
+                      "create_time": 1792422093.9533024,
+                      "create_time_100ns": "134368956939533028",
+                      "executable": "E:\\BG6022-V4\\.venv\\Scripts\\python.exe",
+                      "job_membership_confirmed": true,
+                      "cpu_affinity_mask": 1
+                    },
+                    {
+                      "pid": 47528,
+                      "create_time": 1792422094.0026054,
+                      "create_time_100ns": "134368956940026045",
+                      "executable": "C:\\Windows\\System32\\conhost.exe",
+                      "job_membership_confirmed": true,
+                      "cpu_affinity_mask": 1
+                    },
+                    {
+                      "pid": 46792,
+                      "create_time": 1792422094.0232868,
+                      "create_time_100ns": "134368956940232871",
+                      "executable": "C:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+                      "job_membership_confirmed": true,
+                      "cpu_affinity_mask": 1
+                    }
+                  ],
+                  "process_sampling_errors": [],
+                  "process_sampling_truncated": false,
+                  "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+                },
+                "started_at": "2026-10-19T15:01:33.942471+00:00",
+                "ended_at": "2026-10-19T15:01:35.915652+00:00",
+                "reason": "process_tree_exited"
+              },
+              "elements": [
+                "C",
+                "C",
+                "C",
+                "C",
+                "C",
+                "C",
+                "H",
+                "H",
+                "H",
+                "H",
+                "H",
+                "H",
+                "H",
+                "H",
+                "H",
+                "H",
+                "H",
+                "H",
+                "H",
+                "H"
+              ],
+              "atom_mapping": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "unit": "angstrom",
+              "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+              "sha256": "20dc1df32623e6655629a28aa0d7d8560ceec17995030b521f0fed7cd66ff605"
+            },
+            "rule_version": "structure-prepare-2"
+          }
+        ]
+      },
+      "source_ref": "s1"
+    },
+    {
+      "ref": "f5",
+      "goal_ref": "g1",
+      "kind": "answer",
+      "value": {
+        "kind": "qualified_input_artifact",
+        "value": null,
+        "unit": "angstrom",
+        "artifact_id": "artifact_6d77c84bd7304f3488d0c9c082e53f44",
+        "check_versions": [
+          "structure-prepare-2"
+        ],
+        "scientific_qualification": false
+      },
+      "source_ref": "s1"
+    },
+    {
+      "ref": "f6",
+      "goal_ref": "g2",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "requested_observation_missing"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f7",
+      "goal_ref": "g2",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_nhexane": {
+            "method": "B3LYP",
+            "basis": "3-21G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_nhexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {
+          "origin": "unknown",
+          "scientific_output_verification": "unverified"
+        },
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f8",
+      "goal_ref": "g2",
+      "kind": "operation",
+      "value": {
+        "status": "completed",
+        "source_integrity": "verified",
+        "qualified_ports": []
+      },
+      "source_ref": "s2"
+    },
+    {
+      "ref": "f9",
+      "goal_ref": "g2",
+      "kind": "checks",
+      "value": {},
+      "source_ref": "s2"
+    },
+    {
+      "ref": "f10",
+      "goal_ref": "g3",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "requested_observation_missing"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f11",
+      "goal_ref": "g3",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_nhexane": {
+            "method": "B3LYP",
+            "basis": "3-21G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_nhexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {
+          "origin": "unknown",
+          "scientific_output_verification": "unverified"
+        },
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f12",
+      "goal_ref": "g3",
+      "kind": "operation",
+      "value": {
+        "status": "completed",
+        "source_integrity": "verified",
+        "qualified_ports": []
+      },
+      "source_ref": "s3"
+    },
+    {
+      "ref": "f13",
+      "goal_ref": "g3",
+      "kind": "checks",
+      "value": {},
+      "source_ref": "s3"
+    },
+    {
+      "ref": "f14",
+      "goal_ref": "g4",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "requested_observation_missing"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f15",
+      "goal_ref": "g4",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_nhexane": {
+            "method": "B3LYP",
+            "basis": "3-21G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_nhexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {
+          "origin": "unknown",
+          "scientific_output_verification": "unverified"
+        },
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f16",
+      "goal_ref": "g4",
+      "kind": "operation",
+      "value": {
+        "status": "completed",
+        "source_integrity": "verified",
+        "qualified_ports": []
+      },
+      "source_ref": "s4"
+    },
+    {
+      "ref": "f17",
+      "goal_ref": "g4",
+      "kind": "checks",
+      "value": {},
+      "source_ref": "s4"
+    },
+    {
+      "ref": "f18",
+      "goal_ref": "g5",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "requested_observation_missing"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f19",
+      "goal_ref": "g5",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_nhexane": {
+            "method": "B3LYP",
+            "basis": "3-21G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_nhexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {
+          "origin": "unknown",
+          "scientific_output_verification": "unverified"
+        },
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f20",
+      "goal_ref": "g5",
+      "kind": "operation",
+      "value": {
+        "status": "completed",
+        "source_integrity": "verified",
+        "qualified_ports": []
+      },
+      "source_ref": "s5"
+    },
+    {
+      "ref": "f21",
+      "goal_ref": "g5",
+      "kind": "checks",
+      "value": {},
+      "source_ref": "s5"
+    },
+    {
+      "ref": "f22",
+      "goal_ref": "g6",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "requested_observation_missing"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f23",
+      "goal_ref": "g6",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_nhexane": {
+            "method": "B3LYP",
+            "basis": "3-21G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_nhexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {
+          "origin": "unknown",
+          "scientific_output_verification": "unverified"
+        },
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f24",
+      "goal_ref": "g6",
+      "kind": "operation",
+      "value": {
+        "status": "completed",
+        "source_integrity": "verified",
+        "qualified_ports": []
+      },
+      "source_ref": "s6"
+    },
+    {
+      "ref": "f25",
+      "goal_ref": "g6",
+      "kind": "checks",
+      "value": {},
+      "source_ref": "s6"
+    },
+    {
+      "ref": "f26",
+      "goal_ref": "g7",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "requested_observation_missing"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f27",
+      "goal_ref": "g7",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_nhexane": {
+            "method": "B3LYP",
+            "basis": "3-21G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_nhexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {
+          "origin": "unknown",
+          "scientific_output_verification": "unverified"
+        },
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f28",
+      "goal_ref": "g7",
+      "kind": "operation",
+      "value": {
+        "status": "completed",
+        "source_integrity": "verified",
+        "qualified_ports": []
+      },
+      "source_ref": "s7"
+    },
+    {
+      "ref": "f29",
+      "goal_ref": "g7",
+      "kind": "checks",
+      "value": {},
+      "source_ref": "s7"
+    },
+    {
+      "ref": "f30",
+      "goal_ref": "g8",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "requested_observation_missing"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f31",
+      "goal_ref": "g8",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_nhexane": {
+            "method": "B3LYP",
+            "basis": "3-21G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_nhexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {
+          "origin": "unknown",
+          "scientific_output_verification": "unverified"
+        },
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f32",
+      "goal_ref": "g8",
+      "kind": "operation",
+      "value": {
+        "status": "completed",
+        "source_integrity": "verified",
+        "qualified_ports": []
+      },
+      "source_ref": "s8"
+    },
+    {
+      "ref": "f33",
+      "goal_ref": "g8",
+      "kind": "checks",
+      "value": {},
+      "source_ref": "s8"
+    }
+  ],
+  "blockers": [
+    {
+      "ref": "b1",
+      "goal_refs": [
+        "g2"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "requested_observation_missing"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b2",
+      "goal_refs": [
+        "g3"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "requested_observation_missing"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b3",
+      "goal_refs": [
+        "g4"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "requested_observation_missing"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b4",
+      "goal_refs": [
+        "g5"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "requested_observation_missing"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b5",
+      "goal_refs": [
+        "g6"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "requested_observation_missing"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b6",
+      "goal_refs": [
+        "g7"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "requested_observation_missing"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b7",
+      "goal_refs": [
+        "g8"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "requested_observation_missing"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    }
+  ],
+  "explanations": [
+    {
+      "ref": "e1",
+      "goal_ref": "g1",
+      "fact_refs": [
+        "f1",
+        "f2",
+        "f3",
+        "f4",
+        "f5"
+      ],
+      "relation": "current_goal_satisfied",
+      "text": "Current applicable evidence satisfies this goal.",
+      "blocker_refs": [],
+      "next_action_refs": [
+        "n1"
+      ]
+    },
+    {
+      "ref": "e2",
+      "goal_ref": "g2",
+      "fact_refs": [
+        "f6",
+        "f7",
+        "f8",
+        "f9"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b1"
+      ],
+      "next_action_refs": [
+        "n2"
+      ]
+    },
+    {
+      "ref": "e3",
+      "goal_ref": "g3",
+      "fact_refs": [
+        "f10",
+        "f11",
+        "f12",
+        "f13"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b2"
+      ],
+      "next_action_refs": [
+        "n3"
+      ]
+    },
+    {
+      "ref": "e4",
+      "goal_ref": "g4",
+      "fact_refs": [
+        "f14",
+        "f15",
+        "f16",
+        "f17"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b3"
+      ],
+      "next_action_refs": [
+        "n4"
+      ]
+    },
+    {
+      "ref": "e5",
+      "goal_ref": "g5",
+      "fact_refs": [
+        "f18",
+        "f19",
+        "f20",
+        "f21"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b4"
+      ],
+      "next_action_refs": [
+        "n5"
+      ]
+    },
+    {
+      "ref": "e6",
+      "goal_ref": "g6",
+      "fact_refs": [
+        "f22",
+        "f23",
+        "f24",
+        "f25"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b5"
+      ],
+      "next_action_refs": [
+        "n6"
+      ]
+    },
+    {
+      "ref": "e7",
+      "goal_ref": "g7",
+      "fact_refs": [
+        "f26",
+        "f27",
+        "f28",
+        "f29"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b6"
+      ],
+      "next_action_refs": [
+        "n7"
+      ]
+    },
+    {
+      "ref": "e8",
+      "goal_ref": "g8",
+      "fact_refs": [
+        "f30",
+        "f31",
+        "f32",
+        "f33"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b7"
+      ],
+      "next_action_refs": [
+        "n8"
+      ]
+    }
+  ],
+  "next_actions": [
+    {
+      "ref": "n1",
+      "kind": "deliver",
+      "goal_refs": [
+        "g1"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n2",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g2"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n3",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g3"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n4",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g4"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n5",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g5"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n6",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g6"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n7",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g7"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n8",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g8"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    }
+  ],
+  "references": {
+    "s1": {
+      "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+      "result_id": "result_76abc6988fe34d98bb3b7b177529a452",
+      "call_id": "call_b2dae39dfc7449f5b91be7085cf13a34",
+      "artifact_ids": [
+        "artifact_8a0f6159c1034f708ac11df3fc8b7ebc",
+        "artifact_54654503b90042d582b6e38670fe5478",
+        "artifact_7c73706a639b4778accdb10283777fa8",
+        "artifact_6d77c84bd7304f3488d0c9c082e53f44"
+      ],
+      "integrity": {
+        "status": "verified",
+        "artifacts": [
+          {
+            "artifact_id": "artifact_4e36d581d94043ce866141134ed23ff4",
+            "sha256": "b3cdd931d4ce768e2eb37c0f3047583a76405006e7feb34d683945db06422d82",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_54654503b90042d582b6e38670fe5478",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_591f386708354ee9a23978f3b84affef",
+            "sha256": "1855cd04e4af06033a5321a0751d91a3d5e3707f0035d5975de374cc22b54d53",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_6d77c84bd7304f3488d0c9c082e53f44",
+            "sha256": "20dc1df32623e6655629a28aa0d7d8560ceec17995030b521f0fed7cd66ff605",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_7c73706a639b4778accdb10283777fa8",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_8a0f6159c1034f708ac11df3fc8b7ebc",
+            "sha256": "3ff4b2a70d4b89d6d82bd51c052b790ac5a4177da684957102a4b07f1eac1d7f",
+            "status": "verified"
+          }
+        ],
+        "results": [
+          {
+            "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+            "result_id": "result_8bcb14d5f3b341f393b59cf18c4faac5",
+            "result_fingerprint": "ebffd1dfbc959f6d249528d7ca74640fd87f97feee8dfcbaa10a81f0df33caf9",
+            "status": "verified"
+          }
+        ],
+        "gaps": []
+      },
+      "result_fingerprint": "1786bdc1846782afe24abaa85aaa0bb74075c4308cb6c06173f4ff05de4e8f66",
+      "rule_versions": [
+        "structure-prepare-2"
+      ]
+    },
+    "s2": {
+      "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+      "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+      "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+      "artifact_ids": [
+        "artifact_4cdcef951da345ceb035571948d9caac",
+        "artifact_5ad7c915d39545d7bb414008a8076285",
+        "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+        "artifact_0ea083677fa449d9afe4637d4203d877",
+        "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+        "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+        "artifact_89391857ac724e44827936f6720bbe9e",
+        "artifact_f3d72b8ab415483bb01087048edd1430",
+        "artifact_23f784e042f248479a75f3ef21e9418f",
+        "artifact_4d38f1984f8e4b749fcb7087a124360c",
+        "artifact_6162d320fd1940a4b404f9891ef267b7",
+        "artifact_294153fb3eda47ebafa90a4a181c4015",
+        "artifact_c93639e38e534460aa52bf67d948fc6b",
+        "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+        "artifact_9208f06cfa8a454195f46de318eb2f83",
+        "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+        "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+        "artifact_75651b7befaf4055a71890f7164d3697",
+        "artifact_b51feee8449e49528438aeace17b367f",
+        "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+        "artifact_b2d9d975d5814819be8615e494629734",
+        "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+        "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+        "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+        "artifact_ebe019faad944bdd9b574c1eb38074c1",
+        "artifact_f354253cbf2744798d7e4101de1c372b",
+        "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+        "artifact_cf8a86acb6244db6b98530d8054c2f82"
+      ],
+      "integrity": {
+        "status": "verified",
+        "artifacts": [
+          {
+            "artifact_id": "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+            "sha256": "2cd90a499c4df742198acd5c171be5a09ca1dba3f210566775b6224884fcc260",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_0ea083677fa449d9afe4637d4203d877",
+            "sha256": "77640403515d57c8801b30a1af3ed9f8323a33c857b9600b27f0714ff455dd17",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_23f784e042f248479a75f3ef21e9418f",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_294153fb3eda47ebafa90a4a181c4015",
+            "sha256": "5f18253e6296f16c4e1017e0ec0d9533b14c08762de51844b4df1f332e4663b8",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4cdcef951da345ceb035571948d9caac",
+            "sha256": "236630188a5bc524bbf11e8c2854dc80f6d9532f64e9cbfc343b2b731e28acf0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4d38f1984f8e4b749fcb7087a124360c",
+            "sha256": "a154d64b5e62f829999b16b44ebeba233f3faf49c573cf6d43c5f07b41ab71d4",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5ad7c915d39545d7bb414008a8076285",
+            "sha256": "271a5904a8ac6af72e8856c96536f9ec650a1a1b77b2806abae8e2efa4e61f93",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+            "sha256": "59fb32ccdeaedc86f5729b09a0a0bc369ef1561577b8d32f0fce18fc76e4591b",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+            "sha256": "5e0e90e51ff517e52dda77a360ad2d578ec282aa38165f47c3bd054cd0e8c816",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_6162d320fd1940a4b404f9891ef267b7",
+            "sha256": "6fc5e6883fc08b56bb6662e625e6de46d2f8fb363860dbfcd2ffc8f0600d0315",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_75651b7befaf4055a71890f7164d3697",
+            "sha256": "9099f06a806b6f28e5830de468be6a2c8697c5c5acf276c92beb61fabf3b9cb7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+            "sha256": "c2f0cc93b86023afb6034c1f4cdb695467097b2630d956482505a9ccbc4de2d0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+            "sha256": "2a249b86dd256bf2f69eefa1ba57fc4aea5074cf69ba93e2fe232f6e2430ee62",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_89391857ac724e44827936f6720bbe9e",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_9208f06cfa8a454195f46de318eb2f83",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b2d9d975d5814819be8615e494629734",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b51feee8449e49528438aeace17b367f",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_c93639e38e534460aa52bf67d948fc6b",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_cf8a86acb6244db6b98530d8054c2f82",
+            "sha256": "416b79fb01d7702cacbf451a4a6e178d3e67acf50f394f642ab2834557aad04c",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+            "sha256": "a1090347c04630a3712094b621a39d97dda7550af8628bf1f579779e91c1488f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ebe019faad944bdd9b574c1eb38074c1",
+            "sha256": "276261cc6ff968d43745bec61fab2275e4c59041824c2334105bf9ff01762851",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+            "sha256": "e1c7ad38abe2b1d095f295fa11fd283a2643a74568b670341ad11c83211ab99f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f354253cbf2744798d7e4101de1c372b",
+            "sha256": "44d9fa687d89bf2c4a37051a721e8338dfb469dc242780625179e52074390cc6",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f3d72b8ab415483bb01087048edd1430",
+            "sha256": "2b15e3190cbabc50da5d4f3d2d6d5104b5a1981c99891125400e2d1401abdb9b",
+            "status": "verified"
+          }
+        ],
+        "results": [],
+        "gaps": []
+      },
+      "result_fingerprint": "46cd8a0a57c1ab27c73e66d61cb87aa68f33e706543e7770ad082ae80f71b799",
+      "rule_versions": []
+    },
+    "s3": {
+      "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+      "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+      "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+      "artifact_ids": [
+        "artifact_4cdcef951da345ceb035571948d9caac",
+        "artifact_5ad7c915d39545d7bb414008a8076285",
+        "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+        "artifact_0ea083677fa449d9afe4637d4203d877",
+        "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+        "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+        "artifact_89391857ac724e44827936f6720bbe9e",
+        "artifact_f3d72b8ab415483bb01087048edd1430",
+        "artifact_23f784e042f248479a75f3ef21e9418f",
+        "artifact_4d38f1984f8e4b749fcb7087a124360c",
+        "artifact_6162d320fd1940a4b404f9891ef267b7",
+        "artifact_294153fb3eda47ebafa90a4a181c4015",
+        "artifact_c93639e38e534460aa52bf67d948fc6b",
+        "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+        "artifact_9208f06cfa8a454195f46de318eb2f83",
+        "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+        "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+        "artifact_75651b7befaf4055a71890f7164d3697",
+        "artifact_b51feee8449e49528438aeace17b367f",
+        "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+        "artifact_b2d9d975d5814819be8615e494629734",
+        "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+        "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+        "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+        "artifact_ebe019faad944bdd9b574c1eb38074c1",
+        "artifact_f354253cbf2744798d7e4101de1c372b",
+        "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+        "artifact_cf8a86acb6244db6b98530d8054c2f82"
+      ],
+      "integrity": {
+        "status": "verified",
+        "artifacts": [
+          {
+            "artifact_id": "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+            "sha256": "2cd90a499c4df742198acd5c171be5a09ca1dba3f210566775b6224884fcc260",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_0ea083677fa449d9afe4637d4203d877",
+            "sha256": "77640403515d57c8801b30a1af3ed9f8323a33c857b9600b27f0714ff455dd17",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_23f784e042f248479a75f3ef21e9418f",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_294153fb3eda47ebafa90a4a181c4015",
+            "sha256": "5f18253e6296f16c4e1017e0ec0d9533b14c08762de51844b4df1f332e4663b8",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4cdcef951da345ceb035571948d9caac",
+            "sha256": "236630188a5bc524bbf11e8c2854dc80f6d9532f64e9cbfc343b2b731e28acf0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4d38f1984f8e4b749fcb7087a124360c",
+            "sha256": "a154d64b5e62f829999b16b44ebeba233f3faf49c573cf6d43c5f07b41ab71d4",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5ad7c915d39545d7bb414008a8076285",
+            "sha256": "271a5904a8ac6af72e8856c96536f9ec650a1a1b77b2806abae8e2efa4e61f93",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+            "sha256": "59fb32ccdeaedc86f5729b09a0a0bc369ef1561577b8d32f0fce18fc76e4591b",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+            "sha256": "5e0e90e51ff517e52dda77a360ad2d578ec282aa38165f47c3bd054cd0e8c816",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_6162d320fd1940a4b404f9891ef267b7",
+            "sha256": "6fc5e6883fc08b56bb6662e625e6de46d2f8fb363860dbfcd2ffc8f0600d0315",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_75651b7befaf4055a71890f7164d3697",
+            "sha256": "9099f06a806b6f28e5830de468be6a2c8697c5c5acf276c92beb61fabf3b9cb7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+            "sha256": "c2f0cc93b86023afb6034c1f4cdb695467097b2630d956482505a9ccbc4de2d0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+            "sha256": "2a249b86dd256bf2f69eefa1ba57fc4aea5074cf69ba93e2fe232f6e2430ee62",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_89391857ac724e44827936f6720bbe9e",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_9208f06cfa8a454195f46de318eb2f83",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b2d9d975d5814819be8615e494629734",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b51feee8449e49528438aeace17b367f",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_c93639e38e534460aa52bf67d948fc6b",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_cf8a86acb6244db6b98530d8054c2f82",
+            "sha256": "416b79fb01d7702cacbf451a4a6e178d3e67acf50f394f642ab2834557aad04c",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+            "sha256": "a1090347c04630a3712094b621a39d97dda7550af8628bf1f579779e91c1488f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ebe019faad944bdd9b574c1eb38074c1",
+            "sha256": "276261cc6ff968d43745bec61fab2275e4c59041824c2334105bf9ff01762851",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+            "sha256": "e1c7ad38abe2b1d095f295fa11fd283a2643a74568b670341ad11c83211ab99f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f354253cbf2744798d7e4101de1c372b",
+            "sha256": "44d9fa687d89bf2c4a37051a721e8338dfb469dc242780625179e52074390cc6",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f3d72b8ab415483bb01087048edd1430",
+            "sha256": "2b15e3190cbabc50da5d4f3d2d6d5104b5a1981c99891125400e2d1401abdb9b",
+            "status": "verified"
+          }
+        ],
+        "results": [],
+        "gaps": []
+      },
+      "result_fingerprint": "46cd8a0a57c1ab27c73e66d61cb87aa68f33e706543e7770ad082ae80f71b799",
+      "rule_versions": []
+    },
+    "s4": {
+      "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+      "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+      "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+      "artifact_ids": [
+        "artifact_4cdcef951da345ceb035571948d9caac",
+        "artifact_5ad7c915d39545d7bb414008a8076285",
+        "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+        "artifact_0ea083677fa449d9afe4637d4203d877",
+        "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+        "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+        "artifact_89391857ac724e44827936f6720bbe9e",
+        "artifact_f3d72b8ab415483bb01087048edd1430",
+        "artifact_23f784e042f248479a75f3ef21e9418f",
+        "artifact_4d38f1984f8e4b749fcb7087a124360c",
+        "artifact_6162d320fd1940a4b404f9891ef267b7",
+        "artifact_294153fb3eda47ebafa90a4a181c4015",
+        "artifact_c93639e38e534460aa52bf67d948fc6b",
+        "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+        "artifact_9208f06cfa8a454195f46de318eb2f83",
+        "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+        "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+        "artifact_75651b7befaf4055a71890f7164d3697",
+        "artifact_b51feee8449e49528438aeace17b367f",
+        "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+        "artifact_b2d9d975d5814819be8615e494629734",
+        "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+        "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+        "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+        "artifact_ebe019faad944bdd9b574c1eb38074c1",
+        "artifact_f354253cbf2744798d7e4101de1c372b",
+        "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+        "artifact_cf8a86acb6244db6b98530d8054c2f82"
+      ],
+      "integrity": {
+        "status": "verified",
+        "artifacts": [
+          {
+            "artifact_id": "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+            "sha256": "2cd90a499c4df742198acd5c171be5a09ca1dba3f210566775b6224884fcc260",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_0ea083677fa449d9afe4637d4203d877",
+            "sha256": "77640403515d57c8801b30a1af3ed9f8323a33c857b9600b27f0714ff455dd17",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_23f784e042f248479a75f3ef21e9418f",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_294153fb3eda47ebafa90a4a181c4015",
+            "sha256": "5f18253e6296f16c4e1017e0ec0d9533b14c08762de51844b4df1f332e4663b8",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4cdcef951da345ceb035571948d9caac",
+            "sha256": "236630188a5bc524bbf11e8c2854dc80f6d9532f64e9cbfc343b2b731e28acf0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4d38f1984f8e4b749fcb7087a124360c",
+            "sha256": "a154d64b5e62f829999b16b44ebeba233f3faf49c573cf6d43c5f07b41ab71d4",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5ad7c915d39545d7bb414008a8076285",
+            "sha256": "271a5904a8ac6af72e8856c96536f9ec650a1a1b77b2806abae8e2efa4e61f93",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+            "sha256": "59fb32ccdeaedc86f5729b09a0a0bc369ef1561577b8d32f0fce18fc76e4591b",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+            "sha256": "5e0e90e51ff517e52dda77a360ad2d578ec282aa38165f47c3bd054cd0e8c816",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_6162d320fd1940a4b404f9891ef267b7",
+            "sha256": "6fc5e6883fc08b56bb6662e625e6de46d2f8fb363860dbfcd2ffc8f0600d0315",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_75651b7befaf4055a71890f7164d3697",
+            "sha256": "9099f06a806b6f28e5830de468be6a2c8697c5c5acf276c92beb61fabf3b9cb7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+            "sha256": "c2f0cc93b86023afb6034c1f4cdb695467097b2630d956482505a9ccbc4de2d0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+            "sha256": "2a249b86dd256bf2f69eefa1ba57fc4aea5074cf69ba93e2fe232f6e2430ee62",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_89391857ac724e44827936f6720bbe9e",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_9208f06cfa8a454195f46de318eb2f83",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b2d9d975d5814819be8615e494629734",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b51feee8449e49528438aeace17b367f",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_c93639e38e534460aa52bf67d948fc6b",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_cf8a86acb6244db6b98530d8054c2f82",
+            "sha256": "416b79fb01d7702cacbf451a4a6e178d3e67acf50f394f642ab2834557aad04c",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+            "sha256": "a1090347c04630a3712094b621a39d97dda7550af8628bf1f579779e91c1488f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ebe019faad944bdd9b574c1eb38074c1",
+            "sha256": "276261cc6ff968d43745bec61fab2275e4c59041824c2334105bf9ff01762851",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+            "sha256": "e1c7ad38abe2b1d095f295fa11fd283a2643a74568b670341ad11c83211ab99f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f354253cbf2744798d7e4101de1c372b",
+            "sha256": "44d9fa687d89bf2c4a37051a721e8338dfb469dc242780625179e52074390cc6",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f3d72b8ab415483bb01087048edd1430",
+            "sha256": "2b15e3190cbabc50da5d4f3d2d6d5104b5a1981c99891125400e2d1401abdb9b",
+            "status": "verified"
+          }
+        ],
+        "results": [],
+        "gaps": []
+      },
+      "result_fingerprint": "46cd8a0a57c1ab27c73e66d61cb87aa68f33e706543e7770ad082ae80f71b799",
+      "rule_versions": []
+    },
+    "s5": {
+      "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+      "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+      "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+      "artifact_ids": [
+        "artifact_4cdcef951da345ceb035571948d9caac",
+        "artifact_5ad7c915d39545d7bb414008a8076285",
+        "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+        "artifact_0ea083677fa449d9afe4637d4203d877",
+        "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+        "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+        "artifact_89391857ac724e44827936f6720bbe9e",
+        "artifact_f3d72b8ab415483bb01087048edd1430",
+        "artifact_23f784e042f248479a75f3ef21e9418f",
+        "artifact_4d38f1984f8e4b749fcb7087a124360c",
+        "artifact_6162d320fd1940a4b404f9891ef267b7",
+        "artifact_294153fb3eda47ebafa90a4a181c4015",
+        "artifact_c93639e38e534460aa52bf67d948fc6b",
+        "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+        "artifact_9208f06cfa8a454195f46de318eb2f83",
+        "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+        "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+        "artifact_75651b7befaf4055a71890f7164d3697",
+        "artifact_b51feee8449e49528438aeace17b367f",
+        "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+        "artifact_b2d9d975d5814819be8615e494629734",
+        "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+        "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+        "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+        "artifact_ebe019faad944bdd9b574c1eb38074c1",
+        "artifact_f354253cbf2744798d7e4101de1c372b",
+        "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+        "artifact_cf8a86acb6244db6b98530d8054c2f82"
+      ],
+      "integrity": {
+        "status": "verified",
+        "artifacts": [
+          {
+            "artifact_id": "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+            "sha256": "2cd90a499c4df742198acd5c171be5a09ca1dba3f210566775b6224884fcc260",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_0ea083677fa449d9afe4637d4203d877",
+            "sha256": "77640403515d57c8801b30a1af3ed9f8323a33c857b9600b27f0714ff455dd17",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_23f784e042f248479a75f3ef21e9418f",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_294153fb3eda47ebafa90a4a181c4015",
+            "sha256": "5f18253e6296f16c4e1017e0ec0d9533b14c08762de51844b4df1f332e4663b8",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4cdcef951da345ceb035571948d9caac",
+            "sha256": "236630188a5bc524bbf11e8c2854dc80f6d9532f64e9cbfc343b2b731e28acf0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4d38f1984f8e4b749fcb7087a124360c",
+            "sha256": "a154d64b5e62f829999b16b44ebeba233f3faf49c573cf6d43c5f07b41ab71d4",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5ad7c915d39545d7bb414008a8076285",
+            "sha256": "271a5904a8ac6af72e8856c96536f9ec650a1a1b77b2806abae8e2efa4e61f93",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+            "sha256": "59fb32ccdeaedc86f5729b09a0a0bc369ef1561577b8d32f0fce18fc76e4591b",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+            "sha256": "5e0e90e51ff517e52dda77a360ad2d578ec282aa38165f47c3bd054cd0e8c816",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_6162d320fd1940a4b404f9891ef267b7",
+            "sha256": "6fc5e6883fc08b56bb6662e625e6de46d2f8fb363860dbfcd2ffc8f0600d0315",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_75651b7befaf4055a71890f7164d3697",
+            "sha256": "9099f06a806b6f28e5830de468be6a2c8697c5c5acf276c92beb61fabf3b9cb7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+            "sha256": "c2f0cc93b86023afb6034c1f4cdb695467097b2630d956482505a9ccbc4de2d0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+            "sha256": "2a249b86dd256bf2f69eefa1ba57fc4aea5074cf69ba93e2fe232f6e2430ee62",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_89391857ac724e44827936f6720bbe9e",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_9208f06cfa8a454195f46de318eb2f83",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b2d9d975d5814819be8615e494629734",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b51feee8449e49528438aeace17b367f",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_c93639e38e534460aa52bf67d948fc6b",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_cf8a86acb6244db6b98530d8054c2f82",
+            "sha256": "416b79fb01d7702cacbf451a4a6e178d3e67acf50f394f642ab2834557aad04c",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+            "sha256": "a1090347c04630a3712094b621a39d97dda7550af8628bf1f579779e91c1488f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ebe019faad944bdd9b574c1eb38074c1",
+            "sha256": "276261cc6ff968d43745bec61fab2275e4c59041824c2334105bf9ff01762851",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+            "sha256": "e1c7ad38abe2b1d095f295fa11fd283a2643a74568b670341ad11c83211ab99f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f354253cbf2744798d7e4101de1c372b",
+            "sha256": "44d9fa687d89bf2c4a37051a721e8338dfb469dc242780625179e52074390cc6",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f3d72b8ab415483bb01087048edd1430",
+            "sha256": "2b15e3190cbabc50da5d4f3d2d6d5104b5a1981c99891125400e2d1401abdb9b",
+            "status": "verified"
+          }
+        ],
+        "results": [],
+        "gaps": []
+      },
+      "result_fingerprint": "46cd8a0a57c1ab27c73e66d61cb87aa68f33e706543e7770ad082ae80f71b799",
+      "rule_versions": []
+    },
+    "s6": {
+      "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+      "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+      "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+      "artifact_ids": [
+        "artifact_4cdcef951da345ceb035571948d9caac",
+        "artifact_5ad7c915d39545d7bb414008a8076285",
+        "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+        "artifact_0ea083677fa449d9afe4637d4203d877",
+        "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+        "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+        "artifact_89391857ac724e44827936f6720bbe9e",
+        "artifact_f3d72b8ab415483bb01087048edd1430",
+        "artifact_23f784e042f248479a75f3ef21e9418f",
+        "artifact_4d38f1984f8e4b749fcb7087a124360c",
+        "artifact_6162d320fd1940a4b404f9891ef267b7",
+        "artifact_294153fb3eda47ebafa90a4a181c4015",
+        "artifact_c93639e38e534460aa52bf67d948fc6b",
+        "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+        "artifact_9208f06cfa8a454195f46de318eb2f83",
+        "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+        "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+        "artifact_75651b7befaf4055a71890f7164d3697",
+        "artifact_b51feee8449e49528438aeace17b367f",
+        "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+        "artifact_b2d9d975d5814819be8615e494629734",
+        "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+        "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+        "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+        "artifact_ebe019faad944bdd9b574c1eb38074c1",
+        "artifact_f354253cbf2744798d7e4101de1c372b",
+        "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+        "artifact_cf8a86acb6244db6b98530d8054c2f82"
+      ],
+      "integrity": {
+        "status": "verified",
+        "artifacts": [
+          {
+            "artifact_id": "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+            "sha256": "2cd90a499c4df742198acd5c171be5a09ca1dba3f210566775b6224884fcc260",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_0ea083677fa449d9afe4637d4203d877",
+            "sha256": "77640403515d57c8801b30a1af3ed9f8323a33c857b9600b27f0714ff455dd17",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_23f784e042f248479a75f3ef21e9418f",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_294153fb3eda47ebafa90a4a181c4015",
+            "sha256": "5f18253e6296f16c4e1017e0ec0d9533b14c08762de51844b4df1f332e4663b8",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4cdcef951da345ceb035571948d9caac",
+            "sha256": "236630188a5bc524bbf11e8c2854dc80f6d9532f64e9cbfc343b2b731e28acf0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4d38f1984f8e4b749fcb7087a124360c",
+            "sha256": "a154d64b5e62f829999b16b44ebeba233f3faf49c573cf6d43c5f07b41ab71d4",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5ad7c915d39545d7bb414008a8076285",
+            "sha256": "271a5904a8ac6af72e8856c96536f9ec650a1a1b77b2806abae8e2efa4e61f93",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+            "sha256": "59fb32ccdeaedc86f5729b09a0a0bc369ef1561577b8d32f0fce18fc76e4591b",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+            "sha256": "5e0e90e51ff517e52dda77a360ad2d578ec282aa38165f47c3bd054cd0e8c816",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_6162d320fd1940a4b404f9891ef267b7",
+            "sha256": "6fc5e6883fc08b56bb6662e625e6de46d2f8fb363860dbfcd2ffc8f0600d0315",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_75651b7befaf4055a71890f7164d3697",
+            "sha256": "9099f06a806b6f28e5830de468be6a2c8697c5c5acf276c92beb61fabf3b9cb7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+            "sha256": "c2f0cc93b86023afb6034c1f4cdb695467097b2630d956482505a9ccbc4de2d0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+            "sha256": "2a249b86dd256bf2f69eefa1ba57fc4aea5074cf69ba93e2fe232f6e2430ee62",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_89391857ac724e44827936f6720bbe9e",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_9208f06cfa8a454195f46de318eb2f83",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b2d9d975d5814819be8615e494629734",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b51feee8449e49528438aeace17b367f",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_c93639e38e534460aa52bf67d948fc6b",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_cf8a86acb6244db6b98530d8054c2f82",
+            "sha256": "416b79fb01d7702cacbf451a4a6e178d3e67acf50f394f642ab2834557aad04c",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+            "sha256": "a1090347c04630a3712094b621a39d97dda7550af8628bf1f579779e91c1488f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ebe019faad944bdd9b574c1eb38074c1",
+            "sha256": "276261cc6ff968d43745bec61fab2275e4c59041824c2334105bf9ff01762851",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+            "sha256": "e1c7ad38abe2b1d095f295fa11fd283a2643a74568b670341ad11c83211ab99f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f354253cbf2744798d7e4101de1c372b",
+            "sha256": "44d9fa687d89bf2c4a37051a721e8338dfb469dc242780625179e52074390cc6",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f3d72b8ab415483bb01087048edd1430",
+            "sha256": "2b15e3190cbabc50da5d4f3d2d6d5104b5a1981c99891125400e2d1401abdb9b",
+            "status": "verified"
+          }
+        ],
+        "results": [],
+        "gaps": []
+      },
+      "result_fingerprint": "46cd8a0a57c1ab27c73e66d61cb87aa68f33e706543e7770ad082ae80f71b799",
+      "rule_versions": []
+    },
+    "s7": {
+      "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+      "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+      "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+      "artifact_ids": [
+        "artifact_4cdcef951da345ceb035571948d9caac",
+        "artifact_5ad7c915d39545d7bb414008a8076285",
+        "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+        "artifact_0ea083677fa449d9afe4637d4203d877",
+        "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+        "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+        "artifact_89391857ac724e44827936f6720bbe9e",
+        "artifact_f3d72b8ab415483bb01087048edd1430",
+        "artifact_23f784e042f248479a75f3ef21e9418f",
+        "artifact_4d38f1984f8e4b749fcb7087a124360c",
+        "artifact_6162d320fd1940a4b404f9891ef267b7",
+        "artifact_294153fb3eda47ebafa90a4a181c4015",
+        "artifact_c93639e38e534460aa52bf67d948fc6b",
+        "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+        "artifact_9208f06cfa8a454195f46de318eb2f83",
+        "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+        "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+        "artifact_75651b7befaf4055a71890f7164d3697",
+        "artifact_b51feee8449e49528438aeace17b367f",
+        "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+        "artifact_b2d9d975d5814819be8615e494629734",
+        "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+        "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+        "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+        "artifact_ebe019faad944bdd9b574c1eb38074c1",
+        "artifact_f354253cbf2744798d7e4101de1c372b",
+        "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+        "artifact_cf8a86acb6244db6b98530d8054c2f82"
+      ],
+      "integrity": {
+        "status": "verified",
+        "artifacts": [
+          {
+            "artifact_id": "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+            "sha256": "2cd90a499c4df742198acd5c171be5a09ca1dba3f210566775b6224884fcc260",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_0ea083677fa449d9afe4637d4203d877",
+            "sha256": "77640403515d57c8801b30a1af3ed9f8323a33c857b9600b27f0714ff455dd17",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_23f784e042f248479a75f3ef21e9418f",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_294153fb3eda47ebafa90a4a181c4015",
+            "sha256": "5f18253e6296f16c4e1017e0ec0d9533b14c08762de51844b4df1f332e4663b8",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4cdcef951da345ceb035571948d9caac",
+            "sha256": "236630188a5bc524bbf11e8c2854dc80f6d9532f64e9cbfc343b2b731e28acf0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4d38f1984f8e4b749fcb7087a124360c",
+            "sha256": "a154d64b5e62f829999b16b44ebeba233f3faf49c573cf6d43c5f07b41ab71d4",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5ad7c915d39545d7bb414008a8076285",
+            "sha256": "271a5904a8ac6af72e8856c96536f9ec650a1a1b77b2806abae8e2efa4e61f93",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+            "sha256": "59fb32ccdeaedc86f5729b09a0a0bc369ef1561577b8d32f0fce18fc76e4591b",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+            "sha256": "5e0e90e51ff517e52dda77a360ad2d578ec282aa38165f47c3bd054cd0e8c816",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_6162d320fd1940a4b404f9891ef267b7",
+            "sha256": "6fc5e6883fc08b56bb6662e625e6de46d2f8fb363860dbfcd2ffc8f0600d0315",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_75651b7befaf4055a71890f7164d3697",
+            "sha256": "9099f06a806b6f28e5830de468be6a2c8697c5c5acf276c92beb61fabf3b9cb7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+            "sha256": "c2f0cc93b86023afb6034c1f4cdb695467097b2630d956482505a9ccbc4de2d0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+            "sha256": "2a249b86dd256bf2f69eefa1ba57fc4aea5074cf69ba93e2fe232f6e2430ee62",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_89391857ac724e44827936f6720bbe9e",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_9208f06cfa8a454195f46de318eb2f83",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b2d9d975d5814819be8615e494629734",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b51feee8449e49528438aeace17b367f",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_c93639e38e534460aa52bf67d948fc6b",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_cf8a86acb6244db6b98530d8054c2f82",
+            "sha256": "416b79fb01d7702cacbf451a4a6e178d3e67acf50f394f642ab2834557aad04c",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+            "sha256": "a1090347c04630a3712094b621a39d97dda7550af8628bf1f579779e91c1488f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ebe019faad944bdd9b574c1eb38074c1",
+            "sha256": "276261cc6ff968d43745bec61fab2275e4c59041824c2334105bf9ff01762851",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+            "sha256": "e1c7ad38abe2b1d095f295fa11fd283a2643a74568b670341ad11c83211ab99f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f354253cbf2744798d7e4101de1c372b",
+            "sha256": "44d9fa687d89bf2c4a37051a721e8338dfb469dc242780625179e52074390cc6",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f3d72b8ab415483bb01087048edd1430",
+            "sha256": "2b15e3190cbabc50da5d4f3d2d6d5104b5a1981c99891125400e2d1401abdb9b",
+            "status": "verified"
+          }
+        ],
+        "results": [],
+        "gaps": []
+      },
+      "result_fingerprint": "46cd8a0a57c1ab27c73e66d61cb87aa68f33e706543e7770ad082ae80f71b799",
+      "rule_versions": []
+    },
+    "s8": {
+      "run_id": "run_27b25c07ada4468e83e2c76571139fb1",
+      "result_id": "result_bdedc0e6552149bc8add21e9b8bc3872",
+      "attempt_id": "attempt_71f241b412c043849ed295367c08ae6b",
+      "artifact_ids": [
+        "artifact_4cdcef951da345ceb035571948d9caac",
+        "artifact_5ad7c915d39545d7bb414008a8076285",
+        "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+        "artifact_0ea083677fa449d9afe4637d4203d877",
+        "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+        "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+        "artifact_89391857ac724e44827936f6720bbe9e",
+        "artifact_f3d72b8ab415483bb01087048edd1430",
+        "artifact_23f784e042f248479a75f3ef21e9418f",
+        "artifact_4d38f1984f8e4b749fcb7087a124360c",
+        "artifact_6162d320fd1940a4b404f9891ef267b7",
+        "artifact_294153fb3eda47ebafa90a4a181c4015",
+        "artifact_c93639e38e534460aa52bf67d948fc6b",
+        "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+        "artifact_9208f06cfa8a454195f46de318eb2f83",
+        "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+        "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+        "artifact_75651b7befaf4055a71890f7164d3697",
+        "artifact_b51feee8449e49528438aeace17b367f",
+        "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+        "artifact_b2d9d975d5814819be8615e494629734",
+        "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+        "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+        "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+        "artifact_ebe019faad944bdd9b574c1eb38074c1",
+        "artifact_f354253cbf2744798d7e4101de1c372b",
+        "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+        "artifact_cf8a86acb6244db6b98530d8054c2f82"
+      ],
+      "integrity": {
+        "status": "verified",
+        "artifacts": [
+          {
+            "artifact_id": "artifact_06f8509ddc1b49e18e2c95ece1be3485",
+            "sha256": "2cd90a499c4df742198acd5c171be5a09ca1dba3f210566775b6224884fcc260",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_0ea083677fa449d9afe4637d4203d877",
+            "sha256": "77640403515d57c8801b30a1af3ed9f8323a33c857b9600b27f0714ff455dd17",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_23f784e042f248479a75f3ef21e9418f",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_294153fb3eda47ebafa90a4a181c4015",
+            "sha256": "5f18253e6296f16c4e1017e0ec0d9533b14c08762de51844b4df1f332e4663b8",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4cdcef951da345ceb035571948d9caac",
+            "sha256": "236630188a5bc524bbf11e8c2854dc80f6d9532f64e9cbfc343b2b731e28acf0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_4d38f1984f8e4b749fcb7087a124360c",
+            "sha256": "a154d64b5e62f829999b16b44ebeba233f3faf49c573cf6d43c5f07b41ab71d4",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5ad7c915d39545d7bb414008a8076285",
+            "sha256": "271a5904a8ac6af72e8856c96536f9ec650a1a1b77b2806abae8e2efa4e61f93",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5d849b77296d4177abcdfc8fa4b7a966",
+            "sha256": "59fb32ccdeaedc86f5729b09a0a0bc369ef1561577b8d32f0fce18fc76e4591b",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_5db9d7ce96e9471e9cf127bb0cc13ab5",
+            "sha256": "5e0e90e51ff517e52dda77a360ad2d578ec282aa38165f47c3bd054cd0e8c816",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_6162d320fd1940a4b404f9891ef267b7",
+            "sha256": "6fc5e6883fc08b56bb6662e625e6de46d2f8fb363860dbfcd2ffc8f0600d0315",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_62e969a0c936461b8c37d5bbebc03dc1",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_75651b7befaf4055a71890f7164d3697",
+            "sha256": "9099f06a806b6f28e5830de468be6a2c8697c5c5acf276c92beb61fabf3b9cb7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_79a8f05d007c4fe3bef13e85cf5824c2",
+            "sha256": "c2f0cc93b86023afb6034c1f4cdb695467097b2630d956482505a9ccbc4de2d0",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_7dcc0a4d188f4759ababf6d5c7bcc25b",
+            "sha256": "2a249b86dd256bf2f69eefa1ba57fc4aea5074cf69ba93e2fe232f6e2430ee62",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_89391857ac724e44827936f6720bbe9e",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_9208f06cfa8a454195f46de318eb2f83",
+            "sha256": "519b3c1423ace26884b1244b17df033158833eee10105ecc94c920b6637f86c7",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b0180ab7e4184d60bca1cc7812a2947b",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b2d9d975d5814819be8615e494629734",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_b51feee8449e49528438aeace17b367f",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_c93639e38e534460aa52bf67d948fc6b",
+            "sha256": "72ed864e17c2833809c4446a5bac568be326b2ac10ed325d0a6aaba18dbd554f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_cf8a86acb6244db6b98530d8054c2f82",
+            "sha256": "416b79fb01d7702cacbf451a4a6e178d3e67acf50f394f642ab2834557aad04c",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dea9d37aeb7c4ca1ad4541686d6570c9",
+            "sha256": "90271e8ae547f7ffeca2d1552f03b2b4d66fa83d77efe6009b4809a0c6f11459",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_dff4ecd1eeb447208c3c28441ccd7e0d",
+            "sha256": "a1090347c04630a3712094b621a39d97dda7550af8628bf1f579779e91c1488f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_e91c88ea619d4fef9b5a57da1d12bc79",
+            "sha256": "b29eef9252b743f2ed52fbfc6849176ab484f2264944be7ce8ceeb178340148e",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ebe019faad944bdd9b574c1eb38074c1",
+            "sha256": "276261cc6ff968d43745bec61fab2275e4c59041824c2334105bf9ff01762851",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_ecd6445330804f28bbc8e7d4c66aabea",
+            "sha256": "e1c7ad38abe2b1d095f295fa11fd283a2643a74568b670341ad11c83211ab99f",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f354253cbf2744798d7e4101de1c372b",
+            "sha256": "44d9fa687d89bf2c4a37051a721e8338dfb469dc242780625179e52074390cc6",
+            "status": "verified"
+          },
+          {
+            "artifact_id": "artifact_f3d72b8ab415483bb01087048edd1430",
+            "sha256": "2b15e3190cbabc50da5d4f3d2d6d5104b5a1981c99891125400e2d1401abdb9b",
+            "status": "verified"
+          }
+        ],
+        "results": [],
+        "gaps": []
+      },
+      "result_fingerprint": "46cd8a0a57c1ab27c73e66d61cb87aa68f33e706543e7770ad082ae80f71b799",
+      "rule_versions": []
+    }
+  },
+  "fingerprint": "eee755c861887515ce324fe1421ec055d45c11470937c49140005dea1a16dabd"
+}

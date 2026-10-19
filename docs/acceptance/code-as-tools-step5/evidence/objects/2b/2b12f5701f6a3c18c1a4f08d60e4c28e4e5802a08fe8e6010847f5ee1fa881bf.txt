@@ -1,0 +1,1461 @@
+{
+  "version": "terminal-delivery-1",
+  "snapshot_ref": "current",
+  "basis": {
+    "request_id": "request_f243027fbb36447495a8e189a7fcb7b0",
+    "request_version": 3,
+    "plan_id": "plan_989b392f09cc42a3a64641d038d112da",
+    "plan_version": 3,
+    "permission_version": 1,
+    "control_generation": 1
+  },
+  "request_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。由你选择低成本方法和基组、编写搜索筛选及分析代码；中性单重态、气相。保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。为控制本次开发验证成本，最多进行4次ORCA计算，其余搜索和筛选规模自行合理选择；不能满足时保留已有结果和停止原因。\n常规计算步骤也由你在预算内自主决定，无须另行确认；实际几何关系、评价方法和搜索边界必须如实报告，固定条件与交付标准不变。",
+  "communication": {
+    "delivery_scope": "science",
+    "awaiting_reply": false,
+    "notices": [],
+    "questions": [],
+    "question_gaps": {}
+  },
+  "resources": {
+    "permission": {
+      "version": 1,
+      "scientific_execution": true,
+      "allowed_tools": [
+        "structure.resolve",
+        "structure.prepare",
+        "workspace.write",
+        "python.execute",
+        "orca.run",
+        "evidence.list",
+        "evidence.discover",
+        "evidence.search",
+        "evidence.value",
+        "evidence.text",
+        "knowledge.search",
+        "knowledge.answer"
+      ],
+      "max_cores": 4,
+      "max_memory_mb": 1024,
+      "artifact_ids": [],
+      "source_ids": [],
+      "result_ids": [],
+      "model_execution": true,
+      "code_execution": true,
+      "artifact_writes": true,
+      "allowed_repairs": {},
+      "allow_additional_science": true,
+      "external_identity_queries": true,
+      "geometry_preparation": true
+    },
+    "remaining": {
+      "orca_starts": 4,
+      "extra_orca_starts": 0,
+      "evidence_reads": 11,
+      "analysis_executions": 2,
+      "identity_queries": 1,
+      "structure_preparations": 0,
+      "knowledge_queries": 1,
+      "internal_work_units": 400,
+      "code_retries": 2,
+      "postprocess_starts": 0
+    },
+    "limits": {
+      "orca_starts": 4,
+      "extra_orca_starts": 0,
+      "evidence_reads": 12,
+      "analysis_executions": 4,
+      "identity_queries": 2,
+      "structure_preparations": 1,
+      "knowledge_queries": 3,
+      "internal_work_units": 400,
+      "code_retries": 2,
+      "postprocess_starts": 0
+    },
+    "usage": {
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "extra_orca_starts_reserved": 0,
+      "evidence_reads": 1,
+      "analysis_executions": 2,
+      "identity_queries": 1,
+      "structure_preparations": 1,
+      "knowledge_queries": 2,
+      "internal_work_units": 0,
+      "code_retries": 0,
+      "postprocess_starts": 0
+    },
+    "unsettled_attempt_ids": [],
+    "unsettled_call_ids": [],
+    "code_attempt_allowance": {
+      "recorded": 0,
+      "effective_used": 0,
+      "basis": "max(recorded, python_attempt_count - 1)",
+      "meaning": "every Python execution after the first, including distinct scripts"
+    },
+    "unsettled_internal_request_keys": [],
+    "execution_cost": {
+      "python_attempts": 0,
+      "cpu_seconds": 0.0,
+      "elapsed_seconds": 0.0,
+      "complete": true
+    },
+    "artifact_limits": {
+      "artifact_count": 200,
+      "artifact_bytes": 268435456,
+      "artifact_total_bytes": 268435456
+    },
+    "artifact_usage": {
+      "status": "not_in_snapshot",
+      "disk_hard_quota": false
+    }
+  },
+  "goals": [
+    {
+      "goal_id": "goal_conformer_search",
+      "port": "sampling",
+      "required": true,
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_n_hexane": {
+          "method": "B3LYP",
+          "basis": "6-31G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_n_hexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "conformer sampling executed by corrected script pending; no sampling observation yet"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g1",
+      "original_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+      "text_evidence": {
+        "message_id": "message_114a595b9f824515a5bf2f72cfc13f1c",
+        "start": 0,
+        "end": 62,
+        "text_basis": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f1",
+        "f2"
+      ],
+      "required_blocker_refs": [
+        "b1",
+        "b2"
+      ],
+      "explanation_refs": [
+        "e1"
+      ],
+      "next_action_refs": [
+        "n1"
+      ]
+    },
+    {
+      "goal_id": "goal_lowest_candidate",
+      "port": "energy",
+      "required": true,
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_n_hexane": {
+          "method": "B3LYP",
+          "basis": "6-31G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_n_hexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "ORCA candidate energies pending"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g2",
+      "original_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+      "text_evidence": {
+        "message_id": "message_114a595b9f824515a5bf2f72cfc13f1c",
+        "start": 0,
+        "end": 62,
+        "text_basis": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f3",
+        "f4"
+      ],
+      "required_blocker_refs": [
+        "b3",
+        "b4"
+      ],
+      "explanation_refs": [
+        "e2"
+      ],
+      "next_action_refs": [
+        "n2"
+      ]
+    },
+    {
+      "goal_id": "goal_energy_ranking",
+      "port": "energy_difference",
+      "required": true,
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_n_hexane": {
+          "method": "B3LYP",
+          "basis": "6-31G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_n_hexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "uniform-condition ORCA ranking pending"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g3",
+      "original_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+      "text_evidence": {
+        "message_id": "message_114a595b9f824515a5bf2f72cfc13f1c",
+        "start": 0,
+        "end": 62,
+        "text_basis": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f5",
+        "f6"
+      ],
+      "required_blocker_refs": [
+        "b5",
+        "b6"
+      ],
+      "explanation_refs": [
+        "e3"
+      ],
+      "next_action_refs": [
+        "n3"
+      ]
+    },
+    {
+      "goal_id": "goal_candidate_structures",
+      "port": "member_table",
+      "required": true,
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_n_hexane": {
+          "method": "B3LYP",
+          "basis": "6-31G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_n_hexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "candidate table pending execution"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g4",
+      "original_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+      "text_evidence": {
+        "message_id": "message_114a595b9f824515a5bf2f72cfc13f1c",
+        "start": 0,
+        "end": 62,
+        "text_basis": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f7",
+        "f8"
+      ],
+      "required_blocker_refs": [
+        "b7",
+        "b8"
+      ],
+      "explanation_refs": [
+        "e4"
+      ],
+      "next_action_refs": [
+        "n4"
+      ]
+    },
+    {
+      "goal_id": "goal_failed_members",
+      "port": "sampling_check",
+      "required": true,
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_n_hexane": {
+          "method": "B3LYP",
+          "basis": "6-31G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_n_hexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "failed-member record pending execution"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g5",
+      "original_text": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+      "text_evidence": {
+        "message_id": "message_114a595b9f824515a5bf2f72cfc13f1c",
+        "start": 0,
+        "end": 62,
+        "text_basis": "请搜索n-hexane的低能构象，给出实际搜索范围内的最低候选、统一计算条件下的能量排名、所有候选结构、失败成员与排除原因。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f9",
+        "f10"
+      ],
+      "required_blocker_refs": [
+        "b9",
+        "b10"
+      ],
+      "explanation_refs": [
+        "e5"
+      ],
+      "next_action_refs": [
+        "n5"
+      ]
+    },
+    {
+      "goal_id": "goal_search_report",
+      "port": "sampling",
+      "required": true,
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_n_hexane": {
+          "method": "B3LYP",
+          "basis": "6-31G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_n_hexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "search scope/relationships pending execution"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g6",
+      "original_text": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+      "text_evidence": {
+        "message_id": "message_114a595b9f824515a5bf2f72cfc13f1c",
+        "start": 96,
+        "end": 160,
+        "text_basis": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f11",
+        "f12"
+      ],
+      "required_blocker_refs": [
+        "b11",
+        "b12"
+      ],
+      "explanation_refs": [
+        "e6"
+      ],
+      "next_action_refs": [
+        "n6"
+      ]
+    },
+    {
+      "goal_id": "goal_verification_report",
+      "port": "sampling_check",
+      "required": true,
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_n_hexane": {
+          "method": "B3LYP",
+          "basis": "6-31G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_n_hexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "verification coverage pending execution"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g7",
+      "original_text": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+      "text_evidence": {
+        "message_id": "message_114a595b9f824515a5bf2f72cfc13f1c",
+        "start": 96,
+        "end": 160,
+        "text_basis": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f13",
+        "f14"
+      ],
+      "required_blocker_refs": [
+        "b13",
+        "b14"
+      ],
+      "explanation_refs": [
+        "e7"
+      ],
+      "next_action_refs": [
+        "n7"
+      ]
+    },
+    {
+      "goal_id": "goal_artifacts_report",
+      "port": "member_table",
+      "required": true,
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "n-hexane"
+        ]
+      },
+      "current_conditions": {
+        "system_n_hexane": {
+          "method": "B3LYP",
+          "basis": "6-31G",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_n_hexane": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "downloadable tables pending execution"
+      ],
+      "next_action": "resolve_gaps_in_scope",
+      "ref": "g8",
+      "original_text": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+      "text_evidence": {
+        "message_id": "message_114a595b9f824515a5bf2f72cfc13f1c",
+        "start": 96,
+        "end": 160,
+        "text_basis": "保留初始结构，说明候选之间的结构关系、搜索范围、能量差公式和单位，提供可下载表格与结构，明确验证覆盖和未验证项，不宣称全局最低。",
+        "schema": "request-semantics-3"
+      },
+      "requested_minimum_evidence": [],
+      "required_fact_refs": [
+        "f15",
+        "f16"
+      ],
+      "required_blocker_refs": [
+        "b15",
+        "b16"
+      ],
+      "explanation_refs": [
+        "e8"
+      ],
+      "next_action_refs": [
+        "n8"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "ref": "f1",
+      "goal_ref": "g1",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "conformer sampling executed by corrected script pending; no sampling observation yet"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f2",
+      "goal_ref": "g1",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_n_hexane": {
+            "method": "B3LYP",
+            "basis": "6-31G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_n_hexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {},
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f3",
+      "goal_ref": "g2",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "ORCA candidate energies pending"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f4",
+      "goal_ref": "g2",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_n_hexane": {
+            "method": "B3LYP",
+            "basis": "6-31G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_n_hexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {},
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f5",
+      "goal_ref": "g3",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "uniform-condition ORCA ranking pending"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f6",
+      "goal_ref": "g3",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_n_hexane": {
+            "method": "B3LYP",
+            "basis": "6-31G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_n_hexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {},
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f7",
+      "goal_ref": "g4",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "candidate table pending execution"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f8",
+      "goal_ref": "g4",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_n_hexane": {
+            "method": "B3LYP",
+            "basis": "6-31G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_n_hexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {},
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f9",
+      "goal_ref": "g5",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "failed-member record pending execution"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f10",
+      "goal_ref": "g5",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_n_hexane": {
+            "method": "B3LYP",
+            "basis": "6-31G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_n_hexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {},
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f11",
+      "goal_ref": "g6",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "search scope/relationships pending execution"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f12",
+      "goal_ref": "g6",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_n_hexane": {
+            "method": "B3LYP",
+            "basis": "6-31G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_n_hexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {},
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f13",
+      "goal_ref": "g7",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "verification coverage pending execution"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f14",
+      "goal_ref": "g7",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_n_hexane": {
+            "method": "B3LYP",
+            "basis": "6-31G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_n_hexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {},
+        "geometry_relation": null
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f15",
+      "goal_ref": "g8",
+      "kind": "goal_status",
+      "value": {
+        "recorded": "insufficient_evidence",
+        "complete": false,
+        "current_evidence": "unresolved",
+        "gaps": [
+          "downloadable tables pending execution"
+        ]
+      },
+      "source_ref": null
+    },
+    {
+      "ref": "f16",
+      "goal_ref": "g8",
+      "kind": "conditions",
+      "value": {
+        "current": {
+          "system_n_hexane": {
+            "method": "B3LYP",
+            "basis": "6-31G",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "sources": {
+          "system_n_hexane": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source": {},
+        "source_evidence": {},
+        "geometry_relation": null
+      },
+      "source_ref": null
+    }
+  ],
+  "blockers": [
+    {
+      "ref": "b1",
+      "goal_refs": [
+        "g1"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "conformer sampling executed by corrected script pending; no sampling observation yet"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b2",
+      "goal_refs": [
+        "g1"
+      ],
+      "code": "extra_orca_starts_exhausted",
+      "value": {
+        "limit": 0,
+        "remaining": 0
+      },
+      "text": "extra_orca_starts remaining is zero; a larger batch budget does not override this Run."
+    },
+    {
+      "ref": "b3",
+      "goal_refs": [
+        "g2"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "ORCA candidate energies pending"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b4",
+      "goal_refs": [
+        "g2"
+      ],
+      "code": "extra_orca_starts_exhausted",
+      "value": {
+        "limit": 0,
+        "remaining": 0
+      },
+      "text": "extra_orca_starts remaining is zero; a larger batch budget does not override this Run."
+    },
+    {
+      "ref": "b5",
+      "goal_refs": [
+        "g3"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "uniform-condition ORCA ranking pending"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b6",
+      "goal_refs": [
+        "g3"
+      ],
+      "code": "extra_orca_starts_exhausted",
+      "value": {
+        "limit": 0,
+        "remaining": 0
+      },
+      "text": "extra_orca_starts remaining is zero; a larger batch budget does not override this Run."
+    },
+    {
+      "ref": "b7",
+      "goal_refs": [
+        "g4"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "candidate table pending execution"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b8",
+      "goal_refs": [
+        "g4"
+      ],
+      "code": "extra_orca_starts_exhausted",
+      "value": {
+        "limit": 0,
+        "remaining": 0
+      },
+      "text": "extra_orca_starts remaining is zero; a larger batch budget does not override this Run."
+    },
+    {
+      "ref": "b9",
+      "goal_refs": [
+        "g5"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "failed-member record pending execution"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b10",
+      "goal_refs": [
+        "g5"
+      ],
+      "code": "extra_orca_starts_exhausted",
+      "value": {
+        "limit": 0,
+        "remaining": 0
+      },
+      "text": "extra_orca_starts remaining is zero; a larger batch budget does not override this Run."
+    },
+    {
+      "ref": "b11",
+      "goal_refs": [
+        "g6"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "search scope/relationships pending execution"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b12",
+      "goal_refs": [
+        "g6"
+      ],
+      "code": "extra_orca_starts_exhausted",
+      "value": {
+        "limit": 0,
+        "remaining": 0
+      },
+      "text": "extra_orca_starts remaining is zero; a larger batch budget does not override this Run."
+    },
+    {
+      "ref": "b13",
+      "goal_refs": [
+        "g7"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "verification coverage pending execution"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b14",
+      "goal_refs": [
+        "g7"
+      ],
+      "code": "extra_orca_starts_exhausted",
+      "value": {
+        "limit": 0,
+        "remaining": 0
+      },
+      "text": "extra_orca_starts remaining is zero; a larger batch budget does not override this Run."
+    },
+    {
+      "ref": "b15",
+      "goal_refs": [
+        "g8"
+      ],
+      "code": "current_goal_evidence_missing",
+      "value": [
+        "downloadable tables pending execution"
+      ],
+      "text": "Current goal evidence is incomplete or inapplicable."
+    },
+    {
+      "ref": "b16",
+      "goal_refs": [
+        "g8"
+      ],
+      "code": "extra_orca_starts_exhausted",
+      "value": {
+        "limit": 0,
+        "remaining": 0
+      },
+      "text": "extra_orca_starts remaining is zero; a larger batch budget does not override this Run."
+    }
+  ],
+  "explanations": [
+    {
+      "ref": "e1",
+      "goal_ref": "g1",
+      "fact_refs": [
+        "f1",
+        "f2"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b1",
+        "b2"
+      ],
+      "next_action_refs": [
+        "n1"
+      ]
+    },
+    {
+      "ref": "e2",
+      "goal_ref": "g2",
+      "fact_refs": [
+        "f3",
+        "f4"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b3",
+        "b4"
+      ],
+      "next_action_refs": [
+        "n2"
+      ]
+    },
+    {
+      "ref": "e3",
+      "goal_ref": "g3",
+      "fact_refs": [
+        "f5",
+        "f6"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b5",
+        "b6"
+      ],
+      "next_action_refs": [
+        "n3"
+      ]
+    },
+    {
+      "ref": "e4",
+      "goal_ref": "g4",
+      "fact_refs": [
+        "f7",
+        "f8"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b7",
+        "b8"
+      ],
+      "next_action_refs": [
+        "n4"
+      ]
+    },
+    {
+      "ref": "e5",
+      "goal_ref": "g5",
+      "fact_refs": [
+        "f9",
+        "f10"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b9",
+        "b10"
+      ],
+      "next_action_refs": [
+        "n5"
+      ]
+    },
+    {
+      "ref": "e6",
+      "goal_ref": "g6",
+      "fact_refs": [
+        "f11",
+        "f12"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b11",
+        "b12"
+      ],
+      "next_action_refs": [
+        "n6"
+      ]
+    },
+    {
+      "ref": "e7",
+      "goal_ref": "g7",
+      "fact_refs": [
+        "f13",
+        "f14"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b13",
+        "b14"
+      ],
+      "next_action_refs": [
+        "n7"
+      ]
+    },
+    {
+      "ref": "e8",
+      "goal_ref": "g8",
+      "fact_refs": [
+        "f15",
+        "f16"
+      ],
+      "relation": "current_goal_unmet",
+      "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+      "blocker_refs": [
+        "b15",
+        "b16"
+      ],
+      "next_action_refs": [
+        "n8"
+      ]
+    }
+  ],
+  "next_actions": [
+    {
+      "ref": "n1",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g1"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n2",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g2"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n3",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g3"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n4",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g4"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n5",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g5"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n6",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g6"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n7",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g7"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    },
+    {
+      "ref": "n8",
+      "kind": "stop_with_partial_results",
+      "goal_refs": [
+        "g8"
+      ],
+      "requires": [],
+      "text": "Deliver current facts without starting additional work."
+    }
+  ],
+  "references": {},
+  "fingerprint": "35e89a9e2e1b4266b56b5d1500723bf1ab20ef60447a86c0e4d4bba57ff1df3c"
+}
