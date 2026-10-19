@@ -307,8 +307,14 @@ def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evid
         assert call_tool_instruction() in prepared.body()["messages"][0]["content"]
         # The original rejected inputs already received the structured forms.
         # The new ordinary-language reminder does not establish model success.
-        for source in (original, rebuilt):
-            assert source["PROPOSAL_SCHEMA"]["then"]["properties"]["parameters"] == call_tool_parameters_schema()
+        assert original["PROPOSAL_SCHEMA"]["then"]["properties"]["parameters"] == call_tool_parameters_schema()
+        readers = [tool["name"] for tool in rebuilt["TOOL_CATALOG"]
+                   if tool["effects"] == ["read_registered_artifact"]]
+        assert readers == run.permission.allowed_tools == ["evidence.discover", "evidence.value"]
+        # Current schemas narrow choices to the exact permitted readers and
+        # coordinator-provided ready IDs; archived schema bytes stay unchanged.
+        assert rebuilt["PROPOSAL_SCHEMA"]["then"]["properties"]["parameters"] == call_tool_parameters_schema(
+            tool_names=readers, step_ids=rebuilt.get("CONTROL", {}).get("pending_step_ids"))
         if ready := rebuilt["CONTROL"].get("pending_step_ids"):
             assert rebuilt["ACTION_PARAMETERS"]["call_tool"] == {"step_id": ready[0]}
             for step_id in ready:

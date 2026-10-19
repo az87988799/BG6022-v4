@@ -6,6 +6,9 @@ success. The caller authenticates user message IDs against the control record.
 
 from __future__ import annotations
 
+import hashlib
+import re
+
 from orca_agent.models import EvidenceRef, Plan, Request, Run, Step
 from orca_agent.tools.registry import get_tool
 
@@ -13,10 +16,22 @@ from orca_agent.tools.registry import get_tool
 class PlanningError(ValueError):
     """The proposal cannot be activated under the current immutable contracts."""
 
+    def __init__(self, message, *, detail=None):
+        super().__init__(message)
+        self.detail = detail
+
 
 def _require(condition, message):
     if not condition:
         raise PlanningError(message)
+
+
+def _rule_feedback(value):
+    """Bound an untrusted proposed label for diagnostics, without changing it."""
+    if value is None or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", value):
+        return value
+    return {"omitted": "unsafe_or_oversized_rule_label", "chars": len(value),
+            "sha256": hashlib.sha256(value.encode("utf-8", errors="surrogatepass")).hexdigest()}
 
 
 def _request_revision(prior: Request, proposed: Request, user_update: bool,
@@ -258,9 +273,32 @@ def _goal_bindings(request: Request, plan: Plan, run: Run):
             _concrete_reference(binding.evidence, run)
             _require(binding.evidence.port == goal.port,
                      "concrete goal evidence changes the requested physical quantity")
-            _require(binding.evidence.rule_version is not None and _compatible_rule(
-                goal.minimum_check_version, binding.evidence.rule_version),
-                "concrete goal evidence lacks the minimum scientific rule")
+            if not (binding.evidence.rule_version is not None and _compatible_rule(
+                    goal.minimum_check_version, binding.evidence.rule_version)):
+                message = "concrete goal evidence lacks the minimum scientific rule"
+                detail = {"requirement": message,
+                          "code": "goal_evidence_rule_mismatch", "goal_id": goal.id,
+                          "path": ["parameters", "goal_map", goal.id, "evidence", "rule_version"],
+                          "expected_rule_version": goal.minimum_check_version,
+                          "actual_rule_version": _rule_feedback(binding.evidence.rule_version),
+                          "instruction": "Use the Goal's required evidence contract without changing its quantity, "
+                                         "verification requirement or source identity. Do not claim qualification "
+                                         "by adding a rule label."}
+                if binding.evidence.producer_step_id in steps:
+                    detail["step_target_shape"] = {"step_key": binding.evidence.producer_step_id,
+                                                   "port": goal.port}
+                    detail["step_target_instruction"] = (
+                        "For an output of this existing Plan Step, use this complete outer Goal target instead "
+                        "of evidence. Retain the Step and its dependencies with key-only entries. This changes "
+                        "the proposed route, not execution or evidence qualification; existing checks still apply.")
+                if (goal.evidence_contract_version == "generic-observation-1"
+                        and goal.verification == "reported_with_limitations"
+                        and goal.minimum_check_version == "generic-observation-1"):
+                    detail["observation_contract"] = (
+                        "generic-observation-1 is this Goal's reported-with-limitations observation contract, "
+                        "not a requirement for a registered scientific checker or qualified output. "
+                        "Matching observations remain unverified and must retain their sources and limitations.")
+                raise PlanningError(message, detail=detail)
         else:
             tool = get_tool(steps[binding.step_id].tool)
             if tool.check_contract.get("generic_observations"):

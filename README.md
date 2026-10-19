@@ -6,9 +6,17 @@
 
 R-01～R-05 的后续修复见 [修复验收记录](docs/acceptance/phase-a-repair/report.md)。新请求采用 `orca-hf-2`；旧 Request/Result 保留原规则和原字节。旧 Run 仍可查看、取消、恢复对账及补收，但未完成的旧规则 Run 不会直接继续计算，需另行明确复验；本轮未实现自动规则迁移。
 
-当前可发布已检查科学结果的范围是 **H₂O / CH₄ 组成、中性单重态、RHF/STO-3G、单点与无约束严格优化**。优化收敛只表示五项指定判据通过；未进行 Hessian/频率检查。受管理的原生输入可执行准入范围内的其他方法，但所得观察不自动获得科学资格；DFT、更广体系的科学保证及远程执行尚未实现。逐项状态见 [能力矩阵](docs/capabilities.md)与[原生输入边界](docs/native-orca-input.md)。
+当前可发布已检查科学结果的范围是 **H₂O / CH₄ 组成、中性单重态、RHF/STO-3G、单点与无约束严格优化**。优化收敛只表示五项指定判据通过；既有生产科学检查不包含 Hessian/频率检查。受管理的原生输入可执行准入范围内的其他方法，但所得观察不自动获得科学资格；DFT、更广体系的科学保证及远程执行尚未实现。逐项状态见 [能力矩阵](docs/capabilities.md)与[原生输入边界](docs/native-orca-input.md)。
 
-Code as Tools 步骤 2 已增加显式选择的本地 `linux-container` 后端。最终固定镜像通过 7 项真实测试：科学库与内核拒绝边界、超时、OOM、取消、薄 SDK 四 rank ORCA，以及既有 OPI 四核水单点和优化。Windows LPAC 的串行能力与 MPI 初始化失败继续作为该后端的事实保留；Linux 路径使用独立的 Open MPI 环境。详见[步骤 2 Linux 验证报告](docs/acceptance/code-as-tools-step2-linux/report.md)。这些是开发验证，等待用户验收；本轮未推进步骤 3 的真实模型验证。
+Code as Tools 步骤 2 已增加显式选择的本地 `linux-container` 后端。最终固定镜像通过 7 项真实测试：科学库与内核拒绝边界、超时、OOM、取消、薄 SDK 四 rank ORCA，以及既有 OPI 四核水单点和优化。Windows LPAC 的串行能力与 MPI 初始化失败继续作为该后端的事实保留；Linux 路径使用独立的 Open MPI 环境。详见[步骤 2 Linux 验证报告](docs/acceptance/code-as-tools-step2-linux/report.md)。这些是开发验证，等待用户验收；步骤 2 交付批次未包含步骤 3 的真实模型验证。
+
+2026-10-19，用户明确要求“就先这样完成步骤三收尾”，停止 NameError 专项，不进入步骤 4。本轮步骤 3 收尾待验收；正常路径的 [live035](docs/acceptance/code-as-tools-step3/validation/live035-pro-autonomous-optfreq.json)在 v55 / Pro-v5 completed/complete，并通过[独立科学与完整交付核验](docs/acceptance/code-as-tools-step3/validation/live035-independent-scientific-audit.json)：1 次 Python、1 次四进程 ORCA，9 原子 Angstrom 坐标、完整 27 项 cm^-1 频率。观察仍 unverified、qualified_outputs 为空；不把该旧候选改记为当前版本重复通过。
+
+受控错误修复后的完整交付仍未通过，按用户要求不再阻塞本轮交付。v57 显式失败 Step 修复引用已实际启动重跑；v58 仅澄清原有必需原生块指导，准入未放宽。live040 实际执行 1 次 ORCA，但 30 秒产物收集期限耗尽，第二 Python 失败，随后因用户要求暂停，最终 paused/partial、无观察。现存原始输出[独立科学核验通过](docs/acceptance/code-as-tools-step3/validation/live040-independent-scientific-audit.json)，不能替代完整交付；收集超时仍是未修复限制。
+
+[001—040 累计审计](docs/acceptance/code-as-tools-step3/validation/cumulative-budget-live001-040.json)：40/50 个预约已使用，剩余 10 不再自行消费；491 HTTP、6601871 个已知 token，另保留 live036 的 73131 未知用量预约（不是实际 token），保守占用 6675002。20 次 Python（8 完成、12 失败）、10 次 ORCA、5 次代码重试、1442 工作单位。已知费用独立估算小计 USD 4.91126502，完整费用和 Pro 产品费用未知，非实际账单。[Flash 配置](docs/acceptance/code-as-tools-step3/validation/model-flash-v6-configuration.json)已按用户要求切换并通过禁网本地验证，未做付费复验；历史 Pro Run 不修改。
+
+[第一轮冻结全量](docs/acceptance/code-as-tools-step3/validation/continuation-regression-001.json)为 4231 通过、23 失败、179 跳过；发现问题的定向修复、失败和复测分别保留。用户取消后续全量回归，不能宣称全量通过。本轮不记为用户验收通过，步骤 4—7 未实施。证据、限制和收尾范围见[步骤 3 报告](docs/acceptance/code-as-tools-step3/report.md)与[专项方案](docs/CODE-AS-TOOLS-IMPLEMENTATION-PLAN.md)。
 
 ## 安装与环境
 

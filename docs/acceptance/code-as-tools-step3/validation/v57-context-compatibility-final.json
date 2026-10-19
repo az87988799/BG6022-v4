@@ -1,0 +1,172 @@
+{
+  "schema": "v57-targeted-context-compatibility-1",
+  "scope": "Targeted validation only; user explicitly cancelled any further full regression. Batches overlap and are not summed.",
+  "batches": [
+    {
+      "name": "context-001",
+      "outcome": {
+        "scope": "v57 targeted context compatibility; no full regression",
+        "started_at": "2026-10-19T12:44:44.742182+00:00",
+        "finished_at": "2026-10-19T12:47:00.799479+00:00",
+        "seconds": 135.38999999999942,
+        "returncode": 1,
+        "files_frozen": 528,
+        "changed_files": []
+      },
+      "pytest": {
+        "tests": 194,
+        "passed": 193,
+        "failed": 1,
+        "errors": 0,
+        "skipped": 0,
+        "xml_seconds": 134.125,
+        "failures": [
+          {
+            "class": "tests.unit.test_code_context",
+            "test": "test_settled_failed_python_retains_repair_schema_and_frozen_code_identity[64000]",
+            "message": "AssertionError: assert 'depends_on/observation_names fixed' in 'Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. Unmet Goals use goa...alid bindings. The full new-Step form remains accepted only with the same logical_key and unchanged non-code contract.'"
+          }
+        ]
+      },
+      "references": [
+        {
+          "path": "data/code-tools-step3/repair-reference-v57/context-001/outcome.json",
+          "bytes": 776,
+          "sha256": "579a710110fc1cbb83ca92ae94e922c0373af126b73f6b0d7d18791a145abb4d"
+        },
+        {
+          "path": "data/code-tools-step3/repair-reference-v57/context-001/results.xml",
+          "bytes": 33712,
+          "sha256": "40c37bdbc9bd289b7ad4276847334f7f786c7ead71e5bc349fba1b582e532c27"
+        },
+        {
+          "path": "data/code-tools-step3/repair-reference-v57/context-001/pytest.log",
+          "bytes": 3014,
+          "sha256": "356f09f1c2e8826821a6b154249454ace901a1e21520d511ed3cc667d2e51478"
+        },
+        {
+          "path": "data/code-tools-step3/repair-reference-v57/context-001/freeze.json",
+          "bytes": 64019,
+          "sha256": "8818c8499e8415d04ff4a96023b3435762d2688e600ffb5511b7c3c3f06acb4b"
+        }
+      ]
+    },
+    {
+      "name": "context-002",
+      "outcome": {
+        "scope": "v57 targeted feedback and changed assertion only; no full regression",
+        "started_at": "2026-10-19T12:49:12.123204+00:00",
+        "finished_at": "2026-10-19T12:49:24.149645+00:00",
+        "seconds": 11.57799999999952,
+        "returncode": 1,
+        "files_frozen": 528,
+        "changed_files": []
+      },
+      "pytest": {
+        "tests": 33,
+        "passed": 32,
+        "failed": 1,
+        "errors": 0,
+        "skipped": 0,
+        "xml_seconds": 8.316,
+        "failures": [
+          {
+            "class": "tests.unit.test_code_context",
+            "test": "test_settled_failed_python_retains_repair_schema_and_frozen_code_identity[64000]",
+            "message": "assert \"do not add it to the repair's depends_on\" in 'Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. Unmet Goals use goa...alid bindings. The full new-Step form remains accepted only with the same logical_key and unchanged non-code contract.'"
+          }
+        ]
+      },
+      "references": [
+        {
+          "path": "data/code-tools-step3/repair-reference-v57/context-002/outcome.json",
+          "bytes": 727,
+          "sha256": "a7d985bd9c6b9a1664b839af48bd7bb430259f992ccb4ed8082fa3fb07638226"
+        },
+        {
+          "path": "data/code-tools-step3/repair-reference-v57/context-002/results.xml",
+          "bytes": 8465,
+          "sha256": "76e66eb830e0f2cb448dea0e49df398c6464f1ec976b200e1680aadb878891fd"
+        },
+        {
+          "path": "data/code-tools-step3/repair-reference-v57/context-002/pytest.log",
+          "bytes": 3006,
+          "sha256": "276b0fa5fe555595389a03b02d657ba065a3f3b3e8e09c4ed156e482fb5a86fd"
+        },
+        {
+          "path": "data/code-tools-step3/repair-reference-v57/context-002/freeze.json",
+          "bytes": 64019,
+          "sha256": "a18062c09cbe8018b6e7707d9ac9fff532e07fa6241aac153c698789d48eb103"
+        }
+      ]
+    },
+    {
+      "name": "context-003",
+      "scope": "only the two 12000/64000 parametrizations after both obsolete guidance-text assertions were aligned",
+      "pytest": {
+        "tests": 2,
+        "passed": 2,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_seconds": 4.061,
+        "failures": []
+      },
+      "references": [
+        {
+          "path": "data/code-tools-step3/repair-reference-v57/context-003.xml",
+          "bytes": 546,
+          "sha256": "016f3fc8b1ba9b19bc61013f743465e99312622b1e8e479d96acc914be64e3a5"
+        }
+      ]
+    }
+  ],
+  "interpretation": [
+    "context-001 passed the historical water flows, query feedback, failure-history/schema and context-capacity checks; its only failing test stopped at an obsolete guidance sentence.",
+    "context-002 passed 32 cases after the union-error feedback scope fix; the same test then reached a second obsolete guidance sentence.",
+    "Both assertions were changed to the equivalent new contract wording; no runtime gate or frozen budget was relaxed. The full failing test then passed at both token limits in context-003.",
+    "context-001 and context-002 each independently hashed 528 src/tests/scripts files before and after; both changed_files were empty.",
+    "The context-001 wrapper tried to decode the Windows pytest log as UTF-8 after XML/outcome were saved and raised UnicodeDecodeError. This was a log-display wrapper error, not an additional pytest error; raw bytes and their hash are retained.",
+    "The final code-repair and feedback suite is reported separately; no API, ORCA or development reservation was consumed by these tests."
+  ],
+  "final_source_references": [
+    {
+      "path": "src/orca_agent/context.py",
+      "bytes": 183747,
+      "sha256": "12e9b29f3840d96d7b4a1af5af8d2626c115f400b52cb0da1f3ec96d1baf941a"
+    },
+    {
+      "path": "src/orca_agent/readable_context.py",
+      "bytes": 15831,
+      "sha256": "1fa54aac9f8bb8d0e7d827b1efbcdd8d5b0da5634e794124ce5b2aaede2964be"
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "bytes": 33256,
+      "sha256": "b082a8a7e043ed6ce63b0e84d11469ad5bc97f763c4b192820f8b9d42eeb2df5"
+    },
+    {
+      "path": "src/orca_agent/decision_purpose.py",
+      "bytes": 9020,
+      "sha256": "cb82eb7eec576b2e63cec57855537f9e814a0ed2f5fb20d5f0e84b495cfd80d4"
+    },
+    {
+      "path": "tests/unit/test_code_context.py",
+      "bytes": 37558,
+      "sha256": "42eda444c765d5a9456ebce07d1903182032f2a283252c0b1d212a14c0cc35f2"
+    },
+    {
+      "path": "tests/unit/test_failed_python_history.py",
+      "bytes": 14981,
+      "sha256": "4ae3f79bfc0a6c1d20e51139646f90aad3dfac93ee770588fda7ddf4a574dc41"
+    }
+  ],
+  "related_validation": [
+    {
+      "path": "docs/acceptance/code-as-tools-step3/validation/v57-declarative-code-repair-final.json",
+      "bytes": 2208,
+      "sha256": "ab48d7f3f571661deb966c923bd1ddfbe82582f28a000e8104e1b9c8aad43010"
+    }
+  ],
+  "lint": "Ruff checked all 50 changed Python files successfully; git diff --check passed before live038."
+}

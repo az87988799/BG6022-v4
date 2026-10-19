@@ -164,19 +164,30 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
         by_id = {item["id"]: item for item in records}
         counts = {"transport": 0, "correction": 0, "fatal": 0}
         previous = None
+        candidate = None
         for decision in run.decisions:
             if decision["id"] not in by_id or decision.get("action") != "rejected":
                 continue
-            reply = asdict(read_model_reply(store, run, by_id[decision["id"]])[0])
+            prior_record = by_id[decision["id"]]
+            prior_reply, receipt_hash = read_model_reply(store, run, prior_record)
+            reply = asdict(prior_reply)
             counts[recovery_kind(reply)] += 1
             previous = decision.get("parameters", {})
+            candidate = None
+            if (recovery_kind(reply) == "correction" and isinstance(reply.get("proposal"), dict)
+                    and prior_record.get("basis") == basis and decision.get("basis") == basis):
+                # Reuse the immutable parsed response, never provider headers or
+                # raw error text. This is rejected DATA, not a pending decision.
+                candidate = {"model_id": prior_record["id"], "logical_request_id": logical_id,
+                    "request_hash": prior_record["request_hash"], "response_record_sha256": receipt_hash,
+                    "basis": dict(basis), "proposal": reply["proposal"]}
         if (counts["fatal"] or counts["transport"] > run.budget.transport_retries
                 or counts["correction"] > run.budget.corrections_per_proposal):
             raise StoreError("bounded proposal correction or transport retry exhausted")
-        return previous
+        return previous, candidate
 
     while len(records) <= max_requests:
-        previous_rejection = rejected_state()
+        previous_rejection, rejected_candidate = rejected_state()
         if previous_rejection:
             rejection = {"category": previous_rejection.get("error_category", "rejected"),
                          "requirement": previous_rejection.get("requirement", "prior proposal rejected")}
@@ -210,6 +221,8 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             data = {"new_result_ids": feedback, "validation_error": rejection,
                     "pending_step_ids": [s.id for s in _ready(plan, results)],
                     "allowed_repairs": run.permission.allowed_repairs}
+            if rejected_candidate is not None:
+                data["rejected_proposal"] = rejected_candidate
             from orca_agent.goals import current_goal_evidence
             request = store.load_request(run)
             from orca_agent.delivery import collect_delivery_snapshot, collect_goal_facts
@@ -439,9 +452,11 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             category = reply.get("error_category") or type(exc).__name__
             from pydantic import ValidationError
 
-            from orca_agent.proposals import ProposalError
-            detail = (exc.detail if isinstance(exc, ProposalError) else
-                      [{"type": e["type"], "loc": list(e["loc"])} for e in exc.errors()]
+            from orca_agent.planning import PlanningError
+            from orca_agent.proposals import ProposalError, validation_error_details
+            detail = (exc.detail if isinstance(exc, ProposalError) or (
+                          isinstance(exc, PlanningError) and exc.detail is not None) else
+                      validation_error_details(exc)
                       if isinstance(exc, ValidationError) else
                       str(exc)[:300] if isinstance(exc, (StoreError, ValueError)) else category)
             rejection = {"category": category, "requirement": detail}

@@ -1,6 +1,8 @@
 """Context for authorized task files; no model, network or process launch."""
 
 import copy
+import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -18,19 +20,32 @@ from tests.unit.test_decision_purpose_capacity import decoded
 from tests.unit.test_python_repair_budget import case, settle
 
 
-def test_settled_failed_python_retains_repair_schema_and_frozen_code_identity(tmp_path, monkeypatch):
+@pytest.mark.parametrize("input_tokens", [12000, 64000])
+def test_settled_failed_python_retains_repair_schema_and_frozen_code_identity(tmp_path, monkeypatch, input_tokens):
     store, original, _ = case(tmp_path, monkeypatch)
     request, plan = store.load_request(original), store.load_plan(original)
     run = store.create_run(request, plan, original.permission.model_copy(update={"model_execution": True}),
         original.budget.model_copy(update={"model_calls": 4, "model_tokens": 48000,
-            "input_tokens": 12000, "output_tokens": 2000, "decision_rounds": 12}))
+            "input_tokens": input_tokens, "output_tokens": 2000, "decision_rounds": 12}),
+        configuration=original.configuration.model_copy(update={"model":
+            original.configuration.model.model_copy(update={"input_tokens": input_tokens})}))
     attempt, result = settle(store, run)
     before = copy.deepcopy((request, run, plan, result))
     snapshot = collect_delivery_snapshot(store, run, request, plan, [result])
+    if input_tokens == 12000:
+        with pytest.raises(context.ContextLimitError, match="bound"):
+            context.build_context(request, run, plan, results=[result], delivery_snapshot=snapshot,
+                feedback={"new_result_ids": [result.id]})
+        assert (request, run, plan, result) == before
+        assert not run.model_records and run.usage.model_calls == 0
+        return
     prepared = context.build_context(request, run, plan, results=[result], delivery_snapshot=snapshot,
         feedback={"new_result_ids": [result.id]})
     wire = decoded(prepared)
     assert "revise_plan" in wire["AUTHORITY"]["decision_purpose"]["allowed_actions"]
+    assert "retaining logical_id and every non-code field" in wire["TASK_CODE_RULES"]
+    assert "repair_of:failed frozen_step.id" in wire["TASK_CODE_RULES"]
+    assert "do not add the replacement writer as a dependency" in wire["TASK_CODE_RULES"]
     assert not context._frozen_completed(plan, run, [result])
     if "TOOLS" in wire:
         tool, = [tool for tool in wire["TOOLS"] if tool["name"] == "python.execute"]
@@ -77,24 +92,57 @@ def test_generic_observation_feedback_preserves_values_and_unverified_sources_at
     assert "qualified_outputs" not in view and result == before
 
 
-def test_settled_writer_receipt_remains_after_feedback_without_inlining_task_source(tmp_path, monkeypatch):
+def test_actual_live028_disclosure_gaps_remain_visible_without_rewriting_results():
+    path = Path(__file__).parents[1] / "fixtures/code_contracts/live028-observation-disclosure-gap.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "34d36cc70d3a9f67d5eff4471ed01d1163e8e33fee5bed34d2e0e2a79b8cd378")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    result = Result.model_validate(data["result"])
+    before = result.model_copy(deep=True)
+    view = context._result(result, 1)
+    records = {record["name"]: record for record in view["unqualified_observation_records"]}
+    geometry, frequencies = records["optimized_geometry"], records["vibrational_frequencies"]
+    assert isinstance(geometry["value"], str) and geometry["unit"] is None
+    assert len(data["raw_frequency_values"]) == 27
+    assert len(frequencies["value"]) == 21
+    assert frequencies["value"] == [value for value in data["raw_frequency_values"] if value > 1e-6]
+    assert not any("filter" in text.casefold() for text in frequencies["limitations"])
+    assert all(record["validation_status"] == "unverified" for record in records.values())
+    assert view["unqualified_observation_records"] == data["result"]["observation_records"]
+    assert "qualified_outputs" not in view and result == before
+    # Prompt guidance does not retrospectively restore omitted modes, infer a
+    # unit, add a limitation to historical evidence or create a scientific pass.
+
+
+@pytest.mark.parametrize("input_tokens", [12000, 64000])
+def test_settled_writer_receipt_remains_after_feedback_without_inlining_task_source(tmp_path, monkeypatch, input_tokens):
     from tests.unit.test_generated_delivery import case as writer_case
     from tests.unit.test_generated_delivery import written
     store, original, request, writer = writer_case(tmp_path, monkeypatch)
     plan = store.load_plan(original)
     run = store.create_run(request, plan, original.permission.model_copy(update={"model_execution": True}),
         original.budget.model_copy(update={"model_calls": 4, "model_tokens": 48000,
-            "input_tokens": 12000, "output_tokens": 2000, "decision_rounds": 12}))
+            "input_tokens": input_tokens, "output_tokens": 2000, "decision_rounds": 12}),
+        configuration=original.configuration.model_copy(update={"model":
+            original.configuration.model.model_copy(update={"input_tokens": input_tokens})}))
     result, reference = written(store, run, writer)
     run.processed_feedback.append(result.id)
-    before = run.permission.model_dump()
     snapshot = collect_delivery_snapshot(store, run, request, plan, [result])
-    wire = decoded(context.build_context(request, run, plan, results=[result], delivery_snapshot=snapshot))
+    before = copy.deepcopy((request, run, plan, result, snapshot))
+    if input_tokens == 12000:
+        with pytest.raises(context.ContextLimitError, match="bound"):
+            context.build_context(request, run, plan, results=[result], delivery_snapshot=snapshot)
+        assert (request, run, plan, result, snapshot) == before
+        assert not run.model_records and run.usage.model_calls == 0
+        return
+    prepared = context.build_context(request, run, plan, results=[result], delivery_snapshot=snapshot)
+    assert prepared.input_token_bound <= input_tokens
+    wire = decoded(prepared)
     receipt = next(item for item in wire["DATA"]["results"] if item["result_id"] == result.id)
     value = receipt["unqualified_observations"]["written_artifact"]
     assert {key: value[key] for key in reference} == reference
     assert value["bytes"] == len(writer.parameters.content.encode()) and value["role"] == "python"
-    assert "content" not in value and run.permission.model_dump() == before
+    assert "content" not in value and (request, run, plan, result, snapshot) == before
     def strings(item):
         if isinstance(item, dict):
             return [text for child in item.values() for text in strings(child)]
@@ -104,19 +152,41 @@ def test_settled_writer_receipt_remains_after_feedback_without_inlining_task_sou
     assert writer.parameters.content not in strings(wire)
 
 
-def test_actual_collected_observation_returns_to_same_loop_with_unverified_value(tmp_path, monkeypatch):
+@pytest.mark.parametrize("input_tokens", [12000, 64000])
+def test_actual_collected_observation_returns_to_same_loop_with_unverified_value(tmp_path, monkeypatch, input_tokens):
     from tests.unit.test_generated_delivery import case as writer_case
     from tests.unit.test_generated_delivery import execute_fixture, written
     store, original, request, writer = writer_case(tmp_path, monkeypatch)
     run = store.create_run(request, store.load_plan(original), original.permission.model_copy(update={"model_execution": True}),
         original.budget.model_copy(update={"model_calls": 4, "model_tokens": 48000,
-            "input_tokens": 12000, "output_tokens": 2000, "decision_rounds": 12}))
+            "input_tokens": input_tokens, "output_tokens": 2000, "decision_rounds": 12}),
+        configuration=original.configuration.model_copy(update={"model":
+            original.configuration.model.model_copy(update={"input_tokens": input_tokens})}))
     receipt, reference = written(store, run, writer)
     run, _, result = execute_fixture(store, run, reference)
     plan = store.load_plan(run)
     snapshot = collect_delivery_snapshot(store, run, request, plan, [receipt, result])
-    wire = decoded(context.build_context(request, run, plan, results=[receipt, result], delivery_snapshot=snapshot,
-        feedback={"new_result_ids": [result.id]}))
+    before = copy.deepcopy((request, run, plan, receipt, result, snapshot))
+    if input_tokens == 12000:
+        with pytest.raises(context.ContextLimitError, match="bound"):
+            context.build_context(request, run, plan, results=[receipt, result], delivery_snapshot=snapshot,
+                feedback={"new_result_ids": [result.id]})
+        assert (request, run, plan, receipt, result, snapshot) == before
+        assert not run.model_records and run.usage.model_calls == 0
+        return
+    prepared = context.build_context(request, run, plan, results=[receipt, result], delivery_snapshot=snapshot,
+        feedback={"new_result_ids": [result.id]})
+    wire = decoded(prepared)
+    prompt = prepared.body()["messages"][0]["content"]
+    assert prepared.input_token_bound <= input_tokens
+    assert "ACTION_SCHEMAS" in wire and "PROPOSAL_SCHEMA" not in wire
+    assert "No fabricated evidence or unauthorized code/paths." in prompt
+    assert "No fabricated evidence/code/paths" not in prompt
+    assert run.permission.scientific_execution is False
+    assert "filename:task-relative path" in wire["TASK_CODE_RULES"]
+    assert "internal_request_key" not in wire["TASK_CODE_RULES"]
+    assert "No shell/subprocess/network/host paths" in wire["TASK_CODE_RULES"]
+    assert "Observations unqualified" in wire["TASK_CODE_RULES"]
     feedback = next(item for item in wire["DATA"]["results"] if item["result_id"] == result.id)
     assert feedback["unqualified_observation_records"] == [item.model_dump(mode="json") for item in result.observation_records]
     observed, = feedback["unqualified_observation_records"]
@@ -170,15 +240,81 @@ def test_authorized_selection_exposes_sources_code_tools_and_exact_frozen_native
     assert set(tools["workspace.write"]["parameters"]["properties"]) == {"name", "content", "role"}
     assert wire["AUTHORITY"]["native_input_contract"] == profile_contract(run.configuration.execution.native_input_policy)
     assert wire["AUTHORITY"]["native_input_contract"]["scientific_validation"] == "unverified"
+    native = wire["AUTHORITY"]["native_input_contract"]
+    raw_content = prepared.body()["messages"][1]["content"]
+    for block in ("scf", "geom", "method"):
+        # Actual wire strings remain self-contained even if surrounding keys
+        # are compacted: a decoder cannot hide a missing native block name.
+        assert f"%{block} " in native["required_blocks"][block]
+        assert native["required_blocks"][block] in raw_content
+    assert "1..128" in native["required_blocks"]["method"]
+    assert "Every field needs a value" in native["block_syntax"]
+    assert native["optional_blocks"]["output"]["example"] == "%output JsonPropFile true end"
+    assert native["optional_blocks"]["output"]["fields"] == {"jsonpropfile": ["true", "false", "0", "1"]}
+    assert native["optional_blocks"]["output"]["required"] is False
     rules = wire["TASK_CODE_RULES"]
     assert "from orca_task_sdk import run_orca" in rules and "Step.parameters.observation_names" in rules
+    assert "missing controls are rejected, never filled in" in rules
     assert "request_key unique per Run" in rules
     assert "prior receipts cannot replay" in rules and "same cumulative budgets" in rules
     assert "unknown work:reconcile first" in rules
-    assert "separately authorized" in rules and "Observations are unqualified" in rules
+    assert "separately authorized" in rules and "Observations unqualified" in rules
     assert "exact excerpt quote" in wire["CONDITION_SELECTION_RULES"]
     assert str(run.configuration.execution.docker_path) not in prepared.body()["messages"][1]["content"]
     assert not any(recipe in rules.lower() for recipe in ("ethanol", "cco", "乙醇"))
+
+
+def test_observation_guidance_requires_full_sequences_and_sourced_units_without_task_algorithm(tmp_path):
+    request, run, prepared, wire = selection_context(tmp_path)
+    rules = wire["TASK_CODE_RULES"]
+    assert "full parsed sequences, including negative/near-zero values" in rules
+    assert "Additional filtered subsets must label filtering/omissions" in rules
+    assert "cannot replace full data or prove absence of anomalies" in rules
+    assert "sourced physical units even for strings/coordinate files" in rules
+    assert "Unknown units stay null with explicit limitations, never guessed" in rules
+    assert "dimensionless quantities explicitly" in rules
+    assert not any(task_detail in rules for task_detail in ("value > 1.0e-6", "276.12", "cm^-1", "angstrom"))
+    assert prepared.input_token_bound <= 64000
+    assert Store(tmp_path / "data").load_run(run.id) == run
+    assert Store(tmp_path / "data").load_request(run) == request
+
+
+@pytest.mark.parametrize("native_only", [False, True])
+def test_execution_resource_projection_uses_frozen_nondefault_values_without_permission_changes(tmp_path, native_only):
+    request, run, _, _ = selection_context(tmp_path, native_only=native_only)
+    frozen_values = {"max_cores": 3, "total_memory_mb": 1536, "maxcore_mb": 128,
+                     "job_timeout_seconds": 654.0, "script_timeout_seconds": 321.0}
+    run.configuration = run.configuration.model_copy(update={
+        "resources": run.configuration.resources.model_copy(update=frozen_values)})
+    before = run.model_dump_json()
+    snapshot = collect_delivery_snapshot(Store(tmp_path / "data"), run, request)
+    prepared = context.build_context(request, run, delivery_snapshot=snapshot)
+    wire = decoded(prepared)
+    assert wire["AUTHORITY"]["execution_resources"] == frozen_values
+    assert run.model_dump_json() == before
+    assert wire["AUTHORITY"]["permission"]["code_execution"] is (not native_only)
+    assert wire["AUTHORITY"]["permission"]["allowed_tools"] == run.permission.allowed_tools
+    assert "environment_concurrency" not in wire["AUTHORITY"]["execution_resources"]
+    if not native_only:
+        assert "AUTHORITY.execution_resources.maxcore_mb" in wire["TASK_CODE_RULES"]
+    assert prepared.input_token_bound <= run.budget.input_tokens
+
+
+def test_sdk_guidance_exposes_readonly_filename_mapping_and_repair_constraints(tmp_path):
+    _, _, _, wire = selection_context(tmp_path)
+    rules = wire["TASK_CODE_RULES"]
+    assert "Return dict keys:request_key,input_fingerprint,operation_status,scientific_validation,actual_conditions,files" in rules
+    assert "files maps original filenames to readable read-only copy paths, not Artifact metadata" in rules
+    assert "includes inputs/dependencies" in rules
+    assert "Suffix or mapping order cannot identify outputs" in rules
+    assert "Input=job.inp; OptFreq final geometry=job.xyz; Hessian=job.hess" in rules
+    assert "Inspect files.keys()" in rules
+    assert "stdout.out/stderr.txt" in rules and "check existence before reading" in rules
+    assert "Never infer output names from input_path" in rules
+    assert "Declared relative dependencies" in rules
+    assert "Cite outputs, not copied inputs" in rules
+    assert "filename=original files key and internal_request_key=receipt.request_key" in rules
+    assert "never the copy path" in rules
 
 
 def test_native_only_permission_keeps_authoring_and_bounded_read_schemas_without_python(tmp_path):
@@ -203,14 +339,17 @@ def test_staged_code_guidance_preserves_science_goals_without_future_artifacts(t
     request, run, _, wire = selection_context(tmp_path)
     before = copy.deepcopy((request, run))
     rules = wire["TASK_CODE_RULES"]
-    assert "for unavailable files, defer consuming Steps until real artifact_id/sha256 exist" in rules
-    assert "plan executable workspace.write/input-preparation Steps" in rules
-    assert "Keep existing valid bindings; only affected Goals use" in rules
+    assert "workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256" in rules
+    assert "Unmet Goals use" in rules
     assert "goal_map[Goal.id]={gap,port:Goal.port}" in rules
-    assert "Execute, then revise_plan" in rules
+    assert "Execute writers, then revise_plan from file receipts" in rules
     assert "No placeholders/future producer values in parameters.code/input/inputs" in rules
+    assert "CodeRef.language must match bytes, never converts" in rules
+    assert "python.execute.code needs Python" in rules
+    assert "orca.run.input needs an ORCA program, never XYZ" in rules
+    assert "Geometry belongs in parameters.inputs=manifest" in rules
     assert "parameters.inputs=manifest" in rules
-    assert "Step.inputs {producer_key,port}=declared evidence ports, not manifest" in rules
+    assert "Step.inputs[role]={producer_key,port} binds evidence ports, not manifest" in rules
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
     candidate = {"steps": [{"key": "write", "tool": "workspace.write", "parameters": {
         "name": "task.py", "content": "pass\n", "role": "python"}}],
@@ -242,7 +381,7 @@ def test_scientific_sdk_guidance_declares_current_source_and_resource_limits(tmp
     assert "SDK native receipt must be completed in that same Attempt" in rules
     assert "orca.run only archives raw outputs" in rules
     assert "separate Python parsing imported stdout lacks scientific Goal condition provenance" in rules
-    assert "ORCA %maxcore uses frozen resources.maxcore_mb per process, never total_memory_mb" in rules
+    assert "ORCA %maxcore uses AUTHORITY.execution_resources.maxcore_mb per process, never total_memory_mb" in rules
     assert "pure file tasks need no ORCA" in rules
     assert run.permission.scientific_execution is True
     assert all(str(value) not in rules for value in (192, 1024))
@@ -259,8 +398,12 @@ def test_python_without_native_authorization_does_not_advertise_sdk_execution(tm
     snapshot = collect_delivery_snapshot(store, run, request, plan)
     prepared = context.build_context(request, run, plan, delivery_snapshot=snapshot)
     rules = decoded(prepared)["TASK_CODE_RULES"]
-    assert "Scientific Goal observations need a same-Attempt SDK native receipt" in rules
-    assert "pure file tasks need no ORCA" in rules
+    assert "full parsed sequences" in rules and "Unknown units stay null" in rules
+    if permission:
+        assert "Scientific Goals need a same-Attempt SDK native receipt" in rules
+        assert "pure file tasks need no ORCA" in rules
+    else:
+        assert "File tasks need no ORCA." in rules
     assert "run_orca(" not in rules and "%maxcore" not in rules
     assert "orca.run" not in run.permission.allowed_tools
     assert prepared.input_token_bound <= 12000
@@ -277,8 +420,8 @@ def test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_hist
     request, run = objects()
     prepared = context.build_context(request, run)
     wire = decoded(prepared)
-    assert prepared.prompt_version == "agent-json-v38"
-    assert {"agent-json-v22", "agent-json-v34", "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38"} <= DECISION_CONTRACT_PROMPT_VERSIONS
+    assert prepared.prompt_version == "agent-json-v58"
+    assert {"agent-json-v22", "agent-json-v34", "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41", "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47"} <= DECISION_CONTRACT_PROMPT_VERSIONS
     assert "TASK_CODE_RULES" not in wire and "native_input_contract" not in wire["AUTHORITY"]
     assert run.permission.code_execution is False
 
@@ -352,6 +495,10 @@ def test_current_generated_intake_uses_single_source_scope_and_v3_schema(tmp_pat
     visible = wire["INTENT_RULES"]
     if code_authorized:
         assert visible["generated_task_intent"] == contract["normalize_request"]["generated_task_intent"]
+        assert "confidently known English lookup alias" in visible["generated_task_intent"]
+        assert "independent confirmation" in visible["generated_task_intent"]
+        assert "do not guess an unknown alias" in visible["generated_task_intent"]
+        assert prepared.input_token_bound <= run.budget.input_tokens <= 64000
         assert "science_scope" not in visible
         assert visible["legacy_qualified_scope"] == contract["normalize_request"]["legacy_qualified_scope"]
         assert "unsupported_system" not in visible["notice_choices"]

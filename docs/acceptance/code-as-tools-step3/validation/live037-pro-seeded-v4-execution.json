@@ -1,0 +1,794 @@
+{
+  "schema_version": 1,
+  "scope": "Independent settled live037 v4 deliberately fault-seeded execution/resource/cost audit; no model, Python task or ORCA invoked by auditor.",
+  "audited_at_utc": "2026-10-19T12:38:36.518326+00:00",
+  "finished_at_utc": "2026-10-19T12:38:36.750112+00:00",
+  "run_id": "run_2a94bfb23c984971b6a94860f738815d",
+  "state": "failed",
+  "delivery_status": "partial",
+  "goal_status": {
+    "goal_goal_opt": "insufficient_evidence",
+    "goal_goal_freq": "insufficient_evidence"
+  },
+  "source_freeze": {
+    "start": {
+      "scope": "Independent live-037 source/driver observation; no Run mutation.",
+      "checked_at_utc": "2026-10-19T12:23:30.021690+00:00",
+      "frozen_at": "2026-10-19T12:23:19.219720+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-037/freeze.json",
+        "bytes": 12186,
+        "sha256": "2b91fc109c8fbd9d56838711955703ef77b59272368e7d2477a0141d067401c7"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_exists_at_check": false,
+      "independent_in_run_start_observed": true
+    },
+    "end": {
+      "scope": "Independent live-037 source/driver observation; no Run mutation.",
+      "checked_at_utc": "2026-10-19T12:36:02.178773+00:00",
+      "frozen_at": "2026-10-19T12:23:19.219720+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-037/freeze.json",
+        "bytes": 12186,
+        "sha256": "2b91fc109c8fbd9d56838711955703ef77b59272368e7d2477a0141d067401c7"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_source_changed": [],
+      "outcome_finished_at": "2026-10-19T12:35:35.492758+00:00"
+    },
+    "configuration_start": {
+      "checked_at_utc": "2026-10-19T12:24:02.953786+00:00",
+      "run_id": "run_2a94bfb23c984971b6a94860f738815d",
+      "configuration_file": {
+        "path": "data/code-tools-step3/config.thinking-pro-v5.toml",
+        "bytes": 2381,
+        "sha256": "281bd9304dbf38d85cecdf9e462dd76505f39f6814b942a404dcfeaa6ae45f8a"
+      },
+      "matches_frozen_pro_v5_configuration": true,
+      "effective_configuration_exactly_equal_live035": true,
+      "configuration_canonical_sha256": "a0ba57401d30b0f1b51c543a1d1fa11217f7edfaf7a5e61f86a8a344dc5896c3",
+      "request_file": {
+        "path": "data/code-tools-step3/repair-request-v4.txt",
+        "bytes": 2052,
+        "sha256": "469c5e811276b7abc9647b7423a4a4a09016f40174f540671d2cddfd291e6a46"
+      },
+      "request_file_stripped_text_equals_freeze": true,
+      "request_frozen_text_utf8_sha256": "da527592b0ade8f51089de2b4866195fdfd3b40f34d2cfd332439223f5c17b16",
+      "scope": "development_fault_seeded",
+      "request_protocol": "v4",
+      "source_observation": {
+        "path": "data/code-tools-step3/live-037-freeze-start-audit.json",
+        "bytes": 635,
+        "sha256": "e715423ce1a2635a8c7b52280d110b8162a9810fe20d775e0c5c186d5e0686d5"
+      },
+      "outcome_exists_at_check": false,
+      "boundary": "Source observation and this configuration observation have separate actual timestamps. Neither claims to occur at the launch instant. Raw config file hash and effective frozen configuration are separate checks."
+    },
+    "outcome_source_changes": [],
+    "boundary": "First source observation was about 10.8 seconds after driver freeze creation; configuration was checked at its separately recorded time. Before/after hashes are not continuous monitoring."
+  },
+  "development_prompt": {
+    "protocol": "repair-request-v4",
+    "text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。\n\n以下是人为注入故障的开发对照，不是原文自主运行，也不证明自然复杂错误的诊断成熟度。\nDEVELOPMENT_FAULT_SEEDED: CODE_TOOLS_DEVELOPMENT_FAULT_V1\nDEVELOPMENT_REPAIR_PROTOCOL: v4\n由你自行检索、选定条件、制定 Plan，并生成全部任务 Python、ORCA 输入和所需文件，不使用开发者提供的解题代码。首次执行的 Python 必须已经包含完成科学目标所需的实际计算、结果读取和完整观察交付，不能是占位脚本、空任务或故障探针。首次执行 Step 的输入 manifest、体系、条件、目的、观察名、目标绑定与依赖必须完整，Artifact 与 hash 均来自真实已完成的工具输出。\n在完整首版程序的任何普通导入、文件操作、SDK 调用或其他工作之前，写一行独立的未定义名称表达式 CODE_TOOLS_DEVELOPMENT_FAULT_V1。模块文档字符串可以在前；若使用 __future__ 导入，必须按 Python 语法放在该表达式之前。首版不要定义该名称或捕获其 NameError。这是唯一人为指定的故障；第一次真实执行须在任何 SDK 调用之前因此失败。\n读取真实失败反馈后，自行诊断并通过 workspace.write 生成完整修订代码，不预先规定修改方法或代码差分。先完成写入，再提交新 Step key、原 logical_key 的修复 Step；遵守现有生产修复合同，除 CodeRef 外保持冻结的所有任务字段，不增加新 writer 依赖，不改变用户目标、科学条件、证据要求、执行权限或累计预算。通过真实后续 Attempt 完成原目标；不能完成时保留事实并停止。\n交付完整解析数据、有来源的单位及科学验证限制，区分人为故障与其他实际错误，披露失败、修订、实际重跑和成本。开发驱动只核验和采证，不替你编写或修改 Plan、任务代码、ORCA 输入或回复。",
+    "frozen_text_sha256": "da527592b0ade8f51089de2b4866195fdfd3b40f34d2cfd332439223f5c17b16"
+  },
+  "model_usage": {
+    "http_calls": 17,
+    "known_usage_records": 17,
+    "input_tokens": 222177,
+    "output_tokens": 53664,
+    "total_tokens": 275841,
+    "product_unknown_cost_records": 17,
+    "product_total_cost_usd": null,
+    "independent_known_usage_estimate_subtotal_usd": "0.50578308",
+    "independent_total_estimate_usd": "0.50578308",
+    "independent_price_basis": {
+      "input_per_million": "1.32",
+      "output_per_million": "3.96",
+      "reference": {
+        "path": "docs/acceptance/code-as-tools-step3/validation/model-pro-v5-configuration.json",
+        "bytes": 1625,
+        "sha256": "a284a9456e259cb12505bec3ac7c5dc88c8d8f608167985f140997db8b409033"
+      },
+      "boundary": "Known-token uncached peak-price estimate only; not invoice, ignores cache/off-peak discounts. Product Pro costs remain unknown."
+    }
+  },
+  "model_identity": {
+    "requested": "deepseek-v4-pro",
+    "provider_response_names": [
+      "deepseek-v4-pro"
+    ],
+    "boundary": "Provider-reported names do not independently prove underlying weights."
+  },
+  "actual_usage": {
+    "internal_work_units": 0,
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 2.061999999999898,
+    "cpu_seconds": 1.116247,
+    "resource_usage_complete": false,
+    "logical_attempts": {
+      "logical_af92b0a9c34341e5ae5b6525091ccdd3": 1
+    },
+    "fingerprint_attempts": {
+      "7c44ebd7e7e9aa6c20774322f004a12bc0ed01b6d5f48afacf2c06e13da6517b": 1
+    },
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 17,
+    "model_tokens_used": 275841,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 2,
+    "decision_rounds": 17,
+    "evidence_reads": 3,
+    "analysis_executions": 2,
+    "logical_steps": [
+      "logical_7df064489d6a49daab48e9833ff75c61",
+      "logical_af92b0a9c34341e5ae5b6525091ccdd3",
+      "logical_bad411a95ea441758e1c2ab73b63e44e",
+      "logical_c11adde149f54d4bb75f0d19147b66ab",
+      "logical_c392aef2395540c1b4e13834d15518d6"
+    ],
+    "identity_queries": 1,
+    "structure_preparations": 1,
+    "knowledge_queries": 2
+  },
+  "call_counts": {
+    "knowledge.search": 2,
+    "structure.resolve": 1,
+    "structure.prepare": 1,
+    "workspace.write": 2,
+    "evidence.list": 1,
+    "evidence.text": 2
+  },
+  "resource_counter_checks": {
+    "wall_and_cpu_equal_sum_of_persisted_attempt_counters": true,
+    "ORCA_actual_starts_equal_actual_internal_call_count": true,
+    "internal_work_equal_sum_of_admitted_internal_calls": true,
+    "boundary": "Persisted measured counters are verified, not extrapolated to unsampled usage; resource_usage_complete is retained as recorded."
+  },
+  "writers": [
+    {
+      "call_id": "call_fe60a95b5a8946869d6a3378f53160f8",
+      "name": "ethanol_opt_freq.py",
+      "role": "python",
+      "artifact_id": "artifact_eddad7161b104331a37992b78f93a522",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_eddad7161b104331a37992b78f93a522/files/ethanol_opt_freq.py",
+        "bytes": 2592,
+        "sha256": "d5292b057525836802d077c26685c8894d8bb7fc059c0753b9376281fb823f83"
+      },
+      "model_origins": [
+        "model_9dd54e919ca042f0919cedd9e72938a3"
+      ],
+      "model_content_equals_writer_artifact": true
+    },
+    {
+      "call_id": "call_5da259fd12754cb490da743ce4567d55",
+      "name": "ethanol_opt_freq_corrected.py",
+      "role": "python",
+      "artifact_id": "artifact_da5c966766c54b19a3a4ef1eaa508a17",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_da5c966766c54b19a3a4ef1eaa508a17/files/ethanol_opt_freq_corrected.py",
+        "bytes": 3275,
+        "sha256": "7abcd63706788fa03b147fdf2f69e8ca7d2f512deed1fc2c89a9f911c61a459f"
+      },
+      "model_origins": [
+        "model_21305963d929405a996f402f148d8393",
+        "model_f8b832a62c9f40edab6fff38aa5701e3"
+      ],
+      "model_content_equals_writer_artifact": true
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": {
+        "id": "attempt_71356961f91241d5a69a48cdb48f4a2b",
+        "step_id": "step_bd7aba3831964b1797c93ae8d3314e7e",
+        "logical_id": "logical_af92b0a9c34341e5ae5b6525091ccdd3",
+        "number": 1,
+        "tool": "python.execute",
+        "state": "failed",
+        "execution_kind": "python",
+        "geometry_artifact_id": null,
+        "input_fingerprint": "7c44ebd7e7e9aa6c20774322f004a12bc0ed01b6d5f48afacf2c06e13da6517b",
+        "directory": "runs/run_2a94bfb23c984971b6a94860f738815d/steps/step_bd7aba3831964b1797c93ae8d3314e7e/attempt-001",
+        "created_at": "2026-10-19T12:29:26.477449Z",
+        "finished_at": "2026-10-19T12:29:56.538794Z",
+        "started": true,
+        "result_id": "result_0344544e39d642f49bd145febfe3bf7f",
+        "elapsed_seconds": 2.061999999999898,
+        "cpu_seconds": 1.116247,
+        "request_version": 3,
+        "plan_version": 2,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "result": {
+        "path": "data/code-tools-step3/live-store/runs/run_2a94bfb23c984971b6a94860f738815d/results/result_0344544e39d642f49bd145febfe3bf7f.json",
+        "bytes": 9413,
+        "sha256": "5b42dce02474c2137cb07ee2d57652de144e3f896d28304faf927299cde221bc"
+      },
+      "code": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_eddad7161b104331a37992b78f93a522/files/ethanol_opt_freq.py",
+        "bytes": 2592,
+        "sha256": "d5292b057525836802d077c26685c8894d8bb7fc059c0753b9376281fb823f83"
+      },
+      "sealed_code": {
+        "path": "data/code-tools-step3/live-store/runs/run_2a94bfb23c984971b6a94860f738815d/steps/step_bd7aba3831964b1797c93ae8d3314e7e/attempt-001/sealed/task.py",
+        "bytes": 2592,
+        "sha256": "d5292b057525836802d077c26685c8894d8bb7fc059c0753b9376281fb823f83"
+      },
+      "input_manifest_checks": [
+        {
+          "entry": {
+            "artifact_id": "artifact_eddad7161b104331a37992b78f93a522",
+            "sha256": "d5292b057525836802d077c26685c8894d8bb7fc059c0753b9376281fb823f83",
+            "target_path": "ethanol_opt_freq.py",
+            "purpose": "Python script to run ORCA optimization and frequency calculation and parse results"
+          },
+          "source": {
+            "path": "data/code-tools-step3/live-store/artifacts/artifact_eddad7161b104331a37992b78f93a522/files/ethanol_opt_freq.py",
+            "bytes": 2592,
+            "sha256": "d5292b057525836802d077c26685c8894d8bb7fc059c0753b9376281fb823f83"
+          },
+          "staged": {
+            "path": "data/code-tools-step3/live-store/runs/run_2a94bfb23c984971b6a94860f738815d/steps/step_bd7aba3831964b1797c93ae8d3314e7e/attempt-001/task-inputs/ethanol_opt_freq.py",
+            "bytes": 2592,
+            "sha256": "d5292b057525836802d077c26685c8894d8bb7fc059c0753b9376281fb823f83"
+          }
+        },
+        {
+          "entry": {
+            "artifact_id": "artifact_f8c7856da3294816b1cd52cbb0804249",
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+            "target_path": "prepared.xyz",
+            "purpose": "Prepared ethanol geometry for ORCA optimization and frequency calculation"
+          },
+          "source": {
+            "path": "data/code-tools-step3/live-store/artifacts/artifact_f8c7856da3294816b1cd52cbb0804249/files/prepared.xyz",
+            "bytes": 859,
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+          },
+          "staged": {
+            "path": "data/code-tools-step3/live-store/runs/run_2a94bfb23c984971b6a94860f738815d/steps/step_bd7aba3831964b1797c93ae8d3314e7e/attempt-001/task-inputs/prepared.xyz",
+            "bytes": 859,
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+          }
+        }
+      ],
+      "stderr": {
+        "path": "data/code-tools-step3/live-store/runs/run_2a94bfb23c984971b6a94860f738815d/steps/step_bd7aba3831964b1797c93ae8d3314e7e/attempt-001/task/stderr.txt",
+        "bytes": 458,
+        "sha256": "ffd42c65271e5fcb8099bb1e0f4db998b79b338e3a7a310a7bb2df70b3fbb78b"
+      },
+      "stderr_text": "Traceback (most recent call last):\n  File \"/opt/orca-agent-runtime/python_task.py\", line 21, in <module>\n    runpy.run_path(sys.argv[0], run_name=\"__main__\")\n  File \"<frozen runpy>\", line 291, in run_path\n  File \"<frozen runpy>\", line 98, in _run_module_code\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/work/sealed/task.py\", line 2, in <module>\n    CODE_TOOLS_DEVELOPMENT_FAULT_V1\nNameError: name 'CODE_TOOLS_DEVELOPMENT_FAULT_V1' is not defined\n",
+      "execution": {
+        "state": "failed",
+        "exit_code": 1,
+        "handle": {
+          "backend": "linux-container",
+          "version": 1,
+          "launch_id": "82ce8eb164c44d62880eb640a23f7e68",
+          "container_name": "orca-attempt-82ce8eb164c44d62880eb640a23f7e68",
+          "volume_name": "orca-evidence-82ce8eb164c44d62880eb640a23f7e68",
+          "run_id": "run_2a94bfb23c984971b6a94860f738815d",
+          "attempt_id": "attempt_71356961f91241d5a69a48cdb48f4a2b",
+          "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+          "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+          "execution": {
+            "backend": "linux-container",
+            "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+            "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+            "docker_context": "desktop-linux",
+            "docker_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+            "native_input_policy": {
+              "profile": "bounded-analytic-1",
+              "max_atoms": 32,
+              "max_geom_iterations": 128,
+              "max_scf_iterations": 256,
+              "max_response_iterations": 128
+            },
+            "_docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+          },
+          "engine_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "daemon_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "heartbeat_ttl_seconds": 15,
+          "timeout_seconds": 1200.0,
+          "container_id": "8df8a5c4c5a9e8ea7da98fc07f6a688ce0ac5e9128b75138c0b72033a58beabd",
+          "isolation_verified": true,
+          "isolation_policy": "linux-container-v1",
+          "kind": "python",
+          "workload_identity": {
+            "pid": 51,
+            "uid": 10001,
+            "state": "S (sleeping)",
+            "start_ticks": "1139143",
+            "name": "python3.11",
+            "cap_eff": "0000000000000000",
+            "cap_prm": "0000000000000000",
+            "cap_inh": "0000000000000000",
+            "cap_amb": "0000000000000000",
+            "no_new_privs": "1",
+            "seccomp": "2"
+          },
+          "launch_phase": "gated_launcher",
+          "parent_container_id": null
+        },
+        "not_started": false,
+        "reason": "nonzero_exit_code",
+        "resource_usage": {
+          "wall_seconds": 2.061999999999898,
+          "user_cpu_seconds": 0.734589,
+          "kernel_cpu_seconds": 0.381658,
+          "peak_memory_bytes": 47964160,
+          "cgroup": {
+            "memory.current": "38375424",
+            "memory.max": "1073741824",
+            "memory.peak": "47964160",
+            "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+            "memory.swap.max": "0",
+            "cpu.max": "400000 100000",
+            "cpu.stat": "usage_usec 1116247\nuser_usec 734589\nsystem_usec 381658\nnice_usec 0\nnr_periods 30\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+            "pids.current": "2",
+            "pids.max": "256",
+            "cpuset.cpus.effective": "0-3"
+          },
+          "observed_processes": [
+            {
+              "pid": 1,
+              "uid": 10003,
+              "state": "S (sleeping)",
+              "start_ticks": "1138944",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 20,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1139015",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 45,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1139124",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 75,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1139207",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 93,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1139268",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            }
+          ],
+          "active_processes": 0,
+          "accounting": "aggregate container cgroup v2 including keeper and helpers",
+          "usage_scope": "last successful cgroup observation before container termination",
+          "complete": false,
+          "oom_killed": false
+        },
+        "actual_start_status": "not_applicable",
+        "transport_stderr": ""
+      },
+      "diagnostics": [
+        {
+          "category": "failed",
+          "detail": "nonzero_exit_code"
+        }
+      ],
+      "observation_records": [],
+      "qualified_outputs": {}
+    }
+  ],
+  "internal_ORCA_calls": [],
+  "repair_integrity": {
+    "protocol": "v4",
+    "code_difference_was_prescribed": false,
+    "first_failure_is_deliberately_seeded": true,
+    "actual_repair_established": false
+  },
+  "seeded_gate": {
+    "version": 1,
+    "scope": "development_fault_seeded",
+    "run_id": "run_2a94bfb23c984971b6a94860f738815d",
+    "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1",
+    "point": "before_science_reservation",
+    "status": "prelaunch_verified",
+    "checked_at": "2026-10-19T12:29:25.985521+00:00",
+    "mutated_task_content": false,
+    "selection_origin": "activated_model_plan_first_ready",
+    "source_model_response_sha256": "bb94e518ace86187a52ee879eedd5fb0d4cc51a71530b3cab73199b75d238fdf",
+    "source_decision_record_sha256": "e49095f4b55faca878f0ff4e7dd64591b655b80d2979c2576e16ccc63dc5c813",
+    "source_decision_basis": {
+      "request_version": 3,
+      "plan_version": 1,
+      "permission_version": 1,
+      "control_generation": 1
+    },
+    "syntax": {
+      "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1",
+      "line": 2,
+      "ast_kind": "Expr(Name(Load))",
+      "compiled_without_execution": true
+    },
+    "request_version": 3,
+    "plan_version": 2,
+    "plan_sha256": "bb5b2187ac4c8d4b33376f5316b75a6d13b9967e975167fc35ec9e6c48bda91d",
+    "step_id": "step_bd7aba3831964b1797c93ae8d3314e7e",
+    "logical_id": "logical_af92b0a9c34341e5ae5b6525091ccdd3",
+    "code": {
+      "artifact_id": "artifact_eddad7161b104331a37992b78f93a522",
+      "sha256": "d5292b057525836802d077c26685c8894d8bb7fc059c0753b9376281fb823f83",
+      "language": "python",
+      "version": 1
+    },
+    "code_bytes": 2592,
+    "source_call_id": "call_fe60a95b5a8946869d6a3378f53160f8",
+    "decision_id": "model_8a63450ee4e5449a81db9f5c939d73ea",
+    "usage_before": {
+      "internal_work_units": 0,
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 10,
+      "model_tokens_used": 130453,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 1,
+      "decision_rounds": 10,
+      "evidence_reads": 1,
+      "analysis_executions": 1,
+      "logical_steps": [
+        "logical_af92b0a9c34341e5ae5b6525091ccdd3",
+        "logical_bad411a95ea441758e1c2ab73b63e44e",
+        "logical_c11adde149f54d4bb75f0d19147b66ab",
+        "logical_c392aef2395540c1b4e13834d15518d6"
+      ],
+      "identity_queries": 1,
+      "structure_preparations": 1,
+      "knowledge_queries": 2
+    },
+    "limitations": [
+      "Explicitly prompted generic defect; not a spontaneous model error.",
+      "Prelaunch verification only; actual failure, feedback and model repair require separate audit."
+    ]
+  },
+  "terminal_failure": {
+    "last_three_rejections": [
+      {
+        "id": "model_75a7fa36a6144e4ba6701a260ca63979",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 3,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "A retained Step must use only {key:existing_step_id}, without other fields. For every frozen Step being reused, omit depends_on, tool and parameters; its original dependencies remain unchanged. Include those dependency Steps separately by key too; the program does not insert them or remove submitted fields.",
+            "code": "retained_step_has_fields",
+            "path": [
+              "parameters",
+              "steps",
+              2
+            ],
+            "step_key": "step_abe0dfccb45f4608a86c0e9cb059a5bd",
+            "unexpected_fields": [
+              "depends_on"
+            ],
+            "retained_step_shape": {
+              "key": "step_abe0dfccb45f4608a86c0e9cb059a5bd"
+            }
+          }
+        }
+      },
+      {
+        "id": "model_e908cdc920374e529564c14730e52e3d",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 3,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Each Goal target must use exactly one binding shape. A Step binding is a future output route, not goal completion; do not combine it with a gap.",
+            "errors": [
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "goal_map",
+                  "goal_goal_freq",
+                  "gap"
+                ]
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "parameters",
+                  "goal_map",
+                  "goal_goal_freq",
+                  "evidence"
+                ]
+              },
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "goal_map",
+                  "goal_goal_freq",
+                  "step_key"
+                ]
+              },
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "goal_map",
+                  "goal_goal_opt",
+                  "gap"
+                ]
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "parameters",
+                  "goal_map",
+                  "goal_goal_opt",
+                  "evidence"
+                ]
+              }
+            ],
+            "code": "goal_target_shape",
+            "path": [
+              "parameters",
+              "goal_map",
+              "goal_goal_freq"
+            ],
+            "binding_shapes": [
+              [
+                "step_key",
+                "port"
+              ],
+              [
+                "evidence",
+                "port"
+              ],
+              [
+                "gap",
+                "port"
+              ]
+            ],
+            "step_target_instruction": "A stored Goal route uses step_id; the equivalent proposal route uses step_key with that same existing Step ID and unchanged port. Keep the referenced Step in steps with {key:existing_step_id}. Do not copy step_id into goal_map."
+          }
+        }
+      },
+      {
+        "id": "model_8fef4c5364014efe880896866a8934b2",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 3,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "PlanningError",
+          "recovery_kind": "correction",
+          "requirement": "Python repair may change code only; inputs, conditions and dependencies are fixed"
+        }
+      }
+    ],
+    "final_attempted_non_CodeRef_parameter_changes": [
+      {
+        "path": [
+          "parameters",
+          "inputs",
+          "entries",
+          0,
+          "artifact_id"
+        ],
+        "frozen": "artifact_eddad7161b104331a37992b78f93a522",
+        "proposed": "artifact_da5c966766c54b19a3a4ef1eaa508a17"
+      },
+      {
+        "path": [
+          "parameters",
+          "inputs",
+          "entries",
+          0,
+          "sha256"
+        ],
+        "frozen": "d5292b057525836802d077c26685c8894d8bb7fc059c0753b9376281fb823f83",
+        "proposed": "7abcd63706788fa03b147fdf2f69e8ca7d2f512deed1fc2c89a9f911c61a459f"
+      },
+      {
+        "path": [
+          "parameters",
+          "inputs",
+          "entries",
+          0,
+          "target_path"
+        ],
+        "frozen": "ethanol_opt_freq.py",
+        "proposed": "ethanol_opt_freq_corrected.py"
+      }
+    ],
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_238576d59d634d528751bb66cf7e86ef",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_21305963d929405a996f402f148d8393",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_75a7fa36a6144e4ba6701a260ca63979",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_e908cdc920374e529564c14730e52e3d",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_8fef4c5364014efe880896866a8934b2",
+        "error_category": "PlanningError"
+      },
+      {
+        "category": "StoreError",
+        "message": "bounded proposal correction or transport retry exhausted",
+        "environment_occupied": false
+      }
+    ],
+    "reason": "The last corrected proposal also replaced the original script Artifact/hash/target_path in the frozen input manifest. The code-only repair gate rejected it; bounded proposal correction then exhausted. No repaired Python Attempt was admitted.",
+    "not_transport_failure_or_truncation": true,
+    "unexecuted_revision_is_not_a_successful_repair": true
+  },
+  "first_failure_contemporaneous_observation": {
+    "reference": {
+      "path": "data/code-tools-step3/live-037-first-failure-audit.json",
+      "bytes": 18169,
+      "sha256": "56943b14f6cddcc3068ac23f398674e80db0d95e1f5b9728f7ea871816a3af01"
+    },
+    "checked_at_utc": "2026-10-19T12:29:58.207326+00:00",
+    "attempt_count": 1,
+    "internal_call_count": 0,
+    "orca_starts_actual": 0,
+    "first_Result_hash_still_matches": true,
+    "boundary": "Actual observation after failure and before any second Attempt was recorded, not the exact failure instant."
+  },
+  "independent_reviews": {
+    "code_and_contract": {
+      "path": "data/code-tools-step3/validation/live037-code-repair-audit.json",
+      "bytes": 73985,
+      "sha256": "785c1d14643f4da294ddd3b113cc4637bfb3c6667736d0cf516319f4770dbf3c"
+    }
+  },
+  "terminal_deliveries": [],
+  "scientific_boundary": "Execution completion and product Goal satisfaction do not create scientific qualification. Every audited generic observation remains unverified and QualifiedOutputs empty; independent scientific delivery interpretation is a separate audit.",
+  "limitations": [
+    "This is a deliberately fault-seeded v4 run; it is not a new original-text autonomy trial or proof of general natural-error diagnosis maturity.",
+    "Original-text live035 used v55; no v56 original-text rerun is claimed.",
+    "A further full offline regression was not executed at the user's instruction.",
+    "Resource samples may be lower bounds; no per-Attempt disk hard quota or remote cluster validation is established."
+  ],
+  "evidence": {
+    "run": {
+      "path": "data/code-tools-step3/live-store/runs/run_2a94bfb23c984971b6a94860f738815d/run.json",
+      "bytes": 108163,
+      "sha256": "dc514a77402469d86a4eb672f22112417f6d98afe7101129c8affa4ea8499e67"
+    },
+    "freeze": {
+      "path": "data/code-tools-step3/live-037/freeze.json",
+      "bytes": 12186,
+      "sha256": "2b91fc109c8fbd9d56838711955703ef77b59272368e7d2477a0141d067401c7"
+    },
+    "outcome": {
+      "path": "data/code-tools-step3/live-037/outcome.json",
+      "bytes": 4228,
+      "sha256": "27224883e5933c32e36808710d5a44cd0ea82971495a47782d66ce650406fc68"
+    },
+    "start": {
+      "path": "data/code-tools-step3/live-037-freeze-start-audit.json",
+      "bytes": 635,
+      "sha256": "e715423ce1a2635a8c7b52280d110b8162a9810fe20d775e0c5c186d5e0686d5"
+    },
+    "end": {
+      "path": "data/code-tools-step3/live-037-freeze-end-audit.json",
+      "bytes": 647,
+      "sha256": "ee30e6b4e410a6bdf963d40cb4f01489c0953821860274e232b1517948b379e3"
+    },
+    "prior036_preservation": {
+      "path": "data/code-tools-step3/live-037-prior036-preservation-start-audit.json",
+      "bytes": 994,
+      "sha256": "3be23d971ad763bb43a05e9d3115e86854ae1a883051bbb5a88e60c0fceb93b3"
+    }
+  },
+  "original_run_read_only_check": {
+    "file_count": 131,
+    "before_manifest_sha256": "ff47a569571262e37ad9db312b6c149239498df29eff7b78346e90a6f5b4b3dd",
+    "after_manifest_sha256": "ff47a569571262e37ad9db312b6c149239498df29eff7b78346e90a6f5b4b3dd",
+    "changed": [],
+    "references_rehashed": 124,
+    "all_references_match": true
+  },
+  "archived_file_hash_check_count": 35,
+  "full_audit": {
+    "path": "data/code-tools-step3/live-037-audit.json",
+    "bytes": 181216,
+    "sha256": "4bdeca1906df465e436499a1ed61fd431e79a4f2583f494c81783eed824bf894"
+  }
+}

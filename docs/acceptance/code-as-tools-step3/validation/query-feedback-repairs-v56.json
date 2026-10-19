@@ -1,0 +1,193 @@
+{
+  "scope": "v56_noncode_query_feedback_targeted_repair_not_full_suite",
+  "source_diagnosis": {
+    "path": "data/code-tools-step3/query-regression-diagnostic/query-regression-diagnosis-v56.json",
+    "bytes": 11309,
+    "sha256": "9f12dc54ed9c2adb80e86132365b990ef5c364301c04638f432581c615a65986"
+  },
+  "baseline": {
+    "passed": 0,
+    "failed": 4,
+    "seconds": 5.84,
+    "evidence": [
+      {
+        "path": "data/code-tools-step3/query-regression-diagnostic/replay.log",
+        "bytes": 171195,
+        "sha256": "14e23fa5964a6a5eec0c3facd3e015b07deefe0d64c62a776a65182029dff790"
+      },
+      {
+        "path": "data/code-tools-step3/query-regression-diagnostic/replay.xml",
+        "bytes": 170210,
+        "sha256": "ff37449a9096ecdb6076f45d3ff5b9b1bf78c04f0d5b72b3ab709c7bc8853d97"
+      }
+    ]
+  },
+  "failed_cases": [
+    "test_actual_correction_uses_smaller_existing_projection_and_keeps_final_margin",
+    "test_v07_four_calls_read_in_user_order_and_publish_exact_raw_value",
+    "test_invalid_feedback_call_is_not_executed_or_used_to_override_plan[hybrid]",
+    "test_invalid_feedback_call_is_not_executed_or_used_to_override_plan[effect_name]"
+  ],
+  "insufficient_prototypes": [
+    {
+      "name": "candidate_code_scope_plus_70_byte_compact_readiness",
+      "passed": 2,
+      "failed": 2,
+      "remaining": [
+        "historical correction final reserve",
+        "V07 third request input limit"
+      ],
+      "capture": {
+        "path": "data/code-tools-step3/query-regression-diagnostic/candidate_gate_short_ready-r1/capture.json",
+        "bytes": 100555,
+        "sha256": "3c4fc0d0a723ac2ff6f8ae63acd37ee282c7cbcc809f55cf95ea88c6acc0ee65"
+      }
+    },
+    {
+      "name": "candidate_and_execution_display_code_scope",
+      "passed": 2,
+      "failed": 2,
+      "historical_correction_input": 11502,
+      "v07_third_input": 12099,
+      "capture": {
+        "path": "data/code-tools-step3/query-regression-diagnostic/code_scoped_views-r1/capture.json",
+        "bytes": 91347,
+        "sha256": "00e3cbf3bb4c38f088ec7fd9c33ccef289e7c20e96766263c6d3e8148d67131a"
+      }
+    }
+  ],
+  "root_causes": [
+    "Two invalid-correction tests acquired new rejected candidate and guidance in non-code context, raising their tight input bounds to 12818/12745 over unchanged 12000.",
+    "New step_execution added to non-code query contexts; limiting it and its guidance to code reduces the historical correction 11654 to 11502 and V07 third request 12421 to 12099, still insufficient.",
+    "The old compact legacy envelope has the same 11502 bound under a HEAD context function replay; historically its smaller native fallback was 11270. New immediate-schema literal protection in legacy disabled existing reversible columns/sharing and removed that fitting fallback.",
+    "Scoped restoration of legacy schema columns/sharing gives the historical correction 11128 and V07 third request 11703, without changing budgets or the code profile literal contract."
+  ],
+  "final": {
+    "command": [
+      ".venv/Scripts/python.exe",
+      "-B",
+      "-m",
+      "pytest",
+      "tests/unit/test_query_feedback_contract.py",
+      "-q",
+      "--tb=short",
+      "--basetemp=.../v56-query-module-r2/tmp",
+      "-o",
+      "cache_dir=.../v56-query-module-r2/cache",
+      "--junitxml=.../v56-query-module-r2/results.xml"
+    ],
+    "passed": 10,
+    "failed": 0,
+    "seconds": 8.1,
+    "evidence": [
+      {
+        "path": "data/code-tools-step3/query-regression-diagnostic/v56-query-module-r2/pytest.log",
+        "bytes": 101,
+        "sha256": "6a8ecd427e6504f41cb66c6f7f412fb1f03e1fca9aeb051fb75186d6802a2a77"
+      },
+      {
+        "path": "data/code-tools-step3/query-regression-diagnostic/v56-query-module-r2/results.xml",
+        "bytes": 1920,
+        "sha256": "6f92f7e7593eb8cb2a577bc9db248879e6ad6d63ad58751db23a03e35e73a2a3"
+      }
+    ],
+    "historical_correction_margin": {
+      "remaining": 25303,
+      "current_input": 11128,
+      "current_output": 2000,
+      "future_final_reserve": 12000,
+      "total_required": 25128,
+      "headroom": 175,
+      "original_max_allowed_current_input": 11303,
+      "accepted": true
+    },
+    "v07": {
+      "state": "completed",
+      "actual_input_reservations": [
+        9612,
+        11359,
+        11703,
+        8094
+      ],
+      "input_limit": 12000,
+      "cumulative_token_limit": 32000,
+      "model_calls": 4,
+      "model_call_limit": 4,
+      "synthetic_scripted_tokens": 300,
+      "synthetic_tokens_are_real_provider_usage": false,
+      "tools": [
+        "evidence.discover",
+        "evidence.value",
+        "evidence.value"
+      ],
+      "attempts": 0,
+      "orca_starts": 0
+    },
+    "invalid_feedback": {
+      "hybrid_input_reservations": [
+        9612,
+        11732,
+        11508
+      ],
+      "effect_name_input_reservations": [
+        9611,
+        11732,
+        11451
+      ],
+      "only_executed_tool": "evidence.discover",
+      "model_calls_each": 3,
+      "synthetic_tokens_each": 225,
+      "plan_unchanged": true,
+      "returned_original_ready_step_after_correction": true,
+      "actual_invalid_tool_calls": 0
+    }
+  },
+  "assertion_update": "Only native ACTION_SCHEMAS assertion distinguishes ready step_id action from separate named evidence.value action. Exact action set, ready enum, unknown/hybrid rejection, index/key bounds and runtime invalid-parameter rejection are checked. Legacy two-branch assertion and all original fact/source/unit/status/budget assertions remain.",
+  "projection_boundary": "Legacy _schema omits annotation keywords including default as its existing display contract. Registry full schemas/defaults/runtime validation remain authoritative and unchanged. This is not a claim that legacy wire preserves literal defaults. Code profile keeps full literal/default protection.",
+  "preserved_guards": [
+    "Original 12000 single-input and 32000 cumulative budgets",
+    "Historical 25303 remaining tokens and 12000 final-answer reserve",
+    "Exact ready-Step enum and closed action shapes",
+    "No hybrid inline override or effect-name tool execution",
+    "Original raw value, path, source, unit, scientific status and unchanged Request/Plan assertions",
+    "Code-profile literal fields/default protection is outside this legacy restoration"
+  ],
+  "diagnostic_helper_failures": [
+    "First capture helper import lacked workspace path; stopped before tests. Fixed only ignored helper.",
+    "Direct HEAD-comparison probe needed tests/unit import path; stopped before building context, then reran.",
+    "Intermediate capture helper assumed terminal AUTHORITY.permission; V07 advanced to final delivery then helper raised KeyError. Not a production failure; final module was rerun normally and passed.",
+    "First native assertion update used a deliberately limited independent schema matcher that rejects unsupported numeric keywords. Replaced with explicit preserved numeric-bound assertions plus registry rejection probes; no production bounds changed."
+  ],
+  "intermediate_assertion_run": {
+    "passed": 9,
+    "failed": 1,
+    "cause": "New test used an intentionally narrow schema matcher that refuses numeric keywords; corrected by explicit numeric constraint assertions and runtime rejection probes. No production bounds changed.",
+    "evidence": [
+      {
+        "path": "data/code-tools-step3/query-regression-diagnostic/v56-query-module/pytest.log",
+        "bytes": 2432,
+        "sha256": "d85c3c02505f9b86d24b37e7f9ff6ec006ba10c0ab745bb12cf3b8f99dcee2eb"
+      },
+      {
+        "path": "data/code-tools-step3/query-regression-diagnostic/v56-query-module/results.xml",
+        "bytes": 4084,
+        "sha256": "ae09ba38e510bb9556fbc39bd4f0eadab8ee2cadddeed6fbc2b18fc75c73830e"
+      }
+    ]
+  },
+  "source_hashes_at_final_test": {
+    "src\\orca_agent\\context.py": "5d24ca0494eb41ec2c56d28e5eb0bae7fa4e8761b754587f1325e2cf91f39950",
+    "src\\orca_agent\\readable_context.py": "c6f4c5dd769c809d150617e6d60bf001105c53a32c3d566e51d435ef700cee33",
+    "tests\\unit\\test_query_feedback_contract.py": "699c32c586e043349c2114689ee21e42b9fd6de0208f45e4a3085f31e9eab252"
+  },
+  "live_model_calls": 0,
+  "live_orca_starts": 0,
+  "budgets_increased": false,
+  "whole_suite_pass_claimed": false,
+  "subsequent_full_suite": "Cancelled at explicit user instruction; baseline 4231 passed / 23 failed / 179 skipped remains unchanged.",
+  "limitations": [
+    "Offline scripted transport is not live model or science evidence.",
+    "Targeted successes do not establish a clean full suite.",
+    "Legacy schema projection deliberately omits annotation defaults; defaults remain in the unchanged Tool source and runtime validation."
+  ]
+}

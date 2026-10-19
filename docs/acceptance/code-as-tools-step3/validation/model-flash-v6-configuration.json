@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "recorded_at_utc": "2026-10-19T13:46:13.713908+00:00",
+  "scope": "user_requested_flash_configuration_only_no_network",
+  "effective_changes": [
+    "config.code.example.toml: model.model_name deepseek-v4-pro -> deepseek-flash",
+    "config.local.toml: explicitly set model.model_name=deepseek-flash; existing default was Flash",
+    "new ignored config.thinking-flash-v6.toml: only model name differs from historical Pro-v5"
+  ],
+  "historical_pro_v5_sha256": "281bd9304dbf38d85cecdf9e462dd76505f39f6814b942a404dcfeaa6ae45f8a",
+  "historical_pro_v5_unchanged": true,
+  "offline_checks": [
+    {
+      "path": "config.code.example.toml",
+      "sha256": "1899489bcd21476001b6988fe9c04b62df4ef84ccf462ba4969285cb68ae7ba5",
+      "model": "deepseek-flash",
+      "model_profile": "thinking_low",
+      "input_limit": 64000,
+      "output_limit": 16384,
+      "timeout_seconds": 180.0
+    },
+    {
+      "path": "config.local.toml",
+      "sha256": "10cac779fdc87be1b336683a1fba497a8fe869d69c84f9cf260d26543230ec4f",
+      "model": "deepseek-flash",
+      "model_profile": "disabled",
+      "input_limit": 24000,
+      "output_limit": 2000,
+      "timeout_seconds": 60
+    },
+    {
+      "path": "data/code-tools-step3/config.thinking-flash-v6.toml",
+      "sha256": "a2b6abcaa58a0f1dcd445013ad1ede72611f1646ee29acd016480d6d11f3f118",
+      "model": "deepseek-flash",
+      "model_profile": "thinking_low",
+      "input_limit": 64000,
+      "output_limit": 16384,
+      "timeout_seconds": 180.0
+    }
+  ],
+  "network_guard": "socket.socket and socket.create_connection rejected during prepare_request checks",
+  "actual_api_calls": 0,
+  "actual_orca_starts": 0,
+  "initial_helper_failures": [
+    "Initial edit helper doubled existing CRLF during Windows write translation; TOML load rejected the extra carriage return before any model request.",
+    "Python normalization write returned OSError 22; normalized edited files to LF through native PowerShell file IO, then reran only these local configuration checks."
+  ],
+  "limitations": [
+    "No real API or ORCA request performed. Configuration preparation alone does not validate hosted behavior.",
+    "Historical Run configuration snapshots were not changed. live035 remains historical Pro evidence, not a Flash rerun.",
+    "User stopped NameError trials and requested step 3 closeout; no step 4 work."
+  ]
+}

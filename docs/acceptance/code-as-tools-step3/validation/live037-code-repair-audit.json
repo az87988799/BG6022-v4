@@ -1,0 +1,218 @@
+{
+  "schema": "live037-code-repair-public-summary-1",
+  "run_id": "run_2a94bfb23c984971b6a94860f738815d",
+  "state": "failed",
+  "delivery_status": "partial",
+  "full_audit": {
+    "path": "data/code-tools-step3/validation/live037-code-repair-audit.json",
+    "bytes": 73985,
+    "sha256": "785c1d14643f4da294ddd3b113cc4637bfb3c6667736d0cf516319f4770dbf3c"
+  },
+  "first_code": {
+    "path": "data/code-tools-step3/live-store/artifacts/artifact_eddad7161b104331a37992b78f93a522/files/ethanol_opt_freq.py",
+    "bytes": 2592,
+    "sha256": "d5292b057525836802d077c26685c8894d8bb7fc059c0753b9376281fb823f83"
+  },
+  "revised_code": {
+    "path": "data/code-tools-step3/live-store/artifacts/artifact_da5c966766c54b19a3a4ef1eaa508a17/files/ethanol_opt_freq_corrected.py",
+    "bytes": 3275,
+    "sha256": "7abcd63706788fa03b147fdf2f69e8ca7d2f512deed1fc2c89a9f911c61a459f"
+  },
+  "model_written_artifact_origins_verified": true,
+  "first_program_is_full_workflow_not_stub": true,
+  "completeness_basis": "The actual first source writes native input, calls run_orca, reads XYZ/stdout, parses frequencies and writes observations.json. This is static completeness, not correctness.",
+  "first_real_name_error": "Traceback (most recent call last):\n  File \"/opt/orca-agent-runtime/python_task.py\", line 21, in <module>\n    runpy.run_path(sys.argv[0], run_name=\"__main__\")\n  File \"<frozen runpy>\", line 291, in run_path\n  File \"<frozen runpy>\", line 98, in _run_module_code\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/work/sealed/task.py\", line 2, in <module>\n    CODE_TOOLS_DEVELOPMENT_FAULT_V1\nNameError: name 'CODE_TOOLS_DEVELOPMENT_FAULT_V1' is not defined\n",
+  "first_failure_timepoint": {
+    "path": "data/code-tools-step3/live-037-first-failure-audit.json",
+    "bytes": 18169,
+    "sha256": "56943b14f6cddcc3068ac23f398674e80db0d95e1f5b9728f7ea871816a3af01"
+  },
+  "actual_python_attempts": 1,
+  "actual_internal_calls": 0,
+  "actual_code_retries": 0,
+  "repair_executed": false,
+  "repair_proven": false,
+  "revised_writer_after_failure": true,
+  "full_code_diff": "--- first_task.py\n+++ revised_task.py\n@@ -1,74 +1,81 @@\n \"\"\"Optimize ethanol and compute vibrational frequencies.\"\"\"\n-CODE_TOOLS_DEVELOPMENT_FAULT_V1\n import os\n import json\n from orca_task_sdk import run_orca\n \n def main():\n-    # create ORCA input\n     inp = \"\"\"! B3LYP def2-SVP RKS TightOpt Freq NORI NoAutoStart VeryTightSCF\n %pal nprocs 4 end\n %maxcore 192\n %scf MaxIter 256 ConvForced true AutoTRAH false end\n %geom MaxIter 128 EnforceStrictConvergence true end\n %method Z_MaxIter 128 end\n-* xyzfile 0 1 ethanol.xyz\n+* xyzfile 0 1 prepared.xyz\n \"\"\"\n     with open(\"job.inp\", \"w\") as f:\n         f.write(inp)\n-    receipt = run_orca(\"job.inp\", dependencies=(\"ethanol.xyz\",), request_key=\"calculation\")\n-    files = receipt[\"files\"]\n-    # parse optimized geometry from job.xyz\n+    receipt = run_orca(\"job.inp\", dependencies=(\"prepared.xyz\",), request_key=\"calculation_corrected\")\n+    files = receipt.get(\"files\", {})\n+    if not receipt.get(\"operation_status\") == \"completed\":\n+        raise RuntimeError(f\"ORCA status not completed: {receipt.get('operation_status')} / {receipt.get('scientific_validation')}\")\n     xyz_path = files.get(\"job.xyz\")\n     if xyz_path is None:\n-        raise FileNotFoundError(\"job.xyz not in receipt files\")\n-    with open(xyz_path) as f:\n-        xyz_content = f.read()\n-    # parse frequencies from stdout.out\n+        available = list(files.keys())\n+        raise FileNotFoundError(f\"job.xyz missing; files: {available}\")\n+    with open(xyz_path, \"r\", encoding=\"utf-8\") as f:\n+        xyz_content = f.read().strip()\n     out_path = files.get(\"stdout.out\")\n     if out_path is None:\n-        raise FileNotFoundError(\"stdout.out not in receipt files\")\n+        available = list(files.keys())\n+        raise FileNotFoundError(f\"stdout.out missing; files: {available}\")\n     freqs = []\n-    with open(out_path) as f:\n+    with open(out_path, \"r\", encoding=\"utf-8\") as f:\n         lines = f.readlines()\n-    in_freq_block = False\n-    for line in lines:\n-        if \"VIBRATIONAL FREQUENCIES\" in line:\n-            in_freq_block = True\n-            continue\n-        if in_freq_block:\n-            if line.strip().startswith(\"---\"):\n-                continue\n-            parts = line.split()\n-            if len(parts) >= 2 and parts[0].isdigit():\n-                try:\n-                    val = float(parts[1])\n-                    freqs.append(val)\n-                except (ValueError, IndexError):\n-                    pass\n-            if line.strip().startswith(\"**\"):\n-                break\n-    observations = {\n-        \"version\": 1,\n-        \"observations\": [\n-            {\n-                \"name\": \"optimized_geometry\",\n-                \"value\": xyz_content,\n-                \"unit\": \"angstrom\",\n-                \"sources\": [{\"filename\": \"job.xyz\", \"internal_request_key\": receipt[\"request_key\"]}],\n-                \"limitations\": [\"xyz file from ORCA Opt Freq final geometry\"]\n-            },\n-            {\n-                \"name\": \"vibrational_frequencies\",\n-                \"value\": freqs,\n-                \"unit\": \"cm^-1\",\n-                \"sources\": [{\"filename\": \"stdout.out\", \"internal_request_key\": receipt[\"request_key\"]}],\n-                \"limitations\": [\"parsed from ORCA stdout; may include imaginary frequencies as negative values\"]\n-            }\n-        ]\n-    }\n-    with open(\"observations.json\", \"w\") as f:\n-        json.dump(observations, f, indent=2)\n+    i = 0\n+    while i < len(lines):\n+        if \"VIBRATIONAL FREQUENCIES\" in lines[i]:\n+            j = i + 1\n+            while j < len(lines) and not lines[j].strip():\n+                j += 1\n+            k = j\n+            while k < len(lines):\n+                stripped = lines[k].strip()\n+                if not stripped:\n+                    break\n+                if stripped.startswith(\"----\") or stripped.startswith(\"====\"):\n+                    break\n+                tokens = stripped.replace(\":\", \" \").split()\n+                nums = []\n+                for t in tokens:\n+                    try:\n+                        nums.append(float(t))\n+                    except ValueError:\n+                        pass\n+                if nums:\n+                    freqs.extend(nums)\n+                k += 1\n+            break\n+        i += 1\n+    if not freqs:\n+        raise ValueError(\"No vibrational frequencies found in stdout.out\")\n+    observations = [\n+        {\n+            \"name\": \"optimized_geometry\",\n+            \"value\": xyz_content,\n+            \"unit\": None,\n+            \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": \"job.xyz\", \"location\": None}],\n+            \"limitations\": [\"Units not explicitly labeled in ORCA job.xyz; coordinates are expected Angstrom but not independently verified from this file.\"]\n+        },\n+        {\n+            \"name\": \"vibrational_frequencies\",\n+            \"value\": freqs,\n+            \"unit\": \"cm^-1\",\n+            \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": \"stdout.out\", \"location\": \"VIBRATIONAL FREQUENCIES block\"}],\n+            \"limitations\": [\"Harmonic frequencies from ORCA; negative values indicate transition states/imaginary modes; full list reported.\"]\n+        }\n+    ]\n+    with open(\"observations.json\", \"w\", encoding=\"utf-8\") as f:\n+        json.dump({\"version\": 1, \"observations\": observations}, f, indent=2)\n \n if __name__ == \"__main__\":\n-    main()+    main()\n",
+  "difference_rule": "v4 permits legitimate other code revisions; marker-only removal is not required.",
+  "last_rejected_response": {
+    "path": "data/code-tools-step3/live-store/runs/run_2a94bfb23c984971b6a94860f738815d/model/model_8fef4c5364014efe880896866a8934b2.response.json",
+    "bytes": 6792,
+    "sha256": "2329c7049a1ad6adf4b473613d77d48781a23804895ed8ce2fa5f7a3b2e8f427"
+  },
+  "last_three_rejections": [
+    {
+      "id": "model_75a7fa36a6144e4ba6701a260ca63979",
+      "basis": {
+        "request_version": 3,
+        "plan_version": 3,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "rejected",
+      "related_results": [],
+      "reason": "rejected",
+      "parameters": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": {
+          "requirement": "A retained Step must use only {key:existing_step_id}, without other fields. For every frozen Step being reused, omit depends_on, tool and parameters; its original dependencies remain unchanged. Include those dependency Steps separately by key too; the program does not insert them or remove submitted fields.",
+          "code": "retained_step_has_fields",
+          "path": [
+            "parameters",
+            "steps",
+            2
+          ],
+          "step_key": "step_abe0dfccb45f4608a86c0e9cb059a5bd",
+          "unexpected_fields": [
+            "depends_on"
+          ],
+          "retained_step_shape": {
+            "key": "step_abe0dfccb45f4608a86c0e9cb059a5bd"
+          }
+        }
+      }
+    },
+    {
+      "id": "model_e908cdc920374e529564c14730e52e3d",
+      "basis": {
+        "request_version": 3,
+        "plan_version": 3,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "rejected",
+      "related_results": [],
+      "reason": "rejected",
+      "parameters": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": {
+          "requirement": "Each Goal target must use exactly one binding shape. A Step binding is a future output route, not goal completion; do not combine it with a gap.",
+          "errors": [
+            {
+              "type": "extra_forbidden",
+              "loc": [
+                "parameters",
+                "goal_map",
+                "goal_goal_freq",
+                "gap"
+              ]
+            },
+            {
+              "type": "missing",
+              "loc": [
+                "parameters",
+                "goal_map",
+                "goal_goal_freq",
+                "evidence"
+              ]
+            },
+            {
+              "type": "extra_forbidden",
+              "loc": [
+                "parameters",
+                "goal_map",
+                "goal_goal_freq",
+                "step_key"
+              ]
+            },
+            {
+              "type": "extra_forbidden",
+              "loc": [
+                "parameters",
+                "goal_map",
+                "goal_goal_opt",
+                "gap"
+              ]
+            },
+            {
+              "type": "missing",
+              "loc": [
+                "parameters",
+                "goal_map",
+                "goal_goal_opt",
+                "evidence"
+              ]
+            }
+          ],
+          "code": "goal_target_shape",
+          "path": [
+            "parameters",
+            "goal_map",
+            "goal_goal_freq"
+          ],
+          "binding_shapes": [
+            [
+              "step_key",
+              "port"
+            ],
+            [
+              "evidence",
+              "port"
+            ],
+            [
+              "gap",
+              "port"
+            ]
+          ],
+          "step_target_instruction": "A stored Goal route uses step_id; the equivalent proposal route uses step_key with that same existing Step ID and unchanged port. Keep the referenced Step in steps with {key:existing_step_id}. Do not copy step_id into goal_map."
+        }
+      }
+    },
+    {
+      "id": "model_8fef4c5364014efe880896866a8934b2",
+      "basis": {
+        "request_version": 3,
+        "plan_version": 3,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "rejected",
+      "related_results": [],
+      "reason": "rejected",
+      "parameters": {
+        "error_category": "PlanningError",
+        "recovery_kind": "correction",
+        "requirement": "Python repair may change code only; inputs, conditions and dependencies are fixed"
+      }
+    }
+  ],
+  "actual_frozen_manifest_conflict": {
+    "entry_index": 0,
+    "changed_fields": [
+      "artifact_id",
+      "sha256",
+      "target_path"
+    ],
+    "original": {
+      "artifact_id": "artifact_eddad7161b104331a37992b78f93a522",
+      "sha256": "d5292b057525836802d077c26685c8894d8bb7fc059c0753b9376281fb823f83",
+      "target_path": "ethanol_opt_freq.py",
+      "purpose": "Python script to run ORCA optimization and frequency calculation and parse results"
+    },
+    "proposed": {
+      "artifact_id": "artifact_da5c966766c54b19a3a4ef1eaa508a17",
+      "purpose": "Python script to run ORCA optimization and frequency calculation and parse results",
+      "sha256": "7abcd63706788fa03b147fdf2f69e8ca7d2f512deed1fc2c89a9f911c61a459f",
+      "target_path": "ethanol_opt_freq_corrected.py"
+    }
+  },
+  "static_unexecuted_risks": [
+    "First source uses ethanol.xyz while the manifest provides prepared.xyz; revised source corrects the name.",
+    "Revised frequency parser breaks on a separator and collects all numeric tokens, potentially including mode indices; no second Attempt tested this.",
+    "Revised geometry observation uses unit=null and a limitation. No ORCA output or scientific delivery was produced."
+  ],
+  "original_run_read_only": {
+    "files": 131,
+    "before_manifest_sha256": "9b89959044740f2c3f9dddd22a66584f72010cc7b3b106dd49ba79084eaadae9",
+    "after_manifest_sha256": "9b89959044740f2c3f9dddd22a66584f72010cc7b3b106dd49ba79084eaadae9",
+    "changed": []
+  },
+  "limitations": [
+    "Static AST inspection alone is not execution or scientific correctness proof.",
+    "This deliberate seeded NameError does not prove diagnosis of natural complex errors.",
+    "No model, Tool, generated Python, HTTP or ORCA was invoked by this auditor."
+  ],
+  "audit_helper_initial_failure": "Initial publication helper indexed action on a non-action decision and raised KeyError before writing any output. Fixed helper uses get; production/Run were unchanged."
+}

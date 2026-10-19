@@ -87,6 +87,7 @@ def test_documented_scf_derivative_compatibility_is_not_a_general_method_whiteli
 @pytest.mark.parametrize("before,after", [
     ("RHF", "MP2 RKS"), ("RHF", "B2PLYP RKS"), ("RHF", "Unknown RKS"),
     ("RHF", "PBE0 RHF"), ("RHF", "HF RKS"), ("RHF", "UHF"),
+    ("RHF", "B3LYP"),  # No implicit restricted-state admission.
     ("NORI", "RIJK"), ("NORI", "NoCOSX"), ("NORI", "NORI RIJCOSX"),
     ("Freq", "NumFreq"), ("Opt Freq", "Freq"), ("Opt Freq", "Opt"),
     ("Opt Freq", "Opt AnFreq Freq"), ("Opt", "OptTS"), ("Opt", "Opt Scan"),
@@ -100,6 +101,7 @@ def test_documented_scf_derivative_compatibility_is_not_a_general_method_whiteli
     ("%geom MaxIter 4", "%geom CalcHess true MaxIter 4"),
     ("%method Z_MaxIter 64 end", "%freq Temp 298 end"),
     ("* xyzfile 0 1", "* xyzfile 0 3"), ("* xyzfile 0 1", "* xyzfile 1 1"),
+    ("* xyzfile 0 1 initial.xyz", "* xyzfile 0 1 initial.xyz\n*"),
 ])
 def test_unknown_ambiguous_or_unbounded_derivative_syntax_fails_closed(before, after):
     with pytest.raises(ValueError):

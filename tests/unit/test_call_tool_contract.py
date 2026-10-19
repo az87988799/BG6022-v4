@@ -74,7 +74,7 @@ def test_actual_response_schema_binds_contract_only_to_call_action():
     assert call_tool_instruction() in prepared.body()["messages"][0]["content"]
     schema = data["PROPOSAL_SCHEMA"]
     assert schema["if"] == {"properties": {"action": {"const": "call_tool"}}}
-    assert schema["then"] == {"properties": {"parameters": call_tool_parameters_schema()}}
+    assert schema["then"] == {"properties": {"parameters": call_tool_parameters_schema(tool_names=["evidence.field"])}}
     assert schema["properties"]["parameters"] == {"type": "object"}
     assert {"initial_plan", "clarify", "stop"} <= set(schema["properties"]["action"]["enum"])
     # Closed envelope plus its exact field count requires every declared field.
@@ -91,7 +91,7 @@ def test_no_reader_budget_omits_immediate_contract_but_preserves_ready_step(tmp_
     data = payload(build_context(store.load_request(run), run, store.load_plan(run),
                                  feedback={"pending_step_ids": ["read_a"]}))
     contract = data["PROPOSAL_SCHEMA"]["then"]["properties"]["parameters"]
-    assert contract == call_tool_parameters_schema(immediate=False)
+    assert contract == call_tool_parameters_schema(immediate=False, step_ids=["read_a"])
     assert contract["required"] == ["step_id"] and contract["maxProperties"] == 1
     assert set(contract["properties"]) == {"step_id"}
     assert data["ACTION_PARAMETERS"]["call_tool"] == {"step_id": "read_a"}

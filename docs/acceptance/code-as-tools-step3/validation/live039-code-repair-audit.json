@@ -1,0 +1,175 @@
+{
+  "schema": "live039-code-repair-public-summary-1",
+  "run_id": "run_7c664f9ceab74c8c984d1653a866817e",
+  "state": "failed",
+  "delivery_status": "partial",
+  "protocol": "repair-request-v5",
+  "request": {
+    "path": "data/code-tools-step3/repair-request-v5.txt",
+    "bytes": 2122,
+    "sha256": "8f2d7ce64d036f81c7d57f1e38b1b1dd8aededdadcca6901f93bb123abfa9c3b"
+  },
+  "full_readonly_audit": {
+    "path": "data/code-tools-step3/validation/live039-code-repair-audit.json",
+    "bytes": 13291,
+    "sha256": "cbd6d286370758f2625ed956ca1465ffb1b0ec2e84ed9011315bf656026a4690"
+  },
+  "actual_python_writer_count": 0,
+  "actual_python_attempt_count": 0,
+  "actual_sdk_internal_call_count": 0,
+  "actual_orca_start_count": 0,
+  "code_complete_or_correct": null,
+  "first_real_marker_failure": false,
+  "actual_code_repair_reference": false,
+  "actual_code_diff": null,
+  "repair_closed_loop_proven": false,
+  "scientific_success_proven": false,
+  "last_three_response_and_rejection_facts": [
+    {
+      "ordinal": 7,
+      "source": {
+        "path": "data/code-tools-step3/live-store/runs/run_7c664f9ceab74c8c984d1653a866817e/model/model_7470fec4ccb14c72b907be47748a3fab.response.json",
+        "bytes": 3872,
+        "sha256": "056da4c28bd4080b1201a928ca2f849cb950ba94a8d012921deb3138e683110e"
+      },
+      "action": "select_conditions",
+      "selected_basis": "def2-SVP",
+      "basis_quotes_contain_exact_selected_identifier": false,
+      "recorded_rejections": [
+        {
+          "id": "model_7470fec4ccb14c72b907be47748a3fab",
+          "basis": {
+            "request_version": 2,
+            "plan_version": null,
+            "permission_version": 1,
+            "control_generation": 1
+          },
+          "action": "rejected",
+          "related_results": [],
+          "reason": "rejected",
+          "parameters": {
+            "error_category": "ProposalError",
+            "recovery_kind": "correction",
+            "requirement": {
+              "requirement": "Correct the identified selection fields using retrieved evidence; no condition was selected.",
+              "path": [
+                "parameters",
+                "choices"
+              ],
+              "corrections": [
+                {
+                  "path": [
+                    "parameters",
+                    "choices",
+                    "basis",
+                    "value"
+                  ],
+                  "reason": "selected_value_absent_from_official_quote",
+                  "instruction": "This selected value must occur as a complete identifier in a quoted official source, not a prefix of another method/basis. Retrieve and quote an exact official passage containing the value; do not invent supporting text or substitute a project guide."
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "ordinal": 8,
+      "source": {
+        "path": "data/code-tools-step3/live-store/runs/run_7c664f9ceab74c8c984d1653a866817e/model/model_54ce7c8523d340f9b5320d848b1e7556.response.json",
+        "bytes": 1467,
+        "sha256": "0e80d8d4247bc66219c95600874c3fe38d4645219a7e447923f702657cfa1005"
+      },
+      "action": "knowledge.search",
+      "selected_basis": null,
+      "basis_quotes_contain_exact_selected_identifier": null,
+      "recorded_rejections": [
+        {
+          "id": "model_54ce7c8523d340f9b5320d848b1e7556",
+          "basis": {
+            "request_version": 2,
+            "plan_version": null,
+            "permission_version": 1,
+            "control_generation": 1
+          },
+          "action": "rejected",
+          "related_results": [],
+          "reason": "rejected",
+          "parameters": {
+            "error_category": "ValidationError",
+            "recovery_kind": "correction",
+            "requirement": [
+              {
+                "type": "literal_error",
+                "loc": [
+                  "action"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "ordinal": 9,
+      "source": {
+        "path": "data/code-tools-step3/live-store/runs/run_7c664f9ceab74c8c984d1653a866817e/model/model_9300c8bf1d384cec8af67646b24c0cb5.response.json",
+        "bytes": 4228,
+        "sha256": "cc94796c95e738a07cd6c1954d8e098f93c645e20ce1c59142c7a3ba979eebaf"
+      },
+      "action": "select_conditions",
+      "selected_basis": "def2-SVP",
+      "basis_quotes_contain_exact_selected_identifier": false,
+      "recorded_rejections": [
+        {
+          "id": "model_9300c8bf1d384cec8af67646b24c0cb5",
+          "basis": {
+            "request_version": 2,
+            "plan_version": null,
+            "permission_version": 1,
+            "control_generation": 1
+          },
+          "action": "rejected",
+          "related_results": [],
+          "reason": "rejected",
+          "parameters": {
+            "error_category": "ProposalError",
+            "recovery_kind": "correction",
+            "requirement": {
+              "requirement": "Correct the identified selection fields using retrieved evidence; no condition was selected.",
+              "path": [
+                "parameters",
+                "choices"
+              ],
+              "corrections": [
+                {
+                  "path": [
+                    "parameters",
+                    "choices",
+                    "basis",
+                    "value"
+                  ],
+                  "reason": "selected_value_absent_from_official_quote",
+                  "instruction": "This selected value must occur as a complete identifier in a quoted official source, not a prefix of another method/basis. Retrieve and quote an exact official passage containing the value; do not invent supporting text or substitute a project guide."
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "minimal_actual_blocker": "Automatic basis selection did not provide an official quoted passage containing the exact selected identifier def2-SVP. The intermediate knowledge.search action was rejected by action literal validation. Bounded correction was exhausted before any task-code writer or execution.",
+  "scope_limit": "No first source, genuine marker failure, replacement Artifact, repair reference, second Python Attempt or scientific output exists in this Run; v58 code-path compliance was not tested here.",
+  "original_run_read_only": {
+    "files": 41,
+    "before_manifest_sha256": "8be67f08782074bf3af6b86d6a67c994e95818e111914525d8e59c11215ee6ed",
+    "after_manifest_sha256": "8be67f08782074bf3af6b86d6a67c994e95818e111914525d8e59c11215ee6ed",
+    "changed": []
+  },
+  "limitations": [
+    "Static AST inspection alone is not execution or scientific correctness proof.",
+    "This deliberate seeded NameError does not prove diagnosis of natural complex errors.",
+    "No model, Tool, generated Python, HTTP or ORCA was invoked by this auditor."
+  ]
+}

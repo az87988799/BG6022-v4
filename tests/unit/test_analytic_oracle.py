@@ -22,7 +22,7 @@ def copies(tmp_path):
 
 def test_independent_hessian_matrix_geometry_and_spectrum(tmp_path):
     result = inspect_optfreq(*copies(tmp_path))
-    assert result["version"] == "developer-analytic-oracle-2"
+    assert result["version"] == "developer-analytic-oracle-3"
     assert result["full_mode_count"] == 27 and result["vibrational_mode_count"] == 21
     assert result["product_qualification"] == "unverified"
     assert result["minimum_assessment"] == "consistent_local_harmonic_minimum"

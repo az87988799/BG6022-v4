@@ -64,6 +64,9 @@ READ_TOOLS = {port: tool["name"] for tool in catalog()
               for port in tool["observation_outputs"]}
 INPUT_TOOLS = {port: tool["name"] for tool in catalog() if "write_input_artifact" in tool["effects"]
                for port in tool["output_ports"]}
+_INPUT_RELATION_INSTRUCTION = (
+    "Input preparation does not establish a scientific geometry relation; "
+    "omit this field and retain any separate optimization/scientific Goal.")
 RULES = {port: tool["check_version"] for tool in catalog()
          for port in tool["output_ports"] + (tool["observation_outputs"]
              if tool["effects"] == ["read_registered_artifact"] or tool["check_version"] == "knowledge-answer-1" else [])}
@@ -205,6 +208,11 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
     if request and request.semantic_defaults:
         contract["normalize_request"]["authorized_defaults"] = {
             "source": "default", "default_rule": "local-hf-1", "values": request.semantic_defaults}
+        contract["normalize_request"]["default_adoption"] = (
+            "authorized_defaults is an available template, not automatically applied Request values. "
+            "To adopt it, emit each applicable field explicitly in conditions/system_conditions with "
+            "source=default, default_rule and its exact configured value. Preserve explicit user values, "
+            "unknowns and conflicts; never replace them with defaults.")
     if request and (text_input or any(system.geometry_source == "prepare" for system in request.systems)):
         contract["normalize_request"]["input_acquisition"] = (
             "geometry_source=prepare: structure.resolve obtains SMILES; structure.prepare via OPI supplies XYZ. "
@@ -228,17 +236,24 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
         current["minimum_evidence_rules"]["legacy_qualified_port_rules"] = current["minimum_evidence_rules"].pop("port_rules")
         current["generated_task_intent"] = (
             "For a general identity, every scientific Goal uses the general observation contract even if its port name "
-            "also exists in a legacy qualified Tool. Registered input ports retain their input checks; preparation is not optimization. "
-            "Supply quantity as an exact user phrase and a stable port identifier "
+            "also exists in a legacy qualified Tool. "
+            f"Registered input ports {', '.join(sorted(INPUT_TOOLS))} retain their input checks. "
+            "Input Goals omit geometry_relation; preparing initial geometry is not a scientific fixed_initial or optimized result. "
+            "Every general scientific Goal must supply quantity as an exact user phrase and a stable port identifier "
             "chosen for that quantity; absence of a registered property port/checker is not an unresolved user fact. "
             "Default verification=reported_with_limitations; qualified requires an explicit user minimum-evidence demand. "
-            "Preserve a text-grounded geometry_relation (optimized/fixed_initial) explicitly; silence or mixed relations cannot select one. "
+            "Scientific Goals preserve a text-grounded geometry_relation (optimized/fixed_initial) explicitly; "
+            "silence or mixed relations cannot select one. "
             "Preserve an explicitly requested unit verbatim in minimum_evidence; an absent unit is not proof of compliance. "
             "Preserve every requested quantity and genuine ambiguity. Do not declare a molecule unsupported from the legacy_qualified_scope. "
             "If the user delegates a condition choice, put its exact authorization in automatic_selection[field]={text_basis,message_id}, "
             "omit that field from conditions, and do not mark it unknown/inferred or add a pending-source gap. "
             "Then knowledge.search -> select_conditions -> structure.resolve/prepare. These are available actions, not missing user answers. "
+            "When Request.conditions.explain_results=true, final delivery already explains actual conditions and verification; "
+            "do not create another knowledge_answer Goal for that delivery requirement. knowledge_answer is for independent knowledge questions. "
             "identities[].name is exact user text; key binds system_refs; query_name is an inferred lookup alias until source-checked. "
+            "For a non-English name, use a confidently known English lookup alias in query_name; preserve name verbatim. "
+            "The alias remains inferred and requires independent confirmation by existing identity sources; do not guess an unknown alias. "
             "No identity, port, method, basis or spin is filled in by the program on correction.")
     return contract
 
@@ -333,6 +348,43 @@ def _unit_requirements(text):
                              for match in re.finditer(pattern, text, re.I)))
 
 
+def _omitted_default_corrections(candidate, request, messages):
+    """Ask for an explicit decision; the existing provenance gate owns eligibility."""
+    missing = {}
+    systems = {system.id: system for system in request.systems}
+    for goal in candidate.goals or []:
+        if (not goal.required or goal.port in READ_TOOLS or goal.port in INPUT_TOOLS
+                or goal.port in {"knowledge_answer", "sampling", "sampling_check", "unresolved", "artifacts", "observations"}
+                or not (goal.system_refs or systems or request.geometry_artifact_id)):
+            continue
+        scopes = goal.system_refs or (list(systems) if len(systems) == 1 else [None])
+        for scope in scopes:
+            system = systems.get(scope)
+            if scope is not None and system is None:
+                continue  # The normal Goal binding check owns an unknown scope.
+            scoped = candidate.system_conditions.get(scope, {})
+            for name in get_args(ConditionName):
+                if (name not in PHYSICAL or name not in request.semantic_defaults
+                        or name in candidate.automatic_selection or name in candidate.conditions
+                        or name in scoped or name in goal.conditions):
+                    continue
+                prior = (system.conditions.get(name) if system and name in system.conditions else
+                         request.conditions.get(name, getattr(request, name, None)))
+                if prior is not None:
+                    continue  # Omitting a restatement does not erase an existing value.
+                value = request.semantic_defaults[name]
+                evidence = FieldEvidence(source="default", default_rule="local-hf-1", value=value)
+                try:
+                    _field(name, evidence, request, request.messages + messages, system=system)
+                except StoreError:
+                    continue  # Explicit/unknown/conflicting user conditions still block defaults.
+                path = (["system_conditions", scope, name] if scope is not None and len(systems) > 1
+                        else ["conditions", name])
+                missing[tuple(path)] = {"path": path, "reason": "authorized_default_requires_explicit_adoption",
+                    "authorized_default": {"source": "default", "default_rule": "local-hf-1", "value": value}}
+    return list(missing.values())
+
+
 def _validate_general_intake(candidate, request, messages, run):
     """Reject a mistaken proposal; never manufacture its missing goal or choice."""
     if (candidate.schema_version != VERSION or candidate.kind not in {"normalize", "replace_goals"}
@@ -349,7 +401,7 @@ def _validate_general_intake(candidate, request, messages, run):
                     field = candidate.conditions.get(name)
                     if field is None or field.source in {"unknown", "inferred"}:
                         delegated[name] = {"text_basis": text, "message_id": message["id"]}
-    corrections = []
+    corrections = _omitted_default_corrections(candidate, request, messages)
     for name, evidence in delegated.items():
         if name not in candidate.automatic_selection or name in candidate.conditions:
             corrections.append({"path": ["automatic_selection", name], "reason": "delegated_choice_is_not_unknown",
@@ -358,7 +410,15 @@ def _validate_general_intake(candidate, request, messages, run):
     general_ids = {system.id for system in request.systems if system.identity.get("contract") == "general-identity-2"}
     has_general = False
     for index, item in enumerate(candidate.goals or []):
-        if item.port in READ_TOOLS or item.port in INPUT_TOOLS or item.port in {"knowledge_answer", "sampling", "sampling_check"}:
+        if item.port in INPUT_TOOLS:
+            # Report this independent input error alongside science/selection
+            # errors, rather than hiding it until the next correction round.
+            # _input_goal still validates the same rule on every activation.
+            if item.geometry_relation is not None:
+                corrections.append({"path": ["goals", index, "geometry_relation"],
+                    "reason": "input_preparation_has_no_scientific_geometry_relation"})
+            continue
+        if item.port in READ_TOOLS or item.port in {"knowledge_answer", "sampling", "sampling_check"}:
             continue
         if not (set(item.system_refs) & general_ids or item.quantity is not None or item.port not in RULES):
             continue
@@ -406,6 +466,9 @@ def _validate_general_intake(candidate, request, messages, run):
                 corrections.append({"path": ["notices", notice_index], "reason": "legacy_qualified_scope_is_not_a_general_molecule_whitelist"})
     if corrections:
         instructions = {
+            "authorized_default_requires_explicit_adoption":
+                "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field.",
+            "input_preparation_has_no_scientific_geometry_relation": _INPUT_RELATION_INSTRUCTION,
             "delegated_choice_is_not_unknown":
                 "Keep the exact user authorization in this automatic_selection field and omit the corresponding conditions field until select_conditions. Do not invent a selected value or mark the delegated choice unknown.",
             "general_quantity_requires_exact_user_phrase":
@@ -430,7 +493,8 @@ def _validate_general_intake(candidate, request, messages, run):
         for correction in corrections:
             correction["path"] = ["parameters", *correction["path"]]
             correction["instruction"] = instructions[correction["reason"]]
-        raise ProposalError("Correct general intake without changing the user's quantities or minimum evidence; no values were filled in.",
+        raise ProposalError("Apply all listed corrections together, retaining already valid fields. "
+                            "Preserve the user's quantities and minimum evidence; no values were filled in.",
                             path=["parameters"], corrections=corrections)
 
 
@@ -444,8 +508,7 @@ def _input_goal(item, request, messages, goal_index):
         raise ProposalError("Input acquisition requires one exact registered target.",
                             path=["parameters", "goals", goal_index, "system_refs"])
     if item.geometry_relation is not None:
-        raise ProposalError("Input preparation does not establish a scientific geometry relation; "
-                            "omit this field and retain any separate optimization/scientific Goal.",
+        raise ProposalError(_INPUT_RELATION_INSTRUCTION,
                             path=["parameters", "goals", goal_index, "geometry_relation"])
     if item.quantity is not None and item.quantity not in item.text_basis:
         raise ProposalError("Input quantity must retain an exact user phrase.",

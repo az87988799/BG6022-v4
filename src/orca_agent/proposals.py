@@ -1,12 +1,15 @@
 """Translate symbolic model intentions into program-owned Plan identities."""
 
+import math
 import re
 from typing import Annotated, Any, Literal
 
 from pydantic import Field, ValidationError
 
 from orca_agent.models import (
+    CodeRef,
     EvidenceRef,
+    Identifier,
     InputRef,
     OutputBinding,
     Plan,
@@ -69,8 +72,17 @@ def action_parameter_schema(action, *, immediate=True, terminal_required=False):
     if action == "call_tool":
         return call_tool_parameters_schema(immediate=immediate)
     if action in {"initial_plan", "revise_plan"}:
-        return ProposedPlan.model_json_schema()
+        return proposed_plan_schema()
     raise ValueError("action parameters are owned by their specialized contract")
+
+
+def proposed_plan_schema(*, code_repair=True):
+    """Project the single proposal contract for the Run's authorized surface."""
+    schema = ProposedPlan.model_json_schema()
+    if not code_repair:
+        schema["properties"]["steps"]["items"] = {"$ref": "#/$defs/ProposedStep"}
+        _prune_definitions(schema)
+    return schema
 
 
 def plan_structure_schema():
@@ -79,16 +91,21 @@ def plan_structure_schema():
     Step fields and EvidenceRef contents are intentionally not expanded here;
     the full schema and runtime validation remain available and unchanged.
     """
-    schema = ProposedPlan.model_json_schema()
+    schema = proposed_plan_schema()
     definitions = schema["$defs"]
-    step_name = schema["properties"]["steps"]["items"]["$ref"].removeprefix("#/$defs/")
-    schema["properties"]["steps"]["items"] = {"type": definitions[step_name]["type"]}
+    schema["properties"]["steps"]["items"] = {"type": "object"}
     definitions[EvidenceRef.__name__] = {"type": definitions[EvidenceRef.__name__]["type"]}
     schema["description"] = (
         "Structural projection only: Step fields and EvidenceRef contents are validated separately.")
 
+    _prune_definitions(schema)
+    return schema
+
+
+def _prune_definitions(schema):
     # Dropped expansion layers can leave unused definitions. Retain the exact
     # transitive closure, never a second copy of the target validation rules.
+    definitions = schema["$defs"]
     needed = set()
 
     def visit(node):
@@ -108,7 +125,6 @@ def plan_structure_schema():
 
     visit(schema)
     schema["$defs"] = {name: definition for name, definition in definitions.items() if name in needed}
-    return schema
 
 
 def validate_action_parameters(action, values, *, terminal_required=False):
@@ -181,14 +197,29 @@ class ProposalError(ValueError):
         self.detail = {"requirement": requirement, **details}
 
 
-def _schema_error(exc, *, path, tool=None):
+def validation_error_details(exc):
+    """Expose numeric validation bounds without input values or arbitrary context."""
+    details = []
+    for error in exc.errors(include_input=False, include_url=False):
+        item = {"type": error["type"], "loc": list(error["loc"])}
+        context = error.get("ctx", {})
+        bounds = {key: context[key] for key in ("ge", "gt", "le", "lt", "multiple_of", "min_length", "max_length")
+                  if key in context and type(context[key]) in (int, float) and math.isfinite(context[key])}
+        if bounds:
+            item["constraints"] = bounds
+        details.append(item)
+    return details
+
+
+def _schema_error(exc, *, path, tool=None, errors_details=None):
     def location(part):
         if isinstance(part, int):
             return part
         return part if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]{0,63}", str(part)) else "[field]"
 
-    errors = [{"type": error["type"], "loc": [*path, *(location(part) for part in error["loc"])]}
-              for error in exc.errors(include_input=False, include_context=False, include_url=False)[:8]]
+    details = validation_error_details(exc) if errors_details is None else errors_details
+    errors = [{**error, "loc": [*path, *(location(part) for part in error["loc"])]}
+              for error in details[:8]]
     detail = {"tool": tool} if tool else {}
     if tool:
         definition = get_tool(tool)
@@ -228,6 +259,14 @@ class ProposedStep(Record):
     inputs: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
+class ProposedCodeRepair(Record):
+    """Explicitly reuse a failed task's frozen contract with model-chosen code."""
+
+    key: ShortRef
+    repair_of: Identifier
+    code: CodeRef
+
+
 class FutureGoalTarget(Record):
     step_key: str
     port: Port
@@ -252,7 +291,7 @@ def goal_target_shapes():
 
 
 class ProposedPlan(Record):
-    steps: list[ProposedStep] = Field(min_length=1)
+    steps: list[ProposedStep | ProposedCodeRepair] = Field(min_length=1)
     # Keys are checked against this Request's IDs, not merely an identifier
     # regex; only the target shape is a context-independent schema contract.
     goal_map: dict[str, FutureGoalTarget | EvidenceGoalTarget | GapGoalTarget]
@@ -262,7 +301,20 @@ def _validate_plan_parameters(parameters):
     try:
         return ProposedPlan.model_validate(parameters)
     except ValidationError as exc:
-        error = _schema_error(exc, path=["parameters"])
+        # A disjoint alternative must not add spurious missing fields to the
+        # submitted shape's correction feedback, or consume its bounded slots.
+        submitted = parameters.get("steps", []) if isinstance(parameters, dict) else []
+        repair_indexes = {index for index, item in enumerate(submitted) if isinstance(item, dict)
+                          and ("repair_of" in item or "code" in item)} if isinstance(submitted, list) else set()
+        details = []
+        for item in validation_error_details(exc):
+            loc = item["loc"]
+            if len(loc) > 2 and loc[0] == "steps" and loc[2] in {"ProposedStep", "ProposedCodeRepair"}:
+                expected = "ProposedCodeRepair" if loc[1] in repair_indexes else "ProposedStep"
+                if loc[2] != expected:
+                    continue
+            details.append(item)
+        error = _schema_error(exc, path=["parameters"], errors_details=details)
         # Union branch names are implementation details, not JSON paths. Keep
         # nested EvidenceRef failures at their real field path as well.
         branch_names = {model.__name__ for model in _GOAL_TARGET_TYPES}
@@ -271,10 +323,27 @@ def _validate_plan_parameters(parameters):
             loc = item["loc"]
             if len(loc) > 3 and loc[1] == "goal_map" and loc[3] in branch_names:
                 loc = [*loc[:3], *loc[4:]]
+            if len(loc) > 3 and loc[1] == "steps" and loc[3] in {"ProposedStep", "ProposedCodeRepair"}:
+                loc = [*loc[:3], *loc[4:]]
             item = {**item, "loc": loc}
             if item not in errors:
                 errors.append(item)
         error.detail["errors"] = errors
+        step_errors = [item for item in errors if item["loc"][1:2] == ["steps"]]
+        if step_errors:
+            error.detail["step_fields"] = list(ProposedStep.model_fields)
+            error.detail["step_instruction"] = (
+                "Proposed Steps require key, not the stored Step.id field. "
+                "Retain an existing Step with {key:existing_step_id}; the program reuses its frozen contents. "
+                "Do not copy stored id/logical_id/immutable_frozen metadata into a proposal. "
+                "A new Step uses key/tool/parameters and its declared dependencies; "
+                "a repair uses logical_key for the prior logical_id, subject to the existing repair rules.")
+            if any(len(item["loc"]) > 2 and item["loc"][2] in repair_indexes for item in step_errors):
+                error.detail["code_repair_fields"] = list(ProposedCodeRepair.model_fields)
+                error.detail["code_repair_instruction"] = (
+                    "Use only {key:new_key,repair_of:failed_step_id,code:CodeRef}. This explicit reference reuses "
+                    "the latest settled failed Python Attempt's frozen contract; retain dependencies separately. "
+                    "It still requires code permission and every existing repair gate.")
         target_errors = [item for item in errors if item["loc"][1:2] == ["goal_map"]]
         if target_errors:
             error.detail.update(
@@ -282,7 +351,83 @@ def _validate_plan_parameters(parameters):
                 requirement="Each Goal target must use exactly one binding shape. "
                     "A Step binding is a future output route, not goal completion; do not combine it with a gap.",
                 binding_shapes=goal_target_shapes())
+            error.detail["step_target_instruction"] = (
+                "A stored Goal route uses step_id; the equivalent proposal route uses step_key "
+                "with that same existing Step ID and unchanged port. Keep the referenced Step "
+                "in steps with {key:existing_step_id}. Do not copy step_id into goal_map.")
+            # Union validation also reports a missing 'evidence' for a malformed
+            # Step route. Explain EvidenceRef only when one was actually supplied.
+            targets = parameters.get("goal_map", {})
+            if isinstance(targets, dict) and any(
+                    isinstance(targets.get(item["loc"][2]), dict)
+                    and isinstance(targets[item["loc"][2]].get("evidence"), dict)
+                    for item in target_errors if len(item["loc"]) > 2):
+                error.detail["evidence_reference_shapes"] = EvidenceRef.model_json_schema()["oneOf"]
+                error.detail["evidence_instruction"] = (
+                    "A concrete EvidenceRef requires its existing run_id and result_id, plus the unchanged port; "
+                    "artifact_id/sha256 alone is only a file reference, not a Result binding. "
+                    "Copy source identities from the recorded Result, never invent them. "
+                    "Alternatively retain the existing completed Step with {key:existing_step_id} and keep "
+                    "that Goal's route using step_key=stored step_id and the unchanged port. "
+                    "A future producer_step_id cannot be mixed "
+                    "with concrete Run/Result/Artifact identities. Do not replace satisfied evidence with a gap.")
         raise error from None
+
+
+def _resolve_step_keys(keys, ids, history, *, path, indexed=False):
+    """Resolve declared graph references without inventing or inserting Steps."""
+    paths = [path + [index] if indexed else path for index in range(len(keys))]
+    for key, location in zip(keys, paths, strict=True):
+        if not isinstance(key, str):
+            raise ProposalError("A symbolic Step reference must be a string key from the proposed Steps.",
+                code="invalid_step_reference", path=location, expected_type="string")
+    missing = [(key, location) for key, location in zip(keys, paths, strict=True) if key not in ids]
+    if missing:
+        missing_keys = list(dict.fromkeys(key for key, _ in missing))
+        historical = [key for key in missing_keys if key in history]
+        raise ProposalError(
+            "Every referenced Step must be included in this proposed Plan. Reuse frozen Steps with only "
+            "{key:existing_step_id}; include their dependency closure too. Their original dependencies stay "
+            "with the retained Steps, but the program does not insert missing Steps. Declare a new Step "
+            "with its Tool and parameters instead of referring to an unknown key.",
+            code="missing_step_reference", path=missing[0][1],
+            missing_step_keys=missing_keys, known_history_step_keys=historical,
+            missing_references=[{"key": key, "path": location} for key, location in missing],
+            retained_step_shapes=[{"key": key} for key in historical])
+    return [ids[key] for key in keys]
+
+
+def _code_repair_source(store, run, item, history, *, index):
+    """Resolve only a trusted latest settled failure; this grants no execution."""
+    path = ["parameters", "steps", index]
+    if not run.permission.code_execution:
+        raise ProposalError("Task code repair requires code execution permission.",
+                            code="code_repair_not_authorized", path=path)
+    if item.key in history or any(attempt.step_id == item.key for attempt in run.attempts) or any(
+            call.step_id == item.key for call in run.calls):
+        raise ProposalError("A code repair needs a new Step key, not a historical Step ID.",
+                            code="code_repair_existing_key", path=[*path, "key"])
+    attempts = [attempt for attempt in run.attempts if attempt.step_id == item.repair_of]
+    attempt = attempts[-1] if attempts else None
+    latest = ([other for other in run.attempts if other.logical_id == attempt.logical_id][-1]
+              if attempt else None)
+    if (attempt is None or latest is not attempt or attempt.execution_kind != "python"
+            or attempt.state not in {"failed", "timed_out"} or attempt.finished_at is None
+            or attempt.result_id is None or attempt.result_id not in run.result_ids
+            or attempt.frozen_step is None
+            or (attempt.frozen_step.id, attempt.frozen_step.logical_id, attempt.frozen_step.tool)
+                != (attempt.step_id, attempt.logical_id, attempt.tool)
+            or "execute_python" not in get_tool(attempt.tool).effects):
+        raise ProposalError(
+            "repair_of must identify this Run's latest settled failed or timed-out Python Attempt's frozen "
+            "Step, with its recorded Result. Unknown, unfinished, successful or superseded references cannot repair.",
+            code="invalid_code_repair_reference", path=[*path, "repair_of"])
+    result = store.load_result(run.id, attempt.result_id)
+    if ((result.id, result.run_id, result.step_id, result.attempt_id, result.operation_status)
+            != (attempt.result_id, run.id, attempt.step_id, attempt.id, attempt.state)):
+        raise ProposalError("The repair Result must belong to this exact failed Python Attempt and Step.",
+                            code="code_repair_result_mismatch", path=[*path, "repair_of"])
+    return attempt.frozen_step
 
 
 def materialize_plan(store, run, parameters):
@@ -317,15 +462,52 @@ def materialize_plan(store, run, parameters):
     ids = {key: key if key in history else new_id("step") for key in keys}
     known_logical = {s.logical_id for s in history.values()}
     logical = {}
+    repairs = {item.key: _code_repair_source(store, run, item, history, index=index)
+               for index, item in enumerate(proposal.steps) if isinstance(item, ProposedCodeRepair)}
     for item in proposal.steps:
+        if isinstance(item, ProposedCodeRepair):
+            logical[item.key] = repairs[item.key].logical_id
+            continue
         label = item.logical_key or item.key
         logical[item.key] = (history[item.key].logical_id if item.key in history else
                              label if label in known_logical else new_id("logical"))
     steps = []
     for index, item in enumerate(proposal.steps):
+        if isinstance(item, ProposedCodeRepair):
+            source = repairs[item.key]
+            _resolve_step_keys(source.depends_on, ids, history,
+                path=["parameters", "steps", index, "repair_of"])
+            values = source.model_dump(mode="json")
+            values["id"] = ids[item.key]
+            values["parameters"]["code"] = item.code.model_dump(mode="json")
+            try:
+                steps.append(Step.model_validate(values))
+            except ValidationError as exc:
+                raise _schema_error(exc, path=["parameters", "steps", index], tool=source.tool) from None
+            continue
         if item.tool is None:
-            if item.key not in history or set(item.model_fields_set) != {"key"}:
-                raise ValueError("retained Step must reference its existing key without changes")
+            if item.key not in history:
+                raise ProposalError("A retained Step must reference a known existing key. "
+                    "A new Step requires its Tool and parameters.", code="unknown_retained_step",
+                    path=["parameters", "steps", index, "key"], step_key=item.key)
+            unexpected = sorted(set(item.model_fields_set) - {"key"})
+            if unexpected:
+                raise ProposalError(
+                    "A retained Step must use only {key:existing_step_id}, without other fields. "
+                    "For every frozen Step being reused, omit depends_on, tool and parameters; its original "
+                    "dependencies remain unchanged. Include those dependency Steps separately by key too; "
+                    "the program does not insert them or remove submitted fields.",
+                    code="retained_step_has_fields", path=["parameters", "steps", index],
+                    step_key=item.key, unexpected_fields=unexpected, retained_step_shape={"key": item.key})
+            missing_dependencies = [dependency for dependency in history[item.key].depends_on
+                                    if dependency not in ids]
+            if missing_dependencies:
+                raise ProposalError(
+                    "Reusing a Step preserves its dependencies. Include each missing existing Step with "
+                    "{key:existing_step_id} and retain its dependency closure; the program does not automatically "
+                    "insert Steps or change the proposed Plan.",
+                    code="missing_retained_dependency", path=["parameters", "steps", index, "key"],
+                    retained_step_id=item.key, missing_dependency_step_ids=missing_dependencies)
             steps.append(history[item.key].model_copy(deep=True))
             continue
         try:
@@ -365,16 +547,19 @@ def materialize_plan(store, run, parameters):
             raise ProposalError(str(exc), tool=definition.name,
                                 path=["parameters", "steps", index, "parameters"]) from None
         geometry = item.geometry
+        geometry_path = ["parameters", "steps", index, "geometry"]
         bindings = dict(item.inputs)
         if "execute_orca" in definition.effects and "geometry" in bindings:
             if geometry is not None:
                 raise ProposalError("Bind geometry once, either geometry or inputs.geometry.",
                                     path=["parameters", "steps", index, "inputs", "geometry"])
             geometry = bindings.pop("geometry")
+            geometry_path = ["parameters", "steps", index, "inputs", "geometry"]
         if geometry and "producer_key" in geometry:
             if set(geometry) != {"producer_key", "port"}:
                 raise ValueError("future geometry has ambiguous or undeclared fields")
-            geometry = {"producer_step_id": ids[geometry["producer_key"]],
+            geometry = {"producer_step_id": _resolve_step_keys([geometry["producer_key"]], ids, history,
+                        path=[*geometry_path, "producer_key"])[0],
                         "port": geometry.get("port")}
         if geometry is None:
             if "geometry" in definition.input_roles and "execute_orca" in definition.effects:
@@ -385,10 +570,12 @@ def materialize_plan(store, run, parameters):
         inputs = {}
         for name, value in bindings.items():
             if "producer_key" in value:
-                value = {**value, "producer_step_id": ids[value["producer_key"]]}
+                value = {**value, "producer_step_id": _resolve_step_keys([value["producer_key"]], ids, history,
+                    path=["parameters", "steps", index, "inputs", name, "producer_key"])[0]}
                 value.pop("producer_key")
             inputs[name] = EvidenceRef.model_validate(value)
-        dependencies = [ids[key] for key in item.depends_on]
+        dependencies = _resolve_step_keys(item.depends_on, ids, history,
+            path=["parameters", "steps", index, "depends_on"], indexed=True)
         # A reference itself explicitly declares the dependency relationship.
         dependencies += [r.producer_step_id for r in inputs.values() if r.producer_step_id]
         if geometry and geometry.get("producer_step_id"):

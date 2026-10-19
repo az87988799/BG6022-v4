@@ -14,7 +14,9 @@ from orca_agent.applicability import CONDITION_FIELDS, effective_conditions
 DECISION_CONTRACT_PROMPT_VERSIONS = frozenset({
     "agent-json-v22", "agent-json-v23", "agent-json-v24", "agent-json-v25", "agent-json-v26", "agent-json-v27",
     "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32", "agent-json-v33", "agent-json-v34",
-    "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38"})
+    "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41",
+    "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47",
+    "agent-json-v48", "agent-json-v49", "agent-json-v50", "agent-json-v51", "agent-json-v52", "agent-json-v53", "agent-json-v54", "agent-json-v55", "agent-json-v56", "agent-json-v57", "agent-json-v58"})
 
 
 @dataclass(frozen=True)
@@ -103,6 +105,37 @@ def prepared_decision_purpose(prepared):
     return purpose
 
 
+def retained_read_result_ids(run):
+    """Previously requested reads remain available while authoring task code.
+
+    This selects existing local receipts only, not files or new queries. The
+    context's Result-count and token bounds still apply to the selected set.
+    """
+    from orca_agent.tools.registry import get_tool
+
+    if not run.permission.code_execution or not any(
+            "execute_python" in get_tool(name).effects for name in run.permission.allowed_tools):
+        return set()
+    return {call.result_id for call in run.calls if call.result_id in run.result_ids
+            and call.state == "completed"
+            and get_tool(call.tool).effects == ["read_registered_artifact"]}
+
+
+def settled_failed_python_attempts(run):
+    """Return bound failure history even after a Plan removes its old Step.
+
+    These receipts do not authorize a repair or make the historical Step ready.
+    Keep every matching receipt; a later attempt must not erase an earlier cost
+    or failure. Run budgets and the context bound limit the complete history.
+    """
+    return [attempt for attempt in run.attempts
+            if attempt.execution_kind == "python" and attempt.state in {"failed", "timed_out"}
+            and attempt.finished_at is not None and attempt.result_id in run.result_ids
+            and attempt.frozen_step is not None
+            and (attempt.frozen_step.id, attempt.frozen_step.logical_id, attempt.frozen_step.tool)
+                == (attempt.step_id, attempt.logical_id, attempt.tool)]
+
+
 def relevant_result_ids(run, plan=None, *, snapshot=None, feedback_ids=()):
     """Select by current bindings, feedback and dependencies, never recency.
 
@@ -110,6 +143,9 @@ def relevant_result_ids(run, plan=None, *, snapshot=None, feedback_ids=()):
     references remain in the delivery snapshot and are not relabelled as local.
     """
     selected = set(feedback_ids)
+    selected.update(retained_read_result_ids(run))
+    if run.permission.code_execution:
+        selected.update(attempt.result_id for attempt in settled_failed_python_attempts(run))
     from orca_agent.tools.registry import get_tool
     # Authoring receipts contain IDs/hashes, not inline code. Keep those exact
     # handles available across subsequent revisions without trusting model IDs.

@@ -1,0 +1,384 @@
+{
+  "schema_version": 1,
+  "scope": "Verified publication of real live010 failure; generated text in rejected proposals is not an executed Artifact.",
+  "run_id": "run_ff9acb1e7c854a8fb5b5a9bec1732c8e",
+  "original_text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+  "state": "failed",
+  "delivery_status": "partial",
+  "goal_status": {
+    "goal_prepared_geometry": "insufficient_evidence",
+    "goal_optimized_geometry": "insufficient_evidence",
+    "goal_vibrational_frequencies": "insufficient_evidence"
+  },
+  "freeze": {
+    "created_at": "2026-10-19T04:00:48.664083+00:00",
+    "frozen_source_count": 62,
+    "outcome_reported_changes": [],
+    "independent_checked_at": "2026-10-19T04:03:03.717021+00:00",
+    "changed_sources_at_check": [],
+    "driver_matches_freeze": true
+  },
+  "autonomy": {
+    "accepted_plan": false,
+    "identity_resolution_executed": false,
+    "structure_preparation_executed": false,
+    "generated_input_and_code_text": [
+      {
+        "model_id": "model_9b10053f4b9a433ea64c38688be0561a",
+        "step_key": "write_orca_input",
+        "name": "ethanol_optfreq.inp",
+        "role": "orca",
+        "utf8_bytes": 253,
+        "content_sha256": "3204de1b511f67e3a651b59e4241638c908bb8a29105354d52c29a39c6a118ca",
+        "status": "Text in rejected model proposal only; no file-writing Call or Artifact"
+      },
+      {
+        "model_id": "model_9b10053f4b9a433ea64c38688be0561a",
+        "step_key": "write_parser",
+        "name": "parse_ethanol.py",
+        "role": "python",
+        "utf8_bytes": 1648,
+        "content_sha256": "902e7209834d94faac58a414653f51ddd20b72540baf5daccda63441599a7235",
+        "status": "Text in rejected model proposal only; no file-writing Call or Artifact"
+      }
+    ],
+    "workspace_write_calls": 0,
+    "task_code_or_native_input_artifacts_created": false,
+    "python_attempts": 0,
+    "internal_calls": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "scientific_observation_records": 0,
+    "scientific_qualified_outputs": 0
+  },
+  "model_usage": {
+    "calls": 9,
+    "input_tokens": 76071,
+    "output_tokens": 3356,
+    "total_tokens": 79427,
+    "unknown_token_bound": 0,
+    "estimated_uncached_cost_usd": "0.0268485",
+    "cost_limitation": "Frozen per-token estimate without cache discounts; not invoice cost."
+  },
+  "usage": {
+    "internal_work_units": 0,
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 0.0,
+    "cpu_seconds": 0.0,
+    "resource_usage_complete": true,
+    "logical_attempts": {},
+    "fingerprint_attempts": {},
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 9,
+    "model_tokens_used": 79427,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 0,
+    "decision_rounds": 9,
+    "evidence_reads": 0,
+    "analysis_executions": 0,
+    "logical_steps": [],
+    "identity_queries": 0,
+    "structure_preparations": 0,
+    "knowledge_queries": 3
+  },
+  "last_three_proposals": [
+    {
+      "model_id": "model_86473ecb085e430a9b4255c8aca2ac7d",
+      "action": "initial_plan",
+      "steps": [
+        {
+          "key": "resolve",
+          "tool": "structure.resolve",
+          "parameter_fields": []
+        },
+        {
+          "key": "prepare",
+          "tool": "structure.prepare",
+          "parameter_fields": []
+        },
+        {
+          "key": "optfreq",
+          "tool": "python.execute",
+          "parameter_fields": [
+            "conditions",
+            "observation_names"
+          ]
+        }
+      ],
+      "goal_map": {
+        "goal_prepared_geometry": {
+          "step_key": "prepare",
+          "port": "prepared_geometry"
+        },
+        "goal_optimized_geometry": {
+          "step_key": "optfreq",
+          "port": "optimized_geometry"
+        },
+        "goal_vibrational_frequencies": {
+          "step_key": "optfreq",
+          "port": "vibrational_frequencies"
+        }
+      },
+      "rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": "Use the declared parameter schema at each listed path.",
+        "tool": "python.execute",
+        "code": null,
+        "errors": [
+          {
+            "type": "missing",
+            "loc": [
+              "parameters",
+              "steps",
+              2,
+              "parameters",
+              "code"
+            ]
+          }
+        ]
+      },
+      "request_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_ff9acb1e7c854a8fb5b5a9bec1732c8e/model/model_86473ecb085e430a9b4255c8aca2ac7d.request.json",
+        "bytes": 37852,
+        "sha256": "8cce0583eb3f43121afb2e37c734407ca4b8d00055b758c51673f621d70d7fbc"
+      },
+      "response_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_ff9acb1e7c854a8fb5b5a9bec1732c8e/model/model_86473ecb085e430a9b4255c8aca2ac7d.response.json",
+        "bytes": 4305,
+        "sha256": "b2992fe9776794a6c945623c8fd46ba02794da6cf9cb4debdbe2fda2d25ecb0f"
+      }
+    },
+    {
+      "model_id": "model_9b10053f4b9a433ea64c38688be0561a",
+      "action": "initial_plan",
+      "steps": [
+        {
+          "key": "resolve_ethanol",
+          "tool": "structure.resolve",
+          "parameter_fields": []
+        },
+        {
+          "key": "prepare_ethanol",
+          "tool": "structure.prepare",
+          "parameter_fields": []
+        },
+        {
+          "key": "write_orca_input",
+          "tool": "workspace.write",
+          "parameter_fields": [
+            "content",
+            "name",
+            "role"
+          ]
+        },
+        {
+          "key": "write_parser",
+          "tool": "workspace.write",
+          "parameter_fields": [
+            "content",
+            "name",
+            "role"
+          ]
+        }
+      ],
+      "goal_map": {
+        "goal_prepared_geometry": {
+          "evidence": {
+            "producer_step_id": null,
+            "artifact_id": null,
+            "run_id": null,
+            "result_id": null,
+            "sha256": null,
+            "rule_version": null,
+            "port": "prepared_geometry"
+          },
+          "port": "prepared_geometry"
+        },
+        "goal_optimized_geometry": {
+          "step_key": "write_parser",
+          "port": "optimized_geometry"
+        },
+        "goal_vibrational_frequencies": {
+          "step_key": "write_parser",
+          "port": "vibrational_frequencies"
+        }
+      },
+      "rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": "Each Goal target must use exactly one binding shape. A Step binding is a future output route, not goal completion; do not combine it with a gap.",
+        "tool": null,
+        "code": "goal_target_shape",
+        "errors": [
+          {
+            "type": "missing",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "step_key"
+            ]
+          },
+          {
+            "type": "extra_forbidden",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "evidence"
+            ]
+          },
+          {
+            "type": "value_error",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "evidence"
+            ]
+          },
+          {
+            "type": "missing",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "gap"
+            ]
+          }
+        ]
+      },
+      "request_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_ff9acb1e7c854a8fb5b5a9bec1732c8e/model/model_9b10053f4b9a433ea64c38688be0561a.request.json",
+        "bytes": 38954,
+        "sha256": "0f61be149eef0b14bbaa536da4b839aab3161364e22335d17dc618b6dcd5837c"
+      },
+      "response_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_ff9acb1e7c854a8fb5b5a9bec1732c8e/model/model_9b10053f4b9a433ea64c38688be0561a.response.json",
+        "bytes": 8906,
+        "sha256": "9a2cc7e467433a64f9a4222dec2c0a458cbefff62c720f1d3e59f6f901922734"
+      }
+    },
+    {
+      "model_id": "model_088101ac41ca4258ae40683070b42f9a",
+      "action": "initial_plan",
+      "steps": [
+        {
+          "key": "resolve_ethanol",
+          "tool": "structure.resolve",
+          "parameter_fields": []
+        },
+        {
+          "key": "prepare_ethanol",
+          "tool": "structure.prepare",
+          "parameter_fields": []
+        },
+        {
+          "key": "opt_freq_ethanol",
+          "tool": "python.execute",
+          "parameter_fields": [
+            "conditions",
+            "observation_names"
+          ]
+        }
+      ],
+      "goal_map": {
+        "goal_prepared_geometry": {
+          "step_key": "prepare_ethanol",
+          "port": "prepared_geometry"
+        },
+        "goal_optimized_geometry": {
+          "step_key": "opt_freq_ethanol",
+          "port": "optimized_geometry"
+        },
+        "goal_vibrational_frequencies": {
+          "step_key": "opt_freq_ethanol",
+          "port": "vibrational_frequencies"
+        }
+      },
+      "rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": "Use the declared parameter schema at each listed path.",
+        "tool": "python.execute",
+        "code": null,
+        "errors": [
+          {
+            "type": "missing",
+            "loc": [
+              "parameters",
+              "steps",
+              2,
+              "parameters",
+              "code"
+            ]
+          }
+        ]
+      },
+      "request_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_ff9acb1e7c854a8fb5b5a9bec1732c8e/model/model_088101ac41ca4258ae40683070b42f9a.request.json",
+        "bytes": 38698,
+        "sha256": "eb132062dab0fead0bd50fc345a4fc4dfee47ee03449392250e97019eddcb9fb"
+      },
+      "response_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_ff9acb1e7c854a8fb5b5a9bec1732c8e/model/model_088101ac41ca4258ae40683070b42f9a.response.json",
+        "bytes": 4651,
+        "sha256": "dd53e6e6592c6fefc8764e2d8981c4372d504164732ef671883615d999524e43"
+      }
+    }
+  ],
+  "failure_summary": "The first and third initial Plan proposals included python.execute without the required existing code Artifact. The intermediate staged proposal generated ORCA/Python text, but used an invalid all-null EvidenceRef for the future prepared_geometry; the whole proposal was rejected before any Step executed. Bounded proposal correction exhausted.",
+  "unexecuted_text_review": {
+    "scope": "Read-only diagnosis of rejected text, not an executed failure or independent science validation.",
+    "native_input": "Omitted the required explicit RKS keyword although current Request selected B3LYP/RKS.",
+    "python": "Frequency extraction scanned all numeric-colon stdout lines instead of isolating the frequency block, and used an always-true condition. No values were produced."
+  },
+  "driver_outcome": {
+    "error": null,
+    "report_error": null,
+    "finished_at": "2026-10-19T04:01:22.022882+00:00",
+    "report_and_outcome_written": true
+  },
+  "independent_audit": {
+    "path": "data/code-tools-step3/live-010-audit.json",
+    "bytes": 23087,
+    "sha256": "76410e7d05da90f7d1862985daf0399a0aee74a1082958830b0bc90c7906cf50"
+  },
+  "original_evidence": [
+    {
+      "path": "data/code-tools-step3/live-store/runs/run_ff9acb1e7c854a8fb5b5a9bec1732c8e/run.json",
+      "bytes": 60639,
+      "sha256": "a1f6aa48f40e7eecb41f19ae6f23d740f9282ed3c07991ccb497cd3bb7228fd9"
+    },
+    {
+      "path": "data/code-tools-step3/live-010/freeze.json",
+      "bytes": 10301,
+      "sha256": "1143b26fc97162bf7eac435758b6187731fe682b67b8f0d998c16c0e897154db"
+    },
+    {
+      "path": "data/code-tools-step3/live-010/outcome.json",
+      "bytes": 1113,
+      "sha256": "9db0c7d913764f7108240682947bff775e1710adbe46f0731f8b1fa78e7d7597"
+    },
+    {
+      "path": "data/code-tools-step3/live-010/report.json",
+      "bytes": 50030,
+      "sha256": "c5de2d1e27366ad437bb8729ec0afd419ba86e8179466a60c947158a098672a7"
+    },
+    {
+      "path": "data/code-tools-step3/live-010/report.txt",
+      "bytes": 10709,
+      "sha256": "000f4386ebb312435fb58d6a6181d77321c270c6748df6fd18be61746b78856e"
+    }
+  ],
+  "unverified": [
+    "No accepted execution Plan.",
+    "No OPI structure or ORCA output.",
+    "No generated code execution or real repair.",
+    "No completed autonomous Opt+Freq delivery."
+  ]
+}

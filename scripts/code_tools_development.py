@@ -25,6 +25,10 @@ DEVELOPMENT_LIMITS_V1 = {"runs": 5, "model_calls": 120, "model_tokens": 6000000,
                          "orca_starts": 10, "internal_work_units": 2000}
 DEVELOPMENT_LIMITS_V2 = {"runs": 8, "model_calls": 192, "model_tokens": 9600000,
                          "orca_starts": 16, "internal_work_units": 3200}
+DEVELOPMENT_LIMITS_V3 = {"runs": 50, "model_calls": 1200, "model_tokens": 60000000,
+                         "orca_starts": 100, "internal_work_units": 20000}
+DEVELOPMENT_RUN_LIMITS = {"model_calls": 24, "model_tokens": 1200000,
+                        "orca_starts": 2, "internal_work_units": 400}
 DEVELOPMENT_MEANING = "worst-case development reservations; failures/unknowns never reclaim a slot"
 
 
@@ -53,6 +57,82 @@ def inspect_seeded_code(source):
             "ast_kind": "Expr(Name(Load))", "compiled_without_execution": True}
 
 
+def inspect_seeded_execution(store, run_id):
+    """Read-only prelaunch proof; mirror selection without executing or repairing."""
+    from orca_agent.agent import _ready
+    from orca_agent.model_usage import current_basis, read_model_reply
+    from orca_agent.models import fingerprint
+    from orca_agent.orca.native import read_pinned_input
+    from orca_agent.runner import _step_results
+
+    run = store.load_run(run_id)
+    validate_seeded_request(store.load_request(run).original_text)
+    if (run.attempts or run.internal_calls or run.usage.orca_starts_reserved
+            or run.usage.orca_starts_actual or run.usage.internal_work_units):
+        raise ValueError("seeded first execution requires zero prior Attempts and native reservations")
+    control = store.read_control(run.id)
+    if (store.read_signal(run.id)
+            or any(message["id"] not in run.processed_messages for message in control["messages"])
+            or set(run.result_ids) - set(run.processed_feedback)):
+        raise ValueError("seeded selection requires processed feedback and unchanged user control")
+    plan = store.load_plan(run)
+    ready = _ready(plan, _step_results(store, run))
+    basis = current_basis(store, run)
+    pending = [item for item in run.decisions if item.get("action") == "call_tool"
+               and item["id"] not in run.applied_decisions]
+    proof = {}
+    if pending:
+        decision = pending[0]
+        if (decision.get("basis") != basis or set(decision.get("parameters", {})) != {"step_id"}
+                or any(call.consumption.get("_decision_id") == decision["id"] for call in run.calls)):
+            raise ValueError("seeded gate requires a current unapplied model-selected execution Step")
+        step = next((item for item in ready if item.id == decision["parameters"]["step_id"]), None)
+        proof["selection_origin"] = "unapplied_call_tool"
+    else:
+        decision = run.decisions[-1] if run.decisions else {}
+        prior_basis = decision.get("basis", {})
+        if (plan is None or decision.get("plan_id") != plan.id
+                or decision.get("plan_version") != plan.version
+                or decision.get("request_version") != run.request_version
+                or not decision.get("record_sha256") or decision.get("user_message_ids")
+                or set(prior_basis) != set(basis)
+                or any(prior_basis[key] != value for key, value in basis.items() if key != "plan_version")
+                or prior_basis["plan_version"] != decision.get("prior_plan_version")
+                or plan.version != (prior_basis["plan_version"] or 0) + 1):
+            raise ValueError("seeded gate requires the current activated model Plan and version basis")
+        # load_plan already checks the activated record hash and exact Plan payload.
+        records = [item for item in run.model_records if item.get("id") == decision["id"]]
+        if (len(records) != 1 or records[0].get("basis") != prior_basis
+                or records[0].get("status") != "known" or not records[0].get("response_record_sha256")):
+            raise ValueError("seeded activated Plan lacks its settled model source")
+        reply, response_hash = read_model_reply(store, run, records[0])
+        expected_action = "initial_plan" if prior_basis["plan_version"] is None else "revise_plan"
+        if reply.error_category or not reply.proposal or reply.proposal.get("action") != expected_action:
+            raise ValueError("seeded activated Plan source is not an accepted model planning response")
+        step = ready[0] if ready else None  # Never skip a ready non-Python predecessor.
+        proof.update(selection_origin="activated_model_plan_first_ready",
+                     source_model_response_sha256=response_hash,
+                     source_decision_record_sha256=decision["record_sha256"],
+                     source_decision_basis=prior_basis)
+    if step is None or step.tool != "python.execute":
+        raise ValueError("seeded first execution must be a ready Python Step")
+    code = step.parameters.code
+    artifact = store.load_artifact(code.artifact_id)
+    writers = [call for call in run.calls if call.id == artifact.source.get("call_id")]
+    if (code.artifact_id not in store.verified_own_artifacts(run)
+            or artifact.run_id != run.id or artifact.source.get("role") != "python"
+            or artifact.sha256 != code.sha256 or len(writers) != 1
+            or writers[0].tool != "workspace.write" or writers[0].state != "completed"):
+        raise ValueError("seeded code must be the exact verified workspace.write Artifact of this Run")
+    data = read_pinned_input(store.artifact_path(code.artifact_id), code.sha256, limit=65536)
+    syntax = inspect_seeded_code(data.decode("utf-8"))
+    return {**proof, "syntax": syntax, "request_version": run.request_version,
+        "plan_version": run.plan_version, "plan_sha256": fingerprint(plan),
+        "step_id": step.id, "logical_id": step.logical_id, "code": code.model_dump(mode="json"),
+        "code_bytes": len(data), "source_call_id": artifact.source["call_id"],
+        "decision_id": decision["id"], "usage_before": run.usage.model_dump(mode="json")}
+
+
 class SeededCodeErrorGate:
     """Test-only observer; it never changes a proposal, Artifact, Plan or budget."""
 
@@ -71,37 +151,7 @@ class SeededCodeErrorGate:
                    "marker": SEEDED_MARKER, "point": point, "status": "not_established",
                    "checked_at": utc_now().isoformat(), "mutated_task_content": False}
         try:
-            from orca_agent.models import fingerprint
-            from orca_agent.orca.native import read_pinned_input
-
-            run = self.store.load_run(self.run_id)
-            validate_seeded_request(self.store.load_request(run).original_text)
-            if (run.attempts or run.internal_calls or run.usage.orca_starts_reserved
-                    or run.usage.orca_starts_actual or run.usage.internal_work_units):
-                raise ValueError("seeded first execution requires zero prior Attempts and native reservations")
-            plan = self.store.load_plan(run)
-            decision = run.decisions[-1] if run.decisions else {}
-            if (decision.get("action") != "call_tool"
-                    or set(decision.get("parameters", {})) != {"step_id"}):
-                raise ValueError("seeded gate requires the current model-selected execution Step")
-            steps = [step for step in plan.steps if step.id == decision["parameters"]["step_id"]] if plan else []
-            if len(steps) != 1 or steps[0].tool != "python.execute":
-                raise ValueError("seeded first execution must be a Python Step")
-            step = steps[0]
-            code = step.parameters.code
-            artifact = self.store.load_artifact(code.artifact_id)
-            if (code.artifact_id not in self.store.verified_own_artifacts(run)
-                    or artifact.run_id != run.id or artifact.source.get("role") != "python"
-                    or not artifact.source.get("call_id") or artifact.sha256 != code.sha256):
-                raise ValueError("seeded code must be the exact verified workspace.write Artifact of this Run")
-            data = read_pinned_input(self.store.artifact_path(code.artifact_id), code.sha256, limit=65536)
-            syntax = inspect_seeded_code(data.decode("utf-8"))
-            receipt.update(status="prelaunch_verified", syntax=syntax,
-                request_version=run.request_version, plan_version=run.plan_version,
-                plan_sha256=fingerprint(plan), step_id=step.id, logical_id=step.logical_id,
-                code=code.model_dump(mode="json"), code_bytes=len(data),
-                source_call_id=artifact.source["call_id"], decision_id=decision["id"],
-                usage_before=run.usage.model_dump(mode="json"),
+            receipt.update(status="prelaunch_verified", **inspect_seeded_execution(self.store, self.run_id),
                 limitations=["Explicitly prompted generic defect; not a spontaneous model error.",
                     "Prelaunch verification only; actual failure, feedback and model repair require separate audit."])
         except Exception as exc:
@@ -155,13 +205,14 @@ def _same_limits(actual, expected):
 
 
 def _validate_development_ledger(ledger):
-    if not isinstance(ledger, dict) or type(ledger.get("version")) is not int or ledger["version"] not in (1, 2):
+    if (not isinstance(ledger, dict) or type(ledger.get("version")) is not int
+            or ledger["version"] not in (1, 2, 3)):
         raise RuntimeError("invalid development ledger version")
     version = ledger["version"]
     fields = {"version", "limits", "reservations", "separate_native_probe_starts", "meaning"}
-    if version == 2:
+    if version >= 2:
         fields.add("revisions")
-    limits = DEVELOPMENT_LIMITS_V1 if version == 1 else DEVELOPMENT_LIMITS_V2
+    limits = {1: DEVELOPMENT_LIMITS_V1, 2: DEVELOPMENT_LIMITS_V2, 3: DEVELOPMENT_LIMITS_V3}[version]
     if (set(ledger) != fields or not _same_limits(ledger["limits"], limits)
             or type(ledger["separate_native_probe_starts"]) is not int or ledger["separate_native_probe_starts"] != 1
             or ledger["meaning"] != DEVELOPMENT_MEANING):
@@ -180,32 +231,44 @@ def _validate_development_ledger(ledger):
             raise RuntimeError("invalid or duplicate development reservation identity")
         names.add(name.casefold())
         _validate_budget(row["budget"], limits)
+        if version == 3:
+            _validate_budget(row["budget"], DEVELOPMENT_RUN_LIMITS)
         for key, value in row["budget"].items():
             totals[key] += value
             if totals[key] > limits[key]:
                 raise RuntimeError("development batch reservation exhausted: " + key)
-    if version == 2:
+    if version >= 2:
         revisions = ledger["revisions"]
-        if not isinstance(revisions, list) or len(revisions) != 1 or not isinstance(revisions[0], dict):
-            raise RuntimeError("development extension requires exactly one revision")
-        revision = revisions[0]
-        if (set(revision) != {"action", "revised_at", "reason", "old_limits", "new_limits",
-                "prior_ledger_sha256", "original_reservations_count", "original_reservations_sha256"}
-                or revision["action"] != "extend_development_budget_once"
-                or not _same_limits(revision["old_limits"], DEVELOPMENT_LIMITS_V1)
+        if (not isinstance(revisions, list) or len(revisions) != version - 1
+                or any(not isinstance(revision, dict) for revision in revisions)):
+            raise RuntimeError("development extension revision history does not match ledger version")
+        revision = revisions[-1]
+        revision_fields = {"action", "revised_at", "reason", "old_limits", "new_limits",
+            "prior_ledger_sha256", "original_reservations_count", "original_reservations_sha256"}
+        prior_limits = DEVELOPMENT_LIMITS_V1 if version == 2 else DEVELOPMENT_LIMITS_V2
+        original_count = prior_limits["runs"]
+        action = "extend_development_budget_once" if version == 2 else "extend_development_budget_to_fifty"
+        if version == 3:
+            revision_fields.add("prior_revisions_sha256")
+        if (set(revision) != revision_fields
+                or revision["action"] != action
+                or not _same_limits(revision["old_limits"], prior_limits)
                 or not _same_limits(revision["new_limits"], limits)
                 or type(revision["original_reservations_count"]) is not int
-                or revision["original_reservations_count"] != 5 or len(rows) < 5
+                or revision["original_reservations_count"] != original_count or len(rows) < original_count
                 or not isinstance(revision["reason"], str) or not 1 <= len(revision["reason"].strip()) <= 2000
                 or not _valid_timestamp(revision["revised_at"])
                 or not isinstance(revision["prior_ledger_sha256"], str)
                 or len(revision["prior_ledger_sha256"]) != 64
                 or any(char not in "0123456789abcdef" for char in revision["prior_ledger_sha256"])
-                or revision["original_reservations_sha256"] != _canonical_hash(rows[:5])):
+                or revision["original_reservations_sha256"] != _canonical_hash(rows[:original_count])
+                or (version == 3 and revision["prior_revisions_sha256"] != _canonical_hash(revisions[:-1]))):
             raise RuntimeError("invalid development budget revision or altered original reservations")
-        # The original prefix must still be a legal, fully reserved v1 batch.
+        # Recursively validate both historical prefixes under their original contracts.
         original = {key: value for key, value in ledger.items() if key != "revisions"}
-        original.update(version=1, limits=DEVELOPMENT_LIMITS_V1, reservations=rows[:5])
+        original.update(version=version - 1, limits=prior_limits, reservations=rows[:original_count])
+        if version == 3:
+            original["revisions"] = revisions[:-1]
         _validate_development_ledger(original)
     return limits
 
@@ -245,6 +308,28 @@ def extend_development_budget_once(path, reason):
         return ledger["revisions"][0]
 
 
+def extend_development_budget_to_fifty(path, reason):
+    """Apply the user's new explicit authorization to a full v2 ledger only."""
+    if not isinstance(reason, str) or not 1 <= len(reason.strip()) <= 2000:
+        raise RuntimeError("development budget revision requires a concise explicit reason")
+    with FileLock(str(path.with_suffix(".lock"))):
+        raw, ledger = _read_development_ledger(path)
+        if ledger["version"] != 2 or len(ledger["reservations"]) != 8:
+            raise RuntimeError("extension requires exactly eight v2 reservations and cannot be repeated")
+        revision = {
+            "action": "extend_development_budget_to_fifty", "revised_at": utc_now().isoformat(),
+            "reason": reason.strip(), "old_limits": dict(DEVELOPMENT_LIMITS_V2),
+            "new_limits": dict(DEVELOPMENT_LIMITS_V3), "prior_ledger_sha256": hashlib.sha256(raw).hexdigest(),
+            "original_reservations_count": 8,
+            "original_reservations_sha256": _canonical_hash(ledger["reservations"]),
+            "prior_revisions_sha256": _canonical_hash(ledger["revisions"])}
+        ledger.update(version=3, limits=dict(DEVELOPMENT_LIMITS_V3))
+        ledger["revisions"].append(revision)
+        _validate_development_ledger(ledger)
+        atomic_write(path, (json.dumps(ledger, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+        return revision
+
+
 def reserve_development(evidence, config):
     """Reserve worst-case Run envelopes once; new IDs cannot reset this test batch."""
     path = evidence.parent / "development-ledger.json"
@@ -258,6 +343,8 @@ def reserve_development(evidence, config):
             raise RuntimeError("development batch is exhausted; automatic reservation cannot extend it")
         budget = {key: getattr(config.text.budget, key) for key in limits if key != "runs"}
         _validate_budget(budget, limits)
+        if ledger["version"] == 3:
+            _validate_budget(budget, DEVELOPMENT_RUN_LIMITS)
         for key, value in budget.items():
             if sum(row["budget"][key] for row in ledger["reservations"]) + value > limits[key]:
                 raise RuntimeError("development batch reservation exhausted: " + key)
@@ -269,13 +356,16 @@ def reserve_development(evidence, config):
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
-    if argv[:1] == ["extend-development-budget-once"]:
+    revisions = {"extend-development-budget-once": (2, extend_development_budget_once),
+                 "extend-development-budget-to-fifty": (3, extend_development_budget_to_fifty)}
+    if argv and argv[0] in revisions:
         parser = argparse.ArgumentParser(description="Explicitly revise only the existing development batch ledger.")
         parser.add_argument("--ledger", required=True, type=Path)
         parser.add_argument("--reason", required=True)
         args = parser.parse_args(argv[1:])
-        revision = extend_development_budget_once(args.ledger.resolve(), args.reason)
-        print(json.dumps({"version": 2, "revision": revision, "run_created": False}), flush=True)
+        version, revise = revisions[argv[0]]
+        revision = revise(args.ledger.resolve(), args.reason)
+        print(json.dumps({"version": version, "revision": revision, "run_created": False}), flush=True)
         return 0
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True, type=Path)
@@ -321,17 +411,21 @@ def main(argv=None):
     final = snapshot(root)
     changed = sorted(key for key in set(final) | set(frozen["source_files"])
                      if final.get(key) != frozen["source_files"].get(key))
-    report = build_report(store, run)
-    write(evidence / "report.json", report)
-    (evidence / "report.txt").write_text(render_report(report), encoding="utf-8")
+    report_error = None
+    try:
+        report = build_report(store, run)
+        write(evidence / "report.json", report)
+        (evidence / "report.txt").write_text(render_report(report), encoding="utf-8")
+    except Exception as exc:
+        report_error = {"type": type(exc).__name__, "message": str(exc)}
     write(evidence / "outcome.json", {"run_id": run.id, "state": run.state,
         "delivery_status": run.delivery_status, "goals": run.goal_status,
-        "usage": run.usage.model_dump(mode="json"), "error": error,
+        "usage": run.usage.model_dump(mode="json"), "error": error, "report_error": report_error,
         **({"seeded_code_error": gate.outcome()} if gate else {}),
         "source_changed_during_run": changed, "finished_at": utc_now().isoformat()})
     print(json.dumps({"state": run.state, "goals": run.goal_status,
-                      "error": error, "changed_sources": changed}), flush=True)
-    return 0 if (run.state == "completed" and not error and not changed
+                      "error": error, "report_error": report_error, "changed_sources": changed}), flush=True)
+    return 0 if (run.state == "completed" and not error and not report_error and not changed
                  and (gate is None or gate.outcome()["status"] == "prelaunch_verified")) else 2
 
 

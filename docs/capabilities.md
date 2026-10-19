@@ -1,12 +1,28 @@
 # 能力与证据
 
-## 当前生成代码能力更新（2026-10-18，步骤 3 开发中）
+## 当前生成代码能力更新（2026-10-19，步骤 3 本轮收尾待验收）
 
 已实现一般分子/物理量的语义表达、有来源的方法和基组选择、不可变 `workspace.write`、Python/原生输入 Artifact 规划与受管执行、通用观察及带限制交付。输入检查、程序执行、科学资格和目标完成分别记录；生成值和单位不自动获得科学资格。当前每个 Python Attempt 仍最多一次 SDK ORCA，请求键在 Run 内唯一；不包含步骤 4 的多计算、回执复用与检查点恢复。
 
 进入本步前的故障对应关系与 455 项定向门禁见[前置修复记录](acceptance/code-as-tools-step3/prerequisites.md)。开发者编写的乙醇 HF/STO-3G 优化/解析频率探针完成一次真实四核 ORCA，原始数值独立核对通过，但不是 Agent 自主证据。真实中文身份查询已通过生产 Tool 获取 PubChem/Wikidata 来源；社区映射、电子态默认与初始几何检查的限制单独记录。
 
-八次真实自然语言运行均未启动 ORCA，原始失败及全部成本保留；累计 48 次模型 HTTP、365811 个已知 token，用量回执齐全，按冻结未缓存费率估算 USD 0.1471527，未计缓存折扣，并非实际账单。代码修订准入、累计预算和故障前置门禁已有离线测试；实际代码异常反馈后的真实模型修复链未运行，完整端到端交付未通过。真实 Opt+Freq 仅覆盖独立 HF/STO-3G 探针，DFT 执行仍未验证。OPI 结构准备的末尾空行兼容修复另有真实受管进程探针；该探针的身份为合成夹具，不能拼接成自主任务。最终回归与边界见[步骤 3 报告](acceptance/code-as-tools-step3/report.md)。本节不宣称步骤 3 已完成或用户已验收，不改变下列历史运行的事实。
+最初八次真实自然语言运行均未启动 ORCA，原始失败及成本保留：48 次模型 HTTP、365811 个已知 token，用量回执齐全，按冻结未缓存费率估算 USD 0.1471527，未计缓存折扣，并非实际账单。后续 live009—live016 也未启动 ORCA；live016 首次执行了模型生成的 Python，因 SDK 依赖路径错误失败，模型提出修正但未完成第二次执行。完整失败与后续消耗见[续作记录](acceptance/code-as-tools-step3/continuation-failures.md)。OPI 末尾空行兼容性的合成身份烟测和独立 HF 探针继续单列，不能拼接成自主任务。
+
+live017 首次从原始乙醇请求完成自主真实计算和带限制交付，Run `run_411fb7f2c8ce48249d3fdb6755587142` 为 completed/complete：13 次模型 HTTP、159232 tokens、1 次真实 Python、1 次 ORCA。实际条件为气相 B3LYP/def2-SVP、RKS、电荷 0、多重度 1；模型选择 ORCA 1 进程、MaxCore 192 MB，容器环境上限仍为 4 核/1024 MiB。计算交付仅有优化结构和 27 个频率值两项 unverified 观察，计算 Result 的 qualified_outputs 为空；终止解释合同通过不等于独立科学检查通过。随后[独立科学核验](acceptance/code-as-tools-step3/validation/live017-independent-scientific-audit.json)通过，覆盖原始输出的实际方法/态、收敛、结构与完整频率谱，相关回归 187 通过、1 项真实容器测试未启用而跳过；该开发核验不写回生产资格。当时生成代码错误的完整有界修复和最终回归仍待完成，生产频率科学资格未实现，步骤 3 尚未完成或用户验收通过。当前范围和证据见[步骤 3 报告](acceptance/code-as-tools-step3/report.md)；累计开发上限为[50 个 Run](acceptance/code-as-tools-step3/development-budget-v3.md)，不清零旧失败或消耗。
+
+live018 的受控故障对照在启动前因 Plan 依赖遗漏和纠正响应截断失败，Python/ORCA 均为零。live019 为 failed/partial：两次 Python operation completed、两次 ORCA，但第一份脚本误选输入 XYZ，优化目标被正确拒绝；第二份 manifest 超出 Step 声明而整体拒绝，未注册第二次观察。最后三次 stop JSON 未闭合，没有最终模型解释；该次代码重试未成功。原始 ORCA 科学核验通过不能替代生成代码的正确交付，见[live019 审计](acceptance/code-as-tools-step3/validation/live019-output-selection-and-delivery-failure.json)。
+
+前 19 次逐次记录累计 196 HTTP、2215901 tokens、估算 USD 0.9600441，真实 Python 4 次（3 次 operation completed、1 次 failed）、ORCA 3 次、代码重试 1 次；当时统一预算审计仍在复核，独立探针另列。v49 仅澄清 SDK 文件角色指导，定向回归分别 139 通过和 6 通过，当时完整默认套件仍待运行。live020 已 completed/complete，identity/prepared/optimized/freq 四个 Goal 均满足，13 HTTP、174660 tokens、1 次 Python、1 次 ORCA、work=157、code_retries=0，源码冻结未变；[独立科学核验已通过](acceptance/code-as-tools-step3/validation/live020-independent-scientific-audit.json)，185 个原 Run 文件未变，生产观察与终止快照一致且仍为 unverified。live021 的明确 NameError 对照因测试观察器误要求最后决策为 call_tool 而在科学预约前 failed/partial；[独立审计](acceptance/code-as-tools-step3/validation/live021-seeded-observer-assumption.json)记录 11 HTTP、137330 tokens、估算 USD 0.0588264，0 Attempt/Python/ORCA，不算模型 Python 执行失败。随后仅修正测试驱动，对生产既有 activated Plan 首个 ready Step 作只读核验，未改生产源码、提示或配置；gate、budget、outcome 定向测试 122 通过，真实 live021 只读回放未修改任务，原失败仍保留。live022 使用同一生产 v49 和 v4 配置，最终 failed/partial：16 HTTP、225275 tokens、1 次真实 Python 失败，0 ORCA、0 代码重试、0 声明工作单位。首版只有 359 字节故障占位代码，没有完整计算流程；真实 NameError 后仍未执行有效修复，最后诊断为 unchanged failed input cannot be retried automatically，不能计为完整任务程序修复成功。live020 未启用该种子分支，原文成功证据仍有效。上述前 19 次数字仅为历史小计，后续逐次数据继续保留。
+
+本轮步骤 3 按用户 2026-10-19 最新要求收尾，不进入步骤 4。v55 / Pro-v5 的 [live035 正常路径](acceptance/code-as-tools-step3/validation/live035-pro-autonomous-optfreq.json)已 completed/complete，[独立科学与完整交付](acceptance/code-as-tools-step3/validation/live035-independent-scientific-audit.json)通过：9 原子坐标顶层 Angstrom、完整 27 个频率 cm^-1，来源和终止观察一致。首次执行前改稿不是失败修复；观察仍 unverified、qualified_outputs 为空，不升级历史候选或科学资格。
+
+v56 的非代码容量修复、v57 的显式 `{key, repair_of, code}` 及 v58 的必需原生块指导已有相关定向证据；新修复引用已实际展开并启动同逻辑重跑，原任务字段、准入、权限和预算保留。v58 原生指导定向 51 项通过；上下文为 33P/1F 旧版本断言修正后该项 1P，非全量。详细范围、失败与复测见[本步报告](acceptance/code-as-tools-step3/report.md)。
+
+受控修复后的完整交付仍未通过。live028 原始科学通过但交付缺模式/单位；live038 第二 Python 因 Z_MaxIter 遗漏被 SDK 拒绝；live039 未进入代码执行；live040 实际 ORCA 后收集期限耗尽、两次 Python 均失败，最终按用户要求 paused/partial，无观察。现存 raw stdout/Hessian/XYZ 的[独立科学核验](acceptance/code-as-tools-step3/validation/live040-independent-scientific-audit.json)通过，但 stdout/XYZ 未完成内部 Artifact 注册，不能称完整交付。收集超时仍未修复，静态解析风险也没有执行验证。用户停止 NameError 专项，该项不再阻塞本轮交付，失败不改判。
+
+[001—040 累计审计](acceptance/code-as-tools-step3/validation/cumulative-budget-live001-040.json)：40/50 个预约，剩余 10 不再自行消费；491 HTTP、6601871 已知 tokens，另有 73131 未知预约（非实际用量），保守占用 6675002。20 Python（8 completed、12 failed）、10 ORCA、5 retry、1442 work。已知费用估算小计 USD 4.91126502，完整费用未知、93 条 Pro 产品费用未知，非账单；4220 原 Run 文件和 3513 引用复验未变。独立开发者探针另列。[Flash 配置](acceptance/code-as-tools-step3/validation/model-flash-v6-configuration.json)已切换且通过禁网本地验证，未做付费复验，历史 Pro 配置不改。
+
+首轮冻结全量 4231P/23F/179skip 保留，用户取消后续全量；定向通过不等于全量 clean。本轮收尾待用户验收，不称用户已验收通过，步骤 4—7 未实施。生产频率 checker、一般自然复杂错误成熟修复、跨任务重复可靠性和多计算恢复仍未覆盖。
 
 ## 当前执行边界更新（2026-10-18，Code as Tools 步骤 2）
 
@@ -14,7 +30,7 @@
 
 **Windows LPAC 仍不支持 MPI 科学计算；本次新增的本地 Linux 容器后端已取得真实四核证据。** Linux 最终镜像的动态 Python→SDK→ORCA、OPI SP/Opt、超时/取消/OOM 和边界组 7 项通过；另有真实恶意 IPC、宿主文件/合成凭据/网络拒绝、链接、重放、全局额度竞争和硬退出恢复证据。Windows 四核请求仍启动前拒绝，不自动改写为串行。见 [Linux 续验报告](acceptance/code-as-tools-step2-linux/report.md)，等待用户验收。
 
-此前 Windows 的 10 次 ORCA 启动（含失败）、4 次独立 MPI 诊断及成本记录见 [步骤 2 报告](acceptance/code-as-tools-step2/report.md) 与 [证据索引](acceptance/code-as-tools-step2/evidence-index.json)，保持原样。Linux 的初始探测与生产 Run 单独列证，CPU 成本按下界记录，磁盘无每尝试硬配额。新 Run 冻结后端与镜像，历史 Run 不自动迁移。本轮真实模型、远程运行均为 0；没有实施自然语言代码生成、多次 SDK 调用、检查点重放或步骤 3—7。原生优化/频率和未知执行影响仍受明确准入边界限制，见 [输入边界](native-orca-input.md)。
+此前 Windows 的 10 次 ORCA 启动（含失败）、4 次独立 MPI 诊断及成本记录见 [步骤 2 报告](acceptance/code-as-tools-step2/report.md) 与 [证据索引](acceptance/code-as-tools-step2/evidence-index.json)，保持原样。Linux 的初始探测与生产 Run 单独列证，CPU 成本按下界记录，磁盘无每尝试硬配额。新 Run 冻结后端与镜像，历史 Run 不自动迁移。步骤 2 交付批次的真实模型、远程运行均为 0，当时没有实施自然语言代码生成、多次 SDK 调用、检查点重放或步骤 3—7；后续步骤 3 证据见本页首节。原生优化/频率和未知执行影响仍受明确准入边界限制，见 [输入边界](native-orca-input.md)。
 
 版本：0.1.0；日期：2026-10-07。状态：**阶段 A 已由用户验收通过**，接受代码基线 `236376e`，见[用户验收记录](acceptance/phase-a/user-acceptance.md)。详细验证与失败历史见 [阶段报告](acceptance/phase-a/report.md) 和 [证据索引](acceptance/phase-a/evidence-index.json)。
 

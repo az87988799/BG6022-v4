@@ -73,23 +73,24 @@ def test_actual_failed_context_fits_without_changing_authority_data_or_tool_cont
         "Rows zip columns;null=absent;operation_status defaults completed;full observations=Result.")
     assert {key: value for key, value in new["DATA"].items() if key != "projection_rules"} == {
         key: value for key, value in old["DATA"].items() if key != "projection_rules"}
-    expected_schema = copy.deepcopy(old["PROPOSAL_SCHEMA"])
-    expected_schema["oneOf"] = [{"properties": {
-        **branch["if"]["properties"], **branch["then"]["properties"]}}
-        for branch in expected_schema.pop("allOf")]
-    assert new["PROPOSAL_SCHEMA"] == expected_schema
-    assert new.keys() - old.keys() == {"KEYS", "KEY_ENCODING", "REASON_TEMPLATE"}
-    assert old.keys() - new.keys() == {"ACTION_PARAMETERS", "CONTROL", "PARAMETER_SCHEMAS", "RESPONSE_ENVELOPE"}
+    # The current fitting view keeps the original exhaustive allOf schema;
+    # the historical oneOf rewrite above remains separately hash-verified.
+    assert new["PROPOSAL_SCHEMA"] == old["PROPOSAL_SCHEMA"]
+    assert new.keys() - old.keys() == {"KEYS", "KEY_ENCODING"}
+    assert old.keys() - new.keys() == {"RESPONSE_ENVELOPE"}
     assert old["CONTROL"] == old["PARAMETER_SCHEMAS"] == {}
-    representations = {"AUTHORITY", "DATA", "TOOL_CATALOG", "PROPOSAL_SCHEMA", "STRING_ENCODING", "SHARED_STRINGS"}
+    assert new["CONTROL"] == {"pending_step_ids": inputs["feedback"]["pending_step_ids"]} == {
+        "pending_step_ids": []}
+    representations = {"AUTHORITY", "CONTROL", "DATA", "TOOL_CATALOG", "PROPOSAL_SCHEMA",
+                       "STRING_ENCODING", "SHARED_STRINGS"}
     for key in old.keys() & new.keys() - representations:
         assert new[key] == old[key]
     assert new["TOOL_CATALOG"][0]["check_contract"] == old["TOOL_CATALOG"][0]["check_contract"]
     assert set(new["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
-    assert "RESPONSE_ENVELOPE" not in wire and "ACTION_PARAMETERS" not in wire
+    assert "RESPONSE_ENVELOPE" not in wire and "ACTION_PARAMETERS" in wire
     assert "RESPONSE_ENVELOPE" not in messages[0]["content"]
-    assert "JSON per PROPOSAL_SCHEMA; reason per REASON_TEMPLATE." in messages[0]["content"]
-    assert wire["REASON_TEMPLATE"] == old_wire["RESPONSE_ENVELOPE"]["reason"]
+    assert "JSON per PROPOSAL_SCHEMA." in messages[0]["content"]
+    assert "REASON_TEMPLATE" not in wire and "REASON_TEMPLATE" not in messages[0]["content"]
     analysis = new["DATA"]["results"][0]["unqualified_observations"]["analysis"]
     assert len(analysis["members"]) == 5
     assert [member["status"] for member in analysis["members"]].count("missing") == 2
@@ -177,8 +178,10 @@ def _matches(schema, value):
 ])
 def test_old_and_compact_action_parameter_schemas_agree_with_program_validation(replay, action, parameters, valid):
     data, inputs = replay
-    schemas = [decoded(data["legacy_compact_messages"])["PROPOSAL_SCHEMA"],
-               payload(context.build_context(**inputs))["PROPOSAL_SCHEMA"]]
+    original = decoded(data["legacy_compact_messages"])
+    schemas = [original["PROPOSAL_SCHEMA"],
+               payload(context.build_context(**inputs))["PROPOSAL_SCHEMA"],
+               context._compact_terminal_response(copy.deepcopy(original))["PROPOSAL_SCHEMA"]]
     proposal = {"action": action, "reason": "No remaining authorized science.", "parameters": parameters,
         "request_version": 1, "plan_version": 1, "permission_version": 1, "control_generation": 0,
         "related_results": inputs["run"].result_ids}
@@ -194,12 +197,15 @@ def test_old_and_compact_action_parameter_schemas_agree_with_program_validation(
 @pytest.mark.parametrize("action", ["clarify", "stop"])
 def test_both_actions_still_require_exactly_the_eight_envelope_fields(replay, action):
     data, inputs = replay
-    old = decoded(data["legacy_compact_messages"])["PROPOSAL_SCHEMA"]
+    original = decoded(data["legacy_compact_messages"])
+    old = original["PROPOSAL_SCHEMA"]
     new = payload(context.build_context(**inputs))["PROPOSAL_SCHEMA"]
+    compact = context._compact_terminal_response(copy.deepcopy(original))["PROPOSAL_SCHEMA"]
+    assert new == old
     assert {key: value for key, value in old.items() if key != "allOf"} == {
-        key: value for key, value in new.items() if key != "oneOf"}
-    assert new["oneOf"] == [{"properties": {**rule["if"]["properties"], **rule["then"]["properties"]}}
-                             for rule in old["allOf"]]
+        key: value for key, value in compact.items() if key != "oneOf"}
+    assert compact["oneOf"] == [{"properties": {**rule["if"]["properties"], **rule["then"]["properties"]}}
+                                 for rule in old["allOf"]]
     proposal = {"action": action, "reason": "Insufficient evidence.", "parameters": (
         {"questions": ["Which scope?"], "unresolved": ["scope"]} if action == "clarify" else {}),
         "request_version": 1, "plan_version": 1, "permission_version": 1, "control_generation": 0,
@@ -207,9 +213,9 @@ def test_both_actions_still_require_exactly_the_eight_envelope_fields(replay, ac
     for count in range(len(proposal) + 1):
         for keys in itertools.combinations(proposal, count):
             candidate = {key: proposal[key] for key in keys}
-            assert _matches(old, candidate) is (count == 8)
-            assert _matches(new, candidate) is (count == 8)
-    for schema in (old, new):
+            for schema in (old, new, compact):
+                assert _matches(schema, candidate) is (count == 8)
+    for schema in (old, new, compact):
         assert not _matches(schema, {**proposal, "extra": True})
         assert not _matches(schema, {**proposal, "parameters": []})
         assert not _matches(schema, {**proposal, "action": "call_tool"})

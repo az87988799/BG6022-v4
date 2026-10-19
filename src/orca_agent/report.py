@@ -360,10 +360,12 @@ def render_report(report: dict[str, Any]) -> str:
         if row.get("geometry_relation"):
             lines.append("请求几何关系：" + _cell(row["geometry_relation"]) + "。")
         answer = row.get("answer")
-        if answer and answer["kind"] == "qualified_scientific_output":
+        if answer and answer["kind"] in {"qualified_scientific_output", "qualified_input_artifact"}:
             displayed = ("产物 " + _cell(answer["artifact_id"]) if answer.get("artifact_id") and answer["value"] is None
                          else _cell(answer["value"]) + " " + _cell(answer["unit"] if answer["unit"] is not None else "unknown"))
-            lines.append(f"本目标合格输出：{displayed}；"
+            label = ("本目标已检查输入（不宣称科学资格）" if answer["kind"] == "qualified_input_artifact"
+                     else "本目标合格输出")
+            lines.append(f"{label}：{displayed}；"
                          f"检查版本：{_cell(answer['check_versions'])}。")
         elif answer:
             lines.append("本目标观察（不宣称科学资格）：" + _cell(answer["observation"])

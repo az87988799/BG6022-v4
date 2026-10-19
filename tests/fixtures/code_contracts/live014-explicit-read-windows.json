@@ -1,0 +1,3612 @@
+{
+  "source_run_id": "run_af2fbef621234408a20e1a9406f952bf",
+  "kind": "Original completed evidence Calls and full Results before model request 23; no repaired code or additional execution",
+  "source_run": {
+    "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+    "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985"
+  },
+  "scope": {
+    "included_completed_reads": 9,
+    "excluded_call_id": "call_ce4b10bc570b4093a8153c7df91a2bae",
+    "excluded_result_id": "result_f5dbb18ed9444ff7a4b8827b8af38432",
+    "exclusion_reason": "Read 10 completed after the final model request; no subsequent model request observed it.",
+    "preservation": "Calls, Results, Request and Plan payloads are copied verbatim as parsed JSON. Source file SHA256 values refer to original bytes."
+  },
+  "reads": [
+    {
+      "sequence": 1,
+      "call_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+        "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985",
+        "json_pointer": "/calls/8"
+      },
+      "call": {
+        "id": "call_6f6f63b5818e445290d5ed51924c0c1d",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+          "start_line": 1,
+          "lines": 200
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_e12f0be33e264644b387a5bdb0cffc9c",
+        "request_version": 3,
+        "plan_version": 2,
+        "control_generation": 1,
+        "created_at": "2026-10-19T05:21:50.424751Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_43a71e2cd0604b58901b7ae758d3a18b"
+        }
+      },
+      "result_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/results/result_e12f0be33e264644b387a5bdb0cffc9c.json",
+        "sha256": "c21d18ecbd06ad04711c44df3e371fc18068fae6f4ef42b7769e56d287d91a8b"
+      },
+      "result": {
+        "id": "result_e12f0be33e264644b387a5bdb0cffc9c",
+        "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+        "step_id": null,
+        "attempt_id": null,
+        "call_id": "call_6f6f63b5818e445290d5ed51924c0c1d",
+        "supersedes_result_id": null,
+        "operation_status": "completed",
+        "checks": {
+          "text_window": [
+            {
+              "name": "bounded_evidence_read",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+                "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+                "view": {
+                  "type": "raw_text",
+                  "version": "1"
+                },
+                "path": [],
+                "coverage": {
+                  "version": "evidence-coverage-1",
+                  "requested": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 201
+                  },
+                  "returned": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 68
+                  },
+                  "complete": true,
+                  "truncated": false,
+                  "reason": null,
+                  "next_cursor": null
+                }
+              },
+              "rule_version": "evidence-read-1"
+            }
+          ]
+        },
+        "qualified_outputs": {},
+        "observations": {
+          "text_window": {
+            "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+            "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+            "role": "code",
+            "file": "artifacts/artifact_ff9c2e610f1749bba3ef8a22f4b26aef/files/run_ethanol_optfreq.py",
+            "source": {
+              "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+              "role": "python",
+              "name": "run_ethanol_optfreq.py"
+            },
+            "view": {
+              "type": "raw_text",
+              "version": "1"
+            },
+            "path": [],
+            "geometry_indices": [],
+            "stage": "unknown",
+            "units": null,
+            "conditions": "unknown",
+            "scientific_status": "unverified",
+            "validation": "unverified observation; not a scientific qualification",
+            "lines": [
+              {
+                "line": 1,
+                "text": "import json, re"
+              },
+              {
+                "line": 2,
+                "text": "from pathlib import Path"
+              },
+              {
+                "line": 3,
+                "text": "from orca_task_sdk import run_orca"
+              },
+              {
+                "line": 4,
+                "text": ""
+              },
+              {
+                "line": 5,
+                "text": "receipt = run_orca(\"job.inp\", dependencies=(\"ethanol.xyz\",), request_key=\"ethanol_optfreq\")"
+              },
+              {
+                "line": 6,
+                "text": "files = receipt.get(\"files\", {}) or {}"
+              },
+              {
+                "line": 7,
+                "text": ""
+              },
+              {
+                "line": 8,
+                "text": "def read(path):"
+              },
+              {
+                "line": 9,
+                "text": "    try:"
+              },
+              {
+                "line": 10,
+                "text": "        return Path(path).read_text(encoding=\"utf-8\", errors=\"replace\")"
+              },
+              {
+                "line": 11,
+                "text": "    except Exception:"
+              },
+              {
+                "line": 12,
+                "text": "        return \"\""
+              },
+              {
+                "line": 13,
+                "text": ""
+              },
+              {
+                "line": 14,
+                "text": "def choose(pred):"
+              },
+              {
+                "line": 15,
+                "text": "    for k in files:"
+              },
+              {
+                "line": 16,
+                "text": "        if pred(k):"
+              },
+              {
+                "line": 17,
+                "text": "            return k"
+              },
+              {
+                "line": 18,
+                "text": "    return None"
+              },
+              {
+                "line": 19,
+                "text": ""
+              },
+              {
+                "line": 20,
+                "text": "xyz_key = choose(lambda k: k.lower().endswith(\".xyz\"))"
+              },
+              {
+                "line": 21,
+                "text": "out_key = choose(lambda k: \"stdout\" in k.lower())"
+              },
+              {
+                "line": 22,
+                "text": ""
+              },
+              {
+                "line": 23,
+                "text": "def parse_xyz(path):"
+              },
+              {
+                "line": 24,
+                "text": "    lines = read(path).splitlines()"
+              },
+              {
+                "line": 25,
+                "text": "    for i, line in enumerate(lines):"
+              },
+              {
+                "line": 26,
+                "text": "        s = line.strip()"
+              },
+              {
+                "line": 27,
+                "text": "        if s.isdigit():"
+              },
+              {
+                "line": 28,
+                "text": "            n = int(s)"
+              },
+              {
+                "line": 29,
+                "text": "            if i + 2 + n <= len(lines):"
+              },
+              {
+                "line": 30,
+                "text": "                atoms = []"
+              },
+              {
+                "line": 31,
+                "text": "                ok = True"
+              },
+              {
+                "line": 32,
+                "text": "                for j in range(i + 2, i + 2 + n):"
+              },
+              {
+                "line": 33,
+                "text": "                    p = lines[j].split()"
+              },
+              {
+                "line": 34,
+                "text": "                    if len(p) < 4:"
+              },
+              {
+                "line": 35,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 36,
+                "text": "                        break"
+              },
+              {
+                "line": 37,
+                "text": "                    try:"
+              },
+              {
+                "line": 38,
+                "text": "                        atoms.append({\"element\": p[0], \"x\": float(p[1]), \"y\": float(p[2]), \"z\": float(p[3])})"
+              },
+              {
+                "line": 39,
+                "text": "                    except Exception:"
+              },
+              {
+                "line": 40,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 41,
+                "text": "                        break"
+              },
+              {
+                "line": 42,
+                "text": "                if ok and atoms:"
+              },
+              {
+                "line": 43,
+                "text": "                    return atoms"
+              },
+              {
+                "line": 44,
+                "text": "    return None"
+              },
+              {
+                "line": 45,
+                "text": ""
+              },
+              {
+                "line": 46,
+                "text": "def parse_freqs(text):"
+              },
+              {
+                "line": 47,
+                "text": "    vals = []"
+              },
+              {
+                "line": 48,
+                "text": "    pat = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+(?:\\.\\d+)?)\\s+cm\\*\\*-1\")"
+              },
+              {
+                "line": 49,
+                "text": "    for line in text.splitlines():"
+              },
+              {
+                "line": 50,
+                "text": "        m = pat.match(line)"
+              },
+              {
+                "line": 51,
+                "text": "        if m:"
+              },
+              {
+                "line": 52,
+                "text": "            v = float(m.group(2))"
+              },
+              {
+                "line": 53,
+                "text": "            if abs(v) > 1e-8:"
+              },
+              {
+                "line": 54,
+                "text": "                vals.append(v)"
+              },
+              {
+                "line": 55,
+                "text": "    return vals"
+              },
+              {
+                "line": 56,
+                "text": ""
+              },
+              {
+                "line": 57,
+                "text": "xyz_atoms = parse_xyz(files.get(xyz_key)) if xyz_key else None"
+              },
+              {
+                "line": 58,
+                "text": "freqs = parse_freqs(read(files.get(out_key))) if out_key else []"
+              },
+              {
+                "line": 59,
+                "text": ""
+              },
+              {
+                "line": 60,
+                "text": "obs = []"
+              },
+              {
+                "line": 61,
+                "text": "if xyz_atoms:"
+              },
+              {
+                "line": 62,
+                "text": "    obs.append({\"name\": \"optimized_geometry\", \"value\": xyz_atoms, \"unit\": \"angstrom\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": xyz_key, \"location\": None}], \"limitations\": [\"Geometry parsed from ORCA Opt+Freq output; scientific qualification is not implied.\"]})"
+              },
+              {
+                "line": 63,
+                "text": "if freqs:"
+              },
+              {
+                "line": 64,
+                "text": "    obs.append({\"name\": \"vibrational_frequencies\", \"value\": freqs, \"unit\": \"cm^-1\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": out_key, \"location\": \"VIBRATIONAL FREQUENCIES\"}], \"limitations\": [\"Frequencies parsed from ORCA output; imaginary modes or convergence should be reviewed.\"]})"
+              },
+              {
+                "line": 65,
+                "text": "Path(\"observations.json\").write_text(json.dumps({\"version\": 1, \"observations\": obs}, indent=2), encoding=\"utf-8\")"
+              },
+              {
+                "line": 66,
+                "text": ""
+              },
+              {
+                "line": 67,
+                "text": "result = {\"request_key\": receipt.get(\"request_key\"), \"input_fingerprint\": receipt.get(\"input_fingerprint\"), \"operation_status\": receipt.get(\"operation_status\"), \"scientific_validation\": receipt.get(\"scientific_validation\"), \"actual_conditions\": receipt.get(\"actual_conditions\"), \"files\": files}"
+              }
+            ],
+            "returned_bytes": 2802,
+            "status": "observed",
+            "coverage": {
+              "version": "evidence-coverage-1",
+              "requested": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 201
+              },
+              "returned": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 68
+              },
+              "complete": true,
+              "truncated": false,
+              "reason": null,
+              "next_cursor": null
+            }
+          }
+        },
+        "observation_records": [],
+        "diagnostics": [],
+        "artifact_ids": [
+          "artifact_ff9c2e610f1749bba3ef8a22f4b26aef"
+        ],
+        "source": {
+          "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+          "role": "python",
+          "name": "run_ethanol_optfreq.py",
+          "tool": "evidence.text",
+          "consumption": {
+            "_decision_id": "model_43a71e2cd0604b58901b7ae758d3a18b"
+          },
+          "request_version": 3,
+          "plan_version": 2
+        },
+        "created_at": "2026-10-19T05:21:50.480388Z"
+      }
+    },
+    {
+      "sequence": 2,
+      "call_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+        "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985",
+        "json_pointer": "/calls/9"
+      },
+      "call": {
+        "id": "call_673360851aae413d94b10a6fb329db41",
+        "tool": "evidence.list",
+        "parameters": {
+          "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+          "offset": 0,
+          "limit": 200
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_a366afa7ddee4dccbccc53ba99311dfe",
+        "request_version": 3,
+        "plan_version": 2,
+        "control_generation": 1,
+        "created_at": "2026-10-19T05:22:16.245817Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_fe998704850d42c380c92dda843f54c9"
+        }
+      },
+      "result_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/results/result_a366afa7ddee4dccbccc53ba99311dfe.json",
+        "sha256": "7d446844e637219cf4d6e7e0224df39c4a2833ca8282a78f6b754798d0667d66"
+      },
+      "result": {
+        "id": "result_a366afa7ddee4dccbccc53ba99311dfe",
+        "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+        "step_id": null,
+        "attempt_id": null,
+        "call_id": "call_673360851aae413d94b10a6fb329db41",
+        "supersedes_result_id": null,
+        "operation_status": "completed",
+        "checks": {
+          "artifact_metadata": [
+            {
+              "name": "bounded_evidence_read",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "coverage": {
+                  "version": "evidence-coverage-1",
+                  "requested": {
+                    "kind": "artifacts",
+                    "start": 0,
+                    "stop": 200
+                  },
+                  "returned": {
+                    "kind": "artifacts",
+                    "start": 0,
+                    "stop": 11
+                  },
+                  "complete": true,
+                  "truncated": false,
+                  "reason": null,
+                  "next_cursor": null
+                }
+              },
+              "rule_version": "evidence-read-1"
+            }
+          ]
+        },
+        "qualified_outputs": {},
+        "observations": {
+          "artifact_metadata": {
+            "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+            "inventory_sha256": "d6024e095a07ce45d43d1e46880a0ccf9ab5fa59595c681a09e77fc4f4923a5d",
+            "offset": 0,
+            "total": 11,
+            "artifacts": [
+              {
+                "id": "artifact_a63f84a20ade4cc1bbc5132055f81609",
+                "path": "artifacts/artifact_a63f84a20ade4cc1bbc5132055f81609/files/pubchem-response.json",
+                "sha256": "a7691d1bcb6767607a7aa1a3398ae1d5de1448beb9b62368261ad5e84dfec09d",
+                "size": 296,
+                "role": "identity_raw_response",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                  "call_id": "call_1150697e13e841489dd7226941cbe920",
+                  "step_id": "step_306e865c6623434f8f445e1733439c78",
+                  "request_version": 3
+                },
+                "created_at": "2026-10-19T05:20:45.949549Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              },
+              {
+                "id": "artifact_3147d860728b4e58955ceb37bafe216e",
+                "path": "artifacts/artifact_3147d860728b4e58955ceb37bafe216e/files/pubchem-synonyms.json",
+                "sha256": "099834ba76b0fbae0c5f8f297111ae50098bfa173fb8dc66668cb32418908a80",
+                "size": 449348,
+                "role": "identity_raw_response",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                  "call_id": "call_1150697e13e841489dd7226941cbe920",
+                  "step_id": "step_306e865c6623434f8f445e1733439c78",
+                  "request_version": 3
+                },
+                "created_at": "2026-10-19T05:20:51.433133Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              },
+              {
+                "id": "artifact_22936b08e45f4dfa8f99e88dacb2c1bd",
+                "path": "artifacts/artifact_22936b08e45f4dfa8f99e88dacb2c1bd/files/wikidata-search.json",
+                "sha256": "9e4a53ad21f465041e8774f38238e48beeb47e114be058b3debd1475875d20bb",
+                "size": 2355,
+                "role": "identity_raw_response",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                  "call_id": "call_1150697e13e841489dd7226941cbe920",
+                  "step_id": "step_306e865c6623434f8f445e1733439c78",
+                  "request_version": 3
+                },
+                "created_at": "2026-10-19T05:20:52.027086Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              },
+              {
+                "id": "artifact_ef9dfe9798ef40b4bd3dd3e9ec82f294",
+                "path": "artifacts/artifact_ef9dfe9798ef40b4bd3dd3e9ec82f294/files/wikidata-entities.json",
+                "sha256": "e9a7275a6d718e2b71c11bb6922704200d1672390c8632ccc8d9c2cddb32b948",
+                "size": 552031,
+                "role": "identity_raw_response",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                  "call_id": "call_1150697e13e841489dd7226941cbe920",
+                  "step_id": "step_306e865c6623434f8f445e1733439c78",
+                  "request_version": 3
+                },
+                "created_at": "2026-10-19T05:20:54.761313Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              },
+              {
+                "id": "artifact_1fde4156943b4dce955f900c5b77e209",
+                "path": "artifacts/artifact_1fde4156943b4dce955f900c5b77e209/files/identity.json",
+                "sha256": "1e619df5719303b7fd79fd0ca042ba172882005551712406cee907094c3fd03c",
+                "size": 4820,
+                "role": "resolved_identity",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                  "call_id": "call_1150697e13e841489dd7226941cbe920",
+                  "step_id": "step_306e865c6623434f8f445e1733439c78",
+                  "request_version": 3
+                },
+                "created_at": "2026-10-19T05:20:54.932209Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              },
+              {
+                "id": "artifact_b93e1ed134464d6cb8986398bf40e465",
+                "path": "artifacts/artifact_b93e1ed134464d6cb8986398bf40e465/files/worker-outcome.json",
+                "sha256": "e9272f5cd06b4c43d2ff11a64d5002a7bbd5935741b7ab0b939a5d5639382365",
+                "size": 2661,
+                "role": "structure_execution",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                  "call_id": "call_33abb0d1a04d4bceb4684ccbd105848c",
+                  "step_id": "step_af701fa8d8d74029962758373237e4a8",
+                  "request_version": 3
+                },
+                "created_at": "2026-10-19T05:21:00.160066Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              },
+              {
+                "id": "artifact_719bffe10dae40468ae6518a00f53dfa",
+                "path": "artifacts/artifact_719bffe10dae40468ae6518a00f53dfa/files/stdout.out",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "size": 0,
+                "role": "structure_execution",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                  "call_id": "call_33abb0d1a04d4bceb4684ccbd105848c",
+                  "step_id": "step_af701fa8d8d74029962758373237e4a8",
+                  "request_version": 3
+                },
+                "created_at": "2026-10-19T05:21:00.348123Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              },
+              {
+                "id": "artifact_8b86df12dd2843539b54e963c7db1bcb",
+                "path": "artifacts/artifact_8b86df12dd2843539b54e963c7db1bcb/files/stderr.txt",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "size": 0,
+                "role": "structure_execution",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                  "call_id": "call_33abb0d1a04d4bceb4684ccbd105848c",
+                  "step_id": "step_af701fa8d8d74029962758373237e4a8",
+                  "request_version": 3
+                },
+                "created_at": "2026-10-19T05:21:00.529015Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              },
+              {
+                "id": "artifact_0903573319cc450286564a9f8d4198ae",
+                "path": "artifacts/artifact_0903573319cc450286564a9f8d4198ae/files/prepared.xyz",
+                "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                "size": 859,
+                "role": "prepared_geometry_candidate",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                  "call_id": "call_33abb0d1a04d4bceb4684ccbd105848c",
+                  "step_id": "step_af701fa8d8d74029962758373237e4a8",
+                  "request_version": 3
+                },
+                "created_at": "2026-10-19T05:21:00.793115Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              },
+              {
+                "id": "artifact_3f7f6c479c22415587b94b76799deb5a",
+                "path": "artifacts/artifact_3f7f6c479c22415587b94b76799deb5a/files/ethanol_optfreq.inp",
+                "sha256": "ea6ea758afa146704ad6c386fd2c1415503a2ce3408736f6088369702e5d83b7",
+                "size": 252,
+                "role": "native_input",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "call_id": "call_53e71e5e873b4b12b370330150f4d58c",
+                  "role": "orca",
+                  "name": "ethanol_optfreq.inp"
+                },
+                "created_at": "2026-10-19T05:21:27.253609Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              },
+              {
+                "id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+                "path": "artifacts/artifact_ff9c2e610f1749bba3ef8a22f4b26aef/files/run_ethanol_optfreq.py",
+                "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+                "size": 2802,
+                "role": "code",
+                "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+                "attempt_id": null,
+                "source": {
+                  "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+                  "role": "python",
+                  "name": "run_ethanol_optfreq.py"
+                },
+                "created_at": "2026-10-19T05:21:31.689314Z",
+                "integrity": {
+                  "status": "verified"
+                }
+              }
+            ],
+            "next_offset": null,
+            "validation": "unverified observation; not a scientific qualification",
+            "status": "observed",
+            "coverage": {
+              "version": "evidence-coverage-1",
+              "requested": {
+                "kind": "artifacts",
+                "start": 0,
+                "stop": 200
+              },
+              "returned": {
+                "kind": "artifacts",
+                "start": 0,
+                "stop": 11
+              },
+              "complete": true,
+              "truncated": false,
+              "reason": null,
+              "next_cursor": null
+            }
+          }
+        },
+        "observation_records": [],
+        "diagnostics": [],
+        "artifact_ids": [
+          "artifact_a63f84a20ade4cc1bbc5132055f81609",
+          "artifact_3147d860728b4e58955ceb37bafe216e",
+          "artifact_22936b08e45f4dfa8f99e88dacb2c1bd",
+          "artifact_ef9dfe9798ef40b4bd3dd3e9ec82f294",
+          "artifact_1fde4156943b4dce955f900c5b77e209",
+          "artifact_b93e1ed134464d6cb8986398bf40e465",
+          "artifact_719bffe10dae40468ae6518a00f53dfa",
+          "artifact_8b86df12dd2843539b54e963c7db1bcb",
+          "artifact_0903573319cc450286564a9f8d4198ae",
+          "artifact_3f7f6c479c22415587b94b76799deb5a",
+          "artifact_ff9c2e610f1749bba3ef8a22f4b26aef"
+        ],
+        "source": {
+          "tool": "evidence.list",
+          "consumption": {
+            "_decision_id": "model_fe998704850d42c380c92dda843f54c9"
+          },
+          "request_version": 3,
+          "plan_version": 2
+        },
+        "created_at": "2026-10-19T05:22:16.417825Z"
+      }
+    },
+    {
+      "sequence": 3,
+      "call_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+        "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985",
+        "json_pointer": "/calls/10"
+      },
+      "call": {
+        "id": "call_a2186f9d3ebf40818a6f96447f58241d",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+          "start_line": 1,
+          "lines": 200
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_742570672a944fa6bd84ba48d448748c",
+        "request_version": 3,
+        "plan_version": 2,
+        "control_generation": 1,
+        "created_at": "2026-10-19T05:22:24.007221Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_cbd9ea5f69cd44b6aa7a3f2b2e9700a3"
+        }
+      },
+      "result_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/results/result_742570672a944fa6bd84ba48d448748c.json",
+        "sha256": "8e65aee292e88b809771527186e8c58a7edfaa42267d2a870480adcd13a74d90"
+      },
+      "result": {
+        "id": "result_742570672a944fa6bd84ba48d448748c",
+        "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+        "step_id": null,
+        "attempt_id": null,
+        "call_id": "call_a2186f9d3ebf40818a6f96447f58241d",
+        "supersedes_result_id": null,
+        "operation_status": "completed",
+        "checks": {
+          "text_window": [
+            {
+              "name": "bounded_evidence_read",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+                "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+                "view": {
+                  "type": "raw_text",
+                  "version": "1"
+                },
+                "path": [],
+                "coverage": {
+                  "version": "evidence-coverage-1",
+                  "requested": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 201
+                  },
+                  "returned": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 68
+                  },
+                  "complete": true,
+                  "truncated": false,
+                  "reason": null,
+                  "next_cursor": null
+                }
+              },
+              "rule_version": "evidence-read-1"
+            }
+          ]
+        },
+        "qualified_outputs": {},
+        "observations": {
+          "text_window": {
+            "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+            "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+            "role": "code",
+            "file": "artifacts/artifact_ff9c2e610f1749bba3ef8a22f4b26aef/files/run_ethanol_optfreq.py",
+            "source": {
+              "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+              "role": "python",
+              "name": "run_ethanol_optfreq.py"
+            },
+            "view": {
+              "type": "raw_text",
+              "version": "1"
+            },
+            "path": [],
+            "geometry_indices": [],
+            "stage": "unknown",
+            "units": null,
+            "conditions": "unknown",
+            "scientific_status": "unverified",
+            "validation": "unverified observation; not a scientific qualification",
+            "lines": [
+              {
+                "line": 1,
+                "text": "import json, re"
+              },
+              {
+                "line": 2,
+                "text": "from pathlib import Path"
+              },
+              {
+                "line": 3,
+                "text": "from orca_task_sdk import run_orca"
+              },
+              {
+                "line": 4,
+                "text": ""
+              },
+              {
+                "line": 5,
+                "text": "receipt = run_orca(\"job.inp\", dependencies=(\"ethanol.xyz\",), request_key=\"ethanol_optfreq\")"
+              },
+              {
+                "line": 6,
+                "text": "files = receipt.get(\"files\", {}) or {}"
+              },
+              {
+                "line": 7,
+                "text": ""
+              },
+              {
+                "line": 8,
+                "text": "def read(path):"
+              },
+              {
+                "line": 9,
+                "text": "    try:"
+              },
+              {
+                "line": 10,
+                "text": "        return Path(path).read_text(encoding=\"utf-8\", errors=\"replace\")"
+              },
+              {
+                "line": 11,
+                "text": "    except Exception:"
+              },
+              {
+                "line": 12,
+                "text": "        return \"\""
+              },
+              {
+                "line": 13,
+                "text": ""
+              },
+              {
+                "line": 14,
+                "text": "def choose(pred):"
+              },
+              {
+                "line": 15,
+                "text": "    for k in files:"
+              },
+              {
+                "line": 16,
+                "text": "        if pred(k):"
+              },
+              {
+                "line": 17,
+                "text": "            return k"
+              },
+              {
+                "line": 18,
+                "text": "    return None"
+              },
+              {
+                "line": 19,
+                "text": ""
+              },
+              {
+                "line": 20,
+                "text": "xyz_key = choose(lambda k: k.lower().endswith(\".xyz\"))"
+              },
+              {
+                "line": 21,
+                "text": "out_key = choose(lambda k: \"stdout\" in k.lower())"
+              },
+              {
+                "line": 22,
+                "text": ""
+              },
+              {
+                "line": 23,
+                "text": "def parse_xyz(path):"
+              },
+              {
+                "line": 24,
+                "text": "    lines = read(path).splitlines()"
+              },
+              {
+                "line": 25,
+                "text": "    for i, line in enumerate(lines):"
+              },
+              {
+                "line": 26,
+                "text": "        s = line.strip()"
+              },
+              {
+                "line": 27,
+                "text": "        if s.isdigit():"
+              },
+              {
+                "line": 28,
+                "text": "            n = int(s)"
+              },
+              {
+                "line": 29,
+                "text": "            if i + 2 + n <= len(lines):"
+              },
+              {
+                "line": 30,
+                "text": "                atoms = []"
+              },
+              {
+                "line": 31,
+                "text": "                ok = True"
+              },
+              {
+                "line": 32,
+                "text": "                for j in range(i + 2, i + 2 + n):"
+              },
+              {
+                "line": 33,
+                "text": "                    p = lines[j].split()"
+              },
+              {
+                "line": 34,
+                "text": "                    if len(p) < 4:"
+              },
+              {
+                "line": 35,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 36,
+                "text": "                        break"
+              },
+              {
+                "line": 37,
+                "text": "                    try:"
+              },
+              {
+                "line": 38,
+                "text": "                        atoms.append({\"element\": p[0], \"x\": float(p[1]), \"y\": float(p[2]), \"z\": float(p[3])})"
+              },
+              {
+                "line": 39,
+                "text": "                    except Exception:"
+              },
+              {
+                "line": 40,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 41,
+                "text": "                        break"
+              },
+              {
+                "line": 42,
+                "text": "                if ok and atoms:"
+              },
+              {
+                "line": 43,
+                "text": "                    return atoms"
+              },
+              {
+                "line": 44,
+                "text": "    return None"
+              },
+              {
+                "line": 45,
+                "text": ""
+              },
+              {
+                "line": 46,
+                "text": "def parse_freqs(text):"
+              },
+              {
+                "line": 47,
+                "text": "    vals = []"
+              },
+              {
+                "line": 48,
+                "text": "    pat = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+(?:\\.\\d+)?)\\s+cm\\*\\*-1\")"
+              },
+              {
+                "line": 49,
+                "text": "    for line in text.splitlines():"
+              },
+              {
+                "line": 50,
+                "text": "        m = pat.match(line)"
+              },
+              {
+                "line": 51,
+                "text": "        if m:"
+              },
+              {
+                "line": 52,
+                "text": "            v = float(m.group(2))"
+              },
+              {
+                "line": 53,
+                "text": "            if abs(v) > 1e-8:"
+              },
+              {
+                "line": 54,
+                "text": "                vals.append(v)"
+              },
+              {
+                "line": 55,
+                "text": "    return vals"
+              },
+              {
+                "line": 56,
+                "text": ""
+              },
+              {
+                "line": 57,
+                "text": "xyz_atoms = parse_xyz(files.get(xyz_key)) if xyz_key else None"
+              },
+              {
+                "line": 58,
+                "text": "freqs = parse_freqs(read(files.get(out_key))) if out_key else []"
+              },
+              {
+                "line": 59,
+                "text": ""
+              },
+              {
+                "line": 60,
+                "text": "obs = []"
+              },
+              {
+                "line": 61,
+                "text": "if xyz_atoms:"
+              },
+              {
+                "line": 62,
+                "text": "    obs.append({\"name\": \"optimized_geometry\", \"value\": xyz_atoms, \"unit\": \"angstrom\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": xyz_key, \"location\": None}], \"limitations\": [\"Geometry parsed from ORCA Opt+Freq output; scientific qualification is not implied.\"]})"
+              },
+              {
+                "line": 63,
+                "text": "if freqs:"
+              },
+              {
+                "line": 64,
+                "text": "    obs.append({\"name\": \"vibrational_frequencies\", \"value\": freqs, \"unit\": \"cm^-1\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": out_key, \"location\": \"VIBRATIONAL FREQUENCIES\"}], \"limitations\": [\"Frequencies parsed from ORCA output; imaginary modes or convergence should be reviewed.\"]})"
+              },
+              {
+                "line": 65,
+                "text": "Path(\"observations.json\").write_text(json.dumps({\"version\": 1, \"observations\": obs}, indent=2), encoding=\"utf-8\")"
+              },
+              {
+                "line": 66,
+                "text": ""
+              },
+              {
+                "line": 67,
+                "text": "result = {\"request_key\": receipt.get(\"request_key\"), \"input_fingerprint\": receipt.get(\"input_fingerprint\"), \"operation_status\": receipt.get(\"operation_status\"), \"scientific_validation\": receipt.get(\"scientific_validation\"), \"actual_conditions\": receipt.get(\"actual_conditions\"), \"files\": files}"
+              }
+            ],
+            "returned_bytes": 2802,
+            "status": "observed",
+            "coverage": {
+              "version": "evidence-coverage-1",
+              "requested": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 201
+              },
+              "returned": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 68
+              },
+              "complete": true,
+              "truncated": false,
+              "reason": null,
+              "next_cursor": null
+            }
+          }
+        },
+        "observation_records": [],
+        "diagnostics": [],
+        "artifact_ids": [
+          "artifact_ff9c2e610f1749bba3ef8a22f4b26aef"
+        ],
+        "source": {
+          "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+          "role": "python",
+          "name": "run_ethanol_optfreq.py",
+          "tool": "evidence.text",
+          "consumption": {
+            "_decision_id": "model_cbd9ea5f69cd44b6aa7a3f2b2e9700a3"
+          },
+          "request_version": 3,
+          "plan_version": 2
+        },
+        "created_at": "2026-10-19T05:22:24.062036Z"
+      }
+    },
+    {
+      "sequence": 4,
+      "call_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+        "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985",
+        "json_pointer": "/calls/11"
+      },
+      "call": {
+        "id": "call_6bf49b3e9d7c4a298f3bc0f603d3429e",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+          "start_line": 23,
+          "lines": 46
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_f0e3a8b941ed4a6498da9f87f433aab1",
+        "request_version": 3,
+        "plan_version": 2,
+        "control_generation": 1,
+        "created_at": "2026-10-19T05:22:52.748769Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_a124426b0a1c462d856ef3108dfcd71e"
+        }
+      },
+      "result_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/results/result_f0e3a8b941ed4a6498da9f87f433aab1.json",
+        "sha256": "03345e730c68ac9a3d2b6ef97732155c2bd0ee9cbcb247ddf78e74fa26975426"
+      },
+      "result": {
+        "id": "result_f0e3a8b941ed4a6498da9f87f433aab1",
+        "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+        "step_id": null,
+        "attempt_id": null,
+        "call_id": "call_6bf49b3e9d7c4a298f3bc0f603d3429e",
+        "supersedes_result_id": null,
+        "operation_status": "completed",
+        "checks": {
+          "text_window": [
+            {
+              "name": "bounded_evidence_read",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+                "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+                "view": {
+                  "type": "raw_text",
+                  "version": "1"
+                },
+                "path": [],
+                "coverage": {
+                  "version": "evidence-coverage-1",
+                  "requested": {
+                    "kind": "lines",
+                    "start": 23,
+                    "stop": 69
+                  },
+                  "returned": {
+                    "kind": "lines",
+                    "start": 23,
+                    "stop": 68
+                  },
+                  "complete": true,
+                  "truncated": false,
+                  "reason": null,
+                  "next_cursor": null
+                }
+              },
+              "rule_version": "evidence-read-1"
+            }
+          ]
+        },
+        "qualified_outputs": {},
+        "observations": {
+          "text_window": {
+            "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+            "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+            "role": "code",
+            "file": "artifacts/artifact_ff9c2e610f1749bba3ef8a22f4b26aef/files/run_ethanol_optfreq.py",
+            "source": {
+              "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+              "role": "python",
+              "name": "run_ethanol_optfreq.py"
+            },
+            "view": {
+              "type": "raw_text",
+              "version": "1"
+            },
+            "path": [],
+            "geometry_indices": [],
+            "stage": "unknown",
+            "units": null,
+            "conditions": "unknown",
+            "scientific_status": "unverified",
+            "validation": "unverified observation; not a scientific qualification",
+            "lines": [
+              {
+                "line": 23,
+                "text": "def parse_xyz(path):"
+              },
+              {
+                "line": 24,
+                "text": "    lines = read(path).splitlines()"
+              },
+              {
+                "line": 25,
+                "text": "    for i, line in enumerate(lines):"
+              },
+              {
+                "line": 26,
+                "text": "        s = line.strip()"
+              },
+              {
+                "line": 27,
+                "text": "        if s.isdigit():"
+              },
+              {
+                "line": 28,
+                "text": "            n = int(s)"
+              },
+              {
+                "line": 29,
+                "text": "            if i + 2 + n <= len(lines):"
+              },
+              {
+                "line": 30,
+                "text": "                atoms = []"
+              },
+              {
+                "line": 31,
+                "text": "                ok = True"
+              },
+              {
+                "line": 32,
+                "text": "                for j in range(i + 2, i + 2 + n):"
+              },
+              {
+                "line": 33,
+                "text": "                    p = lines[j].split()"
+              },
+              {
+                "line": 34,
+                "text": "                    if len(p) < 4:"
+              },
+              {
+                "line": 35,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 36,
+                "text": "                        break"
+              },
+              {
+                "line": 37,
+                "text": "                    try:"
+              },
+              {
+                "line": 38,
+                "text": "                        atoms.append({\"element\": p[0], \"x\": float(p[1]), \"y\": float(p[2]), \"z\": float(p[3])})"
+              },
+              {
+                "line": 39,
+                "text": "                    except Exception:"
+              },
+              {
+                "line": 40,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 41,
+                "text": "                        break"
+              },
+              {
+                "line": 42,
+                "text": "                if ok and atoms:"
+              },
+              {
+                "line": 43,
+                "text": "                    return atoms"
+              },
+              {
+                "line": 44,
+                "text": "    return None"
+              },
+              {
+                "line": 45,
+                "text": ""
+              },
+              {
+                "line": 46,
+                "text": "def parse_freqs(text):"
+              },
+              {
+                "line": 47,
+                "text": "    vals = []"
+              },
+              {
+                "line": 48,
+                "text": "    pat = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+(?:\\.\\d+)?)\\s+cm\\*\\*-1\")"
+              },
+              {
+                "line": 49,
+                "text": "    for line in text.splitlines():"
+              },
+              {
+                "line": 50,
+                "text": "        m = pat.match(line)"
+              },
+              {
+                "line": 51,
+                "text": "        if m:"
+              },
+              {
+                "line": 52,
+                "text": "            v = float(m.group(2))"
+              },
+              {
+                "line": 53,
+                "text": "            if abs(v) > 1e-8:"
+              },
+              {
+                "line": 54,
+                "text": "                vals.append(v)"
+              },
+              {
+                "line": 55,
+                "text": "    return vals"
+              },
+              {
+                "line": 56,
+                "text": ""
+              },
+              {
+                "line": 57,
+                "text": "xyz_atoms = parse_xyz(files.get(xyz_key)) if xyz_key else None"
+              },
+              {
+                "line": 58,
+                "text": "freqs = parse_freqs(read(files.get(out_key))) if out_key else []"
+              },
+              {
+                "line": 59,
+                "text": ""
+              },
+              {
+                "line": 60,
+                "text": "obs = []"
+              },
+              {
+                "line": 61,
+                "text": "if xyz_atoms:"
+              },
+              {
+                "line": 62,
+                "text": "    obs.append({\"name\": \"optimized_geometry\", \"value\": xyz_atoms, \"unit\": \"angstrom\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": xyz_key, \"location\": None}], \"limitations\": [\"Geometry parsed from ORCA Opt+Freq output; scientific qualification is not implied.\"]})"
+              },
+              {
+                "line": 63,
+                "text": "if freqs:"
+              },
+              {
+                "line": 64,
+                "text": "    obs.append({\"name\": \"vibrational_frequencies\", \"value\": freqs, \"unit\": \"cm^-1\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": out_key, \"location\": \"VIBRATIONAL FREQUENCIES\"}], \"limitations\": [\"Frequencies parsed from ORCA output; imaginary modes or convergence should be reviewed.\"]})"
+              },
+              {
+                "line": 65,
+                "text": "Path(\"observations.json\").write_text(json.dumps({\"version\": 1, \"observations\": obs}, indent=2), encoding=\"utf-8\")"
+              },
+              {
+                "line": 66,
+                "text": ""
+              },
+              {
+                "line": 67,
+                "text": "result = {\"request_key\": receipt.get(\"request_key\"), \"input_fingerprint\": receipt.get(\"input_fingerprint\"), \"operation_status\": receipt.get(\"operation_status\"), \"scientific_validation\": receipt.get(\"scientific_validation\"), \"actual_conditions\": receipt.get(\"actual_conditions\"), \"files\": files}"
+              }
+            ],
+            "returned_bytes": 2253,
+            "status": "observed",
+            "coverage": {
+              "version": "evidence-coverage-1",
+              "requested": {
+                "kind": "lines",
+                "start": 23,
+                "stop": 69
+              },
+              "returned": {
+                "kind": "lines",
+                "start": 23,
+                "stop": 68
+              },
+              "complete": true,
+              "truncated": false,
+              "reason": null,
+              "next_cursor": null
+            }
+          }
+        },
+        "observation_records": [],
+        "diagnostics": [],
+        "artifact_ids": [
+          "artifact_ff9c2e610f1749bba3ef8a22f4b26aef"
+        ],
+        "source": {
+          "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+          "role": "python",
+          "name": "run_ethanol_optfreq.py",
+          "tool": "evidence.text",
+          "consumption": {
+            "_decision_id": "model_a124426b0a1c462d856ef3108dfcd71e"
+          },
+          "request_version": 3,
+          "plan_version": 2
+        },
+        "created_at": "2026-10-19T05:22:52.801508Z"
+      }
+    },
+    {
+      "sequence": 5,
+      "call_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+        "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985",
+        "json_pointer": "/calls/12"
+      },
+      "call": {
+        "id": "call_0f1bb975058a4cd1b75aade927ee85dd",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+          "start_line": 1,
+          "lines": 200
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_61e56fb8cf3c490f978103a4fd5f3efa",
+        "request_version": 3,
+        "plan_version": 2,
+        "control_generation": 1,
+        "created_at": "2026-10-19T05:22:59.546829Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_d0e7b88be20d47a195bd6f4041ad4829"
+        }
+      },
+      "result_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/results/result_61e56fb8cf3c490f978103a4fd5f3efa.json",
+        "sha256": "f29350e7fc446d9eab54b295d1ee9a081f10ac862be9afcfdb9b9295f6958a64"
+      },
+      "result": {
+        "id": "result_61e56fb8cf3c490f978103a4fd5f3efa",
+        "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+        "step_id": null,
+        "attempt_id": null,
+        "call_id": "call_0f1bb975058a4cd1b75aade927ee85dd",
+        "supersedes_result_id": null,
+        "operation_status": "completed",
+        "checks": {
+          "text_window": [
+            {
+              "name": "bounded_evidence_read",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+                "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+                "view": {
+                  "type": "raw_text",
+                  "version": "1"
+                },
+                "path": [],
+                "coverage": {
+                  "version": "evidence-coverage-1",
+                  "requested": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 201
+                  },
+                  "returned": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 68
+                  },
+                  "complete": true,
+                  "truncated": false,
+                  "reason": null,
+                  "next_cursor": null
+                }
+              },
+              "rule_version": "evidence-read-1"
+            }
+          ]
+        },
+        "qualified_outputs": {},
+        "observations": {
+          "text_window": {
+            "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+            "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+            "role": "code",
+            "file": "artifacts/artifact_ff9c2e610f1749bba3ef8a22f4b26aef/files/run_ethanol_optfreq.py",
+            "source": {
+              "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+              "role": "python",
+              "name": "run_ethanol_optfreq.py"
+            },
+            "view": {
+              "type": "raw_text",
+              "version": "1"
+            },
+            "path": [],
+            "geometry_indices": [],
+            "stage": "unknown",
+            "units": null,
+            "conditions": "unknown",
+            "scientific_status": "unverified",
+            "validation": "unverified observation; not a scientific qualification",
+            "lines": [
+              {
+                "line": 1,
+                "text": "import json, re"
+              },
+              {
+                "line": 2,
+                "text": "from pathlib import Path"
+              },
+              {
+                "line": 3,
+                "text": "from orca_task_sdk import run_orca"
+              },
+              {
+                "line": 4,
+                "text": ""
+              },
+              {
+                "line": 5,
+                "text": "receipt = run_orca(\"job.inp\", dependencies=(\"ethanol.xyz\",), request_key=\"ethanol_optfreq\")"
+              },
+              {
+                "line": 6,
+                "text": "files = receipt.get(\"files\", {}) or {}"
+              },
+              {
+                "line": 7,
+                "text": ""
+              },
+              {
+                "line": 8,
+                "text": "def read(path):"
+              },
+              {
+                "line": 9,
+                "text": "    try:"
+              },
+              {
+                "line": 10,
+                "text": "        return Path(path).read_text(encoding=\"utf-8\", errors=\"replace\")"
+              },
+              {
+                "line": 11,
+                "text": "    except Exception:"
+              },
+              {
+                "line": 12,
+                "text": "        return \"\""
+              },
+              {
+                "line": 13,
+                "text": ""
+              },
+              {
+                "line": 14,
+                "text": "def choose(pred):"
+              },
+              {
+                "line": 15,
+                "text": "    for k in files:"
+              },
+              {
+                "line": 16,
+                "text": "        if pred(k):"
+              },
+              {
+                "line": 17,
+                "text": "            return k"
+              },
+              {
+                "line": 18,
+                "text": "    return None"
+              },
+              {
+                "line": 19,
+                "text": ""
+              },
+              {
+                "line": 20,
+                "text": "xyz_key = choose(lambda k: k.lower().endswith(\".xyz\"))"
+              },
+              {
+                "line": 21,
+                "text": "out_key = choose(lambda k: \"stdout\" in k.lower())"
+              },
+              {
+                "line": 22,
+                "text": ""
+              },
+              {
+                "line": 23,
+                "text": "def parse_xyz(path):"
+              },
+              {
+                "line": 24,
+                "text": "    lines = read(path).splitlines()"
+              },
+              {
+                "line": 25,
+                "text": "    for i, line in enumerate(lines):"
+              },
+              {
+                "line": 26,
+                "text": "        s = line.strip()"
+              },
+              {
+                "line": 27,
+                "text": "        if s.isdigit():"
+              },
+              {
+                "line": 28,
+                "text": "            n = int(s)"
+              },
+              {
+                "line": 29,
+                "text": "            if i + 2 + n <= len(lines):"
+              },
+              {
+                "line": 30,
+                "text": "                atoms = []"
+              },
+              {
+                "line": 31,
+                "text": "                ok = True"
+              },
+              {
+                "line": 32,
+                "text": "                for j in range(i + 2, i + 2 + n):"
+              },
+              {
+                "line": 33,
+                "text": "                    p = lines[j].split()"
+              },
+              {
+                "line": 34,
+                "text": "                    if len(p) < 4:"
+              },
+              {
+                "line": 35,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 36,
+                "text": "                        break"
+              },
+              {
+                "line": 37,
+                "text": "                    try:"
+              },
+              {
+                "line": 38,
+                "text": "                        atoms.append({\"element\": p[0], \"x\": float(p[1]), \"y\": float(p[2]), \"z\": float(p[3])})"
+              },
+              {
+                "line": 39,
+                "text": "                    except Exception:"
+              },
+              {
+                "line": 40,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 41,
+                "text": "                        break"
+              },
+              {
+                "line": 42,
+                "text": "                if ok and atoms:"
+              },
+              {
+                "line": 43,
+                "text": "                    return atoms"
+              },
+              {
+                "line": 44,
+                "text": "    return None"
+              },
+              {
+                "line": 45,
+                "text": ""
+              },
+              {
+                "line": 46,
+                "text": "def parse_freqs(text):"
+              },
+              {
+                "line": 47,
+                "text": "    vals = []"
+              },
+              {
+                "line": 48,
+                "text": "    pat = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+(?:\\.\\d+)?)\\s+cm\\*\\*-1\")"
+              },
+              {
+                "line": 49,
+                "text": "    for line in text.splitlines():"
+              },
+              {
+                "line": 50,
+                "text": "        m = pat.match(line)"
+              },
+              {
+                "line": 51,
+                "text": "        if m:"
+              },
+              {
+                "line": 52,
+                "text": "            v = float(m.group(2))"
+              },
+              {
+                "line": 53,
+                "text": "            if abs(v) > 1e-8:"
+              },
+              {
+                "line": 54,
+                "text": "                vals.append(v)"
+              },
+              {
+                "line": 55,
+                "text": "    return vals"
+              },
+              {
+                "line": 56,
+                "text": ""
+              },
+              {
+                "line": 57,
+                "text": "xyz_atoms = parse_xyz(files.get(xyz_key)) if xyz_key else None"
+              },
+              {
+                "line": 58,
+                "text": "freqs = parse_freqs(read(files.get(out_key))) if out_key else []"
+              },
+              {
+                "line": 59,
+                "text": ""
+              },
+              {
+                "line": 60,
+                "text": "obs = []"
+              },
+              {
+                "line": 61,
+                "text": "if xyz_atoms:"
+              },
+              {
+                "line": 62,
+                "text": "    obs.append({\"name\": \"optimized_geometry\", \"value\": xyz_atoms, \"unit\": \"angstrom\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": xyz_key, \"location\": None}], \"limitations\": [\"Geometry parsed from ORCA Opt+Freq output; scientific qualification is not implied.\"]})"
+              },
+              {
+                "line": 63,
+                "text": "if freqs:"
+              },
+              {
+                "line": 64,
+                "text": "    obs.append({\"name\": \"vibrational_frequencies\", \"value\": freqs, \"unit\": \"cm^-1\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": out_key, \"location\": \"VIBRATIONAL FREQUENCIES\"}], \"limitations\": [\"Frequencies parsed from ORCA output; imaginary modes or convergence should be reviewed.\"]})"
+              },
+              {
+                "line": 65,
+                "text": "Path(\"observations.json\").write_text(json.dumps({\"version\": 1, \"observations\": obs}, indent=2), encoding=\"utf-8\")"
+              },
+              {
+                "line": 66,
+                "text": ""
+              },
+              {
+                "line": 67,
+                "text": "result = {\"request_key\": receipt.get(\"request_key\"), \"input_fingerprint\": receipt.get(\"input_fingerprint\"), \"operation_status\": receipt.get(\"operation_status\"), \"scientific_validation\": receipt.get(\"scientific_validation\"), \"actual_conditions\": receipt.get(\"actual_conditions\"), \"files\": files}"
+              }
+            ],
+            "returned_bytes": 2802,
+            "status": "observed",
+            "coverage": {
+              "version": "evidence-coverage-1",
+              "requested": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 201
+              },
+              "returned": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 68
+              },
+              "complete": true,
+              "truncated": false,
+              "reason": null,
+              "next_cursor": null
+            }
+          }
+        },
+        "observation_records": [],
+        "diagnostics": [],
+        "artifact_ids": [
+          "artifact_ff9c2e610f1749bba3ef8a22f4b26aef"
+        ],
+        "source": {
+          "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+          "role": "python",
+          "name": "run_ethanol_optfreq.py",
+          "tool": "evidence.text",
+          "consumption": {
+            "_decision_id": "model_d0e7b88be20d47a195bd6f4041ad4829"
+          },
+          "request_version": 3,
+          "plan_version": 2
+        },
+        "created_at": "2026-10-19T05:22:59.601792Z"
+      }
+    },
+    {
+      "sequence": 6,
+      "call_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+        "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985",
+        "json_pointer": "/calls/13"
+      },
+      "call": {
+        "id": "call_41435713e1554ec3b4017ca458a8c364",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_3f7f6c479c22415587b94b76799deb5a",
+          "start_line": 1,
+          "lines": 200
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_393773d73278411f85c2cdff5a35aff7",
+        "request_version": 3,
+        "plan_version": 2,
+        "control_generation": 1,
+        "created_at": "2026-10-19T05:23:06.473241Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_dc953c1d932c4ebb932c1dbae829c822"
+        }
+      },
+      "result_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/results/result_393773d73278411f85c2cdff5a35aff7.json",
+        "sha256": "d1f2d1080e50a685f1bb91666b3a6abaff96f0bc171b7f972a970b40d2961fc6"
+      },
+      "result": {
+        "id": "result_393773d73278411f85c2cdff5a35aff7",
+        "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+        "step_id": null,
+        "attempt_id": null,
+        "call_id": "call_41435713e1554ec3b4017ca458a8c364",
+        "supersedes_result_id": null,
+        "operation_status": "completed",
+        "checks": {
+          "text_window": [
+            {
+              "name": "bounded_evidence_read",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "artifact_id": "artifact_3f7f6c479c22415587b94b76799deb5a",
+                "sha256": "ea6ea758afa146704ad6c386fd2c1415503a2ce3408736f6088369702e5d83b7",
+                "view": {
+                  "type": "raw_text",
+                  "version": "1"
+                },
+                "path": [],
+                "coverage": {
+                  "version": "evidence-coverage-1",
+                  "requested": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 201
+                  },
+                  "returned": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 20
+                  },
+                  "complete": true,
+                  "truncated": false,
+                  "reason": null,
+                  "next_cursor": null
+                }
+              },
+              "rule_version": "evidence-read-1"
+            }
+          ]
+        },
+        "qualified_outputs": {},
+        "observations": {
+          "text_window": {
+            "artifact_id": "artifact_3f7f6c479c22415587b94b76799deb5a",
+            "sha256": "ea6ea758afa146704ad6c386fd2c1415503a2ce3408736f6088369702e5d83b7",
+            "role": "native_input",
+            "file": "artifacts/artifact_3f7f6c479c22415587b94b76799deb5a/files/ethanol_optfreq.inp",
+            "source": {
+              "call_id": "call_53e71e5e873b4b12b370330150f4d58c",
+              "role": "orca",
+              "name": "ethanol_optfreq.inp"
+            },
+            "view": {
+              "type": "raw_text",
+              "version": "1"
+            },
+            "path": [],
+            "geometry_indices": [],
+            "stage": "unknown",
+            "units": null,
+            "conditions": "unknown",
+            "scientific_status": "unverified",
+            "validation": "unverified observation; not a scientific qualification",
+            "lines": [
+              {
+                "line": 1,
+                "text": "! B3LYP 6-31G Opt Freq NORI NoAutoStart TightSCF"
+              },
+              {
+                "line": 2,
+                "text": "%pal"
+              },
+              {
+                "line": 3,
+                "text": "  nprocs 4"
+              },
+              {
+                "line": 4,
+                "text": "end"
+              },
+              {
+                "line": 5,
+                "text": "%maxcore 192"
+              },
+              {
+                "line": 6,
+                "text": "%scf"
+              },
+              {
+                "line": 7,
+                "text": "  MaxIter 256"
+              },
+              {
+                "line": 8,
+                "text": "  ConvForced true"
+              },
+              {
+                "line": 9,
+                "text": "  AutoTRAH false"
+              },
+              {
+                "line": 10,
+                "text": "end"
+              },
+              {
+                "line": 11,
+                "text": "%geom"
+              },
+              {
+                "line": 12,
+                "text": "  MaxIter 128"
+              },
+              {
+                "line": 13,
+                "text": "  EnforceStrictConvergence true"
+              },
+              {
+                "line": 14,
+                "text": "end"
+              },
+              {
+                "line": 15,
+                "text": "%method"
+              },
+              {
+                "line": 16,
+                "text": "  Z_MaxIter 128"
+              },
+              {
+                "line": 17,
+                "text": "end"
+              },
+              {
+                "line": 18,
+                "text": "* xyzfile 0 1 ethanol.xyz"
+              },
+              {
+                "line": 19,
+                "text": "*"
+              }
+            ],
+            "returned_bytes": 252,
+            "status": "observed",
+            "coverage": {
+              "version": "evidence-coverage-1",
+              "requested": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 201
+              },
+              "returned": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 20
+              },
+              "complete": true,
+              "truncated": false,
+              "reason": null,
+              "next_cursor": null
+            }
+          }
+        },
+        "observation_records": [],
+        "diagnostics": [],
+        "artifact_ids": [
+          "artifact_3f7f6c479c22415587b94b76799deb5a"
+        ],
+        "source": {
+          "call_id": "call_53e71e5e873b4b12b370330150f4d58c",
+          "role": "orca",
+          "name": "ethanol_optfreq.inp",
+          "tool": "evidence.text",
+          "consumption": {
+            "_decision_id": "model_dc953c1d932c4ebb932c1dbae829c822"
+          },
+          "request_version": 3,
+          "plan_version": 2
+        },
+        "created_at": "2026-10-19T05:23:06.527866Z"
+      }
+    },
+    {
+      "sequence": 7,
+      "call_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+        "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985",
+        "json_pointer": "/calls/14"
+      },
+      "call": {
+        "id": "call_0eec2581b3474c718746c4bbfab37ec2",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+          "start_line": 1,
+          "lines": 120
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_f70a2ded98e345eb8f15ee6c379ee0f0",
+        "request_version": 3,
+        "plan_version": 2,
+        "control_generation": 1,
+        "created_at": "2026-10-19T05:23:16.068438Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_c9c824135b0e48eb964ee922cdb81c6b"
+        }
+      },
+      "result_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/results/result_f70a2ded98e345eb8f15ee6c379ee0f0.json",
+        "sha256": "3ac93de6b45da084a2c89b56415059a170c020f12d25c4712e06079969843117"
+      },
+      "result": {
+        "id": "result_f70a2ded98e345eb8f15ee6c379ee0f0",
+        "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+        "step_id": null,
+        "attempt_id": null,
+        "call_id": "call_0eec2581b3474c718746c4bbfab37ec2",
+        "supersedes_result_id": null,
+        "operation_status": "completed",
+        "checks": {
+          "text_window": [
+            {
+              "name": "bounded_evidence_read",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+                "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+                "view": {
+                  "type": "raw_text",
+                  "version": "1"
+                },
+                "path": [],
+                "coverage": {
+                  "version": "evidence-coverage-1",
+                  "requested": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 121
+                  },
+                  "returned": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 68
+                  },
+                  "complete": true,
+                  "truncated": false,
+                  "reason": null,
+                  "next_cursor": null
+                }
+              },
+              "rule_version": "evidence-read-1"
+            }
+          ]
+        },
+        "qualified_outputs": {},
+        "observations": {
+          "text_window": {
+            "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+            "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+            "role": "code",
+            "file": "artifacts/artifact_ff9c2e610f1749bba3ef8a22f4b26aef/files/run_ethanol_optfreq.py",
+            "source": {
+              "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+              "role": "python",
+              "name": "run_ethanol_optfreq.py"
+            },
+            "view": {
+              "type": "raw_text",
+              "version": "1"
+            },
+            "path": [],
+            "geometry_indices": [],
+            "stage": "unknown",
+            "units": null,
+            "conditions": "unknown",
+            "scientific_status": "unverified",
+            "validation": "unverified observation; not a scientific qualification",
+            "lines": [
+              {
+                "line": 1,
+                "text": "import json, re"
+              },
+              {
+                "line": 2,
+                "text": "from pathlib import Path"
+              },
+              {
+                "line": 3,
+                "text": "from orca_task_sdk import run_orca"
+              },
+              {
+                "line": 4,
+                "text": ""
+              },
+              {
+                "line": 5,
+                "text": "receipt = run_orca(\"job.inp\", dependencies=(\"ethanol.xyz\",), request_key=\"ethanol_optfreq\")"
+              },
+              {
+                "line": 6,
+                "text": "files = receipt.get(\"files\", {}) or {}"
+              },
+              {
+                "line": 7,
+                "text": ""
+              },
+              {
+                "line": 8,
+                "text": "def read(path):"
+              },
+              {
+                "line": 9,
+                "text": "    try:"
+              },
+              {
+                "line": 10,
+                "text": "        return Path(path).read_text(encoding=\"utf-8\", errors=\"replace\")"
+              },
+              {
+                "line": 11,
+                "text": "    except Exception:"
+              },
+              {
+                "line": 12,
+                "text": "        return \"\""
+              },
+              {
+                "line": 13,
+                "text": ""
+              },
+              {
+                "line": 14,
+                "text": "def choose(pred):"
+              },
+              {
+                "line": 15,
+                "text": "    for k in files:"
+              },
+              {
+                "line": 16,
+                "text": "        if pred(k):"
+              },
+              {
+                "line": 17,
+                "text": "            return k"
+              },
+              {
+                "line": 18,
+                "text": "    return None"
+              },
+              {
+                "line": 19,
+                "text": ""
+              },
+              {
+                "line": 20,
+                "text": "xyz_key = choose(lambda k: k.lower().endswith(\".xyz\"))"
+              },
+              {
+                "line": 21,
+                "text": "out_key = choose(lambda k: \"stdout\" in k.lower())"
+              },
+              {
+                "line": 22,
+                "text": ""
+              },
+              {
+                "line": 23,
+                "text": "def parse_xyz(path):"
+              },
+              {
+                "line": 24,
+                "text": "    lines = read(path).splitlines()"
+              },
+              {
+                "line": 25,
+                "text": "    for i, line in enumerate(lines):"
+              },
+              {
+                "line": 26,
+                "text": "        s = line.strip()"
+              },
+              {
+                "line": 27,
+                "text": "        if s.isdigit():"
+              },
+              {
+                "line": 28,
+                "text": "            n = int(s)"
+              },
+              {
+                "line": 29,
+                "text": "            if i + 2 + n <= len(lines):"
+              },
+              {
+                "line": 30,
+                "text": "                atoms = []"
+              },
+              {
+                "line": 31,
+                "text": "                ok = True"
+              },
+              {
+                "line": 32,
+                "text": "                for j in range(i + 2, i + 2 + n):"
+              },
+              {
+                "line": 33,
+                "text": "                    p = lines[j].split()"
+              },
+              {
+                "line": 34,
+                "text": "                    if len(p) < 4:"
+              },
+              {
+                "line": 35,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 36,
+                "text": "                        break"
+              },
+              {
+                "line": 37,
+                "text": "                    try:"
+              },
+              {
+                "line": 38,
+                "text": "                        atoms.append({\"element\": p[0], \"x\": float(p[1]), \"y\": float(p[2]), \"z\": float(p[3])})"
+              },
+              {
+                "line": 39,
+                "text": "                    except Exception:"
+              },
+              {
+                "line": 40,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 41,
+                "text": "                        break"
+              },
+              {
+                "line": 42,
+                "text": "                if ok and atoms:"
+              },
+              {
+                "line": 43,
+                "text": "                    return atoms"
+              },
+              {
+                "line": 44,
+                "text": "    return None"
+              },
+              {
+                "line": 45,
+                "text": ""
+              },
+              {
+                "line": 46,
+                "text": "def parse_freqs(text):"
+              },
+              {
+                "line": 47,
+                "text": "    vals = []"
+              },
+              {
+                "line": 48,
+                "text": "    pat = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+(?:\\.\\d+)?)\\s+cm\\*\\*-1\")"
+              },
+              {
+                "line": 49,
+                "text": "    for line in text.splitlines():"
+              },
+              {
+                "line": 50,
+                "text": "        m = pat.match(line)"
+              },
+              {
+                "line": 51,
+                "text": "        if m:"
+              },
+              {
+                "line": 52,
+                "text": "            v = float(m.group(2))"
+              },
+              {
+                "line": 53,
+                "text": "            if abs(v) > 1e-8:"
+              },
+              {
+                "line": 54,
+                "text": "                vals.append(v)"
+              },
+              {
+                "line": 55,
+                "text": "    return vals"
+              },
+              {
+                "line": 56,
+                "text": ""
+              },
+              {
+                "line": 57,
+                "text": "xyz_atoms = parse_xyz(files.get(xyz_key)) if xyz_key else None"
+              },
+              {
+                "line": 58,
+                "text": "freqs = parse_freqs(read(files.get(out_key))) if out_key else []"
+              },
+              {
+                "line": 59,
+                "text": ""
+              },
+              {
+                "line": 60,
+                "text": "obs = []"
+              },
+              {
+                "line": 61,
+                "text": "if xyz_atoms:"
+              },
+              {
+                "line": 62,
+                "text": "    obs.append({\"name\": \"optimized_geometry\", \"value\": xyz_atoms, \"unit\": \"angstrom\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": xyz_key, \"location\": None}], \"limitations\": [\"Geometry parsed from ORCA Opt+Freq output; scientific qualification is not implied.\"]})"
+              },
+              {
+                "line": 63,
+                "text": "if freqs:"
+              },
+              {
+                "line": 64,
+                "text": "    obs.append({\"name\": \"vibrational_frequencies\", \"value\": freqs, \"unit\": \"cm^-1\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": out_key, \"location\": \"VIBRATIONAL FREQUENCIES\"}], \"limitations\": [\"Frequencies parsed from ORCA output; imaginary modes or convergence should be reviewed.\"]})"
+              },
+              {
+                "line": 65,
+                "text": "Path(\"observations.json\").write_text(json.dumps({\"version\": 1, \"observations\": obs}, indent=2), encoding=\"utf-8\")"
+              },
+              {
+                "line": 66,
+                "text": ""
+              },
+              {
+                "line": 67,
+                "text": "result = {\"request_key\": receipt.get(\"request_key\"), \"input_fingerprint\": receipt.get(\"input_fingerprint\"), \"operation_status\": receipt.get(\"operation_status\"), \"scientific_validation\": receipt.get(\"scientific_validation\"), \"actual_conditions\": receipt.get(\"actual_conditions\"), \"files\": files}"
+              }
+            ],
+            "returned_bytes": 2802,
+            "status": "observed",
+            "coverage": {
+              "version": "evidence-coverage-1",
+              "requested": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 121
+              },
+              "returned": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 68
+              },
+              "complete": true,
+              "truncated": false,
+              "reason": null,
+              "next_cursor": null
+            }
+          }
+        },
+        "observation_records": [],
+        "diagnostics": [],
+        "artifact_ids": [
+          "artifact_ff9c2e610f1749bba3ef8a22f4b26aef"
+        ],
+        "source": {
+          "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+          "role": "python",
+          "name": "run_ethanol_optfreq.py",
+          "tool": "evidence.text",
+          "consumption": {
+            "_decision_id": "model_c9c824135b0e48eb964ee922cdb81c6b"
+          },
+          "request_version": 3,
+          "plan_version": 2
+        },
+        "created_at": "2026-10-19T05:23:16.123466Z"
+      }
+    },
+    {
+      "sequence": 8,
+      "call_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+        "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985",
+        "json_pointer": "/calls/15"
+      },
+      "call": {
+        "id": "call_468dac1eb7cf43af9afab5036824fda7",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_0903573319cc450286564a9f8d4198ae",
+          "start_line": 1,
+          "lines": 40
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_06fba7e1f69343f09a10162aba3d6933",
+        "request_version": 3,
+        "plan_version": 2,
+        "control_generation": 1,
+        "created_at": "2026-10-19T05:23:54.444153Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_f2b493388c824f098df2b3b234fcfe7e"
+        }
+      },
+      "result_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/results/result_06fba7e1f69343f09a10162aba3d6933.json",
+        "sha256": "9d8da82c274786813fd5a592b71bbc412574b744a2d63855a14e61aaad80074d"
+      },
+      "result": {
+        "id": "result_06fba7e1f69343f09a10162aba3d6933",
+        "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+        "step_id": null,
+        "attempt_id": null,
+        "call_id": "call_468dac1eb7cf43af9afab5036824fda7",
+        "supersedes_result_id": null,
+        "operation_status": "completed",
+        "checks": {
+          "text_window": [
+            {
+              "name": "bounded_evidence_read",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "artifact_id": "artifact_0903573319cc450286564a9f8d4198ae",
+                "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                "view": {
+                  "type": "raw_text",
+                  "version": "1"
+                },
+                "path": [],
+                "coverage": {
+                  "version": "evidence-coverage-1",
+                  "requested": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 41
+                  },
+                  "returned": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 13
+                  },
+                  "complete": true,
+                  "truncated": false,
+                  "reason": null,
+                  "next_cursor": null
+                }
+              },
+              "rule_version": "evidence-read-1"
+            }
+          ]
+        },
+        "qualified_outputs": {},
+        "observations": {
+          "text_window": {
+            "artifact_id": "artifact_0903573319cc450286564a9f8d4198ae",
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+            "role": "prepared_geometry_candidate",
+            "file": "artifacts/artifact_0903573319cc450286564a9f8d4198ae/files/prepared.xyz",
+            "source": {
+              "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+              "call_id": "call_33abb0d1a04d4bceb4684ccbd105848c",
+              "step_id": "step_af701fa8d8d74029962758373237e4a8",
+              "request_version": 3
+            },
+            "view": {
+              "type": "raw_text",
+              "version": "1"
+            },
+            "path": [],
+            "geometry_indices": [],
+            "stage": "unknown",
+            "units": null,
+            "conditions": "unknown",
+            "scientific_status": "unverified",
+            "validation": "unverified observation; not a scientific qualification",
+            "lines": [
+              {
+                "line": 1,
+                "text": "9"
+              },
+              {
+                "line": 2,
+                "text": ""
+              },
+              {
+                "line": 3,
+                "text": "C            -0.9534551842756148             0.0478042160961903             0.0424993766391190"
+              },
+              {
+                "line": 4,
+                "text": "C             0.4879186876831028            -0.3215393180742966            -0.1890497363596318"
+              },
+              {
+                "line": 5,
+                "text": "O             1.2769775263468710             0.3247836784511813             0.7376732425087271"
+              },
+              {
+                "line": 6,
+                "text": "H            -1.3570126123500212             0.7339751954162034            -0.7332225613847179"
+              },
+              {
+                "line": 7,
+                "text": "H            -1.5933209403261652            -0.8625698312047165             0.0217594756657287"
+              },
+              {
+                "line": 8,
+                "text": "H            -1.0710312763466439             0.5964393608027803             1.0111627605054949"
+              },
+              {
+                "line": 9,
+                "text": "H             0.7874060542693289            -0.1406086817100028            -1.2357743239018328"
+              },
+              {
+                "line": 10,
+                "text": "H             0.5900278787458185            -1.4261096608429211            -0.0440304857665417"
+              },
+              {
+                "line": 11,
+                "text": "H             1.8324898662533231             1.0478250410655789             0.3889822520936568"
+              },
+              {
+                "line": 12,
+                "text": ""
+              }
+            ],
+            "returned_bytes": 859,
+            "status": "observed",
+            "coverage": {
+              "version": "evidence-coverage-1",
+              "requested": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 41
+              },
+              "returned": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 13
+              },
+              "complete": true,
+              "truncated": false,
+              "reason": null,
+              "next_cursor": null
+            }
+          }
+        },
+        "observation_records": [],
+        "diagnostics": [],
+        "artifact_ids": [
+          "artifact_0903573319cc450286564a9f8d4198ae"
+        ],
+        "source": {
+          "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+          "call_id": "call_33abb0d1a04d4bceb4684ccbd105848c",
+          "step_id": "step_af701fa8d8d74029962758373237e4a8",
+          "request_version": 3,
+          "tool": "evidence.text",
+          "consumption": {
+            "_decision_id": "model_f2b493388c824f098df2b3b234fcfe7e"
+          },
+          "plan_version": 2
+        },
+        "created_at": "2026-10-19T05:23:54.514669Z"
+      }
+    },
+    {
+      "sequence": 9,
+      "call_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+        "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985",
+        "json_pointer": "/calls/16"
+      },
+      "call": {
+        "id": "call_6179e64089984156918b7df6792d942b",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+          "start_line": 1,
+          "lines": 200
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_d51c00d69420498a876eaa3add7d6ee5",
+        "request_version": 3,
+        "plan_version": 2,
+        "control_generation": 1,
+        "created_at": "2026-10-19T05:24:01.334676Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_ae2cf42d538e44399cdc0b6ce4db84a2"
+        }
+      },
+      "result_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/results/result_d51c00d69420498a876eaa3add7d6ee5.json",
+        "sha256": "0d31d706e39074f12b596693a7c1bdc21395b1eb74e89b527eba8a7cacad2de7"
+      },
+      "result": {
+        "id": "result_d51c00d69420498a876eaa3add7d6ee5",
+        "run_id": "run_af2fbef621234408a20e1a9406f952bf",
+        "step_id": null,
+        "attempt_id": null,
+        "call_id": "call_6179e64089984156918b7df6792d942b",
+        "supersedes_result_id": null,
+        "operation_status": "completed",
+        "checks": {
+          "text_window": [
+            {
+              "name": "bounded_evidence_read",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+                "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+                "view": {
+                  "type": "raw_text",
+                  "version": "1"
+                },
+                "path": [],
+                "coverage": {
+                  "version": "evidence-coverage-1",
+                  "requested": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 201
+                  },
+                  "returned": {
+                    "kind": "lines",
+                    "start": 1,
+                    "stop": 68
+                  },
+                  "complete": true,
+                  "truncated": false,
+                  "reason": null,
+                  "next_cursor": null
+                }
+              },
+              "rule_version": "evidence-read-1"
+            }
+          ]
+        },
+        "qualified_outputs": {},
+        "observations": {
+          "text_window": {
+            "artifact_id": "artifact_ff9c2e610f1749bba3ef8a22f4b26aef",
+            "sha256": "02c1a7461cb1a5cb053a538a928c3e9893e808e66fa7cce8a5f921d713f3f89f",
+            "role": "code",
+            "file": "artifacts/artifact_ff9c2e610f1749bba3ef8a22f4b26aef/files/run_ethanol_optfreq.py",
+            "source": {
+              "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+              "role": "python",
+              "name": "run_ethanol_optfreq.py"
+            },
+            "view": {
+              "type": "raw_text",
+              "version": "1"
+            },
+            "path": [],
+            "geometry_indices": [],
+            "stage": "unknown",
+            "units": null,
+            "conditions": "unknown",
+            "scientific_status": "unverified",
+            "validation": "unverified observation; not a scientific qualification",
+            "lines": [
+              {
+                "line": 1,
+                "text": "import json, re"
+              },
+              {
+                "line": 2,
+                "text": "from pathlib import Path"
+              },
+              {
+                "line": 3,
+                "text": "from orca_task_sdk import run_orca"
+              },
+              {
+                "line": 4,
+                "text": ""
+              },
+              {
+                "line": 5,
+                "text": "receipt = run_orca(\"job.inp\", dependencies=(\"ethanol.xyz\",), request_key=\"ethanol_optfreq\")"
+              },
+              {
+                "line": 6,
+                "text": "files = receipt.get(\"files\", {}) or {}"
+              },
+              {
+                "line": 7,
+                "text": ""
+              },
+              {
+                "line": 8,
+                "text": "def read(path):"
+              },
+              {
+                "line": 9,
+                "text": "    try:"
+              },
+              {
+                "line": 10,
+                "text": "        return Path(path).read_text(encoding=\"utf-8\", errors=\"replace\")"
+              },
+              {
+                "line": 11,
+                "text": "    except Exception:"
+              },
+              {
+                "line": 12,
+                "text": "        return \"\""
+              },
+              {
+                "line": 13,
+                "text": ""
+              },
+              {
+                "line": 14,
+                "text": "def choose(pred):"
+              },
+              {
+                "line": 15,
+                "text": "    for k in files:"
+              },
+              {
+                "line": 16,
+                "text": "        if pred(k):"
+              },
+              {
+                "line": 17,
+                "text": "            return k"
+              },
+              {
+                "line": 18,
+                "text": "    return None"
+              },
+              {
+                "line": 19,
+                "text": ""
+              },
+              {
+                "line": 20,
+                "text": "xyz_key = choose(lambda k: k.lower().endswith(\".xyz\"))"
+              },
+              {
+                "line": 21,
+                "text": "out_key = choose(lambda k: \"stdout\" in k.lower())"
+              },
+              {
+                "line": 22,
+                "text": ""
+              },
+              {
+                "line": 23,
+                "text": "def parse_xyz(path):"
+              },
+              {
+                "line": 24,
+                "text": "    lines = read(path).splitlines()"
+              },
+              {
+                "line": 25,
+                "text": "    for i, line in enumerate(lines):"
+              },
+              {
+                "line": 26,
+                "text": "        s = line.strip()"
+              },
+              {
+                "line": 27,
+                "text": "        if s.isdigit():"
+              },
+              {
+                "line": 28,
+                "text": "            n = int(s)"
+              },
+              {
+                "line": 29,
+                "text": "            if i + 2 + n <= len(lines):"
+              },
+              {
+                "line": 30,
+                "text": "                atoms = []"
+              },
+              {
+                "line": 31,
+                "text": "                ok = True"
+              },
+              {
+                "line": 32,
+                "text": "                for j in range(i + 2, i + 2 + n):"
+              },
+              {
+                "line": 33,
+                "text": "                    p = lines[j].split()"
+              },
+              {
+                "line": 34,
+                "text": "                    if len(p) < 4:"
+              },
+              {
+                "line": 35,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 36,
+                "text": "                        break"
+              },
+              {
+                "line": 37,
+                "text": "                    try:"
+              },
+              {
+                "line": 38,
+                "text": "                        atoms.append({\"element\": p[0], \"x\": float(p[1]), \"y\": float(p[2]), \"z\": float(p[3])})"
+              },
+              {
+                "line": 39,
+                "text": "                    except Exception:"
+              },
+              {
+                "line": 40,
+                "text": "                        ok = False"
+              },
+              {
+                "line": 41,
+                "text": "                        break"
+              },
+              {
+                "line": 42,
+                "text": "                if ok and atoms:"
+              },
+              {
+                "line": 43,
+                "text": "                    return atoms"
+              },
+              {
+                "line": 44,
+                "text": "    return None"
+              },
+              {
+                "line": 45,
+                "text": ""
+              },
+              {
+                "line": 46,
+                "text": "def parse_freqs(text):"
+              },
+              {
+                "line": 47,
+                "text": "    vals = []"
+              },
+              {
+                "line": 48,
+                "text": "    pat = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+(?:\\.\\d+)?)\\s+cm\\*\\*-1\")"
+              },
+              {
+                "line": 49,
+                "text": "    for line in text.splitlines():"
+              },
+              {
+                "line": 50,
+                "text": "        m = pat.match(line)"
+              },
+              {
+                "line": 51,
+                "text": "        if m:"
+              },
+              {
+                "line": 52,
+                "text": "            v = float(m.group(2))"
+              },
+              {
+                "line": 53,
+                "text": "            if abs(v) > 1e-8:"
+              },
+              {
+                "line": 54,
+                "text": "                vals.append(v)"
+              },
+              {
+                "line": 55,
+                "text": "    return vals"
+              },
+              {
+                "line": 56,
+                "text": ""
+              },
+              {
+                "line": 57,
+                "text": "xyz_atoms = parse_xyz(files.get(xyz_key)) if xyz_key else None"
+              },
+              {
+                "line": 58,
+                "text": "freqs = parse_freqs(read(files.get(out_key))) if out_key else []"
+              },
+              {
+                "line": 59,
+                "text": ""
+              },
+              {
+                "line": 60,
+                "text": "obs = []"
+              },
+              {
+                "line": 61,
+                "text": "if xyz_atoms:"
+              },
+              {
+                "line": 62,
+                "text": "    obs.append({\"name\": \"optimized_geometry\", \"value\": xyz_atoms, \"unit\": \"angstrom\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": xyz_key, \"location\": None}], \"limitations\": [\"Geometry parsed from ORCA Opt+Freq output; scientific qualification is not implied.\"]})"
+              },
+              {
+                "line": 63,
+                "text": "if freqs:"
+              },
+              {
+                "line": 64,
+                "text": "    obs.append({\"name\": \"vibrational_frequencies\", \"value\": freqs, \"unit\": \"cm^-1\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": out_key, \"location\": \"VIBRATIONAL FREQUENCIES\"}], \"limitations\": [\"Frequencies parsed from ORCA output; imaginary modes or convergence should be reviewed.\"]})"
+              },
+              {
+                "line": 65,
+                "text": "Path(\"observations.json\").write_text(json.dumps({\"version\": 1, \"observations\": obs}, indent=2), encoding=\"utf-8\")"
+              },
+              {
+                "line": 66,
+                "text": ""
+              },
+              {
+                "line": 67,
+                "text": "result = {\"request_key\": receipt.get(\"request_key\"), \"input_fingerprint\": receipt.get(\"input_fingerprint\"), \"operation_status\": receipt.get(\"operation_status\"), \"scientific_validation\": receipt.get(\"scientific_validation\"), \"actual_conditions\": receipt.get(\"actual_conditions\"), \"files\": files}"
+              }
+            ],
+            "returned_bytes": 2802,
+            "status": "observed",
+            "coverage": {
+              "version": "evidence-coverage-1",
+              "requested": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 201
+              },
+              "returned": {
+                "kind": "lines",
+                "start": 1,
+                "stop": 68
+              },
+              "complete": true,
+              "truncated": false,
+              "reason": null,
+              "next_cursor": null
+            }
+          }
+        },
+        "observation_records": [],
+        "diagnostics": [],
+        "artifact_ids": [
+          "artifact_ff9c2e610f1749bba3ef8a22f4b26aef"
+        ],
+        "source": {
+          "call_id": "call_e0c4924088c34a82beea7b09099162a9",
+          "role": "python",
+          "name": "run_ethanol_optfreq.py",
+          "tool": "evidence.text",
+          "consumption": {
+            "_decision_id": "model_ae2cf42d538e44399cdc0b6ce4db84a2"
+          },
+          "request_version": 3,
+          "plan_version": 2
+        },
+        "created_at": "2026-10-19T05:24:01.391126Z"
+      }
+    }
+  ],
+  "model_context": {
+    "ordinal": 23,
+    "model_id": "model_b8cbb9d774024da89e7479a21b94fb60",
+    "model_record_source": {
+      "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/run.json",
+      "sha256": "f5f860e5b9a2fb9f1b52435d5cf1a6cbb8e35320f03a8be9b0fb3c5a449d9985",
+      "json_pointer": "/model_records/22"
+    },
+    "request_file": {
+      "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/model/model_b8cbb9d774024da89e7479a21b94fb60.request.json",
+      "sha256": "c4f45f0c5eb60dbebf1d279170dccc20a7af7c7a3fde171217c8d0c8a036bf76"
+    },
+    "request_hash": "c4f45f0c5eb60dbebf1d279170dccc20a7af7c7a3fde171217c8d0c8a036bf76",
+    "basis": {
+      "request_version": 3,
+      "plan_version": 2,
+      "permission_version": 1,
+      "control_generation": 1
+    },
+    "prompt_version": "agent-json-v44",
+    "request_revision": {
+      "source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/decisions/model_7514a87e828842f29eeac77774f49d27.json",
+        "sha256": "267a1ca221c8e9e761d0b5f081a2a6e3b28b05875802572b143b5e7efa50c0b6",
+        "json_pointer": "/request"
+      },
+      "payload": {
+        "id": "request_83bf2686fefd46288e7ea81a8f6bca8b",
+        "version": 3,
+        "original_text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+        "geometry_artifact_id": null,
+        "charge": 0,
+        "multiplicity": 1,
+        "method": "B3LYP",
+        "basis": "6-31G",
+        "conditions_source": {
+          "charge": "default",
+          "multiplicity": "default",
+          "electronic_state": "default",
+          "environment": "default",
+          "method": "auto_selected",
+          "basis": "auto_selected"
+        },
+        "goals": [
+          {
+            "id": "goal_prepare_ethanol_geometry",
+            "port": "prepared_geometry",
+            "required": true,
+            "minimum_check_version": "structure-prepare-2",
+            "evidence_contract_version": "legacy-1",
+            "verification": "qualified",
+            "quantity": "生成结构",
+            "original_text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+            "identity": {
+              "contract": "general-identity-2",
+              "requested_names": [
+                "乙醇"
+              ],
+              "canonical_names": [],
+              "query_name": "ethanol",
+              "query_name_source": "inferred_translation_or_alias",
+              "ambiguities": [],
+              "text_evidence": {
+                "message_id": "message_57c6520538d144f88257f698858287c2",
+                "start": 0,
+                "end": 46,
+                "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+                "schema": "request-semantics-3"
+              }
+            },
+            "text_evidence": {
+              "message_id": "message_57c6520538d144f88257f698858287c2",
+              "start": 0,
+              "end": 46,
+              "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+              "schema": "request-semantics-3"
+            },
+            "system_ids": [
+              "system_ethanol"
+            ],
+            "conditions": {},
+            "minimum_evidence": [],
+            "minimum_evidence_source": {},
+            "unresolved": []
+          },
+          {
+            "id": "goal_optimize_ethanol",
+            "port": "optimized_geometry",
+            "required": true,
+            "minimum_check_version": "generic-observation-1",
+            "evidence_contract_version": "generic-observation-1",
+            "verification": "reported_with_limitations",
+            "quantity": "优化结构",
+            "original_text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+            "identity": {
+              "requested_names": [
+                "乙醇"
+              ]
+            },
+            "text_evidence": {
+              "message_id": "message_57c6520538d144f88257f698858287c2",
+              "start": 0,
+              "end": 46,
+              "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+              "schema": "request-semantics-3"
+            },
+            "system_ids": [
+              "system_ethanol"
+            ],
+            "conditions": {
+              "geometry_relation": "optimized"
+            },
+            "minimum_evidence": [],
+            "minimum_evidence_source": {},
+            "unresolved": []
+          },
+          {
+            "id": "goal_ethanol_vibrational_frequencies",
+            "port": "vibrational_frequencies",
+            "required": true,
+            "minimum_check_version": "generic-observation-1",
+            "evidence_contract_version": "generic-observation-1",
+            "verification": "reported_with_limitations",
+            "quantity": "分析振动频率",
+            "original_text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+            "identity": {
+              "requested_names": [
+                "乙醇"
+              ]
+            },
+            "text_evidence": {
+              "message_id": "message_57c6520538d144f88257f698858287c2",
+              "start": 0,
+              "end": 46,
+              "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+              "schema": "request-semantics-3"
+            },
+            "system_ids": [
+              "system_ethanol"
+            ],
+            "conditions": {
+              "geometry_relation": "optimized"
+            },
+            "minimum_evidence": [],
+            "minimum_evidence_source": {},
+            "unresolved": []
+          }
+        ],
+        "systems": [
+          {
+            "id": "system_ethanol",
+            "geometry_artifact_id": null,
+            "conditions": {},
+            "conditions_source": {},
+            "atom_mapping": [],
+            "label": "乙醇",
+            "identity": {
+              "contract": "general-identity-2",
+              "requested_names": [
+                "乙醇"
+              ],
+              "canonical_names": [],
+              "query_name": "ethanol",
+              "query_name_source": "inferred_translation_or_alias",
+              "ambiguities": [],
+              "text_evidence": {
+                "message_id": "message_57c6520538d144f88257f698858287c2",
+                "start": 0,
+                "end": 46,
+                "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+                "schema": "request-semantics-3"
+              }
+            },
+            "geometry_source": "prepare"
+          }
+        ],
+        "messages": [
+          {
+            "id": "message_57c6520538d144f88257f698858287c2",
+            "text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+            "source": "user",
+            "created_at": "2026-10-19T05:19:35.690310+00:00",
+            "request_version": 1
+          }
+        ],
+        "unresolved": [],
+        "conditions": {
+          "explain_results": true,
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase",
+          "method": "B3LYP",
+          "basis": "6-31G"
+        },
+        "normalization_status": "normalized",
+        "condition_evidence": {
+          "request.charge": {
+            "value": 0,
+            "source": "default",
+            "text_basis": "",
+            "request_version": null,
+            "system_ref": null,
+            "default_rule": "local-hf-1",
+            "message_id": null,
+            "message_ids": [
+              "message_57c6520538d144f88257f698858287c2"
+            ],
+            "schema": "request-semantics-3"
+          },
+          "request.multiplicity": {
+            "value": 1,
+            "source": "default",
+            "text_basis": "",
+            "request_version": null,
+            "system_ref": null,
+            "default_rule": "local-hf-1",
+            "message_id": null,
+            "message_ids": [
+              "message_57c6520538d144f88257f698858287c2"
+            ],
+            "schema": "request-semantics-3"
+          },
+          "request.electronic_state": {
+            "value": "RKS",
+            "source": "default",
+            "text_basis": "",
+            "request_version": null,
+            "system_ref": null,
+            "default_rule": "local-hf-1",
+            "message_id": null,
+            "message_ids": [
+              "message_57c6520538d144f88257f698858287c2"
+            ],
+            "schema": "request-semantics-3"
+          },
+          "request.environment": {
+            "value": "gas_phase",
+            "source": "default",
+            "text_basis": "",
+            "request_version": null,
+            "system_ref": null,
+            "default_rule": "local-hf-1",
+            "message_id": null,
+            "message_ids": [
+              "message_57c6520538d144f88257f698858287c2"
+            ],
+            "schema": "request-semantics-3"
+          },
+          "automatic_selection.method": {
+            "text_basis": "选择合适的方法和基组",
+            "message_id": "message_57c6520538d144f88257f698858287c2",
+            "start": 9,
+            "end": 19,
+            "source": "explicit",
+            "schema": "request-semantics-3"
+          },
+          "automatic_selection.basis": {
+            "text_basis": "选择合适的方法和基组",
+            "message_id": "message_57c6520538d144f88257f698858287c2",
+            "start": 9,
+            "end": 19,
+            "source": "explicit",
+            "schema": "request-semantics-3"
+          },
+          "request.method": {
+            "value": "B3LYP",
+            "source": "auto_selected",
+            "request_version": 2,
+            "authorization": {
+              "text_basis": "选择合适的方法和基组",
+              "message_id": "message_57c6520538d144f88257f698858287c2",
+              "start": 9,
+              "end": 19,
+              "source": "explicit",
+              "schema": "request-semantics-3"
+            },
+            "reason": "Official ORCA documentation identifies B3LYP as a widely used hybrid functional; selected for geometry optimization and frequency analysis of ethanol. This is a documentation-based selection, not scientific validation.",
+            "sources": [
+              {
+                "result_id": "result_478334ff8c1f41f1beb9ee4052638d0e",
+                "result_fingerprint": "039826a8875dd1dcff54b8728a4f9f7c5fb9c333f36b55f66752de46e3551b68",
+                "document_sha256": "94424fff221bde28abf4a32b7f1649771dcfde5585360082816107d4a6032c0c",
+                "excerpt_sha256": "10d51ddb41b06d033647f2ad68e8a7d65d37dadce1a5cb5b9536e0254ced5746",
+                "quote": "The popular B3LYP functional (20% HF exchange) as defined in the TurboMole program system (LDAOPT C_VWN5)",
+                "kind": "official_document",
+                "document_id": "orca_dft",
+                "index_version": "knowledge-index-2",
+                "document_version": "6.1",
+                "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/modelchemistries/DensityFunctionalTheory.html",
+                "title": "ORCA 6.1 Density Functional Theory"
+              }
+            ],
+            "schema": "condition-selection-1"
+          },
+          "request.basis": {
+            "value": "6-31G",
+            "source": "auto_selected",
+            "request_version": 2,
+            "authorization": {
+              "text_basis": "选择合适的方法和基组",
+              "message_id": "message_57c6520538d144f88257f698858287c2",
+              "start": 9,
+              "end": 19,
+              "source": "explicit",
+              "schema": "request-semantics-3"
+            },
+            "reason": "Official ORCA basis documentation lists 6-31G for H–Zn, covering the elements in ethanol. This is a minimal split-valence basis without polarization functions, so frequency/geometry results should be reported with that limitation.",
+            "sources": [
+              {
+                "result_id": "result_ef24fdd7bbf848ad8d2a724e30ad2db1",
+                "result_fingerprint": "1eb7809636aaf53456293fdfe1b649328552269d3877c46dad3110b4f312ddd4",
+                "document_sha256": "48750fa1c9dc25992c9e339648e52ef0f63423a7ad196e33b78609eb7143c4b6",
+                "excerpt_sha256": "17f913fb56b7ccb22149b0eb053fbb66728c05a7c0fbb75a44f9d3f707fab9af",
+                "quote": "6-31G H–Zn –",
+                "kind": "official_document",
+                "document_id": "orca_basis",
+                "index_version": "knowledge-index-2",
+                "document_version": "6.1",
+                "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/basisset.html",
+                "title": "ORCA 6.1 Basis Sets"
+              }
+            ],
+            "schema": "condition-selection-1"
+          }
+        },
+        "semantic_defaults": {
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        },
+        "automatic_selection": [
+          "method",
+          "basis"
+        ],
+        "selection_reasons": {
+          "method": "Official ORCA documentation identifies B3LYP as a widely used hybrid functional; selected for geometry optimization and frequency analysis of ethanol. This is a documentation-based selection, not scientific validation.",
+          "basis": "Official ORCA basis documentation lists 6-31G for H–Zn, covering the elements in ethanol. This is a minimal split-valence basis without polarization functions, so frequency/geometry results should be reported with that limitation."
+        }
+      }
+    },
+    "plan_revision": {
+      "source": {
+        "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/decisions/model_7514a87e828842f29eeac77774f49d27.json",
+        "sha256": "267a1ca221c8e9e761d0b5f081a2a6e3b28b05875802572b143b5e7efa50c0b6",
+        "json_pointer": "/plan"
+      },
+      "payload": {
+        "id": "plan_95b505e299bd489e8cc3caa9b70277c5",
+        "version": 2,
+        "request_id": "request_83bf2686fefd46288e7ea81a8f6bca8b",
+        "request_version": 3,
+        "steps": [
+          {
+            "id": "step_306e865c6623434f8f445e1733439c78",
+            "logical_id": "logical_1857411f56224362bce6818725aa4a40",
+            "tool": "structure.resolve",
+            "parameters": {
+              "system_id": "system_ethanol"
+            },
+            "geometry": null,
+            "depends_on": [],
+            "inputs": {},
+            "system_id": "system_ethanol"
+          },
+          {
+            "id": "step_af701fa8d8d74029962758373237e4a8",
+            "logical_id": "logical_17311b1d6de2428299fc38863556bd16",
+            "tool": "structure.prepare",
+            "parameters": {
+              "system_id": "system_ethanol",
+              "charge": 0,
+              "multiplicity": 1
+            },
+            "geometry": null,
+            "depends_on": [
+              "step_306e865c6623434f8f445e1733439c78"
+            ],
+            "inputs": {
+              "identity": {
+                "producer_step_id": "step_306e865c6623434f8f445e1733439c78",
+                "run_id": null,
+                "result_id": null,
+                "attempt_id": null,
+                "artifact_id": null,
+                "sha256": null,
+                "port": "resolved_identity",
+                "rule_version": null
+              }
+            },
+            "system_id": "system_ethanol"
+          },
+          {
+            "id": "step_35e81f92b48c44db8bc39920236798f2",
+            "logical_id": "logical_16e8e0049ec943d08001edef0016ddcd",
+            "tool": "workspace.write",
+            "parameters": {
+              "name": "ethanol_optfreq.inp",
+              "content": "! B3LYP 6-31G Opt Freq NORI NoAutoStart TightSCF\n%pal\n  nprocs 4\nend\n%maxcore 192\n%scf\n  MaxIter 256\n  ConvForced true\n  AutoTRAH false\nend\n%geom\n  MaxIter 128\n  EnforceStrictConvergence true\nend\n%method\n  Z_MaxIter 128\nend\n* xyzfile 0 1 ethanol.xyz\n*\n",
+              "role": "orca"
+            },
+            "geometry": null,
+            "depends_on": [],
+            "inputs": {},
+            "system_id": null
+          },
+          {
+            "id": "step_74072a3e6c584cd5abebee422d8ac2ec",
+            "logical_id": "logical_28d751c9fb9f41c29ee1d044da9addfa",
+            "tool": "workspace.write",
+            "parameters": {
+              "name": "run_ethanol_optfreq.py",
+              "content": "import json, re\nfrom pathlib import Path\nfrom orca_task_sdk import run_orca\n\nreceipt = run_orca(\"job.inp\", dependencies=(\"ethanol.xyz\",), request_key=\"ethanol_optfreq\")\nfiles = receipt.get(\"files\", {}) or {}\n\ndef read(path):\n    try:\n        return Path(path).read_text(encoding=\"utf-8\", errors=\"replace\")\n    except Exception:\n        return \"\"\n\ndef choose(pred):\n    for k in files:\n        if pred(k):\n            return k\n    return None\n\nxyz_key = choose(lambda k: k.lower().endswith(\".xyz\"))\nout_key = choose(lambda k: \"stdout\" in k.lower())\n\ndef parse_xyz(path):\n    lines = read(path).splitlines()\n    for i, line in enumerate(lines):\n        s = line.strip()\n        if s.isdigit():\n            n = int(s)\n            if i + 2 + n <= len(lines):\n                atoms = []\n                ok = True\n                for j in range(i + 2, i + 2 + n):\n                    p = lines[j].split()\n                    if len(p) < 4:\n                        ok = False\n                        break\n                    try:\n                        atoms.append({\"element\": p[0], \"x\": float(p[1]), \"y\": float(p[2]), \"z\": float(p[3])})\n                    except Exception:\n                        ok = False\n                        break\n                if ok and atoms:\n                    return atoms\n    return None\n\ndef parse_freqs(text):\n    vals = []\n    pat = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+(?:\\.\\d+)?)\\s+cm\\*\\*-1\")\n    for line in text.splitlines():\n        m = pat.match(line)\n        if m:\n            v = float(m.group(2))\n            if abs(v) > 1e-8:\n                vals.append(v)\n    return vals\n\nxyz_atoms = parse_xyz(files.get(xyz_key)) if xyz_key else None\nfreqs = parse_freqs(read(files.get(out_key))) if out_key else []\n\nobs = []\nif xyz_atoms:\n    obs.append({\"name\": \"optimized_geometry\", \"value\": xyz_atoms, \"unit\": \"angstrom\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": xyz_key, \"location\": None}], \"limitations\": [\"Geometry parsed from ORCA Opt+Freq output; scientific qualification is not implied.\"]})\nif freqs:\n    obs.append({\"name\": \"vibrational_frequencies\", \"value\": freqs, \"unit\": \"cm^-1\", \"sources\": [{\"internal_request_key\": receipt.get(\"request_key\"), \"filename\": out_key, \"location\": \"VIBRATIONAL FREQUENCIES\"}], \"limitations\": [\"Frequencies parsed from ORCA output; imaginary modes or convergence should be reviewed.\"]})\nPath(\"observations.json\").write_text(json.dumps({\"version\": 1, \"observations\": obs}, indent=2), encoding=\"utf-8\")\n\nresult = {\"request_key\": receipt.get(\"request_key\"), \"input_fingerprint\": receipt.get(\"input_fingerprint\"), \"operation_status\": receipt.get(\"operation_status\"), \"scientific_validation\": receipt.get(\"scientific_validation\"), \"actual_conditions\": receipt.get(\"actual_conditions\"), \"files\": files}\n",
+              "role": "python"
+            },
+            "geometry": null,
+            "depends_on": [],
+            "inputs": {},
+            "system_id": null
+          }
+        ],
+        "goal_map": {
+          "goal_prepare_ethanol_geometry": {
+            "step_id": "step_af701fa8d8d74029962758373237e4a8",
+            "port": "prepared_geometry",
+            "evidence": null,
+            "gap": null
+          },
+          "goal_optimize_ethanol": {
+            "step_id": null,
+            "port": "optimized_geometry",
+            "evidence": null,
+            "gap": "prepared_geometry_receipt_required"
+          },
+          "goal_ethanol_vibrational_frequencies": {
+            "step_id": null,
+            "port": "vibrational_frequencies",
+            "evidence": null,
+            "gap": "prepared_geometry_receipt_required"
+          }
+        }
+      }
+    },
+    "wire_results_source": {
+      "path": "data/code-tools-step3/live-store/runs/run_af2fbef621234408a20e1a9406f952bf/model/model_b8cbb9d774024da89e7479a21b94fb60.request.json",
+      "sha256": "c4f45f0c5eb60dbebf1d279170dccc20a7af7c7a3fde171217c8d0c8a036bf76",
+      "selector": "JSON-decode messages[1].content, then DATA.results"
+    },
+    "wire_result_ids": [
+      "result_10ac6eb1c8d14e9bae9e111d47877c1e",
+      "result_478334ff8c1f41f1beb9ee4052638d0e",
+      "result_0bf0003b6fa74d4eb7bc3d076af02fbc",
+      "result_ef24fdd7bbf848ad8d2a724e30ad2db1",
+      "result_a38eb1fa092e433fb31c618551c9b72b",
+      "result_184fe1789dd2414891496544d9188818",
+      "result_d51c00d69420498a876eaa3add7d6ee5"
+    ],
+    "wire_control": {
+      "pending_step_ids": []
+    },
+    "wire_evidence_previews": [
+      {
+        "result_id": "result_d51c00d69420498a876eaa3add7d6ee5",
+        "tool": "evidence.text",
+        "context_page": {
+          "meaning": "context preview only; Tool coverage is recorded separately",
+          "next_line": 23,
+          "omitted_from_result": 45,
+          "shown": 22
+        },
+        "shown_line_numbers": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,576 @@
+{
+  "schema_version": 1,
+  "scope": "Verified live012 initial preparation and rejected plan revisions. No ORCA or generated-code execution, and no autonomous Opt+Freq delivery.",
+  "run_id": "run_0bd22cf67623455aaa26158eb93f1b6a",
+  "original_text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+  "prompt_versions": [
+    "agent-json-v42"
+  ],
+  "state": "failed",
+  "delivery_status": "partial",
+  "goal_status": {
+    "goal_prepared_geometry": "satisfied",
+    "goal_optimized_geometry": "insufficient_evidence",
+    "goal_vibrational_frequencies": "insufficient_evidence"
+  },
+  "source_freeze": {
+    "scope": "Independent posthoc read-only source freeze check before subsequent fixes",
+    "checked_at": "2026-10-19T04:53:55.604373+00:00",
+    "frozen_at": "2026-10-19T04:52:42.960463+00:00",
+    "source_file_count": 62,
+    "changed_sources": [],
+    "driver_current_sha256": "adbbaa1f9974742c2ce9e1fccb772c0c699c5ed591316ed268a07a50ee3ec5be",
+    "driver_frozen_sha256": "adbbaa1f9974742c2ce9e1fccb772c0c699c5ed591316ed268a07a50ee3ec5be",
+    "freeze_sha256": "1509d708a0182a073353b101ef3b91961c52462dc9afe701d2c6f02bc1269ccc"
+  },
+  "source_freeze_temporal_boundary": "The independent comparison was recorded at Run completion before later fixes were authorized. It is not a claim that subsequent working-tree source still matches this Run.",
+  "model_usage": {
+    "http_calls": 13,
+    "http_200_count": 13,
+    "input_tokens": 125130,
+    "output_tokens": 3771,
+    "total_tokens": 128901,
+    "unknown_tokens": 0,
+    "recorded_estimated_usd": "0.0420642",
+    "cost_boundary": "Recorded provider usage multiplied by configured rates; not an independently reconciled invoice."
+  },
+  "actual_usage": {
+    "internal_work_units": 0,
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 0.0,
+    "cpu_seconds": 0.0,
+    "resource_usage_complete": true,
+    "logical_attempts": {},
+    "fingerprint_attempts": {},
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 13,
+    "model_tokens_used": 128901,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 0,
+    "decision_rounds": 13,
+    "evidence_reads": 0,
+    "analysis_executions": 0,
+    "logical_steps": [
+      "logical_4347cfb7946f4af78f56eb298647f2da",
+      "logical_94c02015124e48dba493e0cf81f05af8"
+    ],
+    "identity_queries": 1,
+    "structure_preparations": 1,
+    "knowledge_queries": 4
+  },
+  "registration_and_plan": {
+    "explicit_default_conditions": {
+      "charge": {
+        "source": "default",
+        "default_rule": "local-hf-1",
+        "value": 0,
+        "text_basis": "",
+        "message_id": null
+      },
+      "multiplicity": {
+        "source": "default",
+        "default_rule": "local-hf-1",
+        "value": 1,
+        "text_basis": "",
+        "message_id": null
+      },
+      "electronic_state": {
+        "source": "default",
+        "default_rule": "local-hf-1",
+        "value": "RKS",
+        "text_basis": "",
+        "message_id": null
+      },
+      "environment": {
+        "source": "default",
+        "default_rule": "local-hf-1",
+        "value": "gas_phase",
+        "text_basis": "",
+        "message_id": null
+      }
+    },
+    "selected_request_fields": {
+      "version": 3,
+      "method": "B3LYP",
+      "basis": "def2-SVP",
+      "charge": 0,
+      "multiplicity": 1,
+      "conditions": {
+        "explain_results": true,
+        "charge": 0,
+        "multiplicity": 1,
+        "electronic_state": "RKS",
+        "environment": "gas_phase",
+        "method": "B3LYP",
+        "basis": "def2-SVP"
+      },
+      "conditions_source": {
+        "charge": "default",
+        "multiplicity": "default",
+        "electronic_state": "default",
+        "environment": "default",
+        "method": "auto_selected",
+        "basis": "auto_selected"
+      },
+      "automatic_selection": [
+        "method",
+        "basis"
+      ]
+    },
+    "accepted_initial_plan": {
+      "action": "initial_plan",
+      "parameters": {
+        "steps": [
+          {
+            "key": "resolve",
+            "parameters": {},
+            "system_id": "system_ethanol",
+            "tool": "structure.resolve"
+          },
+          {
+            "depends_on": [
+              "resolve"
+            ],
+            "inputs": {
+              "identity": {
+                "port": "resolved_identity",
+                "producer_key": "resolve"
+              }
+            },
+            "key": "prepare",
+            "parameters": {},
+            "system_id": "system_ethanol",
+            "tool": "structure.prepare"
+          }
+        ],
+        "goal_map": {
+          "goal_prepared_geometry": {
+            "port": "prepared_geometry",
+            "step_key": "prepare"
+          },
+          "goal_optimized_geometry": {
+            "gap": "pending_optfreq_after_prepared_geometry",
+            "port": "optimized_geometry"
+          },
+          "goal_vibrational_frequencies": {
+            "gap": "pending_optfreq_after_prepared_geometry",
+            "port": "vibrational_frequencies"
+          }
+        }
+      },
+      "reason": "Prior proposal was rejected because python.execute parameters.code required a concrete registered Artifact ID/sha256, which cannot exist yet. Staging: resolve ethanol identity (PubChem), then prepare the initial XYZ. The Opt+Freq Python Step (B3LYP/def2-SVP, gas phase, charge 0, multiplicity 1, RKS; parse optimized geometry and frequencies from the same SDK receipt) will be added in a revised plan once the prepared geometry Artifact ID/hash are known. Optimized-geometry and frequency Goals are bound to unchanged-port gaps pending that Step; no Goals removed or weakened."
+    },
+    "accepted_plan_id": "plan_185a66e3893b458fbeb2f226fc0422e8",
+    "accepted_plan_version": 1,
+    "accepted_plan_revisions": 0
+  },
+  "preparation": {
+    "operation_status": "completed",
+    "artifact_id": "artifact_2066f75905ba40579ad5a3708ad75b37",
+    "xyz": {
+      "path": "data/code-tools-step3/live-store/artifacts/artifact_2066f75905ba40579ad5a3708ad75b37/files/prepared.xyz",
+      "bytes": 859,
+      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+    },
+    "generator": "opi.Structure.from_smiles",
+    "versions": {
+      "orca-pi": "2.0.0",
+      "rdkit": "2025.9.6",
+      "python": "3.11.4"
+    },
+    "elements": [
+      "C",
+      "C",
+      "O",
+      "H",
+      "H",
+      "H",
+      "H",
+      "H",
+      "H"
+    ],
+    "atom_mapping": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "unit": "angstrom",
+    "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+    "rule_version": "structure-prepare-2",
+    "random_seed": null,
+    "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+    "process_state": "completed",
+    "process_exit_code": 0,
+    "resource_usage": {
+      "wall_seconds": 1.655999999999949,
+      "user_cpu_seconds": 0.5625,
+      "kernel_cpu_seconds": 0.609375,
+      "total_processes": 3,
+      "active_processes": 0,
+      "peak_job_commit_bytes": 65654784,
+      "job_commit_limit_bytes": 1073741824,
+      "memory_metric": "Windows Job Object committed virtual memory, not working set",
+      "cpu_affinity_mask": 1,
+      "cores": 1,
+      "process_sampling_errors": [],
+      "process_sampling_truncated": false,
+      "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+    },
+    "sampled_process_count": 3,
+    "sampled_membership_confirmed": true,
+    "cpu_seconds": 1.171875,
+    "cost_boundary": "Trusted structure preparation ran in a Windows Job Object. Its measured resources are retained here separately from Run usage.elapsed_seconds/cpu_seconds, which are zero for managed science execution. This is not an ORCA or generated-Python Attempt."
+  },
+  "last_corrections": [
+    {
+      "model_id": "model_5c86bded1499458da38f6a09626310ec",
+      "request_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/model/model_5c86bded1499458da38f6a09626310ec.request.json",
+        "bytes": 44251,
+        "sha256": "c23de530c204f1bd0a023b0f4ce06e35db02785390d359d85e6222ccb78b7164"
+      },
+      "response_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/model/model_5c86bded1499458da38f6a09626310ec.response.json",
+        "bytes": 2885,
+        "sha256": "89fb7fda880adc43ee32e2566e5841f72d467084a88105f6a3dd26e5e5fa06ce"
+      },
+      "previous_candidate_equals_original_response": null,
+      "proposal_fact": "Required goal_prepared_geometry is omitted.",
+      "rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": "Map every required Request Goal ID to exactly one binding shape with its unchanged port. A planned Step output is a route, not completion; use a gap only when no valid route or evidence exists.",
+        "path": [
+          "parameters",
+          "goal_map"
+        ],
+        "missing_goals": [
+          {
+            "goal_id": "goal_prepared_geometry",
+            "port": "prepared_geometry"
+          }
+        ]
+      },
+      "previous_rejected_candidate": null
+    },
+    {
+      "model_id": "model_f725d89ec10542019ae8ba1314eeb1d9",
+      "request_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/model/model_f725d89ec10542019ae8ba1314eeb1d9.request.json",
+        "bytes": 46900,
+        "sha256": "49068225fcafe60aaa70f8421fee857e6baadf383002b598a1643243f188d675"
+      },
+      "response_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/model/model_f725d89ec10542019ae8ba1314eeb1d9.response.json",
+        "bytes": 3515,
+        "sha256": "29273d7e6c4a1a07f71fb6ecb1b1a669c30e04219290b369155c730e3b436046"
+      },
+      "previous_candidate_equals_original_response": true,
+      "proposal_fact": "The goal is added using only artifact_id/sha256 as an EvidenceRef.",
+      "rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": "Each Goal target must use exactly one binding shape. A Step binding is a future output route, not goal completion; do not combine it with a gap.",
+        "path": [
+          "parameters",
+          "goal_map",
+          "goal_prepared_geometry"
+        ],
+        "code": "goal_target_shape",
+        "errors": [
+          {
+            "type": "missing",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "step_key"
+            ]
+          },
+          {
+            "type": "extra_forbidden",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "evidence"
+            ]
+          },
+          {
+            "type": "value_error",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "evidence"
+            ]
+          },
+          {
+            "type": "missing",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "gap"
+            ]
+          }
+        ]
+      },
+      "previous_rejected_candidate": {
+        "source_model_id": "model_5c86bded1499458da38f6a09626310ec",
+        "projection": {
+          "bytes": 884,
+          "complete": true,
+          "omitted": false,
+          "redacted": false,
+          "sha256": "dfa7141f02a7d7327362a8219297d5eca3611f513e1e67be94dcd3a88e652150"
+        },
+        "status": "rejected_not_accepted",
+        "trust": "untrusted"
+      }
+    },
+    {
+      "model_id": "model_e116a6e3d14e40848908ca3a595e4581",
+      "request_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/model/model_e116a6e3d14e40848908ca3a595e4581.request.json",
+        "bytes": 47384,
+        "sha256": "b4075feabdaff8d61f922243ef212638ac8ae54fd0daf0a247f9ea84bd38bf04"
+      },
+      "response_source": {
+        "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/model/model_e116a6e3d14e40848908ca3a595e4581.response.json",
+        "bytes": 3568,
+        "sha256": "85e80bda3e74b9c5720b005ebadbae51a693f64e5ea9f628944ebddc14d99cd4"
+      },
+      "previous_candidate_equals_original_response": true,
+      "proposal_fact": "The invalid file-only EvidenceRef is repeated.",
+      "rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": "Each Goal target must use exactly one binding shape. A Step binding is a future output route, not goal completion; do not combine it with a gap.",
+        "path": [
+          "parameters",
+          "goal_map",
+          "goal_prepared_geometry"
+        ],
+        "code": "goal_target_shape",
+        "errors": [
+          {
+            "type": "missing",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "step_key"
+            ]
+          },
+          {
+            "type": "extra_forbidden",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "evidence"
+            ]
+          },
+          {
+            "type": "value_error",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "evidence"
+            ]
+          },
+          {
+            "type": "missing",
+            "loc": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry",
+              "gap"
+            ]
+          }
+        ]
+      },
+      "previous_rejected_candidate": {
+        "source_model_id": "model_f725d89ec10542019ae8ba1314eeb1d9",
+        "projection": {
+          "bytes": 1143,
+          "complete": true,
+          "omitted": false,
+          "redacted": false,
+          "sha256": "6ecb6d0ac07e34e05ab708f34b94e28061decf5501b6073d564d46ce3f82da73"
+        },
+        "status": "rejected_not_accepted",
+        "trust": "untrusted"
+      }
+    }
+  ],
+  "failure_analysis": {
+    "terminal_diagnostic": {
+      "category": "StoreError",
+      "message": "bounded proposal correction or transport retry exhausted",
+      "environment_occupied": false
+    },
+    "first_missing_goal": "goal_prepared_geometry",
+    "later_invalid_evidence_fields": [
+      "artifact_id",
+      "sha256"
+    ],
+    "feedback_boundary": "Both correction requests include complete, unredacted previous rejected proposals from the same logical decision/basis. The final correction still repeats the invalid EvidenceRef. Prior-candidate absence is not the observed failure in this Run.",
+    "unexecuted_input_issue": "All three final rejected proposals use the prepared XYZ Artifact as orca.run input with language=orca. They provide no native ORCA input text and no generated Python task. Because plan validation rejected them, this is an unexecuted proposal defect, not an observed ORCA parser or runtime failure."
+  },
+  "execution": {
+    "attempts": 0,
+    "internal_calls": 0,
+    "workspace_write_calls": 0,
+    "python_execute_calls": 0,
+    "orca_run_calls": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "generated_code_or_native_input_registered": false,
+    "dft_stdout_hessian_optimized_xyz_available": false,
+    "scientific_oracle_run": false,
+    "bounded_generated_code_repair_exercised": false
+  },
+  "unverified": [
+    "Only initial identity/geometry preparation passed its input checks; optimized geometry and vibrational frequencies remain insufficient_evidence.",
+    "No real ORCA output, Hessian, or optimized XYZ exists for independent method/basis/electronic-state/convergence/frequency checks.",
+    "No generated-code execution or bounded code repair occurred.",
+    "The initial staged Plan and later rejected revisions were model-produced; the audit did not substitute handwritten Plan/code/input or upgrade scientific qualification."
+  ],
+  "driver_outcome": {
+    "state": "failed",
+    "error": null,
+    "report_error": null,
+    "source_changed_during_run": [],
+    "finished_at": "2026-10-19T04:53:42.299338+00:00"
+  },
+  "sources": [
+    {
+      "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/run.json",
+      "bytes": 93919,
+      "sha256": "c6e746460ceee11654242af8cbc644bff661b591140f7391d79daa333ccc743b"
+    },
+    {
+      "path": "data/code-tools-step3/live-012/freeze.json",
+      "bytes": 10301,
+      "sha256": "1509d708a0182a073353b101ef3b91961c52462dc9afe701d2c6f02bc1269ccc"
+    },
+    {
+      "path": "data/code-tools-step3/live-012-freeze-audit.json",
+      "bytes": 532,
+      "sha256": "5ff98a65e44f0e50e879d407e46fc0fb37fed66fe749161ef41765b1ef3dc0a1"
+    },
+    {
+      "path": "data/code-tools-step3/live-012/run-location.json",
+      "bytes": 212,
+      "sha256": "22fdc0828d99cf556386265b1a1ca518814153216b46c6740b5665a0520e6731"
+    },
+    {
+      "path": "data/code-tools-step3/live-012/outcome.json",
+      "bytes": 1211,
+      "sha256": "94697499025acbd432eeb627ebe69925a0a0e884a44c565b4d3cb7c69cef42d2"
+    },
+    {
+      "path": "data/code-tools-step3/live-012/report.json",
+      "bytes": 167090,
+      "sha256": "83bc85804c5cf255f0a0ea00e0a06a1645bac3ac16e9e8e54aab9fa2e62fd9e2"
+    },
+    {
+      "path": "data/code-tools-step3/live-012/report.txt",
+      "bytes": 42226,
+      "sha256": "85c86a08fd565338bdef8c06690dbfcab6ca79edc8cbffedc447719233d70002"
+    },
+    {
+      "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/results/result_47eddaa66c3f4600ac2c052a15fe63da.json",
+      "bytes": 45607,
+      "sha256": "e864423bd43112a064d852357947182d908b51e41d1949065ecf2b2ea4c491ec"
+    },
+    {
+      "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/results/result_0d7406d6508b453d91c66fe195dd685d.json",
+      "bytes": 32266,
+      "sha256": "a2fd3034e054705b8a872b5350940bf52f3f4a49217b6ec118093a7dd8edd2da"
+    },
+    {
+      "path": "data/code-tools-step3/live-store/artifacts/artifact_2066f75905ba40579ad5a3708ad75b37/artifact.json",
+      "bytes": 607,
+      "sha256": "ff9dfa8ba8e22cbf4278e58e8be5119b07d602ce6dbc4cf75228ee4818d5a1bb"
+    },
+    {
+      "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/model/model_a24d3c866ab44539994f72a1cb5798b9.response.json",
+      "bytes": 8368,
+      "sha256": "d90668cfb2627f281f064e6545cba2a47edf142f7924f1e6935799a78ad54f42"
+    },
+    {
+      "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/decisions/model_f38db1b8a25947e0be9205edfbcdb1cc.json",
+      "bytes": 14237,
+      "sha256": "418495e43d36a66f2d549723fb7b985f58e4c83f56183f8121eb442cd163ef08"
+    },
+    {
+      "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/model/model_ddedb8c2e1ab435b8e05f0ad5bca5637.response.json",
+      "bytes": 3685,
+      "sha256": "7d7923c3f904d67c30256870a676b62e038a475cfdfcea537fdc0b6b358f55a6"
+    },
+    {
+      "path": "data/code-tools-step3/live-store/runs/run_0bd22cf67623455aaa26158eb93f1b6a/decisions/model_ddedb8c2e1ab435b8e05f0ad5bca5637.json",
+      "bytes": 14594,
+      "sha256": "b720c218cc81d8edb96bab005d125d1baf133212574eb38a912f678949561170"
+    }
+  ],
+  "independent_audit": {
+    "path": "data/code-tools-step3/live-012-audit.json",
+    "bytes": 41354,
+    "sha256": "466a580c048b9f7f1844eb80c2f365f5c17c31825e5a60ed07d2c7c4429d453e"
+  },
+  "final_rejected_proposal": {
+    "action": "revise_plan",
+    "parameters": {
+      "goal_map": {
+        "goal_prepared_geometry": {
+          "evidence": {
+            "artifact_id": "artifact_2066f75905ba40579ad5a3708ad75b37",
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+          },
+          "port": "prepared_geometry"
+        },
+        "goal_optimized_geometry": {
+          "step_key": "optfreq",
+          "port": "optimized_geometry"
+        },
+        "goal_vibrational_frequencies": {
+          "step_key": "optfreq",
+          "port": "vibrational_frequencies"
+        }
+      },
+      "steps": [
+        {
+          "key": "optfreq",
+          "tool": "orca.run",
+          "system_id": "system_ethanol",
+          "parameters": {
+            "input": {
+              "artifact_id": "artifact_2066f75905ba40579ad5a3708ad75b37",
+              "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+              "language": "orca"
+            },
+            "observation_names": [
+              "optimized_geometry",
+              "vibrational_frequencies"
+            ]
+          }
+        }
+      ]
+    },
+    "reason": "Corrected goal_map shapes: goal_prepared_geometry uses evidence binding to the qualified prepared XYZ (artifact_2066f75905ba40579ad5a3708ad75b37, sha256 5341a7b8…); optimized_geometry and vibrational_frequencies use future step_key bindings to one combined Opt+Freq ORCA step on that registered XYZ with B3LYP/def2-SVP, charge 0, multiplicity 1, gas phase. Raw outputs are unqualified until parsed in the same Attempt."
+  }
+}

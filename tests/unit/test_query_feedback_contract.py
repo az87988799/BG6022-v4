@@ -160,8 +160,9 @@ def test_actual_correction_uses_smaller_existing_projection_and_keeps_final_marg
     repeated_instruction = expected_error["requirement"].pop("requirement")
     assert repeated_instruction == call_tool_instruction()
     assert sent["CONTROL"]["validation_error"] == expected_error
-    # The complete transmitted schema replaces repeated prose, with the same
-    # exact disjoint call shapes (and no inline override for a planned Step).
+    # The transmitted schema replaces repeated prose. The native view gives
+    # immediate readers their own named action; the legacy envelope keeps the
+    # two disjoint call_tool forms. Neither permits an inline Step override.
     schema = sent.get("ACTION_SCHEMAS", {}).get("call_tool", sent.get("PROPOSAL_SCHEMA"))
     def records(value):
         if isinstance(value, dict):
@@ -173,7 +174,44 @@ def test_actual_correction_uses_smaller_existing_projection_and_keeps_final_marg
                 yield from records(child)
     objects = list(records(schema))
     assert any(item.get("required") == ["step_id"] and item.get("maxProperties") == 1 for item in objects)
-    assert any(item.get("required") == ["tool", "parameters"] and item.get("maxProperties") == 2 for item in objects)
+    if "ACTION_SCHEMAS" in sent:
+        from pydantic import ValidationError
+
+        from orca_agent.tools.registry import validate_parameters
+        from tests.unit.test_plan_goal_binding_contract import matches
+
+        schemas = sent["ACTION_SCHEMAS"]
+        assert set(schemas) == {"call_tool", "clarify", "stop", "evidence.value"}
+        assert set(schema["properties"]) == {"step_id"}
+        assert set(schema["properties"]["step_id"]["enum"]) == set(values["feedback"]["pending_step_ids"])
+        step_id = values["feedback"]["pending_step_ids"][0]
+        assert matches(schema, {"step_id": step_id}, schema)
+        for invalid in ({"step_id": "unknown_step"},
+                        {"step_id": step_id, "parameters": {}},
+                        {"tool": "evidence.value", "parameters": {}}):
+            assert not matches(schema, invalid, schema)
+        readers = {tool["name"] for tool in sent["TOOLS"] if tool.get("immediate")}
+        assert readers == {"evidence.value"}
+        reader_schema = schemas["evidence.value"]
+        parameters = next(step.parameters.model_dump(mode="json") for step in values["plan"].steps
+                          if step.tool == "evidence.value")
+        assert reader_schema["additionalProperties"] is False
+        path_schema = reader_schema["properties"]["path"]
+        assert path_schema["maxItems"] == 12
+        segments = {branch["properties"]["kind"]["const"]: branch
+                    for branch in path_schema["items"]["oneOf"]}
+        assert segments["index"]["properties"]["index"] == {
+            "type": "integer", "minimum": 0, "maximum": 1000000}
+        assert segments["key"]["properties"]["key"] == {
+            "type": "string", "minLength": 1, "maxLength": 100}
+        assert validate_parameters("evidence.value", parameters).model_dump(mode="json") == parameters
+        for invalid in ({**parameters, "undeclared": True},
+                        {**parameters, "path": [{"kind": "index", "index": -1}]},
+                        {**parameters, "path": [{"kind": "key", "key": "x" * 101}]}):
+            with pytest.raises(ValidationError):
+                validate_parameters("evidence.value", invalid)
+    else:
+        assert any(item.get("required") == ["tool", "parameters"] and item.get("maxProperties") == 2 for item in objects)
     goals = {row["id"]: row for row in sent["AUTHORITY"]["request"]["goals"]}
     for goal in document["request"]["goals"]:
         assert goals[goal["id"]]["conditions"] == goal["conditions"]

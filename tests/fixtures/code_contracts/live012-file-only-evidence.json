@@ -1,0 +1,48 @@
+{
+  "source": {
+    "run_id": "run_0bd22cf67623455aaa26158eb93f1b6a",
+    "model_id": "model_e116a6e3d14e40848908ca3a595e4581",
+    "response_record_sha256": "85e80bda3e74b9c5720b005ebadbae51a693f64e5ea9f628944ebddc14d99cd4"
+  },
+  "proposal": {
+    "action": "revise_plan",
+    "parameters": {
+      "goal_map": {
+        "goal_prepared_geometry": {
+          "evidence": {
+            "artifact_id": "artifact_2066f75905ba40579ad5a3708ad75b37",
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+          },
+          "port": "prepared_geometry"
+        },
+        "goal_optimized_geometry": {
+          "step_key": "optfreq",
+          "port": "optimized_geometry"
+        },
+        "goal_vibrational_frequencies": {
+          "step_key": "optfreq",
+          "port": "vibrational_frequencies"
+        }
+      },
+      "steps": [
+        {
+          "key": "optfreq",
+          "tool": "orca.run",
+          "system_id": "system_ethanol",
+          "parameters": {
+            "input": {
+              "artifact_id": "artifact_2066f75905ba40579ad5a3708ad75b37",
+              "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+              "language": "orca"
+            },
+            "observation_names": [
+              "optimized_geometry",
+              "vibrational_frequencies"
+            ]
+          }
+        }
+      ]
+    },
+    "reason": "Corrected goal_map shapes: goal_prepared_geometry uses evidence binding to the qualified prepared XYZ (artifact_2066f75905ba40579ad5a3708ad75b37, sha256 5341a7b8…); optimized_geometry and vibrational_frequencies use future step_key bindings to one combined Opt+Freq ORCA step on that registered XYZ with B3LYP/def2-SVP, charge 0, multiplicity 1, gas phase. Raw outputs are unqualified until parsed in the same Attempt."
+  }
+}

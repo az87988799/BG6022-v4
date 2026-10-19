@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "scope": "Independent five-module stale-test repair audit after the frozen full baseline; offline unit evidence only.",
+  "audited_at_utc": "2026-10-19T12:22:08.435719+00:00",
+  "test_runs": [
+    {
+      "xml": {
+        "path": "data/code-tools-step3/stale-test-audit/five-modules-001.xml",
+        "bytes": 33354,
+        "sha256": "5bec606f8abd05bc712231e9d16f66c55d2a58b815ba2cc66d979acaa0e72aa8"
+      },
+      "log": {
+        "path": "data/code-tools-step3/stale-test-audit/five-modules-001.log",
+        "bytes": 7995,
+        "sha256": "c8b022bc932f2c4e03a621f98243eefb5f7ee336921a393bec49ad5ee38685ef"
+      },
+      "counts": {
+        "tests": 135,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 132
+      },
+      "xml_duration_seconds": 13.915,
+      "xml_started_at": "2026-10-19T20:16:43.851731+08:00",
+      "started_at_utc": "2026-10-19T12:16:43.851731+00:00",
+      "end_from_xml_start_plus_duration_utc": "2026-10-19T12:16:57.766731+00:00",
+      "module_counts": {
+        "tests.unit.test_condition_selection_feedback": 29,
+        "tests.unit.test_context_fact_contract": 49,
+        "tests.unit.test_context_goal_copy_targets": 17,
+        "tests.unit.test_context_terminal_replay": 34,
+        "tests.unit.test_retained_plan_dependencies": 6
+      },
+      "failed_tests": [
+        "tests.unit.test_context_terminal_replay::test_actual_failed_context_fits_without_changing_authority_data_or_tool_contract",
+        "tests.unit.test_context_terminal_replay::test_both_actions_still_require_exactly_the_eight_envelope_fields[clarify]",
+        "tests.unit.test_context_terminal_replay::test_both_actions_still_require_exactly_the_eight_envelope_fields[stop]"
+      ]
+    },
+    {
+      "xml": {
+        "path": "data/code-tools-step3/stale-test-audit/five-modules-002.xml",
+        "bytes": 24356,
+        "sha256": "a4ab813acb6505db0bc6256b65320f12bd695e68dc4744b015c467ee3d8e141d"
+      },
+      "log": {
+        "path": "data/code-tools-step3/stale-test-audit/five-modules-002.log",
+        "bytes": 184,
+        "sha256": "cd60e141d6cfc9a8bca6d60cdb0037535d2f0b76a89fe1bcf30572a1ddd6a80e"
+      },
+      "counts": {
+        "tests": 135,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 135
+      },
+      "xml_duration_seconds": 14.072,
+      "xml_started_at": "2026-10-19T20:18:03.906583+08:00",
+      "started_at_utc": "2026-10-19T12:18:03.906583+00:00",
+      "end_from_xml_start_plus_duration_utc": "2026-10-19T12:18:17.978583+00:00",
+      "module_counts": {
+        "tests.unit.test_condition_selection_feedback": 29,
+        "tests.unit.test_context_fact_contract": 49,
+        "tests.unit.test_context_goal_copy_targets": 17,
+        "tests.unit.test_context_terminal_replay": 34,
+        "tests.unit.test_retained_plan_dependencies": 6
+      },
+      "failed_tests": []
+    }
+  ],
+  "test_command_template": ".venv/Scripts/python.exe -B -m pytest -q <five listed modules> -o cache_dir=data/code-tools-step3/stale-test-audit/five-modules-cache-NNN --basetemp=data/code-tools-step3/stale-test-audit/five-modules-tmp-NNN --junitxml=data/code-tools-step3/stale-test-audit/five-modules-NNN.xml",
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "local_timezone": "Asia/Hong_Kong",
+    "python_bytecode_flag": "-B"
+  },
+  "changed_test_files": [
+    {
+      "path": "tests/unit/test_condition_selection_feedback.py",
+      "bytes": 11072,
+      "sha256": "5f906122e94886dec10b5f4f2eee471759797927846a7c6aca3079e8e6d7dbcd"
+    },
+    {
+      "path": "tests/unit/test_context_fact_contract.py",
+      "bytes": 22790,
+      "sha256": "a20b582cb4417904aa08e6184e8cd4ad0be830fc4ddc721f4eacb82a5ebb5ae4"
+    },
+    {
+      "path": "tests/unit/test_context_goal_copy_targets.py",
+      "bytes": 15224,
+      "sha256": "1dd4a9331fd033be55bb074bd38af32c34247dbc2f0a0b33f427ce0a5da26cc3"
+    },
+    {
+      "path": "tests/unit/test_context_terminal_replay.py",
+      "bytes": 14160,
+      "sha256": "8fcef797d6cd3dca4b1149a4e55cf7c85de0d61d74404fd3c502f59ab159041e"
+    },
+    {
+      "path": "tests/unit/test_retained_plan_dependencies.py",
+      "bytes": 6342,
+      "sha256": "91df264e9d06d825ace3d12e4e5df75bd9e1d0e03232cefc28988bed75a08261"
+    }
+  ],
+  "changes": [
+    {
+      "file": "tests/unit/test_condition_selection_feedback.py",
+      "original_failure_cases": 5,
+      "cause": "Archived deadline was compared with the present machine clock during context replay.",
+      "change": "Pass the last recorded model receipt timestamp as now, proving it follows all supplied Results and precedes the unchanged archived deadline.",
+      "retained_assertions": "All precise rejection paths, reason and quote facts, no recipe injection, context bound, unchanged stored Request/Run, historical calls and zero ORCA/Attempts remain asserted."
+    },
+    {
+      "file": "tests/unit/test_context_fact_contract.py",
+      "original_failure_cases": 6,
+      "cause": "Current reader schema legitimately narrows tool names and ready Step IDs; the old expectation compared both archived and rebuilt schemas with the unrestricted historical form.",
+      "change": "Keep the archived unrestricted schema equality; compare the rebuilt schema exactly with its two authorized readers and coordinator-provided pending IDs.",
+      "retained_assertions": "Permission list, literal IDs, archived hashes, facts, control and immutable stored evidence remain exact."
+    },
+    {
+      "file": "tests/unit/test_context_goal_copy_targets.py",
+      "original_failure_cases": 1,
+      "cause": "The compact prompt uses a different existing instruction with the same Goal ID/port requirement.",
+      "change": "Accept the two explicit existing prompt wordings; strengthen Request Goal equality from IDs to ID/port pairs.",
+      "retained_assertions": "Three-field decision-intent envelope, initial_plan schema, readable current IDs, no retired-status copying and immutable inputs remain asserted."
+    },
+    {
+      "file": "tests/unit/test_context_terminal_replay.py",
+      "original_failure_cases": 3,
+      "cause": "Current fitting terminal view retains original allOf and control facts; the test required an older compact oneOf representation and omitted fields.",
+      "change": "Require exact original authority, original allOf schema, pending_step_ids=[] and preserved fields. Independently test original, current and explicit historical oneOf schemas against valid/invalid parameters and every subset of the eight envelope fields.",
+      "retained_assertions": "Original wire/hash and historical compact hash, <=12000 current bound, all facts, checker contracts, exact eight fields, invalid actions/types/additional fields and immutable evidence remain asserted. No step_execution authority was allowed in the legacy branch."
+    },
+    {
+      "file": "tests/unit/test_retained_plan_dependencies.py",
+      "original_failure_cases": 1,
+      "cause": "The old 12000-token positive expectation predates the explicit v53 code-context capacity limit.",
+      "change": "A fresh 12000-budget Run must fail closed with ContextLimitError; a separate fresh 64000-budget Run must fit. Every candidate retains literal writer ID and empty depends_on.",
+      "retained_assertions": "Native ACTION_SCHEMAS, no PROPOSAL_SCHEMA/string_steps, transitive dependency instruction on success, unchanged objects and persisted Run bytes, fixed configuration/budget, zero model records/calls. No failed Run budget is enlarged."
+    }
+  ],
+  "checks": {
+    "ruff": {
+      "command": [
+        ".venv/Scripts/ruff.exe",
+        "check",
+        "--no-cache",
+        "tests/unit/test_condition_selection_feedback.py",
+        "tests/unit/test_context_fact_contract.py",
+        "tests/unit/test_context_goal_copy_targets.py",
+        "tests/unit/test_context_terminal_replay.py",
+        "tests/unit/test_retained_plan_dependencies.py"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-10-19T12:22:08.315360+00:00",
+      "ended_at_utc": "2026-10-19T12:22:08.360052+00:00",
+      "log": {
+        "path": "data/code-tools-step3/stale-test-audit/five-modules-ruff-001.log",
+        "bytes": 19,
+        "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+      }
+    },
+    "git_diff_check": {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "tests/unit/test_condition_selection_feedback.py",
+        "tests/unit/test_context_fact_contract.py",
+        "tests/unit/test_context_goal_copy_targets.py",
+        "tests/unit/test_context_terminal_replay.py",
+        "tests/unit/test_retained_plan_dependencies.py"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-10-19T12:22:08.368063+00:00",
+      "ended_at_utc": "2026-10-19T12:22:08.427674+00:00",
+      "log": {
+        "path": "data/code-tools-step3/stale-test-audit/five-modules-diff-check-001.log",
+        "bytes": 545,
+        "sha256": "22cf045d359d60fa59431ddc2a80685fdb1dadc4dc243b09347575dee4998a27"
+      }
+    }
+  },
+  "execution_and_integrity": {
+    "real_model_http_calls_started": 0,
+    "real_orca_calculations_started": 0,
+    "development_run_reservations_used": 0,
+    "production_source_changed_by_this_agent": false,
+    "driver_or_configuration_changed_by_this_agent": false,
+    "historical_run_files_changed_by_this_agent": false,
+    "legacy_scope_production_change": "Applied separately by repair_diagnosis before this test group; not attributed to these test-only changes.",
+    "historical_integrity_scope": "Existing test assertions recheck their archived fixture hashes and immutability; this batch does not claim a fresh hash audit of every historical Run."
+  },
+  "limitations": [
+    "135 passing unit cases establish this bounded test group, not the full repository regression or a new real-model/ORCA acceptance run.",
+    "A further full repository regression is not executed, following the user's explicit instruction. The earlier full baseline and its 23 failures remain historical evidence; these targeted repairs do not replace that baseline.",
+    "The first 132-pass/3-failure run and its original XML/log are preserved; the final result does not rewrite that failure history.",
+    "The code-authorized 12000-token case remains unsupported and is explicitly verified to fail closed; the 64000 positive control uses a distinct Run.",
+    "Current test-file hashes were collected after the targeted run; this is not a claim of an independent whole-repository freeze around that run.",
+    "test_retained_plan_dependencies.py already belonged to the uncommitted implementation and is untracked against HEAD; git diff --check alone does not cover its full contents, while Ruff and pytest do."
+  ]
+}

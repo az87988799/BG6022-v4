@@ -1,0 +1,79 @@
+{
+  "source_model_id": "model_0c9a3c5e7d0b40af851bb42bf8ebcd04",
+  "response_record_sha256": "ef37badab59d25624739dfa29f25cb9d3ee72a2fd3ad92b0f63769ba9bfabde2",
+  "proposal": {
+    "action": "normalize_request",
+    "parameters": {
+      "schema_version": "request-semantics-3",
+      "message_ids": [
+        "message_de56a0d7508e47a586fcb24fa0e8ebde"
+      ],
+      "kind": "normalize",
+      "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+      "identities": [
+        {
+          "key": "ethanol",
+          "name": "乙醇",
+          "text_basis": "乙醇",
+          "message_id": "message_de56a0d7508e47a586fcb24fa0e8ebde",
+          "query_name": "ethanol"
+        }
+      ],
+      "automatic_selection": {
+        "method": {
+          "text_basis": "选择合适的方法和基组",
+          "message_id": "message_de56a0d7508e47a586fcb24fa0e8ebde"
+        },
+        "basis": {
+          "text_basis": "选择合适的方法和基组",
+          "message_id": "message_de56a0d7508e47a586fcb24fa0e8ebde"
+        }
+      },
+      "goals": [
+        {
+          "key": "resolved_identity",
+          "port": "resolved_identity",
+          "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+          "system_refs": [
+            "ethanol"
+          ],
+          "required": true
+        },
+        {
+          "key": "prepared_geometry",
+          "port": "prepared_geometry",
+          "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+          "system_refs": [
+            "ethanol"
+          ],
+          "required": true
+        },
+        {
+          "key": "optimized_geometry",
+          "port": "optimized_geometry",
+          "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+          "system_refs": [
+            "ethanol"
+          ],
+          "quantity": "优化结构",
+          "geometry_relation": "optimized",
+          "required": true,
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "vibrational_frequencies",
+          "port": "vibrational_frequencies",
+          "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+          "system_refs": [
+            "ethanol"
+          ],
+          "quantity": "振动频率",
+          "geometry_relation": "optimized",
+          "required": true,
+          "verification": "reported_with_limitations"
+        }
+      ]
+    },
+    "reason": "User asks to build ethanol, choose method/basis (delegated -> automatic_selection), optimize geometry, and analyze vibrational frequencies, plus explain conditions/verification. Emit identity 乙醇, input goals resolved_identity and prepared_geometry (OPI-generated XYZ, not a missing user input), and scientific goals optimized_geometry and vibrational_frequencies with geometry_relation=optimized. Method/basis delegated, so omitted from conditions; defaults charge=0, multiplicity=1, RKS, gas_phase apply. explain_results=true means final delivery covers the explanation, so no separate knowledge_answer goal."
+  }
+}

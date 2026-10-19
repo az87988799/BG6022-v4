@@ -1,0 +1,79 @@
+{
+  "source_model_id": "model_9b10053f4b9a433ea64c38688be0561a",
+  "response_record_sha256": "9a2cc7e467433a64f9a4222dec2c0a458cbefff62c720f1d3e59f6f901922734",
+  "proposal": {
+    "action": "initial_plan",
+    "reason": "No Steps are pending and no geometry artifact exists. The prior proposal failed because python.execute referenced a not-yet-existing code Artifact. Stage the plan: first resolve identity and prepare the initial XYZ (executable now), then write the ORCA Opt+Freq input and Python parser as workspace.write Steps, and only after those Artifacts exist will a revised plan bind concrete artifact_id/sha256 for python.execute. Goals for optimized geometry and frequencies are bound to future producer ports; prepared geometry binds to structure.prepare.",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_ethanol",
+          "tool": "structure.resolve",
+          "system_id": "system_ethanol",
+          "parameters": {}
+        },
+        {
+          "key": "prepare_ethanol",
+          "tool": "structure.prepare",
+          "system_id": "system_ethanol",
+          "depends_on": [
+            "resolve_ethanol"
+          ],
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_ethanol",
+              "port": "resolved_identity"
+            }
+          },
+          "parameters": {}
+        },
+        {
+          "key": "write_orca_input",
+          "tool": "workspace.write",
+          "depends_on": [
+            "prepare_ethanol"
+          ],
+          "parameters": {
+            "name": "ethanol_optfreq.inp",
+            "role": "orca",
+            "content": "! B3LYP def2-SVP Opt Freq TightSCF NORI NoAutoStart\n%pal\n  nprocs 4\nend\n%maxcore 192\n%scf\n  MaxIter 256\n  ConvForced true\n  AutoTRAH false\nend\n%geom\n  MaxIter 128\n  EnforceStrictConvergence true\nend\n%method\n  Z_MaxIter 128\nend\n* xyzfile 0 1 ethanol.xyz\n"
+          }
+        },
+        {
+          "key": "write_parser",
+          "tool": "workspace.write",
+          "depends_on": [
+            "write_orca_input"
+          ],
+          "parameters": {
+            "name": "parse_ethanol.py",
+            "role": "python",
+            "content": "import json, os\nfrom orca_task_sdk import run_orca\n\nreceipt = run_orca('ethanol_optfreq.inp', dependencies=('ethanol.xyz',), request_key='ethanol_optfreq')\nfiles = receipt['files']\nobs = []\n\ndef read(name):\n    p = files.get(name)\n    if not p or not os.path.exists(p):\n        return None\n    with open(p, 'r', errors='replace') as f:\n        return f.read()\n\nxyz = read('job.xyz')\nif xyz:\n    obs.append({'name': 'optimized_geometry', 'value': xyz, 'unit': None,\n                'sources': [{'internal_request_key': receipt['request_key'], 'filename': 'job.xyz', 'location': None}],\n                'limitations': ['unqualified raw ORCA output; convergence not independently verified']})\n\nout = read('stdout.out') or ''\nfreqs = []\nfor line in out.splitlines():\n    s = line.strip()\n    if s.startswith('VIBRATIONAL FREQUENCIES'):\n        continue\n    parts = s.split()\n    if len(parts) >= 3 and parts[0].rstrip(':').isdigit():\n        try:\n            v = float(parts[1])\n        except ValueError:\n            continue\n        if abs(v) > 1e-6 or True:\n            freqs.append(v)\nif freqs:\n    obs.append({'name': 'vibrational_frequencies', 'value': freqs, 'unit': 'cm^-1',\n                'sources': [{'internal_request_key': receipt['request_key'], 'filename': 'stdout.out', 'location': 'VIBRATIONAL FREQUENCIES block'}],\n                'limitations': ['unqualified raw ORCA output; imaginary modes not assessed']})\n\nwith open('observations.json', 'w') as f:\n    json.dump({'version': 1, 'observations': obs}, f)\nprint(json.dumps({'request_key': receipt['request_key'], 'operation_status': receipt['operation_status'], 'n_obs': len(obs)}))\n"
+          }
+        }
+      ],
+      "goal_map": {
+        "goal_prepared_geometry": {
+          "evidence": {
+            "producer_step_id": null,
+            "artifact_id": null,
+            "run_id": null,
+            "result_id": null,
+            "sha256": null,
+            "rule_version": null,
+            "port": "prepared_geometry"
+          },
+          "port": "prepared_geometry"
+        },
+        "goal_optimized_geometry": {
+          "step_key": "write_parser",
+          "port": "optimized_geometry"
+        },
+        "goal_vibrational_frequencies": {
+          "step_key": "write_parser",
+          "port": "vibrational_frequencies"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "schema": "v56-targeted-context-compatibility-1",
+  "created_at_utc": "2026-10-19T12:24:58.108144+00:00",
+  "scope": "Restore the documented non-code display compatibility while preserving the authorized code contract. No production admission, readiness, execution, budget or qualification rule changed.",
+  "prompt_version": "agent-json-v56",
+  "changes": [
+    "Complete preceding rejected-candidate projection is code-authorized only in planning and terminal contexts; durable source records and the validator are unchanged.",
+    "Additional Step execution history and its added readiness explanation are code-authorized only; old pending fields, Result facts and actual execution gates are unchanged.",
+    "Non-code native fallback again uses the existing reversible schema-column, literal-pool and key encodings for immediate tools. Historical schema annotations/default display omissions remain; registry defaults and validation constraints are unchanged.",
+    "Code-authorized literal schema/defaults and failed-Python frozen repair contracts retain their previous representation."
+  ],
+  "prototype_evidence": {
+    "path": "data/code-tools-step3/capacity-v56-prototype/full-scope-compatibility-audit.json",
+    "bytes": 2449,
+    "sha256": "065399cb330cdb83fbfc755af7e1b029cdb55f4407b6af03ec4e1db559e5f054"
+  },
+  "prototype_code_body_comparison": "Two same-input/same-clock v55 versus scope-prototype request bodies were identical: a complete rejected candidate, and a settled failed Python removed from the Plan followed by a writer. This is an offline equivalence check, not a v56 live replay of live035.",
+  "targeted_test_batches": [
+    {
+      "evidence": {
+        "path": "data/code-tools-step3/capacity-v56-prototype/formal-scope-001.xml",
+        "bytes": 3982,
+        "sha256": "151253dbcb0d1f66b28c1bc787ce98ca6ae44e5b2e5d7ff531a563cd6e430a68"
+      },
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 20.292,
+      "failed_cases": []
+    },
+    {
+      "evidence": {
+        "path": "data/code-tools-step3/capacity-v56-prototype/formal-v56-002.xml",
+        "bytes": 29698,
+        "sha256": "9d8b2e6a198763408c6591ad183a41a4c521142527098e6581acca1ba5632fd5"
+      },
+      "tests": 136,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 126.454,
+      "failed_cases": [
+        "test_noncode_correction_keeps_legacy_error_and_facts_without_new_candidate[True]",
+        "test_code_terminal_correction_keeps_complete_candidate_and_source",
+        "test_noncode_immediate_schema_uses_legacy_reversible_projection_with_same_validation"
+      ]
+    },
+    {
+      "evidence": {
+        "path": "data/code-tools-step3/capacity-v56-prototype/formal-v56-003.xml",
+        "bytes": 894,
+        "sha256": "697234a5ebe90c65b57827b59139dee71e4c2df645214353d0646203682f23dd"
+      },
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 1.253,
+      "failed_cases": []
+    },
+    {
+      "evidence": {
+        "path": "data/code-tools-step3/capacity-v56-prototype/formal-v56-version.xml",
+        "bytes": 362,
+        "sha256": "a5c5e486f2e94ee5a3ac6aaf816f92dc467a0738262464b115d7fce4464856d1"
+      },
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.778,
+      "failed_cases": []
+    }
+  ],
+  "intermediate_failures": {
+    "count": 3,
+    "batch": "formal-v56-002.xml",
+    "causes": [
+      "Two newly added terminal tests supplied a nonexistent final_only keyword to build_context.",
+      "One newly added non-code schema test reused a helper that required literal immediate schemas, although this branch uses the historical reversible schema projection."
+    ],
+    "repairs": [
+      "Call the existing _terminal_context entry point directly.",
+      "Independently expand local schema references and compare all projected fields/constraints exactly; retain registry default and invalid-bound assertions."
+    ],
+    "rerun": "formal-v56-003.xml: all 4 selected cases passed. No production fix was needed for these test construction errors."
+  },
+  "capacity": {
+    "all_three_requested_water_regressions_passed_in_formal_batch": true,
+    "input_limit": 12000,
+    "run_token_limit": 48000,
+    "scripted_model_calls": [
+      5,
+      6,
+      6
+    ],
+    "limits_unchanged": true,
+    "source_goal_schema_permission_and_error_assertions_retained": true,
+    "boundary": "Entirely synthetic offline model/science. Synthetic usage is not evidence that a real trajectory fits the 48k cumulative token budget."
+  },
+  "source_files": [
+    {
+      "path": "src/orca_agent/context.py",
+      "bytes": 183250,
+      "sha256": "5d24ca0494eb41ec2c56d28e5eb0bae7fa4e8761b754587f1325e2cf91f39950"
+    },
+    {
+      "path": "src/orca_agent/readable_context.py",
+      "bytes": 15804,
+      "sha256": "c6f4c5dd769c809d150617e6d60bf001105c53a32c3d566e51d435ef700cee33"
+    },
+    {
+      "path": "src/orca_agent/decision_purpose.py",
+      "bytes": 9002,
+      "sha256": "3af8580738a482f16cc4dfd72eb505061052541fc303bed5bc6fe1d3287fbbf4"
+    }
+  ],
+  "ruff_relevant_files_passed": true,
+  "git_diff_check_passed": true,
+  "real_model_calls": 0,
+  "real_ORCA_starts": 0,
+  "full_regression_rerun": false,
+  "unverified": [
+    "No new all-suite pass is claimed after v56; the user explicitly cancelled further full regression.",
+    "Live same-purpose code repair and complete scientific delivery remain separate Run-specific checks."
+  ]
+}

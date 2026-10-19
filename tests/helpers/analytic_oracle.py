@@ -44,21 +44,105 @@ def _xyz(text):
     return [row[0] for row in rows], np.array([[_number(v) for v in row[1:]] for row in rows])
 
 
+def _actual_output(stdout):
+    """Exclude echoed input, which cannot establish the executed Hamiltonian."""
+    return re.sub(r"(?ms)^\s*INPUT FILE\s*$.*?^.*?\*{4}END OF INPUT\*{4}.*?$", "", stdout)
+
+
+def _method_state(stdout, *, method, basis, charge, multiplicity, electrons):
+    # This intentionally narrow developer oracle recognizes only the methods
+    # exercised by the frozen HF probe and autonomous B3LYP calculation.
+    if method not in {"HF", "B3LYP", "B3LYP/G"}:
+        raise ValueError("independent output method oracle does not cover requested method")
+    blocks = re.findall(r"(?ms)^SCF SETTINGS\s*\n-+\s*\n(.*?)(?=^Convergence Acceleration:|\Z)", stdout)
+    if not blocks:
+        raise ValueError("actual SCF SETTINGS evidence is missing")
+    basis_names = re.findall(r"(?m)^Your calculation utilizes the basis: (\S+)\s*$", stdout)
+    if not basis_names or any(name != basis for name in basis_names):
+        raise ValueError("output basis differs from expected basis")
+
+    def value(block, key):
+        matches = re.findall(r"(?m)^\s*[^\n]*?\b" + re.escape(key)
+                             + r"\s+\.{4}\s+([^\n]+?)\s*$", block)
+        if len(matches) != 1:
+            raise ValueError("missing or repeated SCF setting: " + key)
+        return matches[0]
+
+    records = []
+    for block in blocks:
+        actual = {key: value(block, key) for key in ("Method", "HFTyp", "Charge", "Mult", "NEL")}
+        if actual["HFTyp"] != "RHF":
+            raise ValueError("output electronic state is not restricted closed shell")
+        for key, expected in (("Charge", charge), ("Mult", multiplicity), ("NEL", electrons)):
+            if not re.fullmatch(r"-?\d+", actual[key]) or int(actual[key]) != expected:
+                raise ValueError("output electronic state differs at " + key)
+        if method == "HF":
+            if actual["Method"] != "Hartree-Fock(GTOs)":
+                raise ValueError("output method differs from HF")
+        else:
+            expected_values = {"Method": "DFT(GTOs)", "Exchange": "B88", "Correlation": "LYP",
+                               "LDAOpt": "VWN-5" if method == "B3LYP" else "VWN-3"}
+            for key, expected in expected_values.items():
+                actual[key] = value(block, key)
+                if actual[key] != expected:
+                    raise ValueError("output functional differs at " + key)
+            expected_scales = {"XAlpha": .666667, "XBeta": .0042,
+                               "ScalHFX": .2, "ScalDFX": .72, "ScalDFC": .81, "ScalLDAC": 1.}
+            for key, expected in expected_scales.items():
+                actual[key] = _number(value(block, key))
+                if not math.isclose(actual[key], expected, rel_tol=0, abs_tol=5e-7):
+                    raise ValueError("output functional coefficient differs at " + key)
+            if len(re.findall(r"(?m)^\s*Hybrid DFT is turned on\s*$", block)) != 1:
+                raise ValueError("actual hybrid DFT activation evidence is missing")
+            correction = re.findall(r"(?m)^\s*Perturbative correction\s+\.{4}\s+(\S+)\s*$", block)
+            if len(correction) != 1 or _number(correction[0]) != 0:
+                raise ValueError("unexpected perturbative functional correction")
+        records.append(actual)
+    if any(record != records[0] for record in records[1:]):
+        raise ValueError("conflicting actual SCF SETTINGS blocks")
+    return {"method": method, "basis": basis, "charge": charge, "multiplicity": multiplicity,
+            "electrons": electrons, "restricted_state": "RHF" if method == "HF" else "RKS",
+            "scf_settings_blocks": len(records), "actual_scf_settings": records}
+
+
+def _response_convergence(stdout, dimension):
+    blocks = re.findall(r"(?ms)^SHARK CP-SCF DRIVER\s*\n(.*?)^CP-SCF equations solved[^\n]*$", stdout)
+    if len(blocks) != 1:
+        raise ValueError("one completed analytic CP-SCF response is required")
+    block = blocks[0]
+    tolerances = re.findall(r"Convergence Tolerance\s+\.{3}\s+(\S+)", block)
+    counts = re.findall(r"Number of perturbations\s+\.{3}\s+(\d+)", block)
+    iterations = re.findall(r"ITERATION\s+\d+:\s+\|\|err\|\|_max\s*=\s*(\S+)"
+                            r"\s*\([^\n]*?\s+(\d+)/\s*(\d+)\s+done\)", block)
+    if len(tolerances) != 1 or counts != [str(dimension)] or not iterations:
+        raise ValueError("response tolerance, perturbation count or iteration evidence is missing")
+    tolerance = _number(tolerances[0])
+    error, done, total = iterations[-1]
+    error = _number(error)
+    if tolerance <= 0 or error < 0 or error > tolerance or int(done) != dimension or int(total) != dimension:
+        raise ValueError("not all analytic response perturbations independently converged")
+    return {"perturbations": dimension, "completed": int(done), "max_error": error,
+            "tolerance": tolerance}
+
+
 def inspect_optfreq(stdout_path, hessian_path, geometry_path, *, expected_atoms=9,
-                    method="HF", basis="STO-3G"):
+                    method="HF", basis="STO-3G", charge=0, multiplicity=1, electrons=26):
     paths = {"stdout": Path(stdout_path), "hessian": Path(hessian_path), "geometry": Path(geometry_path)}
     if any(path.stat().st_size > 16 * 1024 * 1024 for path in paths.values()):
         raise ValueError("developer oracle read bound exceeded")
     raw = {key: path.read_bytes() for key, path in paths.items()}
     if any(len(value) > 16 * 1024 * 1024 for value in raw.values()):
         raise ValueError("developer oracle read bound exceeded")
-    stdout, hessian = raw["stdout"].decode("utf-8"), raw["hessian"].decode("ascii")
+    stdout, hessian = _actual_output(raw["stdout"].decode("utf-8")), raw["hessian"].decode("ascii")
+    if stdout.count("ORCA TERMINATED NORMALLY") != 1:
+        raise ValueError("one complete ORCA job is required; concatenated jobs are not accepted")
     if "ORCA TERMINATED NORMALLY" not in stdout or "THE OPTIMIZATION HAS CONVERGED" not in stdout:
         raise ValueError("normal termination and explicit optimization convergence are required")
     if "SCF CONVERGED AFTER" not in stdout or re.search(r"SCF NOT CONVERGED|SCF DID NOT CONVERGE", stdout):
         raise ValueError("SCF convergence evidence missing or contradicted")
     if "CP-SCF equations solved" not in stdout:
         raise ValueError("analytic response completion evidence is missing")
+    response = _response_convergence(stdout, 3 * expected_atoms)
     optimization_text = stdout.split("THE OPTIMIZATION HAS CONVERGED")[0]
     convergence = optimization_text.rsplit("|Geometry convergence|", 1)[-1]
     criteria = re.findall(r"(?m)^\s*(Energy change|RMS gradient|MAX gradient|RMS step|MAX step)"
@@ -69,14 +153,8 @@ def inspect_optfreq(stdout_path, hessian_path, geometry_path, *, expected_atoms=
     factors = re.findall(r"Scaling factor for frequencies\s*=\s*([\d.]+)", stdout)
     if len(factors) != 1 or _number(factors[0]) != 1:
         raise ValueError("independent frequency comparison requires explicit unit scaling")
-    # The initial independent implementation deliberately has a narrow method
-    # oracle. It cannot silently certify an unfamiliar functional's output.
-    if method != "HF" or not re.search(r"Ab initio Hamiltonian\s+Method\s+\.+\s+Hartree-Fock\(GTOs\)", stdout):
-        raise ValueError("independent output method oracle currently covers HF only")
-    if not re.search(r"Hartree-Fock type\s+HFTyp\s+\.+\s+RHF\b", stdout):
-        raise ValueError("output electronic state differs from RHF")
-    if "Your calculation utilizes the basis: " + basis not in stdout:
-        raise ValueError("output basis differs from expected basis")
+    actual_conditions = _method_state(stdout, method=method, basis=basis, charge=charge,
+                                     multiplicity=multiplicity, electrons=electrons)
     atoms, final_xyz = _xyz(raw["geometry"].decode("ascii"))
     if len(atoms) != expected_atoms:
         raise ValueError("unexpected final atom count")
@@ -162,9 +240,17 @@ def inspect_optfreq(stdout_path, hessian_path, geometry_path, *, expected_atoms=
     assessment = ("inconsistent_with_minimum" if np.any(vibrations < -20) else
                   "inconclusive_soft_modes" if np.any(vibrations <= 20) else
                   "consistent_local_harmonic_minimum")
-    return {"version": "developer-analytic-oracle-2", "product_qualification": "unverified",
+    energies = re.findall(r"(?m)^FINAL SINGLE POINT ENERGY\s+([-+\d.]+)\s*$", stdout)
+    if not energies:
+        raise ValueError("final electronic energy is missing from actual output")
+    final_energy = _number(energies[-1])
+    return {"version": "developer-analytic-oracle-3", "product_qualification": "unverified",
             "source_sha256": {key: hashlib.sha256(value).hexdigest() for key, value in raw.items()},
             "method": method, "basis": basis, "atom_count": expected_atoms,
+            "actual_conditions": actual_conditions,
+            "response_convergence": response,
+            "final_electronic_energy_hartree": final_energy,
+            "final_electronic_energy_decimal": energies[-1],
             "full_mode_count": dimension, "vibrational_mode_count": len(vibrations),
             "frequencies_cm_minus_1": h_frequencies.tolist(), "minimum_assessment": assessment,
             "geometry_max_error_angstrom": geom_error, "frequency_max_error_cm_minus_1": freq_error,
@@ -177,5 +263,6 @@ def inspect_optfreq(stdout_path, hessian_path, geometry_path, *, expected_atoms=
                                       for name, value, tolerance, _ in criteria],
             "tolerances": {"geometry_angstrom": GEOMETRY_TOLERANCE_ANGSTROM,
                            "frequency_cm_minus_1": FREQUENCY_TOLERANCE_CM},
-            "limitations": ["HF output method oracle only", "harmonic local stationarity; not global minimum",
+            "limitations": ["narrow HF/B3LYP output method oracle; no general DFT qualification",
+                            "harmonic local stationarity; not global minimum",
                             "no production frequency checker; independent developer evidence only"]}

@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "scope": "Independent posthoc explicit seeded live036 execution/receipt audit; no model/task/ORCA invoked by auditor.",
+  "audited_at_utc": "2026-10-19T11:34:42.322958+00:00",
+  "finished_at_utc": "2026-10-19T11:34:42.490691+00:00",
+  "run_id": "run_738360e148fc46e6aec6735a84be7d09",
+  "state": "failed",
+  "delivery_status": "partial",
+  "goal_status": {
+    "goal_opt_geom": "insufficient_evidence",
+    "goal_vib_freq": "insufficient_evidence"
+  },
+  "development_prompt": {
+    "text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。\n\n以下是独立的受控代码故障开发验收，不是自然任务首次自主成功的证据。\nDEVELOPMENT_FAULT_SEEDED: CODE_TOOLS_DEVELOPMENT_FAULT_V1\n本次仍由你自行检索、选择条件、制定 Plan，并编写完整 Python 程序与 ORCA 输入，不使用开发者提供的解题脚本。\n首次执行 Python 前，先完成所需条件选择、初始结构和全部任务文件的生成。第一版 Python 必须已经是完成上述科学目标的完整程序，包含实际 SDK 计算、输出读取和观察交付；禁止先执行仅用于报错的占位脚本、空任务或故障探针。第一次执行的 Step 就必须具备实际任务所需的完整输入 manifest、体系、条件、观察名、目标绑定与依赖，不能把这些留到第二次补充。所有 Artifact 与 hash 必须来自实际已完成的工具输出。\n在这份完整程序的任何导入、文件操作、SDK 调用或其他工作之前，写一行单独的未定义名称表达式 CODE_TOOLS_DEVELOPMENT_FAULT_V1。模块文档字符串可以在前；如果使用 __future__ 导入，必须将其放在故障标记之前（且保持 Python 规定的文件开头顺序），否则会在执行前产生 SyntaxError，不能算本次 NameError 故障。不要定义该名称，不要捕获这一行的 NameError。这一行是唯一人为要求的故障；其余程序从第一版开始就应完整。\n实际执行并读取真实失败反馈后，在同一个 Run 内由你自己通过 workspace.write 生成修订代码：仅删除上述独立 marker 行，其他代码字节保持不变。先完成新代码的写入，再提交修复 Step：使用新的 Step key 与原失败 Step 的同一个 logical_key，除 CodeRef 外保留原有输入、条件、目的、依赖和观察名。不要把新 writer 加为修复 Step 的依赖，不要重跑旧代码或再次注入 marker。第一次在 marker 处失败时尚未调用 SDK，因此已有计算请求键无须更改。若发现其他问题不能在这些约束下完成，保留事实并停止，不放宽测试或科学目标。\n继续使用同一累计预算和现有生产校验完成真实计算与带来源的结果交付。开发驱动只核验前置条件、驱动与采证，不会替你改写 Plan、脚本、ORCA 输入或模型回复。交付时区分本次人为要求的 NameError 与自然发生的错误，披露首次失败、实际修复、资源成本和科学验证缺项。",
+    "text_utf8_sha256": "b03759aefbbff15bc65a860f355d283f707c3cf7ebc57076e945963901442d8f",
+    "version": "repair-request-v3"
+  },
+  "source_freeze": {
+    "start": {
+      "scope": "Independent live-036 source/driver observation; no Run mutation.",
+      "checked_at_utc": "2026-10-19T11:22:26.124132+00:00",
+      "frozen_at": "2026-10-19T11:18:27.948349+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-036/freeze.json",
+        "bytes": 12733,
+        "sha256": "9e9add8b23c83738d15aa8ebd5117df00c9688e451104c2fdf60a00640ad0266"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_exists_at_check": false,
+      "independent_in_run_start_observed": true
+    },
+    "end": {
+      "scope": "Independent live-036 source/driver observation; no Run mutation.",
+      "checked_at_utc": "2026-10-19T11:29:14.984715+00:00",
+      "frozen_at": "2026-10-19T11:18:27.948349+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-036/freeze.json",
+        "bytes": 12733,
+        "sha256": "9e9add8b23c83738d15aa8ebd5117df00c9688e451104c2fdf60a00640ad0266"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_source_changed": [],
+      "outcome_finished_at": "2026-10-19T11:28:45.392929+00:00"
+    },
+    "outcome_changes": [],
+    "start_observation_boundary": "Independent first observation occurred almost four minutes after freeze creation, while the Run was active and before outcome existed; it is not a launch-instant observation.",
+    "same_configuration_and_source_map_as_live035": true
+  },
+  "model_usage": {
+    "http_calls": 15,
+    "known_usage_records": 14,
+    "input_tokens": 162219,
+    "output_tokens": 41880,
+    "total_tokens": 204099,
+    "unknown_usage_records": 1,
+    "unknown_token_reservations": 73131,
+    "product_cost_unknown_records": 15,
+    "product_total_cost_usd": null,
+    "independent_known_usage_estimate_usd": "0.37997388",
+    "independent_unknown_cost_records": 1,
+    "independent_total_cost_usd": null,
+    "price_basis": {
+      "input_per_million": "1.32",
+      "output_per_million": "3.96",
+      "description": "Known-token subtotal at frozen Pro uncached peak rates only; not invoice or total cost. Cache and off-peak discounts ignored.",
+      "pricing_freeze": {
+        "path": "docs/acceptance/code-as-tools-step3/validation/model-pro-v5-configuration.json",
+        "bytes": 1625,
+        "sha256": "a284a9456e259cb12505bec3ac7c5dc88c8d8f608167985f140997db8b409033"
+      },
+      "official_source_snapshot": {
+        "path": "data/code-tools-step3/validation/pro-pricing-20261019.html",
+        "bytes": 26043,
+        "sha256": "b856a6e93fa4793ecc8f3fd03a01bb7d8f7572f78a4739da8ce6dbdb09328d66"
+      }
+    }
+  },
+  "model_identity": {
+    "requested_model": "deepseek-v4-pro",
+    "known_usage_responses_self_reported_model": "deepseek-v4-pro",
+    "known_usage_response_count": 14,
+    "final_HTTP402_response_model": null,
+    "boundary": "The final rejected HTTP call has no provider model identity. Reported names do not independently prove model weights."
+  },
+  "actual_usage": {
+    "internal_work_units": 0,
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 0.0,
+    "cpu_seconds": 0.0,
+    "resource_usage_complete": true,
+    "logical_attempts": {},
+    "fingerprint_attempts": {},
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 15,
+    "model_tokens_used": 204099,
+    "model_tokens_unknown": 73131,
+    "plan_revisions": 0,
+    "decision_rounds": 15,
+    "evidence_reads": 3,
+    "analysis_executions": 2,
+    "logical_steps": [
+      "logical_29d4992f8c8342f78e5860bdcb822605",
+      "logical_426808ec132c4a68a7af03582be14c14",
+      "logical_5a65c6e1402746029881f071bb27a9b4",
+      "logical_cfd54ec906044f4c9ed673276e91df3c"
+    ],
+    "identity_queries": 1,
+    "structure_preparations": 1,
+    "knowledge_queries": 2
+  },
+  "writers": [
+    {
+      "call_id": "call_f4e44283374947f3af4e8f009ceeb2b2",
+      "name": "ethanol_optfreq.inp",
+      "role": "orca",
+      "artifact_id": "artifact_d2fd6ee687bd43438ecdcd15851411cf",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_d2fd6ee687bd43438ecdcd15851411cf/files/ethanol_optfreq.inp",
+        "bytes": 272,
+        "sha256": "e570be783d8b57f6b546431f510eb8592f3a92fcd43912e20517ddaa67525b21"
+      },
+      "model_origins": [
+        "model_446572d846e74ebaa9d90252dccdb4c7",
+        "model_58d01a3ba54440c7afcbbebeade38d40"
+      ],
+      "model_content_equals_writer_artifact": true
+    },
+    {
+      "call_id": "call_248c6cfad0014ce78e0aff560f637dda",
+      "name": "ethanol_optfreq_v1.py",
+      "role": "python",
+      "artifact_id": "artifact_e9ff0000e31845f199b25b63f072b8b9",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_e9ff0000e31845f199b25b63f072b8b9/files/ethanol_optfreq_v1.py",
+        "bytes": 3684,
+        "sha256": "e09a701e2654cf4ef391611794a33d0b371a76faf5bc7596543c29c8362460d4"
+      },
+      "model_origins": [
+        "model_446572d846e74ebaa9d90252dccdb4c7",
+        "model_58d01a3ba54440c7afcbbebeade38d40"
+      ],
+      "model_content_equals_writer_artifact": true
+    }
+  ],
+  "seeded_gate": {
+    "scope": "development_fault_seeded",
+    "status": "not_established",
+    "reason": "before_science_reservation was not reached",
+    "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1"
+  },
+  "independent_code_provenance_audit": {
+    "reference": {
+      "path": "data/code-tools-step3/validation/live036-code-unexecuted-audit.json",
+      "bytes": 43396,
+      "sha256": "1cbd0a2b6a5c5877e4b056abc7adf2b8ab49849a5ac5727bed4a32c34e36fc2c"
+    },
+    "summary": "The 3684-byte written program and both writer Artifacts match retained model content; the marker is the first non-docstring statement. No accepted python.execute, Attempt, SDK call, ORCA start, or repair occurred. Static parser concerns are unexecuted risks, not actual failure causes."
+  },
+  "terminal_failure": {
+    "final_model_receipt": {
+      "record": {
+        "id": "model_bcce4522d1c945efb24d48ff16b2c0ca",
+        "logical_id": "decision_c21a9466fa30bbaecc061d5f_1",
+        "request_hash": "bb986587d6026f9e4a8395203dd019e94ef72f48a1d5fda784d32882d909904a",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 1,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "input_reserved": 56747,
+        "output_reserved": 16384,
+        "cost_reserved_usd": null,
+        "created_at": "2026-10-19T11:28:43.578784+00:00",
+        "status": "unknown",
+        "prompt_version": "agent-json-v55",
+        "sdk_version": "2.28.0",
+        "model": "deepseek-v4-pro",
+        "token_bound_version": "deepseek-v41-utf8-upper-v2",
+        "model_profile": "thinking_low",
+        "transport_limits": {
+          "model_name": "deepseek-v4-pro",
+          "input_tokens": 64000,
+          "output_tokens": 16384,
+          "timeout_seconds": 180.0,
+          "response_bytes": 524288,
+          "proposal_bytes": 131072,
+          "messages": 64
+        },
+        "delivery_snapshot_sha256": "c73081f70d98b0d6fc73fa7deb3be578742e05964eddf1e0dfa45a51e36bc6ae",
+        "response_record_sha256": "eab78777fec241c8dded4f0a8e42808f032f6e398f4ca8331af41b746675f824",
+        "response_hash": null,
+        "error_category": "http_error",
+        "provider_request_id": null,
+        "response_model": null,
+        "latency_seconds": 0.6559999999990396,
+        "http_status": 402,
+        "finish_reason": null
+      },
+      "response": {
+        "request_hash": "bb986587d6026f9e4a8395203dd019e94ef72f48a1d5fda784d32882d909904a",
+        "proposal": null,
+        "raw_content": null,
+        "error_category": "http_error",
+        "retryable": false,
+        "usage": null,
+        "response_hash": null,
+        "response_bytes": 0,
+        "response_model": null,
+        "provider_request_id": null,
+        "completion_id": null,
+        "finish_reason": null,
+        "http_status": 402,
+        "retry_after_seconds": null,
+        "elapsed_seconds": 0.6559999999990396
+      },
+      "reference": {
+        "path": "data/code-tools-step3/live-store/runs/run_738360e148fc46e6aec6735a84be7d09/model/model_bcce4522d1c945efb24d48ff16b2c0ca.response.json",
+        "bytes": 454,
+        "sha256": "eab78777fec241c8dded4f0a8e42808f032f6e398f4ca8331af41b746675f824"
+      }
+    },
+    "last_rejection": {
+      "id": "model_bcce4522d1c945efb24d48ff16b2c0ca",
+      "basis": {
+        "request_version": 3,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "rejected",
+      "related_results": [],
+      "reason": "rejected",
+      "parameters": {
+        "error_category": "http_error",
+        "recovery_kind": "fatal",
+        "requirement": "http_error"
+      }
+    },
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_0b9d1eca2a2d43359b1bb5f85e63ce65",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_1ff4fc76a61746d49812839ed5713f72",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_446572d846e74ebaa9d90252dccdb4c7",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_bcce4522d1c945efb24d48ff16b2c0ca",
+        "error_category": "http_error"
+      },
+      {
+        "category": "StoreError",
+        "message": "bounded proposal correction or transport retry exhausted",
+        "environment_occupied": false
+      }
+    ],
+    "reason": "The final HTTP request returned 402 with no usage or response body. The transport classified it as fatal/nonretryable; the program preserved the unknown token reservation.",
+    "not_a_Python_failure": true,
+    "not_a_seeded_NameError": true,
+    "ordinary_correction_count_exhaustion_established": false
+  },
+  "findings": [
+    "Identity resolution, structure preparation and two task writers completed, but no Python Attempt or internal ORCA execution occurred.",
+    "The 15th model request returned HTTP402 and no usage. Fourteen earlier response token receipts total 204099; the final 73131-token reservation is conservatively retained as unknown, not actual consumption or zero consumption.",
+    "The final fatal HTTP failure is distinct from earlier corrected model proposals. The generic terminal exhausted message does not establish ordinary correction-counter exhaustion.",
+    "All 15 Pro product cost records are unknown. The independently priced known-token subtotal excludes the final unknown call and must not be reported as complete run cost.",
+    "The seeded prelaunch point was not reached, so no actual NameError, code repair, scientific observation or successful 035/036 repair pair was established."
+  ],
+  "unverified": [
+    "Actual usage, billed cost or underlying provider model of the final HTTP402 call.",
+    "Execution correctness of the written code/input, including static parser concerns.",
+    "Actual seeded failure and same-logical-purpose repair."
+  ],
+  "report_status": "Failed/partial seeded trial before Python execution due to final fatal HTTP402; repair acceptance remains incomplete.",
+  "evidence": {
+    "run": {
+      "path": "data/code-tools-step3/live-store/runs/run_738360e148fc46e6aec6735a84be7d09/run.json",
+      "bytes": 89085,
+      "sha256": "ffdbddb92a45b63083a984fac306f53f0fd5e33a8b2c7ea504e15b7f008c713f"
+    },
+    "outcome": {
+      "path": "data/code-tools-step3/live-036/outcome.json",
+      "bytes": 1466,
+      "sha256": "1041fa3c9ad177d19e8eb3f46fd1b04b20e00edc7784991ce8ad25e3a6dfbb7a"
+    },
+    "freeze": {
+      "path": "data/code-tools-step3/live-036/freeze.json",
+      "bytes": 12733,
+      "sha256": "9e9add8b23c83738d15aa8ebd5117df00c9688e451104c2fdf60a00640ad0266"
+    },
+    "start_check": {
+      "path": "data/code-tools-step3/live-036-freeze-start-audit.json",
+      "bytes": 635,
+      "sha256": "f0e4d3a2527ae04fb83115ed841ea10deacf1e1efdb79f9ec56647c38df44087"
+    },
+    "end_check": {
+      "path": "data/code-tools-step3/live-036-freeze-end-audit.json",
+      "bytes": 647,
+      "sha256": "4bdfc3797df059dd599859db41b92853a9e1a0e1d3a948148841181928b4bb6e"
+    }
+  },
+  "original_run_read_only_check": {
+    "file_count": 95,
+    "before_manifest_sha256": "f1868f8997d4a7cd0776db8545e23a7e5122aea404bcc4566b44be8861015126",
+    "after_manifest_sha256": "f1868f8997d4a7cd0776db8545e23a7e5122aea404bcc4566b44be8861015126",
+    "changed": [],
+    "reference_paths_rehashed": 85,
+    "all_references_match": true
+  },
+  "archived_file_hash_check_count": 24,
+  "full_audit": {
+    "path": "data/code-tools-step3/live-036-audit.json",
+    "bytes": 127103,
+    "sha256": "29fbcc6ae0fb44b0aec6c95192bbe12f06b2ab12e10b30031cfcdc75f23084b3"
+  }
+}

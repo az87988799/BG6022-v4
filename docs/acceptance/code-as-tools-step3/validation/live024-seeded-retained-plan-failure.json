@@ -1,0 +1,630 @@
+{
+  "schema_version": 1,
+  "scope": "Independent posthoc explicit fault-seeded live024 audit; no task/model/ORCA invoked. Candidate code was never executed.",
+  "audited_at_utc": "2026-10-19T09:35:55.662473+00:00",
+  "finished_at_utc": "2026-10-19T09:35:55.827883+00:00",
+  "run_id": "run_1650781da73449d785e95011d3333844",
+  "state": "failed",
+  "delivery_status": "partial",
+  "goal_status": {
+    "goal_ethanol_prepared_geometry": "satisfied",
+    "goal_ethanol_optimized_geometry": "insufficient_evidence",
+    "goal_ethanol_vibrational_frequencies": "insufficient_evidence"
+  },
+  "model_usage": {
+    "http_calls": 15,
+    "input_tokens": 194050,
+    "output_tokens": 33116,
+    "total_tokens": 227166,
+    "estimated_usd": "0.0979542",
+    "unknown_tokens": 0,
+    "cost_basis": "Frozen uncached USD0.30 input / USD1.20 output per million; estimate, not invoice."
+  },
+  "actual_usage": {
+    "internal_work_units": 0,
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 0.0,
+    "cpu_seconds": 0.0,
+    "resource_usage_complete": true,
+    "logical_attempts": {},
+    "fingerprint_attempts": {},
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 15,
+    "model_tokens_used": 227166,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 0,
+    "decision_rounds": 15,
+    "evidence_reads": 2,
+    "analysis_executions": 1,
+    "logical_steps": [
+      "logical_2822663b99f24a0b8349f458e305829f",
+      "logical_48f8f522e1834081927338de590de6a0",
+      "logical_a0d77b9d7bf84fd785ec544c9a3b2791"
+    ],
+    "identity_queries": 1,
+    "structure_preparations": 1,
+    "knowledge_queries": 4
+  },
+  "source_freeze": {
+    "start": {
+      "scope": "Independent live024 source/driver check while running; no completion assertion.",
+      "checked_at_utc": "2026-10-19T09:29:11.188599+00:00",
+      "frozen_at": "2026-10-19T09:28:38.216888+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-024/freeze.json",
+        "bytes": 12563,
+        "sha256": "c419a8f792da5f164170e299ac3e1af1405413a08fbfbd609b4691be9f689907"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true
+    },
+    "end": {
+      "scope": "Independent completed live024 source/driver check; no Run mutation.",
+      "checked_at_utc": "2026-10-19T09:33:17.549344+00:00",
+      "frozen_at": "2026-10-19T09:28:38.216888+00:00",
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_source_changed": []
+    },
+    "outcome_changes": []
+  },
+  "development_prompt": {
+    "text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。\n\n以下是独立的受控代码故障开发验收，不是自然任务首次自主成功的证据。\nDEVELOPMENT_FAULT_SEEDED: CODE_TOOLS_DEVELOPMENT_FAULT_V1\n本次仍由你自行检索、选择条件、制定 Plan，并编写完整 Python 程序与 ORCA 输入，不使用开发者提供的解题脚本。\n首次执行 Python 前，先完成所需条件选择、初始结构和全部任务文件的生成。第一版 Python 必须已经是完成上述科学目标的完整程序，包含实际 SDK 计算、输出读取和观察交付；禁止先执行仅用于报错的占位脚本、空任务或故障探针。第一次执行的 Step 就必须具备实际任务所需的完整输入 manifest、体系、条件、观察名、目标绑定与依赖，不能把这些留到第二次补充。所有 Artifact 与 hash 必须来自实际已完成的工具输出。\n在这份完整程序的任何导入、文件操作、SDK 调用或其他工作之前，写一行单独的未定义名称表达式 CODE_TOOLS_DEVELOPMENT_FAULT_V1。模块文档字符串和合法的 __future__ 导入可以在前。不要定义该名称，不要捕获这一行的 NameError。这一行是唯一人为要求的故障；其余程序从第一版开始就应完整。\n实际执行并读取真实失败反馈后，在同一个 Run 内由你自己通过 workspace.write 生成修订代码：仅删除上述独立 marker 行，其他代码字节保持不变。先完成新代码的写入，再提交修复 Step：使用新的 Step key 与原失败 Step 的同一个 logical_key，除 CodeRef 外保留原有输入、条件、目的、依赖和观察名。不要把新 writer 加为修复 Step 的依赖，不要重跑旧代码或再次注入 marker。第一次在 marker 处失败时尚未调用 SDK，因此已有计算请求键无须更改。若发现其他问题不能在这些约束下完成，保留事实并停止，不放宽测试或科学目标。\n继续使用同一累计预算和现有生产校验完成真实计算与带来源的结果交付。开发驱动只核验前置条件、驱动与采证，不会替你改写 Plan、脚本、ORCA 输入或模型回复。交付时区分本次人为要求的 NameError 与自然发生的错误，披露首次失败、实际修复、资源成本和科学验证缺项。",
+    "text_utf8_sha256": "c8d881c5bbf78a070d1f31567846866452849b992ec13a52cd4bfd1892fa0ce8",
+    "version": "repair-request-v2"
+  },
+  "seeded_gate": {
+    "scope": "development_fault_seeded",
+    "status": "not_established",
+    "reason": "before_science_reservation was not reached",
+    "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1"
+  },
+  "candidate_written_not_executed": {
+    "name": "ethanol_opt_freq.py",
+    "file": {
+      "path": "data/code-tools-step3/live-store/artifacts/artifact_2539b24b83a6403a885efb2fd30621ba/files/ethanol_opt_freq.py",
+      "bytes": 3388,
+      "sha256": "90784842e7dc7b0673d308e466f3bf811ad15680b5523f722173d8e432ea90f9"
+    },
+    "artifact_id": "artifact_2539b24b83a6403a885efb2fd30621ba",
+    "source_call_id": "call_1b4b55fa72934d5d8f82d41bf8cf9ab1",
+    "source_model_id": "model_a8439c2df16c40169b00f285ac190353",
+    "model_content_equals_writer_artifact": true,
+    "marker_first_AST_statement": true,
+    "marker_line": 1,
+    "syntax_compiles_without_execution": true,
+    "contains_sdk_call_input_construction_and_observation_output": true,
+    "correctness_boundary": "Structural evidence only; full computation/manifest correctness and same-purpose repair were not exercised.",
+    "declared_native_method": "B3LYP/6-31G*",
+    "text": "CODE_TOOLS_DEVELOPMENT_FAULT_V1\nimport json\nimport os\nimport re\n\nfrom orca_task_sdk import run_orca\n\nXYZ_NAME = \"ethanol.xyz\"\nINPUT_NAME = \"job.inp\"\nREQUEST_KEY = \"ethanol-opt-freq-1\"\n\ndef build_input():\n    return \"\"\"! B3LYP 6-31G* Opt Freq TightSCF NORI NoAutoStart RKS\n%pal\n  nprocs 4\nend\n%maxcore 192\n%scf\n  MaxIter 256\n  ConvForced true\n  AutoTRAH false\nend\n%geom\n  MaxIter 128\n  EnforceStrictConvergence true\nend\n%method\n  Z_MaxIter 128\nend\n* xyzfile 0 1 ethanol.xyz\n\"\"\"\n\ndef read_from_files(files, predicate):\n    for original_name, path in files.items():\n        if predicate(original_name):\n            try:\n                with open(path, \"r\", encoding=\"utf-8\", errors=\"replace\") as handle:\n                    return original_name, handle.read()\n            except OSError:\n                continue\n    return None, \"\"\n\ndef parse_frequencies(text):\n    values = []\n    in_block = False\n    pattern = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+\\.\\d+)\\s+cm\\*\\*-1\")\n    for line in text.splitlines():\n        if \"VIBRATIONAL FREQUENCIES\" in line:\n            in_block = True\n            continue\n        if not in_block:\n            continue\n        if \"NORMAL MODES\" in line or \"IR SPECTRUM\" in line:\n            break\n        match = pattern.match(line)\n        if match:\n            values.append(float(match.group(2)))\n    return values\n\nwith open(INPUT_NAME, \"w\", encoding=\"utf-8\") as handle:\n    handle.write(build_input())\n\nreceipt = run_orca(INPUT_NAME, dependencies=(XYZ_NAME,), request_key=REQUEST_KEY)\nfiles = receipt.get(\"files\", {})\n\noptimized_name, optimized_text = read_from_files(\n    files, lambda name: name.endswith(\"job.xyz\")\n)\nif not optimized_text:\n    optimized_name, optimized_text = read_from_files(\n        files, lambda name: name.endswith(\".xyz\") and not name.endswith(XYZ_NAME)\n    )\n\nstdout_name, stdout_text = read_from_files(\n    files, lambda name: name.endswith(\"stdout.out\") or name.endswith(\"job.out\")\n)\nfrequencies = parse_frequencies(stdout_text)\n\nobservations = {\n    \"version\": 1,\n    \"observations\": [\n        {\n            \"name\": \"optimized_geometry\",\n            \"value\": optimized_text,\n            \"unit\": None,\n            \"sources\": [\n                {\n                    \"internal_request_key\": receipt.get(\"request_key\", REQUEST_KEY),\n                    \"filename\": optimized_name or \"job.xyz\",\n                    \"location\": \"final optimized geometry\",\n                }\n            ],\n            \"limitations\": [\n                \"B3LYP/6-31G* gas-phase optimization; not a basis-set-limit benchmark\"\n            ],\n        },\n        {\n            \"name\": \"vibrational_frequencies\",\n            \"value\": frequencies,\n            \"unit\": \"cm^-1\",\n            \"sources\": [\n                {\n                    \"internal_request_key\": receipt.get(\"request_key\", REQUEST_KEY),\n                    \"filename\": stdout_name or \"stdout.out\",\n                    \"location\": \"VIBRATIONAL FREQUENCIES block\",\n                }\n            ],\n            \"limitations\": [\n                \"harmonic frequencies from ORCA Freq; no anharmonic correction\"\n            ],\n        },\n    ],\n}\n\nwith open(\"observations.json\", \"w\", encoding=\"utf-8\") as handle:\n    json.dump(observations, handle, indent=2, allow_nan=False)\nprint(json.dumps({\"request_key\": receipt.get(\"request_key\"), \"files\": list(files.keys()), \"frequency_count\": len(frequencies)}))\n"
+  },
+  "failure": {
+    "first_rejected_revision_ordinal": 13,
+    "missing_retained_goal_step_refs": [
+      {
+        "goal_id": "goal_ethanol_prepared_geometry",
+        "step_key": "step_5e02a1f071134a3fbcbe774c1a53f571"
+      }
+    ],
+    "missing_dependency_step_keys": [
+      "step_c119f878ff6a4b4f8839f705518bf535",
+      "step_5e02a1f071134a3fbcbe774c1a53f571",
+      "step_6a375e1de25a41d1925ee4859e7d76c7"
+    ],
+    "first_KeyError_dependency": "step_c119f878ff6a4b4f8839f705518bf535",
+    "first_rejection_location": "materialize_plan dependencies = [ids[key] for key in item.depends_on], before goal_map validation",
+    "first_rejection_reported_to_model": "KeyError",
+    "later_retained_shape_rejections": [
+      {
+        "ordinal": 14,
+        "retained_steps_with_extra_fields": [
+          {
+            "key": "step_6a375e1de25a41d1925ee4859e7d76c7",
+            "tool": "structure.resolve",
+            "parameters": {
+              "system_id": "system_ethanol"
+            }
+          },
+          {
+            "key": "step_5e02a1f071134a3fbcbe774c1a53f571",
+            "depends_on": [
+              "step_6a375e1de25a41d1925ee4859e7d76c7"
+            ]
+          },
+          {
+            "key": "step_c119f878ff6a4b4f8839f705518bf535",
+            "depends_on": [
+              "step_5e02a1f071134a3fbcbe774c1a53f571"
+            ],
+            "tool": "workspace.write"
+          }
+        ],
+        "first_retained_branch_rejection": {
+          "step_index": 1,
+          "step": {
+            "key": "step_5e02a1f071134a3fbcbe774c1a53f571",
+            "depends_on": [
+              "step_6a375e1de25a41d1925ee4859e7d76c7"
+            ]
+          },
+          "reason": "Existing prepare Step entered the retained branch with extra depends_on. Index0 resolve supplies tool+parameters and entered the reconstruction branch; it did not directly trigger this error."
+        }
+      },
+      {
+        "ordinal": 15,
+        "retained_steps_with_extra_fields": [
+          {
+            "key": "step_6a375e1de25a41d1925ee4859e7d76c7",
+            "parameters": {
+              "system_id": "system_ethanol"
+            },
+            "tool": "structure.resolve"
+          },
+          {
+            "key": "step_5e02a1f071134a3fbcbe774c1a53f571",
+            "depends_on": [
+              "step_6a375e1de25a41d1925ee4859e7d76c7"
+            ]
+          },
+          {
+            "key": "step_c119f878ff6a4b4f8839f705518bf535",
+            "depends_on": [
+              "step_5e02a1f071134a3fbcbe774c1a53f571"
+            ]
+          }
+        ],
+        "first_retained_branch_rejection": {
+          "step_index": 1,
+          "step": {
+            "key": "step_5e02a1f071134a3fbcbe774c1a53f571",
+            "depends_on": [
+              "step_6a375e1de25a41d1925ee4859e7d76c7"
+            ]
+          },
+          "reason": "Existing prepare Step entered the retained branch with extra depends_on. Index0 resolve supplies tool+parameters and entered the reconstruction branch; it did not directly trigger this error."
+        }
+      }
+    ],
+    "last_three_responses_complete_valid_json": true,
+    "last_three_finish_reason": "stop",
+    "last_three_original_rejection_decisions": [
+      {
+        "id": "model_88bee0589c4148f78ff6a84e692a5724",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 1,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "KeyError",
+          "recovery_kind": "correction",
+          "requirement": "KeyError"
+        }
+      },
+      {
+        "id": "model_953dbcf36ac7471bb098c3f46ed8d87e",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 1,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ValueError",
+          "recovery_kind": "correction",
+          "requirement": "retained Step must reference its existing key without changes"
+        }
+      },
+      {
+        "id": "model_990950d032c8430092a7afed26066dcc",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 1,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ValueError",
+          "recovery_kind": "correction",
+          "requirement": "retained Step must reference its existing key without changes"
+        }
+      }
+    ],
+    "terminal_diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_192bf4f3531e4330b16e9ef33ecf0eac",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_88bee0589c4148f78ff6a84e692a5724",
+        "error_category": "KeyError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_953dbcf36ac7471bb098c3f46ed8d87e",
+        "error_category": "ValueError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_990950d032c8430092a7afed26066dcc",
+        "error_category": "ValueError"
+      },
+      {
+        "category": "StoreError",
+        "message": "bounded proposal correction or transport retry exhausted",
+        "environment_occupied": false
+      }
+    ],
+    "failed_python_attempt": false,
+    "successful_repair": false,
+    "actual_orca_starts": 0
+  },
+  "findings": [
+    "The complete-looking 3388-byte candidate includes the required first-line marker, an SDK call, native input construction and observations, but no Python Attempt was admitted.",
+    "Revision 13 listed only the new Python Step but depended on three omitted existing Steps. The ids lookup first failed on the writer dependency and returned an opaque KeyError before goal_map validation. The prepared-geometry goal also referenced an omitted producer.",
+    "Revisions 14 and 15 first hit retained-Step validation at index1 prepare, whose key+depends_on had extra fields. Index0 resolve carried tool+parameters and entered reconstruction, not this rejection branch. Later writer entries also had extra retained fields.",
+    "The bounded proposal-correction allowance exhausted; this is a prelaunch planning failure, not a genuine executed-code failure or repair.",
+    "No output truncation occurred in the last three model responses; each was complete valid JSON with finish_reason=stop."
+  ],
+  "unverified": [
+    "Execution of candidate code, its native input, observation parser, and scientific results.",
+    "Actual seeded NameError and same-logical-purpose repair chain."
+  ],
+  "report_status": "failed prelaunch development trial; no Step3 repair acceptance",
+  "evidence": {
+    "run": {
+      "path": "data/code-tools-step3/live-store/runs/run_1650781da73449d785e95011d3333844/run.json",
+      "bytes": 106692,
+      "sha256": "900800122562cf5aa466dd46b00172e666600e1a2aa5693b5e9df431a8ebb62f"
+    },
+    "outcome": {
+      "path": "data/code-tools-step3/live-024/outcome.json",
+      "bytes": 1504,
+      "sha256": "4f423097add41b1de641e0a84dbd0dcc18e70117b4ceab962f584e23aa8f4f65"
+    },
+    "freeze": {
+      "path": "data/code-tools-step3/live-024/freeze.json",
+      "bytes": 12563,
+      "sha256": "c419a8f792da5f164170e299ac3e1af1405413a08fbfbd609b4691be9f689907"
+    },
+    "freeze_start": {
+      "path": "data/code-tools-step3/live-024-freeze-start-audit.json",
+      "bytes": 567,
+      "sha256": "4b274be3303ba71c038102f7fd722967c696dcd6609ae1a0d40ef5349e29cf7c"
+    },
+    "freeze_end": {
+      "path": "data/code-tools-step3/live-024-freeze-end-audit.json",
+      "bytes": 405,
+      "sha256": "84207f17573c4ccc7d30bf729ca52a28304b69b50a72339c0f3011b2ca5c0ce6"
+    }
+  },
+  "original_run_read_only_check": {
+    "file_count": 93,
+    "before_manifest_sha256": "a3e6b9d1f2b5fec47f99224716dab5ad2bb729cde63fadc5aae162e9feddd96a",
+    "after_manifest_sha256": "a3e6b9d1f2b5fec47f99224716dab5ad2bb729cde63fadc5aae162e9feddd96a",
+    "changed": [],
+    "reference_paths_rehashed": 79,
+    "all_references_match": true
+  },
+  "last_three_model_proposals": [
+    {
+      "ordinal": 13,
+      "model_id": "model_88bee0589c4148f78ff6a84e692a5724",
+      "action": "revise_plan",
+      "prompt_version": "agent-json-v50",
+      "request": {
+        "path": "data/code-tools-step3/live-store/runs/run_1650781da73449d785e95011d3333844/model/model_88bee0589c4148f78ff6a84e692a5724.request.json",
+        "bytes": 52232,
+        "sha256": "3a479514b1e5f0aa34f206382ef4c48c8569b25076d716e04ab7e27e6abfb3b9"
+      },
+      "response": {
+        "path": "data/code-tools-step3/live-store/runs/run_1650781da73449d785e95011d3333844/model/model_88bee0589c4148f78ff6a84e692a5724.response.json",
+        "bytes": 4421,
+        "sha256": "880b04d6cfa3401e7ab1488bcbaa25f33a5f450d3e7b52a68a02623ff5b326f3"
+      },
+      "delivery": {
+        "path": "data/code-tools-step3/live-store/runs/run_1650781da73449d785e95011d3333844/model/model_88bee0589c4148f78ff6a84e692a5724.delivery.json",
+        "bytes": 29248,
+        "sha256": "78b1701605ce250fecf875c2fd9081e77036f7fc620860b458052d349d798cbb"
+      },
+      "usage": {
+        "prompt_tokens": 15113,
+        "completion_tokens": 7410,
+        "total_tokens": 22523,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 15113
+      },
+      "estimated_usd": "0.0134259",
+      "finish_reason": "stop",
+      "error_category": null,
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "steps": [
+            {
+              "key": "step_python_first_attempt",
+              "logical_key": "logical_ethanol_opt_freq_python",
+              "tool": "python.execute",
+              "system_id": "system_ethanol",
+              "depends_on": [
+                "step_c119f878ff6a4b4f8839f705518bf535",
+                "step_5e02a1f071134a3fbcbe774c1a53f571",
+                "step_6a375e1de25a41d1925ee4859e7d76c7"
+              ],
+              "parameters": {
+                "code": {
+                  "artifact_id": "artifact_2539b24b83a6403a885efb2fd30621ba",
+                  "sha256": "90784842e7dc7b0673d308e466f3bf811ad15680b5523f722173d8e432ea90f9"
+                },
+                "inputs": {
+                  "version": 1,
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_603cbb2dcf3c41eeb9e61bd99e4906ad",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz",
+                      "purpose": "trusted prepared ethanol geometry"
+                    }
+                  ]
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              }
+            }
+          ],
+          "goal_map": {
+            "goal_ethanol_prepared_geometry": {
+              "port": "prepared_geometry",
+              "step_key": "step_5e02a1f071134a3fbcbe774c1a53f571"
+            },
+            "goal_ethanol_optimized_geometry": {
+              "gap": "pending_complete_python_analysis",
+              "port": "optimized_geometry"
+            },
+            "goal_ethanol_vibrational_frequencies": {
+              "gap": "pending_complete_python_analysis",
+              "port": "vibrational_frequencies"
+            }
+          }
+        },
+        "reason": "No Step is ready: the plan has prepared the geometry and written the complete Python program containing the mandated marker, but no Python execution Step exists. Add the first Python attempt using the existing code artifact and prepared XYZ manifest so the required real NameError feedback is obtained before the repair revision."
+      }
+    },
+    {
+      "ordinal": 14,
+      "model_id": "model_953dbcf36ac7471bb098c3f46ed8d87e",
+      "action": "revise_plan",
+      "prompt_version": "agent-json-v50",
+      "request": {
+        "path": "data/code-tools-step3/live-store/runs/run_1650781da73449d785e95011d3333844/model/model_953dbcf36ac7471bb098c3f46ed8d87e.request.json",
+        "bytes": 54958,
+        "sha256": "27af1286dfc6ee07f7535e145f16d87126a199ea746a33c9424cbbbbfe0fe68f"
+      },
+      "response": {
+        "path": "data/code-tools-step3/live-store/runs/run_1650781da73449d785e95011d3333844/model/model_953dbcf36ac7471bb098c3f46ed8d87e.response.json",
+        "bytes": 5614,
+        "sha256": "531ef762d8306c04fb70677bf4ac59c9ed056a12a1fd258ca3f07900fa563bd2"
+      },
+      "delivery": {
+        "path": "data/code-tools-step3/live-store/runs/run_1650781da73449d785e95011d3333844/model/model_953dbcf36ac7471bb098c3f46ed8d87e.delivery.json",
+        "bytes": 29248,
+        "sha256": "78b1701605ce250fecf875c2fd9081e77036f7fc620860b458052d349d798cbb"
+      },
+      "usage": {
+        "prompt_tokens": 15920,
+        "completion_tokens": 3768,
+        "total_tokens": 19688,
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 15792
+      },
+      "estimated_usd": "0.0092976",
+      "finish_reason": "stop",
+      "error_category": null,
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "steps": [
+            {
+              "key": "step_6a375e1de25a41d1925ee4859e7d76c7",
+              "tool": "structure.resolve",
+              "parameters": {
+                "system_id": "system_ethanol"
+              }
+            },
+            {
+              "key": "step_5e02a1f071134a3fbcbe774c1a53f571",
+              "depends_on": [
+                "step_6a375e1de25a41d1925ee4859e7d76c7"
+              ]
+            },
+            {
+              "key": "step_c119f878ff6a4b4f8839f705518bf535",
+              "depends_on": [
+                "step_5e02a1f071134a3fbcbe774c1a53f571"
+              ],
+              "tool": "workspace.write"
+            },
+            {
+              "key": "step_python_first_attempt",
+              "logical_key": "logical_ethanol_opt_freq_python",
+              "depends_on": [
+                "step_c119f878ff6a4b4f8839f705518bf535",
+                "step_5e02a1f071134a3fbcbe774c1a53f571",
+                "step_6a375e1de25a41d1925ee4859e7d76c7"
+              ],
+              "system_id": "system_ethanol",
+              "tool": "python.execute",
+              "parameters": {
+                "code": {
+                  "artifact_id": "artifact_2539b24b83a6403a885efb2fd30621ba",
+                  "sha256": "90784842e7dc7b0673d308e466f3bf811ad15680b5523f722173d8e432ea90f9"
+                },
+                "inputs": {
+                  "version": 1,
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_603cbb2dcf3c41eeb9e61bd99e4906ad",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz",
+                      "purpose": "trusted prepared ethanol geometry"
+                    }
+                  ]
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              }
+            }
+          ],
+          "goal_map": {
+            "goal_ethanol_prepared_geometry": {
+              "port": "prepared_geometry",
+              "step_key": "step_5e02a1f071134a3fbcbe774c1a53f571"
+            },
+            "goal_ethanol_optimized_geometry": {
+              "port": "optimized_geometry",
+              "gap": "pending_complete_python_analysis"
+            },
+            "goal_ethanol_vibrational_frequencies": {
+              "port": "vibrational_frequencies",
+              "gap": "pending_complete_python_analysis"
+            }
+          }
+        },
+        "reason": "Correction of the rejected proposal: the validation KeyError arose because goal_map.step_key referenced an existing Step that was not retained in the revised steps list. This revision includes the completed dependency chain by key (without id/logical_id/immutable_frozen) and adds the first full python.execute Step using the already-written code artifact and prepared XYZ artifact. No Step is ready otherwise, and no placeholders are introduced."
+      }
+    },
+    {
+      "ordinal": 15,
+      "model_id": "model_990950d032c8430092a7afed26066dcc",
+      "action": "revise_plan",
+      "prompt_version": "agent-json-v50",
+      "request": {
+        "path": "data/code-tools-step3/live-store/runs/run_1650781da73449d785e95011d3333844/model/model_990950d032c8430092a7afed26066dcc.request.json",
+        "bytes": 55512,
+        "sha256": "e5d2dd431bdf571505c692e4ec99f2d32bdba943a0c534feab11013078435330"
+      },
+      "response": {
+        "path": "data/code-tools-step3/live-store/runs/run_1650781da73449d785e95011d3333844/model/model_990950d032c8430092a7afed26066dcc.response.json",
+        "bytes": 5585,
+        "sha256": "b8f558f36d3cae5753d9d08aeba376b44bfdf0772436e023daab257c10713fc6"
+      },
+      "delivery": {
+        "path": "data/code-tools-step3/live-store/runs/run_1650781da73449d785e95011d3333844/model/model_990950d032c8430092a7afed26066dcc.delivery.json",
+        "bytes": 29248,
+        "sha256": "78b1701605ce250fecf875c2fd9081e77036f7fc620860b458052d349d798cbb"
+      },
+      "usage": {
+        "prompt_tokens": 16098,
+        "completion_tokens": 4063,
+        "total_tokens": 20161,
+        "prompt_cache_hit_tokens": 1920,
+        "prompt_cache_miss_tokens": 14178
+      },
+      "estimated_usd": "0.009705",
+      "finish_reason": "stop",
+      "error_category": null,
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "steps": [
+            {
+              "key": "step_6a375e1de25a41d1925ee4859e7d76c7",
+              "parameters": {
+                "system_id": "system_ethanol"
+              },
+              "tool": "structure.resolve"
+            },
+            {
+              "key": "step_5e02a1f071134a3fbcbe774c1a53f571",
+              "depends_on": [
+                "step_6a375e1de25a41d1925ee4859e7d76c7"
+              ]
+            },
+            {
+              "key": "step_c119f878ff6a4b4f8839f705518bf535",
+              "depends_on": [
+                "step_5e02a1f071134a3fbcbe774c1a53f571"
+              ]
+            },
+            {
+              "key": "step_python_first_attempt",
+              "logical_key": "logical_ethanol_opt_freq_python",
+              "tool": "python.execute",
+              "system_id": "system_ethanol",
+              "depends_on": [
+                "step_c119f878ff6a4b4f8839f705518bf535",
+                "step_5e02a1f071134a3fbcbe774c1a53f571",
+                "step_6a375e1de25a41d1925ee4859e7d76c7"
+              ],
+              "parameters": {
+                "code": {
+                  "artifact_id": "artifact_2539b24b83a6403a885efb2fd30621ba",
+                  "sha256": "90784842e7dc7b0673d308e466f3bf811ad15680b5523f722173d8e432ea90f9"
+                },
+                "inputs": {
+                  "version": 1,
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_603cbb2dcf3c41eeb9e61bd99e4906ad",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz",
+                      "purpose": "trusted prepared ethanol geometry"
+                    }
+                  ]
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              }
+            }
+          ],
+          "goal_map": {
+            "goal_ethanol_prepared_geometry": {
+              "port": "prepared_geometry",
+              "step_key": "step_5e02a1f071134a3fbcbe774c1a53f571"
+            },
+            "goal_ethanol_optimized_geometry": {
+              "gap": "pending_complete_python_analysis",
+              "port": "optimized_geometry"
+            },
+            "goal_ethanol_vibrational_frequencies": {
+              "gap": "pending_complete_python_analysis",
+              "port": "vibrational_frequencies"
+            }
+          }
+        },
+        "reason": "Corrected rejected revision: retained completed dependency Steps are referenced by their existing keys without adding changed tool metadata to the already-completed workspace.write Step. Kept the existing prepared-geometry goal binding and added the first full python.execute Step using the already-written code artifact and prepared XYZ artifact, with observation names for both remaining Goals. No Step is otherwise ready; this is a plan revision, not execution."
+      }
+    }
+  ],
+  "archived_file_hash_check_count": 21,
+  "full_audit": {
+    "path": "data/code-tools-step3/live-024-audit.json",
+    "bytes": 115448,
+    "sha256": "52265be9947f594b593e4c0227fd3bea0ca6b963c1ce81a9b268f9c1ebfea9df"
+  }
+}

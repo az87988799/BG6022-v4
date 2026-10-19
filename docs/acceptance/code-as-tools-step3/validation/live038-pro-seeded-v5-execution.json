@@ -1,0 +1,1456 @@
+{
+  "schema_version": 1,
+  "scope": "Independent settled live038 v5 deliberately fault-seeded execution/resource/cost audit; no model, Python task or ORCA invoked by auditor.",
+  "audited_at_utc": "2026-10-19T13:08:44.138112+00:00",
+  "finished_at_utc": "2026-10-19T13:08:44.426620+00:00",
+  "run_id": "run_49eef7d8c16b4c02a8e84228ea830c18",
+  "state": "failed",
+  "delivery_status": "partial",
+  "goal_status": {
+    "goal_goal_optimized_geometry": "insufficient_evidence",
+    "goal_goal_vibrational_frequencies": "insufficient_evidence"
+  },
+  "source_freeze": {
+    "start": {
+      "scope": "Independent live-038 source/driver observation; no Run mutation.",
+      "checked_at_utc": "2026-10-19T12:52:14.352594+00:00",
+      "frozen_at": "2026-10-19T12:51:51.999767+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-038/freeze.json",
+        "bytes": 12256,
+        "sha256": "65a1e2253ba5ad9654eb470b1a009468e2edf6eba8f49f11ba4daf60e8ddbca5"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_exists_at_check": false,
+      "independent_in_run_start_observed": true
+    },
+    "end": {
+      "scope": "Independent live-038 source/driver observation; no Run mutation.",
+      "checked_at_utc": "2026-10-19T13:06:31.499599+00:00",
+      "frozen_at": "2026-10-19T12:51:51.999767+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-038/freeze.json",
+        "bytes": 12256,
+        "sha256": "65a1e2253ba5ad9654eb470b1a009468e2edf6eba8f49f11ba4daf60e8ddbca5"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_source_changed": [],
+      "outcome_finished_at": "2026-10-19T13:06:22.894727+00:00"
+    },
+    "configuration_start": {
+      "checked_at_utc": "2026-10-19T12:56:41.460236+00:00",
+      "run_id": "run_49eef7d8c16b4c02a8e84228ea830c18",
+      "configuration_file": {
+        "path": "data/code-tools-step3/config.thinking-pro-v5.toml",
+        "bytes": 2381,
+        "sha256": "281bd9304dbf38d85cecdf9e462dd76505f39f6814b942a404dcfeaa6ae45f8a"
+      },
+      "matches_frozen_pro_v5_configuration": true,
+      "effective_configuration_exactly_equal_live035": true,
+      "configuration_canonical_sha256": "4a5d5dc2a37465766e862ab3297e5cd04860e679512d68bf8f6b438fc255c40a",
+      "request_file": {
+        "path": "data/code-tools-step3/repair-request-v5.txt",
+        "bytes": 2122,
+        "sha256": "8f2d7ce64d036f81c7d57f1e38b1b1dd8aededdadcca6901f93bb123abfa9c3b"
+      },
+      "request_file_stripped_text_equals_freeze": true,
+      "request_frozen_text_utf8_sha256": "6885cf7a748c6c36bd43bde197298d2f41daf998314782186885011219906031",
+      "scope": "development_fault_seeded",
+      "request_protocol": "v5",
+      "source_observation": {
+        "path": "data/code-tools-step3/live-038-freeze-start-audit.json",
+        "bytes": 635,
+        "sha256": "ddaae896601cc9527f82b7616ee794499c751f498608a15405431d63d04327c9"
+      },
+      "outcome_exists_at_check": false,
+      "boundary": "Source and configuration observations have separately recorded actual timestamps; neither is the launch instant. Raw configuration and effective frozen configuration checked separately."
+    },
+    "outcome_source_changes": [],
+    "boundary": "First source observation was about 22.35 seconds after driver freeze creation; configuration was checked at its separately recorded time. Before/after hashes are not continuous monitoring."
+  },
+  "development_prompt": {
+    "protocol": "repair-request-v5",
+    "text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。\n\n以下是人为注入故障的开发对照，不是原文自主运行，也不证明自然复杂错误的诊断成熟度。\nDEVELOPMENT_FAULT_SEEDED: CODE_TOOLS_DEVELOPMENT_FAULT_V1\nDEVELOPMENT_REPAIR_PROTOCOL: v5\n由你自行检索、选定条件、制定 Plan，并生成全部任务 Python、ORCA 输入和所需文件，不使用开发者提供的解题代码。首次执行的 Python 必须已经包含完成科学目标所需的实际计算、结果读取和完整观察交付，不能是占位脚本、空任务或故障探针。首次执行 Step 的输入 manifest、体系、条件、目的、观察名、目标绑定与依赖必须完整，Artifact 与 hash 均来自真实已完成的工具输出。\n在完整首版程序的任何普通导入、文件操作、SDK 调用或其他工作之前，写一行独立的未定义名称表达式 CODE_TOOLS_DEVELOPMENT_FAULT_V1。模块文档字符串可以在前；若使用 __future__ 导入，必须按 Python 语法放在该表达式之前。首版不要定义该名称或捕获其 NameError。这是唯一人为指定的故障；第一次真实执行须在任何 SDK 调用之前因此失败。\n读取真实失败反馈后，自行诊断并通过 workspace.write 生成完整修订代码，不预先规定修改方法或代码差分。先完成写入，再提交新 Step key、保留原 logical_id；按当前 schema 明确引用失败 Step 和新 CodeRef 或合法完整修订；遵守现有生产修复合同，除 CodeRef 外保持冻结的所有任务字段，不增加新 writer 依赖，不改变用户目标、科学条件、证据要求、执行权限或累计预算。通过真实后续 Attempt 完成原目标；不能完成时保留事实并停止。\n交付完整解析数据、有来源的单位及科学验证限制，区分人为故障与其他实际错误，披露失败、修订、实际重跑和成本。开发驱动只核验和采证，不替你编写或修改 Plan、任务代码、ORCA 输入或回复。",
+    "frozen_text_sha256": "6885cf7a748c6c36bd43bde197298d2f41daf998314782186885011219906031"
+  },
+  "model_usage": {
+    "http_calls": 20,
+    "known_usage_records": 20,
+    "input_tokens": 271404,
+    "output_tokens": 63832,
+    "total_tokens": 335236,
+    "product_unknown_cost_records": 20,
+    "product_total_cost_usd": null,
+    "independent_known_usage_estimate_subtotal_usd": "0.61102800",
+    "independent_total_estimate_usd": "0.61102800",
+    "independent_price_basis": {
+      "input_per_million": "1.32",
+      "output_per_million": "3.96",
+      "reference": {
+        "path": "docs/acceptance/code-as-tools-step3/validation/model-pro-v5-configuration.json",
+        "bytes": 1625,
+        "sha256": "a284a9456e259cb12505bec3ac7c5dc88c8d8f608167985f140997db8b409033"
+      },
+      "boundary": "Known-token uncached peak-price estimate only; not invoice, ignores cache/off-peak discounts. Product Pro costs remain unknown."
+    }
+  },
+  "model_identity": {
+    "requested": "deepseek-v4-pro",
+    "provider_response_names": [
+      "deepseek-v4-pro"
+    ],
+    "boundary": "Provider-reported names do not independently prove underlying weights."
+  },
+  "actual_usage": {
+    "internal_work_units": 0,
+    "code_retries": 1,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 9.657000000001062,
+    "cpu_seconds": 2.360519,
+    "resource_usage_complete": false,
+    "logical_attempts": {
+      "logical_468c4cc814fb4010999514f93da71744": 2
+    },
+    "fingerprint_attempts": {
+      "20a3e9fd5ad5834129a2c57b98ad1ad46ac85610e9e31be6d235909a8974115c": 1,
+      "d9cd0abccd039a0bcb5b1fa94c0184e0b335d48dee6ea2f296224637410df99c": 1
+    },
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 20,
+    "model_tokens_used": 335236,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 3,
+    "decision_rounds": 20,
+    "evidence_reads": 3,
+    "analysis_executions": 2,
+    "logical_steps": [
+      "logical_468c4cc814fb4010999514f93da71744",
+      "logical_4aec2cca297b4aa6be77329bdd811807",
+      "logical_a31ac048c0bd401481993f76ef3a656d",
+      "logical_e03f8b9cd7ab4293b7d819c34537e356",
+      "logical_f1c6ce8b0d164510baf5c3b8575c523d"
+    ],
+    "identity_queries": 1,
+    "structure_preparations": 1,
+    "knowledge_queries": 4
+  },
+  "call_counts": {
+    "knowledge.search": 4,
+    "structure.resolve": 1,
+    "structure.prepare": 1,
+    "workspace.write": 2,
+    "evidence.list": 1,
+    "evidence.text": 2
+  },
+  "resource_counter_checks": {
+    "wall_and_cpu_equal_sum_of_persisted_attempt_counters": true,
+    "ORCA_actual_starts_equal_actual_internal_call_count": true,
+    "internal_work_equal_sum_of_admitted_internal_calls": true,
+    "boundary": "Persisted measured counters are verified, not extrapolated to unsampled usage; resource_usage_complete is retained as recorded."
+  },
+  "writers": [
+    {
+      "call_id": "call_4f6050c1b4404225b2bf8c2846c50a4b",
+      "name": "ethanol_task.py",
+      "role": "python",
+      "artifact_id": "artifact_d3f6577dd5c243fcb0ff04da49a45c79",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_d3f6577dd5c243fcb0ff04da49a45c79/files/ethanol_task.py",
+        "bytes": 3335,
+        "sha256": "6f504d6542a021e0d6ac026edda7ad76b9da5b4ecd814f1dbc0c0d011ce4bcd9"
+      },
+      "model_origins": [
+        "model_a61b30db90e14eb188db7ccdc7dcd4f8"
+      ],
+      "model_content_equals_writer_artifact": true
+    },
+    {
+      "call_id": "call_dca5a5cf78e34a28bc614f7c6bfbc6b9",
+      "name": "ethanol_task_repaired.py",
+      "role": "python",
+      "artifact_id": "artifact_2461fa36b6fc45438fe2f8e46ccc0a75",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_2461fa36b6fc45438fe2f8e46ccc0a75/files/ethanol_task_repaired.py",
+        "bytes": 3485,
+        "sha256": "e69826ee333bc4808e8ff284bae07c6edbfdcc8ab448daa942536c53f65070b9"
+      },
+      "model_origins": [
+        "model_5f859b7ba0ac44dcaef35cfc04d8b725",
+        "model_7963414303aa49799669090e997ce9ef"
+      ],
+      "model_content_equals_writer_artifact": true
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": {
+        "id": "attempt_2cd0b350382e4f5e8d493bac1785cf97",
+        "step_id": "step_6c8b84b6038d467a9d8eb5454ff63501",
+        "logical_id": "logical_468c4cc814fb4010999514f93da71744",
+        "number": 1,
+        "tool": "python.execute",
+        "state": "failed",
+        "execution_kind": "python",
+        "geometry_artifact_id": null,
+        "input_fingerprint": "20a3e9fd5ad5834129a2c57b98ad1ad46ac85610e9e31be6d235909a8974115c",
+        "directory": "runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_6c8b84b6038d467a9d8eb5454ff63501/attempt-001",
+        "created_at": "2026-10-19T12:59:40.938104Z",
+        "finished_at": "2026-10-19T13:00:07.662637Z",
+        "started": true,
+        "result_id": "result_a72092f92a92453ab558300c72cde6f5",
+        "elapsed_seconds": 2.563000000000102,
+        "cpu_seconds": 1.17672,
+        "request_version": 3,
+        "plan_version": 2,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "result": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/results/result_a72092f92a92453ab558300c72cde6f5.json",
+        "bytes": 9995,
+        "sha256": "4312b952eaf28c5738f1161f3ea9a4d05c6507c3804c9fb0bab5c1be5bf7fa3c"
+      },
+      "code": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_d3f6577dd5c243fcb0ff04da49a45c79/files/ethanol_task.py",
+        "bytes": 3335,
+        "sha256": "6f504d6542a021e0d6ac026edda7ad76b9da5b4ecd814f1dbc0c0d011ce4bcd9"
+      },
+      "sealed_code": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_6c8b84b6038d467a9d8eb5454ff63501/attempt-001/sealed/task.py",
+        "bytes": 3335,
+        "sha256": "6f504d6542a021e0d6ac026edda7ad76b9da5b4ecd814f1dbc0c0d011ce4bcd9"
+      },
+      "input_manifest_checks": [
+        {
+          "entry": {
+            "artifact_id": "artifact_92f6907146be4ae8a44498ea73dc3c21",
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+            "target_path": "prepared.xyz",
+            "purpose": "optimized starting geometry for ORCA OptFreq"
+          },
+          "source": {
+            "path": "data/code-tools-step3/live-store/artifacts/artifact_92f6907146be4ae8a44498ea73dc3c21/files/prepared.xyz",
+            "bytes": 859,
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+          },
+          "staged": {
+            "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_6c8b84b6038d467a9d8eb5454ff63501/attempt-001/task-inputs/prepared.xyz",
+            "bytes": 859,
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+          }
+        }
+      ],
+      "stderr": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_6c8b84b6038d467a9d8eb5454ff63501/attempt-001/task/stderr.txt",
+        "bytes": 458,
+        "sha256": "ffd42c65271e5fcb8099bb1e0f4db998b79b338e3a7a310a7bb2df70b3fbb78b"
+      },
+      "stderr_text": "Traceback (most recent call last):\n  File \"/opt/orca-agent-runtime/python_task.py\", line 21, in <module>\n    runpy.run_path(sys.argv[0], run_name=\"__main__\")\n  File \"<frozen runpy>\", line 291, in run_path\n  File \"<frozen runpy>\", line 98, in _run_module_code\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/work/sealed/task.py\", line 2, in <module>\n    CODE_TOOLS_DEVELOPMENT_FAULT_V1\nNameError: name 'CODE_TOOLS_DEVELOPMENT_FAULT_V1' is not defined\n",
+      "execution": {
+        "state": "failed",
+        "exit_code": 1,
+        "handle": {
+          "backend": "linux-container",
+          "version": 1,
+          "launch_id": "f83f9e0d00c444b1afff0ff7f665b19c",
+          "container_name": "orca-attempt-f83f9e0d00c444b1afff0ff7f665b19c",
+          "volume_name": "orca-evidence-f83f9e0d00c444b1afff0ff7f665b19c",
+          "run_id": "run_49eef7d8c16b4c02a8e84228ea830c18",
+          "attempt_id": "attempt_2cd0b350382e4f5e8d493bac1785cf97",
+          "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+          "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+          "execution": {
+            "backend": "linux-container",
+            "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+            "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+            "docker_context": "desktop-linux",
+            "docker_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+            "native_input_policy": {
+              "profile": "bounded-analytic-1",
+              "max_atoms": 32,
+              "max_geom_iterations": 128,
+              "max_scf_iterations": 256,
+              "max_response_iterations": 128
+            },
+            "_docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+          },
+          "engine_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "daemon_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "heartbeat_ttl_seconds": 15,
+          "timeout_seconds": 1200.0,
+          "container_id": "d371b3f30448ca1f60b425e1cc37d3e7f5b7e7cea9bba7393b234fb7616a9a7d",
+          "isolation_verified": true,
+          "isolation_policy": "linux-container-v1",
+          "kind": "python",
+          "workload_identity": {
+            "pid": 45,
+            "uid": 10001,
+            "state": "S (sleeping)",
+            "start_ticks": "1320552",
+            "name": "python3.11",
+            "cap_eff": "0000000000000000",
+            "cap_prm": "0000000000000000",
+            "cap_inh": "0000000000000000",
+            "cap_amb": "0000000000000000",
+            "no_new_privs": "1",
+            "seccomp": "2"
+          },
+          "launch_phase": "gated_launcher",
+          "parent_container_id": null
+        },
+        "not_started": false,
+        "reason": "nonzero_exit_code",
+        "resource_usage": {
+          "wall_seconds": 2.563000000000102,
+          "user_cpu_seconds": 0.756174,
+          "kernel_cpu_seconds": 0.420546,
+          "peak_memory_bytes": 29384704,
+          "cgroup": {
+            "memory.current": "15269888",
+            "memory.max": "1073741824",
+            "memory.peak": "29384704",
+            "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+            "memory.swap.max": "0",
+            "cpu.max": "400000 100000",
+            "cpu.stat": "usage_usec 1176720\nuser_usec 756174\nsystem_usec 420546\nnice_usec 0\nnr_periods 36\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+            "pids.current": "2",
+            "pids.max": "256",
+            "cpuset.cpus.effective": "0-3"
+          },
+          "observed_processes": [
+            {
+              "pid": 1,
+              "uid": 10003,
+              "state": "S (sleeping)",
+              "start_ticks": "1320364",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 20,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1320438",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 38,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1320534",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 45,
+              "uid": 10001,
+              "state": "S (sleeping)",
+              "start_ticks": "1320552",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 63,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1320607",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 87,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1320685",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 99,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1320731",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            }
+          ],
+          "active_processes": 0,
+          "accounting": "aggregate container cgroup v2 including keeper and helpers",
+          "usage_scope": "last successful cgroup observation before container termination",
+          "complete": false,
+          "oom_killed": false
+        },
+        "actual_start_status": "not_applicable",
+        "transport_stderr": ""
+      },
+      "diagnostics": [
+        {
+          "category": "failed",
+          "detail": "nonzero_exit_code"
+        }
+      ],
+      "observation_records": [],
+      "qualified_outputs": {}
+    },
+    {
+      "attempt": {
+        "id": "attempt_b0fb5df37840471ea2e5a5ac4c66c6cb",
+        "step_id": "step_4518c0e453534695a52fa011bb08f581",
+        "logical_id": "logical_468c4cc814fb4010999514f93da71744",
+        "number": 2,
+        "tool": "python.execute",
+        "state": "failed",
+        "execution_kind": "python",
+        "geometry_artifact_id": null,
+        "input_fingerprint": "d9cd0abccd039a0bcb5b1fa94c0184e0b335d48dee6ea2f296224637410df99c",
+        "directory": "runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_4518c0e453534695a52fa011bb08f581/attempt-002",
+        "created_at": "2026-10-19T13:04:42.455737Z",
+        "finished_at": "2026-10-19T13:05:19.256856Z",
+        "started": true,
+        "result_id": "result_fe870e38e4cb4447b3f1394620741daa",
+        "elapsed_seconds": 7.09400000000096,
+        "cpu_seconds": 1.183799,
+        "request_version": 3,
+        "plan_version": 4,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "result": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/results/result_fe870e38e4cb4447b3f1394620741daa.json",
+        "bytes": 11545,
+        "sha256": "683a6fd83b4cbab9f4c5111bfa37e8de76d8020ce9a71cec98b208f6f77fc921"
+      },
+      "code": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_2461fa36b6fc45438fe2f8e46ccc0a75/files/ethanol_task_repaired.py",
+        "bytes": 3485,
+        "sha256": "e69826ee333bc4808e8ff284bae07c6edbfdcc8ab448daa942536c53f65070b9"
+      },
+      "sealed_code": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_4518c0e453534695a52fa011bb08f581/attempt-002/sealed/task.py",
+        "bytes": 3485,
+        "sha256": "e69826ee333bc4808e8ff284bae07c6edbfdcc8ab448daa942536c53f65070b9"
+      },
+      "input_manifest_checks": [
+        {
+          "entry": {
+            "artifact_id": "artifact_92f6907146be4ae8a44498ea73dc3c21",
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+            "target_path": "prepared.xyz",
+            "purpose": "optimized starting geometry for ORCA OptFreq"
+          },
+          "source": {
+            "path": "data/code-tools-step3/live-store/artifacts/artifact_92f6907146be4ae8a44498ea73dc3c21/files/prepared.xyz",
+            "bytes": 859,
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+          },
+          "staged": {
+            "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_4518c0e453534695a52fa011bb08f581/attempt-002/task-inputs/prepared.xyz",
+            "bytes": 859,
+            "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+          }
+        }
+      ],
+      "stderr": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_4518c0e453534695a52fa011bb08f581/attempt-002/task/stderr.txt",
+        "bytes": 878,
+        "sha256": "f09b9bdf36043ce3145e1b515927a3fd5460c461e37ed6ae1febf277b35e1369"
+      },
+      "stderr_text": "Traceback (most recent call last):\n  File \"/opt/orca-agent-runtime/python_task.py\", line 21, in <module>\n    runpy.run_path(sys.argv[0], run_name=\"__main__\")\n  File \"<frozen runpy>\", line 291, in run_path\n  File \"<frozen runpy>\", line 98, in _run_module_code\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/work/sealed/task.py\", line 100, in <module>\n    main()\n  File \"/work/sealed/task.py\", line 24, in main\n    receipt = run_orca('job.inp', dependencies=('prepared.xyz',), request_key='calculation_repair_v1')\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/orca-agent-runtime/venv/lib/python3.11/site-packages/orca_task_sdk.py\", line 64, in run_orca\n    raise RuntimeError(response[\"error\"])\nRuntimeError: managed_orca_request_rejected: explicit %method Z_MaxIter exceeds or omits the frozen bound\n",
+      "execution": {
+        "state": "failed",
+        "exit_code": 1,
+        "handle": {
+          "backend": "linux-container",
+          "version": 1,
+          "launch_id": "7265a5bae9b443388a791159b6099bfb",
+          "container_name": "orca-attempt-7265a5bae9b443388a791159b6099bfb",
+          "volume_name": "orca-evidence-7265a5bae9b443388a791159b6099bfb",
+          "run_id": "run_49eef7d8c16b4c02a8e84228ea830c18",
+          "attempt_id": "attempt_b0fb5df37840471ea2e5a5ac4c66c6cb",
+          "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+          "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+          "execution": {
+            "backend": "linux-container",
+            "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+            "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+            "docker_context": "desktop-linux",
+            "docker_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+            "native_input_policy": {
+              "profile": "bounded-analytic-1",
+              "max_atoms": 32,
+              "max_geom_iterations": 128,
+              "max_scf_iterations": 256,
+              "max_response_iterations": 128
+            },
+            "_docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+          },
+          "engine_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "daemon_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "heartbeat_ttl_seconds": 15,
+          "timeout_seconds": 1200.0,
+          "container_id": "28da2b8696245a1cb5c62f5580ce56762db7c33e27f44ff6f38ae7e11684affe",
+          "isolation_verified": true,
+          "isolation_policy": "linux-container-v1",
+          "kind": "python",
+          "workload_identity": {
+            "pid": 44,
+            "uid": 10001,
+            "state": "S (sleeping)",
+            "start_ticks": "1350591",
+            "name": "python3.11",
+            "cap_eff": "0000000000000000",
+            "cap_prm": "0000000000000000",
+            "cap_inh": "0000000000000000",
+            "cap_amb": "0000000000000000",
+            "no_new_privs": "1",
+            "seccomp": "2"
+          },
+          "launch_phase": "gated_launcher",
+          "parent_container_id": null
+        },
+        "not_started": false,
+        "reason": "nonzero_exit_code",
+        "resource_usage": {
+          "wall_seconds": 7.09400000000096,
+          "user_cpu_seconds": 0.855855,
+          "kernel_cpu_seconds": 0.327944,
+          "peak_memory_bytes": 30081024,
+          "cgroup": {
+            "memory.current": "15822848",
+            "memory.max": "1073741824",
+            "memory.peak": "30081024",
+            "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+            "memory.swap.max": "0",
+            "cpu.max": "400000 100000",
+            "cpu.stat": "usage_usec 1183799\nuser_usec 855855\nsystem_usec 327944\nnice_usec 0\nnr_periods 66\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+            "pids.current": "2",
+            "pids.max": "256",
+            "cpuset.cpus.effective": "0-3"
+          },
+          "observed_processes": [
+            {
+              "pid": 1,
+              "uid": 10003,
+              "state": "S (sleeping)",
+              "start_ticks": "1350445",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 19,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1350500",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 38,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1350576",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 44,
+              "uid": 10001,
+              "state": "S (sleeping)",
+              "start_ticks": "1350591",
+              "name": "python",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 68,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1350653",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 86,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1350884",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 98,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1351111",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 116,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1351196",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            },
+            {
+              "pid": 128,
+              "uid": 10003,
+              "state": "R (running)",
+              "start_ticks": "1351229",
+              "name": "python3.11",
+              "cap_eff": "0000000000000000",
+              "cap_prm": "0000000000000000",
+              "cap_inh": "0000000000000000",
+              "cap_amb": "0000000000000000",
+              "no_new_privs": "1",
+              "seccomp": "2"
+            }
+          ],
+          "active_processes": 0,
+          "accounting": "aggregate container cgroup v2 including keeper and helpers",
+          "usage_scope": "last successful cgroup observation before container termination",
+          "complete": false,
+          "oom_killed": false
+        },
+        "actual_start_status": "not_applicable",
+        "transport_stderr": ""
+      },
+      "diagnostics": [
+        {
+          "category": "failed",
+          "detail": "nonzero_exit_code"
+        }
+      ],
+      "observation_records": [],
+      "qualified_outputs": {}
+    }
+  ],
+  "internal_ORCA_calls": [],
+  "repair_integrity": {
+    "protocol": "v5",
+    "code_difference_was_prescribed": false,
+    "first_failure_is_deliberately_seeded": true,
+    "actual_repair_established": false,
+    "first_attempt_id": "attempt_2cd0b350382e4f5e8d493bac1785cf97",
+    "first_attempt_state": "failed",
+    "first_real_marker_NameError": true,
+    "first_attempt_internal_ORCA_count": 0,
+    "same_run": true,
+    "same_logical_purpose_and_new_step": true,
+    "all_other_frozen_step_fields_equal": true,
+    "second_attempt_state": "failed",
+    "contract_comparison_boundary": "Only Step.id and parameters.code are removed; all other fields compare by value."
+  },
+  "seeded_gate": {
+    "version": 1,
+    "scope": "development_fault_seeded",
+    "run_id": "run_49eef7d8c16b4c02a8e84228ea830c18",
+    "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1",
+    "point": "before_science_reservation",
+    "status": "prelaunch_verified",
+    "checked_at": "2026-10-19T12:59:40.469498+00:00",
+    "mutated_task_content": false,
+    "selection_origin": "activated_model_plan_first_ready",
+    "source_model_response_sha256": "d10676d576d9e060f33a9e2c4d38168b713f5763f70dc7789bba5c1860bdff38",
+    "source_decision_record_sha256": "fa4d7d953787920729df1129adec6772c0bdde3192ca7f1476405b3289214edd",
+    "source_decision_basis": {
+      "request_version": 3,
+      "plan_version": 1,
+      "permission_version": 1,
+      "control_generation": 1
+    },
+    "syntax": {
+      "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1",
+      "line": 2,
+      "ast_kind": "Expr(Name(Load))",
+      "compiled_without_execution": true
+    },
+    "request_version": 3,
+    "plan_version": 2,
+    "plan_sha256": "6a820e53e7e051be42c55416d10d8e5fe5223ac9fba89f9611536ae144a0f505",
+    "step_id": "step_6c8b84b6038d467a9d8eb5454ff63501",
+    "logical_id": "logical_468c4cc814fb4010999514f93da71744",
+    "code": {
+      "artifact_id": "artifact_d3f6577dd5c243fcb0ff04da49a45c79",
+      "sha256": "6f504d6542a021e0d6ac026edda7ad76b9da5b4ecd814f1dbc0c0d011ce4bcd9",
+      "language": "python",
+      "version": 1
+    },
+    "code_bytes": 3335,
+    "source_call_id": "call_4f6050c1b4404225b2bf8c2846c50a4b",
+    "decision_id": "model_f6784aa517664ceda5ec93b19f29a619",
+    "usage_before": {
+      "internal_work_units": 0,
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 14,
+      "model_tokens_used": 202011,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 1,
+      "decision_rounds": 14,
+      "evidence_reads": 1,
+      "analysis_executions": 1,
+      "logical_steps": [
+        "logical_468c4cc814fb4010999514f93da71744",
+        "logical_4aec2cca297b4aa6be77329bdd811807",
+        "logical_e03f8b9cd7ab4293b7d819c34537e356",
+        "logical_f1c6ce8b0d164510baf5c3b8575c523d"
+      ],
+      "identity_queries": 1,
+      "structure_preparations": 1,
+      "knowledge_queries": 4
+    },
+    "limitations": [
+      "Explicitly prompted generic defect; not a spontaneous model error.",
+      "Prelaunch verification only; actual failure, feedback and model repair require separate audit."
+    ]
+  },
+  "terminal_failure": {
+    "last_decisions": [
+      {
+        "id": "model_7963414303aa49799669090e997ce9ef",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 2,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "record_sha256": "e20c3212824d07067bb599a8ac3815b1ad7117ee5c3e87a21b65ade4537a763c",
+        "prior_plan_id": "plan_5dd31400e5564f0bae61f979923d2c70",
+        "prior_plan_version": 2,
+        "plan_id": "plan_5dd31400e5564f0bae61f979923d2c70",
+        "plan_version": 3,
+        "request_version": 3,
+        "user_message_ids": []
+      },
+      {
+        "id": "model_bb49014a3a2448f6a450c097b7a3d937",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 3,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "record_sha256": "172f601e94285394dab8ea7051ea31b242578419d82d059557962509ceca89d2",
+        "prior_plan_id": "plan_5dd31400e5564f0bae61f979923d2c70",
+        "prior_plan_version": 3,
+        "plan_id": "plan_5dd31400e5564f0bae61f979923d2c70",
+        "plan_version": 4,
+        "request_version": 3,
+        "user_message_ids": []
+      },
+      {
+        "id": "model_42e0f1c7412b4bb68ade519b0d8c0ea8",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 4,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "stop",
+        "related_results": [
+          "result_fe870e38e4cb4447b3f1394620741daa"
+        ],
+        "reason": "Python execution attempts are exhausted (code_retries remaining=0) after two failed attempts on the same logical task; no executed ORCA calculation produced qualified optimized-geometry or vibrational-frequency observations. Remaining next actions require a new Python task, which the current budget disallows. Delivering terminal partial results with unresolved goals and evidence gaps.",
+        "parameters": {
+          "delivery": {
+            "version": "terminal-delivery-1",
+            "snapshot_ref": "current",
+            "goal_explanations": [
+              {
+                "goal_ref": "g1",
+                "fact_refs": [
+                  "f1",
+                  "f2",
+                  "f3",
+                  "f4"
+                ],
+                "explanation_ref": "e1",
+                "blocker_refs": [
+                  "b1"
+                ],
+                "next_action_ref": "n1"
+              },
+              {
+                "goal_ref": "g2",
+                "fact_refs": [
+                  "f5",
+                  "f6",
+                  "f7",
+                  "f8"
+                ],
+                "explanation_ref": "e2",
+                "blocker_refs": [
+                  "b2"
+                ],
+                "next_action_ref": "n2"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_d35839c18e8243d6ac43dabff258e7d3",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_546979af708d4bffa0347e4fa8450144",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_0a07d7053fa8463fb641b4d599f843ce",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_5f859b7ba0ac44dcaef35cfc04d8b725",
+        "error_category": "ProposalError"
+      }
+    ],
+    "final_model_response": {
+      "ordinal": 20,
+      "model_id": "model_42e0f1c7412b4bb68ade519b0d8c0ea8",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "request": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/model/model_42e0f1c7412b4bb68ade519b0d8c0ea8.request.json",
+        "bytes": 59167,
+        "sha256": "d497e50122110fc874b399556049785426420fdc4039e16f7096aa0b2dc34617"
+      },
+      "response": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/model/model_42e0f1c7412b4bb68ade519b0d8c0ea8.response.json",
+        "bytes": 3014,
+        "sha256": "70968ead72cb180324ee8cf67baf17d73b8a405352df28cd30e4551b39024360"
+      },
+      "delivery": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/model/model_42e0f1c7412b4bb68ade519b0d8c0ea8.delivery.json",
+        "bytes": 25791,
+        "sha256": "b52c08c30ee54453afea7a380693dcadef1b785d2b68a36d965ad04f7be5ce87"
+      },
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 17412,
+        "completion_tokens": 5812,
+        "total_tokens": 23224,
+        "prompt_cache_hit_tokens": 1920,
+        "prompt_cache_miss_tokens": 15492
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.04599936"
+    },
+    "reason_boundary": "See exact persisted decisions and diagnostics; an unexecuted revision is not a successful repair.",
+    "reason": "The second admitted Python Attempt really ran the model revision, removed the original NameError, and reached the SDK. Its generated native input omitted the required %method Z_MaxIter for Opt+Freq and was rejected before any internal ORCA reservation/start. The one additional code-attempt budget was exhausted and the model stopped with partial delivery.",
+    "second_native_input": {
+      "generated": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_4518c0e453534695a52fa011bb08f581/attempt-002/task/job.inp",
+        "bytes": 219,
+        "sha256": "eb67aca00f9c02f4bab8c319dea4e25c1f6dcdced0b73c5bc55bbeb98891c3ed"
+      },
+      "sealed": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_4518c0e453534695a52fa011bb08f581/attempt-002/sealed/sdk/native.inp",
+        "bytes": 225,
+        "sha256": "f08853ac5aa17e047b9a54c407bd06b9373370a534a0295946fa6b92f9d0df3f"
+      },
+      "copies_exactly_equal": false,
+      "only_difference_is_LF_to_CRLF": true,
+      "required_response_iteration_bound": 128,
+      "method_block_and_Z_MaxIter_absent": true,
+      "audit_helper_comparison_correction": {
+        "path": "data/code-tools-step3/live-038-audit-helper-comparison-correction.json",
+        "bytes": 886,
+        "sha256": "d6895c27190e0e0f2cc656a63b9bbc78cd45398414ab118a0b41fbf46f5af5c2"
+      }
+    },
+    "original_NameError_removed_and_revision_really_executed": true,
+    "successful_complete_task_repair": false,
+    "scientific_delivery_completed": false
+  },
+  "first_failure_contemporaneous_observation": {
+    "reference": {
+      "path": "data/code-tools-step3/live-038-first-failure-audit.json",
+      "bytes": 18001,
+      "sha256": "88a7810a05f28e4e51875313475d8fac02994ab0fa69a04127ba04ebdee82d8a"
+    },
+    "checked_at_utc": "2026-10-19T13:00:08.296947+00:00",
+    "attempt_count": 1,
+    "internal_call_count": 0,
+    "orca_starts_actual": 0,
+    "first_Result_hash_still_matches": true,
+    "boundary": "Actual observation after failure and before any second Attempt was recorded, not the exact failure instant."
+  },
+  "independent_reviews": {
+    "code_and_contract": {
+      "path": "data/code-tools-step3/validation/live038-code-repair-audit.json",
+      "bytes": 152470,
+      "sha256": "c2badc2821ff0d4e869d7ecd365dbd7a10b1d230c4a64dc58ae5b2dbfb46d021"
+    }
+  },
+  "terminal_deliveries": [
+    {
+      "decision_id": "model_42e0f1c7412b4bb68ade519b0d8c0ea8",
+      "contract_version": "terminal-delivery-1",
+      "basis": {
+        "request_version": 3,
+        "plan_version": 4,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "snapshot_fingerprint": "612876fea17d9ad35251f48281c9e1b2b7da70c2feed362a1cb0da9945dc92e2",
+      "explanation": {
+        "version": "terminal-delivery-1",
+        "snapshot_ref": "current",
+        "goal_explanations": [
+          {
+            "goal_ref": "g1",
+            "fact_refs": [
+              "f1",
+              "f2",
+              "f3",
+              "f4"
+            ],
+            "explanation_ref": "e1",
+            "blocker_refs": [
+              "b1"
+            ],
+            "next_action_ref": "n1"
+          },
+          {
+            "goal_ref": "g2",
+            "fact_refs": [
+              "f5",
+              "f6",
+              "f7",
+              "f8"
+            ],
+            "explanation_ref": "e2",
+            "blocker_refs": [
+              "b2"
+            ],
+            "next_action_ref": "n2"
+          }
+        ]
+      },
+      "contract_status": "passed",
+      "terminal_state": "failed",
+      "report_status": "rendered",
+      "report_version": "terminal-report-1",
+      "report_path": "runs/run_49eef7d8c16b4c02a8e84228ea830c18/deliveries/model_42e0f1c7412b4bb68ade519b0d8c0ea8.md",
+      "report_sha256": "4281bd6c1ab812b587537b56cfdbc5151f1806d38eaae73ca9a85eb907f9f007",
+      "report_error": null
+    }
+  ],
+  "scientific_boundary": "Execution completion and product Goal satisfaction do not create scientific qualification. Every audited generic observation remains unverified and QualifiedOutputs empty; independent scientific delivery interpretation is a separate audit.",
+  "limitations": [
+    "This is a deliberately fault-seeded v5 run; it is not a new original-text autonomy trial or proof of general natural-error diagnosis maturity.",
+    "Original-text live035 used v55; no v57 original-text rerun is claimed.",
+    "A further full offline regression was not executed at the user's instruction.",
+    "Resource samples may be lower bounds; no per-Attempt disk hard quota or remote cluster validation is established."
+  ],
+  "evidence": {
+    "run": {
+      "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/run.json",
+      "bytes": 140377,
+      "sha256": "fe3e48640bfea38345055e3cbebb1ec3bab7dd783c708f98e3128f7be78b2f31"
+    },
+    "freeze": {
+      "path": "data/code-tools-step3/live-038/freeze.json",
+      "bytes": 12256,
+      "sha256": "65a1e2253ba5ad9654eb470b1a009468e2edf6eba8f49f11ba4daf60e8ddbca5"
+    },
+    "outcome": {
+      "path": "data/code-tools-step3/live-038/outcome.json",
+      "bytes": 4340,
+      "sha256": "990d90d1eac0c655ed15754822d4b8a421d7c66251e049beb30696a7a8bde5ba"
+    },
+    "start": {
+      "path": "data/code-tools-step3/live-038-freeze-start-audit.json",
+      "bytes": 635,
+      "sha256": "ddaae896601cc9527f82b7616ee794499c751f498608a15405431d63d04327c9"
+    },
+    "end": {
+      "path": "data/code-tools-step3/live-038-freeze-end-audit.json",
+      "bytes": 647,
+      "sha256": "2de68301a65e5eb2c8c121480faec3462e780e8af031a914372a4e07c14637e0"
+    },
+    "prior037_preservation": {
+      "path": "data/code-tools-step3/live-038-prior037-preservation-start-audit.json",
+      "bytes": 994,
+      "sha256": "7318519481320c0186a1141bcf54157375e37137629e40994f1a65f98639b9aa"
+    }
+  },
+  "original_run_read_only_check": {
+    "file_count": 173,
+    "before_manifest_sha256": "c40274d8f1ea7640bdecc6455e407e2d5c1042c12d53345f11415e3d58d6a392",
+    "after_manifest_sha256": "c40274d8f1ea7640bdecc6455e407e2d5c1042c12d53345f11415e3d58d6a392",
+    "changed": [],
+    "references_rehashed": 168,
+    "all_references_match": true
+  },
+  "settled_receipt_summary": [
+    {
+      "ordinal": 1,
+      "model_id": "model_d35839c18e8243d6ac43dabff258e7d3",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 5119,
+        "completion_tokens": 6820,
+        "total_tokens": 11939,
+        "prompt_cache_hit_tokens": 1792,
+        "prompt_cache_miss_tokens": 3327
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.03376428"
+    },
+    {
+      "ordinal": 2,
+      "model_id": "model_80c24cdf7b814e7c855e271ee3047fe8",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 6545,
+        "completion_tokens": 3062,
+        "total_tokens": 9607,
+        "prompt_cache_hit_tokens": 1792,
+        "prompt_cache_miss_tokens": 4753
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.02076492"
+    },
+    {
+      "ordinal": 3,
+      "model_id": "model_232742f27a5244eeb96073c0d717a3d4",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 9381,
+        "completion_tokens": 667,
+        "total_tokens": 10048,
+        "prompt_cache_hit_tokens": 768,
+        "prompt_cache_miss_tokens": 8613
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.01502424"
+    },
+    {
+      "ordinal": 4,
+      "model_id": "model_0e75beb559ee4b8f85aec93b42f90ade",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 10482,
+        "completion_tokens": 1505,
+        "total_tokens": 11987,
+        "prompt_cache_hit_tokens": 768,
+        "prompt_cache_miss_tokens": 9714
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.01979604"
+    },
+    {
+      "ordinal": 5,
+      "model_id": "model_0d6e5fb9de9e4013a42fb31b430af8a9",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 11436,
+        "completion_tokens": 569,
+        "total_tokens": 12005,
+        "prompt_cache_hit_tokens": 896,
+        "prompt_cache_miss_tokens": 10540
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.01734876"
+    },
+    {
+      "ordinal": 6,
+      "model_id": "model_245783c8c18a46cd8b6be47114d1c6ee",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 12042,
+        "completion_tokens": 1955,
+        "total_tokens": 13997,
+        "prompt_cache_hit_tokens": 2944,
+        "prompt_cache_miss_tokens": 9098
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.02363724"
+    },
+    {
+      "ordinal": 7,
+      "model_id": "model_546979af708d4bffa0347e4fa8450144",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 12472,
+        "completion_tokens": 2257,
+        "total_tokens": 14729,
+        "prompt_cache_hit_tokens": 896,
+        "prompt_cache_miss_tokens": 11576
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.02540076"
+    },
+    {
+      "ordinal": 8,
+      "model_id": "model_f53c19c81acc4ac891906dabdd3f02b6",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 13297,
+        "completion_tokens": 1983,
+        "total_tokens": 15280,
+        "prompt_cache_hit_tokens": 256,
+        "prompt_cache_miss_tokens": 13041
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.02540472"
+    },
+    {
+      "ordinal": 9,
+      "model_id": "model_a61b30db90e14eb188db7ccdc7dcd4f8",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 12098,
+        "completion_tokens": 6387,
+        "total_tokens": 18485,
+        "prompt_cache_hit_tokens": 1920,
+        "prompt_cache_miss_tokens": 10178
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.04126188"
+    },
+    {
+      "ordinal": 10,
+      "model_id": "model_623dd94e8ceb4f30a2fe549c7f1f9510",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 14202,
+        "completion_tokens": 275,
+        "total_tokens": 14477,
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 13818
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.01983564"
+    },
+    {
+      "ordinal": 11,
+      "model_id": "model_79f82c451be74ba796300a8a50adb49a",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 13925,
+        "completion_tokens": 361,
+        "total_tokens": 14286,
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 13541
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.01981056"
+    },
+    {
+      "ordinal": 12,
+      "model_id": "model_2ef748d76b644fcfae12a86e6d55e779",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 12933,
+        "completion_tokens": 1325,
+        "total_tokens": 14258,
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 12549
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.02231856"
+    },
+    {
+      "ordinal": 13,
+      "model_id": "model_0a07d7053fa8463fb641b4d599f843ce",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 15880,
+        "completion_tokens": 5562,
+        "total_tokens": 21442,
+        "prompt_cache_hit_tokens": 896,
+        "prompt_cache_miss_tokens": 14984
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.04298712"
+    },
+    {
+      "ordinal": 14,
+      "model_id": "model_f6784aa517664ceda5ec93b19f29a619",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 16935,
+        "completion_tokens": 2536,
+        "total_tokens": 19471,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 16935
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.03239676"
+    },
+    {
+      "ordinal": 15,
+      "model_id": "model_4da498f90f574bffb92a637b49bde519",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 17724,
+        "completion_tokens": 923,
+        "total_tokens": 18647,
+        "prompt_cache_hit_tokens": 896,
+        "prompt_cache_miss_tokens": 16828
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.02705076"
+    },
+    {
+      "ordinal": 16,
+      "model_id": "model_53b3bfba3fcc4c73be0a90dfd0635cad",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 18356,
+        "completion_tokens": 1319,
+        "total_tokens": 19675,
+        "prompt_cache_hit_tokens": 2304,
+        "prompt_cache_miss_tokens": 16052
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.02945316"
+    },
+    {
+      "ordinal": 17,
+      "model_id": "model_5f859b7ba0ac44dcaef35cfc04d8b725",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 16415,
+        "completion_tokens": 8577,
+        "total_tokens": 24992,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 16415
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.05563272"
+    },
+    {
+      "ordinal": 18,
+      "model_id": "model_7963414303aa49799669090e997ce9ef",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 18278,
+        "completion_tokens": 7370,
+        "total_tokens": 25648,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 18278
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.05331216"
+    },
+    {
+      "ordinal": 19,
+      "model_id": "model_bb49014a3a2448f6a450c097b7a3d937",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 16472,
+        "completion_tokens": 4567,
+        "total_tokens": 21039,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 16472
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.03982836"
+    },
+    {
+      "ordinal": 20,
+      "model_id": "model_42e0f1c7412b4bb68ade519b0d8c0ea8",
+      "requested_model": "deepseek-v4-pro",
+      "provider_response_model": "deepseek-v4-pro",
+      "status": "known",
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 17412,
+        "completion_tokens": 5812,
+        "total_tokens": 23224,
+        "prompt_cache_hit_tokens": 1920,
+        "prompt_cache_miss_tokens": 15492
+      },
+      "finish_reason": "stop",
+      "error_category": null,
+      "independent_known_usage_estimate_usd": "0.04599936"
+    }
+  ],
+  "archived_file_hash_check_count": 48,
+  "full_audit": {
+    "path": "data/code-tools-step3/live-038-audit.json",
+    "bytes": 237394,
+    "sha256": "447f3fea7b0c039a6e36564cbf36bd0a41700a6f7ae88572ba62a4da2944855b"
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "source_run_id": "run_df0604c3be3e44ebaaa36758873a97c4",
+  "kind": "original parsed rejected proposals; no corrected plan or execution",
+  "replies": [
+    {
+      "model_id": "model_3d4171e8c53e4d71b0db287d3f98179b",
+      "response_record_sha256": "72ff513c98f3b8abdf7a8727f6ccfa12ff7077ecc6113b9490a82a2cbf2876ee",
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "steps": [
+            {
+              "id": "step_4caa62e1219b4521b4bfb9544a632c64",
+              "logical_id": "logical_d7edeabe5b8c4d159b7878b7c7692328",
+              "parameters": {
+                "system_id": "system_ethanol"
+              },
+              "system_id": "system_ethanol",
+              "tool": "structure.resolve"
+            },
+            {
+              "id": "step_b9032ad64fbe4b4085d9575a616092ee",
+              "immutable_frozen": true
+            },
+            {
+              "id": "step_optfreq_ethanol",
+              "logical_id": "logical_optfreq_ethanol",
+              "parameters": {
+                "code": {
+                  "artifact_id": "artifact_optfreq_script",
+                  "sha256": "PLACEHOLDER"
+                },
+                "inputs": {
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_a92efd65d0224a85ab2cb6f5117b011f",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz",
+                      "purpose": "prepared geometry"
+                    }
+                  ],
+                  "version": 1
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              },
+              "system_id": "system_ethanol",
+              "tool": "python.execute"
+            }
+          ],
+          "goal_map": {
+            "goal_prepared_geometry": {
+              "port": "prepared_geometry",
+              "step_id": "step_b9032ad64fbe4b4085d9575a616092ee"
+            },
+            "goal_optimized_geometry": {
+              "step_key": "step_optfreq_ethanol",
+              "port": "optimized_geometry"
+            },
+            "goal_vibrational_frequencies": {
+              "step_key": "step_optfreq_ethanol",
+              "port": "vibrational_frequencies"
+            }
+          }
+        },
+        "reason": "Prepared geometry is satisfied (result_80854a5795c743b8ac4e16dcb689c990, artifact_a92efd65d0224a85ab2cb6f5117b011f, sha256 5341a7b8...). Remaining goals (optimized geometry, vibrational frequencies) require a combined B3LYP/def2-SVP Opt+Freq ORCA run on the prepared XYZ. I will add a python.execute Step that stages the native ORCA input via the SDK run_orca with the prepared geometry as a dependency, then parses job.xyz and job.hess into observations. The script artifact must be written first via workspace.write before this Step can execute."
+      }
+    },
+    {
+      "model_id": "model_d37d6d97ea5c48a7b84f5aefbc849db5",
+      "response_record_sha256": "92a903c3dc53f9eac7c1424ae7c6cc51fba350c9954742b29aa6837ac6a689bd",
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "steps": [
+            {
+              "key": "step_optfreq_ethanol",
+              "tool": "orca.run",
+              "system_id": "system_ethanol",
+              "parameters": {
+                "input": {
+                  "artifact_id": "artifact_optfreq_input",
+                  "sha256": "PLACEHOLDER"
+                },
+                "inputs": {
+                  "version": 1,
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_a92efd65d0224a85ab2cb6f5117b011f",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz",
+                      "purpose": "prepared geometry"
+                    }
+                  ]
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              }
+            }
+          ],
+          "goal_map": {
+            "goal_prepared_geometry": {
+              "port": "prepared_geometry",
+              "step_id": "step_b9032ad64fbe4b4085d9575a616092ee"
+            },
+            "goal_optimized_geometry": {
+              "port": "optimized_geometry",
+              "step_key": "step_optfreq_ethanol"
+            },
+            "goal_vibrational_frequencies": {
+              "port": "vibrational_frequencies",
+              "step_key": "step_optfreq_ethanol"
+            }
+          }
+        },
+        "reason": "Prepared geometry satisfied (result_80854a5795c743b8ac4e16dcb689c990, artifact_a92efd65d0224a85ab2cb6f5117b011f, sha256 5341a7b8...). Remaining goals need a combined B3LYP/def2-SVP Opt+Freq ORCA run on the prepared XYZ. Prior proposal was rejected: steps must use key (not id/logical_id), and the ORCA input must be a real registered artifact, not a placeholder. Next: workspace.write the native ORCA input (Opt+Freq, TightSCF, NORI, NoAutoStart, %pal/%maxcore within resources, * xyzfile 0 1 ethanol.xyz), then revise_plan with its real artifact_id/sha256 to add the orca.run Step."
+      }
+    },
+    {
+      "model_id": "model_4de1f0ee4eab48afa9b4f971f71c0346",
+      "response_record_sha256": "3fe38f6829ecc4720c8c15bccc14af54e6e71a53e7fa40f0d7fbc828322293b9",
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "goal_map": {
+            "goal_prepared_geometry": {
+              "evidence": {
+                "producer_step_id": "step_b9032ad64fbe4b4085d9575a616092ee",
+                "port": "prepared_geometry",
+                "run_id": "run_df0604c3be3e44ebaaa36758873a97c4",
+                "result_id": "result_80854a5795c743b8ac4e16dcb689c990",
+                "artifact_id": "artifact_a92efd65d0224a85ab2cb6f5117b011f",
+                "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+              },
+              "port": "prepared_geometry"
+            },
+            "goal_optimized_geometry": {
+              "step_key": "step_optfreq_ethanol",
+              "port": "optimized_geometry"
+            },
+            "goal_vibrational_frequencies": {
+              "step_key": "step_optfreq_ethanol",
+              "port": "vibrational_frequencies"
+            }
+          },
+          "steps": [
+            {
+              "key": "step_write_orca_input",
+              "tool": "workspace.write",
+              "system_id": "system_ethanol",
+              "parameters": {
+                "name": "ethanol_optfreq.inp",
+                "role": "orca",
+                "content": "! B3LYP def2-SVP Opt Freq TightSCF NORI NoAutoStart\n%pal nprocs 4 end\n%maxcore 192\n%scf MaxIter 256 ConvForced true AutoTRAH false end\n%geom MaxIter 128 EnforceStrictConvergence true end\n%method Z_MaxIter 128 end\n* xyzfile 0 1 ethanol.xyz\n"
+              }
+            },
+            {
+              "key": "step_optfreq_ethanol",
+              "tool": "orca.run",
+              "system_id": "system_ethanol",
+              "parameters": {
+                "input": {
+                  "producer_key": "step_write_orca_input",
+                  "port": "written_artifact"
+                },
+                "inputs": {
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_a92efd65d0224a85ab2cb6f5117b011f",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz",
+                      "purpose": "prepared geometry"
+                    }
+                  ]
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              }
+            }
+          ]
+        },
+        "reason": "Prepared geometry is satisfied (result_80854a5795c743b8ac4e16dcb689c990, artifact_a92efd65d0224a85ab2cb6f5117b011f, sha256 5341a7b8...). Prior rejection: goal_prepared_geometry must keep its completed Step binding, and ORCA input must be a real registered artifact. Fix: bind goal_prepared_geometry to the existing completed Step via EvidenceRef; add a workspace.write Step producing the native ORCA Opt+Freq input (B3LYP/def2-SVP, TightSCF, NORI, NoAutoStart, %pal 4, %maxcore 192, bounded SCF/geom/method iterations, * xyzfile 0 1 ethanol.xyz), then an orca.run Step consuming that written artifact plus the prepared XYZ dependency. After the write executes, a follow-up revise_plan will bind the real artifact_id/sha256."
+      }
+    }
+  ]
+}

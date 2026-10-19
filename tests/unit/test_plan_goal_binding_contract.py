@@ -264,8 +264,10 @@ def test_public_plan_structure_changes_only_two_expansion_layers_and_declares_sc
     expected = copy.deepcopy(original)
     expected["properties"]["steps"]["items"] = {"type": "object"}
     expected["$defs"]["EvidenceRef"] = {"type": "object"}
-    # This definition becomes unreachable only because steps.items is opaque.
-    expected["$defs"].pop("ProposedStep")
+    # Both Step forms and the repair-only CodeRef become unreachable only
+    # because steps.items is opaque; no remaining Goal constraint is removed.
+    for name in ("ProposedStep", "ProposedCodeRepair", "CodeRef"):
+        expected["$defs"].pop(name)
     expected["description"] = (
         "Structural projection only: Step fields and EvidenceRef contents are validated separately.")
     assert projected == expected

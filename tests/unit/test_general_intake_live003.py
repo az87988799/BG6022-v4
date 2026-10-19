@@ -60,9 +60,12 @@ def test_full_real_replies_remain_rejected_with_actionable_exact_paths(tmp_path,
     else:
         paths = {tuple(item["path"]) for item in corrections}
         assert paths >= {("parameters", "goals", 1, "quantity"), ("parameters", "goals", 2, "quantity")}
-        # The first Goal is registered input preparation. Its historical false
-        # demand for a scientific optimized relation must not be repeated.
-        assert not any(path[:3] == ("parameters", "goals", 0) for path in paths)
+        # Input preparation must omit a scientific relation. Aggregate that
+        # existing rule now; never repeat the old demand to set it optimized.
+        input_error, = [item for item in corrections if item["path"][:3] == ["parameters", "goals", 0]]
+        assert input_error["reason"] == "input_preparation_has_no_scientific_geometry_relation"
+        assert "omit this field" in input_error["instruction"]
+        assert "required_relation" not in input_error
     feedback = {"category": "ProposalError", "requirement": rejected.value.detail}
     projected = run.model_copy(update={"budget": run.budget.model_copy(update={"input_tokens": 48000,
                                                                               "model_tokens": 1200000})})

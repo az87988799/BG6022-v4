@@ -74,14 +74,16 @@ def test_planning_prompt_uses_request_ids_when_status_contains_retired_goal():
     prompt = prepared.body()["messages"][0]["content"]
     wire = decoded(prepared)
     if wire["AUTHORITY"].get("response_contract") == "decision-intent-2":
-        assert "Map every required Goal ID/port." in prompt
+        assert any(instruction in prompt for instruction in (
+            "Map every required Goal ID/port.", "Keep Goal IDs/ports/satisfied bindings."))
         assert set(wire["RESPONSE_ENVELOPE"]) == {"action", "parameters", "reason"}
         assert "initial_plan" in wire["ACTION_SCHEMAS"]
     else:
         assert "Goal IDs=AUTHORITY.request.goals[].id." in prompt
     assert "Goal IDs=AUTHORITY.goal_status keys" not in prompt and "Goal IDs=goal_status keys" not in prompt
     current = wire["AUTHORITY"]
-    assert {goal["id"] for goal in current["request"]["goals"]} == {goal.id for goal in request.goals}
+    assert {(goal["id"], goal["port"]) for goal in current["request"]["goals"]} == {
+        (goal.id, goal.port) for goal in request.goals}
     assert all(json.dumps(goal.id) in prepared.body()["messages"][1]["content"] for goal in request.goals)
     assert current["goal_status"]["retired_goal"] == "satisfied"
     assert (request, run) == before

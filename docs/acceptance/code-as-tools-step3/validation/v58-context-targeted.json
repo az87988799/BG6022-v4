@@ -1,0 +1,109 @@
+{
+  "scope": "v58 targeted context compatibility; no full regression, model API, ORCA or development reservation",
+  "recorded_at_utc": "2026-10-19T13:14:05.659543+00:00",
+  "batches": [
+    {
+      "xml": {
+        "path": "data/code-tools-step3/native-guidance-v58-context/context-001.xml",
+        "bytes": 6193,
+        "sha256": "7ac90472af054b349e43a92e51ff60e621d403588a152e1278d0e2193c939fe4"
+      },
+      "log": {
+        "path": "data/code-tools-step3/native-guidance-v58-context/context-001.log",
+        "bytes": 1033,
+        "sha256": "9eb5ddcbb714623b2275858902c34500fef7c62de8bb05db87f9e363c9084edf"
+      },
+      "counts": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "1",
+        "skipped": "0",
+        "tests": "34",
+        "time": "10.616",
+        "timestamp": "2026-10-19T21:12:53.985065+08:00",
+        "hostname": "AZ"
+      },
+      "failures": [
+        {
+          "classname": "tests.unit.test_code_context",
+          "name": "test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_history_survives",
+          "time": "0.006"
+        }
+      ]
+    },
+    {
+      "xml": {
+        "path": "data/code-tools-step3/native-guidance-v58-context/context-002.xml",
+        "bytes": 400,
+        "sha256": "c378a929ef22914afd3d141b323eec8af675c9fffd789293e3144153ac431765"
+      },
+      "log": {
+        "path": "data/code-tools-step3/native-guidance-v58-context/context-002.log",
+        "bytes": 100,
+        "sha256": "2a92bbf3fc680c5f737a63682d4a7b7d7eca56fbe4539e6c0c1e056e39011aa9"
+      },
+      "counts": {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "1",
+        "time": "1.513",
+        "timestamp": "2026-10-19T21:13:41.468960+08:00",
+        "hostname": "AZ"
+      },
+      "failures": []
+    }
+  ],
+  "first_batch_freeze": {
+    "path": "data/code-tools-step3/native-guidance-v58-context/context-001.json",
+    "bytes": 57838,
+    "sha256": "c1684172681439f0b61b39b76980f3efdd58258548bc1998ef8745eba9962b0d"
+  },
+  "first_batch_selected_files": 466,
+  "first_batch_changed_files": [],
+  "resolution": "First batch 33 passed and 1 stale prompt-version literal failed. Changed only that expected literal from v57 to v58; exact failing test then passed. No production gate or budget changed. Do not sum overlapping counts as unique cases.",
+  "native_gate_evidence": {
+    "path": "docs/acceptance/code-as-tools-step3/validation/v58-native-guidance-targeted.json",
+    "bytes": 3521,
+    "sha256": "5df78026e8149f99ab2f195c0b2d9acccb913e5cdf228c527cc40dcb8b4b527a"
+  },
+  "lint": "Ruff passed for context.py, decision_purpose.py, native_profile.py, test_context.py, test_code_context.py, test_native_block_guidance.py; final later edit only stale test version literal",
+  "final_related_files": [
+    {
+      "path": "src/orca_agent/context.py",
+      "bytes": 183937,
+      "sha256": "742dc85bc2d18f2aca2fe0592929cec416dc99f199af7110965b467270fce02e"
+    },
+    {
+      "path": "src/orca_agent/decision_purpose.py",
+      "bytes": 9038,
+      "sha256": "4812583b93a6b23a864757575580f685be30930524d9951e11bfb84e16635628"
+    },
+    {
+      "path": "src/orca_agent/orca/native_profile.py",
+      "bytes": 12056,
+      "sha256": "82b5a13dacde5467093756cb1de70966640621a5e9afab0487d150976b9fdcd5"
+    },
+    {
+      "path": "tests/unit/test_context.py",
+      "bytes": 51428,
+      "sha256": "99aa81dbdee8ecb7eb6663db428ec35e958c42fcb27636efc4c2b4e81950b496"
+    },
+    {
+      "path": "tests/unit/test_code_context.py",
+      "bytes": 38078,
+      "sha256": "c6555c69494f4085c02b621de004c3ba18760fd16ada6b024dd14f0b7fff6759"
+    },
+    {
+      "path": "tests/unit/test_native_block_guidance.py",
+      "bytes": 8082,
+      "sha256": "85dd29ec7577f684fc573eb75d09c31de483da58fd6ec9c4a5ae00f0c8d27c33"
+    }
+  ],
+  "limitations": [
+    "Targeted offline tests do not establish real-model compliance or successful scientific delivery.",
+    "Original v57 live038 remains failed/partial.",
+    "No final full regression per user instruction."
+  ]
+}

@@ -77,8 +77,17 @@ def test_first_reply_missing_identity_message_stays_rejected_and_missing_quantit
 
 
 @pytest.mark.parametrize("index", [1, 2])
-def test_valid_real_replies_preserve_input_goal_scientific_goals_and_preparation_plan(tmp_path, index):
+def test_real_replies_preserve_goals_after_explicit_default_adoption_if_missing(tmp_path, index):
     store, run, proposed = replay(tmp_path, index)
+    if index == 1:
+        # This historical reply omitted two configured conditions. v42 requires
+        # an explicit decision; the retained real fixture is never rewritten.
+        with pytest.raises(ProposalError) as rejected:
+            submit(store, run, proposed)
+        rows = rejected.value.detail["corrections"]
+        assert all(row["reason"] == "authorized_default_requires_explicit_adoption" for row in rows)
+        for row in rows:
+            proposed.setdefault("conditions", {})[row["path"][-1]] = row["authorized_default"]
     before = copy.deepcopy(proposed)
     permission = run.permission.model_dump()
     run = submit(store, run, proposed)
@@ -168,22 +177,28 @@ def test_input_goal_rejects_wrong_scope_stale_evidence_and_scientific_claims(tmp
 
 @pytest.mark.parametrize("field,value", [("geometry_relation", "optimized"), ("quantity", "优化结构")])
 def test_input_intake_rejects_optimized_claim_without_rewriting_the_goal(tmp_path, field, value):
-    store, run, proposed = replay(tmp_path, 1)
-    proposed["goals"][0][field] = value
+    store, run, proposed = replay(tmp_path, 2)
+    index = next(i for i, goal in enumerate(proposed["goals"]) if goal["port"] == "prepared_geometry")
+    proposed["goals"][index][field] = value
     with pytest.raises(ProposalError) as error:
         submit(store, run, proposed)
-    assert error.value.detail["path"] == ["parameters", "goals", 0, field]
-    assert proposed["goals"][0][field] == value and not run.decisions
+    if field == "geometry_relation":
+        assert [item["path"] for item in error.value.detail["corrections"]] == [["parameters", "goals", index, field]]
+    else:
+        assert error.value.detail["path"] == ["parameters", "goals", index, field]
+    assert proposed["goals"][index][field] == value and not run.decisions
 
 
 def test_registered_input_goal_keeps_actual_unknowns_and_immutable_prior_request(tmp_path):
-    store, run, proposed = replay(tmp_path, 1)
+    store, run, proposed = replay(tmp_path, 2)
     original = store.path(f"runs/{run.id}/request-revisions/1.json").read_bytes()
-    proposed["goals"][0]["unresolved"] = ["missing:stereochemistry_confirmation"]
+    goal = next(goal for goal in proposed["goals"] if goal["port"] == "prepared_geometry")
+    goal["unresolved"] = ["missing:stereochemistry_confirmation"]
     proposed["notices"] = ["Unresolved stereochemistry confirmation is retained; preparation has not completed."]
     run = submit(store, run, proposed)
     request = store.load_request(run)
-    assert request.goals[0].unresolved == ["missing:stereochemistry_confirmation"]
+    goal = next(goal for goal in request.goals if goal.port == "prepared_geometry")
+    assert goal.unresolved == ["missing:stereochemistry_confirmation"]
     assert request.normalization_status == "clarification"
     assert store.path(f"runs/{run.id}/request-revisions/1.json").read_bytes() == original
     assert not run.calls and not run.attempts and not run.goal_evidence

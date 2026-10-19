@@ -3,6 +3,7 @@
 import copy
 import hashlib
 import json
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -62,10 +63,15 @@ def test_real_rejected_parameters_keep_precise_field_errors_visible(tmp_path, in
     assert all("B3LYP" not in item["instruction"] and "def2-SVP" not in item["instruction"]
                for item in corrections)  # Program feedback supplies no recipe or substitute.
     feedback = {"category": "ProposalError", "requirement": rejected.value.detail}
+    results = [store.load_result(run.id, identifier) for identifier in run.result_ids]
+    # Replay at a recorded time after all retrieved evidence, without extending
+    # the archived deadline or depending on the machine's present-day clock.
+    replay_now = datetime.fromisoformat(run.model_records[-1]["created_at"])
+    assert max(result.created_at for result in results) <= replay_now < run.deadline
     prepared = build_context(store.load_request(run), run, relevant_tools=[],
-        results=[store.load_result(run.id, identifier) for identifier in run.result_ids],
+        results=results,
         action_parameters={"select_conditions": selection_action_parameters(store.load_request(run))},
-        feedback={"validation_error": feedback})
+        feedback={"validation_error": feedback}, now=replay_now)
     assert payload(prepared)["CONTROL"]["validation_error"] == feedback
     assert prepared.input_token_bound <= run.budget.input_tokens
     assert (store.load_run(run.id).model_dump_json(), store.load_request(run).model_dump_json()) == before

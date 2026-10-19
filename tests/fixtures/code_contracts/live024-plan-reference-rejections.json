@@ -1,0 +1,959 @@
+{
+  "schema": "live024-plan-reference-rejections-1",
+  "scope": "Exact Plan, Request and three rejected model proposals from live024; run_context is an explicit partial fixture retaining original frozen Step Calls and budgets, omitting transport/internal diagnostic details and resolved-input cache. Offline materialization only, no generated script execution.",
+  "run_id": "run_1650781da73449d785e95011d3333844",
+  "request": {
+    "id": "request_09526461519a4b26bf01c53b11f5d857",
+    "version": 3,
+    "original_text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。\n\n以下是独立的受控代码故障开发验收，不是自然任务首次自主成功的证据。\nDEVELOPMENT_FAULT_SEEDED: CODE_TOOLS_DEVELOPMENT_FAULT_V1\n本次仍由你自行检索、选择条件、制定 Plan，并编写完整 Python 程序与 ORCA 输入，不使用开发者提供的解题脚本。\n首次执行 Python 前，先完成所需条件选择、初始结构和全部任务文件的生成。第一版 Python 必须已经是完成上述科学目标的完整程序，包含实际 SDK 计算、输出读取和观察交付；禁止先执行仅用于报错的占位脚本、空任务或故障探针。第一次执行的 Step 就必须具备实际任务所需的完整输入 manifest、体系、条件、观察名、目标绑定与依赖，不能把这些留到第二次补充。所有 Artifact 与 hash 必须来自实际已完成的工具输出。\n在这份完整程序的任何导入、文件操作、SDK 调用或其他工作之前，写一行单独的未定义名称表达式 CODE_TOOLS_DEVELOPMENT_FAULT_V1。模块文档字符串和合法的 __future__ 导入可以在前。不要定义该名称，不要捕获这一行的 NameError。这一行是唯一人为要求的故障；其余程序从第一版开始就应完整。\n实际执行并读取真实失败反馈后，在同一个 Run 内由你自己通过 workspace.write 生成修订代码：仅删除上述独立 marker 行，其他代码字节保持不变。先完成新代码的写入，再提交修复 Step：使用新的 Step key 与原失败 Step 的同一个 logical_key，除 CodeRef 外保留原有输入、条件、目的、依赖和观察名。不要把新 writer 加为修复 Step 的依赖，不要重跑旧代码或再次注入 marker。第一次在 marker 处失败时尚未调用 SDK，因此已有计算请求键无须更改。若发现其他问题不能在这些约束下完成，保留事实并停止，不放宽测试或科学目标。\n继续使用同一累计预算和现有生产校验完成真实计算与带来源的结果交付。开发驱动只核验前置条件、驱动与采证，不会替你改写 Plan、脚本、ORCA 输入或模型回复。交付时区分本次人为要求的 NameError 与自然发生的错误，披露首次失败、实际修复、资源成本和科学验证缺项。",
+    "geometry_artifact_id": null,
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "B3LYP",
+    "basis": "6-31G*",
+    "conditions_source": {
+      "charge": "default",
+      "multiplicity": "default",
+      "electronic_state": "default",
+      "environment": "default",
+      "basis": "auto_selected",
+      "method": "auto_selected"
+    },
+    "goals": [
+      {
+        "id": "goal_ethanol_prepared_geometry",
+        "port": "prepared_geometry",
+        "required": true,
+        "minimum_check_version": "structure-prepare-2",
+        "evidence_contract_version": "legacy-1",
+        "verification": "qualified",
+        "quantity": "生成结构",
+        "original_text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+        "identity": {
+          "contract": "general-identity-2",
+          "requested_names": [
+            "乙醇"
+          ],
+          "canonical_names": [],
+          "query_name": "ethanol",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+            "start": 1,
+            "end": 8,
+            "text_basis": "为乙醇生成结构",
+            "schema": "request-semantics-3"
+          }
+        },
+        "text_evidence": {
+          "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+          "start": 0,
+          "end": 46,
+          "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_ethanol"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_ethanol_optimized_geometry",
+        "port": "optimized_geometry",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "优化结构",
+        "original_text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+        "identity": {
+          "requested_names": [
+            "乙醇"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+          "start": 0,
+          "end": 46,
+          "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_ethanol"
+        ],
+        "conditions": {
+          "geometry_relation": "optimized"
+        },
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_ethanol_vibrational_frequencies",
+        "port": "vibrational_frequencies",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "振动频率",
+        "original_text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+        "identity": {
+          "requested_names": [
+            "乙醇"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+          "start": 0,
+          "end": 46,
+          "text_basis": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_ethanol"
+        ],
+        "conditions": {
+          "geometry_relation": "optimized"
+        },
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      }
+    ],
+    "systems": [
+      {
+        "id": "system_ethanol",
+        "geometry_artifact_id": null,
+        "conditions": {},
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": "乙醇",
+        "identity": {
+          "contract": "general-identity-2",
+          "requested_names": [
+            "乙醇"
+          ],
+          "canonical_names": [],
+          "query_name": "ethanol",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+            "start": 1,
+            "end": 8,
+            "text_basis": "为乙醇生成结构",
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+        "text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。\n\n以下是独立的受控代码故障开发验收，不是自然任务首次自主成功的证据。\nDEVELOPMENT_FAULT_SEEDED: CODE_TOOLS_DEVELOPMENT_FAULT_V1\n本次仍由你自行检索、选择条件、制定 Plan，并编写完整 Python 程序与 ORCA 输入，不使用开发者提供的解题脚本。\n首次执行 Python 前，先完成所需条件选择、初始结构和全部任务文件的生成。第一版 Python 必须已经是完成上述科学目标的完整程序，包含实际 SDK 计算、输出读取和观察交付；禁止先执行仅用于报错的占位脚本、空任务或故障探针。第一次执行的 Step 就必须具备实际任务所需的完整输入 manifest、体系、条件、观察名、目标绑定与依赖，不能把这些留到第二次补充。所有 Artifact 与 hash 必须来自实际已完成的工具输出。\n在这份完整程序的任何导入、文件操作、SDK 调用或其他工作之前，写一行单独的未定义名称表达式 CODE_TOOLS_DEVELOPMENT_FAULT_V1。模块文档字符串和合法的 __future__ 导入可以在前。不要定义该名称，不要捕获这一行的 NameError。这一行是唯一人为要求的故障；其余程序从第一版开始就应完整。\n实际执行并读取真实失败反馈后，在同一个 Run 内由你自己通过 workspace.write 生成修订代码：仅删除上述独立 marker 行，其他代码字节保持不变。先完成新代码的写入，再提交修复 Step：使用新的 Step key 与原失败 Step 的同一个 logical_key，除 CodeRef 外保留原有输入、条件、目的、依赖和观察名。不要把新 writer 加为修复 Step 的依赖，不要重跑旧代码或再次注入 marker。第一次在 marker 处失败时尚未调用 SDK，因此已有计算请求键无须更改。若发现其他问题不能在这些约束下完成，保留事实并停止，不放宽测试或科学目标。\n继续使用同一累计预算和现有生产校验完成真实计算与带来源的结果交付。开发驱动只核验前置条件、驱动与采证，不会替你改写 Plan、脚本、ORCA 输入或模型回复。交付时区分本次人为要求的 NameError 与自然发生的错误，披露首次失败、实际修复、资源成本和科学验证缺项。",
+        "source": "user",
+        "created_at": "2026-10-19T09:28:38.433205+00:00",
+        "request_version": 1
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "electronic_state": "RKS",
+      "environment": "gas_phase",
+      "basis": "6-31G*",
+      "method": "B3LYP"
+    },
+    "normalization_status": "normalized",
+    "condition_evidence": {
+      "request.charge": {
+        "value": 0,
+        "source": "default",
+        "text_basis": "",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": "local-hf-1",
+        "message_id": null,
+        "message_ids": [
+          "message_6b4181296e3b4ef7b3f26a1f69a8501b"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.multiplicity": {
+        "value": 1,
+        "source": "default",
+        "text_basis": "",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": "local-hf-1",
+        "message_id": null,
+        "message_ids": [
+          "message_6b4181296e3b4ef7b3f26a1f69a8501b"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.electronic_state": {
+        "value": "RKS",
+        "source": "default",
+        "text_basis": "",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": "local-hf-1",
+        "message_id": null,
+        "message_ids": [
+          "message_6b4181296e3b4ef7b3f26a1f69a8501b"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.environment": {
+        "value": "gas_phase",
+        "source": "default",
+        "text_basis": "",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": "local-hf-1",
+        "message_id": null,
+        "message_ids": [
+          "message_6b4181296e3b4ef7b3f26a1f69a8501b"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.method": {
+        "text_basis": "选择合适的方法和基组",
+        "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+        "start": 9,
+        "end": 19,
+        "source": "explicit",
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.basis": {
+        "text_basis": "选择合适的方法和基组",
+        "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+        "start": 9,
+        "end": 19,
+        "source": "explicit",
+        "schema": "request-semantics-3"
+      },
+      "request.basis": {
+        "value": "6-31G*",
+        "source": "auto_selected",
+        "request_version": 2,
+        "authorization": {
+          "text_basis": "选择合适的方法和基组",
+          "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+          "start": 9,
+          "end": 19,
+          "source": "explicit",
+          "schema": "request-semantics-3"
+        },
+        "reason": "6-31G* (identical to 6-31G(d)) is a split-valence basis with polarization functions on heavy atoms, covering H–Kr and thus all ethanol atoms; compact enough for a combined Opt+Freq job within the run budget. The quoted official table row lists the exact identifier 6-31G*, so the selected value is supported verbatim rather than inferred from a prefixed spelling. Cost/accuracy limitation: modest basis, no diffuse functions, so frequencies are harmonic values without anharmonic or basis-set-limit corrections.",
+        "sources": [
+          {
+            "result_id": "result_0df7cda5fe91409caa5d6649f6b37b4f",
+            "result_fingerprint": "616dca9fdb6372d72c7e4eaa50e9bec9601b1584d1b03d5a677149ca07728c05",
+            "document_sha256": "48750fa1c9dc25992c9e339648e52ef0f63423a7ad196e33b78609eb7143c4b6",
+            "excerpt_sha256": "2fcc3521127a068400375eaa270b6e1706a73d8a538640aae55d8eb3f622cbe9",
+            "quote": "6-31G* H–Kr –",
+            "kind": "official_document",
+            "document_id": "orca_basis",
+            "index_version": "knowledge-index-2",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/basisset.html",
+            "title": "ORCA 6.1 Basis Sets"
+          }
+        ],
+        "schema": "condition-selection-1"
+      },
+      "request.method": {
+        "value": "B3LYP",
+        "source": "auto_selected",
+        "request_version": 2,
+        "authorization": {
+          "text_basis": "选择合适的方法和基组",
+          "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+          "start": 9,
+          "end": 19,
+          "source": "explicit",
+          "schema": "request-semantics-3"
+        },
+        "reason": "B3LYP is a widely used hybrid functional suitable for geometry optimization and harmonic frequency analysis of small organic molecules such as ethanol; it balances accuracy and cost. Limitation: it is not a benchmark validation, and dispersion/thermochemistry are not assessed here.",
+        "sources": [
+          {
+            "result_id": "result_6711676c55fc45c6a04fbfcdf76cbb53",
+            "result_fingerprint": "3ea282fe4a6837f4145459f4a2eb2568253bdf9ff3a0eeefcdb8d1a488e9ad50",
+            "document_sha256": "94424fff221bde28abf4a32b7f1649771dcfde5585360082816107d4a6032c0c",
+            "excerpt_sha256": "b29876c137a3faa3b54688fd43c7f67f1d7cc38ea2595d8df9a228df66ef383d",
+            "quote": "B3LYP [230] B3LYP 20 The popular B3LYP functional (20% HF exchange) as defined in the TurboMole program system (LDAOPT C_VWN5)",
+            "kind": "official_document",
+            "document_id": "orca_dft",
+            "index_version": "knowledge-index-2",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/modelchemistries/DensityFunctionalTheory.html",
+            "title": "ORCA 6.1 Density Functional Theory"
+          }
+        ],
+        "schema": "condition-selection-1"
+      }
+    },
+    "semantic_defaults": {
+      "charge": 0,
+      "multiplicity": 1,
+      "electronic_state": "RKS",
+      "environment": "gas_phase"
+    },
+    "automatic_selection": [
+      "method",
+      "basis"
+    ],
+    "selection_reasons": {
+      "basis": "6-31G* (identical to 6-31G(d)) is a split-valence basis with polarization functions on heavy atoms, covering H–Kr and thus all ethanol atoms; compact enough for a combined Opt+Freq job within the run budget. The quoted official table row lists the exact identifier 6-31G*, so the selected value is supported verbatim rather than inferred from a prefixed spelling. Cost/accuracy limitation: modest basis, no diffuse functions, so frequencies are harmonic values without anharmonic or basis-set-limit corrections.",
+      "method": "B3LYP is a widely used hybrid functional suitable for geometry optimization and harmonic frequency analysis of small organic molecules such as ethanol; it balances accuracy and cost. Limitation: it is not a benchmark validation, and dispersion/thermochemistry are not assessed here."
+    }
+  },
+  "plan": {
+    "id": "plan_94c6659b787349e897982bcf2fe39f2b",
+    "version": 1,
+    "request_id": "request_09526461519a4b26bf01c53b11f5d857",
+    "request_version": 3,
+    "steps": [
+      {
+        "id": "step_6a375e1de25a41d1925ee4859e7d76c7",
+        "logical_id": "logical_a0d77b9d7bf84fd785ec544c9a3b2791",
+        "tool": "structure.resolve",
+        "parameters": {
+          "system_id": "system_ethanol"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": "system_ethanol"
+      },
+      {
+        "id": "step_5e02a1f071134a3fbcbe774c1a53f571",
+        "logical_id": "logical_48f8f522e1834081927338de590de6a0",
+        "tool": "structure.prepare",
+        "parameters": {
+          "system_id": "system_ethanol",
+          "charge": 0,
+          "multiplicity": 1
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_6a375e1de25a41d1925ee4859e7d76c7"
+        ],
+        "inputs": {
+          "identity": {
+            "producer_step_id": "step_6a375e1de25a41d1925ee4859e7d76c7",
+            "run_id": null,
+            "result_id": null,
+            "attempt_id": null,
+            "artifact_id": null,
+            "sha256": null,
+            "port": "resolved_identity",
+            "rule_version": null
+          }
+        },
+        "system_id": "system_ethanol"
+      },
+      {
+        "id": "step_c119f878ff6a4b4f8839f705518bf535",
+        "logical_id": "logical_2822663b99f24a0b8349f458e305829f",
+        "tool": "workspace.write",
+        "parameters": {
+          "name": "ethanol_opt_freq.py",
+          "content": "CODE_TOOLS_DEVELOPMENT_FAULT_V1\nimport json\nimport os\nimport re\n\nfrom orca_task_sdk import run_orca\n\nXYZ_NAME = \"ethanol.xyz\"\nINPUT_NAME = \"job.inp\"\nREQUEST_KEY = \"ethanol-opt-freq-1\"\n\ndef build_input():\n    return \"\"\"! B3LYP 6-31G* Opt Freq TightSCF NORI NoAutoStart RKS\n%pal\n  nprocs 4\nend\n%maxcore 192\n%scf\n  MaxIter 256\n  ConvForced true\n  AutoTRAH false\nend\n%geom\n  MaxIter 128\n  EnforceStrictConvergence true\nend\n%method\n  Z_MaxIter 128\nend\n* xyzfile 0 1 ethanol.xyz\n\"\"\"\n\ndef read_from_files(files, predicate):\n    for original_name, path in files.items():\n        if predicate(original_name):\n            try:\n                with open(path, \"r\", encoding=\"utf-8\", errors=\"replace\") as handle:\n                    return original_name, handle.read()\n            except OSError:\n                continue\n    return None, \"\"\n\ndef parse_frequencies(text):\n    values = []\n    in_block = False\n    pattern = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+\\.\\d+)\\s+cm\\*\\*-1\")\n    for line in text.splitlines():\n        if \"VIBRATIONAL FREQUENCIES\" in line:\n            in_block = True\n            continue\n        if not in_block:\n            continue\n        if \"NORMAL MODES\" in line or \"IR SPECTRUM\" in line:\n            break\n        match = pattern.match(line)\n        if match:\n            values.append(float(match.group(2)))\n    return values\n\nwith open(INPUT_NAME, \"w\", encoding=\"utf-8\") as handle:\n    handle.write(build_input())\n\nreceipt = run_orca(INPUT_NAME, dependencies=(XYZ_NAME,), request_key=REQUEST_KEY)\nfiles = receipt.get(\"files\", {})\n\noptimized_name, optimized_text = read_from_files(\n    files, lambda name: name.endswith(\"job.xyz\")\n)\nif not optimized_text:\n    optimized_name, optimized_text = read_from_files(\n        files, lambda name: name.endswith(\".xyz\") and not name.endswith(XYZ_NAME)\n    )\n\nstdout_name, stdout_text = read_from_files(\n    files, lambda name: name.endswith(\"stdout.out\") or name.endswith(\"job.out\")\n)\nfrequencies = parse_frequencies(stdout_text)\n\nobservations = {\n    \"version\": 1,\n    \"observations\": [\n        {\n            \"name\": \"optimized_geometry\",\n            \"value\": optimized_text,\n            \"unit\": None,\n            \"sources\": [\n                {\n                    \"internal_request_key\": receipt.get(\"request_key\", REQUEST_KEY),\n                    \"filename\": optimized_name or \"job.xyz\",\n                    \"location\": \"final optimized geometry\",\n                }\n            ],\n            \"limitations\": [\n                \"B3LYP/6-31G* gas-phase optimization; not a basis-set-limit benchmark\"\n            ],\n        },\n        {\n            \"name\": \"vibrational_frequencies\",\n            \"value\": frequencies,\n            \"unit\": \"cm^-1\",\n            \"sources\": [\n                {\n                    \"internal_request_key\": receipt.get(\"request_key\", REQUEST_KEY),\n                    \"filename\": stdout_name or \"stdout.out\",\n                    \"location\": \"VIBRATIONAL FREQUENCIES block\",\n                }\n            ],\n            \"limitations\": [\n                \"harmonic frequencies from ORCA Freq; no anharmonic correction\"\n            ],\n        },\n    ],\n}\n\nwith open(\"observations.json\", \"w\", encoding=\"utf-8\") as handle:\n    json.dump(observations, handle, indent=2, allow_nan=False)\nprint(json.dumps({\"request_key\": receipt.get(\"request_key\"), \"files\": list(files.keys()), \"frequency_count\": len(frequencies)}))\n",
+          "role": "python"
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_5e02a1f071134a3fbcbe774c1a53f571"
+        ],
+        "inputs": {},
+        "system_id": null
+      }
+    ],
+    "goal_map": {
+      "goal_ethanol_prepared_geometry": {
+        "step_id": "step_5e02a1f071134a3fbcbe774c1a53f571",
+        "port": "prepared_geometry",
+        "evidence": null,
+        "gap": null
+      },
+      "goal_ethanol_optimized_geometry": {
+        "step_id": null,
+        "port": "optimized_geometry",
+        "evidence": null,
+        "gap": "pending_complete_python_analysis"
+      },
+      "goal_ethanol_vibrational_frequencies": {
+        "step_id": null,
+        "port": "vibrational_frequencies",
+        "evidence": null,
+        "gap": "pending_complete_python_analysis"
+      }
+    }
+  },
+  "run_context": {
+    "id": "run_1650781da73449d785e95011d3333844",
+    "request_id": "request_09526461519a4b26bf01c53b11f5d857",
+    "request_version": 3,
+    "plan_id": "plan_94c6659b787349e897982bcf2fe39f2b",
+    "plan_version": 1,
+    "permission": {
+      "version": 1,
+      "scientific_execution": true,
+      "allowed_tools": [
+        "structure.resolve",
+        "structure.prepare",
+        "workspace.write",
+        "python.execute",
+        "orca.run",
+        "evidence.list",
+        "evidence.discover",
+        "evidence.search",
+        "evidence.value",
+        "evidence.text",
+        "knowledge.search",
+        "knowledge.answer"
+      ],
+      "max_cores": 4,
+      "max_memory_mb": 1024,
+      "artifact_ids": [],
+      "source_ids": [],
+      "result_ids": [],
+      "model_execution": true,
+      "code_execution": true,
+      "artifact_writes": true,
+      "allowed_repairs": {},
+      "allow_additional_science": true,
+      "external_identity_queries": true,
+      "geometry_preparation": true
+    },
+    "budget": {
+      "logical_steps": 12,
+      "attempts_per_step": 2,
+      "orca_starts": 2,
+      "extra_orca_starts": 1,
+      "postprocess_starts": 0,
+      "run_seconds": 3600.0,
+      "model_calls": 24,
+      "plan_revisions": 12,
+      "model_tokens": 1200000,
+      "input_tokens": 64000,
+      "output_tokens": 16384,
+      "decision_rounds": 40,
+      "evidence_reads": 12,
+      "analysis_executions": 4,
+      "corrections_per_proposal": 2,
+      "transport_retries": 0,
+      "identity_queries": 2,
+      "structure_preparations": 1,
+      "knowledge_queries": 4,
+      "internal_work_units": 400,
+      "code_retries": 1,
+      "artifact_count": 200,
+      "artifact_bytes": 268435456,
+      "artifact_total_bytes": 268435456
+    },
+    "usage": {
+      "internal_work_units": 0,
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 15,
+      "model_tokens_used": 227166,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 0,
+      "decision_rounds": 15,
+      "evidence_reads": 2,
+      "analysis_executions": 1,
+      "logical_steps": [
+        "logical_2822663b99f24a0b8349f458e305829f",
+        "logical_48f8f522e1834081927338de590de6a0",
+        "logical_a0d77b9d7bf84fd785ec544c9a3b2791"
+      ],
+      "identity_queries": 1,
+      "structure_preparations": 1,
+      "knowledge_queries": 4
+    },
+    "attempts": [],
+    "state": "failed",
+    "goal_status": {
+      "goal_ethanol_prepared_geometry": "satisfied",
+      "goal_ethanol_optimized_geometry": "insufficient_evidence",
+      "goal_ethanol_vibrational_frequencies": "insufficient_evidence"
+    },
+    "delivery_status": "partial",
+    "created_at": "2026-10-19T09:28:38.319657Z",
+    "deadline": "2026-10-19T10:28:38.318661Z",
+    "result_ids": [
+      "result_d0b7de609d18433a84e27452965098af",
+      "result_f544009af573450a80c72d60f92b7001",
+      "result_6711676c55fc45c6a04fbfcdf76cbb53",
+      "result_0df7cda5fe91409caa5d6649f6b37b4f",
+      "result_24fa92d789db45be8d617fc2f0d71a70",
+      "result_009809cd5f18426aa1673fcfa2945d96",
+      "result_47095672b35844639e423357ff043333",
+      "result_749f108eed10454fbe2ce289bd6f7cb9",
+      "result_e2976a3664b644a0866bc54ff992e990"
+    ],
+    "control_generation": 1,
+    "agent_enabled": true,
+    "science_baseline_policy": "first_science_plan",
+    "calls": [
+      {
+        "id": "call_cc9e9d07b9694f10814314ad8a645b4e",
+        "tool": "structure.resolve",
+        "parameters": {
+          "system_id": "system_ethanol"
+        },
+        "step_id": "step_6a375e1de25a41d1925ee4859e7d76c7",
+        "state": "completed",
+        "result_id": "result_24fa92d789db45be8d617fc2f0d71a70",
+        "request_version": 3,
+        "plan_version": 1,
+        "control_generation": 1,
+        "created_at": "2026-10-19T09:29:52.922581Z",
+        "frozen_step": {
+          "id": "step_6a375e1de25a41d1925ee4859e7d76c7",
+          "logical_id": "logical_a0d77b9d7bf84fd785ec544c9a3b2791",
+          "tool": "structure.resolve",
+          "parameters": {
+            "system_id": "system_ethanol"
+          },
+          "geometry": null,
+          "depends_on": [],
+          "inputs": {},
+          "system_id": "system_ethanol"
+        },
+        "consumption": {
+          "_input_purpose": {
+            "version": "structure-input-purpose-1",
+            "request_id": "request_09526461519a4b26bf01c53b11f5d857",
+            "request_version": 3,
+            "system_id": "system_ethanol",
+            "identity": {
+              "contract": "general-identity-2",
+              "requested_names": [
+                "乙醇"
+              ],
+              "canonical_names": [],
+              "query_name": "ethanol",
+              "query_name_source": "inferred_translation_or_alias",
+              "ambiguities": [],
+              "text_evidence": {
+                "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+                "start": 1,
+                "end": 8,
+                "text_basis": "为乙醇生成结构",
+                "schema": "request-semantics-3"
+              }
+            },
+            "geometry_source": "prepare",
+            "conditions": {
+              "method": "B3LYP",
+              "basis": "6-31G*",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          }
+        }
+      },
+      {
+        "id": "call_d27b48ceabb7496c8bcea84e0f4589a2",
+        "tool": "structure.prepare",
+        "parameters": {
+          "system_id": "system_ethanol",
+          "charge": 0,
+          "multiplicity": 1
+        },
+        "step_id": "step_5e02a1f071134a3fbcbe774c1a53f571",
+        "state": "completed",
+        "result_id": "result_009809cd5f18426aa1673fcfa2945d96",
+        "request_version": 3,
+        "plan_version": 1,
+        "control_generation": 1,
+        "created_at": "2026-10-19T09:30:06.239327Z",
+        "frozen_step": {
+          "id": "step_5e02a1f071134a3fbcbe774c1a53f571",
+          "logical_id": "logical_48f8f522e1834081927338de590de6a0",
+          "tool": "structure.prepare",
+          "parameters": {
+            "system_id": "system_ethanol",
+            "charge": 0,
+            "multiplicity": 1
+          },
+          "geometry": null,
+          "depends_on": [
+            "step_6a375e1de25a41d1925ee4859e7d76c7"
+          ],
+          "inputs": {
+            "identity": {
+              "producer_step_id": "step_6a375e1de25a41d1925ee4859e7d76c7",
+              "run_id": null,
+              "result_id": null,
+              "attempt_id": null,
+              "artifact_id": null,
+              "sha256": null,
+              "port": "resolved_identity",
+              "rule_version": null
+            }
+          },
+          "system_id": "system_ethanol"
+        },
+        "consumption": {
+          "identity": {
+            "run_id": "run_1650781da73449d785e95011d3333844",
+            "result_id": "result_24fa92d789db45be8d617fc2f0d71a70",
+            "attempt_id": null,
+            "port": "resolved_identity",
+            "artifact_hashes": {
+              "artifact_dc55810a96484557829ebc45d8dd04f3": "a7691d1bcb6767607a7aa1a3398ae1d5de1448beb9b62368261ad5e84dfec09d",
+              "artifact_41ed5984cf6e4ae9833412a0cda73797": "099834ba76b0fbae0c5f8f297111ae50098bfa173fb8dc66668cb32418908a80",
+              "artifact_cf2c6ae64c2b455eac1ed6e42757d264": "9e4a53ad21f465041e8774f38238e48beeb47e114be058b3debd1475875d20bb",
+              "artifact_b10ce021121b4df5bf6083707a7eb097": "e9a7275a6d718e2b71c11bb6922704200d1672390c8632ccc8d9c2cddb32b948",
+              "artifact_7d1d1abb95bb4476b183c31b41cfc598": "227fc74db7bdb36c0a136702ab73ab9422e8e04925e6847656120495c7137332"
+            },
+            "rule_version": "structure-identity-2",
+            "result_fingerprint": "280ed1ef27bc412e8336d7700b03997b9933f0d70dec3cc6449eb44b3c419fa8",
+            "status": "qualified",
+            "unavailable_reason": null
+          },
+          "_input_purpose": {
+            "version": "structure-input-purpose-1",
+            "request_id": "request_09526461519a4b26bf01c53b11f5d857",
+            "request_version": 3,
+            "system_id": "system_ethanol",
+            "identity": {
+              "contract": "general-identity-2",
+              "requested_names": [
+                "乙醇"
+              ],
+              "canonical_names": [],
+              "query_name": "ethanol",
+              "query_name_source": "inferred_translation_or_alias",
+              "ambiguities": [],
+              "text_evidence": {
+                "message_id": "message_6b4181296e3b4ef7b3f26a1f69a8501b",
+                "start": 1,
+                "end": 8,
+                "text_basis": "为乙醇生成结构",
+                "schema": "request-semantics-3"
+              }
+            },
+            "geometry_source": "prepare",
+            "conditions": {
+              "method": "B3LYP",
+              "basis": "6-31G*",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "_decision_id": "model_0da78ab542f54ccbb656a6e2be57c7be"
+        }
+      },
+      {
+        "id": "call_1b4b55fa72934d5d8f82d41bf8cf9ab1",
+        "tool": "workspace.write",
+        "parameters": {
+          "name": "ethanol_opt_freq.py",
+          "content": "CODE_TOOLS_DEVELOPMENT_FAULT_V1\nimport json\nimport os\nimport re\n\nfrom orca_task_sdk import run_orca\n\nXYZ_NAME = \"ethanol.xyz\"\nINPUT_NAME = \"job.inp\"\nREQUEST_KEY = \"ethanol-opt-freq-1\"\n\ndef build_input():\n    return \"\"\"! B3LYP 6-31G* Opt Freq TightSCF NORI NoAutoStart RKS\n%pal\n  nprocs 4\nend\n%maxcore 192\n%scf\n  MaxIter 256\n  ConvForced true\n  AutoTRAH false\nend\n%geom\n  MaxIter 128\n  EnforceStrictConvergence true\nend\n%method\n  Z_MaxIter 128\nend\n* xyzfile 0 1 ethanol.xyz\n\"\"\"\n\ndef read_from_files(files, predicate):\n    for original_name, path in files.items():\n        if predicate(original_name):\n            try:\n                with open(path, \"r\", encoding=\"utf-8\", errors=\"replace\") as handle:\n                    return original_name, handle.read()\n            except OSError:\n                continue\n    return None, \"\"\n\ndef parse_frequencies(text):\n    values = []\n    in_block = False\n    pattern = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+\\.\\d+)\\s+cm\\*\\*-1\")\n    for line in text.splitlines():\n        if \"VIBRATIONAL FREQUENCIES\" in line:\n            in_block = True\n            continue\n        if not in_block:\n            continue\n        if \"NORMAL MODES\" in line or \"IR SPECTRUM\" in line:\n            break\n        match = pattern.match(line)\n        if match:\n            values.append(float(match.group(2)))\n    return values\n\nwith open(INPUT_NAME, \"w\", encoding=\"utf-8\") as handle:\n    handle.write(build_input())\n\nreceipt = run_orca(INPUT_NAME, dependencies=(XYZ_NAME,), request_key=REQUEST_KEY)\nfiles = receipt.get(\"files\", {})\n\noptimized_name, optimized_text = read_from_files(\n    files, lambda name: name.endswith(\"job.xyz\")\n)\nif not optimized_text:\n    optimized_name, optimized_text = read_from_files(\n        files, lambda name: name.endswith(\".xyz\") and not name.endswith(XYZ_NAME)\n    )\n\nstdout_name, stdout_text = read_from_files(\n    files, lambda name: name.endswith(\"stdout.out\") or name.endswith(\"job.out\")\n)\nfrequencies = parse_frequencies(stdout_text)\n\nobservations = {\n    \"version\": 1,\n    \"observations\": [\n        {\n            \"name\": \"optimized_geometry\",\n            \"value\": optimized_text,\n            \"unit\": None,\n            \"sources\": [\n                {\n                    \"internal_request_key\": receipt.get(\"request_key\", REQUEST_KEY),\n                    \"filename\": optimized_name or \"job.xyz\",\n                    \"location\": \"final optimized geometry\",\n                }\n            ],\n            \"limitations\": [\n                \"B3LYP/6-31G* gas-phase optimization; not a basis-set-limit benchmark\"\n            ],\n        },\n        {\n            \"name\": \"vibrational_frequencies\",\n            \"value\": frequencies,\n            \"unit\": \"cm^-1\",\n            \"sources\": [\n                {\n                    \"internal_request_key\": receipt.get(\"request_key\", REQUEST_KEY),\n                    \"filename\": stdout_name or \"stdout.out\",\n                    \"location\": \"VIBRATIONAL FREQUENCIES block\",\n                }\n            ],\n            \"limitations\": [\n                \"harmonic frequencies from ORCA Freq; no anharmonic correction\"\n            ],\n        },\n    ],\n}\n\nwith open(\"observations.json\", \"w\", encoding=\"utf-8\") as handle:\n    json.dump(observations, handle, indent=2, allow_nan=False)\nprint(json.dumps({\"request_key\": receipt.get(\"request_key\"), \"files\": list(files.keys()), \"frequency_count\": len(frequencies)}))\n",
+          "role": "python"
+        },
+        "step_id": "step_c119f878ff6a4b4f8839f705518bf535",
+        "state": "completed",
+        "result_id": "result_47095672b35844639e423357ff043333",
+        "request_version": 3,
+        "plan_version": 1,
+        "control_generation": 1,
+        "created_at": "2026-10-19T09:30:16.017723Z",
+        "frozen_step": {
+          "id": "step_c119f878ff6a4b4f8839f705518bf535",
+          "logical_id": "logical_2822663b99f24a0b8349f458e305829f",
+          "tool": "workspace.write",
+          "parameters": {
+            "name": "ethanol_opt_freq.py",
+            "content": "CODE_TOOLS_DEVELOPMENT_FAULT_V1\nimport json\nimport os\nimport re\n\nfrom orca_task_sdk import run_orca\n\nXYZ_NAME = \"ethanol.xyz\"\nINPUT_NAME = \"job.inp\"\nREQUEST_KEY = \"ethanol-opt-freq-1\"\n\ndef build_input():\n    return \"\"\"! B3LYP 6-31G* Opt Freq TightSCF NORI NoAutoStart RKS\n%pal\n  nprocs 4\nend\n%maxcore 192\n%scf\n  MaxIter 256\n  ConvForced true\n  AutoTRAH false\nend\n%geom\n  MaxIter 128\n  EnforceStrictConvergence true\nend\n%method\n  Z_MaxIter 128\nend\n* xyzfile 0 1 ethanol.xyz\n\"\"\"\n\ndef read_from_files(files, predicate):\n    for original_name, path in files.items():\n        if predicate(original_name):\n            try:\n                with open(path, \"r\", encoding=\"utf-8\", errors=\"replace\") as handle:\n                    return original_name, handle.read()\n            except OSError:\n                continue\n    return None, \"\"\n\ndef parse_frequencies(text):\n    values = []\n    in_block = False\n    pattern = re.compile(r\"^\\s*(\\d+):\\s+(-?\\d+\\.\\d+)\\s+cm\\*\\*-1\")\n    for line in text.splitlines():\n        if \"VIBRATIONAL FREQUENCIES\" in line:\n            in_block = True\n            continue\n        if not in_block:\n            continue\n        if \"NORMAL MODES\" in line or \"IR SPECTRUM\" in line:\n            break\n        match = pattern.match(line)\n        if match:\n            values.append(float(match.group(2)))\n    return values\n\nwith open(INPUT_NAME, \"w\", encoding=\"utf-8\") as handle:\n    handle.write(build_input())\n\nreceipt = run_orca(INPUT_NAME, dependencies=(XYZ_NAME,), request_key=REQUEST_KEY)\nfiles = receipt.get(\"files\", {})\n\noptimized_name, optimized_text = read_from_files(\n    files, lambda name: name.endswith(\"job.xyz\")\n)\nif not optimized_text:\n    optimized_name, optimized_text = read_from_files(\n        files, lambda name: name.endswith(\".xyz\") and not name.endswith(XYZ_NAME)\n    )\n\nstdout_name, stdout_text = read_from_files(\n    files, lambda name: name.endswith(\"stdout.out\") or name.endswith(\"job.out\")\n)\nfrequencies = parse_frequencies(stdout_text)\n\nobservations = {\n    \"version\": 1,\n    \"observations\": [\n        {\n            \"name\": \"optimized_geometry\",\n            \"value\": optimized_text,\n            \"unit\": None,\n            \"sources\": [\n                {\n                    \"internal_request_key\": receipt.get(\"request_key\", REQUEST_KEY),\n                    \"filename\": optimized_name or \"job.xyz\",\n                    \"location\": \"final optimized geometry\",\n                }\n            ],\n            \"limitations\": [\n                \"B3LYP/6-31G* gas-phase optimization; not a basis-set-limit benchmark\"\n            ],\n        },\n        {\n            \"name\": \"vibrational_frequencies\",\n            \"value\": frequencies,\n            \"unit\": \"cm^-1\",\n            \"sources\": [\n                {\n                    \"internal_request_key\": receipt.get(\"request_key\", REQUEST_KEY),\n                    \"filename\": stdout_name or \"stdout.out\",\n                    \"location\": \"VIBRATIONAL FREQUENCIES block\",\n                }\n            ],\n            \"limitations\": [\n                \"harmonic frequencies from ORCA Freq; no anharmonic correction\"\n            ],\n        },\n    ],\n}\n\nwith open(\"observations.json\", \"w\", encoding=\"utf-8\") as handle:\n    json.dump(observations, handle, indent=2, allow_nan=False)\nprint(json.dumps({\"request_key\": receipt.get(\"request_key\"), \"files\": list(files.keys()), \"frequency_count\": len(frequencies)}))\n",
+            "role": "python"
+          },
+          "geometry": null,
+          "depends_on": [
+            "step_5e02a1f071134a3fbcbe774c1a53f571"
+          ],
+          "inputs": {},
+          "system_id": null
+        },
+        "consumption": {
+          "_decision_id": "model_a9624ba2b1e24807b51a04a57d57a164"
+        }
+      }
+    ]
+  },
+  "rejections": [
+    {
+      "model_id": "model_88bee0589c4148f78ff6a84e692a5724",
+      "source_request_sha256": "3a479514b1e5f0aa34f206382ef4c48c8569b25076d716e04ab7e27e6abfb3b9",
+      "source_response_sha256": "880b04d6cfa3401e7ab1488bcbaa25f33a5f450d3e7b52a68a02623ff5b326f3",
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "steps": [
+            {
+              "key": "step_python_first_attempt",
+              "logical_key": "logical_ethanol_opt_freq_python",
+              "tool": "python.execute",
+              "system_id": "system_ethanol",
+              "depends_on": [
+                "step_c119f878ff6a4b4f8839f705518bf535",
+                "step_5e02a1f071134a3fbcbe774c1a53f571",
+                "step_6a375e1de25a41d1925ee4859e7d76c7"
+              ],
+              "parameters": {
+                "code": {
+                  "artifact_id": "artifact_2539b24b83a6403a885efb2fd30621ba",
+                  "sha256": "90784842e7dc7b0673d308e466f3bf811ad15680b5523f722173d8e432ea90f9"
+                },
+                "inputs": {
+                  "version": 1,
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_603cbb2dcf3c41eeb9e61bd99e4906ad",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz",
+                      "purpose": "trusted prepared ethanol geometry"
+                    }
+                  ]
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              }
+            }
+          ],
+          "goal_map": {
+            "goal_ethanol_prepared_geometry": {
+              "port": "prepared_geometry",
+              "step_key": "step_5e02a1f071134a3fbcbe774c1a53f571"
+            },
+            "goal_ethanol_optimized_geometry": {
+              "gap": "pending_complete_python_analysis",
+              "port": "optimized_geometry"
+            },
+            "goal_ethanol_vibrational_frequencies": {
+              "gap": "pending_complete_python_analysis",
+              "port": "vibrational_frequencies"
+            }
+          }
+        },
+        "reason": "No Step is ready: the plan has prepared the geometry and written the complete Python program containing the mandated marker, but no Python execution Step exists. Add the first Python attempt using the existing code artifact and prepared XYZ manifest so the required real NameError feedback is obtained before the repair revision."
+      },
+      "preceding_validation_error": null,
+      "preceding_rejected_projection": null
+    },
+    {
+      "model_id": "model_953dbcf36ac7471bb098c3f46ed8d87e",
+      "source_request_sha256": "27af1286dfc6ee07f7535e145f16d87126a199ea746a33c9424cbbbbfe0fe68f",
+      "source_response_sha256": "531ef762d8306c04fb70677bf4ac59c9ed056a12a1fd258ca3f07900fa563bd2",
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "steps": [
+            {
+              "key": "step_6a375e1de25a41d1925ee4859e7d76c7",
+              "tool": "structure.resolve",
+              "parameters": {
+                "system_id": "system_ethanol"
+              }
+            },
+            {
+              "key": "step_5e02a1f071134a3fbcbe774c1a53f571",
+              "depends_on": [
+                "step_6a375e1de25a41d1925ee4859e7d76c7"
+              ]
+            },
+            {
+              "key": "step_c119f878ff6a4b4f8839f705518bf535",
+              "depends_on": [
+                "step_5e02a1f071134a3fbcbe774c1a53f571"
+              ],
+              "tool": "workspace.write"
+            },
+            {
+              "key": "step_python_first_attempt",
+              "logical_key": "logical_ethanol_opt_freq_python",
+              "depends_on": [
+                "step_c119f878ff6a4b4f8839f705518bf535",
+                "step_5e02a1f071134a3fbcbe774c1a53f571",
+                "step_6a375e1de25a41d1925ee4859e7d76c7"
+              ],
+              "system_id": "system_ethanol",
+              "tool": "python.execute",
+              "parameters": {
+                "code": {
+                  "artifact_id": "artifact_2539b24b83a6403a885efb2fd30621ba",
+                  "sha256": "90784842e7dc7b0673d308e466f3bf811ad15680b5523f722173d8e432ea90f9"
+                },
+                "inputs": {
+                  "version": 1,
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_603cbb2dcf3c41eeb9e61bd99e4906ad",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz",
+                      "purpose": "trusted prepared ethanol geometry"
+                    }
+                  ]
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              }
+            }
+          ],
+          "goal_map": {
+            "goal_ethanol_prepared_geometry": {
+              "port": "prepared_geometry",
+              "step_key": "step_5e02a1f071134a3fbcbe774c1a53f571"
+            },
+            "goal_ethanol_optimized_geometry": {
+              "port": "optimized_geometry",
+              "gap": "pending_complete_python_analysis"
+            },
+            "goal_ethanol_vibrational_frequencies": {
+              "port": "vibrational_frequencies",
+              "gap": "pending_complete_python_analysis"
+            }
+          }
+        },
+        "reason": "Correction of the rejected proposal: the validation KeyError arose because goal_map.step_key referenced an existing Step that was not retained in the revised steps list. This revision includes the completed dependency chain by key (without id/logical_id/immutable_frozen) and adds the first full python.execute Step using the already-written code artifact and prepared XYZ artifact. No Step is ready otherwise, and no placeholders are introduced."
+      },
+      "preceding_validation_error": {
+        "category": "KeyError",
+        "requirement": "KeyError"
+      },
+      "preceding_rejected_projection": {
+        "bytes": 1480,
+        "complete": true,
+        "omitted": false,
+        "redacted": false,
+        "sha256": "e6a4a0edeb8824c3714ec6befd7204fcc0b171c58b80e342ca396a7d7b7cfce2"
+      }
+    },
+    {
+      "model_id": "model_990950d032c8430092a7afed26066dcc",
+      "source_request_sha256": "e5d2dd431bdf571505c692e4ec99f2d32bdba943a0c534feab11013078435330",
+      "source_response_sha256": "b8f558f36d3cae5753d9d08aeba376b44bfdf0772436e023daab257c10713fc6",
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "steps": [
+            {
+              "key": "step_6a375e1de25a41d1925ee4859e7d76c7",
+              "parameters": {
+                "system_id": "system_ethanol"
+              },
+              "tool": "structure.resolve"
+            },
+            {
+              "key": "step_5e02a1f071134a3fbcbe774c1a53f571",
+              "depends_on": [
+                "step_6a375e1de25a41d1925ee4859e7d76c7"
+              ]
+            },
+            {
+              "key": "step_c119f878ff6a4b4f8839f705518bf535",
+              "depends_on": [
+                "step_5e02a1f071134a3fbcbe774c1a53f571"
+              ]
+            },
+            {
+              "key": "step_python_first_attempt",
+              "logical_key": "logical_ethanol_opt_freq_python",
+              "tool": "python.execute",
+              "system_id": "system_ethanol",
+              "depends_on": [
+                "step_c119f878ff6a4b4f8839f705518bf535",
+                "step_5e02a1f071134a3fbcbe774c1a53f571",
+                "step_6a375e1de25a41d1925ee4859e7d76c7"
+              ],
+              "parameters": {
+                "code": {
+                  "artifact_id": "artifact_2539b24b83a6403a885efb2fd30621ba",
+                  "sha256": "90784842e7dc7b0673d308e466f3bf811ad15680b5523f722173d8e432ea90f9"
+                },
+                "inputs": {
+                  "version": 1,
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_603cbb2dcf3c41eeb9e61bd99e4906ad",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz",
+                      "purpose": "trusted prepared ethanol geometry"
+                    }
+                  ]
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              }
+            }
+          ],
+          "goal_map": {
+            "goal_ethanol_prepared_geometry": {
+              "port": "prepared_geometry",
+              "step_key": "step_5e02a1f071134a3fbcbe774c1a53f571"
+            },
+            "goal_ethanol_optimized_geometry": {
+              "gap": "pending_complete_python_analysis",
+              "port": "optimized_geometry"
+            },
+            "goal_ethanol_vibrational_frequencies": {
+              "gap": "pending_complete_python_analysis",
+              "port": "vibrational_frequencies"
+            }
+          }
+        },
+        "reason": "Corrected rejected revision: retained completed dependency Steps are referenced by their existing keys without adding changed tool metadata to the already-completed workspace.write Step. Kept the existing prepared-geometry goal binding and added the first full python.execute Step using the already-written code artifact and prepared XYZ artifact, with observation names for both remaining Goals. No Step is otherwise ready; this is a plan revision, not execution."
+      },
+      "preceding_validation_error": {
+        "category": "ValueError",
+        "requirement": "retained Step must reference its existing key without changes"
+      },
+      "preceding_rejected_projection": {
+        "bytes": 1947,
+        "complete": true,
+        "omitted": false,
+        "redacted": false,
+        "sha256": "3f223242d9862b89a48f509b36ff29e7e2506d64e2ec8f34a6bfe91952a21261"
+      }
+    }
+  ],
+  "source_run_sha256": "900800122562cf5aa466dd46b00172e666600e1a2aa5693b5e9df431a8ebb62f",
+  "original_run_files": 93,
+  "source_decision_hashes": {
+    "decisions/model_2f8b190716bf4796bd7d43cae1469da4.json": "dbf2f6ec2a1854b06b44d21f610ccc4bace6d5a7c872660a849f4371ceaf0782",
+    "decisions/model_a8439c2df16c40169b00f285ac190353.json": "b4b571b1b9b89fc05a4b468d762433ad01d4e876dfca789c894e9794f1ff4871",
+    "decisions/model_ecbf70a3cd684e2a9e0d70a6f160ffda.json": "7e196cce4dd4c40ac9d20d0ee142585b4550a53aa9a62029c5fe65260fe88462"
+  }
+}

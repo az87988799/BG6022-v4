@@ -1,0 +1,223 @@
+{
+  "feedback_scope_closure": {
+    "actual_pre_v57_proposal_rejection_exactly_matches": true,
+    "historical_run": {
+      "path": "data/code-tools-step3/live-store/runs/run_3dc3f7fe404c40038c8c6a95f0ce124c/run.json",
+      "bytes": 257729,
+      "sha256": "6d60bd5d735a35262bfb91dbe1621f4bf8d07da6934a06e5b328cb9fcd78fade"
+    },
+    "historical_response": {
+      "path": "data/code-tools-step3/live-store/runs/run_3dc3f7fe404c40038c8c6a95f0ce124c/model/model_586944c0a23d43389d00a2f5812dbdd6.response.json",
+      "bytes": 8550,
+      "sha256": "93f1b5fcb8774bec847b232bbd0e26d1055fe63d65d774cb78d576ebae50a685"
+    },
+    "historical_decision_id": "model_586944c0a23d43389d00a2f5812dbdd6",
+    "existing_generic_fields_and_instruction_unchanged": true,
+    "new_repair_fields_or_instructions_visible": false,
+    "current_malformed_id_detail_utf8_bytes": 708,
+    "current_malformed_id_detail": {
+      "requirement": "Use the declared parameter schema at each listed path.",
+      "errors": [
+        {
+          "type": "missing",
+          "loc": [
+            "parameters",
+            "steps",
+            0,
+            "key"
+          ]
+        },
+        {
+          "type": "extra_forbidden",
+          "loc": [
+            "parameters",
+            "steps",
+            0,
+            "id"
+          ]
+        }
+      ],
+      "step_fields": [
+        "key",
+        "logical_key",
+        "tool",
+        "parameters",
+        "system_id",
+        "geometry",
+        "depends_on",
+        "inputs"
+      ],
+      "step_instruction": "Proposed Steps require key, not the stored Step.id field. Retain an existing Step with {key:existing_step_id}; the program reuses its frozen contents. Do not copy stored id/logical_id/immutable_frozen metadata into a proposal. A new Step uses key/tool/parameters and its declared dependencies; a repair uses logical_key for the prior logical_id, subject to the existing repair rules."
+    },
+    "preserved_original_finding": {
+      "path": "data/code-tools-step3/repair-reference-v57/feedback-scope-observation-001.json",
+      "bytes": 2199,
+      "sha256": "0ea43d7e78a7014a966bc15e839964f9f949101a11631eac2ef96892a4f4cd45"
+    },
+    "preserved_baseline_error": {
+      "path": "data/code-tools-step3/repair-reference-v57/independent-reference-review-baseline-error-001.json",
+      "bytes": 1489,
+      "sha256": "bd6d4f7e315c385ea78cf565e4e00406d556799b6d941606cc2bf19ed6c6977f"
+    }
+  },
+  "run_before_manifest_sha256": "ff47a569571262e37ad9db312b6c149239498df29eff7b78346e90a6f5b4b3dd",
+  "run_after_manifest_sha256": "ff47a569571262e37ad9db312b6c149239498df29eff7b78346e90a6f5b4b3dd",
+  "scope": "Independent finite pure-memory/read-only review of v57 repair reference against preserved live037; no Plan activation/reservation/execution.",
+  "started_at_utc": "2026-10-19T12:53:21.885493+00:00",
+  "finished_at_utc": "2026-10-19T12:53:25.655628+00:00",
+  "source_before_sha256": "b082a8a7e043ed6ce63b0e84d11469ad5bc97f763c4b192820f8b9d42eeb2df5",
+  "source_after_sha256": "b082a8a7e043ed6ce63b0e84d11469ad5bc97f763c4b192820f8b9d42eeb2df5",
+  "schema": {
+    "baseline_origin": "HEAD pre-v57 ProposedPlan type; relevant four Step/Goal class ASTs equal current definitions",
+    "baseline_source_sha256": "889f21d69cf1657cbcf8ecb82c0f8c72aa6e2754bb0a79fc94d84477872576c9",
+    "unchanged_classes": [
+      "ProposedStep",
+      "FutureGoalTarget",
+      "EvidenceGoalTarget",
+      "GapGoalTarget"
+    ],
+    "legacy_schema_exactly_equal": true,
+    "legacy_native_wire_exactly_equal": true,
+    "legacy_native_bytes": 2173,
+    "added_legacy_native_bytes": 0,
+    "capture_during_v57_edit_not_used": true
+  },
+  "positive": {
+    "new_step_id": true,
+    "same_logical_id": true,
+    "only_id_and_CodeRef_changed": true,
+    "dependency_count_unchanged": true,
+    "no_inserted_steps": true,
+    "existing_failure_evidence_gate_passed": true,
+    "existing_planning_gate_passed": true,
+    "existing_Artifact_permission_hash_gates_passed": true
+  },
+  "negative_cases": [
+    {
+      "case": "no_code_permission",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "Task code repair requires code execution permission."
+    },
+    {
+      "case": "invalid_failure_state_running",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "repair_of must identify this Run's latest settled failed or timed-out Python Attempt's frozen Step, with its recorded Result. Unknown, unfinished, successful or superseded references cannot repair."
+    },
+    {
+      "case": "invalid_failure_state_unknown",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "repair_of must identify this Run's latest settled failed or timed-out Python Attempt's frozen Step, with its recorded Result. Unknown, unfinished, successful or superseded references cannot repair."
+    },
+    {
+      "case": "invalid_failure_state_completed",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "repair_of must identify this Run's latest settled failed or timed-out Python Attempt's frozen Step, with its recorded Result. Unknown, unfinished, successful or superseded references cannot repair."
+    },
+    {
+      "case": "invalid_failure_state_not_started",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "repair_of must identify this Run's latest settled failed or timed-out Python Attempt's frozen Step, with its recorded Result. Unknown, unfinished, successful or superseded references cannot repair."
+    },
+    {
+      "case": "unfinished_attempt",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "repair_of must identify this Run's latest settled failed or timed-out Python Attempt's frozen Step, with its recorded Result. Unknown, unfinished, successful or superseded references cannot repair."
+    },
+    {
+      "case": "missing_result",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "repair_of must identify this Run's latest settled failed or timed-out Python Attempt's frozen Step, with its recorded Result. Unknown, unfinished, successful or superseded references cannot repair."
+    },
+    {
+      "case": "different_existing_Result",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "The repair Result must belong to this exact failed Python Attempt and Step."
+    },
+    {
+      "case": "wrong_frozen_step_binding",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "repair_of must identify this Run's latest settled failed or timed-out Python Attempt's frozen Step, with its recorded Result. Unknown, unfinished, successful or superseded references cannot repair."
+    },
+    {
+      "case": "superseded_failure",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "repair_of must identify this Run's latest settled failed or timed-out Python Attempt's frozen Step, with its recorded Result. Unknown, unfinished, successful or superseded references cannot repair."
+    },
+    {
+      "case": "historical_key_reused",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "A code repair needs a new Step key, not a historical Step ID."
+    },
+    {
+      "case": "mixed_override_fields",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "Use the declared parameter schema at each listed path."
+    },
+    {
+      "case": "dependency_not_explicitly_retained",
+      "rejected": true,
+      "type": "ProposalError",
+      "message": "Every referenced Step must be included in this proposed Plan. Reuse frozen Steps with only {key:existing_step_id}; include their dependency closure too. Their original dependencies stay with the retained Steps, but the program does not insert missing Steps. Declare a new Step with its Tool and parameters instead of referring to an unknown key."
+    },
+    {
+      "case": "same_hash_original_planning_gate",
+      "rejected": true,
+      "type": "PlanningError",
+      "message": "unchanged code is not a Python repair"
+    },
+    {
+      "case": "exhausted_retry_original_planning_gate",
+      "rejected": true,
+      "type": "PlanningError",
+      "message": "proposed Plan exceeds the remaining additional code attempt budget"
+    },
+    {
+      "case": "tool_permission_original_planning_gate",
+      "rejected": true,
+      "type": "PlanningError",
+      "message": "tool is outside the permission snapshot"
+    },
+    {
+      "case": "wrong_pinned_hash_original_consume_gate",
+      "rejected": true,
+      "type": "PlanningError",
+      "message": "task input hash differs from pinned Artifact"
+    },
+    {
+      "case": "unregistered_Artifact_original_consume_gate",
+      "rejected": true,
+      "type": "PlanningError",
+      "message": "task input is outside the permission snapshot"
+    }
+  ],
+  "unrejected_negative_cases": [],
+  "original_run_files": 131,
+  "all_original_run_files_unchanged": true,
+  "real_model_calls": 0,
+  "real_ORCA_starts": 0,
+  "Plan_commits_or_Attempt_reservations": 0,
+  "boundary": "The readonly probe tests candidate construction and the existing preflight functions; it does not bypass Store activation checks or establish real repair success. Full non-code body capacity is separately checked by root.",
+  "full_audit": {
+    "path": "data/code-tools-step3/repair-reference-v57/independent-reference-review-002.json",
+    "bytes": 9501,
+    "sha256": "38ba8c7b70930d75487cac3126f4a7d42bb392ccb676350a378a59bc1fb28976"
+  },
+  "schema_version": 1,
+  "limitations": [
+    "Read-only candidate construction and preflight checks do not establish live repair success.",
+    "The initial whole-validator comparison against Git HEAD used an older baseline; the failure is preserved and corrected with an actual pre-v57 historical rejection.",
+    "No additional full regression was run at the user instruction."
+  ]
+}

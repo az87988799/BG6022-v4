@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "scope": "Independent posthoc explicit fault-seeded live029 execution/cost/source audit. Compile-only inspection; no model, task or ORCA invoked.",
+  "audited_at_utc": "2026-10-19T10:23:32.788261+00:00",
+  "finished_at_utc": "2026-10-19T10:23:32.942878+00:00",
+  "run_id": "run_dc6938abfe474b3880bc0cb3f6d5f98f",
+  "state": "failed",
+  "delivery_status": "partial",
+  "goal_status": {
+    "goal_prepared_geometry": "satisfied",
+    "goal_optimized_geometry": "insufficient_evidence",
+    "goal_vibrational_frequencies": "insufficient_evidence"
+  },
+  "model_usage": {
+    "http_calls": 12,
+    "input_tokens": 151429,
+    "output_tokens": 24032,
+    "total_tokens": 175461,
+    "estimated_usd": "0.0742671",
+    "unknown_tokens": 0,
+    "cost_basis": "Frozen uncached USD0.30 input / USD1.20 output per million; estimate, not invoice."
+  },
+  "actual_usage": {
+    "internal_work_units": 0,
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 0.0,
+    "cpu_seconds": 0.0,
+    "resource_usage_complete": true,
+    "logical_attempts": {},
+    "fingerprint_attempts": {},
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 12,
+    "model_tokens_used": 175461,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 2,
+    "decision_rounds": 12,
+    "evidence_reads": 2,
+    "analysis_executions": 1,
+    "logical_steps": [
+      "logical_1df8aeadef16401d85e2875ef8b8f652",
+      "logical_300a671384cb4505b3e7494a1206011c",
+      "logical_83af6a7824d2420aa97d0e8a182db4bc",
+      "logical_d3c19c589bd9460fbc0cd3dcdfb12b63"
+    ],
+    "identity_queries": 1,
+    "structure_preparations": 1,
+    "knowledge_queries": 4
+  },
+  "source_freeze": {
+    "start": {
+      "scope": "Independent live029 source/driver check while running; no completion assertion.",
+      "checked_at_utc": "2026-10-19T10:16:38.498660+00:00",
+      "frozen_at": "2026-10-19T10:16:13.348385+00:00",
+      "outcome_exists_at_check": false,
+      "freeze": {
+        "path": "data/code-tools-step3/live-029/freeze.json",
+        "bytes": 12563,
+        "sha256": "fd0cf84131607775765d6acc5dc3eafbd4a9485ff918c7bd408cf6aa2a81d2ca"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true
+    },
+    "end": {
+      "scope": "Independent completed live029 source/driver check; no Run mutation.",
+      "checked_at_utc": "2026-10-19T10:19:30.203499+00:00",
+      "frozen_at": "2026-10-19T10:16:13.348385+00:00",
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_source_changed": []
+    },
+    "outcome_changes": []
+  },
+  "development_prompt": {
+    "text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。\n\n以下是独立的受控代码故障开发验收，不是自然任务首次自主成功的证据。\nDEVELOPMENT_FAULT_SEEDED: CODE_TOOLS_DEVELOPMENT_FAULT_V1\n本次仍由你自行检索、选择条件、制定 Plan，并编写完整 Python 程序与 ORCA 输入，不使用开发者提供的解题脚本。\n首次执行 Python 前，先完成所需条件选择、初始结构和全部任务文件的生成。第一版 Python 必须已经是完成上述科学目标的完整程序，包含实际 SDK 计算、输出读取和观察交付；禁止先执行仅用于报错的占位脚本、空任务或故障探针。第一次执行的 Step 就必须具备实际任务所需的完整输入 manifest、体系、条件、观察名、目标绑定与依赖，不能把这些留到第二次补充。所有 Artifact 与 hash 必须来自实际已完成的工具输出。\n在这份完整程序的任何导入、文件操作、SDK 调用或其他工作之前，写一行单独的未定义名称表达式 CODE_TOOLS_DEVELOPMENT_FAULT_V1。模块文档字符串和合法的 __future__ 导入可以在前。不要定义该名称，不要捕获这一行的 NameError。这一行是唯一人为要求的故障；其余程序从第一版开始就应完整。\n实际执行并读取真实失败反馈后，在同一个 Run 内由你自己通过 workspace.write 生成修订代码：仅删除上述独立 marker 行，其他代码字节保持不变。先完成新代码的写入，再提交修复 Step：使用新的 Step key 与原失败 Step 的同一个 logical_key，除 CodeRef 外保留原有输入、条件、目的、依赖和观察名。不要把新 writer 加为修复 Step 的依赖，不要重跑旧代码或再次注入 marker。第一次在 marker 处失败时尚未调用 SDK，因此已有计算请求键无须更改。若发现其他问题不能在这些约束下完成，保留事实并停止，不放宽测试或科学目标。\n继续使用同一累计预算和现有生产校验完成真实计算与带来源的结果交付。开发驱动只核验前置条件、驱动与采证，不会替你改写 Plan、脚本、ORCA 输入或模型回复。交付时区分本次人为要求的 NameError 与自然发生的错误，披露首次失败、实际修复、资源成本和科学验证缺项。",
+    "text_utf8_sha256": "c8d881c5bbf78a070d1f31567846866452849b992ec13a52cd4bfd1892fa0ce8",
+    "version": "repair-request-v2"
+  },
+  "seeded_gate": {
+    "version": 1,
+    "scope": "development_fault_seeded",
+    "run_id": "run_dc6938abfe474b3880bc0cb3f6d5f98f",
+    "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1",
+    "point": "before_science_reservation",
+    "status": "not_established",
+    "checked_at": "2026-10-19T10:19:01.077297+00:00",
+    "mutated_task_content": false,
+    "reason": "from __future__ imports must occur at the beginning of the file (model-generated-task.py, line 3)"
+  },
+  "candidate_written_not_executed": {
+    "file": {
+      "path": "data/code-tools-step3/live-store/artifacts/artifact_a9bebbdf0e84480da1a84a47477cb6b0/files/ethanol_optfreq.py",
+      "bytes": 4254,
+      "sha256": "807e128312d5b0e8dcb63f567e1507dd6beae55e04282349b30deb6a07756af3"
+    },
+    "artifact_id": "artifact_a9bebbdf0e84480da1a84a47477cb6b0",
+    "source_call_id": "call_6101503f7061413e9e5d216b87e21ede",
+    "source_result_id": "result_07e55b29530b48c5bbe031bac9f9971b",
+    "source_model_id": "model_9226f20a267e469384b46928c3577ded",
+    "model_content_equals_writer_artifact": true,
+    "marker_line": 1,
+    "future_import_line": 3,
+    "compile_only_error": {
+      "category": "SyntaxError",
+      "message": "from __future__ imports must occur at the beginning of the file",
+      "line": 3,
+      "filename": "model-generated-task.py"
+    },
+    "static_program_components": [
+      "embedded native OptFreq input",
+      "SDK run_orca",
+      "final XYZ and complete signed frequency parse",
+      "explicit angstrom/cm^-1 observation units and limitations"
+    ],
+    "component_presence_establishes_executable_program": false,
+    "planned_step_not_frozen_attempt_contract": {
+      "id": "step_a8c9a59081c741c0af9637947e60d8b1",
+      "logical_id": "logical_1df8aeadef16401d85e2875ef8b8f652",
+      "tool": "python.execute",
+      "parameters": {
+        "code": {
+          "artifact_id": "artifact_a9bebbdf0e84480da1a84a47477cb6b0",
+          "sha256": "807e128312d5b0e8dcb63f567e1507dd6beae55e04282349b30deb6a07756af3",
+          "language": "python",
+          "version": 1
+        },
+        "inputs": {
+          "version": 1,
+          "entries": [
+            {
+              "artifact_id": "artifact_d4595ff4489d4a00b9498cdf89cdb336",
+              "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+              "target_path": "geometry.xyz",
+              "purpose": "prepared ethanol initial geometry consumed by the ORCA Opt Freq input"
+            }
+          ]
+        },
+        "observation_names": [
+          "optimized_geometry",
+          "vibrational_frequencies"
+        ],
+        "conditions": {}
+      },
+      "geometry": null,
+      "depends_on": [
+        "step_0a2ceb8f5ae44f26a699d346ac71744c",
+        "step_db0dfdeb74824deba751b6ec5b2d6e71"
+      ],
+      "inputs": {
+        "geometry": {
+          "producer_step_id": "step_0a2ceb8f5ae44f26a699d346ac71744c",
+          "run_id": null,
+          "result_id": null,
+          "attempt_id": null,
+          "artifact_id": null,
+          "sha256": null,
+          "port": "prepared_geometry",
+          "rule_version": null
+        }
+      },
+      "system_id": null
+    }
+  },
+  "failure": {
+    "stage": "Development fault-seed compile preflight before science reservation",
+    "diagnostics": [
+      {
+        "category": "RuntimeError",
+        "message": "seeded-code-error not_established: from __future__ imports must occur at the beginning of the file (model-generated-task.py, line 3)",
+        "environment_occupied": false
+      }
+    ],
+    "actual_python_attempts": 0,
+    "actual_orca_starts": 0,
+    "actual_nameerror": false,
+    "actual_code_repair": false,
+    "seeded_test_established": false
+  },
+  "findings": [
+    "The model wrote a 4254-byte candidate containing its own scientific algorithm, native input, SDK call and observations. Its marker is line 1 and its future import is line 3.",
+    "Compile-only inspection independently reproduces the exact SyntaxError recorded by the development gate. A future import cannot follow an executable marker expression.",
+    "The explicit seeded protocol failed before any Python Attempt or ORCA reservation. No actual NameError or repair was established; this cannot count as a successful repair trial.",
+    "All 12 model responses ended with stop and no response error category; this failure was not an output truncation.",
+    "Both independently observed source checks and the driver outcome show the 62 frozen production source files and driver unchanged. Original Run evidence remained byte-identical."
+  ],
+  "unverified": [
+    "Execution correctness of the candidate and its scientific outputs.",
+    "Actual marker NameError and same-logical-purpose code repair."
+  ],
+  "report_status": "failed prelaunch seeded development trial; no Step3 repair acceptance",
+  "evidence": {
+    "run": {
+      "path": "data/code-tools-step3/live-store/runs/run_dc6938abfe474b3880bc0cb3f6d5f98f/run.json",
+      "bytes": 100428,
+      "sha256": "e4ff0a82b05deaa53e8410dcbbfab91baaa727daa4613da09954866f9aa6fb6a"
+    },
+    "outcome": {
+      "path": "data/code-tools-step3/live-029/outcome.json",
+      "bytes": 1795,
+      "sha256": "435a1c525bb19cd8e75d9839ef2413a8bd8ce3d4828ce50ccf189dd2d4cdd2fa"
+    },
+    "freeze": {
+      "path": "data/code-tools-step3/live-029/freeze.json",
+      "bytes": 12563,
+      "sha256": "fd0cf84131607775765d6acc5dc3eafbd4a9485ff918c7bd408cf6aa2a81d2ca"
+    },
+    "freeze_start": {
+      "path": "data/code-tools-step3/live-029-freeze-start-audit.json",
+      "bytes": 604,
+      "sha256": "5047345bfb72920e523d69c12501a48e40ec4cc4b97dfa5333985e7bf5a7aaa8"
+    },
+    "freeze_end": {
+      "path": "data/code-tools-step3/live-029-freeze-end-audit.json",
+      "bytes": 405,
+      "sha256": "173c58c527dd943135bbfbdf61f18711faeb9dc84421836a979b2769546dd423"
+    },
+    "seeded_prelaunch": {
+      "path": "data/code-tools-step3/live-029/seeded-code-error-prelaunch.json",
+      "bytes": 427,
+      "sha256": "2e6e7e6b16c4a53af9bd8e0ba43405d9a2d87d17045fa699b274b62b89200ce8"
+    },
+    "independent_code_audit": {
+      "path": "data/code-tools-step3/validation/live029-code-prelaunch-audit.json",
+      "bytes": 15207,
+      "sha256": "331ed7a787d7298798f5e477e71b670f91527ee291d25b5a68ebba453f59c2bc"
+    }
+  },
+  "original_run_read_only_check": {
+    "file_count": 87,
+    "before_manifest_sha256": "1cd2717e118308de21bc79c2e3ee924a8242ac511c353959765f7793d7eb3922",
+    "after_manifest_sha256": "1cd2717e118308de21bc79c2e3ee924a8242ac511c353959765f7793d7eb3922",
+    "changed": [],
+    "reference_paths_rehashed": 72,
+    "all_references_match": true
+  },
+  "archived_file_hash_check_count": 12,
+  "full_audit": {
+    "path": "data/code-tools-step3/live-029-audit.json",
+    "bytes": 93233,
+    "sha256": "5669911fbfbc2ce92ff0a302b5f739040c18eb963fb70d54e8fe38b80df0a349"
+  }
+}

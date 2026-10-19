@@ -106,8 +106,18 @@ def assert_native_schemas_equivalent(schemas, original_schemas):
                          "goal_map": {"energy": {"gap": "No evidence.", "port": "energy"}}}],
     }
     for action, actual_schema in schemas.items():
+        if action not in examples:
+            # Immediate Tool schemas now remain literal, including annotations
+            # and limits outside this small independent Plan-schema matcher.
+            assert actual_schema == original_schemas[action]
+            continue
         original_schema = without_defaults(original_schemas[action])
         valid = examples[action]
+        if action == "call_tool":
+            fields = original_schema["properties"]
+            valid = [{"step_id": fields["step_id"].get("enum", ["pending"])[0]}]
+            if "tool" in fields:
+                valid.append({"tool": fields["tool"].get("enum", ["evidence.value"])[0], "parameters": {}})
         invalid = [{}, None, [], 0, ""]
         for example in valid:
             assert matches(original_schema, example, original_schema)
@@ -130,7 +140,8 @@ def assert_native_schemas_equivalent(schemas, original_schemas):
             invalid += [{"questions": [], "unresolved": ["basis"]},
                         {"questions": ["Which basis?"] * 6, "unresolved": ["basis"]}]
         for value in [*valid, *invalid]:
-            assert matches(actual_schema, value, actual_schema) == matches(original_schema, value, original_schema)
+            actual = without_defaults(actual_schema)
+            assert matches(actual, value, actual) == matches(original_schema, value, original_schema)
 
 
 def decoded(prepared):
@@ -462,20 +473,21 @@ def test_key_encoding_preserves_native_authority_and_literal_marker_shaped_data(
     assert encoded["AUTHORITY"] == authority
 
 
-def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decoder(tmp_path, monkeypatch):
+@pytest.mark.parametrize("input_tokens", [12000, 64000])
+def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decoder(tmp_path, monkeypatch, input_tokens):
     from orca_agent import config as configuration
     from orca_agent.store import Store
     from tests.unit.test_structure_input_chain import (
         test_text_to_model_plan_to_prepared_input_uses_the_single_feedback_loop,
     )
 
-    # This regression tests its original 12k envelope, independently of the
-    # opt-in example profile's current capacity. It must not silently widen.
+    # Non-code profiles retain their historical 12k display and validation
+    # boundary; the larger profile must preserve the same provenance too.
     load = configuration.load_config
     def frozen_capacity(*args, **kwargs):
         config = load(*args, **kwargs)
-        config.text.budget.input_tokens = 12000
-        return config
+        config.text.budget.input_tokens = input_tokens
+        return config.model_copy(update={"model": config.model.model_copy(update={"input_tokens": input_tokens})})
     monkeypatch.setattr(configuration, "load_config", frozen_capacity)
     requests = []
     prepare = context.prepare_request
@@ -503,7 +515,8 @@ def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decod
     def capture_final_schemas(value, **kwargs):
         if ("ACTION_SCHEMAS" in value
                 and value.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.*")):
-            final_native_schemas.append({name: copy.deepcopy(encoded_sources[json.dumps(schema, sort_keys=True)])
+            final_native_schemas.append({name: copy.deepcopy(schema if isinstance(schema, dict) and schema.get("type") == "object"
+                else encoded_sources[json.dumps(schema, sort_keys=True)])
                 for name, schema in value["ACTION_SCHEMAS"].items()})
             grouped_native_provenance.append(isinstance(value["AUTHORITY"]["request"].get("condition_evidence"), list))
         return share_strings(value, **kwargs)
@@ -534,15 +547,24 @@ def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decod
     assert len(sent) == 4
     grouped = []
     for prepared in sent:
-        assert prepared.input_token_bound <= 12000
+        assert prepared.input_token_bound <= input_tokens
         wire = decoded(prepared)  # Only documented wire; no Store in decoder.
-        if not wire["AUTHORITY"].get("request", {}).get("condition_evidence"):
+        request_view = wire["AUTHORITY"].get("request", {})
+        if not (request_view.get("condition_evidence") or request_view.get("condition_evidence_ref")):
             continue
         current = store.load_request_revision(run, wire["AUTHORITY"]["basis"]["request_version"])
-        assert wire["AUTHORITY"]["request"]["condition_evidence"] == current.condition_evidence
+        if "condition_evidence" in request_view:
+            assert request_view["condition_evidence"] == current.condition_evidence
+        else:
+            assert request_view["condition_evidence_ref"] == {
+                "source": "immutable Request.condition_evidence", "sha256": context._hash(current.condition_evidence)}
         assert wire["AUTHORITY"]["request"]["conditions_source"] == current.conditions_source
-        assert [goal.get("text_evidence", {}) for goal in wire["AUTHORITY"]["request"]["goals"]] == [
-            goal.text_evidence for goal in current.goals]
+        goal_evidence = [copy.deepcopy(goal.get("text_evidence", {})) for goal in request_view["goals"]]
+        for evidence in goal_evidence:
+            if "text_basis_ref" in evidence:
+                assert evidence.pop("text_basis_ref") == "AUTHORITY.user_originals[0].text"
+                evidence["text_basis"] = wire["AUTHORITY"]["user_originals"][0]["text"]
+        assert goal_evidence == [goal.text_evidence for goal in current.goals]
         record = next(item for item in run.model_records if item["request_hash"] == prepared.request_hash)
         full = json.loads(store.path(f"runs/{run.id}/model/{record['id']}.delivery.json").read_bytes())
         original_conditions = {fact["ref"]: fact["value"] for fact in full["facts"] if fact["kind"] == "conditions"}

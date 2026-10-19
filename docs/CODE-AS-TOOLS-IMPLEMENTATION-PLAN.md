@@ -4,11 +4,7 @@
 >
 > 代码基线：`14a7bf92a7b24f901e46b86714fd50da8bbe349e`
 >
-> 状态：步骤 1 已于 2026-10-18 由用户验收通过；步骤 2 已完成 Windows 串行底座及本地 Linux 四核容器续验，实际边界和 SDK 链路有真实证据，等待用户验收；用户随后授权修复前置问题并进入步骤 3。步骤 3 已实施初版，但真实模型端到端交付及代码错误修正尚未通过，不能记为完成；步骤 4—7 未实施。详见 [步骤 1 交付记录](acceptance/code-as-tools-step1/report.md) 、[步骤 2 Windows 交付记录](acceptance/code-as-tools-step2/report.md) 、[Linux 续验记录](acceptance/code-as-tools-step2-linux/report.md) 与 [步骤 3 当前证据](acceptance/code-as-tools-step3/report.md)。
->
-> 文档关系：本文是专项实施计划；[总蓝图](ORCA-Agent-Project-Blueprint.md)仍为唯一总版本。第 1 步同步相关契约后，再推进运行时代码。
->
-> 执行方式：后续按用户指定步骤实施；本文不代表一次性启动全部开发、真实模型调用或 ORCA 计算。
+> 状态：步骤 1 已于 2026-10-18 由用户验收通过；步骤 2 Windows 串行与 Linux 四核容器底座已交付，后续用户授权修复前置问题并进入步骤 3。2026-10-19 用户最新明确“就先这样完成步骤三收尾”，停止 NameError 专项，不进入步骤 4。本轮步骤 3 收尾待验收：v55 / Pro-v5 的 live035 正常路径 completed/complete，独立科学与完整交付通过；受控修复后的完整交付仍未通过，但不再阻塞本轮交付。live040 实际 ORCA 原始科学通过，产物收集超时导致 Python 失败/无观察，随后用户暂停，最终 paused/partial；收集超时仍未修复。累计 40/50 个预约、剩余 10 不再自行消费，未知用量与费用保留；[Flash 配置](acceptance/code-as-tools-step3/validation/model-flash-v6-configuration.json)已通过禁网本地验证，未做付费复验。首轮全量 4231 通过、23 失败、179 跳过保留，后续全量按用户要求取消，仅报告实际定向结果，不宣称全量通过或用户验收通过。步骤 4—7 未实施。详见[步骤 3 报告](acceptance/code-as-tools-step3/report.md)与[001—040 累计审计](acceptance/code-as-tools-step3/validation/cumulative-budget-live001-040.json)。
 
 ## 1. 目标与范围
 
@@ -160,14 +156,18 @@ Python 可现场实现搜索、循环、筛选、拟合、解析和绘图。项�
 - [x] 扩展版本化文档索引，提供输入编写、方法选择、输出诊断三类简短指导；不预写乙醇等任务的完整解法。
 - [x] 配置模型名称、上下文、输出上限和超时，保持现有单一调用协议；处理代码截断、JSON 错误和有限纠正。
 - [x] 更新提示和上下文，移除禁止代码的旧约束；代码通过文件 Artifact 引用，按需读取片段。
-- [ ] 模型生成 Plan、Python 和 ORCA 输入，程序校验后执行，将实际结果反馈给同一个 Agent。
+- [x] 模型生成 Plan、Python 和 ORCA 输入，程序校验后执行，将实际结果反馈给同一个 Agent。
 - [x] 接入最小通用结果交付：实际条件、核心观察、文件来源、检查状态与未完成事项。
 
-上述勾选表示实现与局部验证已有证据，不表示本步退出条件通过。八次不同开发候选的真实模型运行均未启动 ORCA；真实计算仅有独立开发者探针，不能替代模型自主交付。当前失败和验证范围见本步报告。
+上述勾选表示实现和适用验证已有证据，不表示步骤 3 或用户验收通过。历史原文 live017、live020、live023 分别在不同候选完成真实乙醇交付；live028 虽完成真实受控错误、同逻辑修订重跑和 ORCA，独立完整交付因遗漏六个零模式及坐标单位而失败。live029—live034 的未执行修复或未完成交付继续保留，不能拼接为修复成功。v55 / Pro-v5 的 live035 原文 [独立科学与完整交付核验](acceptance/code-as-tools-step3/validation/live035-independent-scientific-audit.json)通过，交付 9 原子 Angstrom 坐标和完整 27 项 cm^-1 频率，观察仍 unverified、qualified_outputs 为空；首次执行前改稿不是实际失败修复。live036 同候选 v3 对照因 HTTP 402 未进入 Python/ORCA，详见[执行审计](acceptance/code-as-tools-step3/validation/live036-pro-seeded-http402-unknown-usage.json)。用户告知充值后的 live037 以 v56 / Pro-v5、受控 v4 真实触发 NameError，但修复提案未获执行，最终 failed/partial，1 failed Python、0 ORCA、0 重试；[原始失败审计](acceptance/code-as-tools-step3/validation/live037-pro-seeded-v4-execution.json)保留。
+
+v56 修复非代码上下文容量，查询反馈模块 10 项通过；v57 显式修复引用相关最终定向 102 项通过，live038 真实展开并重跑但被既有 SDK 拒绝。v58 必需原生块指导定向 51 项通过，原 admit_profile 未变；live039 执行前失败，live040 真实 ORCA 后因收集超时未完成交付。所有历史失败、预算、原始数据和独立标准保留，详见[报告](acceptance/code-as-tools-step3/report.md)。用户最新停止 NameError 专项，不再将其作为本轮步骤 3 交付门槛；本轮收尾待验收，不推进步骤 4—7，不新增付费试跑或全量回归。
 
 主要修改：`natural.py`、`semantic.py`、`tools/structure.py`、`tools/knowledge.py`、`llm.py`、`context.py`、`readable_context.py`、`proposals.py`、`agent.py`、`planning.py`、`goals.py`、`delivery.py`。
 
 **退出条件：** 仅输入自然语言，由真实模型自主生成程序并完成真实乙醇计算和有来源的交付，无人工填写 Plan、输入或脚本；能处理一次生成代码错误并有界修正。若没有适用频率检查器，必须说明科学验证缺项，不能把进程结束等同于极小值确认。
+
+**本轮用户收尾决定（2026-10-19）：** 正常路径以 live035 的真实完整交付为证据；NameError 专项暂不继续，未通过事实保留，不再阻塞本轮交付。该决定不降低科学数据/来源/单位标准，不把受控修复改判成功，也不表示用户已验收通过；步骤 4 不进入。
 
 ### 步骤 4：支持多次计算、反馈决策与恢复
 

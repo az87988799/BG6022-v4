@@ -1,0 +1,113 @@
+{
+  "schema": "v57-declarative-code-repair-targeted-summary-1",
+  "scope": "Offline interface and existing repair gate verification only. No generated program, SDK, model, ORCA or full regression was executed by these tests.",
+  "decision": {
+    "path": "docs/decisions/0035-declarative-code-repair-reference.md",
+    "bytes": 3547,
+    "sha256": "225e9f161322786fa587fce5cfdacf0cf2e15a09f2b32fb1467244660684f605"
+  },
+  "production": {
+    "path": "src/orca_agent/proposals.py",
+    "bytes": 32022,
+    "sha256": "63ca0d13e086b3b9204f691c3807ca9e85fc0c605be1ac9ad6b17c4df5b6d28b"
+  },
+  "tests": [
+    {
+      "path": "tests/unit/test_declarative_code_repair.py",
+      "bytes": 10910,
+      "sha256": "288e3e33106eb3c4cf387b03c597040caf1799daeb2afe4cf93c8ef0c00ede95"
+    },
+    {
+      "path": "tests/unit/test_native_immediate_schema.py",
+      "bytes": 14607,
+      "sha256": "31e9b695e2fcc64e53921f45570d1d9d0d435f0403f86d17393d231a75741c07"
+    },
+    {
+      "path": "tests/unit/test_plan_goal_binding_contract.py",
+      "bytes": 16630,
+      "sha256": "03349bfe0792ecb128b01dee5bf673259edb1c47275d6aa1d90fcc1bbf68e040"
+    }
+  ],
+  "actual_fixture": {
+    "path": "tests/fixtures/code_contracts/live037-frozen-repair-contract.json",
+    "bytes": 10481,
+    "sha256": "dba933eea6e1a19b6872c74b9522c37ef6f9b84c62c8b0b45a6f3d4af1685899"
+  },
+  "actual_failure_audit": {
+    "path": "docs/acceptance/code-as-tools-step3/validation/live037-code-repair-audit.json",
+    "bytes": 14612,
+    "sha256": "0056445719e11da63c050a157b721c1bdbf4b0bd51906df57d51fbaad00d4707"
+  },
+  "checks": [
+    {
+      "evidence": {
+        "path": "data/code-tools-step3/validation/v57-repair-reference-001.xml",
+        "bytes": 8181,
+        "sha256": "7132f68d0697a3f42a5fc0fff3514251fb959e3eada63e479b969e1a1a083a4e"
+      },
+      "tests": 40,
+      "failures": 1,
+      "errors": 0,
+      "seconds": 19.669,
+      "failures_detail": [
+        {
+          "test": "test_historical_failure_reference_copies_full_contract_without_mutation",
+          "message": "AssertionError: assert {'artifact_id... 'version': 1} == {'artifact_id...782870e64bfe'}\n  \n  Omitting 2 identical items, use -vv to show\n  Left contains 2 more items:\n  {'language': 'python', 'version': 1}\n  Use -v to get more diff"
+        }
+      ]
+    },
+    {
+      "evidence": {
+        "path": "data/code-tools-step3/validation/v57-repair-reference-002.xml",
+        "bytes": 36010,
+        "sha256": "97547c7bc7c334c0d87bc7a77c6c25705f6a6aaffe93f59b49cb1e2966c43737"
+      },
+      "tests": 194,
+      "failures": 1,
+      "errors": 0,
+      "seconds": 41.27,
+      "failures_detail": [
+        {
+          "test": "test_public_plan_structure_changes_only_two_expansion_layers_and_declares_scope",
+          "message": "AssertionError: assert {'$defs': {'E...al_map'], ...} == {'$defs': {'C...al_map'], ...}\n  \n  Omitting 6 identical items, use -vv to show\n  Differing items:\n  {'$defs': {'EvidenceGoalTarget': {'additionalProperties': False, 'properties': {'evidence': {'$ref': '#/$defs/Evidence...A-Za-z0-9_]{0,63}$', 'title': 'Port', 'type': 'string'}}, 'required': ['gap', 'port'], 'title': 'GapGoalTarget', ...}}} != {'$defs': {'CodeRef': {'additionalProperties': False, 'description': 'An immutable code/input Artifact binding; not pe...,63}$', 'title': 'Port', 'type': 'string'}}, 'required': ['step_key', 'port'], 'title': 'FutureGoalTarget', ...}, ...}}\n  Use -v to get more diff"
+        }
+      ]
+    },
+    {
+      "evidence": {
+        "path": "data/code-tools-step3/validation/v57-repair-reference-003.xml",
+        "bytes": 405,
+        "sha256": "563648b4d3933dcf60214e44c6f45e8c0f6dfe8d732c49d5b6013db0fe04ed23"
+      },
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 0.838,
+      "failures_detail": []
+    }
+  ],
+  "resolution": {
+    "001": "39 passed, one new assertion compared a two-field writer code reference directly with a validated CodeRef including existing language/version defaults. Assertion corrected to CodeRef equality; no admission change.",
+    "002": "193 passed, one historical structural-schema assertion omitted only ProposedStep. Opaque steps.items also makes the new ProposedCodeRepair and CodeRef definitions unreachable. Expected pruning updated for exactly those three; all Goal constraints remain.",
+    "003": "The one changed structural-schema case passed. No broad duplicate run was added.",
+    "ruff": "Initial I001 on the new test import layout was fixed by formatting only; final related Ruff passed.",
+    "diff_check": "git diff --check passed (line-ending warnings only)."
+  },
+  "coverage": [
+    "Explicit reference retains complete frozen parameters, manifest/purpose/observation_names/conditions/system/geometry/inputs/dependencies and logical ID; only Step.id and parameters.code change.",
+    "Historical failed Step removed from current Plan remains repairable; no missing dependency is automatically inserted.",
+    "Unauthorized, unknown, running, completed, not-started, unfinished, missing Result/snapshot, mismatched snapshot, ORCA and superseded references reject without mutation.",
+    "Result identity and status must match exact Run/Attempt/Step; five mismatch negative controls.",
+    "Closed repair shape forbids overriding tool/logical/parameters/dependencies/inputs/conditions/system fields.",
+    "Existing same-code, Artifact permission/hash, Python language, retry budget and scientific qualification gates still reject invalid candidates.",
+    "Successful offline activation/reservation retains logical ID, increments Attempt number and code retry cost; it never launches a process.",
+    "Real live037 full proposal remains invalid; a synthetic declarative candidate preserves its original self-script manifest, without claiming actual model success.",
+    "Legacy ProposedStep and native literal CodeRef schema tested; non-code projection removes only unauthorized repair branch and orphan definitions."
+  ],
+  "limits": [
+    "No real successful repair is established by these tests; live037 remains failed with only one Python Attempt.",
+    "Structured references do not write task code, select scientific conditions, fill Goal routes or add dependency Steps.",
+    "Latest outcomes cover 194 cases across the targeted suite and its one corrected-case rerun, not a single new full-regression pass.",
+    "Parent separately verifies context projection and legacy capacity; no full suite was repeated at user request."
+  ]
+}

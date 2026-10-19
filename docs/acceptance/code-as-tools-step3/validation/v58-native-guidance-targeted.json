@@ -1,0 +1,66 @@
+{
+  "schema": "v58-native-required-block-guidance-targeted-1",
+  "scope": "Existing guidance clarified only; no admission, budget, task algorithm or historical result changes.",
+  "production": {
+    "path": "src/orca_agent/orca/native_profile.py",
+    "bytes": 12056,
+    "sha256": "82b5a13dacde5467093756cb1de70966640621a5e9afab0487d150976b9fdcd5"
+  },
+  "tests": {
+    "path": "tests/unit/test_native_block_guidance.py",
+    "bytes": 8082,
+    "sha256": "85dd29ec7577f684fc573eb75d09c31de483da58fd6ec9c4a5ae00f0c8d27c33"
+  },
+  "actual_failed_input_fixture": {
+    "path": "tests/fixtures/code_contracts/live038-missing-response-bound.json",
+    "bytes": 7632,
+    "sha256": "3f93d5a0841ef0ee73464f7977acff49abf40ad57411583cb706bda27a5745a8"
+  },
+  "actual_failure": {
+    "path": "docs/acceptance/code-as-tools-step3/validation/live038-code-repair-audit.json",
+    "bytes": 15261,
+    "sha256": "532b583fc00b33c1a01ac3c946239db3cff83017f5eebf9c9d9273c38f450190"
+  },
+  "admit_profile_source_sha256_before_and_after": "7e6bf85e005e9410d0b6e9a9f4b14a718f69a6ce3d0f00b4b1fc525352ba0702",
+  "admission_function_unchanged": true,
+  "targeted": {
+    "evidence": {
+      "path": "data/code-tools-step3/validation/v58-native-guidance-001.xml",
+      "bytes": 8858,
+      "sha256": "d226ad98afe203d98c7a1c6f5cbcf2a591721a130de3c83576c4a4a85d714b7f"
+    },
+    "tests": 51,
+    "failures": 0,
+    "errors": 0,
+    "xml_seconds": 1.626,
+    "console_seconds": 1.66
+  },
+  "verified": [
+    "Old required-block guidance was present in actual first/revised writer requests; omission is not described as absent contract.",
+    "Each scf/geom/method value now includes full native block name, lower bound 1 and corresponding frozen policy upper bound.",
+    "Geometry and response controls are explicitly required for Opt+Freq and forbidden for SP.",
+    "Actual sealed live038 input preserves its exact CRLF bytes and still fails the unchanged admission for omitted Z_MaxIter.",
+    "Only an offline synthetic insertion of the missing method block passes existing admission; it does not execute anything or repair live038.",
+    "Dynamic tighter SCF/geometry/response policy bounds pass at the bound and reject zero/over-bound values.",
+    "Existing unknown, ambiguous and unbounded derivative syntax stays rejected.",
+    "The SP control rejects response blocks and succeeds once that forbidden block is removed."
+  ],
+  "original_run_read_only": {
+    "files": 173,
+    "before_sha256": "4f890862c755c0cff2dcf97c714b51f9cf0e42291eb5d30d9aafee001b481ac3",
+    "after_sha256": "4f890862c755c0cff2dcf97c714b51f9cf0e42291eb5d30d9aafee001b481ac3"
+  },
+  "fixture_capture_initial_failures": [
+    "Initial helper asserted byte equality between CRLF sealed input and LF task file, failing before writes. Fixture preserves sealed bytes and both actual hashes.",
+    "Second helper treated model_records dict as object.id, failing before writes. Corrected to dictionary lookup. No production or historical file changed."
+  ],
+  "ruff_passed": true,
+  "diff_check_passed": true,
+  "no_full_regression": true,
+  "no_live_model_or_orca_invoked": true,
+  "limits": [
+    "Model compliance and scientific completion still require a new actual controlled run; offline admission is not evidence of them.",
+    "The live038 frequency parser was never reached and remains a recorded static risk.",
+    "Parent verifies final writer context and current version separately."
+  ]
+}

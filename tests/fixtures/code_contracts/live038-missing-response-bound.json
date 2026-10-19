@@ -1,0 +1,116 @@
+{
+  "schema": "live038-missing-response-bound-1",
+  "run_id": "run_49eef7d8c16b4c02a8e84228ea830c18",
+  "attempt_id": "attempt_b0fb5df37840471ea2e5a5ac4c66c6cb",
+  "scope": "Exact failed SDK sealed native input and geometry. Amended test strings are synthetic admission controls, not model repair or ORCA execution.",
+  "source_run": {
+    "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/run.json",
+    "bytes": 140377,
+    "sha256": "fe3e48640bfea38345055e3cbebb1ec3bab7dd783c708f98e3128f7be78b2f31"
+  },
+  "input_source": {
+    "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_4518c0e453534695a52fa011bb08f581/attempt-002/sealed/sdk/native.inp",
+    "bytes": 225,
+    "sha256": "f08853ac5aa17e047b9a54c407bd06b9373370a534a0295946fa6b92f9d0df3f"
+  },
+  "task_input_source": {
+    "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_4518c0e453534695a52fa011bb08f581/attempt-002/task/job.inp",
+    "bytes": 219,
+    "sha256": "eb67aca00f9c02f4bab8c319dea4e25c1f6dcdced0b73c5bc55bbeb98891c3ed"
+  },
+  "input_line_endings": "Sealed SDK input has CRLF; generated task file has LF. Text-equivalent, not byte-equal. This fixture preserves sealed bytes.",
+  "geometry_source": {
+    "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_4518c0e453534695a52fa011bb08f581/attempt-002/sealed/sdk/dependency-0",
+    "bytes": 859,
+    "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+  },
+  "stderr_source": {
+    "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/steps/step_4518c0e453534695a52fa011bb08f581/attempt-002/task/stderr.txt",
+    "bytes": 878,
+    "sha256": "f09b9bdf36043ce3145e1b515927a3fd5460c461e37ed6ae1febf277b35e1369"
+  },
+  "actual_stderr": "Traceback (most recent call last):\n  File \"/opt/orca-agent-runtime/python_task.py\", line 21, in <module>\n    runpy.run_path(sys.argv[0], run_name=\"__main__\")\n  File \"<frozen runpy>\", line 291, in run_path\n  File \"<frozen runpy>\", line 98, in _run_module_code\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/work/sealed/task.py\", line 100, in <module>\n    main()\n  File \"/work/sealed/task.py\", line 24, in main\n    receipt = run_orca('job.inp', dependencies=('prepared.xyz',), request_key='calculation_repair_v1')\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/orca-agent-runtime/venv/lib/python3.11/site-packages/orca_task_sdk.py\", line 64, in run_orca\n    raise RuntimeError(response[\"error\"])\nRuntimeError: managed_orca_request_rejected: explicit %method Z_MaxIter exceeds or omits the frozen bound\n",
+  "input": "! RKS B3LYP def2-TZVP Opt Freq TightSCF NORI NoAutoStart\r\n%maxcore 192\r\n%pal nprocs 4 end\r\n%geom MaxIter 128 EnforceStrictConvergence true end\r\n%scf MaxIter 256 ConvForced true AutoTRAH false end\r\n* xyzfile 0 1 prepared.xyz\r\n",
+  "dependencies": {
+    "prepared.xyz": "9\n\nC            -0.9534551842756148             0.0478042160961903             0.0424993766391190\nC             0.4879186876831028            -0.3215393180742966            -0.1890497363596318\nO             1.2769775263468710             0.3247836784511813             0.7376732425087271\nH            -1.3570126123500212             0.7339751954162034            -0.7332225613847179\nH            -1.5933209403261652            -0.8625698312047165             0.0217594756657287\nH            -1.0710312763466439             0.5964393608027803             1.0111627605054949\nH             0.7874060542693289            -0.1406086817100028            -1.2357743239018328\nH             0.5900278787458185            -1.4261096608429211            -0.0440304857665417\nH             1.8324898662533231             1.0478250410655789             0.3889822520936568\n\n"
+  },
+  "resources": {
+    "max_cores": 4,
+    "total_memory_mb": 1024,
+    "maxcore_mb": 192,
+    "environment_concurrency": 1,
+    "job_timeout_seconds": 900.0,
+    "script_timeout_seconds": 1200.0,
+    "collection_timeout_seconds": 30.0
+  },
+  "native_input_policy": {
+    "profile": "bounded-analytic-1",
+    "max_atoms": 32,
+    "max_geom_iterations": 128,
+    "max_scf_iterations": 256,
+    "max_response_iterations": 128
+  },
+  "binding": {
+    "request_id": "request_ca24d00a13fc4d7aa30ad55df6d48b58",
+    "request_version": 3,
+    "step_id": "step_4518c0e453534695a52fa011bb08f581",
+    "system_id": "system_ethanol",
+    "conditions": {
+      "method": "B3LYP",
+      "basis": "def2-TZVP",
+      "charge": 0,
+      "multiplicity": 1,
+      "electronic_state": "RKS",
+      "environment": "gas_phase"
+    },
+    "condition_sources": {
+      "method": "request.conditions",
+      "basis": "request.conditions",
+      "charge": "request.conditions",
+      "multiplicity": "request.conditions",
+      "electronic_state": "request.conditions",
+      "environment": "request.conditions"
+    },
+    "geometry_artifact_id": "artifact_92f6907146be4ae8a44498ea73dc3c21",
+    "geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+  },
+  "old_guidance_visible_in_actual_requests": [
+    {
+      "ordinal": 9,
+      "source": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/model/model_a61b30db90e14eb188db7ccdc7dcd4f8.request.json",
+        "bytes": 48607,
+        "sha256": "01004cd5212bc069dd4d285bc9a13274db451e26238be3b1c0d63b6814e2f497"
+      },
+      "visible_required_block_fragment": "ger within Run resources\\\",\\\"method\\\":\\\"Opt+Freq only: Z_MaxIter <bound> end\\\",\\\"pal\\\":\\\"nprocs within Run resources (omit only fo"
+    },
+    {
+      "ordinal": 17,
+      "source": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/model/model_5f859b7ba0ac44dcaef35cfc04d8b725.request.json",
+        "bytes": 56645,
+        "sha256": "938f8677dd270bb7d41755116404ba191fbb2897e3e2b6698fc9b4be0f7458fd"
+      },
+      "visible_required_block_fragment": "and Step\\\",\\\"required_blocks\\\":{\\\"P\\\":\\\"Opt+Freq only: Z_MaxIter <bound> end\\\",\\\"geom\\\":\\\"Opt+Freq only: MaxIter <bound> EnforceSt"
+    },
+    {
+      "ordinal": 18,
+      "source": {
+        "path": "data/code-tools-step3/live-store/runs/run_49eef7d8c16b4c02a8e84228ea830c18/model/model_7963414303aa49799669090e997ce9ef.request.json",
+        "bytes": 63463,
+        "sha256": "f2ef4c74e483fa16a083b65d1cd545f17e5ef50b879da65bc350081e6fe146a0"
+      },
+      "visible_required_block_fragment": "and Step\\\",\\\"required_blocks\\\":{\\\"P\\\":\\\"Opt+Freq only: Z_MaxIter <bound> end\\\",\\\"geom\\\":\\\"Opt+Freq only: MaxIter <bound> EnforceSt"
+    }
+  ],
+  "admit_profile_source_sha256": "7e6bf85e005e9410d0b6e9a9f4b14a718f69a6ce3d0f00b4b1fc525352ba0702",
+  "original_run_read_only": {
+    "files": 173,
+    "before_sha256": "4f890862c755c0cff2dcf97c714b51f9cf0e42291eb5d30d9aafee001b481ac3",
+    "after_sha256": "4f890862c755c0cff2dcf97c714b51f9cf0e42291eb5d30d9aafee001b481ac3"
+  },
+  "fixture_helper_initial_failures": [
+    "Initial helper asserted byte equality between CRLF sealed input and LF task file, failing before writes. Fixture preserves sealed bytes and both actual hashes.",
+    "Second helper treated model_records dict as object.id, failing before writes. Corrected to dictionary lookup. No production or historical file changed."
+  ]
+}

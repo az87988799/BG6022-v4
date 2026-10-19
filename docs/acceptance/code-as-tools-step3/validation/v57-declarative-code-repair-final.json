@@ -1,0 +1,45 @@
+{
+  "schema": "v57-declarative-code-repair-final-targeted-1",
+  "prior_evidence_retained": {
+    "path": "docs/acceptance/code-as-tools-step3/validation/v57-declarative-code-repair-targeted.json",
+    "bytes": 6619,
+    "sha256": "ab3f5e95819518aea40f7608ef7314595d8c88d6bbd635ca07159e403b2d2b68"
+  },
+  "production": {
+    "path": "src/orca_agent/proposals.py",
+    "bytes": 33256,
+    "sha256": "b082a8a7e043ed6ce63b0e84d11469ad5bc97f763c4b192820f8b9d42eeb2df5"
+  },
+  "new_tests": {
+    "path": "tests/unit/test_declarative_code_repair.py",
+    "bytes": 13528,
+    "sha256": "2b074bf0c5c51104b4d22531318b61855102788eab9b6fed213187754910d1dc"
+  },
+  "final_targeted": {
+    "evidence": {
+      "path": "data/code-tools-step3/validation/v57-repair-reference-004.xml",
+      "bytes": 19221,
+      "sha256": "befb700add13b64c6c8ca12b4bda2b9138a5a1a13aec41a331a04cc6b5e4b418"
+    },
+    "tests": 102,
+    "failures": 0,
+    "errors": 0,
+    "xml_seconds": 22.701,
+    "console_seconds": 23.4
+  },
+  "additional_review_fix": "Pydantic reports errors from both union alternatives. Before the eight-error cap, select the submitted Step shape by explicit repair_of/code fields. Ordinary legacy Step error detail, paths, fields and guidance now exactly match the former ProposedStep contract. Only an explicit repair-shaped error gets reference guidance; this grants no permission.",
+  "new_exact_assertions": [
+    "Ordinary malformed Step detail is identical to validation with the original ProposedStep list type.",
+    "Mixed ordinary/reference Steps report only the actual per-Step error paths.",
+    "Invalid explicit CodeRef reports its real code.sha256 path without irrelevant alternate-branch fields."
+  ],
+  "source_frozen": true,
+  "related_ruff_passed": true,
+  "no_full_regression": true,
+  "no_model_or_sdk_or_orca_invoked": true,
+  "limitations": [
+    "Offline materialization and reservation do not establish model code correctness or a successful actual repair.",
+    "Historical live037 remains failed; its writer Artifact was not executed.",
+    "Root performs final context/legacy capacity checks separately before a new controlled live Run."
+  ]
+}

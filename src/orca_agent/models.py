@@ -222,8 +222,27 @@ class Goal(Record):
     unresolved: list[str] = Field(default_factory=list)
 
 
+_EVIDENCE_IDENTITIES = ("run_id", "result_id")
+_EVIDENCE_CONCRETE_FIELDS = (*_EVIDENCE_IDENTITIES, "attempt_id", "artifact_id", "sha256")
+
+
+def _evidence_reference_schema(schema):
+    # Expose the existing runtime invariant in this type's generated schema.
+    # Empty sha256 was historically allowed on a future reference; retain it.
+    schema["oneOf"] = [
+        {"required": ["producer_step_id"], "properties": {
+            "producer_step_id": {"type": "string"},
+            **{key: {"enum": [None, ""]} for key in _EVIDENCE_CONCRETE_FIELDS}}},
+        {"required": list(_EVIDENCE_IDENTITIES), "properties": {
+            "producer_step_id": {"type": "null"},
+            **{key: {"type": "string"} for key in _EVIDENCE_IDENTITIES}}},
+    ]
+
+
 class EvidenceRef(Record):
     """A local typed consumer binding; it owns no independent lifecycle."""
+
+    model_config = ConfigDict(json_schema_extra=_evidence_reference_schema)
 
     producer_step_id: Identifier | None = None
     run_id: Identifier | None = None
@@ -237,9 +256,9 @@ class EvidenceRef(Record):
     @model_validator(mode="after")
     def exact_or_future(self):
         if self.producer_step_id:
-            if any((self.run_id, self.result_id, self.attempt_id, self.artifact_id, self.sha256)):
+            if any(getattr(self, name) for name in _EVIDENCE_CONCRETE_FIELDS):
                 raise ValueError("future reference cannot also select concrete evidence")
-        elif not (self.run_id and self.result_id):
+        elif not all(getattr(self, name) for name in _EVIDENCE_IDENTITIES):
             raise ValueError("concrete evidence must identify its Run and Result")
         return self
 

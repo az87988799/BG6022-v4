@@ -1,0 +1,1336 @@
+{
+  "schema_version": 1,
+  "scope": "Independent posthoc live028 execution/provenance audit of explicitly fault-seeded development repair. Scientific interpretation is independently reviewed elsewhere.",
+  "audited_at_utc": "2026-10-19T10:12:05.493788+00:00",
+  "finished_at_utc": "2026-10-19T10:12:05.881771+00:00",
+  "run_id": "run_e545504b9174421e8e0156a4c6568fc3",
+  "state": "completed",
+  "delivery_status": "complete",
+  "goal_status": {
+    "goal_prepared_geometry": "satisfied",
+    "goal_optimized_geometry": "satisfied",
+    "goal_vibrational_frequencies": "satisfied"
+  },
+  "model_usage": {
+    "http_calls": 14,
+    "input_tokens": 165789,
+    "output_tokens": 40840,
+    "total_tokens": 206629,
+    "estimated_usd": "0.0987447",
+    "unknown_tokens": 0,
+    "cost_basis": "Frozen uncached USD0.30 input / USD1.20 output per million; estimate, not invoice."
+  },
+  "actual_usage": {
+    "internal_work_units": 157,
+    "code_retries": 1,
+    "orca_starts_reserved": 1,
+    "orca_starts_actual": 1,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 89.0619999999999,
+    "cpu_seconds": 156.35541,
+    "resource_usage_complete": false,
+    "logical_attempts": {
+      "logical_5c8e059e6ae348c99b67e6ddc16b0b76": 2
+    },
+    "fingerprint_attempts": {
+      "26e02634050d6bb2201ff519e1b93a9aacf9effa65b05576a0da6ad0571a9939": 1,
+      "3b3de76789a27ac2cda497d0f2aaaafeef1894dc46cced1e18a8a184d5c4919b": 1
+    },
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 14,
+    "model_tokens_used": 206629,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 3,
+    "decision_rounds": 14,
+    "evidence_reads": 1,
+    "analysis_executions": 3,
+    "logical_steps": [
+      "logical_526c55fcb5f74f0b84c3df150bffc4e3",
+      "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+      "logical_67d3d43ff79c4ad38f5f399880731dec",
+      "logical_6b60ae5c138845e4a696496ae149a541",
+      "logical_8f418e3772f04aef8001bfe3173365e8",
+      "logical_efa0f1024c6744c29f4c30df56b29489"
+    ],
+    "identity_queries": 1,
+    "structure_preparations": 1,
+    "knowledge_queries": 2
+  },
+  "source_freeze": {
+    "start": {
+      "scope": "Independent live028 source/driver check while running; no completion assertion.",
+      "checked_at_utc": "2026-10-19T10:01:29.664519+00:00",
+      "frozen_at": "2026-10-19T10:01:02.402531+00:00",
+      "outcome_exists_at_check": false,
+      "freeze": {
+        "path": "data/code-tools-step3/live-028/freeze.json",
+        "bytes": 12563,
+        "sha256": "17b38ecbdfa163554dedf500f9c603281cbc12ffac91208f72ff37791d8ce9d8"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true
+    },
+    "end": {
+      "scope": "Independent completed live028 source/driver check; no Run mutation.",
+      "checked_at_utc": "2026-10-19T10:07:36.078913+00:00",
+      "frozen_at": "2026-10-19T10:01:02.402531+00:00",
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_source_changed": []
+    },
+    "outcome_changes": []
+  },
+  "development_prompt": {
+    "text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。\n\n以下是独立的受控代码故障开发验收，不是自然任务首次自主成功的证据。\nDEVELOPMENT_FAULT_SEEDED: CODE_TOOLS_DEVELOPMENT_FAULT_V1\n本次仍由你自行检索、选择条件、制定 Plan，并编写完整 Python 程序与 ORCA 输入，不使用开发者提供的解题脚本。\n首次执行 Python 前，先完成所需条件选择、初始结构和全部任务文件的生成。第一版 Python 必须已经是完成上述科学目标的完整程序，包含实际 SDK 计算、输出读取和观察交付；禁止先执行仅用于报错的占位脚本、空任务或故障探针。第一次执行的 Step 就必须具备实际任务所需的完整输入 manifest、体系、条件、观察名、目标绑定与依赖，不能把这些留到第二次补充。所有 Artifact 与 hash 必须来自实际已完成的工具输出。\n在这份完整程序的任何导入、文件操作、SDK 调用或其他工作之前，写一行单独的未定义名称表达式 CODE_TOOLS_DEVELOPMENT_FAULT_V1。模块文档字符串和合法的 __future__ 导入可以在前。不要定义该名称，不要捕获这一行的 NameError。这一行是唯一人为要求的故障；其余程序从第一版开始就应完整。\n实际执行并读取真实失败反馈后，在同一个 Run 内由你自己通过 workspace.write 生成修订代码：仅删除上述独立 marker 行，其他代码字节保持不变。先完成新代码的写入，再提交修复 Step：使用新的 Step key 与原失败 Step 的同一个 logical_key，除 CodeRef 外保留原有输入、条件、目的、依赖和观察名。不要把新 writer 加为修复 Step 的依赖，不要重跑旧代码或再次注入 marker。第一次在 marker 处失败时尚未调用 SDK，因此已有计算请求键无须更改。若发现其他问题不能在这些约束下完成，保留事实并停止，不放宽测试或科学目标。\n继续使用同一累计预算和现有生产校验完成真实计算与带来源的结果交付。开发驱动只核验前置条件、驱动与采证，不会替你改写 Plan、脚本、ORCA 输入或模型回复。交付时区分本次人为要求的 NameError 与自然发生的错误，披露首次失败、实际修复、资源成本和科学验证缺项。",
+    "text_utf8_sha256": "c8d881c5bbf78a070d1f31567846866452849b992ec13a52cd4bfd1892fa0ce8",
+    "version": "repair-request-v2"
+  },
+  "seeded_gate": {
+    "version": 1,
+    "scope": "development_fault_seeded",
+    "run_id": "run_e545504b9174421e8e0156a4c6568fc3",
+    "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1",
+    "point": "before_science_reservation",
+    "status": "prelaunch_verified",
+    "checked_at": "2026-10-19T10:03:52.707023+00:00",
+    "mutated_task_content": false,
+    "selection_origin": "activated_model_plan_first_ready",
+    "source_model_response_sha256": "48028307340314ca1e1ef4be653f25a4f47eb9a3dbe909c4a021a0245cd78cd0",
+    "source_decision_record_sha256": "37308cf4cd06700273c7b187aa805f93fe0396f0c2ef152d1f14b65d7b215583",
+    "source_decision_basis": {
+      "request_version": 3,
+      "plan_version": 1,
+      "permission_version": 1,
+      "control_generation": 1
+    },
+    "syntax": {
+      "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1",
+      "line": 1,
+      "ast_kind": "Expr(Name(Load))",
+      "compiled_without_execution": true
+    },
+    "request_version": 3,
+    "plan_version": 2,
+    "plan_sha256": "31d91869129fb59bd93551ef800e956630249cda214150a131024c97164b2735",
+    "step_id": "step_903eb672132b4f55ac293a6be1ea31ab",
+    "logical_id": "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+    "code": {
+      "artifact_id": "artifact_3af88b44a7a44b598c17d64e2bc9a261",
+      "sha256": "4a2cf10b47f519654e16b001a4202345c227c8297fe1f68a43217e4ac2249607",
+      "language": "python",
+      "version": 1
+    },
+    "code_bytes": 3375,
+    "source_call_id": "call_8e795267af52479f8b78420949516702",
+    "decision_id": "model_ba3c7c6ed4d04042895f6fec22e39bde",
+    "usage_before": {
+      "internal_work_units": 0,
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 11,
+      "model_tokens_used": 154942,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 1,
+      "decision_rounds": 11,
+      "evidence_reads": 1,
+      "analysis_executions": 2,
+      "logical_steps": [
+        "logical_526c55fcb5f74f0b84c3df150bffc4e3",
+        "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+        "logical_6b60ae5c138845e4a696496ae149a541",
+        "logical_8f418e3772f04aef8001bfe3173365e8",
+        "logical_efa0f1024c6744c29f4c30df56b29489"
+      ],
+      "identity_queries": 1,
+      "structure_preparations": 1,
+      "knowledge_queries": 2
+    },
+    "limitations": [
+      "Explicitly prompted generic defect; not a spontaneous model error.",
+      "Prelaunch verification only; actual failure, feedback and model repair require separate audit."
+    ]
+  },
+  "first_failure_contemporaneous_snapshot": {
+    "checked_at_utc": "2026-10-19T10:04:13.630371+00:00",
+    "scope": "Independent read-only observation during live028 after the first failed Python attempt; no task content mutation.",
+    "run_id": "run_e545504b9174421e8e0156a4c6568fc3",
+    "first_attempt": {
+      "id": "attempt_9b8329bdad3e4c12bd3a0e7bad250bc9",
+      "step_id": "step_903eb672132b4f55ac293a6be1ea31ab",
+      "logical_id": "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+      "state": "failed",
+      "started": true,
+      "created_at": "2026-10-19T10:03:53.160315Z",
+      "finished_at": "2026-10-19T10:04:12.561557Z",
+      "result_id": "result_cb206aef47d747f4bc1b6d8ca5c0807d",
+      "consumption": {
+        "code": {
+          "artifact_id": "artifact_3af88b44a7a44b598c17d64e2bc9a261",
+          "sha256": "4a2cf10b47f519654e16b001a4202345c227c8297fe1f68a43217e4ac2249607",
+          "language": "python",
+          "version": 1
+        },
+        "inputs": {
+          "version": 1,
+          "entries": [
+            {
+              "artifact_id": "artifact_8e08379fbe7843b89aa7f2ecee3d1056",
+              "sha256": "c258b596bd594b48bc9008bfae8d49ad381e0a2e1baa0a87bc0abd919e80d12d",
+              "target_path": "job.inp",
+              "purpose": "ORCA B3LYP/def2-SVP Opt+Freq input"
+            },
+            {
+              "artifact_id": "artifact_e1d10a2d1f8440508e95a4d36123561d",
+              "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+              "target_path": "ethanol.xyz",
+              "purpose": "prepared initial ethanol geometry (trusted current XYZ)"
+            }
+          ]
+        }
+      },
+      "frozen_step": {
+        "id": "step_903eb672132b4f55ac293a6be1ea31ab",
+        "logical_id": "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+        "tool": "python.execute",
+        "parameters": {
+          "code": {
+            "artifact_id": "artifact_3af88b44a7a44b598c17d64e2bc9a261",
+            "sha256": "4a2cf10b47f519654e16b001a4202345c227c8297fe1f68a43217e4ac2249607",
+            "language": "python",
+            "version": 1
+          },
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "artifact_id": "artifact_8e08379fbe7843b89aa7f2ecee3d1056",
+                "sha256": "c258b596bd594b48bc9008bfae8d49ad381e0a2e1baa0a87bc0abd919e80d12d",
+                "target_path": "job.inp",
+                "purpose": "ORCA B3LYP/def2-SVP Opt+Freq input"
+              },
+              {
+                "artifact_id": "artifact_e1d10a2d1f8440508e95a4d36123561d",
+                "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                "target_path": "ethanol.xyz",
+                "purpose": "prepared initial ethanol geometry (trusted current XYZ)"
+              }
+            ]
+          },
+          "observation_names": [
+            "prepared_geometry",
+            "optimized_geometry",
+            "vibrational_frequencies"
+          ],
+          "conditions": {}
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_2ad7d6d2c6fb446c9f668ddf70b44195",
+          "step_ffa80bb958ce4f00858a0472aabcd2fb",
+          "step_c5d5f3d6f39147df8ff96030c37ffb4d",
+          "step_2f5ed078697447bf92d5682cc9a62a3f"
+        ],
+        "inputs": {},
+        "system_id": "system_ethanol"
+      }
+    },
+    "usage_at_read": {
+      "internal_work_units": 0,
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 1.530999999999949,
+      "cpu_seconds": 0.784408,
+      "resource_usage_complete": false,
+      "logical_attempts": {
+        "logical_5c8e059e6ae348c99b67e6ddc16b0b76": 1
+      },
+      "fingerprint_attempts": {
+        "26e02634050d6bb2201ff519e1b93a9aacf9effa65b05576a0da6ad0571a9939": 1
+      },
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 11,
+      "model_tokens_used": 154942,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 1,
+      "decision_rounds": 12,
+      "evidence_reads": 1,
+      "analysis_executions": 2,
+      "logical_steps": [
+        "logical_526c55fcb5f74f0b84c3df150bffc4e3",
+        "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+        "logical_6b60ae5c138845e4a696496ae149a541",
+        "logical_8f418e3772f04aef8001bfe3173365e8",
+        "logical_efa0f1024c6744c29f4c30df56b29489"
+      ],
+      "identity_queries": 1,
+      "structure_preparations": 1,
+      "knowledge_queries": 2
+    },
+    "internal_call_count_at_read": 0,
+    "stderr": {
+      "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_903eb672132b4f55ac293a6be1ea31ab/attempt-001/task/stderr.txt",
+      "bytes": 458,
+      "sha256": "490b722d13b21542009108809e5ba0cb36774b54cc35c223cd79ed374d244eca"
+    },
+    "stderr_text": "Traceback (most recent call last):\n  File \"/opt/orca-agent-runtime/python_task.py\", line 21, in <module>\n    runpy.run_path(sys.argv[0], run_name=\"__main__\")\n  File \"<frozen runpy>\", line 291, in run_path\n  File \"<frozen runpy>\", line 98, in _run_module_code\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/work/sealed/task.py\", line 1, in <module>\n    CODE_TOOLS_DEVELOPMENT_FAULT_V1\nNameError: name 'CODE_TOOLS_DEVELOPMENT_FAULT_V1' is not defined\n",
+    "execution_not_started": false,
+    "exit_code": 1
+  },
+  "writers": [
+    {
+      "call_id": "call_e4cbc093bfb8496daf366a54d2a4f13b",
+      "name": "job.inp",
+      "role": "orca",
+      "artifact_id": "artifact_8e08379fbe7843b89aa7f2ecee3d1056",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_8e08379fbe7843b89aa7f2ecee3d1056/files/job.inp",
+        "bytes": 274,
+        "sha256": "c258b596bd594b48bc9008bfae8d49ad381e0a2e1baa0a87bc0abd919e80d12d"
+      },
+      "model_origins": [
+        "model_f67164a330be45fe97502c0686f4a42b"
+      ],
+      "model_content_equals_writer_artifact": true
+    },
+    {
+      "call_id": "call_8e795267af52479f8b78420949516702",
+      "name": "run_ethanol_opt_freq.py",
+      "role": "python",
+      "artifact_id": "artifact_3af88b44a7a44b598c17d64e2bc9a261",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_3af88b44a7a44b598c17d64e2bc9a261/files/run_ethanol_opt_freq.py",
+        "bytes": 3375,
+        "sha256": "4a2cf10b47f519654e16b001a4202345c227c8297fe1f68a43217e4ac2249607"
+      },
+      "model_origins": [
+        "model_f67164a330be45fe97502c0686f4a42b"
+      ],
+      "model_content_equals_writer_artifact": true
+    },
+    {
+      "call_id": "call_a53e914d23334c549f069352e33fa693",
+      "name": "run_ethanol_opt_freq.py",
+      "role": "python",
+      "artifact_id": "artifact_36b59164cad14170bcddb872aaedf1ec",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_36b59164cad14170bcddb872aaedf1ec/files/run_ethanol_opt_freq.py",
+        "bytes": 3343,
+        "sha256": "9477c6183737ec184386df66f9659636475cc44bde9c047f38b690895759e8d3"
+      },
+      "model_origins": [
+        "model_a360f767a87346cba3584a9254162c91"
+      ],
+      "model_content_equals_writer_artifact": true
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": {
+        "id": "attempt_9b8329bdad3e4c12bd3a0e7bad250bc9",
+        "step_id": "step_903eb672132b4f55ac293a6be1ea31ab",
+        "logical_id": "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+        "number": 1,
+        "tool": "python.execute",
+        "state": "failed",
+        "execution_kind": "python",
+        "geometry_artifact_id": null,
+        "input_fingerprint": "26e02634050d6bb2201ff519e1b93a9aacf9effa65b05576a0da6ad0571a9939",
+        "directory": "runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_903eb672132b4f55ac293a6be1ea31ab/attempt-001",
+        "created_at": "2026-10-19T10:03:53.160315Z",
+        "finished_at": "2026-10-19T10:04:12.561557Z",
+        "execution_handle": {
+          "backend": "linux-container",
+          "version": 1,
+          "launch_id": "67784d0bf3f949268295f796696e995a",
+          "container_name": "orca-attempt-67784d0bf3f949268295f796696e995a",
+          "volume_name": "orca-evidence-67784d0bf3f949268295f796696e995a",
+          "run_id": "run_e545504b9174421e8e0156a4c6568fc3",
+          "attempt_id": "attempt_9b8329bdad3e4c12bd3a0e7bad250bc9",
+          "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+          "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+          "execution": {
+            "backend": "linux-container",
+            "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+            "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+            "docker_context": "desktop-linux",
+            "docker_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+            "native_input_policy": {
+              "profile": "bounded-analytic-1",
+              "max_atoms": 32,
+              "max_geom_iterations": 128,
+              "max_scf_iterations": 256,
+              "max_response_iterations": 128
+            },
+            "_docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+          },
+          "engine_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "daemon_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "heartbeat_ttl_seconds": 15,
+          "timeout_seconds": 1200.0,
+          "container_id": "92eb08716958ed941ca4751ab2b883c6b1a572427609acfc6cd589e69657b71b",
+          "isolation_verified": true,
+          "isolation_policy": "linux-container-v1",
+          "kind": "python",
+          "workload_identity": {
+            "pid": 49,
+            "uid": 10001,
+            "state": "S (sleeping)",
+            "start_ticks": "265668",
+            "name": "python3.11",
+            "cap_eff": "0000000000000000",
+            "cap_prm": "0000000000000000",
+            "cap_inh": "0000000000000000",
+            "cap_amb": "0000000000000000",
+            "no_new_privs": "1",
+            "seccomp": "2"
+          },
+          "launch_phase": "gated_launcher",
+          "parent_container_id": null
+        },
+        "started": true,
+        "result_id": "result_cb206aef47d747f4bc1b6d8ca5c0807d",
+        "elapsed_seconds": 1.530999999999949,
+        "cpu_seconds": 0.784408,
+        "request_version": 3,
+        "plan_version": 2,
+        "permission_version": 1,
+        "control_generation": 1,
+        "frozen_step": {
+          "id": "step_903eb672132b4f55ac293a6be1ea31ab",
+          "logical_id": "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+          "tool": "python.execute",
+          "parameters": {
+            "code": {
+              "artifact_id": "artifact_3af88b44a7a44b598c17d64e2bc9a261",
+              "sha256": "4a2cf10b47f519654e16b001a4202345c227c8297fe1f68a43217e4ac2249607",
+              "language": "python",
+              "version": 1
+            },
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "artifact_id": "artifact_8e08379fbe7843b89aa7f2ecee3d1056",
+                  "sha256": "c258b596bd594b48bc9008bfae8d49ad381e0a2e1baa0a87bc0abd919e80d12d",
+                  "target_path": "job.inp",
+                  "purpose": "ORCA B3LYP/def2-SVP Opt+Freq input"
+                },
+                {
+                  "artifact_id": "artifact_e1d10a2d1f8440508e95a4d36123561d",
+                  "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                  "target_path": "ethanol.xyz",
+                  "purpose": "prepared initial ethanol geometry (trusted current XYZ)"
+                }
+              ]
+            },
+            "observation_names": [
+              "prepared_geometry",
+              "optimized_geometry",
+              "vibrational_frequencies"
+            ],
+            "conditions": {}
+          },
+          "geometry": null,
+          "depends_on": [
+            "step_2ad7d6d2c6fb446c9f668ddf70b44195",
+            "step_ffa80bb958ce4f00858a0472aabcd2fb",
+            "step_c5d5f3d6f39147df8ff96030c37ffb4d",
+            "step_2f5ed078697447bf92d5682cc9a62a3f"
+          ],
+          "inputs": {},
+          "system_id": "system_ethanol"
+        },
+        "consumption": {
+          "code": {
+            "artifact_id": "artifact_3af88b44a7a44b598c17d64e2bc9a261",
+            "sha256": "4a2cf10b47f519654e16b001a4202345c227c8297fe1f68a43217e4ac2249607",
+            "language": "python",
+            "version": 1
+          },
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "artifact_id": "artifact_8e08379fbe7843b89aa7f2ecee3d1056",
+                "sha256": "c258b596bd594b48bc9008bfae8d49ad381e0a2e1baa0a87bc0abd919e80d12d",
+                "target_path": "job.inp",
+                "purpose": "ORCA B3LYP/def2-SVP Opt+Freq input"
+              },
+              {
+                "artifact_id": "artifact_e1d10a2d1f8440508e95a4d36123561d",
+                "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                "target_path": "ethanol.xyz",
+                "purpose": "prepared initial ethanol geometry (trusted current XYZ)"
+              }
+            ]
+          }
+        }
+      },
+      "result": {
+        "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/results/result_cb206aef47d747f4bc1b6d8ca5c0807d.json",
+        "bytes": 9393,
+        "sha256": "db930d3cfcf3125fe6e6017383510ee3467db61b7b12fc68c46400902c914159"
+      },
+      "operation_status": "failed",
+      "execution_not_started": false,
+      "exit_code": 1,
+      "stderr": {
+        "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_903eb672132b4f55ac293a6be1ea31ab/attempt-001/task/stderr.txt",
+        "bytes": 458,
+        "sha256": "490b722d13b21542009108809e5ba0cb36774b54cc35c223cd79ed374d244eca"
+      },
+      "stderr_text": "Traceback (most recent call last):\n  File \"/opt/orca-agent-runtime/python_task.py\", line 21, in <module>\n    runpy.run_path(sys.argv[0], run_name=\"__main__\")\n  File \"<frozen runpy>\", line 291, in run_path\n  File \"<frozen runpy>\", line 98, in _run_module_code\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/work/sealed/task.py\", line 1, in <module>\n    CODE_TOOLS_DEVELOPMENT_FAULT_V1\nNameError: name 'CODE_TOOLS_DEVELOPMENT_FAULT_V1' is not defined\n",
+      "code_file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_3af88b44a7a44b598c17d64e2bc9a261/files/run_ethanol_opt_freq.py",
+        "bytes": 3375,
+        "sha256": "4a2cf10b47f519654e16b001a4202345c227c8297fe1f68a43217e4ac2249607"
+      },
+      "sealed_code": {
+        "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_903eb672132b4f55ac293a6be1ea31ab/attempt-001/sealed/task.py",
+        "bytes": 3375,
+        "sha256": "4a2cf10b47f519654e16b001a4202345c227c8297fe1f68a43217e4ac2249607"
+      },
+      "observation_records": [],
+      "qualified_outputs": {},
+      "execution_diagnostics": [
+        {
+          "category": "failed",
+          "detail": "nonzero_exit_code"
+        }
+      ]
+    },
+    {
+      "attempt": {
+        "id": "attempt_42da3bac7ddc4df18c283e81b4cbbb74",
+        "step_id": "step_f3c121a13ef44beaa150ce647277e79a",
+        "logical_id": "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+        "number": 2,
+        "tool": "python.execute",
+        "state": "completed",
+        "execution_kind": "python",
+        "geometry_artifact_id": null,
+        "input_fingerprint": "3b3de76789a27ac2cda497d0f2aaaafeef1894dc46cced1e18a8a184d5c4919b",
+        "directory": "runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_f3c121a13ef44beaa150ce647277e79a/attempt-002",
+        "created_at": "2026-10-19T10:04:57.453157Z",
+        "finished_at": "2026-10-19T10:06:48.309336Z",
+        "execution_handle": {
+          "backend": "linux-container",
+          "version": 1,
+          "launch_id": "49728fe4b47f4348924a58209af67df9",
+          "container_name": "orca-attempt-49728fe4b47f4348924a58209af67df9",
+          "volume_name": "orca-evidence-49728fe4b47f4348924a58209af67df9",
+          "run_id": "run_e545504b9174421e8e0156a4c6568fc3",
+          "attempt_id": "attempt_42da3bac7ddc4df18c283e81b4cbbb74",
+          "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+          "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+          "execution": {
+            "backend": "linux-container",
+            "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+            "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+            "docker_context": "desktop-linux",
+            "docker_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+            "native_input_policy": {
+              "profile": "bounded-analytic-1",
+              "max_atoms": 32,
+              "max_geom_iterations": 128,
+              "max_scf_iterations": 256,
+              "max_response_iterations": 128
+            },
+            "_docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+          },
+          "engine_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "daemon_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "heartbeat_ttl_seconds": 15,
+          "timeout_seconds": 1200.0,
+          "container_id": "6605af99dc3cbba6614a1fcf273285419316e80cf466c2c113c110dea1623e92",
+          "isolation_verified": true,
+          "isolation_policy": "linux-container-v1",
+          "kind": "python",
+          "workload_identity": {
+            "pid": 49,
+            "uid": 10001,
+            "state": "S (sleeping)",
+            "start_ticks": "272047",
+            "name": "python3.11",
+            "cap_eff": "0000000000000000",
+            "cap_prm": "0000000000000000",
+            "cap_inh": "0000000000000000",
+            "cap_amb": "0000000000000000",
+            "no_new_privs": "1",
+            "seccomp": "2"
+          },
+          "launch_phase": "gated_launcher",
+          "parent_container_id": null
+        },
+        "started": true,
+        "result_id": "result_649c9339c87041b3a67ae85d3bab997c",
+        "elapsed_seconds": 87.53099999999995,
+        "cpu_seconds": 155.571002,
+        "request_version": 3,
+        "plan_version": 4,
+        "permission_version": 1,
+        "control_generation": 1,
+        "frozen_step": {
+          "id": "step_f3c121a13ef44beaa150ce647277e79a",
+          "logical_id": "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+          "tool": "python.execute",
+          "parameters": {
+            "code": {
+              "artifact_id": "artifact_36b59164cad14170bcddb872aaedf1ec",
+              "sha256": "9477c6183737ec184386df66f9659636475cc44bde9c047f38b690895759e8d3",
+              "language": "python",
+              "version": 1
+            },
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "artifact_id": "artifact_8e08379fbe7843b89aa7f2ecee3d1056",
+                  "sha256": "c258b596bd594b48bc9008bfae8d49ad381e0a2e1baa0a87bc0abd919e80d12d",
+                  "target_path": "job.inp",
+                  "purpose": "ORCA B3LYP/def2-SVP Opt+Freq input"
+                },
+                {
+                  "artifact_id": "artifact_e1d10a2d1f8440508e95a4d36123561d",
+                  "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                  "target_path": "ethanol.xyz",
+                  "purpose": "prepared initial ethanol geometry (trusted current XYZ)"
+                }
+              ]
+            },
+            "observation_names": [
+              "prepared_geometry",
+              "optimized_geometry",
+              "vibrational_frequencies"
+            ],
+            "conditions": {}
+          },
+          "geometry": null,
+          "depends_on": [
+            "step_2ad7d6d2c6fb446c9f668ddf70b44195",
+            "step_ffa80bb958ce4f00858a0472aabcd2fb",
+            "step_c5d5f3d6f39147df8ff96030c37ffb4d",
+            "step_2f5ed078697447bf92d5682cc9a62a3f"
+          ],
+          "inputs": {},
+          "system_id": "system_ethanol"
+        },
+        "consumption": {
+          "code": {
+            "artifact_id": "artifact_36b59164cad14170bcddb872aaedf1ec",
+            "sha256": "9477c6183737ec184386df66f9659636475cc44bde9c047f38b690895759e8d3",
+            "language": "python",
+            "version": 1
+          },
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "artifact_id": "artifact_8e08379fbe7843b89aa7f2ecee3d1056",
+                "sha256": "c258b596bd594b48bc9008bfae8d49ad381e0a2e1baa0a87bc0abd919e80d12d",
+                "target_path": "job.inp",
+                "purpose": "ORCA B3LYP/def2-SVP Opt+Freq input"
+              },
+              {
+                "artifact_id": "artifact_e1d10a2d1f8440508e95a4d36123561d",
+                "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                "target_path": "ethanol.xyz",
+                "purpose": "prepared initial ethanol geometry (trusted current XYZ)"
+              }
+            ]
+          }
+        }
+      },
+      "result": {
+        "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/results/result_649c9339c87041b3a67ae85d3bab997c.json",
+        "bytes": 166351,
+        "sha256": "c2c0851d80540cda473c0f2d4a7a3157334be967cf8e954229e5ade34f73d35f"
+      },
+      "operation_status": "completed",
+      "execution_not_started": false,
+      "exit_code": 0,
+      "stderr": {
+        "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_f3c121a13ef44beaa150ce647277e79a/attempt-002/task/stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr_text": "",
+      "code_file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_36b59164cad14170bcddb872aaedf1ec/files/run_ethanol_opt_freq.py",
+        "bytes": 3343,
+        "sha256": "9477c6183737ec184386df66f9659636475cc44bde9c047f38b690895759e8d3"
+      },
+      "sealed_code": {
+        "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_f3c121a13ef44beaa150ce647277e79a/attempt-002/sealed/task.py",
+        "bytes": 3343,
+        "sha256": "9477c6183737ec184386df66f9659636475cc44bde9c047f38b690895759e8d3"
+      },
+      "observation_records": [
+        {
+          "name": "prepared_geometry",
+          "value": "9\n\nC            -0.9534551842756148             0.0478042160961903             0.0424993766391190\nC             0.4879186876831028            -0.3215393180742966            -0.1890497363596318\nO             1.2769775263468710             0.3247836784511813             0.7376732425087271\nH            -1.3570126123500212             0.7339751954162034            -0.7332225613847179\nH            -1.5933209403261652            -0.8625698312047165             0.0217594756657287\nH            -1.0710312763466439             0.5964393608027803             1.0111627605054949\nH             0.7874060542693289            -0.1406086817100028            -1.2357743239018328\nH             0.5900278787458185            -1.4261096608429211            -0.0440304857665417\nH             1.8324898662533231             1.0478250410655789             0.3889822520936568\n\n",
+          "unit": null,
+          "actual_conditions": {},
+          "sources": [
+            {
+              "artifact_id": "artifact_0da8a411b9554298b51409c9daa1dbdf",
+              "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+              "location": "initial XYZ dependency",
+              "attempt_id": "attempt_42da3bac7ddc4df18c283e81b4cbbb74",
+              "internal_request_key": null
+            }
+          ],
+          "code_sha256": "9477c6183737ec184386df66f9659636475cc44bde9c047f38b690895759e8d3",
+          "checks": [
+            {
+              "name": "archived_source_binding",
+              "status": "passed",
+              "detail": "file identity/hash only; value, units and scientific interpretation are unverified",
+              "source": {},
+              "rule_version": "generic-observation-1"
+            }
+          ],
+          "validation_status": "unverified",
+          "limitations": [
+            "Generated code parsed these values; no registered scientific checker qualified them.",
+            "Source locations and interpretation are task declarations; only archived file identity is checked.",
+            "Conditions describe admitted input, not independent output verification."
+          ]
+        },
+        {
+          "name": "optimized_geometry",
+          "value": "9\nCoordinates from ORCA-job job E -154.828249797040\n  C          -0.91686440818592      0.07147422424429      0.04148705783117\n  C           0.51874560129175     -0.41707482841267     -0.11802519883160\n  O           1.45989751873920      0.40295082168290      0.54506463634138\n  H          -1.05389170505105      1.06266205975960     -0.42636260963335\n  H          -1.62962285520748     -0.62128557687717     -0.43646647211416\n  H          -1.17880672970809      0.16144396160104      1.10790153433231\n  H           0.76168426994749     -0.52598984469265     -1.19631768338181\n  H           0.62500995414164     -1.42018668528568      0.32800743757790\n  H           1.41384835403246      1.28600586798033      0.15471129787818\n",
+          "unit": null,
+          "actual_conditions": {
+            "input_keywords": [
+              "B3LYP",
+              "def2-SVP",
+              "Opt",
+              "Freq",
+              "TightSCF",
+              "NORI",
+              "NoAutoStart",
+              "RKS"
+            ],
+            "input_blocks": {
+              "pal": {
+                "nprocs": "4"
+              },
+              "maxcore": 192,
+              "scf": {
+                "maxiter": "256",
+                "convforced": "true",
+                "autotrah": "false"
+              },
+              "geom": {
+                "maxiter": "128",
+                "enforcestrictconvergence": "true"
+              },
+              "method": {
+                "z_maxiter": "128"
+              },
+              "output": {
+                "jsonpropfile": "true"
+              }
+            },
+            "charge": 0,
+            "multiplicity": 1,
+            "atom_count": 9,
+            "run_type": "optimization_and_analytic_frequencies",
+            "scientific_validation": "unverified",
+            "method": "B3LYP",
+            "basis": "def2-SVP",
+            "electronic_state": "RKS",
+            "environment": "gas_phase",
+            "origin": "admitted_native_input",
+            "geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+            "input_geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+            "request_version": 3,
+            "system_id": "system_ethanol",
+            "collection_error": null
+          },
+          "sources": [
+            {
+              "artifact_id": "artifact_5da890b872624861bb9bac2d2ebeadae",
+              "sha256": "e897eb579e44efa04acd9fc09ff6d3163d6966eeded0bac52c3f09b032018862",
+              "location": "final optimized geometry",
+              "attempt_id": "attempt_42da3bac7ddc4df18c283e81b4cbbb74",
+              "internal_request_key": "ethanol_opt_freq_1"
+            }
+          ],
+          "code_sha256": "9477c6183737ec184386df66f9659636475cc44bde9c047f38b690895759e8d3",
+          "checks": [
+            {
+              "name": "archived_source_binding",
+              "status": "passed",
+              "detail": "file identity/hash only; value, units and scientific interpretation are unverified",
+              "source": {},
+              "rule_version": "generic-observation-1"
+            }
+          ],
+          "validation_status": "unverified",
+          "limitations": [
+            "Generated code parsed these values; no registered scientific checker qualified them.",
+            "Source locations and interpretation are task declarations; only archived file identity is checked.",
+            "Conditions describe admitted input, not independent output verification."
+          ]
+        },
+        {
+          "name": "vibrational_frequencies",
+          "value": [
+            276.12,
+            317.94,
+            425.09,
+            805.52,
+            895.63,
+            1061.16,
+            1095.16,
+            1141.96,
+            1271.84,
+            1371.72,
+            1385.3,
+            1417.29,
+            1460.06,
+            1468.32,
+            1497.62,
+            2964.71,
+            3016.96,
+            3068.13,
+            3096.55,
+            3116.08,
+            3804.59
+          ],
+          "unit": "cm^-1",
+          "actual_conditions": {
+            "input_keywords": [
+              "B3LYP",
+              "def2-SVP",
+              "Opt",
+              "Freq",
+              "TightSCF",
+              "NORI",
+              "NoAutoStart",
+              "RKS"
+            ],
+            "input_blocks": {
+              "pal": {
+                "nprocs": "4"
+              },
+              "maxcore": 192,
+              "scf": {
+                "maxiter": "256",
+                "convforced": "true",
+                "autotrah": "false"
+              },
+              "geom": {
+                "maxiter": "128",
+                "enforcestrictconvergence": "true"
+              },
+              "method": {
+                "z_maxiter": "128"
+              },
+              "output": {
+                "jsonpropfile": "true"
+              }
+            },
+            "charge": 0,
+            "multiplicity": 1,
+            "atom_count": 9,
+            "run_type": "optimization_and_analytic_frequencies",
+            "scientific_validation": "unverified",
+            "method": "B3LYP",
+            "basis": "def2-SVP",
+            "electronic_state": "RKS",
+            "environment": "gas_phase",
+            "origin": "admitted_native_input",
+            "geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+            "input_geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+            "request_version": 3,
+            "system_id": "system_ethanol",
+            "collection_error": null
+          },
+          "sources": [
+            {
+              "artifact_id": "artifact_4328ae43b19b4b7ba424b9f5e6898409",
+              "sha256": "31f370efa587b15db25435e15630619b6c2c591f05ebb273bc44045da4da0967",
+              "location": "ORCA vibrational frequency block",
+              "attempt_id": "attempt_42da3bac7ddc4df18c283e81b4cbbb74",
+              "internal_request_key": "ethanol_opt_freq_1"
+            }
+          ],
+          "code_sha256": "9477c6183737ec184386df66f9659636475cc44bde9c047f38b690895759e8d3",
+          "checks": [
+            {
+              "name": "archived_source_binding",
+              "status": "passed",
+              "detail": "file identity/hash only; value, units and scientific interpretation are unverified",
+              "source": {},
+              "rule_version": "generic-observation-1"
+            }
+          ],
+          "validation_status": "unverified",
+          "limitations": [
+            "Generated code parsed these values; no registered scientific checker qualified them.",
+            "Source locations and interpretation are task declarations; only archived file identity is checked.",
+            "Conditions describe admitted input, not independent output verification."
+          ]
+        }
+      ],
+      "qualified_outputs": {},
+      "execution_diagnostics": []
+    }
+  ],
+  "repair_integrity": {
+    "same_Run": true,
+    "same_logical_id": "logical_5c8e059e6ae348c99b67e6ddc16b0b76",
+    "different_step_ids": true,
+    "first_code_bytes": 3375,
+    "revised_code_bytes": 3343,
+    "deleted_bytes": 32,
+    "only_first_marker_line_deleted": true,
+    "all_other_frozen_Step_fields_exactly_equal": true,
+    "comparison_scope": "Only Step.id and parameters.code excluded; logical_id, depends_on, manifest, conditions, observation names, system_id and other fields compare equal.",
+    "independent_code_and_contract_audit": {
+      "path": "data/code-tools-step3/validation/live028-code-repair-audit.json",
+      "bytes": 45892,
+      "sha256": "d5c687e2537cf241ff0ae4ecc97dbfc4cf3b8180db151d21ea5ddc5047407137"
+    },
+    "native_input_unchanged_across_attempts": true,
+    "code_retry_cumulative": 1,
+    "second_Python_operation_completed": true,
+    "actual_ORCA_operation_completed": true,
+    "original_spontaneous_error": false
+  },
+  "internal_ORCA": {
+    "request_key": "ethanol_opt_freq_1",
+    "input_fingerprint": "9a3ee1605d6e12c4770016968065682ad087af2596b121ca467d766ebd4ff2c9",
+    "tool": "orca.run",
+    "code": {
+      "artifact_id": "artifact_d3f02fc539a94f46b7df715f7ab3c9da",
+      "sha256": "7aa3a2c3d0e163c498e6dcbb3ca50f768818dbc77541e0a1f1f95b1a5bc292d9",
+      "language": "orca",
+      "version": 1
+    },
+    "inputs": {
+      "version": 1,
+      "entries": [
+        {
+          "artifact_id": "artifact_00b0a4c0696646e69c33d6914b7bce37",
+          "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+          "target_path": "ethanol.xyz",
+          "purpose": "native_dependency"
+        }
+      ]
+    },
+    "conditions": {
+      "admission_version": "native-orca-input-2",
+      "execution_impact": {
+        "orca_starts": 1,
+        "postprocess_starts": 0,
+        "external_programs": false,
+        "internal_work_units": 157,
+        "work_unit_contract": "declared-native-workload-1",
+        "work_unit_meaning": "conservative declared task slots, not actual SCF/response evaluations",
+        "optimization_evaluation_slots": 129,
+        "analytic_hessian_slots": 1,
+        "response_direction_slots": 27,
+        "scf_maxiter": 256,
+        "geom_maxiter": 128,
+        "response_maxiter": 128
+      },
+      "input_binding": {
+        "request_id": "request_a56318b61def44fd8250d989a6eb0f41",
+        "request_version": 3,
+        "step_id": "step_f3c121a13ef44beaa150ce647277e79a",
+        "system_id": "system_ethanol",
+        "conditions": {
+          "method": "B3LYP",
+          "basis": "def2-SVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        },
+        "condition_sources": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        },
+        "geometry_artifact_id": "artifact_e1d10a2d1f8440508e95a4d36123561d",
+        "geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+      }
+    },
+    "actual_conditions": {
+      "input_keywords": [
+        "B3LYP",
+        "def2-SVP",
+        "Opt",
+        "Freq",
+        "TightSCF",
+        "NORI",
+        "NoAutoStart",
+        "RKS"
+      ],
+      "input_blocks": {
+        "pal": {
+          "nprocs": "4"
+        },
+        "maxcore": 192,
+        "scf": {
+          "maxiter": "256",
+          "convforced": "true",
+          "autotrah": "false"
+        },
+        "geom": {
+          "maxiter": "128",
+          "enforcestrictconvergence": "true"
+        },
+        "method": {
+          "z_maxiter": "128"
+        },
+        "output": {
+          "jsonpropfile": "true"
+        }
+      },
+      "charge": 0,
+      "multiplicity": 1,
+      "atom_count": 9,
+      "run_type": "optimization_and_analytic_frequencies",
+      "scientific_validation": "unverified",
+      "method": "B3LYP",
+      "basis": "def2-SVP",
+      "electronic_state": "RKS",
+      "environment": "gas_phase",
+      "origin": "admitted_native_input",
+      "geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+      "input_geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+      "request_version": 3,
+      "system_id": "system_ethanol",
+      "collection_error": null
+    },
+    "state": "completed",
+    "attempt_id": "internal_7d43f1de18f44bc2afcb0e80595ee99c",
+    "parent_attempt_id": "attempt_42da3bac7ddc4df18c283e81b4cbbb74",
+    "work_units": 157,
+    "started": true,
+    "execution_handle": {
+      "backend": "linux-container",
+      "version": 1,
+      "launch_id": "49728fe4b47f4348924a58209af67df9",
+      "container_name": "orca-attempt-49728fe4b47f4348924a58209af67df9",
+      "volume_name": "orca-evidence-49728fe4b47f4348924a58209af67df9",
+      "run_id": "run_e545504b9174421e8e0156a4c6568fc3",
+      "attempt_id": "attempt_42da3bac7ddc4df18c283e81b4cbbb74",
+      "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+      "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+      "execution": {
+        "backend": "linux-container",
+        "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+        "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+        "docker_context": "desktop-linux",
+        "docker_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+        "native_input_policy": {
+          "profile": "bounded-analytic-1",
+          "max_atoms": 32,
+          "max_geom_iterations": 128,
+          "max_scf_iterations": 256,
+          "max_response_iterations": 128
+        },
+        "_docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+      },
+      "engine_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+      "daemon_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+      "heartbeat_ttl_seconds": 15,
+      "timeout_seconds": 1200.0,
+      "container_id": "6605af99dc3cbba6614a1fcf273285419316e80cf466c2c113c110dea1623e92",
+      "isolation_verified": true,
+      "isolation_policy": "linux-container-v1",
+      "kind": "orca",
+      "workload_identity": {
+        "pid": 133,
+        "uid": 10002,
+        "state": "S (sleeping)",
+        "start_ticks": "272567",
+        "name": "python3.11",
+        "cap_eff": "0000000000000000",
+        "cap_prm": "0000000000000000",
+        "cap_inh": "0000000000000000",
+        "cap_amb": "0000000000000000",
+        "no_new_privs": "1",
+        "seccomp": "2"
+      },
+      "launch_phase": "executed",
+      "parent_container_id": "6605af99dc3cbba6614a1fcf273285419316e80cf466c2c113c110dea1623e92",
+      "actual_start_evidence": {
+        "method": "proc_exe_inode_and_pid_start_ticks",
+        "executable": "/opt/orca/orca",
+        "device": 87,
+        "inode": 54273,
+        "pid": 133,
+        "start_ticks": "272567"
+      }
+    },
+    "result_id": null,
+    "created_at": "2026-10-19T10:05:04.169196Z",
+    "finished_at": "2026-10-19T10:06:23.464672Z"
+  },
+  "native_input_provenance": {
+    "original": {
+      "path": "data/code-tools-step3/live-store/artifacts/artifact_8e08379fbe7843b89aa7f2ecee3d1056/files/job.inp",
+      "bytes": 274,
+      "sha256": "c258b596bd594b48bc9008bfae8d49ad381e0a2e1baa0a87bc0abd919e80d12d"
+    },
+    "SDK_request": {
+      "path": "data/code-tools-step3/live-store/artifacts/artifact_d3f02fc539a94f46b7df715f7ab3c9da/files/native.inp",
+      "bytes": 283,
+      "sha256": "7aa3a2c3d0e163c498e6dcbb3ca50f768818dbc77541e0a1f1f95b1a5bc292d9"
+    },
+    "byte_equal": false,
+    "equal_after_CRLF_to_LF_only": true,
+    "sealed_native": {
+      "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_f3c121a13ef44beaa150ce647277e79a/attempt-002/sealed/sdk/native.inp",
+      "bytes": 283,
+      "sha256": "7aa3a2c3d0e163c498e6dcbb3ca50f768818dbc77541e0a1f1f95b1a5bc292d9"
+    },
+    "actual_native": {
+      "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_f3c121a13ef44beaa150ce647277e79a/attempt-002/native/task/job.inp",
+      "bytes": 283,
+      "sha256": "7aa3a2c3d0e163c498e6dcbb3ca50f768818dbc77541e0a1f1f95b1a5bc292d9"
+    }
+  },
+  "observation_evidence": {
+    "optimized_geometry_exact_original_XYZ_text": true,
+    "geometry_unit_field": null,
+    "xyz": {
+      "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_f3c121a13ef44beaa150ce647277e79a/attempt-002/native/task/job.xyz",
+      "bytes": 727,
+      "sha256": "e897eb579e44efa04acd9fc09ff6d3163d6966eeded0bac52c3f09b032018862"
+    },
+    "frequency_stdout": {
+      "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/steps/step_f3c121a13ef44beaa150ce647277e79a/attempt-002/native/task/stdout.out",
+      "bytes": 423618,
+      "sha256": "31f370efa587b15db25435e15630619b6c2c591f05ebb273bc44045da4da0967"
+    },
+    "raw_frequency_count": 27,
+    "delivered_frequency_count": 21,
+    "raw_frequencies": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      276.12,
+      317.94,
+      425.09,
+      805.52,
+      895.63,
+      1061.16,
+      1095.16,
+      1141.96,
+      1271.84,
+      1371.72,
+      1385.3,
+      1417.29,
+      1460.06,
+      1468.32,
+      1497.62,
+      2964.71,
+      3016.96,
+      3068.13,
+      3096.55,
+      3116.08,
+      3804.59
+    ],
+    "delivered_frequencies": [
+      276.12,
+      317.94,
+      425.09,
+      805.52,
+      895.63,
+      1061.16,
+      1095.16,
+      1141.96,
+      1271.84,
+      1371.72,
+      1385.3,
+      1417.29,
+      1460.06,
+      1468.32,
+      1497.62,
+      2964.71,
+      3016.96,
+      3068.13,
+      3096.55,
+      3116.08,
+      3804.59
+    ],
+    "exact_positive_filter_match": true,
+    "filter": "value > 1e-6",
+    "raw_negative_frequency_count": 0,
+    "raw_zero_frequency_count": 6,
+    "limitations": [
+      "The generated parser filters by positivity. It would omit negative modes on another output, so this parser cannot establish a general imaginary-mode safety guarantee.",
+      "The product geometry value is raw XYZ text with unit=null, not a typed explicit angstrom field. Independent interpretation must keep this limitation visible.",
+      "All three observations are unverified and QualifiedOutput is empty. Operation completion and Goal satisfaction do not create scientific qualification."
+    ]
+  },
+  "terminal_delivery": {
+    "decision_id": "model_da411fdfc39142a2b6cc24ff81e9124f",
+    "contract_version": "terminal-delivery-1",
+    "basis": {
+      "request_version": 3,
+      "plan_version": 4,
+      "permission_version": 1,
+      "control_generation": 1
+    },
+    "snapshot_fingerprint": "6865ecdd1c55860a2ba2d06224a0ed2c25355626753f2c66ba606292f2486620",
+    "explanation": {
+      "version": "terminal-delivery-1",
+      "snapshot_ref": "current",
+      "goal_explanations": [
+        {
+          "goal_ref": "g1",
+          "fact_refs": [
+            "f1",
+            "f2",
+            "f3",
+            "f4",
+            "f5"
+          ],
+          "explanation_ref": "e1",
+          "blocker_refs": [],
+          "next_action_ref": "n1"
+        },
+        {
+          "goal_ref": "g2",
+          "fact_refs": [
+            "f6",
+            "f7",
+            "f8",
+            "f9",
+            "f10"
+          ],
+          "explanation_ref": "e2",
+          "blocker_refs": [],
+          "next_action_ref": "n2"
+        },
+        {
+          "goal_ref": "g3",
+          "fact_refs": [
+            "f11",
+            "f12",
+            "f13",
+            "f14",
+            "f15"
+          ],
+          "explanation_ref": "e3",
+          "blocker_refs": [],
+          "next_action_ref": "n3"
+        }
+      ]
+    },
+    "contract_status": "passed",
+    "terminal_state": "completed",
+    "report_status": "rendered",
+    "report_version": "terminal-report-1",
+    "report_path": "runs/run_e545504b9174421e8e0156a4c6568fc3/deliveries/model_da411fdfc39142a2b6cc24ff81e9124f.md",
+    "report_sha256": "c8cedee4ab3319a4f3533a05af3303ecc44844f2314b67190ca1794d7f81fef1",
+    "report_error": null
+  },
+  "independent_complete_delivery_assessment": {
+    "status": "not_passed",
+    "raw_science_oracle": {
+      "path": "data/code-tools-step3/oracle-development/live028-oracle.json",
+      "bytes": 3875,
+      "sha256": "030a2f795f3c66310264fc4251172d16d8ae84417fc5588fa85890f9e5ab598f"
+    },
+    "independent_scientific_and_delivery_audit": {
+      "path": "docs/acceptance/code-as-tools-step3/validation/live028-independent-scientific-audit.json",
+      "bytes": 15614,
+      "sha256": "83a1b1bbc431f1d22dbf9788dea0c1cfe2207e7354c9e831761d120a85e77a42"
+    },
+    "raw_scientific_check_passed": true,
+    "reasons": [
+      "The 27-mode raw spectrum is delivered as an unlabelled 21-positive-mode subset, omitting six zero modes.",
+      "Optimized XYZ observation has unit=null and the user report renders its unit as unknown."
+    ],
+    "boundary": "Successful operations and product completed/complete status do not satisfy this complete-delivery review. Raw science passing does not upgrade any product observation."
+  },
+  "findings": [
+    "The first full 3375-byte model task genuinely failed on the explicit marker before ORCA. The model removed only that 32-byte line.",
+    "The second actual Python Attempt preserved the frozen purpose and inputs, consumed one code retry, launched one admitted ORCA calculation and completed.",
+    "The model delivered source-bound unverified observations and a passing terminal explanation. The product recorded completed/complete and all three Goals satisfied.",
+    "Frequency output contains 21 positive values from a 27-mode raw block; six exact zeros are omitted and this raw block has no negative frequencies.",
+    "The independent raw-science oracle passes, but complete scientific delivery does not: the subset is not labelled and geometry units are missing. This Run therefore does not establish complete Step3 acceptance despite successful bounded repair execution."
+  ],
+  "unverified": [
+    "Production frequency/DFT scientific qualification and global-minimum proof.",
+    "General negative-mode handling by the positive-only parser.",
+    "Formal repeated stability and remote cluster validation."
+  ],
+  "report_status": "Product completed/complete and bounded same-purpose code repair execution succeeded; independent complete scientific delivery did not pass. Step3 acceptance remains incomplete.",
+  "evidence": {
+    "run": {
+      "path": "data/code-tools-step3/live-store/runs/run_e545504b9174421e8e0156a4c6568fc3/run.json",
+      "bytes": 320302,
+      "sha256": "23e0c2487510a9dd8c626a6887308358b65eaf81325225210f9842daf80d9f68"
+    },
+    "outcome": {
+      "path": "data/code-tools-step3/live-028/outcome.json",
+      "bytes": 4460,
+      "sha256": "02545f36084f2c67eecfbcfc5342c355dc05e189bac14f7feaff68e361f902c6"
+    },
+    "freeze": {
+      "path": "data/code-tools-step3/live-028/freeze.json",
+      "bytes": 12563,
+      "sha256": "17b38ecbdfa163554dedf500f9c603281cbc12ffac91208f72ff37791d8ce9d8"
+    },
+    "start_check": {
+      "path": "data/code-tools-step3/live-028-freeze-start-audit.json",
+      "bytes": 604,
+      "sha256": "7231479b896353f0432b68eb4d02d808a52d14e4cc6229a4e8dfe1d9202c73e4"
+    },
+    "end_check": {
+      "path": "data/code-tools-step3/live-028-freeze-end-audit.json",
+      "bytes": 405,
+      "sha256": "5065d82d24780bb01849c54113bb76bc81900cc03294b7949253cd1895a17284"
+    },
+    "first_failure_check": {
+      "path": "data/code-tools-step3/live-028-first-failure-audit.json",
+      "bytes": 5268,
+      "sha256": "987838988a7fcd565886e3d21f716ecb5dbbe86fe67f7a191ca63fca22e00c84"
+    }
+  },
+  "original_run_read_only_check": {
+    "file_count": 221,
+    "before_manifest_sha256": "18f6be48cd748f0189d61b80ee5b73c4b69535dd979dc907c5e1c9e9dfabf664",
+    "after_manifest_sha256": "18f6be48cd748f0189d61b80ee5b73c4b69535dd979dc907c5e1c9e9dfabf664",
+    "changed": [],
+    "reference_paths_rehashed": 197,
+    "all_references_match": true
+  },
+  "archived_file_hash_check_count": 61,
+  "full_audit": {
+    "path": "data/code-tools-step3/live-028-audit.json",
+    "bytes": 233018,
+    "sha256": "53e315c3951eaabcc0be0be7b5b9ba130a0abf4b440e407f96571efc55f6a391"
+  }
+}

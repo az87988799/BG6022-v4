@@ -1,0 +1,597 @@
+{
+  "schema_version": 1,
+  "scope": "Independent posthoc seeded live032 prelaunch failure audit; no model, task or ORCA invoked by auditor.",
+  "audited_at_utc": "2026-10-19T10:43:09.113386+00:00",
+  "finished_at_utc": "2026-10-19T10:43:09.298653+00:00",
+  "run_id": "run_52d53e5e8c554be6b77071ee249fab7d",
+  "state": "failed",
+  "delivery_status": "partial",
+  "goal_status": {
+    "goal_prepared_geometry": "satisfied",
+    "goal_optimized_geometry": "insufficient_evidence",
+    "goal_vibrational_frequencies": "insufficient_evidence"
+  },
+  "development_prompt": {
+    "text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。\n\n以下是独立的受控代码故障开发验收，不是自然任务首次自主成功的证据。\nDEVELOPMENT_FAULT_SEEDED: CODE_TOOLS_DEVELOPMENT_FAULT_V1\n本次仍由你自行检索、选择条件、制定 Plan，并编写完整 Python 程序与 ORCA 输入，不使用开发者提供的解题脚本。\n首次执行 Python 前，先完成所需条件选择、初始结构和全部任务文件的生成。第一版 Python 必须已经是完成上述科学目标的完整程序，包含实际 SDK 计算、输出读取和观察交付；禁止先执行仅用于报错的占位脚本、空任务或故障探针。第一次执行的 Step 就必须具备实际任务所需的完整输入 manifest、体系、条件、观察名、目标绑定与依赖，不能把这些留到第二次补充。所有 Artifact 与 hash 必须来自实际已完成的工具输出。\n在这份完整程序的任何导入、文件操作、SDK 调用或其他工作之前，写一行单独的未定义名称表达式 CODE_TOOLS_DEVELOPMENT_FAULT_V1。模块文档字符串可以在前；如果使用 __future__ 导入，必须将其放在故障标记之前（且保持 Python 规定的文件开头顺序），否则会在执行前产生 SyntaxError，不能算本次 NameError 故障。不要定义该名称，不要捕获这一行的 NameError。这一行是唯一人为要求的故障；其余程序从第一版开始就应完整。\n实际执行并读取真实失败反馈后，在同一个 Run 内由你自己通过 workspace.write 生成修订代码：仅删除上述独立 marker 行，其他代码字节保持不变。先完成新代码的写入，再提交修复 Step：使用新的 Step key 与原失败 Step 的同一个 logical_key，除 CodeRef 外保留原有输入、条件、目的、依赖和观察名。不要把新 writer 加为修复 Step 的依赖，不要重跑旧代码或再次注入 marker。第一次在 marker 处失败时尚未调用 SDK，因此已有计算请求键无须更改。若发现其他问题不能在这些约束下完成，保留事实并停止，不放宽测试或科学目标。\n继续使用同一累计预算和现有生产校验完成真实计算与带来源的结果交付。开发驱动只核验前置条件、驱动与采证，不会替你改写 Plan、脚本、ORCA 输入或模型回复。交付时区分本次人为要求的 NameError 与自然发生的错误，披露首次失败、实际修复、资源成本和科学验证缺项。",
+    "text_utf8_sha256": "b03759aefbbff15bc65a860f355d283f707c3cf7ebc57076e945963901442d8f",
+    "version": "repair-request-v3"
+  },
+  "model_usage": {
+    "http_calls": 16,
+    "input_tokens": 221463,
+    "output_tokens": 34813,
+    "total_tokens": 256276,
+    "estimated_usd": "0.1082145",
+    "unknown_tokens": 0,
+    "cost_basis": "Frozen uncached USD0.30 input / USD1.20 output per million; estimate, not invoice."
+  },
+  "actual_usage": {
+    "internal_work_units": 0,
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 0.0,
+    "cpu_seconds": 0.0,
+    "resource_usage_complete": true,
+    "logical_attempts": {},
+    "fingerprint_attempts": {},
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 16,
+    "model_tokens_used": 256276,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 1,
+    "decision_rounds": 16,
+    "evidence_reads": 3,
+    "analysis_executions": 2,
+    "logical_steps": [
+      "logical_5f5f9ff1e9944a4d81e9a3e831f94397",
+      "logical_90f915f1caa94b24805d96f0437ff886",
+      "logical_c84339a9ca8d48e6859f262d573cb2d9",
+      "logical_dbaa74a3b1ad4e89909dbd838e9cc0d3"
+    ],
+    "identity_queries": 1,
+    "structure_preparations": 1,
+    "knowledge_queries": 3
+  },
+  "source_freeze": {
+    "start": {
+      "scope": "Independent live-032 source/driver observation; no Run mutation.",
+      "checked_at_utc": "2026-10-19T10:38:24.571821+00:00",
+      "frozen_at": "2026-10-19T10:38:01.812394+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-032/freeze.json",
+        "bytes": 12732,
+        "sha256": "e5dfa45b601c18654eadc4b2b72d23f45a7df4a4036b7750f646e697d468585d"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_exists_at_check": false,
+      "independent_in_run_start_observed": true
+    },
+    "end": {
+      "scope": "Independent live-032 source/driver observation; no Run mutation.",
+      "checked_at_utc": "2026-10-19T10:42:03.406021+00:00",
+      "frozen_at": "2026-10-19T10:38:01.812394+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-032/freeze.json",
+        "bytes": 12732,
+        "sha256": "e5dfa45b601c18654eadc4b2b72d23f45a7df4a4036b7750f646e697d468585d"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_source_changed": [],
+      "outcome_finished_at": "2026-10-19T10:41:45.676266+00:00"
+    },
+    "outcome_changes": []
+  },
+  "writers": [
+    {
+      "call_id": "call_af5fc3f2783e49229ee3abb5b599c4c7",
+      "name": "job.inp",
+      "role": "orca",
+      "artifact_id": "artifact_5b73cc138d364c64ba069daf75085a69",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_5b73cc138d364c64ba069daf75085a69/files/job.inp",
+        "bytes": 242,
+        "sha256": "6147f32b699e6a670551964e769c00365b0324278b87566e6fdc5ff77fc3b591"
+      },
+      "model_origins": [
+        "model_bf42b3bae14a4709bf53733f3373cfa4",
+        "model_3481011ec4cd4abd9940332b06e75007"
+      ],
+      "model_content_equals_writer_artifact": true
+    },
+    {
+      "call_id": "call_67f2d81a61754742a67870b83981f690",
+      "name": "opt_freq.py",
+      "role": "python",
+      "artifact_id": "artifact_955c9f67017347cd9e3ddbbd770b25c9",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_955c9f67017347cd9e3ddbbd770b25c9/files/opt_freq.py",
+        "bytes": 3112,
+        "sha256": "ccdf45d1e8b784d9da53cc3781f6729dc1f052a6a346038dfef857cc34d289ad"
+      },
+      "model_origins": [
+        "model_bf42b3bae14a4709bf53733f3373cfa4",
+        "model_3481011ec4cd4abd9940332b06e75007"
+      ],
+      "model_content_equals_writer_artifact": true
+    }
+  ],
+  "candidate_not_executed": {
+    "marker_line": 2,
+    "syntax_compiles_without_execution": true,
+    "code_file": {
+      "path": "data/code-tools-step3/live-store/artifacts/artifact_955c9f67017347cd9e3ddbbd770b25c9/files/opt_freq.py",
+      "bytes": 3112,
+      "sha256": "ccdf45d1e8b784d9da53cc3781f6729dc1f052a6a346038dfef857cc34d289ad"
+    },
+    "full_algorithm_and_manifest_execution_validated": false
+  },
+  "terminal_proposal_failures": [
+    {
+      "ordinal": 14,
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "steps": [
+            {
+              "key": "step_execute_ethanol_opt_freq",
+              "logical_key": "logical_ethanol_opt_freq_run",
+              "tool": "python.execute",
+              "system_id": "system_ethanol",
+              "depends_on": [
+                "step_f86e16b4e0b34ab99b8a201dece4123a",
+                "step_02557f49313e46799c52754c532949b7",
+                "step_bb52ab9c3328459f848d628e1a49cb79",
+                "step_f4cb35fa90824384b37595477f1b69ed"
+              ],
+              "parameters": {
+                "code": {
+                  "artifact_id": "artifact_955c9f67017347cd9e3ddbbd770b25c9",
+                  "sha256": "ccdf45d1e8b784d9da53cc3781f6729dc1f052a6a346038dfef857cc34d289ad",
+                  "language": "python",
+                  "version": 1
+                },
+                "inputs": {
+                  "version": 1,
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_5b73cc138d364c64ba069daf75085a69",
+                      "sha256": "6147f32b699e6a670551964e769c00365b0324278b87566e6fdc5ff77fc3b591",
+                      "target_path": "job.inp",
+                      "purpose": "Native ORCA Opt+Freq input referenced by the complete execution program."
+                    },
+                    {
+                      "artifact_id": "artifact_4383cf6b570d4288bf0f31ae09408e2e",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz",
+                      "purpose": "Prepared ethanol geometry dependency referenced by the ORCA input."
+                    }
+                  ]
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              }
+            }
+          ],
+          "goal_map": {
+            "goal_prepared_geometry": {
+              "gap": "",
+              "port": "prepared_geometry",
+              "step_key": "step_02557f49313e46799c52754c532949b7"
+            },
+            "goal_optimized_geometry": {
+              "gap": "Complete Opt+Freq execution step planned; the program will write optimized_geometry observations after reading actual ORCA output.",
+              "port": "optimized_geometry"
+            },
+            "goal_vibrational_frequencies": {
+              "gap": "Complete Opt+Freq execution step planned; the program will write vibrational_frequencies observations after reading actual ORCA output.",
+              "port": "vibrational_frequencies"
+            }
+          }
+        },
+        "reason": "Prepared geometry, native ORCA input, and the complete Python driver already exist as immutable artifacts. No pending step can execute them, so revise the Plan to add the python.execute step using those exact artifact IDs and hashes; the step preserves all completed producer dependencies and binds the requested observation names."
+      },
+      "record": {
+        "path": "data/code-tools-step3/live-store/runs/run_52d53e5e8c554be6b77071ee249fab7d/model/model_74ec4b871140451c8f098aef786b00e9.response.json",
+        "bytes": 5700,
+        "sha256": "c8b10cecc65cc7763109d522a3e9f75bdb87d56530ed2bca3f60806050423c6a"
+      },
+      "rejection": {
+        "id": "model_74ec4b871140451c8f098aef786b00e9",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 2,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Each Goal target must use exactly one binding shape. A Step binding is a future output route, not goal completion; do not combine it with a gap.",
+            "errors": [
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "goal_map",
+                  "goal_prepared_geometry",
+                  "gap"
+                ]
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "parameters",
+                  "goal_map",
+                  "goal_prepared_geometry",
+                  "evidence"
+                ]
+              },
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "goal_map",
+                  "goal_prepared_geometry",
+                  "step_key"
+                ]
+              }
+            ],
+            "code": "goal_target_shape",
+            "path": [
+              "parameters",
+              "goal_map",
+              "goal_prepared_geometry"
+            ],
+            "binding_shapes": [
+              [
+                "step_key",
+                "port"
+              ],
+              [
+                "evidence",
+                "port"
+              ],
+              [
+                "gap",
+                "port"
+              ]
+            ],
+            "step_target_instruction": "A stored Goal route uses step_id; the equivalent proposal route uses step_key with that same existing Step ID and unchanged port. Keep the referenced Step in steps with {key:existing_step_id}. Do not copy step_id into goal_map."
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 15,
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "goal_map": {
+            "goal_prepared_geometry": {
+              "port": "prepared_geometry",
+              "step_key": "step_02557f49313e46799c52754c532949b7"
+            },
+            "goal_optimized_geometry": {
+              "port": "optimized_geometry",
+              "gap": "A complete Python execution step is planned using the existing native ORCA Opt+Freq input and driver; optimized_geometry will be emitted only after actual ORCA output is read and parsed."
+            },
+            "goal_vibrational_frequencies": {
+              "port": "vibrational_frequencies",
+              "gap": "A complete Python execution step is planned using the existing native ORCA Opt+Freq input and driver; vibrational_frequencies will be emitted only after actual ORCA output is read and parsed."
+            }
+          },
+          "steps": [
+            {
+              "key": "step_02557f49313e46799c52754c532949b7"
+            },
+            {
+              "key": "step_execute_ethanol_opt_freq",
+              "logical_key": "logical_ethanol_opt_freq_run",
+              "depends_on": [
+                "step_f86e16b4e0b34ab99b8a201dece4123a",
+                "step_02557f49313e46799c52754c532949b7",
+                "step_bb52ab9c3328459f848d628e1a49cb79",
+                "step_f4cb35fa90824384b37595477f1b69ed"
+              ],
+              "parameters": {
+                "code": {
+                  "artifact_id": "artifact_955c9f67017347cd9e3ddbbd770b25c9",
+                  "language": "python",
+                  "sha256": "ccdf45d1e8b784d9da53cc3781f6729dc1f052a6a346038dfef857cc34d289ad",
+                  "version": 1
+                },
+                "inputs": {
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_5b73cc138d364c64ba069daf75085a69",
+                      "purpose": "Native ORCA Opt+Freq input referenced by the complete execution program.",
+                      "sha256": "6147f32b699e6a670551964e769c00365b0324278b87566e6fdc5ff77fc3b591",
+                      "target_path": "job.inp"
+                    },
+                    {
+                      "artifact_id": "artifact_4383cf6b570d4288bf0f31ae09408e2e",
+                      "purpose": "Prepared ethanol geometry dependency referenced by the ORCA input.",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz"
+                    }
+                  ],
+                  "version": 1
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              },
+              "system_id": "system_ethanol",
+              "tool": "python.execute"
+            }
+          ]
+        },
+        "reason": "Correct the rejected goal_map shape: prepared_geometry now uses only the required step_key binding to the existing prepared-geometry Step, while the two unmet goals use gap-only bindings. Add the complete python.execute Step using the existing code, native ORCA input, and prepared-geometry artifacts with their recorded hashes, preserving completed producer dependencies and requesting the two required observation names."
+      },
+      "record": {
+        "path": "data/code-tools-step3/live-store/runs/run_52d53e5e8c554be6b77071ee249fab7d/model/model_6cabae46f19d4768b12feffea5e362e9.response.json",
+        "bytes": 6203,
+        "sha256": "fe8b6ed6166984be91787665de9a6eb68c5a1ebfb3c2417c8852c476974bf732"
+      },
+      "rejection": {
+        "id": "model_6cabae46f19d4768b12feffea5e362e9",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 2,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Reusing a Step preserves its dependencies. Include each missing existing Step with {key:existing_step_id} and retain its dependency closure; the program does not automatically insert Steps or change the proposed Plan.",
+            "code": "missing_retained_dependency",
+            "path": [
+              "parameters",
+              "steps",
+              0,
+              "key"
+            ],
+            "retained_step_id": "step_02557f49313e46799c52754c532949b7",
+            "missing_dependency_step_ids": [
+              "step_f86e16b4e0b34ab99b8a201dece4123a"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 16,
+      "proposal": {
+        "action": "revise_plan",
+        "parameters": {
+          "steps": [
+            {
+              "key": "step_f86e16b4e0b34ab99b8a201dece4123a"
+            },
+            {
+              "key": "step_02557f49313e46799c52754c532949b7",
+              "depends_on": [
+                "step_f86e16b4e0b34ab99b8a201dece4123a"
+              ]
+            },
+            {
+              "key": "step_bb52ab9c3328459f848d628e1a49cb79",
+              "depends_on": [
+                "step_02557f49313e46799c52754c532949b7"
+              ]
+            },
+            {
+              "key": "step_f4cb35fa90824384b37595477f1b69ed",
+              "depends_on": []
+            },
+            {
+              "key": "step_execute_ethanol_opt_freq",
+              "logical_key": "logical_ethanol_opt_freq_run",
+              "tool": "python.execute",
+              "system_id": "system_ethanol",
+              "depends_on": [
+                "step_f86e16b4e0b34ab99b8a201dece4123a",
+                "step_02557f49313e46799c52754c532949b7",
+                "step_bb52ab9c3328459f848d628e1a49cb79",
+                "step_f4cb35fa90824384b37595477f1b69ed"
+              ],
+              "parameters": {
+                "code": {
+                  "artifact_id": "artifact_955c9f67017347cd9e3ddbbd770b25c9",
+                  "language": "python",
+                  "sha256": "ccdf45d1e8b784d9da53cc3781f6729dc1f052a6a346038dfef857cc34d289ad",
+                  "version": 1
+                },
+                "inputs": {
+                  "entries": [
+                    {
+                      "artifact_id": "artifact_5b73cc138d364c64ba069daf75085a69",
+                      "purpose": "Native ORCA Opt+Freq input referenced by the complete execution program.",
+                      "sha256": "6147f32b699e6a670551964e769c00365b0324278b87566e6fdc5ff77fc3b591",
+                      "target_path": "job.inp"
+                    },
+                    {
+                      "artifact_id": "artifact_4383cf6b570d4288bf0f31ae09408e2e",
+                      "purpose": "Prepared ethanol geometry dependency referenced by the ORCA input.",
+                      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                      "target_path": "ethanol.xyz"
+                    }
+                  ],
+                  "version": 1
+                },
+                "observation_names": [
+                  "optimized_geometry",
+                  "vibrational_frequencies"
+                ]
+              }
+            }
+          ],
+          "goal_map": {
+            "goal_prepared_geometry": {
+              "port": "prepared_geometry",
+              "step_key": "step_02557f49313e46799c52754c532949b7"
+            },
+            "goal_optimized_geometry": {
+              "gap": "A complete Python execution step is planned using the existing native ORCA Opt+Freq input and driver; optimized_geometry will be emitted only after actual ORCA output is read and parsed.",
+              "port": "optimized_geometry"
+            },
+            "goal_vibrational_frequencies": {
+              "gap": "A complete Python execution step is planned using the existing native ORCA Opt+Freq input and driver; vibrational_frequencies will be emitted only after actual ORCA output is read and parsed.",
+              "port": "vibrational_frequencies"
+            }
+          }
+        },
+        "reason": "Correct the rejected proposal by preserving the retained prepared-geometry Step's dependency closure: include step_f86e16b4e0b34ab99b8a201dece4123a, keep step_02557f49313e46799c52754c532949b7 depending on it, and include the completed job.inp and code writer Steps. The new python.execute Step retains its existing code/input artifacts, recorded hashes, dependencies, system binding, and observation names."
+      },
+      "record": {
+        "path": "data/code-tools-step3/live-store/runs/run_52d53e5e8c554be6b77071ee249fab7d/model/model_7f8b56371beb457e81bcaa04f0338e0c.response.json",
+        "bytes": 6907,
+        "sha256": "3fd207d1ba5dd59657a474565a042a58d762cae84de2224920ee3c2852366981"
+      },
+      "rejection": {
+        "id": "model_7f8b56371beb457e81bcaa04f0338e0c",
+        "basis": {
+          "request_version": 3,
+          "plan_version": 2,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "A retained Step must use only {key:existing_step_id}, without other fields. For every frozen Step being reused, omit depends_on, tool and parameters; its original dependencies remain unchanged. Include those dependency Steps separately by key too; the program does not insert them or remove submitted fields.",
+            "code": "retained_step_has_fields",
+            "path": [
+              "parameters",
+              "steps",
+              1
+            ],
+            "step_key": "step_02557f49313e46799c52754c532949b7",
+            "unexpected_fields": [
+              "depends_on"
+            ],
+            "retained_step_shape": {
+              "key": "step_02557f49313e46799c52754c532949b7"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "seeded_gate": {
+    "scope": "development_fault_seeded",
+    "status": "not_established",
+    "reason": "before_science_reservation was not reached",
+    "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1"
+  },
+  "terminal_diagnostics": [
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_bf42b3bae14a4709bf53733f3373cfa4",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_74ec4b871140451c8f098aef786b00e9",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_6cabae46f19d4768b12feffea5e362e9",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_7f8b56371beb457e81bcaa04f0338e0c",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "StoreError",
+      "message": "bounded proposal correction or transport retry exhausted",
+      "environment_occupied": false
+    }
+  ],
+  "findings": [
+    "Identity resolution, initial geometry preparation and two workspace writers completed. The model wrote its native input and task Python; neither was executed by Python or ORCA.",
+    "Proposal 14 mixed gap and step_key in the prepared-geometry Goal target. Proposal 15 corrected that shape but retained prepare without its existing resolve dependency.",
+    "Proposal 16 added dependency keys, but its retained prepare entry at index1 included an extra depends_on field. That exact first retained-field rejection is preserved; later writer entries also contained extra fields.",
+    "These three consecutive replies were complete JSON with finish_reason=stop and were rejected as correction failures. The bounded correction allowance then ended the Run; this was not truncation.",
+    "An earlier Goal-reference rejection at proposal 8 had been followed by an accepted revision at proposal 9. It is distinct from the final consecutive rejection sequence.",
+    "The seeded gate was not reached. No Python Attempt, real marker NameError, code repair, ORCA call or new scientific observation was established."
+  ],
+  "unverified": [
+    "Actual candidate execution, seeded failure and same-logical-purpose code repair.",
+    "Optimization/frequency calculation and scientific delivery."
+  ],
+  "report_status": "failed prelaunch seeded trial; prepared geometry only, no repair acceptance",
+  "evidence": {
+    "run": {
+      "path": "data/code-tools-step3/live-store/runs/run_52d53e5e8c554be6b77071ee249fab7d/run.json",
+      "bytes": 116703,
+      "sha256": "bd1f12986f24c325be3d45f9b31368e5d7ed92bf51fe89bd94d5734aaf82f81f"
+    },
+    "outcome": {
+      "path": "data/code-tools-step3/live-032/outcome.json",
+      "bytes": 1531,
+      "sha256": "bcf9838cd53b4ec9717e8c1e5c16405f5f4c5479868212a8b5613b629811bca8"
+    },
+    "freeze": {
+      "path": "data/code-tools-step3/live-032/freeze.json",
+      "bytes": 12732,
+      "sha256": "e5dfa45b601c18654eadc4b2b72d23f45a7df4a4036b7750f646e697d468585d"
+    },
+    "start_check": {
+      "path": "data/code-tools-step3/live-032-freeze-start-audit.json",
+      "bytes": 635,
+      "sha256": "944b8324adeff4c324e74ec833080538b4c5f1152b3dcddc3d8fd0fa242328b6"
+    },
+    "end_check": {
+      "path": "data/code-tools-step3/live-032-freeze-end-audit.json",
+      "bytes": 647,
+      "sha256": "3e44f9cb318a278c55b6a5c7e2961d92ff879e5c24b5d4216e6ee17acb34f31b"
+    },
+    "independent_code_audit": {
+      "path": "data/code-tools-step3/validation/live032-code-unexecuted-audit.json",
+      "bytes": 32757,
+      "sha256": "80656dfd1acaea8bb323bd5667bb8afd97f5ebc3556061c62579b7c09f3f630e"
+    }
+  },
+  "original_run_read_only_check": {
+    "file_count": 100,
+    "before_manifest_sha256": "490e0c9c3cf12eabc44041cf50c845bcf4548aab34faad000a590fbf62b6e727",
+    "after_manifest_sha256": "490e0c9c3cf12eabc44041cf50c845bcf4548aab34faad000a590fbf62b6e727",
+    "changed": [],
+    "reference_paths_rehashed": 86,
+    "all_references_match": true
+  },
+  "archived_file_hash_check_count": 24,
+  "full_audit": {
+    "path": "data/code-tools-step3/live-032-audit.json",
+    "bytes": 138350,
+    "sha256": "839fe3717385184cfee3614f9992ba42d3ec70b847e8c5400d0d14fbec3a38be"
+  }
+}

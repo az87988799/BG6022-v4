@@ -1,0 +1,487 @@
+{
+  "schema_version": 1,
+  "scope": "Independent posthoc live031 explicit fault-seeded execution/cost audit; no model, task or ORCA invoked by auditor.",
+  "audited_at_utc": "2026-10-19T10:39:22.422656+00:00",
+  "finished_at_utc": "2026-10-19T10:39:22.620269+00:00",
+  "run_id": "run_1472758d09264a5ca56439c2eb53013a",
+  "state": "failed",
+  "delivery_status": "partial",
+  "goal_status": {
+    "goal_prepared_geometry": "satisfied",
+    "goal_optimized_geometry": "insufficient_evidence",
+    "goal_vibrational_frequencies": "insufficient_evidence"
+  },
+  "model_usage": {
+    "http_calls": 13,
+    "input_tokens": 173121,
+    "output_tokens": 45239,
+    "total_tokens": 218360,
+    "estimated_usd": "0.1062231",
+    "unknown_tokens": 0,
+    "cost_basis": "Frozen uncached USD0.30 input / USD1.20 output per million; estimate, not invoice."
+  },
+  "actual_usage": {
+    "internal_work_units": 0,
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 1.530999999999949,
+    "cpu_seconds": 0.70439,
+    "resource_usage_complete": false,
+    "logical_attempts": {
+      "logical_6abfcaaeba6a42a0a4dc6f1cc591b3da": 1
+    },
+    "fingerprint_attempts": {
+      "569ecc19403e02bbe88d51c6166cfb567206b66087106ebe98d516751673c90d": 1
+    },
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 13,
+    "model_tokens_used": 218360,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 2,
+    "decision_rounds": 13,
+    "evidence_reads": 2,
+    "analysis_executions": 1,
+    "logical_steps": [
+      "logical_08031f26d6ba4afcb82909f3c4e16617",
+      "logical_5ab2cb6c85d74aacb6c38308d8460928",
+      "logical_6abfcaaeba6a42a0a4dc6f1cc591b3da",
+      "logical_9ddd2147a04b4f8e9158a3e11ecb71e4"
+    ],
+    "identity_queries": 1,
+    "structure_preparations": 1,
+    "knowledge_queries": 3
+  },
+  "source_freeze": {
+    "start": {
+      "scope": "Independent live-031 source/driver observation; no Run mutation.",
+      "checked_at_utc": "2026-10-19T10:33:17.247864+00:00",
+      "frozen_at": "2026-10-19T10:33:01.011471+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-031/freeze.json",
+        "bytes": 12732,
+        "sha256": "5540e44e459a197dfa9ede7ebebcb8de06628e0cc5662a1aeb684cd8718a01f3"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_exists_at_check": false,
+      "independent_in_run_start_observed": true
+    },
+    "end": {
+      "scope": "Independent live-031 source/driver observation; no Run mutation.",
+      "checked_at_utc": "2026-10-19T10:37:45.686208+00:00",
+      "frozen_at": "2026-10-19T10:33:01.011471+00:00",
+      "freeze": {
+        "path": "data/code-tools-step3/live-031/freeze.json",
+        "bytes": 12732,
+        "sha256": "5540e44e459a197dfa9ede7ebebcb8de06628e0cc5662a1aeb684cd8718a01f3"
+      },
+      "source_file_count": 62,
+      "source_changed": [],
+      "driver_sha256": "8114dec5cb2677610593939d2cb915e0ab09166be17a587b2aa9cda4bd982f01",
+      "driver_matches_freeze": true,
+      "outcome_source_changed": [],
+      "outcome_finished_at": "2026-10-19T10:37:21.631912+00:00"
+    },
+    "outcome_changes": []
+  },
+  "development_prompt": {
+    "text": "请为乙醇生成结构，选择合适的方法和基组，优化结构并分析振动频率，说明计算条件和结果验证情况。\n\n以下是独立的受控代码故障开发验收，不是自然任务首次自主成功的证据。\nDEVELOPMENT_FAULT_SEEDED: CODE_TOOLS_DEVELOPMENT_FAULT_V1\n本次仍由你自行检索、选择条件、制定 Plan，并编写完整 Python 程序与 ORCA 输入，不使用开发者提供的解题脚本。\n首次执行 Python 前，先完成所需条件选择、初始结构和全部任务文件的生成。第一版 Python 必须已经是完成上述科学目标的完整程序，包含实际 SDK 计算、输出读取和观察交付；禁止先执行仅用于报错的占位脚本、空任务或故障探针。第一次执行的 Step 就必须具备实际任务所需的完整输入 manifest、体系、条件、观察名、目标绑定与依赖，不能把这些留到第二次补充。所有 Artifact 与 hash 必须来自实际已完成的工具输出。\n在这份完整程序的任何导入、文件操作、SDK 调用或其他工作之前，写一行单独的未定义名称表达式 CODE_TOOLS_DEVELOPMENT_FAULT_V1。模块文档字符串可以在前；如果使用 __future__ 导入，必须将其放在故障标记之前（且保持 Python 规定的文件开头顺序），否则会在执行前产生 SyntaxError，不能算本次 NameError 故障。不要定义该名称，不要捕获这一行的 NameError。这一行是唯一人为要求的故障；其余程序从第一版开始就应完整。\n实际执行并读取真实失败反馈后，在同一个 Run 内由你自己通过 workspace.write 生成修订代码：仅删除上述独立 marker 行，其他代码字节保持不变。先完成新代码的写入，再提交修复 Step：使用新的 Step key 与原失败 Step 的同一个 logical_key，除 CodeRef 外保留原有输入、条件、目的、依赖和观察名。不要把新 writer 加为修复 Step 的依赖，不要重跑旧代码或再次注入 marker。第一次在 marker 处失败时尚未调用 SDK，因此已有计算请求键无须更改。若发现其他问题不能在这些约束下完成，保留事实并停止，不放宽测试或科学目标。\n继续使用同一累计预算和现有生产校验完成真实计算与带来源的结果交付。开发驱动只核验前置条件、驱动与采证，不会替你改写 Plan、脚本、ORCA 输入或模型回复。交付时区分本次人为要求的 NameError 与自然发生的错误，披露首次失败、实际修复、资源成本和科学验证缺项。",
+    "text_utf8_sha256": "b03759aefbbff15bc65a860f355d283f707c3cf7ebc57076e945963901442d8f",
+    "version": "repair-request-v3"
+  },
+  "seeded_gate": {
+    "version": 1,
+    "scope": "development_fault_seeded",
+    "run_id": "run_1472758d09264a5ca56439c2eb53013a",
+    "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1",
+    "point": "before_science_reservation",
+    "status": "prelaunch_verified",
+    "checked_at": "2026-10-19T10:35:59.427637+00:00",
+    "mutated_task_content": false,
+    "selection_origin": "activated_model_plan_first_ready",
+    "source_model_response_sha256": "5f4c82af4e77fabae5f160c53f8368f07e0b8b7b5b9adbbba9ea13aebf852706",
+    "source_decision_record_sha256": "c0879e23a96693d86ccba2e5e2797ffff3db3bf543053f76bbff5398d79fbcc1",
+    "source_decision_basis": {
+      "request_version": 3,
+      "plan_version": 2,
+      "permission_version": 1,
+      "control_generation": 1
+    },
+    "syntax": {
+      "marker": "CODE_TOOLS_DEVELOPMENT_FAULT_V1",
+      "line": 2,
+      "ast_kind": "Expr(Name(Load))",
+      "compiled_without_execution": true
+    },
+    "request_version": 3,
+    "plan_version": 3,
+    "plan_sha256": "7c4ef0d88ef09b2c82adb99cef2f23523bc7a862d2c4439e582b7944ca15ba67",
+    "step_id": "step_42391d019f4b43dbb6e7c8f13f90c6b4",
+    "logical_id": "logical_6abfcaaeba6a42a0a4dc6f1cc591b3da",
+    "code": {
+      "artifact_id": "artifact_32b77cee02c340edbe541df701d56099",
+      "sha256": "7515ac57a8a8ef28653128eef7a292a9ea42ac2d77a9d86c2ebcd9c25b977c3e",
+      "language": "python",
+      "version": 1
+    },
+    "code_bytes": 4954,
+    "source_call_id": "call_d7212dd6545c46c4a1c3d41a345acf8d",
+    "decision_id": "model_0cc0f63aeef64ac19e41a51b5e59016b",
+    "usage_before": {
+      "internal_work_units": 0,
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 12,
+      "model_tokens_used": 184690,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 2,
+      "decision_rounds": 12,
+      "evidence_reads": 2,
+      "analysis_executions": 1,
+      "logical_steps": [
+        "logical_08031f26d6ba4afcb82909f3c4e16617",
+        "logical_5ab2cb6c85d74aacb6c38308d8460928",
+        "logical_6abfcaaeba6a42a0a4dc6f1cc591b3da",
+        "logical_9ddd2147a04b4f8e9158a3e11ecb71e4"
+      ],
+      "identity_queries": 1,
+      "structure_preparations": 1,
+      "knowledge_queries": 3
+    },
+    "limitations": [
+      "Explicitly prompted generic defect; not a spontaneous model error.",
+      "Prelaunch verification only; actual failure, feedback and model repair require separate audit."
+    ]
+  },
+  "first_failure_contemporaneous_snapshot": {
+    "reference": {
+      "path": "data/code-tools-step3/live-031-first-failure-audit.json",
+      "bytes": 15105,
+      "sha256": "3f860734eb3bd3d1852680651df98566834bdfd2cfa17471df57084ef8bf352b"
+    },
+    "checked_at_utc": "2026-10-19T10:37:05.313565+00:00",
+    "run_state": "running",
+    "actual_internal_orca_calls": 0
+  },
+  "writers": [
+    {
+      "call_id": "call_d7212dd6545c46c4a1c3d41a345acf8d",
+      "name": "optfreq_ethanol.py",
+      "role": "python",
+      "artifact_id": "artifact_32b77cee02c340edbe541df701d56099",
+      "file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_32b77cee02c340edbe541df701d56099/files/optfreq_ethanol.py",
+        "bytes": 4954,
+        "sha256": "7515ac57a8a8ef28653128eef7a292a9ea42ac2d77a9d86c2ebcd9c25b977c3e"
+      },
+      "model_origins": [
+        "model_3acfb72745fa4165bb4b007b80fc89a7"
+      ],
+      "model_content_equals_writer_artifact": true
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": {
+        "id": "attempt_a24dbf3be99d4a30891e571763a3ebbf",
+        "step_id": "step_42391d019f4b43dbb6e7c8f13f90c6b4",
+        "logical_id": "logical_6abfcaaeba6a42a0a4dc6f1cc591b3da",
+        "number": 1,
+        "tool": "python.execute",
+        "state": "failed",
+        "execution_kind": "python",
+        "geometry_artifact_id": null,
+        "input_fingerprint": "569ecc19403e02bbe88d51c6166cfb567206b66087106ebe98d516751673c90d",
+        "directory": "runs/run_1472758d09264a5ca56439c2eb53013a/steps/step_42391d019f4b43dbb6e7c8f13f90c6b4/attempt-001",
+        "created_at": "2026-10-19T10:35:59.941043Z",
+        "finished_at": "2026-10-19T10:36:19.199433Z",
+        "execution_handle": {
+          "backend": "linux-container",
+          "version": 1,
+          "launch_id": "09a5db1657144ed4919f3327911841be",
+          "container_name": "orca-attempt-09a5db1657144ed4919f3327911841be",
+          "volume_name": "orca-evidence-09a5db1657144ed4919f3327911841be",
+          "run_id": "run_1472758d09264a5ca56439c2eb53013a",
+          "attempt_id": "attempt_a24dbf3be99d4a30891e571763a3ebbf",
+          "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+          "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+          "execution": {
+            "backend": "linux-container",
+            "image_id": "sha256:705838c326773e91f0b1d33bd572b3716931a07828bd66e48e4a0d5aaff8cb7e",
+            "manifest_sha256": "535a71876cae4b67cbf8a7dd63f051b917a7e6c1b50f2c1afbade8776b1f104f",
+            "docker_context": "desktop-linux",
+            "docker_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+            "native_input_policy": {
+              "profile": "bounded-analytic-1",
+              "max_atoms": 32,
+              "max_geom_iterations": 128,
+              "max_scf_iterations": 256,
+              "max_response_iterations": 128
+            },
+            "_docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+          },
+          "engine_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "daemon_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "heartbeat_ttl_seconds": 15,
+          "timeout_seconds": 1200.0,
+          "container_id": "cf2b6c94e80c408bb68f3a22cafb0c87ee88a2ba538b2660504f2f2417f2b773",
+          "isolation_verified": true,
+          "isolation_policy": "linux-container-v1",
+          "kind": "python",
+          "workload_identity": {
+            "pid": 43,
+            "uid": 10001,
+            "state": "S (sleeping)",
+            "start_ticks": "458332",
+            "name": "python3.11",
+            "cap_eff": "0000000000000000",
+            "cap_prm": "0000000000000000",
+            "cap_inh": "0000000000000000",
+            "cap_amb": "0000000000000000",
+            "no_new_privs": "1",
+            "seccomp": "2"
+          },
+          "launch_phase": "gated_launcher",
+          "parent_container_id": null
+        },
+        "started": true,
+        "result_id": "result_457a19aff28e494e800f93bee4b1f614",
+        "elapsed_seconds": 1.530999999999949,
+        "cpu_seconds": 0.70439,
+        "request_version": 3,
+        "plan_version": 3,
+        "permission_version": 1,
+        "control_generation": 1,
+        "frozen_step": {
+          "id": "step_42391d019f4b43dbb6e7c8f13f90c6b4",
+          "logical_id": "logical_6abfcaaeba6a42a0a4dc6f1cc591b3da",
+          "tool": "python.execute",
+          "parameters": {
+            "code": {
+              "artifact_id": "artifact_32b77cee02c340edbe541df701d56099",
+              "sha256": "7515ac57a8a8ef28653128eef7a292a9ea42ac2d77a9d86c2ebcd9c25b977c3e",
+              "language": "python",
+              "version": 1
+            },
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "artifact_id": "artifact_293f18d2a005410d89348ef383e0a86d",
+                  "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                  "target_path": "ethanol.xyz",
+                  "purpose": "Initial prepared ethanol geometry for ORCA Opt+Freq"
+                }
+              ]
+            },
+            "observation_names": [
+              "optimized_geometry",
+              "vibrational_frequencies"
+            ],
+            "conditions": {
+              "basis": "def2-SVP",
+              "charge": 0,
+              "electronic_state": "RKS",
+              "environment": "gas_phase",
+              "method": "B3LYP",
+              "multiplicity": 1
+            }
+          },
+          "geometry": null,
+          "depends_on": [
+            "step_369aa27ce7b1405fbe9c55b570eb0580",
+            "step_d4e2a219626a42c9b9a18567ec7fa4fc",
+            "step_1408f573ed1e424aba6b0db5d9ec0bdd"
+          ],
+          "inputs": {},
+          "system_id": "system_ethanol"
+        },
+        "consumption": {
+          "code": {
+            "artifact_id": "artifact_32b77cee02c340edbe541df701d56099",
+            "sha256": "7515ac57a8a8ef28653128eef7a292a9ea42ac2d77a9d86c2ebcd9c25b977c3e",
+            "language": "python",
+            "version": 1
+          },
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "artifact_id": "artifact_293f18d2a005410d89348ef383e0a86d",
+                "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                "target_path": "ethanol.xyz",
+                "purpose": "Initial prepared ethanol geometry for ORCA Opt+Freq"
+              }
+            ]
+          }
+        }
+      },
+      "result": {
+        "path": "data/code-tools-step3/live-store/runs/run_1472758d09264a5ca56439c2eb53013a/results/result_457a19aff28e494e800f93bee4b1f614.json",
+        "bytes": 9158,
+        "sha256": "8cf2fbac92834f806bbc36457be89ac366d3042bb1dcfbc5fc1c6532fe7b9fe5"
+      },
+      "operation_status": "failed",
+      "execution_not_started": false,
+      "exit_code": 1,
+      "stderr": {
+        "path": "data/code-tools-step3/live-store/runs/run_1472758d09264a5ca56439c2eb53013a/steps/step_42391d019f4b43dbb6e7c8f13f90c6b4/attempt-001/task/stderr.txt",
+        "bytes": 458,
+        "sha256": "ffd42c65271e5fcb8099bb1e0f4db998b79b338e3a7a310a7bb2df70b3fbb78b"
+      },
+      "stderr_text": "Traceback (most recent call last):\n  File \"/opt/orca-agent-runtime/python_task.py\", line 21, in <module>\n    runpy.run_path(sys.argv[0], run_name=\"__main__\")\n  File \"<frozen runpy>\", line 291, in run_path\n  File \"<frozen runpy>\", line 98, in _run_module_code\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/work/sealed/task.py\", line 2, in <module>\n    CODE_TOOLS_DEVELOPMENT_FAULT_V1\nNameError: name 'CODE_TOOLS_DEVELOPMENT_FAULT_V1' is not defined\n",
+      "code_file": {
+        "path": "data/code-tools-step3/live-store/artifacts/artifact_32b77cee02c340edbe541df701d56099/files/optfreq_ethanol.py",
+        "bytes": 4954,
+        "sha256": "7515ac57a8a8ef28653128eef7a292a9ea42ac2d77a9d86c2ebcd9c25b977c3e"
+      },
+      "sealed_code": {
+        "path": "data/code-tools-step3/live-store/runs/run_1472758d09264a5ca56439c2eb53013a/steps/step_42391d019f4b43dbb6e7c8f13f90c6b4/attempt-001/sealed/task.py",
+        "bytes": 4954,
+        "sha256": "7515ac57a8a8ef28653128eef7a292a9ea42ac2d77a9d86c2ebcd9c25b977c3e"
+      },
+      "observation_records": [],
+      "qualified_outputs": {},
+      "execution_diagnostics": [
+        {
+          "category": "failed",
+          "detail": "nonzero_exit_code"
+        }
+      ]
+    }
+  ],
+  "terminal_model_failure": {
+    "model_id": "model_01c6cd1c472c4b0cb2cd7a65c2e95fff",
+    "response": {
+      "path": "data/code-tools-step3/live-store/runs/run_1472758d09264a5ca56439c2eb53013a/model/model_01c6cd1c472c4b0cb2cd7a65c2e95fff.response.json",
+      "bytes": 729,
+      "sha256": "a21467be66739bdf3e03bffcc603f28f8d900d51789068ee2ae150f9edb154be"
+    },
+    "request": {
+      "path": "data/code-tools-step3/live-store/runs/run_1472758d09264a5ca56439c2eb53013a/model/model_01c6cd1c472c4b0cb2cd7a65c2e95fff.request.json",
+      "bytes": 59589,
+      "sha256": "d54793741b88e89388005750d42dbb4637ab310a0d6ad794b2a671156f6ee96c"
+    },
+    "http_status": 200,
+    "finish_reason": "length",
+    "error_category": "truncated",
+    "completion_tokens": 16384,
+    "proposal": null,
+    "retained_raw_content": "",
+    "retryable": false,
+    "last_decision": {
+      "id": "model_01c6cd1c472c4b0cb2cd7a65c2e95fff",
+      "basis": {
+        "request_version": 3,
+        "plan_version": 3,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "rejected",
+      "related_results": [],
+      "reason": "rejected",
+      "parameters": {
+        "error_category": "truncated",
+        "recovery_kind": "fatal",
+        "requirement": "truncated"
+      }
+    },
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_ab5b2b8b6dac4836a7762b3c8d5748c6",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_01c6cd1c472c4b0cb2cd7a65c2e95fff",
+        "error_category": "truncated"
+      },
+      {
+        "category": "StoreError",
+        "message": "bounded proposal correction or transport retry exhausted",
+        "environment_occupied": false
+      }
+    ],
+    "fatal_truncation_not_ordinary_correction_counter_exhaustion": true,
+    "boundary": "The terminal StoreError wording is generic. The decisive rejection is recovery_kind=fatal for truncation, not evidence that ordinary correction count or scientific execution budget ran out. Provider wire bytes are not retained; no complete repair proposal or revised Artifact can be established."
+  },
+  "repair_integrity": {
+    "actual_seeded_NameError": true,
+    "actual_python_attempts": 1,
+    "actual_code_retries": 0,
+    "second_writer_completed": false,
+    "second_attempt_started": false,
+    "repair_established": false
+  },
+  "findings": [
+    "The 4954-byte model-written task was genuinely started and failed at the explicit line-2 marker NameError. Input copies and sealed task hashes match their registered Artifacts.",
+    "There was no internal ORCA call before or after the failure. The initial prepared geometry Goal is satisfied; optimization and frequencies remain insufficient.",
+    "The subsequent model response reached its 16384-token completion limit, ended with finish_reason=length, and was rejected as fatal truncation. The retained proposal is null and raw_content is empty.",
+    "No revised task Artifact or second Attempt was established. This demonstrates real failure preservation, not a successful repair.",
+    "Both independent freeze observations and the driver outcome agree that the 62 source files and driver were unchanged; historical Run bytes remained identical."
+  ],
+  "unverified": [
+    "Whether a complete nontruncated model reply would produce a contract-preserving repair.",
+    "Any internal ORCA calculation or scientific output from this Run."
+  ],
+  "report_status": "failed seeded development trial after genuine Python failure and truncated model feedback response; no successful repair acceptance",
+  "evidence": {
+    "run": {
+      "path": "data/code-tools-step3/live-store/runs/run_1472758d09264a5ca56439c2eb53013a/run.json",
+      "bytes": 109642,
+      "sha256": "aa0bea67e5bdae2efeddb0d68c46b9d46c45c996f94aecdda4cf80f9d4648bb3"
+    },
+    "outcome": {
+      "path": "data/code-tools-step3/live-031/outcome.json",
+      "bytes": 4244,
+      "sha256": "2c18442d78f113ee4d16ab332f40b6560427c4be45d5a342dda356a213d8b223"
+    },
+    "freeze": {
+      "path": "data/code-tools-step3/live-031/freeze.json",
+      "bytes": 12732,
+      "sha256": "5540e44e459a197dfa9ede7ebebcb8de06628e0cc5662a1aeb684cd8718a01f3"
+    },
+    "start_check": {
+      "path": "data/code-tools-step3/live-031-freeze-start-audit.json",
+      "bytes": 635,
+      "sha256": "4c393ebf515b76dbacbab60492da84fd774c1b74c559f64f4b859d70aadf7844"
+    },
+    "end_check": {
+      "path": "data/code-tools-step3/live-031-freeze-end-audit.json",
+      "bytes": 647,
+      "sha256": "264f563d5c83c11fe8050fff142b2358c73756babe009a78604c3796bd0aaea7"
+    },
+    "independent_code_audit": {
+      "path": "data/code-tools-step3/validation/live031-code-truncation-audit.json",
+      "bytes": 22116,
+      "sha256": "71a550752c913003f61e46df6901b2b6f5b8de0cd065d3cddde43e13316f3979"
+    }
+  },
+  "original_run_read_only_check": {
+    "file_count": 113,
+    "before_manifest_sha256": "beca2ed7094b6ecc868755a64b3a1387cae9530a8194e437521513f203989307",
+    "after_manifest_sha256": "beca2ed7094b6ecc868755a64b3a1387cae9530a8194e437521513f203989307",
+    "changed": [],
+    "reference_paths_rehashed": 101,
+    "all_references_match": true
+  },
+  "archived_file_hash_check_count": 32,
+  "full_audit": {
+    "path": "data/code-tools-step3/live-031-audit.json",
+    "bytes": 127711,
+    "sha256": "bef44c818d279d85ebf5cd776e9f6d962ca0a36643afe087d84816b6d5bc2e23"
+  }
+}
