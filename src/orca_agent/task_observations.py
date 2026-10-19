@@ -27,6 +27,22 @@ class _Manifest(Record):
     observations: list[_Declared] = Field(max_length=32)
 
 
+def _receipt_parent(run, receipt, attempt):
+    """A reused source retains its original, settled Python provenance."""
+    parent = next((item for item in run.attempts if item.id == receipt.parent_attempt_id), None)
+    if parent is None:
+        raise ValueError("observation internal source has no original Attempt")
+    if parent.id != attempt.id:
+        if (receipt.state != "completed" or receipt.finished_at is None
+                or parent.finished_at is None or parent.state in {"intent", "running", "unknown"}
+                or parent.execution_kind != "python" or parent.frozen_step is None
+                or parent.request_version != attempt.request_version
+                or not getattr(parent.frozen_step.parameters, "code", None)
+                or receipt.code is None or receipt.code.language != "orca"):
+            raise ValueError("reused observation source lacks settled original provenance")
+    return parent
+
+
 def collect(store, run, step, attempt, files):
     entry = files.get("task/observations.json")
     if entry is None:
@@ -54,10 +70,17 @@ def collect(store, run, step, attempt, files):
                     or any(p in {"", ".", ".."} for p in name.split("/"))):
                 raise ValueError("observation source is not a task-relative file")
             if declaration.internal_request_key:
-                receipt = next((r for r in run.internal_calls if r.parent_attempt_id == attempt.id
-                    and r.request_key == declaration.internal_request_key), None)
+                receipt = next((r for r in run.internal_calls
+                    if r.request_key == declaration.internal_request_key), None)
                 if receipt is None or receipt.state not in {"completed", "failed", "timed_out", "cancelled"}:
                     raise ValueError("observation internal source has no settled receipt")
+                parent = _receipt_parent(run, receipt, attempt)
+                if parent.id != attempt.id:
+                    native_input = store.load_artifact(receipt.code.artifact_id)
+                    store.artifact_path(native_input.id)
+                    if ((native_input.run_id, native_input.attempt_id) != (run.id, parent.id)
+                            or native_input.sha256 != receipt.code.sha256):
+                        raise ValueError("reused observation native input provenance changed")
                 candidates = [store.load_artifact(a) for a in receipt.artifact_ids]
                 # Native output names are task relative. Only unique basenames are
                 # supported here; subdirectory/ambiguous declarations are rejected.
@@ -70,15 +93,16 @@ def collect(store, run, step, attempt, files):
                     raise ValueError("observation combines different admitted conditions")
                 conditions = admitted
             else:
+                parent = attempt
                 selected = files.get("task/" + name)
                 if selected is None:
                     raise ValueError("observation task source was not archived")
                 artifact = store.load_artifact(selected["artifact_id"])
             store.artifact_path(artifact.id)
-            if artifact.run_id != run.id or artifact.attempt_id != attempt.id:
-                raise ValueError("observation source does not belong to its Attempt")
+            if artifact.run_id != run.id or artifact.attempt_id != parent.id:
+                raise ValueError("observation source does not belong to its original Attempt")
             sources.append(ObservationSource(artifact_id=artifact.id, sha256=artifact.sha256,
-                location=declaration.location, attempt_id=attempt.id,
+                location=declaration.location, attempt_id=parent.id,
                 internal_request_key=declaration.internal_request_key))
         records.append(Observation(name=item.name, value=item.value, unit=item.unit,
             actual_conditions=conditions or {}, sources=sources, code_sha256=step.parameters.code.sha256,
@@ -162,11 +186,13 @@ def _geometry_relation_evidence(store, run, request, step, attempt, observation,
     if len(selected) != 1 or selected[0].state != "completed":
         raise ValueError("geometry_relation_requires_one_completed_native_source")
     receipt = selected[0]
+    parent = _receipt_parent(run, receipt, attempt)
+    source_step = parent.frozen_step or step
     binding = receipt.conditions.get("input_binding", {})
     if (not isinstance(binding, dict) or receipt.conditions.get("admission_version") != "native-orca-input-2"
             or any(binding.get(name) != expected for name, expected in {
                 "request_id": request.id, "request_version": request.version,
-                "step_id": step.id, "system_id": system_id}.items())):
+                "step_id": source_step.id, "system_id": system_id}.items())):
         raise ValueError("geometry_relation_input_purpose_binding_missing")
     system = next((item for item in request.systems if item.id == system_id), None)
     geometry_id = (prepared_geometry(store, run, request, system_id)
@@ -192,7 +218,7 @@ def _geometry_relation_evidence(store, run, request, step, attempt, observation,
         if len(matches) != 1 or matches[0].size == 0:
             raise ValueError("geometry_relation_native_file_missing_or_ambiguous:" + name)
         artifact = matches[0]
-        if (artifact.run_id, artifact.attempt_id) != (run.id, attempt.id):
+        if (artifact.run_id, artifact.attempt_id) != (run.id, parent.id):
             raise ValueError("geometry_relation_native_file_provenance_mismatch")
         store.artifact_path(artifact.id)
         return artifact
@@ -285,7 +311,10 @@ def assess(store, run, request, goal, result):
             raise ValueError("requested_observation_missing")
         observation = selected[0]
         conditions = observation.actual_conditions
-        receipts = [r for r in run.internal_calls if r.parent_attempt_id == attempt.id]
+        source_keys = {source.internal_request_key for source in observation.sources
+                       if source.internal_request_key}
+        receipts = [r for r in run.internal_calls
+                    if r.parent_attempt_id == attempt.id or r.request_key in source_keys]
         relation, extra_reasons = _additional_conditions(request, goal, system_id)
         reasons.extend(extra_reasons)
         if receipts:

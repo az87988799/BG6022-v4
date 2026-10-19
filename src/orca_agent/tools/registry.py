@@ -18,6 +18,7 @@ from orca_agent.models import (
     Record,
     Tool,
 )
+from orca_agent.task_sdk import MAX_EXCHANGES
 from orca_agent.tools.analysis import SAMPLING_CHECK_VERSION, sampling_check_contract
 from orca_agent.tools.evidence import (
     EvidenceDiscoverParameters,
@@ -108,12 +109,14 @@ TOOLS: dict[str, _Registration] = {
     ),
     "python.execute": _register(
         CodeExecutionParameters, name="python.execute",
-        description="Execute a pinned Python Artifact in the frozen managed task boundary, with one bounded SDK ORCA call.",
+        description="Execute pinned Python with bounded sequential SDK ORCA calls, stable receipts and durable decision checkpoints in the frozen task boundary.",
         input_roles=["code", "input_manifest"], output_ports=[],
         observation_outputs=["observations", "artifacts"],
         effects=["read_registered_artifact", "execute_python", "write_artifact"],
         check_version="generic-observation-1",
         check_contract={"execution_available": True, "generic_observations": True,
+                        "sdk_protocol": 2, "sdk_max_exchanges_per_attempt": MAX_EXCHANGES,
+                        "stable_receipt_reuse": True, "durable_task_checkpoints": True,
                         "context_dependencies": ["workspace.write", "knowledge.search", "evidence.list", "evidence.text", "evidence.search"],
                         **_LOCAL_ORCA_EXECUTION,
                         "collector": "orca_agent.tools.managed.collect_result"},

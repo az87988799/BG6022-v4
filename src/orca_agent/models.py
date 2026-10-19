@@ -169,10 +169,14 @@ class InternalCall(Record):
 
     request_key: Identifier
     input_fingerprint: Digest
+    purpose: Literal["new_candidate", "plan_addition", "failure_retry"] = "new_candidate"
+    retry_of: Identifier | None = None
     tool: Literal["orca.run"] = "orca.run"
     code: CodeRef | None = None
     inputs: InputManifest = Field(default_factory=InputManifest)
     conditions: dict[str, Any] = Field(default_factory=dict)
+    goal: dict[str, JsonValue] = Field(default_factory=dict)
+    resources: dict[str, JsonValue] = Field(default_factory=dict)
     actual_conditions: dict[str, Any] = Field(default_factory=dict)
     state: Literal["reserved", "running", "completed", "failed", "cancelled", "timed_out", "unknown"]
     attempt_id: Identifier | None = None
@@ -183,8 +187,46 @@ class InternalCall(Record):
     resource_usage: dict[str, Any] = Field(default_factory=dict)
     result_id: Identifier | None = None
     artifact_ids: list[Identifier] = Field(default_factory=list)
+    response: dict[str, JsonValue] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=utc_now)
     finished_at: datetime | None = None
+
+    @model_validator(mode="after")
+    def explicit_retry_source(self):
+        if (self.purpose == "failure_retry") != (self.retry_of is not None):
+            raise ValueError("failure_retry requires retry_of; other purposes cannot declare it")
+        if self.retry_of == self.request_key:
+            raise ValueError("a failure retry requires a new request key")
+        return self
+
+
+class TaskCheckpoint(Record):
+    """Immutable Run-local task state; it does not resume a Python call stack."""
+
+    name: Identifier
+    source_attempt_id: Identifier
+    code_sha256: Digest
+    state: dict[str, JsonValue] = Field(default_factory=dict)
+    completed_request_keys: list[Identifier] = Field(default_factory=list)
+    requires_decision: bool = False
+    reason: str | None = None
+    sha256: Digest
+    created_at: datetime = Field(default_factory=utc_now)
+
+    @model_validator(mode="after")
+    def bounded_state(self):
+        if len(set(self.completed_request_keys)) != len(self.completed_request_keys):
+            raise ValueError("checkpoint completed request keys must be unique")
+        if self.requires_decision and (not self.reason or not self.reason.strip()):
+            raise ValueError("a decision checkpoint requires a reason")
+        if self.reason is not None and len(self.reason.encode("utf-8")) > 4096:
+            raise ValueError("checkpoint reason exceeds 4 KiB")
+        if len(json.dumps(self.state, allow_nan=False).encode("utf-8")) > 64 * 1024:
+            raise ValueError("checkpoint state exceeds 64 KiB")
+        payload = self.model_dump(mode="json", exclude={"sha256", "created_at"})
+        if fingerprint(payload) != self.sha256:
+            raise ValueError("checkpoint hash differs from its immutable state")
+        return self
 
 
 class InputRef(Record):
@@ -625,6 +667,10 @@ class RunConfiguration(Record):
 
 class BudgetUsage(Record):
     internal_work_units: Annotated[int, Field(strict=True, ge=0)] = 0
+    internal_calls_by_purpose: dict[
+        Literal["new_candidate", "plan_addition", "failure_retry"],
+        Annotated[int, Field(strict=True, ge=0)],
+    ] = Field(default_factory=dict)
     code_retries: Annotated[int, Field(strict=True, ge=0)] = 0
     orca_starts_reserved: Annotated[int, Field(ge=0)] = 0
     orca_starts_actual: Annotated[int, Field(ge=0)] = 0
@@ -773,6 +819,7 @@ class Run(Record):
     diagnostics: list[dict[str, Any]] = Field(default_factory=list)
     calls: list[ToolCall] = Field(default_factory=list)
     internal_calls: list[InternalCall] = Field(default_factory=list)
+    task_checkpoints: list[TaskCheckpoint] = Field(default_factory=list)
     model_records: list[dict[str, Any]] = Field(default_factory=list)
     selected_results: dict[str, Identifier] = Field(default_factory=dict)
     goal_evidence: dict[Identifier, EvidenceRef] = Field(default_factory=dict)

@@ -32,6 +32,7 @@ from orca_agent.models import (
     Run,
     RunConfiguration,
     Step,
+    TaskCheckpoint,
     ToolCall,
     fingerprint,
     new_id,
@@ -399,7 +400,7 @@ class Store:
                           "internal_work_units", "code_retries"):
                 if getattr(run.usage, field) < getattr(previous.usage, field):
                     raise StoreError(f"cumulative usage cannot decrease: {field}")
-            for field in ("logical_attempts", "fingerprint_attempts"):
+            for field in ("logical_attempts", "fingerprint_attempts", "internal_calls_by_purpose"):
                 old, new = getattr(previous.usage, field), getattr(run.usage, field)
                 if any(new.get(key, 0) < value for key, value in old.items()):
                     raise StoreError("attempt counters cannot be reset")
@@ -447,6 +448,7 @@ class Store:
                 raise StoreError("internal request keys must remain unique")
             for old, new in zip(previous.internal_calls, run.internal_calls, strict=False):
                 for field in ("request_key", "input_fingerprint", "tool", "code", "inputs",
+                              "purpose", "retry_of", "goal", "resources",
                               "conditions", "attempt_id", "parent_attempt_id", "work_units", "created_at"):
                     if getattr(old, field) != getattr(new, field):
                         raise StoreError(f"internal call identity/input cannot be rewritten: {field}")
@@ -454,6 +456,8 @@ class Store:
                     raise StoreError("internal process identity cannot be removed or changed")
                 if old.finished_at is not None and new != old:
                     raise StoreError("settled internal call cannot be rewritten")
+            if run.task_checkpoints[:len(previous.task_checkpoints)] != previous.task_checkpoints:
+                raise StoreError("task checkpoint history cannot be removed or rewritten")
             for old, new in zip(previous.model_records, run.model_records, strict=False):
                 if old != new:
                     raise StoreError("model records require dedicated evidence-backed settlement")
@@ -847,13 +851,21 @@ class Store:
             self.save_run(run)
             return record
 
-    def _internal_parent(self, run: Run, parent: Attempt) -> Attempt:
+    def _internal_parent(self, run: Run, parent: Attempt, *, allow_reconciled: bool = False) -> Attempt:
         current = self.load_run(run.id)
         if current != run:
             raise StoreError("stale run snapshot; reload and revalidate")
         actual = next((item for item in run.attempts if item.id == parent.id), None)
+        reconciled = False
+        if allow_reconciled and parent.state == "unknown":
+            relative = f"{parent.directory}/reconciled.json"
+            if self.path(relative).exists():
+                proof = self._read_json(relative)
+                reconciled = (proof.get("attempt_id") == parent.id
+                              and proof.get("reconciliation", {}).get("state") == "terminated")
         if (actual != parent or parent.execution_kind != "python"
-                or parent.state not in {"intent", "running"} or parent.finished_at is not None):
+                or (parent.state not in {"intent", "running"} and not reconciled)
+                or parent.finished_at is not None):
             raise StoreError("internal ORCA requires the active managed Python attempt")
         lease = self.environment_lease()
         if not lease or (lease["run_id"], lease["attempt_id"]) != (run.id, parent.id):
@@ -864,6 +876,8 @@ class Store:
         self, run: Run, parent: Attempt, request_key: str, input_fingerprint: str, *,
         code: CodeRef | None = None, inputs: InputManifest | None = None,
         conditions: dict | None = None, work_units: int = 1,
+        purpose: str = "new_candidate", retry_of: str | None = None,
+        goal: dict | None = None, resources: dict | None = None,
     ) -> InternalCall:
         """Reserve one brokered call without another coordinator or environment lease.
 
@@ -887,6 +901,7 @@ class Store:
                 raise StoreError("budget snapshot mismatch")
             candidate = InternalCall(request_key=request_key, input_fingerprint=input_fingerprint,
                 code=code, inputs=inputs or InputManifest(), conditions=conditions or {},
+                purpose=purpose, retry_of=retry_of, goal=goal or {}, resources=resources or {},
                 state="reserved", parent_attempt_id=parent.id, work_units=work_units,
                 attempt_id=new_id("internal"))
             existing = next((item for item in run.internal_calls if item.request_key == request_key), None)
@@ -895,11 +910,29 @@ class Store:
                     raise StoreError("internal request key was reused with changed input")
                 if existing.state != "completed":
                     raise StoreError("internal request already exists; reconcile or inspect its receipt")
+                if (existing.purpose, existing.retry_of, existing.goal, existing.resources) != (
+                        candidate.purpose, candidate.retry_of, candidate.goal, candidate.resources):
+                    raise StoreError("internal request key was reused with changed input metadata")
+                def input_identity(call):
+                    return (call.code.sha256 if call.code else None,
+                            call.code.language if call.code else None,
+                            sorted((item.target_path, item.sha256, item.purpose)
+                                   for item in call.inputs.entries),
+                            call.conditions, call.work_units)
+
+                if input_identity(existing) != input_identity(candidate):
+                    raise StoreError("internal request key was reused with changed input")
                 for artifact_id in existing.artifact_ids:
                     self.artifact_path(artifact_id)
                 return existing
-            if any(item.parent_attempt_id == parent.id for item in run.internal_calls):
-                raise StoreError("this execution boundary permits only one internal ORCA call per Python attempt")
+            if any(item.state in {"reserved", "running", "unknown"} for item in run.internal_calls):
+                raise StoreError("previous internal call needs reconciliation before another submission")
+            if purpose == "failure_retry":
+                original = next((item for item in run.internal_calls
+                                 if item.request_key == retry_of), None)
+                if (original is None or original.state not in {"failed", "cancelled", "timed_out"}
+                        or original.finished_at is None):
+                    raise StoreError("failure retry requires a settled failed call in this Run")
             if code is None or code.language != "orca":
                 raise StoreError("internal ORCA requires a pinned native input Artifact")
             for reference in [code, *candidate.inputs.entries]:
@@ -936,6 +969,9 @@ class Store:
             run.internal_calls.append(candidate)
             run.usage.orca_starts_reserved += 1
             run.usage.internal_work_units += work_units
+            prior_count = sum(item.purpose == purpose for item in run.internal_calls[:-1])
+            run.usage.internal_calls_by_purpose[purpose] = max(
+                run.usage.internal_calls_by_purpose.get(purpose, 0), prior_count) + 1
             run.usage.extra_orca_starts_reserved = repeated + int(extra)
             self.save_run(run)
             return candidate
@@ -985,10 +1021,11 @@ class Store:
         self, run: Run, parent: Attempt, request_key: str, *, state: str,
         artifact_ids: list[str] | None = None, actual_conditions: dict | None = None,
         resource_usage: dict | None = None,
+        response: dict | None = None,
     ) -> InternalCall:
         """Settle receipt only; aggregate Job resource costs belong to the parent."""
         with self.run_lock(run.id), self._environment_lock():
-            self._internal_parent(run, parent)
+            self._internal_parent(run, parent, allow_reconciled=True)
             call = next((item for item in run.internal_calls if item.request_key == request_key
                          and item.parent_attempt_id == parent.id), None)
             if call is None or call.finished_at is not None:
@@ -1002,15 +1039,76 @@ class Store:
                 self.artifact_path(artifact_id)
                 if (artifact.run_id, artifact.attempt_id) != (run.id, parent.id):
                     raise StoreError("internal result Artifact has invalid parent provenance")
+            stable_response = dict(response or {})
+            response_files = stable_response.get("files", {})
+            if not isinstance(response_files, dict):
+                raise StoreError("internal response files must be pinned result Artifact references")
+            for name, reference in response_files.items():
+                controlled_path(self.root, name)
+                if (not isinstance(reference, dict) or set(reference) != {"artifact_id", "sha256"}
+                        or reference["artifact_id"] not in (artifact_ids or [])):
+                    raise StoreError("internal response requires pinned result Artifact references")
+                artifact = self.load_artifact(reference["artifact_id"])
+                if artifact.sha256 != reference["sha256"]:
+                    raise StoreError("internal response differs from its result Artifact hash")
+            # Validate JSON before mutating the in-memory receipt or durable Run.
+            InternalCall.model_validate({**call.model_dump(), "response": stable_response})
             call.state = state
             call.artifact_ids = list(artifact_ids or [])
             call.actual_conditions = dict(actual_conditions or {})
             call.resource_usage = dict(resource_usage or {})
+            call.response = stable_response
             call.finished_at = None if state == "unknown" else utc_now()
             if state == "unknown":
                 run.usage.resource_usage_complete = False
             self.save_run(run)
             return call
+
+    def save_task_checkpoint(
+        self, run: Run, parent: Attempt, name: str, state: dict, *,
+        completed_request_keys: list[str] | None = None,
+        requires_decision: bool = False, reason: str | None = None,
+    ) -> TaskCheckpoint:
+        """Persist bounded state and exact completed receipts without a new coordinator."""
+        with self.run_lock(run.id), self._environment_lock():
+            self._internal_parent(run, parent)
+            code = parent.frozen_step.parameters.code
+            completed = {item.request_key for item in run.internal_calls if item.state == "completed"}
+            keys = list(completed_request_keys if completed_request_keys is not None
+                        else (item.request_key for item in run.internal_calls if item.state == "completed"))
+            if not set(keys).issubset(completed):
+                raise StoreError("checkpoint can reference only completed internal calls from this Run")
+            for call in run.internal_calls:
+                if call.request_key in keys:
+                    for artifact_id in call.artifact_ids:
+                        self.artifact_path(artifact_id)
+            payload = {"name": name, "source_attempt_id": parent.id,
+                       "code_sha256": code.sha256, "state": state,
+                       "completed_request_keys": keys,
+                       "requires_decision": requires_decision, "reason": reason}
+            checkpoint = TaskCheckpoint(**payload, sha256=fingerprint(payload))
+            prior = next((item for item in run.task_checkpoints
+                          if (item.source_attempt_id, item.name) == (parent.id, name)), None)
+            if prior:
+                if prior.sha256 != checkpoint.sha256:
+                    raise StoreError("checkpoint name already records different immutable task state")
+                return prior
+            if len(run.task_checkpoints) >= 256:
+                raise BudgetExceeded("retained task checkpoint limit exhausted")
+            if sum(len(_json_bytes(item)) for item in [*run.task_checkpoints, checkpoint]) > 1024 * 1024:
+                raise BudgetExceeded("retained task checkpoint byte limit exhausted")
+            relative = f"{parent.directory}/checkpoints/{_id(name)}.json"
+            if self.path(relative).exists():
+                # A crash after the immutable file and before Run publication is
+                # recoverable only with this exact already-written task state.
+                recorded = TaskCheckpoint.model_validate(self._read_json(relative))
+                if recorded.sha256 != checkpoint.sha256:
+                    raise StoreError("unpublished checkpoint records different immutable task state")
+                checkpoint = recorded
+            self._write_json(relative, checkpoint, immutable=True)
+            run.task_checkpoints.append(checkpoint)
+            self.save_run(run)
+            return checkpoint
 
     def recover_unstarted_reservation(self, run: Run, draft: Attempt, *, before: dict,
                                       reservation_sha256: str) -> Attempt:

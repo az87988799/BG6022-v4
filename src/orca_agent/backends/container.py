@@ -180,6 +180,9 @@ def inspect_environment(execution):
             actual = entry.get("sha256") if isinstance(entry, dict) else entry
             if actual != expected:
                 raise ValueError("runtime helper differs from this backend: " + name)
+        sdk_hash = hashlib.sha256((Path(__file__).parents[1] / "task_sdk.py").read_bytes()).hexdigest()
+        if manifest.get("sdk", {}).get("sha256") != sdk_hash:
+            raise ValueError("runtime SDK differs from this backend")
         result.update(engine_id=info["ID"], daemon_id=info["ID"], manifest=manifest,
                       docker_endpoint=endpoint, verified=True)
     except Exception as exc:
@@ -402,6 +405,15 @@ def _relative(name):
     return name
 
 
+def _scoped_area(boundary, area):
+    scope = boundary.get("orca_scope") if area == "orca" else None
+    if scope is not None:
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,96}", scope):
+            raise ValueError("invalid internal ORCA scope")
+        return "orca:" + scope
+    return area
+
+
 def stage(boundary, area, files, *, checkpoint=None):
     if area not in {"sealed", "python", "orca", "responses"}:
         raise ValueError("invalid staging area")
@@ -420,13 +432,14 @@ def stage(boundary, area, files, *, checkpoint=None):
                 if checkpoint:
                     checkpoint()
             reader.seek(0)
-            _helper(boundary, _UID[area], ["put", area, name, str(info.st_size), digest.hexdigest()],
+            _helper(boundary, _UID[area], ["put", _scoped_area(boundary, area), name,
+                                        str(info.st_size), digest.hexdigest()],
                     input_stream=reader, timeout=min(30, boundary["deadline"] - time.monotonic()),
                     checkpoint=lambda: (check_active(boundary), checkpoint() if checkpoint else None))
 
 
-def read_request(boundary, *, max_bytes):
-    code, data, error = _helper(boundary, 0, ["request", str(max_bytes)],
+def read_request(boundary, *, max_bytes, name="request.json"):
+    code, data, error = _helper(boundary, 0, ["request", str(max_bytes), name],
                                 max_output=max_bytes, check=False)
     if code == 3:
         return None
@@ -435,14 +448,16 @@ def read_request(boundary, *, max_bytes):
     return data
 
 
-def publish_response(boundary, response, files):
-    paths = {name: "/work/responses/files/" + _relative(name) for name in files}
-    stage(boundary, "responses", {"files/" + name: path for name, path in files.items()})
+def publish_response(boundary, response, files, *, sequence=None):
+    prefix = "files/" if sequence is None else f"files/{sequence:06d}/"
+    paths = {name: "/work/responses/" + prefix + _relative(name) for name in files}
+    stage(boundary, "responses", {prefix + name: path for name, path in files.items()})
     value = {**response, "files": paths}
     payload = json.dumps(value, allow_nan=False).encode()
     if len(payload) > 1024**2:
         raise ValueError("SDK response exceeds transport budget")
-    _helper(boundary, 0, ["put", "responses", "response.json", str(len(payload)),
+    name = "response.json" if sequence is None else f"response-{sequence:06d}.json"
+    _helper(boundary, 0, ["put", "responses", name, str(len(payload)),
                          hashlib.sha256(payload).hexdigest()], input_stream=io.BytesIO(payload))
     return paths
 
@@ -462,6 +477,7 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
               "reason": None, "resource_usage": {},
               "actual_start_status": "not_started" if kind == "orca" else "not_applicable"}
     area = kind
+    scoped_area = _scoped_area(boundary, area)
     process = None
     transport = tempfile.TemporaryFile()
     previous = _ACTIVE.get(boundary["handle"]["launch_id"])
@@ -492,7 +508,7 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
     try:
         controls()
         args = ["exec", "--user", f"{_UID[area]}:{_UID[area]}", boundary["handle"]["container_id"],
-                PYTHON, "-I", HELPER, "launch", kind, str(timeout_s)]
+                PYTHON, "-I", HELPER, "launch", kind, str(timeout_s), scoped_area]
         process = subprocess.Popen(_argv(boundary["execution"], args), stdin=subprocess.DEVNULL,
             stdout=transport, stderr=transport, env=_environment(), shell=False,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
@@ -500,7 +516,7 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
         gate_deadline = min(deadline, time.monotonic() + 12)
         while time.monotonic() < gate_deadline:
             controls()
-            code, data, _ = _helper(boundary, _UID[area], ["identity", area], check=False)
+            code, data, _ = _helper(boundary, _UID[area], ["identity", scoped_area], check=False)
             if code == 0:
                 identity = json.loads(data)
                 break
@@ -510,6 +526,7 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
         if identity is None:
             raise RuntimeError("gated workload identity unavailable")
         handle = {**boundary["handle"], "kind": kind, "workload_identity": identity,
+                  "orca_scope": boundary.get("orca_scope") if kind == "orca" else None,
                   "launch_phase": "gated_launcher",
                   "parent_container_id": parent_handle.get("container_id") if nested else None}
         result.update(handle=handle, not_started=False)
@@ -522,7 +539,7 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
         if kind == "orca":
             # A lost gate acknowledgement cannot prove that exec did not happen.
             result["actual_start_status"] = "unconfirmed"
-        _helper(boundary, 0, ["gate", area])
+        _helper(boundary, 0, ["gate", scoped_area])
         if kind == "python":
             boundary["python_started"] = True
         _ACTIVE[boundary["handle"]["launch_id"]] = controls
@@ -531,7 +548,7 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
         while process.poll() is None:
             controls()
             if kind == "orca" and result["actual_start_status"] != "confirmed":
-                code, data, _ = _helper(boundary, _UID[area], ["exec-identity", area], check=False)
+                code, data, _ = _helper(boundary, _UID[area], ["exec-identity", scoped_area], check=False)
                 if code == 0:
                     observed = json.loads(data)
                     proof = observed.get("actual_start_evidence", {})
@@ -553,7 +570,7 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
                 on_poll(handle)
             time.sleep(0.1)
         controls()
-        _helper(boundary, _UID[area], ["quiesce", area], timeout=5)
+        _helper(boundary, _UID[area], ["quiesce", scoped_area], timeout=5)
         result.update(exit_code=process.returncode,
                       state="completed" if process.returncode == 0 else "failed",
                       reason="workload_tree_exited" if process.returncode == 0 else "nonzero_exit_code")
@@ -677,7 +694,7 @@ def collect(boundary, area, destination, *, limits, checkpoint=None):
     limits = dict(limits)
     deadline = time.monotonic() + limits["seconds"]
     maximum = limits["total_bytes"] + limits["count"] * 8196 + 8196
-    args = ["export", area, json.dumps(limits, separators=(",", ":"))]
+    args = ["export", _scoped_area(boundary, area), json.dumps(limits, separators=(",", ":"))]
     spool_path = boundary["local_root"] / ("container-export-" + uuid.uuid4().hex + ".bin")
     failure = None
     result = None
@@ -758,6 +775,7 @@ def _is_reparse(path):
 def boundary_from_handle(handle, *, local_root):
     execution = _validate_execution(handle["execution"])
     return {"execution": execution, "handle": dict(handle), "local_root": Path(local_root),
+            "orca_scope": handle.get("orca_scope"),
             "resources": {}, "deadline": time.monotonic(), "running": False,
             "observed_processes": {}, "last_snapshot": None}
 

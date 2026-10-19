@@ -27,23 +27,26 @@ def mailbox(tmp_path, monkeypatch):
 def exchange(mailbox, response, action):
     """A file-only coordinator stand-in records the exact transmitted request."""
     requests, responses = mailbox
+    sequence = len(list(requests.glob("request-*.json"))) + 1
+    request_path = requests / f"request-{sequence:06d}.json"
+    response_path = responses / f"response-{sequence:06d}.json"
     captured, errors = [], []
     stop = threading.Event()
 
     def peer():
         deadline = time.monotonic() + 2
         try:
-            while not (requests / "request.json").exists():
+            while not request_path.exists():
                 if stop.wait(0.005):
                     return
                 if time.monotonic() >= deadline:
                     raise TimeoutError("test peer saw no request")
-            captured.append(json.loads((requests / "request.json").read_bytes()))
+            captured.append(json.loads(request_path.read_bytes()))
             payload = response(captured[0]) if callable(response) else response
             encoded = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
-            pending = responses / "response.pending"
+            pending = responses / f"response-{sequence:06d}.pending"
             pending.write_bytes(encoded)
-            pending.replace(responses / "response.json")
+            pending.replace(response_path)
         except Exception as exc:
             errors.append(exc)
 
@@ -70,21 +73,36 @@ def test_sdk_transports_exact_input_and_dependency_bytes_without_scientific_clai
         "job.inp", dependencies=["geometry.xyz"], request_key="single"))
     assert result == {**reply, "input_fingerprint": fingerprint(captured[0])}
     assert len(captured) == 1
-    assert captured[0] == {"version": 1, "request_key": "single",
+    assert captured[0] == {"version": 2, "kind": "orca", "purpose": "new_candidate", "retry_of": None, "request_key": "single",
         "input": "! HF STO-3G\n* xyzfile 0 1 geometry.xyz\n",
         "dependencies": [{"target_path": "geometry.xyz",
                            "content_base64": base64.b64encode(dependency).decode("ascii")}]}
     assert "qualified_outputs" not in result
 
 
-def test_sdk_second_call_cannot_overwrite_request_or_return_first_response(mailbox):
-    reply = {"request_key": "first", "operation_status": "completed", "files": {}}
-    exchange(mailbox, lambda request: {**reply, "input_fingerprint": fingerprint(request)},
-             lambda: task_sdk.run_orca("job.inp", request_key="first"))
-    original = (mailbox[0] / "request.json").read_bytes()
-    with pytest.raises((ValueError, RuntimeError, FileExistsError)):
-        task_sdk.run_orca("job.inp", request_key="second")
-    assert (mailbox[0] / "request.json").read_bytes() == original
+def test_sdk_sequential_calls_keep_distinct_messages_and_receipts(mailbox):
+    def reply(request):
+        return {"request_key": request["request_key"], "input_fingerprint": fingerprint(request),
+                "operation_status": "completed", "files": {}}
+    first, _ = exchange(mailbox, reply, lambda: task_sdk.run_orca("job.inp", request_key="first"))
+    original = (mailbox[0] / "request-000001.json").read_bytes()
+    second, _ = exchange(mailbox, reply, lambda: task_sdk.run_orca("job.inp", request_key="second"))
+    assert first["request_key"] == "first" and second["request_key"] == "second"
+    assert (mailbox[0] / "request-000001.json").read_bytes() == original
+    assert (mailbox[0] / "request-000002.json").exists()
+
+
+def test_checkpoint_returns_only_when_no_decision_is_needed(mailbox):
+    def reply(request):
+        return {"request_key": request["request_key"], "input_fingerprint": fingerprint(request),
+                "checkpoint_sha256": "a" * 64}
+    response, captured = exchange(mailbox, reply, lambda: task_sdk.checkpoint(
+        {"completed": ["first"]}, request_key="batch-one", requires_decision=False))
+    assert captured[0]["kind"] == "checkpoint"
+    assert response["checkpoint_sha256"] == "a" * 64
+    with pytest.raises(SystemExit) as stopped:
+        exchange(mailbox, reply, lambda: task_sdk.checkpoint({"next": "ask model"}))
+    assert stopped.value.code == 0
 
 
 def test_competing_sdk_calls_publish_only_one_request(mailbox):
@@ -142,7 +160,7 @@ def test_sdk_request_limit_precedes_publication(mailbox, monkeypatch):
     monkeypatch.setattr(task_sdk, "MAX_REQUEST_BYTES", 32)
     with pytest.raises(ValueError, match="bounded transport size"):
         task_sdk.run_orca("job.inp")
-    assert not (mailbox[0] / "request.json").exists()
+    assert not (mailbox[0] / "request-000001.json").exists()
 
 
 def test_sdk_response_read_is_bounded(mailbox, monkeypatch):
@@ -155,6 +173,6 @@ def test_sdk_timeout_preserves_submitted_request_for_coordinator_reconciliation(
     monkeypatch.setenv("ORCA_TASK_TIMEOUT_SECONDS", "0.01")
     with pytest.raises(TimeoutError, match="deadline"):
         task_sdk.run_orca("job.inp", request_key="single")
-    request = json.loads((mailbox[0] / "request.json").read_bytes())
+    request = json.loads((mailbox[0] / "request-000001.json").read_bytes())
     assert request["request_key"] == "single"
-    assert not (mailbox[1] / "response.json").exists()
+    assert not (mailbox[1] / "response-000001.json").exists()

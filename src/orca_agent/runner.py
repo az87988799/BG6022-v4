@@ -128,6 +128,124 @@ def _record_reconciliation(store, run, attempt, reconciliation, observed_usage=N
     return receipt
 
 
+def _recover_internal_calls(store, run, attempt):
+    """Reconcile durable child identities and collect; never restart task code."""
+    from pathlib import Path
+
+    from orca_agent.tools.managed import _archive, _collection_limits
+
+    for call in run.internal_calls:
+        if call.parent_attempt_id != attempt.id or call.state not in {"reserved", "running", "unknown"}:
+            continue
+        handle = call.execution_handle
+        if not handle:
+            store.record_diagnostic(run, "internal_reconciliation_not_implemented",
+                "Internal launch identity is incomplete; raw files, reservation and lease retained. No task replay.")
+            return False
+        backend = local
+        if handle.get("backend") == "linux-container":
+            from orca_agent.backends import container
+            backend = container
+        reconciliation = backend.reconcile(handle)
+        if reconciliation["state"] != "terminated":
+            store.record_diagnostic(run, "internal_reconciliation_required", reconciliation["reason"])
+            return False
+        root = store.path(f"{attempt.directory}/internal/{call.request_key}")
+        receipt_path, prepared_path = root / "execution.json", root / "prepared.json"
+        execution = json.loads(receipt_path.read_text(encoding="utf-8")) if receipt_path.exists() else {}
+        prepared = json.loads(prepared_path.read_text(encoding="utf-8")) if prepared_path.exists() else {}
+        task = Path(prepared["input_path"]).parent if prepared.get("input_path") else root / "task"
+        if not task.resolve().is_relative_to(store.path(attempt.directory).resolve()):
+            raise ValueError("internal recovery task directory escapes its frozen Attempt")
+        files = {}
+        try:
+            if backend is not local:
+                boundary = backend.boundary_from_handle(handle, local_root=root)
+                backend.collect(boundary, "orca", task, limits=_collection_limits(store, run))
+                collection_state = backend.reconcile(handle)
+                if collection_state["state"] != "terminated":
+                    store.record_diagnostic(run, "internal_collection_reconciliation_required",
+                                             collection_state["reason"])
+                    return False
+            if task.exists():
+                _archive(store, run, attempt, task, "", files)
+            proof_path = root / "reconciled.json"
+            if proof_path.exists():
+                proof = json.loads(proof_path.read_text(encoding="utf-8"))
+                if (proof.get("request_key") != call.request_key or proof.get("attempt_id") != attempt.id
+                        or proof.get("reconciliation", {}).get("state") != "terminated"):
+                    raise ValueError("internal durable reconciliation identity differs")
+            else:
+                store._write_json(f"{attempt.directory}/internal/{call.request_key}/reconciled.json",
+                    {"attempt_id": attempt.id, "request_key": call.request_key,
+                     "reconciliation": reconciliation, "additional_usage": "unknown after coordinator loss"},
+                    immutable=True)
+            for name in ("intent.json", "started.json", "actual-start.json", "prepared.json", "execution.json", "reconciled.json"):
+                path = root / name
+                if path.exists():
+                    artifact = store.import_artifact(path, "execution_record", run_id=run.id, attempt_id=attempt.id)
+                    files["record/" + name] = {"artifact_id": artifact.id, "sha256": artifact.sha256}
+        except (ValueError, OSError, RuntimeError) as exc:
+            store.record_diagnostic(run, "internal_collection_recovery_required", str(exc)[:1000])
+            return False
+        state = execution.get("state")
+        complete = state in {"completed", "failed", "cancelled", "timed_out"}
+        state = state if complete else "failed"
+        conditions = dict(prepared.get("actual_conditions", {}))
+        if not complete:
+            conditions["termination_basis"] = "coordinator_lost; exact internal boundary terminated"
+            run.usage.resource_usage_complete = False
+        usage = execution.get("resource_usage", {}) if complete else {"complete": False}
+        response = {"request_key": call.request_key, "input_fingerprint": call.input_fingerprint,
+            "operation_status": state, "scientific_validation": "unverified",
+            "actual_conditions": conditions,
+            "files": {name: reference for name, reference in files.items() if not name.startswith("record/")}}
+        # Unknown cost is a durable fact before the guarded child settlement;
+        # that guard compares the exact Run snapshot, including usage flags.
+        store.save_run(run)
+        store.finish_internal_call(run, attempt, call.request_key, state=state,
+            artifact_ids=[entry["artifact_id"] for entry in files.values()],
+            actual_conditions=conditions, resource_usage=usage, response=response)
+    return True
+
+
+def _recover_task_checkpoints(store, run, attempt):
+    """Reattach a bounded saved checkpoint after its Run publication was interrupted."""
+    from orca_agent.backends.task_files import collect_paths, regular_path
+    from orca_agent.models import TaskCheckpoint
+
+    if attempt.execution_kind != "python" or attempt.frozen_step is None:
+        return
+    directory = store.path(f"{attempt.directory}/checkpoints")
+    if not directory.exists():
+        return
+    regular_path(directory, store.path(attempt.directory))
+    complete = {item.request_key: item for item in run.internal_calls if item.state == "completed"}
+    known = {(item.source_attempt_id, item.name): item for item in run.task_checkpoints}
+    additions = []
+    for path in sorted(collect_paths(directory, count=256, depth=0)):
+        if path.suffix != ".json" or path.stat().st_size > 256 * 1024:
+            raise ValueError("checkpoint recovery requires bounded JSON records")
+        checkpoint = TaskCheckpoint.model_validate_json(path.read_bytes())
+        if (checkpoint.source_attempt_id != attempt.id or path.stem != checkpoint.name
+                or checkpoint.code_sha256 != attempt.frozen_step.parameters.code.sha256
+                or not set(checkpoint.completed_request_keys) <= complete.keys()):
+            raise ValueError("checkpoint recovery differs from its original Attempt or completed receipts")
+        for key in checkpoint.completed_request_keys:
+            for artifact_id in complete[key].artifact_ids:
+                store.artifact_path(artifact_id)
+        previous = known.get((attempt.id, checkpoint.name))
+        if previous and previous != checkpoint:
+            raise ValueError("checkpoint recovery cannot rewrite published task state")
+        if previous is None:
+            additions.append(checkpoint)
+    if additions:
+        if len(run.task_checkpoints) + len(additions) > 256:
+            raise ValueError("retained checkpoint recovery limit exhausted")
+        run.task_checkpoints.extend(additions)
+        store.save_run(run)
+
+
 def _recover(store, config, run, plan):
     import importlib
 
@@ -143,6 +261,7 @@ def _recover(store, config, run, plan):
         # A settled attempt can still have a replacement saved before its Run reference.
         if (attempt.finished_at and not needs_collection and not owns_lease
                 and current.id == attempt.result_id):
+            _recover_task_checkpoints(store, run, attempt)
             continue
         if not attempt.finished_at and attempt.state not in ("intent", "running", "unknown"):
             continue
@@ -197,15 +316,11 @@ def _recover(store, config, run, plan):
                            "reconciliation": reconciliation}
                 _record_reconciliation(store, run, attempt, reconciliation, outcome["resource_usage"])
         if needs_collection:
-            if (attempt.execution_kind == "python" and any(
-                    call.parent_attempt_id == attempt.id and call.state in {"reserved", "running", "unknown"}
-                    for call in run.internal_calls)):
+            if attempt.execution_kind == "python" and not _recover_internal_calls(store, run, attempt):
                 run.state = "unknown"
                 run.usage.resource_usage_complete = False
-                store.record_diagnostic(run, "internal_reconciliation_not_implemented",
-                    "Internal launch receipt is incomplete; raw files and reservation retained. "
-                    "No task replay or new internal execution is permitted.")
                 return False
+            _recover_task_checkpoints(store, run, attempt)
             if attempt.frozen_step:
                 step = attempt.frozen_step
             else:

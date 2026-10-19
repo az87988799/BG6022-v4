@@ -1,0 +1,39 @@
+Step 4 Store / broker directed validation transcript
+Date: 2026-10-19, Asia/Hong_Kong
+Source: actual command outputs recorded in the development tool session.
+No model, ORCA, Docker or full regression suite was started by these commands.
+
+1. Store reservation, immutable history and shared launch budgets
+Command:
+.venv/Scripts/python.exe -m pytest tests/unit/test_managed_attempt_store.py tests/unit/test_managed_shared_orca_budget.py -q
+Actual final output:
+56 passed in 50.60s
+
+2. Supplemental checkpoint and stable response provenance checks
+Command:
+.venv/Scripts/python.exe -m pytest tests/unit/test_managed_attempt_store.py -q -k "checkpoint or response_pins"
+Actual final output:
+4 passed, 32 deselected in 5.53s
+This overlaps the checkpoint coverage in command 1 and is not 4 additional unique tests.
+
+3. Narrow unknown-parent settlement guard plus multi-call broker review checks
+Command:
+.venv/Scripts/python.exe -m pytest tests/unit/test_multi_call_broker.py tests/unit/test_managed_attempt_store.py -q -k "unknown_parent or sequential_calls_and_replay or decision_checkpoint_blocks or interrupted_call_collection"
+Actual final output:
+5 passed, 36 deselected in 9.39s
+Coverage: only exact durable termination proof permits settlement of unknown parent;
+reservation/start/checkpoint remain prohibited; sequential calls keep separate raw
+files; completed replay neither imports artifacts nor reserves work again; changed
+input under a retained key is rejected; decision checkpoint blocks further science;
+interrupted raw collection attributes each Windows/Linux call directory correctly.
+
+4. Static check after the final Store/test changes
+Command:
+.venv/Scripts/python.exe -m ruff check src/orca_agent/store.py tests/unit/test_managed_attempt_store.py tests/unit/test_multi_call_broker.py
+Actual final output:
+All checks passed!
+
+Interpretation:
+All selected tests passed at the time each command ran. Commands 1 and 2 preceded
+the later unknown-parent settlement guard; command 3 directly exercised that guard
+and the broker review changes. No complete-suite or live-scientific claim is made.

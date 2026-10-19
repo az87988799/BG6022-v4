@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import re
 import signal
 import stat
 import struct
@@ -20,8 +21,29 @@ UIDS = {"sealed": 0, "python": 10001, "orca": 10002, "requests": 10001,
 CHUNK = 65536
 
 
+def base_area(area):
+    if area.startswith("orca:") and re.fullmatch(r"[A-Za-z0-9_-]{1,96}", area[5:]):
+        return "orca"
+    if area not in AREAS:
+        raise ValueError("invalid fixed transport area")
+    return area
+
+
+def area_root(area, *, create=False):
+    base = base_area(area)
+    path = ROOT / AREAS[base]
+    if area != base:
+        path = path / area[5:]
+        if create:
+            path.mkdir(mode=0o700, exist_ok=True)
+        if path.is_symlink():
+            raise ValueError("linked native call directory")
+    return path
+
+
 def require_identity(area):
-    if area not in AREAS or os.getuid() != UIDS[area] or os.getgid() != UIDS[area]:
+    base = base_area(area)
+    if os.getuid() != UIDS[base] or os.getgid() != UIDS[base]:
         raise ValueError("helper identity/area mismatch")
 
 
@@ -36,7 +58,8 @@ def relative(value):
 
 def parent_fd(area, name, *, create=False):
     parts = relative(name)
-    descriptor = os.open(ROOT / AREAS[area], os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    descriptor = os.open(area_root(area, create=create),
+                         os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     try:
         for component in parts[:-1]:
             if create:
@@ -104,11 +127,13 @@ def put(area, name, size, digest):
     print(json.dumps({"bytes": size, "sha256": actual.hexdigest()}))
 
 
-def read_request(limit):
+def read_request(limit, name="request.json"):
     if os.getuid() != 0 or os.getgid() != 0:
         raise ValueError("request reader must use a different UID from task code")
+    if name != "request.json" and not re.fullmatch(r"request-[0-9]{6}\.json", name):
+        raise ValueError("invalid mailbox sequence")
     try:
-        fd = open_file("requests", "request.json", os.O_RDONLY)
+        fd = open_file("requests", name, os.O_RDONLY)
     except FileNotFoundError:
         return 3
     with os.fdopen(fd, "rb") as source:
@@ -155,7 +180,7 @@ def output_files(directory, limits, start):
 def export(area, limits):
     require_identity(area)
     start, count, total = time.monotonic(), 0, 0
-    directory = ROOT / AREAS[area]
+    directory = area_root(area)
     def expired(_number, _frame):
         raise TimeoutError("fixed collector lifetime exhausted")
 
@@ -280,18 +305,18 @@ def keeper():
         time.sleep(0.1)
 
 
-def launch(kind, timeout):
-    area = "python" if kind == "python" else "orca"
+def launch(kind, timeout, area=None):
+    area = area or kind
     require_identity(area)
-    if kind not in {"python", "orca"}:
+    if kind not in {"python", "orca"} or base_area(area) != kind:
         raise ValueError("invalid workload kind")
-    folder = ROOT / AREAS[area]
+    folder = area_root(area)
     os.chdir(folder)
     identity = next(item for item in processes(os.getuid()) if item["pid"] == os.getpid())
     with (folder / ".launch.json").open("x") as target:
         json.dump(identity, target)
     deadline = time.monotonic() + min(timeout, 20)
-    while not (ROOT / "gates" / f"{kind}.gate").exists():
+    while not (ROOT / "gates" / f"{area}.gate").exists():
         if time.monotonic() >= deadline:
             raise TimeoutError("workload gate was never released")
         time.sleep(0.025)
@@ -329,7 +354,7 @@ def launch_identity(area, *, executable=False):
     if actual["no_new_privs"] != "1" or actual["seccomp"] != "2":
         raise ValueError("workload base isolation unavailable")
     if executable:
-        if area != "orca":
+        if base_area(area) != "orca":
             raise ValueError("actual executable proof is only defined for ORCA")
         target = Path("/opt/orca/orca")
         loaded = Path(f"/proc/{actual['pid']}/exe")
@@ -350,7 +375,7 @@ def launch_identity(area, *, executable=False):
 
 
 def gate(area):
-    if area not in {"python", "orca"} or os.getuid() != 0 or os.getgid() != 0:
+    if base_area(area) not in {"python", "orca"} or os.getuid() != 0 or os.getgid() != 0:
         raise ValueError("gate requires the fixed trusted identity")
     with (ROOT / "gates" / f"{area}.gate").open("x"):
         pass
@@ -389,7 +414,7 @@ def main():
     elif command == "put":
         put(args[0], args[1], int(args[2]), args[3])
     elif command == "request":
-        return read_request(int(args[0]))
+        return read_request(int(args[0]), args[1] if len(args) > 1 else "request.json")
     elif command == "export":
         export(args[0], json.loads(args[1]))
     elif command == "snapshot":
@@ -397,7 +422,7 @@ def main():
     elif command == "control":
         control(args[0])
     elif command == "launch":
-        launch(args[0], float(args[1]))
+        launch(args[0], float(args[1]), args[2] if len(args) > 2 else None)
     elif command == "identity":
         launch_identity(args[0])
     elif command == "exec-identity":

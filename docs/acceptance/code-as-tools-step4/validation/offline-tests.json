@@ -1,0 +1,31 @@
+{
+  "full_regression_run": false,
+  "model_calls": 0,
+  "records": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_task_sdk.py tests/unit/test_managed_execution.py tests/test_container_backend.py -q",
+      "result": "51 passed in 10.26s",
+      "kind": "offline",
+      "source": "observed development command output"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_task_checkpoint_feedback.py tests/unit/test_managed_execution.py::test_unfinished_internal_recovery_preserves_budget_raw_files_and_lease tests/unit/test_context.py::test_actual_proposal_schema_and_bounded_default_context -q --tb=short",
+      "result": "12 passed in 15.43s",
+      "kind": "offline",
+      "source": "subagent observed output"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_task_checkpoint_feedback.py::test_resume_recovers_checkpoint_file_before_run_publication_without_task_replay -q --tb=short",
+      "result": "2 passed in 5.53s",
+      "kind": "offline",
+      "source": "subagent observed output"
+    },
+    {
+      "command": "ruff check all 17 changed Python files listed in this delivery",
+      "result": "All checks passed!",
+      "kind": "static",
+      "source": "observed final command output"
+    }
+  ],
+  "note": "Pass counts are command-level evidence at each relevant change; overlapping executions are not added as unique tests."
+}

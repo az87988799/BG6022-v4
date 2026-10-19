@@ -156,3 +156,29 @@ requires retained local originals and checks both original and published hashes.
 Run state, Result checks, raw ORCA text and pytest outcomes remain distinct. CPU
 summaries sum each Run's persisted aggregate usage once and exclude additional
 SDK internal accounting; incomplete measurements remain lower bounds.
+
+## Sequential task calls and decision checkpoints
+
+Step 4 uses SDK protocol 2. The current host coordinator consumes sequential,
+size-bounded numbered messages (at most 1024 exchanges per Attempt). ORCA
+inputs, outputs, process identity and launch gate live in a separate native
+subdirectory per stable request key inside the same container and cgroup.
+Completed identical requests return hash-checked copies of the original
+Artifacts, including across explicit continuation Attempts, without a new ORCA
+reservation. Changed inputs or unsettled calls cannot restart under the same key.
+
+`run_orca(path, request_key="candidate_a", purpose="new_candidate")` submits a
+candidate. `purpose="plan_addition"` records an addition; `purpose="failure_retry"`
+requires a new key and `retry_of="failed_key"`. All calls inherit the Run's
+permission, total starts, extra starts and internal workload limits.
+`checkpoint(state, request_key="batch_1", requires_decision=True, reason="Review observations")`
+persists JSON state and completed keys, then exits Python normally so the Agent
+can assess the observations. Catching that exit cannot authorize more ORCA
+work in the same Attempt. A checkpoint is data, not a scientific pass or Python
+stack snapshot. Historical attempts and source Artifacts retain their identities.
+
+The helper and SDK changes require a freshly built, explicitly selected image
+for new Runs. Historical frozen images and Runs are not upgraded. The runtime
+backend still rejects environment concurrency above 1; it does not claim
+parallel allocation across Runs. See [decision 0036](../../docs/decisions/0036-multiple-computations-and-checkpoints.md)
+and [step 4 evidence](../../docs/acceptance/code-as-tools-step4/report.md).

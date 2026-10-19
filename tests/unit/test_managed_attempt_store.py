@@ -15,6 +15,7 @@ from orca_agent.models import (
     Plan,
     Request,
     Step,
+    fingerprint,
 )
 from orca_agent.store import BudgetExceeded, EnvironmentBusy, Store, StoreError
 
@@ -214,7 +215,7 @@ def test_internal_budget_rejection_keeps_parent_and_no_new_receipt(tmp_path, mon
     assert run.usage.orca_starts_reserved == 0
 
 
-def test_same_key_changed_payload_unknown_retry_and_second_call_rejected(tmp_path, monkeypatch):
+def test_same_key_changed_payload_and_unsettled_calls_cannot_be_restarted(tmp_path, monkeypatch):
     store, run, step, _ = make_task(tmp_path, monkeypatch)
     parent = store.reserve_attempt(run, step)
     code = native_input(store, run, parent, tmp_path)
@@ -223,7 +224,7 @@ def test_same_key_changed_payload_unknown_retry_and_second_call_rejected(tmp_pat
         store.reserve_internal_call(run, parent, "single", "b" * 64, code=code)
     with pytest.raises(StoreError, match="reconcile"):
         store.reserve_internal_call(run, parent, "single", "a" * 64, code=code)
-    with pytest.raises(StoreError, match="only one"):
+    with pytest.raises(StoreError, match="reconciliation"):
         store.reserve_internal_call(run, parent, "second", "a" * 64, code=code)
     assert run.usage.orca_starts_reserved == 1
 
@@ -321,3 +322,223 @@ def test_internal_record_remains_roundtrippable_with_historical_defaults():
                        inputs=InputManifest(), state="completed")
     assert old.parent_attempt_id is None
     assert InternalCall.model_validate_json(old.model_dump_json()) == old
+
+
+def multi_task(tmp_path, monkeypatch, *, work_units=4):
+    return make_task(tmp_path, monkeypatch,
+        permission_changes={"allow_additional_science": True},
+        budget_changes={"internal_work_units": work_units, "code_retries": 1})
+
+
+def test_multiple_calls_distinguish_candidates_additions_and_failure_retries(tmp_path, monkeypatch):
+    store, run, step, _ = multi_task(tmp_path, monkeypatch, work_units=3)
+    parent = store.reserve_attempt(run, step)
+    code = native_input(store, run, parent, tmp_path)
+    goal = {"quantity": "electronic_energy", "condition": "gas_phase"}
+    resources = {"cores": 4, "memory_mb": 1024}
+    first = store.reserve_internal_call(run, parent, "candidate", "a" * 64,
+        code=code, goal=goal, resources=resources)
+    store.finish_internal_call(run, parent, first.request_key, state="failed")
+    retry = store.reserve_internal_call(run, parent, "corrected", "b" * 64, code=code,
+        purpose="failure_retry", retry_of="candidate", goal=goal, resources=resources)
+    store.mark_internal_call_started(run, parent, retry.request_key, {"pid": 12, "create_time": 1})
+    store.finish_internal_call(run, parent, retry.request_key, state="completed")
+    addition = store.reserve_internal_call(run, parent, "extra", "c" * 64,
+        code=code, purpose="plan_addition", goal=goal, resources=resources)
+    store.finish_internal_call(run, parent, addition.request_key, state="failed")
+    loaded = store.load_run(run.id)
+    assert [item.purpose for item in loaded.internal_calls] == [
+        "new_candidate", "failure_retry", "plan_addition"]
+    assert loaded.internal_calls[1].retry_of == "candidate"
+    assert loaded.internal_calls[1].goal == goal
+    assert loaded.internal_calls[1].resources == resources
+    assert loaded.usage.internal_calls_by_purpose == {
+        "new_candidate": 1, "failure_retry": 1, "plan_addition": 1}
+    assert loaded.usage.orca_starts_reserved == loaded.usage.internal_work_units == 3
+    assert loaded.usage.orca_starts_actual == 1
+    with pytest.raises(BudgetExceeded, match="work unit"):
+        store.reserve_internal_call(run, parent, "exhausted", "d" * 64, code=code)
+
+
+@pytest.mark.parametrize("state", ["reserved", "running", "unknown", "completed"])
+def test_failure_retry_requires_confirmed_failure_and_new_key(tmp_path, monkeypatch, state):
+    store, run, step, _ = multi_task(tmp_path, monkeypatch)
+    parent = store.reserve_attempt(run, step)
+    code = native_input(store, run, parent, tmp_path)
+    store.reserve_internal_call(run, parent, "original", "a" * 64, code=code)
+    if state in {"running", "completed"}:
+        store.mark_internal_call_started(run, parent, "original", {"pid": 12})
+    if state in {"completed", "unknown"}:
+        store.finish_internal_call(run, parent, "original", state=state)
+    with pytest.raises(StoreError, match="reconciliation|settled failed"):
+        store.reserve_internal_call(run, parent, "retry", "b" * 64, code=code,
+                                    purpose="failure_retry", retry_of="original")
+    with pytest.raises(ValueError, match="new request key"):
+        store.reserve_internal_call(run, parent, "original", "a" * 64, code=code,
+                                    purpose="failure_retry", retry_of="original")
+    assert store.load_run(run.id).usage.orca_starts_reserved == 1
+
+
+def test_completed_call_replays_across_attempts_without_budget_reset(tmp_path, monkeypatch):
+    store, run, step, _ = multi_task(tmp_path, monkeypatch, work_units=1)
+    first = store.reserve_attempt(run, step)
+    code = native_input(store, run, first, tmp_path)
+    call = store.reserve_internal_call(run, first, "stable", "a" * 64, code=code)
+    store.mark_internal_call_started(run, first, "stable", {"pid": 12})
+    source = tmp_path / "job.out"
+    source.write_text("retained raw output")
+    output = store.import_artifact(source, "raw_output", run_id=run.id, attempt_id=first.id)
+    response = {"request_key": "stable", "input_fingerprint": "a" * 64,
+                "files": {"job.out": {"artifact_id": output.id, "sha256": output.sha256}}}
+    store.finish_internal_call(run, first, "stable", state="completed",
+                               artifact_ids=[output.id], response=response)
+    store.finish_attempt(run, first.id, state="completed", started=True, termination_confirmed=True)
+    reopened = Store(store.root, environment_root=store.environment_root)
+    loaded = reopened.load_run(run.id)
+    second = reopened.reserve_attempt(loaded, step)
+    second_input = native_input(reopened, loaded, second, tmp_path)
+    before = loaded.usage.model_dump()
+    replay = reopened.reserve_internal_call(loaded, second, "stable", "a" * 64, code=second_input)
+    assert replay == call and replay.response == response
+    assert replay.parent_attempt_id == first.id
+    assert loaded.usage.model_dump() == before
+    assert loaded.usage.code_retries == 1
+    with pytest.raises(BudgetExceeded, match="work unit"):
+        reopened.reserve_internal_call(loaded, second, "new", "b" * 64, code=second_input)
+    changed = reopened.load_run(run.id)
+    changed.usage.internal_calls_by_purpose["new_candidate"] = 0
+    with pytest.raises(StoreError, match="counters cannot be reset"):
+        reopened.save_run(changed)
+
+
+def test_response_pins_artifact_hash_and_replay_rechecks_retained_evidence(tmp_path, monkeypatch):
+    store, run, step, _ = multi_task(tmp_path, monkeypatch)
+    parent = store.reserve_attempt(run, step)
+    code = native_input(store, run, parent, tmp_path)
+    store.reserve_internal_call(run, parent, "stable", "a" * 64, code=code)
+    store.mark_internal_call_started(run, parent, "stable", {"pid": 12})
+    source = tmp_path / "job.out"
+    source.write_text("original raw output")
+    artifact = store.import_artifact(source, "raw_output", run_id=run.id, attempt_id=parent.id)
+    with pytest.raises(StoreError, match="result Artifact hash"):
+        store.finish_internal_call(run, parent, "stable", state="completed",
+            artifact_ids=[artifact.id], response={"files": {
+                "job.out": {"artifact_id": artifact.id, "sha256": "f" * 64}}})
+    assert store.load_run(run.id).internal_calls[0].state == "running"
+    response = {"files": {"job.out": {"artifact_id": artifact.id, "sha256": artifact.sha256}}}
+    store.finish_internal_call(run, parent, "stable", state="completed",
+                               artifact_ids=[artifact.id], response=response)
+    store.artifact_path(artifact.id).write_text("tampered evidence")
+    with pytest.raises(StoreError, match="hash|changed|size"):
+        store.reserve_internal_call(run, parent, "stable", "a" * 64, code=code)
+
+
+def test_checkpoint_survives_restart_and_preserves_exact_source_state(tmp_path, monkeypatch):
+    store, run, step, _ = multi_task(tmp_path, monkeypatch)
+    parent = store.reserve_attempt(run, step)
+    code = native_input(store, run, parent, tmp_path)
+    store.reserve_internal_call(run, parent, "candidate", "a" * 64, code=code)
+    store.mark_internal_call_started(run, parent, "candidate", {"pid": 12})
+    store.finish_internal_call(run, parent, "candidate", state="completed")
+    record = store.save_task_checkpoint(run, parent, "choose_next", {"energies": [-1.0]},
+        requires_decision=True, reason="a new result needs a plan decision")
+    reopened = Store(store.root, environment_root=store.environment_root)
+    loaded = reopened.load_run(run.id)
+    assert loaded.task_checkpoints == [record]
+    assert record.completed_request_keys == ["candidate"]
+    assert record.source_attempt_id == parent.id
+    assert record.code_sha256 == step.parameters.code.sha256
+    assert reopened.save_task_checkpoint(loaded, loaded.attempts[0], "choose_next",
+        {"energies": [-1.0]}, requires_decision=True,
+        reason="a new result needs a plan decision") == record
+    with pytest.raises(StoreError, match="different immutable"):
+        reopened.save_task_checkpoint(loaded, loaded.attempts[0], "choose_next", {"energies": [0.0]})
+    changed = reopened.load_run(run.id)
+    changed.task_checkpoints[0].source_attempt_id = "another_attempt"
+    item = changed.task_checkpoints[0]
+    item.sha256 = fingerprint(item.model_dump(mode="json", exclude={"sha256", "created_at"}))
+    with pytest.raises(StoreError, match="checkpoint history"):
+        reopened.save_run(changed)
+    changed = reopened.load_run(run.id)
+    changed.task_checkpoints.clear()
+    with pytest.raises(StoreError, match="checkpoint history"):
+        reopened.save_run(changed)
+
+
+def test_checkpoint_rejects_unfinished_calls_invalid_json_and_missing_reason(tmp_path, monkeypatch):
+    store, run, step, _ = multi_task(tmp_path, monkeypatch)
+    parent = store.reserve_attempt(run, step)
+    with pytest.raises(StoreError, match="only completed"):
+        store.save_task_checkpoint(run, parent, "unfinished", {}, completed_request_keys=["missing"])
+    with pytest.raises(ValueError, match="reason"):
+        store.save_task_checkpoint(run, parent, "decision", {}, requires_decision=True)
+    with pytest.raises(ValueError):
+        store.save_task_checkpoint(run, parent, "infinite", {"value": float("nan")})
+    with pytest.raises(ValueError, match="64 KiB"):
+        store.save_task_checkpoint(run, parent, "large", {"value": "x" * 65536})
+    assert store.load_run(run.id).task_checkpoints == []
+
+
+def test_unpublished_checkpoint_is_recovered_without_rewriting_it(tmp_path, monkeypatch):
+    store, run, step, _ = multi_task(tmp_path, monkeypatch)
+    parent = store.reserve_attempt(run, step)
+    with monkeypatch.context() as fault:
+        fault.setattr(store, "save_run", lambda _: (_ for _ in ()).throw(OSError("crash before Run write")))
+        with pytest.raises(OSError, match="crash"):
+            store.save_task_checkpoint(run, parent, "saved", {"completed": 1})
+    relative = f"{parent.directory}/checkpoints/saved.json"
+    original = store.path(relative).read_bytes()
+    loaded = store.load_run(run.id)
+    restored = store.save_task_checkpoint(loaded, loaded.attempts[0], "saved", {"completed": 1})
+    assert store.path(relative).read_bytes() == original
+    assert store.load_run(run.id).task_checkpoints == [restored]
+
+
+def test_two_runs_compete_for_one_environment_while_python_waits_for_orca(tmp_path, monkeypatch):
+    store, first, step, _ = multi_task(tmp_path, monkeypatch)
+    _, second, second_step, _ = make_task(tmp_path, monkeypatch)
+    parent = store.reserve_attempt(first, step)
+    code = native_input(store, first, parent, tmp_path)
+    store.reserve_internal_call(first, parent, "owned", "a" * 64, code=code)
+    with pytest.raises(EnvironmentBusy, match="quota is occupied"):
+        store.reserve_attempt(second, second_step)
+    assert store.load_run(second.id).attempts == []
+    assert store.load_run(second.id).usage.orca_starts_reserved == 0
+    store.finish_internal_call(first, parent, "owned", state="failed")
+    store.finish_attempt(first, parent.id, state="completed", started=True, termination_confirmed=True)
+    next_parent = store.reserve_attempt(second, second_step)
+    assert store.environment_lease()["attempt_id"] == next_parent.id
+
+
+def test_unknown_parent_can_only_settle_after_exact_durable_termination_proof(tmp_path, monkeypatch):
+    store, run, step, _ = multi_task(tmp_path, monkeypatch)
+    parent = store.reserve_attempt(run, step)
+    code = native_input(store, run, parent, tmp_path)
+    store.reserve_internal_call(run, parent, "interrupted", "a" * 64, code=code)
+    store.mark_internal_call_started(run, parent, "interrupted", {"pid": 12})
+    parent.state = "unknown"
+    store.save_run(run)
+    before = run.usage.model_dump()
+    relative = f"{parent.directory}/reconciled.json"
+    for proof in (None,
+                  {"attempt_id": "another", "reconciliation": {"state": "terminated"}},
+                  {"attempt_id": parent.id, "reconciliation": {"state": "unknown"}}):
+        if proof is not None:
+            store._write_json(relative, proof)
+        with pytest.raises(StoreError, match="active managed Python"):
+            store.finish_internal_call(run, parent, "interrupted", state="failed")
+    store._write_json(relative, {"attempt_id": parent.id, "reconciliation": {"state": "terminated"}})
+    for action in (
+        lambda: store.reserve_internal_call(run, parent, "new", "b" * 64, code=code),
+        lambda: store.mark_internal_call_started(run, parent, "interrupted", {"pid": 12}),
+        lambda: store.save_task_checkpoint(run, parent, "resume", {}),
+    ):
+        with pytest.raises(StoreError, match="active managed Python"):
+            action()
+    store.finish_internal_call(run, parent, "interrupted", state="failed",
+                               actual_conditions={"termination_basis": "reconciled parent"})
+    persisted = store.load_run(run.id)
+    assert persisted.internal_calls[0].state == "failed"
+    assert persisted.usage.model_dump() == before
+    assert persisted.attempts[0].state == "unknown"
+    assert store.environment_lease()["attempt_id"] == parent.id

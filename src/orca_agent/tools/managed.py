@@ -1,4 +1,4 @@
-"""Task-code execution and a single bounded SDK call in the existing coordinator.
+"""Task-code execution and bounded SDK calls in the existing coordinator.
 
 All task content is untrusted. The mailbox transports bytes, never a host path,
 permission, command line, scientific success assertion or execution handle.
@@ -326,7 +326,7 @@ def collect_result(store, run, step, attempt, outcome):
         diagnostics.append({"category": "collection_error", "detail": outcome["collection_error"]})
     if outcome["state"] != "unknown":
         try:
-            for folder in ("sealed", "task"):
+            for folder in ("sealed", "task", "checkpoints"):
                 if (root / folder).exists():
                     _archive(store, run, attempt, root / folder, folder + "/", files)
             # Coordinator records are outside every task-writable ACL tree.
@@ -337,9 +337,12 @@ def collect_result(store, run, step, attempt, outcome):
             for receipt in run.internal_calls:
                 if receipt.parent_attempt_id == attempt.id:
                     internal = root / "internal" / receipt.request_key
-                    raw_task = root / "native" / "task"
-                    if not raw_task.exists():
-                        raw_task = internal / "task"
+                    prepared_path = internal / "prepared.json"
+                    prepared = json.loads(prepared_path.read_bytes()) if prepared_path.exists() else {}
+                    raw_task = (Path(prepared["input_path"]).parent
+                                if prepared.get("input_path") else internal / "task")
+                    if not raw_task.resolve().is_relative_to(root.resolve()):
+                        raise ValueError("internal raw evidence escapes its frozen Attempt")
                     if not receipt.artifact_ids and raw_task.is_dir():
                         _archive(store, run, attempt, raw_task,
                                  f"internal/{receipt.request_key}/task/", files)
@@ -382,68 +385,154 @@ def collect_result(store, run, step, attempt, outcome):
 
 
 class _Broker:
+    """Sequential mailbox handling in the existing coordinator, never a child Agent."""
+
     def __init__(self, store, run, step, attempt, config, session, requests, responses, deadline,
                  native_boundary=None, container_boundary=None):
         self.store, self.run, self.step, self.attempt = store, run, step, attempt
         self.config, self.session = config, session
         self.requests, self.responses = requests, responses
-        self.handled = False
+        self.sequence = 1
+        self.legacy_handled = False
         self.deadline = deadline
         self.native_boundary = native_boundary
         self.container_boundary = container_boundary
 
     def poll(self, parent_handle):
-        if self.handled:
+        from orca_agent.task_sdk import MAX_EXCHANGES
+
+        if self.legacy_handled or self.sequence > MAX_EXCHANGES:
             return
-        try:
+        sequence = self.sequence
+        name = f"request-{sequence:06d}.json"
+        legacy = False
+
+        def read(name):
             if self.container_boundary:
                 from orca_agent.backends import container
-                data = container.read_request(self.container_boundary, max_bytes=MAX_REQUEST_BYTES)
-                if data is None:
-                    return
-            else:
-                target = self.requests / "request.json"
-                if not target.exists():
-                    return
-                data = read_mailbox(target, MAX_REQUEST_BYTES)
-            self.handled = True
-            response = self.execute(json.loads(data), parent_handle)
+                return container.read_request(self.container_boundary, max_bytes=MAX_REQUEST_BYTES, name=name)
+            target = self.requests / name
+            return read_mailbox(target, MAX_REQUEST_BYTES) if target.exists() else None
+
+        try:
+            data = read(name)
+            if data is None and sequence == 1:
+                data = read("request.json")
+                legacy = data is not None
+            if data is None:
+                return
+            # Claim this transport slot before admission. A rejected message cannot be replayed.
+            self.sequence += 1
+            self.legacy_handled = legacy
+            value = json.loads(data)
+            if (legacy and value.get("version") != 1) or (not legacy and value.get("version") != 2):
+                raise ValueError("SDK protocol does not match its mailbox")
+            response = self.execute(value, parent_handle)
         except Exception as exc:
-            self.handled = True
-            response = {"error": f"managed_orca_request_rejected: {exc}"}
-        _save_json(self.responses / "response.json", response)
+            if self.sequence == sequence:
+                self.sequence += 1
+            response = {"error": f"managed_sdk_request_rejected: {exc}"}
+        response_name = "response.json" if legacy else f"response-{sequence:06d}.json"
+        _save_json(self.responses / response_name, response)
         if self.container_boundary:
             from orca_agent.backends import container
             container.publish_response(self.container_boundary, response,
-                                       {name: Path(path) for name, path in response.get("files", {}).items()})
+                {name: Path(path) for name, path in response.get("files", {}).items()},
+                sequence=None if legacy else sequence)
+
+    def _checkpoint(self, value):
+        if (set(value) != {"version", "kind", "request_key", "state", "requires_decision", "reason"}
+                or type(value["requires_decision"]) is not bool
+                or not isinstance(value["state"], dict)
+                or (value["reason"] is not None and not isinstance(value["reason"], str))):
+            raise ValueError("invalid bounded task checkpoint")
+        checkpoint = self.store.save_task_checkpoint(
+            self.run, self.attempt, value["request_key"], value["state"],
+            completed_request_keys=[item.request_key for item in self.run.internal_calls
+                                    if item.state == "completed"],
+            requires_decision=value["requires_decision"], reason=value["reason"])
+        return {"request_key": value["request_key"], "input_fingerprint": fingerprint(value),
+                "checkpoint_sha256": checkpoint.sha256,
+                "completed_request_keys": checkpoint.completed_request_keys,
+                "requires_decision": checkpoint.requires_decision}
+
+    def _reply(self, receipt, parent_handle):
+        from orca_agent.store import sha256_file
+
+        if not receipt.response:
+            raise ValueError("completed historical receipt has no pinned replay response")
+        response = dict(receipt.response)
+        output = self.responses / f"files-{self.sequence:06d}"
+        output.mkdir()
+        files = {}
+        for name, reference in response.get("files", {}).items():
+            # Saved names passed archive's portable path checks; validate again on consumption.
+            from orca_agent.backends.container import _relative
+            _relative(name)
+            source = self.store.artifact_path(reference["artifact_id"])
+            if sha256_file(source) != reference["sha256"]:
+                raise ValueError("completed receipt raw evidence hash changed")
+            target = output / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with source.open("rb") as reader, target.open("xb") as writer:
+                while block := reader.read(1024 * 1024):
+                    self._active(parent_handle)
+                    writer.write(block)
+            if sha256_file(target) != reference["sha256"]:
+                raise ValueError("receipt copy differs from original evidence")
+            files[name] = str(target)
+        if self.session is not None:
+            self.session.grant_read(output)
+        return {**response, "files": files, "source_attempt_id": receipt.parent_attempt_id}
+
+    def _active(self, parent_handle):
+        if self.container_boundary:
+            from orca_agent.backends import container
+            container.check_active(self.container_boundary)
+        else:
+            local.check_active_job(parent_handle["job_name"])
 
     def execute(self, value, parent_handle):
-        if self.native_boundary is None:
-            raise ValueError("ORCA SDK boundary was not authorized/prepared before task execution")
         if time.monotonic() >= self.deadline:
             raise TimeoutError("script deadline exhausted before SDK admission")
-        if (not isinstance(value, dict) or set(value) != {"version", "request_key", "input", "dependencies"}
-                or type(value["version"]) is not int or value["version"] != 1
+        if not isinstance(value, dict) or type(value.get("version")) is not int:
+            raise ValueError("invalid bounded SDK request")
+        if value["version"] == 2 and value.get("kind") == "checkpoint":
+            return self._checkpoint(value)
+        old_keys = {"version", "request_key", "input", "dependencies"}
+        new_keys = old_keys | {"kind", "purpose", "retry_of"}
+        if (not ((value["version"] == 1 and set(value) == old_keys)
+                 or (value["version"] == 2 and set(value) == new_keys and value["kind"] == "orca"))
                 or not isinstance(value["input"], str) or not isinstance(value["dependencies"], list)
                 or len(value["dependencies"]) > 32):
             raise ValueError("invalid bounded SDK request")
-        # Validate names and hashes with the same native-input schema. No child path is opened.
+        if self.native_boundary is None:
+            raise ValueError("ORCA SDK boundary was not authorized/prepared before task execution")
+        if any(item.source_attempt_id == self.attempt.id and item.requires_decision
+               for item in self.run.task_checkpoints):
+            raise ValueError("task checkpoint requires a coordinator decision before more computation")
         from orca_agent.models import InternalCall
-        InternalCall(request_key=value["request_key"], input_fingerprint=fingerprint(value), state="reserved")
+        purpose, retry_of = value.get("purpose", "new_candidate"), value.get("retry_of")
+        digest = fingerprint(value)
+        InternalCall(request_key=value["request_key"], input_fingerprint=digest, state="reserved",
+                     purpose=purpose, retry_of=retry_of)
+        _control(self.store, self.run, self.step)
+        self._active(parent_handle)
+        existing = next((item for item in self.run.internal_calls
+                         if item.request_key == value["request_key"]), None)
+        if existing:
+            if existing.input_fingerprint != digest:
+                raise ValueError("internal request key was reused with changed input")
+            if existing.state != "completed":
+                raise ValueError("internal request already exists; reconcile or inspect its receipt")
+            return self._reply(existing, parent_handle)
 
         def checkpoint():
-            # The task is still alive while its coordinator imports/copies evidence.
-            # Keep the same parent's cancellation, memory and deadline monitor active.
-            if self.container_boundary:
-                from orca_agent.backends import container
-                container.check_active(self.container_boundary)
-            else:
-                local.check_active_job(parent_handle["job_name"])
+            self._active(parent_handle)
 
-        checkpoint()
         root = self.store.path(self.attempt.directory)
-        sealed = root / "sealed" / "sdk"
-        sealed.mkdir()
+        sealed = root / "sealed" / "sdk" / f"{value['request_key']}-{self.sequence:06d}"
+        sealed.mkdir(parents=True)
         source = sealed / "native.inp"
         source.write_text(value["input"], encoding="utf-8")
         code = self.store.import_artifact(source, "native_input", run_id=self.run.id,
@@ -462,26 +551,31 @@ class _Broker:
         parameters = NativeOrcaParameters(input=CodeRef(artifact_id=code.id, sha256=code.sha256,
                                                         language="orca"),
                                           inputs=InputManifest(entries=entries))
-        # Admission precedes ORCA reservation; failed source preparations remain recorded.
-        prepare_root = self.native_boundary["workdir"]
+        internal_root = root / "internal" / value["request_key"]
+        # Prepare separately from the durable launch intent directory.
+        prepare_root = (root / "native" / "task" / value["request_key"]
+                        if not self.container_boundary else root / "native" / value["request_key"] / "task")
         configuration = self.store.run_configuration(self.run)
         prepared = prepare_native_input(prepare_root, parameters, self.store.artifact_path,
             configuration.resources, policy=configuration.execution.native_input_policy,
             binding=native_input_binding(self.store, self.run, self.step))
         _control(self.store, self.run, self.step)
+        request = self.store.load_request(self.run)
         receipt = self.store.reserve_internal_call(
-            self.run, self.attempt, value["request_key"], fingerprint(value),
-            code=parameters.input, inputs=parameters.inputs,
+            self.run, self.attempt, value["request_key"], digest,
+            code=parameters.input, inputs=parameters.inputs, purpose=purpose, retry_of=retry_of,
+            goal={"request_id": request.id, "request_version": request.version,
+                  "step_id": self.step.id, "goals": [goal.model_dump(mode="json") for goal in request.goals]},
+            resources=prepared["resources"],
             conditions={"admission_version": prepared["admission_version"],
                         "execution_impact": prepared["execution_impact"],
                         "input_binding": prepared.get("input_binding")},
             work_units=prepared["execution_impact"]["internal_work_units"])
-        if receipt.state == "completed":
-            raise ValueError("completed SDK receipt already exists; task replay is not enabled")
-        internal_root = root / "internal" / receipt.request_key
         task = prepare_root
-        prepared["input_path"] = str(task / "job.inp")
         _save_json(internal_root / "prepared.json", prepared)
+        if self.container_boundary:
+            self.container_boundary["orca_scope"] = receipt.request_key
+        native = {**self.native_boundary, "workdir": task}
 
         def started(handle):
             self.store.mark_internal_call_started(self.run, self.attempt, receipt.request_key, handle)
@@ -492,10 +586,10 @@ class _Broker:
                               parent_job_name=parent_handle.get("job_name"), deadline=self.deadline,
                               parent_handle=parent_handle if self.container_boundary else None,
                               execution_handle=parent_handle,
-                              boundary=self.container_boundary or self.native_boundary)
+                              boundary=self.container_boundary or native)
         _save_json(internal_root / "execution.json", outcome)
         files = {}
-        collection_error = None
+        collection_error = outcome.get("collection_error")
         try:
             if outcome["state"] != "unknown":
                 _archive(self.store, self.run, self.attempt, task, "", files, checkpoint=checkpoint)
@@ -503,41 +597,24 @@ class _Broker:
                     path = internal_root / name
                     if path.exists():
                         artifact = self.store.import_artifact(path, "execution_record", run_id=self.run.id,
-                                                              attempt_id=self.attempt.id,
-                                                              checkpoint=checkpoint)
+                                                              attempt_id=self.attempt.id, checkpoint=checkpoint)
                         files["record/" + name] = {"artifact_id": artifact.id, "sha256": artifact.sha256}
         except Exception as exc:
             collection_error = str(exc)
-        self.store.finish_internal_call(self.run, self.attempt, receipt.request_key,
+        response = {"request_key": receipt.request_key, "input_fingerprint": receipt.input_fingerprint,
+                    "operation_status": outcome["state"], "scientific_validation": "unverified",
+                    "actual_conditions": prepared["actual_conditions"],
+                    "files": {name: ref for name, ref in files.items() if not name.startswith("record/")}}
+        receipt = self.store.finish_internal_call(self.run, self.attempt, receipt.request_key,
             state="failed" if collection_error else outcome["state"],
             artifact_ids=[item["artifact_id"] for item in files.values()],
             actual_conditions={**prepared["actual_conditions"], "collection_error": collection_error},
-            resource_usage=outcome["resource_usage"])
+            resource_usage=outcome["resource_usage"], response=response if not collection_error else {})
         if collection_error:
             raise ValueError(f"ORCA evidence collection incomplete: {collection_error}")
         if outcome["state"] == "unknown":
             raise ValueError("internal ORCA termination is unknown; no raw files exposed")
-        # The task receives new read-only copies, never the original evidence store path.
-        output = self.responses / "files"
-        output.mkdir()
-        for name in files:
-            if name.startswith("record/"):
-                continue
-            checkpoint()
-            target = output / name
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with (task / name).open("rb") as reader, target.open("xb") as writer:
-                while block := reader.read(1024 * 1024):
-                    checkpoint()
-                    writer.write(block)
-            checkpoint()
-        if self.session is not None:
-            self.session.grant_read(output)
-        checkpoint()
-        return {"request_key": receipt.request_key, "input_fingerprint": receipt.input_fingerprint,
-                "operation_status": outcome["state"],
-                "scientific_validation": "unverified", "actual_conditions": prepared["actual_conditions"],
-                "files": {name: str(output / name) for name in files if not name.startswith("record/")}}
+        return self._reply(receipt, parent_handle)
 
 
 def _prepare_python_inputs(store, run, step, root, task):

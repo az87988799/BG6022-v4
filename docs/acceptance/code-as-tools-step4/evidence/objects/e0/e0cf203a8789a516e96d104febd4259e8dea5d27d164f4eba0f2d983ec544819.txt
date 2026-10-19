@@ -1,0 +1,28 @@
+from pathlib import Path
+import json, re, time
+from orca_task_sdk import run_orca, checkpoint
+
+template = '! RHF STO-3G TightSCF NoRI NoAutoStart\n%maxcore 192\n%pal nprocs 4 end\n%scf ConvForced 1 MaxIter 100 end\n* xyz 0 1\nO 0 0 0\nH {distance} 0 .586260\nH -{distance} 0 .586260\n*\n'
+receipts = []
+energies = []
+for key, distance in (("candidate_a", ".757160"), ("candidate_b", ".800000")):
+    source = Path(key + ".inp")
+    source.write_text(template.format(distance=distance))
+    receipt = run_orca(source, request_key=key, purpose="new_candidate")
+    assert receipt["operation_status"] == "completed", receipt
+    text = Path(receipt["files"]["stdout.out"]).read_text()
+    assert "ORCA TERMINATED NORMALLY" in text
+    assert "4 parallel MPI-processes" in text
+    energies.append(float(re.findall(r"FINAL SINGLE POINT ENERGY\s+([-+0-9.]+)", text)[-1]))
+    receipts.append(receipt)
+    if key == "candidate_a":
+        reused = run_orca(source, request_key=key, purpose="new_candidate")
+        assert reused["input_fingerprint"] == receipt["input_fingerprint"]
+        assert Path(reused["files"]["stdout.out"]).read_text() == text
+Path("receipts.json").write_text(json.dumps(receipts, indent=2))
+state = {"completed": [r["request_key"] for r in receipts], "energies_hartree": energies,
+         "scientific_validation": "unverified"}
+Path("computed.json").write_text(json.dumps(state, indent=2))
+checkpoint(state, request_key="review", requires_decision=True,
+           reason="Review the two observations before deciding whether to add calculations")
+Path("after-checkpoint.txt").write_text("must not run")

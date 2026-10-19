@@ -1,0 +1,67 @@
+Original test run; no rerun. Failure text below is copied from the original JUnit.
+{"name": "pytest", "errors": "0", "failures": "1", "skipped": "0", "tests": "2", "time": "89.959", "timestamp": "2026-10-19T22:05:04.374394+08:00", "hostname": "AZ"}
+tmp_path = WindowsPath('E:/BG6022-V4/data/code-as-tools-step4/live-interruption-001/test_second_real_orca_interrup0')
+action = 'crash'
+
+    @pytest.mark.parametrize("action", ["crash", "cancel"])
+    def test_second_real_orca_interruption_preserves_first_and_never_replays(tmp_path, action):
+        from test_container_lifecycle import (
+            _assert_identity,
+            _attempt_containers,
+            _cleanup_owned,
+            _inspect,
+            _wait,
+        )
+    
+        config, store, run, _ = _task(tmp_path, yield_decision=False)
+        try:
+            with _worker(tmp_path, config, store, run, action) as (process, worker):
+                expected_exit = CRASH_EXIT if action == "crash" else 0
+                assert process.wait(timeout=180) == expected_exit, (worker / "stderr.txt").read_text()
+                event = json.loads((worker / "interrupted.json").read_bytes())
+                durable = store.load_run(run.id)
+                assert len(durable.internal_calls) == 2, durable.diagnostics
+                first, second = durable.internal_calls
+                assert first.state == "completed" and second.started
+                assert second.request_key == "candidate_b"
+                original = _raw_evidence(store, first)
+                assert original[:2] == (event["first_stdout_id"], event["first_stdout_sha256"])
+                handle = durable.attempts[0].execution_handle
+                actual = _wait(
+                    lambda: (value if not value["State"]["Running"] else None)
+                    if (value := _inspect(config, handle)) else None,
+                    35, "the shared container must stop after cancellation/coordinator heartbeat loss",
+                )
+                _assert_identity(actual, handle)
+                assert actual["State"]["Pid"] == 0 and actual["RestartCount"] == 0
+                containers = _attempt_containers(config)
+                if action == "cancel":
+                    worker_result = json.loads((worker / "worker-result.json").read_bytes())
+                    assert worker_result["outcome"]["state"] == "cancelled", worker_result
+                    assert worker_result["outcome"]["resource_usage"]["active_processes"] == 0
+>               assert _recover(store, config, durable, store.load_plan(durable)) is True
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\live\test_step4_multi_calculation.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\orca_agent\runner.py:278: in _recover
+    if attempt.execution_kind == "python" and not _recover_internal_calls(store, run, attempt):
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\runner.py:203: in _recover_internal_calls
+    store.finish_internal_call(run, attempt, call.request_key, state=state,
+src\orca_agent\store.py:1020: in finish_internal_call
+    def finish_internal_call(
+            ^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <orca_agent.store.Store object at 0x00000223BC1B5650>
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...eopened_terminal_ids=[], agent_enabled=False, batch_category=None, input_bindings={}, science_baseline_policy='legacy')
+parent = Attempt(id='attempt_855c8f95af88445392e3f5661f328174', step_id='dynamic', logical_id='dynamic', number=1, tool='python...57c8c3280fb7dd43', 'language': 'python', 'version': 1}, 'inputs': {'version': 1, 'entries': []}}, native_workload=None)
+
+    def _internal_parent(self, run: Run, parent: Attempt, *, allow_reconciled: bool = False) -> Attempt:
+        current = self.load_run(run.id)
+        if current != run:
+>           raise StoreError("stale run snapshot; reload and revalidate")
+E           orca_agent.store.StoreError: stale run snapshot; reload and revalidate
+
+src\orca_agent\store.py:857: StoreError
