@@ -135,7 +135,8 @@ def _concrete_reference(reference: EvidenceRef, run: Run) -> None:
                  "concrete Artifact is outside the permission snapshot")
 
 
-def validate_code_inputs(store, permission, step, *, run=None, request=None, plan=None):
+def validate_code_inputs(store, permission, step, *, run=None, request=None, plan=None,
+                         allow_future_geometry=False):
     """Verify pinned task files at consumption; a declaration cannot expand access."""
     tool = get_tool(step.tool)
     if not tool.check_contract.get("generic_observations"):
@@ -151,7 +152,8 @@ def validate_code_inputs(store, permission, step, *, run=None, request=None, pla
     if (run is not None and getattr(step.parameters, "sdk_orca", None) is True
             and not any(attempt.step_id == step.id for attempt in run.attempts)):
         from orca_agent.tools.managed import validate_sdk_orca_preconditions
-        validate_sdk_orca_preconditions(store, run, step, request=request, plan=plan)
+        validate_sdk_orca_preconditions(store, run, step, request=request, plan=plan,
+                                       allow_future_geometry=allow_future_geometry)
 
 
 def validate_tool_call_budget(plan: Plan, run: Run) -> None:
@@ -162,7 +164,7 @@ def validate_tool_call_budget(plan: Plan, run: Run) -> None:
 
     reserved = {call.step_id for call in run.calls if call.step_id}
     reserved.update(attempt.step_id for attempt in run.attempts)
-    pending = Counter(call_usage_counter(get_tool(step.tool))
+    pending = Counter(call_usage_counter(get_tool(step.tool), run.budget)
                       for step in plan.steps if step.id not in reserved)
     for counter, count in pending.items():
         if counter is None:

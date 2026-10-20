@@ -46,6 +46,10 @@ def _control(store, run, step):
         raise ValueError("execution control/deadline prevents launch")
 
 
+class _MissingInitialGeometry(ValueError):
+    """Only an absent anchor can be deferred at Plan admission, never bad evidence."""
+
+
 def _initial_geometry(store, run, request, system_id):
     """Read the trusted initial anchor; task-authored copies cannot establish it."""
     from orca_agent.input_bindings import prepared_geometry
@@ -58,18 +62,39 @@ def _initial_geometry(store, run, request, system_id):
         if geometry_id is not None and geometry_id not in run.permission.artifact_ids:
             raise ValueError("registered native geometry is outside the frozen permission")
     if geometry_id is None:
-        raise ValueError(
+        raise _MissingInitialGeometry(
             "native execution requires current prepared or registered geometry: "
             "complete identity resolution and geometry preparation, or bind an authorized "
-            "registered initial geometry, before proposing/executing sdk_orca=true. "
-            "Keep dependent goals as gaps until that binding exists; task-generated XYZ "
+            "registered initial geometry, before executing sdk_orca=true. "
+            "Plan approval may instead declare a direct pending same-system geometry preparation "
+            "dependency; task-generated XYZ "
             "files cannot replace this initial identity/geometry anchor.")
     geometry = store.load_artifact(geometry_id)
     geometry_bytes = read_pinned_input(store.artifact_path(geometry_id), geometry.sha256, limit=65536)
     return geometry_id, geometry, geometry_bytes
 
 
-def validate_sdk_orca_preconditions(store, run, step, *, request=None, plan=None):
+def _pending_initial_geometry(run, request, plan, step):
+    """A future producer is a dependency, not an initial-geometry qualification."""
+    system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
+    system = next((item for item in request.systems if item.id == system_id), None)
+    if system is None or system.geometry_source != "prepare":
+        return False
+    for producer in plan.steps:
+        tool = get_tool(producer.tool)
+        if (producer.id in step.depends_on and "prepare_geometry" in tool.effects
+                and "prepared_geometry" in tool.output_ports
+                and producer.system_id == system_id
+                and getattr(producer.parameters, "system_id", None) == system_id
+                and producer.tool in run.permission.allowed_tools
+                and run.permission.geometry_preparation
+                and not any(call.step_id == producer.id for call in run.calls)):
+            return True
+    return False
+
+
+def validate_sdk_orca_preconditions(store, run, step, *, request=None, plan=None,
+                                    allow_future_geometry=False):
     """Read-only preflight before any Python reservation or boundary startup."""
     if not run.permission.scientific_execution or "orca.run" not in run.permission.allowed_tools:
         raise ValueError("sdk_orca=true requires authorized managed ORCA execution")
@@ -79,10 +104,15 @@ def validate_sdk_orca_preconditions(store, run, step, *, request=None, plan=None
         raise ValueError("SDK preflight requires the current or candidate frozen Step")
     if len(request.systems) > 1 and step.system_id is None:
         raise ValueError("sdk_orca=true requires an explicit requested system")
-    binding = native_input_binding(store, run, step, request=request, plan=plan)
-    if binding is None:  # Historical input profile still requires an initial anchor when declared.
-        system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
-        _initial_geometry(store, run, request, system_id)
+    try:
+        binding = native_input_binding(store, run, step, request=request, plan=plan)
+        if binding is None:  # Historical profiles still require the declared initial anchor.
+            system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
+            _initial_geometry(store, run, request, system_id)
+    except _MissingInitialGeometry:
+        if allow_future_geometry and _pending_initial_geometry(run, request, plan, step):
+            return None
+        raise
     return binding
 
 
@@ -737,6 +767,8 @@ class _Broker:
 
 
 def _prepare_python_inputs(store, run, step, root, task):
+    if getattr(step.parameters, "sdk_orca", None) is True:
+        validate_sdk_orca_preconditions(store, run, step)
     if len(step.parameters.inputs.entries) > run.budget.artifact_count:
         raise ValueError("task input count exceeds the frozen artifact budget")
     input_bytes = sum(store.load_artifact(entry.artifact_id).size

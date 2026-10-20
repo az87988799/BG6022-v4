@@ -183,9 +183,10 @@ def test_pending_read_still_uses_store_cost_gate_when_its_read_budget_is_exhaust
     step = plan.steps[0]
     before = run.model_dump_json()
     data = payload(build_context(request, run, plan, feedback={"pending_step_ids": [step.id]}))
-    # Projection only filters immediate reads here. A structural ready Step is
-    # not a promise that all execution gates pass; the existing Store is final.
-    assert data["ACTION_PARAMETERS"]["call_tool"] == {"step_id": step.id}
+    # The exhausted reader is absent from executable choices. Store must still
+    # enforce the same limit if a caller directly requests the otherwise ready Step.
+    assert "call_tool" not in data["ACTION_PARAMETERS"]
+    assert step.tool not in {tool["name"] for tool in data["TOOL_CATALOG"]}
     with pytest.raises(BudgetExceeded, match="evidence_reads budget exhausted"):
         store.reserve_call(run, step.tool, step.parameters.model_dump(), step=step, validate_only=True)
     assert run.model_dump_json() == before and not run.calls

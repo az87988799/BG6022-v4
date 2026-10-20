@@ -1,0 +1,21 @@
+.....F....F....F..                                                       [100%]
+================================== FAILURES ===================================
+_ test_malformed_parameter_system_remains_a_bounded_proposal_error[resolve-None] _
+tests\unit\test_plan_system_scope.py:111: in test_malformed_parameter_system_remains_a_bounded_proposal_error
+    assert caught.value.detail["path"][:4] == ["parameters", "steps", index, "parameters"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'path'
+_ test_malformed_parameter_system_remains_a_bounded_proposal_error[prepare-None] _
+tests\unit\test_plan_system_scope.py:111: in test_malformed_parameter_system_remains_a_bounded_proposal_error
+    assert caught.value.detail["path"][:4] == ["parameters", "steps", index, "parameters"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'path'
+________ test_unknown_system_cannot_be_activated_from_parameter_scope _________
+tests\unit\test_plan_system_scope.py:119: in test_unknown_system_cannot_be_activated_from_parameter_scope
+    with pytest.raises((ProposalError, StoreError, ValueError), match="unknown requested system"):
+E   Failed: DID NOT RAISE any of (ProposalError, StoreError, ValueError)
+=========================== short test summary info ===========================
+FAILED tests/unit/test_plan_system_scope.py::test_malformed_parameter_system_remains_a_bounded_proposal_error[resolve-None]
+FAILED tests/unit/test_plan_system_scope.py::test_malformed_parameter_system_remains_a_bounded_proposal_error[prepare-None]
+FAILED tests/unit/test_plan_system_scope.py::test_unknown_system_cannot_be_activated_from_parameter_scope
+3 failed, 15 passed in 13.67s

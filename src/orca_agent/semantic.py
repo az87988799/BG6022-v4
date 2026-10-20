@@ -28,7 +28,12 @@ from orca_agent.models import Goal, Identifier, Record, Request, ScientificLabel
 from orca_agent.natural import _authorized_geometry, _missing_information
 from orca_agent.proposals import ProposalError, _schema_error
 from orca_agent.schema_projection import project_schema as _schema
-from orca_agent.semantic_notices import NOTICE_CONTRACT_VERSION, notice_choices, validate_notices
+from orca_agent.semantic_notices import (
+    NOTICE_CONTRACT_VERSION,
+    coverage_gaps,
+    notice_choices,
+    validate_notices,
+)
 from orca_agent.store import StoreError
 from orca_agent.tools.registry import (
     SCIENCE_COMPOSITIONS,
@@ -114,6 +119,7 @@ class SemanticGoal(Record):
     port: str
     text_basis: str = Field(min_length=1, max_length=1000)
     system_refs: list[Identifier] = Field(default_factory=list, max_length=5)
+    system_refs_note: str | None = Field(default=None, max_length=1000)
     required: bool = Field(default=True, strict=True)
     geometry_relation: Literal["fixed_initial", "optimized"] | None = None
     minimum_evidence: list[str] = Field(default_factory=list, max_length=8)
@@ -198,7 +204,7 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
         "Chemistry questions use knowledge_answer, not energy; no geometry/physical conditions needed. "
         "Version/manual/source questions: knowledge.search before knowledge.answer. Energy needs its own Goal; fixed_initial=SP, optimized=after Opt. "
         "temperature/standard_state only if requested; absent unit=unknown, no question. "
-        "Copy pending IDs; unique verbatim text_basis must match field/target. "
+        "Copy pending IDs; verbatim text_basis must match field/target. Same-message repeats bind all positions. "
         "normalize replaces raw_request/missing:goal_definition; amend keeps goals; replace_goals needs explicit replacement+all old IDs. "
         "NewGoal system_refs; existingGoal goal_bindings[Goal.id]. Registration/no-execution is not a Goal. "
         "science_scope describes legacy qualified checks, not general execution or permission/defaults. "
@@ -217,8 +223,8 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
                                            for port in tool["output_ports"]})},
         "questions_policy": (
             "For explicit registration-only, disclose scope and geometry limits via notices, "
-            "without asking for resources/confirmation. Copy each applicable notice_choices sentence once. "
-            "Otherwise ask only critical gaps; new gaps need a question or notice. Preserve explicit choices. "
+            "without asking for resources/confirmation. The program supplies missing known coverage notices. "
+            "Otherwise ask only critical gaps; unknown/conflicting user facts need a question or notice. Preserve explicit choices. "
             "No execution permission alone is not registration-only intent."),
         "schema": schema,
         "condition_lexicon": {field: [value for name, value in LEXICAL_ALIASES if name == field]
@@ -231,10 +237,9 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
         contract["normalize_request"]["authorized_defaults"] = {
             "source": "default", "default_rule": "local-hf-1", "values": request.semantic_defaults}
         contract["normalize_request"]["default_adoption"] = (
-            "authorized_defaults is an available template, not automatically applied Request values. "
-            "To adopt it, emit each applicable field explicitly in conditions/system_conditions with "
-            "source=default, default_rule and its exact configured value. Preserve explicit user values, "
-            "unknowns and conflicts; never replace them with defaults.")
+            "The program applies omitted applicable authorized_defaults with source=default and default_rule. "
+            "Explicit user values, unknowns, conflicts and delegated choices take precedence; "
+            "defaults never select an unauthorized method or basis.")
     if request and (text_input or any(system.geometry_source == "prepare" for system in request.systems)):
         contract["normalize_request"]["input_acquisition"] = (
             "geometry_source=prepare: structure.resolve obtains SMILES; structure.prepare via OPI supplies XYZ. "
@@ -282,12 +287,12 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
             "reporting or random-seed Goals. fixed_initial binds the exact initial/prepared XYZ; single-point calculation "
             "or fixed internal geometry does not itself establish that binding. A prohibition on optimization is not optimized. "
             "General tasks may use multiple candidate/derived geometries. Do not impose one fixed_initial/optimized label "
-            "on their per-geometry calculations; preserve every geometry constraint and independently requested calculation "
-            "verbatim in relevant text_basis or minimum_evidence. An explicit initial XYZ/hash restriction still binds. "
+            "on their per-geometry calculations; program source references retain shared geometry constraints "
+            "without recopying them into every Goal. An explicit initial XYZ/hash restriction still binds. "
             "When routine steps are delegated and no scalar relation is specified, "
             "omit geometry_relation, choose the program steps within budget and record each source's actual geometry relation; "
             "do not require a user SP-versus-Opt choice. Never change an explicit geometry requirement. "
-            "Preserve an explicitly requested unit verbatim in minimum_evidence; an absent unit is not proof of compliance. "
+            "The program retains explicit units with source references; an absent unit is not proof of compliance. "
             "Preserve every requested quantity and genuine ambiguity. Do not declare a molecule unsupported from the legacy_qualified_scope. "
             "If the user delegates a condition choice, put its exact authorization in automatic_selection[field]={text_basis,message_id}, "
             "omit that field from conditions, and do not mark it unknown/inferred or add a pending-source gap. "
@@ -298,7 +303,7 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
             "For a non-English name, use a confidently known English lookup alias in query_name; preserve name verbatim. "
             "New name queries check one PubChem candidate and its graph/formula/charge, without independently authenticating "
             "the original name or translation; do not guess an unknown alias. "
-            "No identity, port, method, basis or spin is filled in by the program on correction.")
+            "No identity, port or unauthorized method/basis/spin is filled in by the program.")
     return contract
 
 
@@ -322,7 +327,7 @@ def _quote_occurrences(text, messages, message_id=None):
 
 def _quote_correction(text, messages, message_id, path):
     matches = _quote_occurrences(text, messages, message_id)
-    if len(matches) == 1:
+    if matches and len({id(message) for message, _, _ in matches}) == 1:
         return None
     return {
         "path": path,
@@ -335,13 +340,22 @@ def _quote_correction(text, messages, message_id, path):
 
 
 def _locate(text, messages, message_id=None):
-    """Authenticate one exact occurrence; offsets are derived, never model authority."""
+    """Return a compatible primary location; same-message repeats retain all ranges."""
     matches = _quote_occurrences(text, messages, message_id)
     if not matches:
         raise StoreError("semantic evidence must quote a supplied user message and its exact message ID")
-    if len(matches) != 1:
-        raise StoreError("semantic evidence quote is repeated; supply a unique fuller quote or message ID")
+    if len({id(message) for message, _, _ in matches}) != 1:
+        raise StoreError("semantic evidence quote spans messages; supply its exact message ID")
     return matches[0]
+
+
+def _source_evidence(text, messages, message_id=None):
+    message, start, end = _locate(text, messages, message_id)
+    matches = _quote_occurrences(text, [message], message.get("id"))
+    return {"message_id": message.get("id"), "text_basis": text, "start": start,
+            "end": end, "schema": VERSION,
+            **({"occurrences": [{"message_id": entry.get("id"), "start": left, "end": right}
+                               for entry, left, right in matches]} if len(matches) > 1 else {})}
 
 
 def _has_visible_notice(candidate):
@@ -397,8 +411,7 @@ def bind_general_text_identity(request, run, pending, candidate):
                 "canonical_names": [], "query_name": query,
                 "query_name_source": "explicit" if query == item.name else "inferred_translation_or_alias",
                 "ambiguities": item.ambiguities,
-                "text_evidence": {"message_id": message["id"], "start": start, "end": end,
-                    "text_basis": item.text_basis, "schema": VERSION}}))
+                "text_evidence": _source_evidence(item.text_basis, pending, item.message_id)}))
     for goal in candidate.goals or []:
         goal.system_refs = [mapping.get(identifier, identifier) for identifier in goal.system_refs]
     candidate.system_conditions = {mapping.get(key, key): value for key, value in candidate.system_conditions.items()}
@@ -411,16 +424,16 @@ def _authorize_selection(candidate, request, messages, values):
             raise StoreError("automatic selection requires the current semantic contract")
         message, start, end = _locate(authorization.text_basis, messages, authorization.message_id)
         text = authorization.text_basis
+        locations = _quote_occurrences(text, [message], message.get("id"))
         surrounding = ";".join(part for left, right, part in _propositions(message["text"])
-                               if left < end and right > start)
+                               if any(left < stop and right > begin for _, begin, stop in locations))
         if (not re.search(SELECTION_LABELS[name], text, re.I)
                 or not re.search(r"选择|选用|推荐|决定|自行|自动|choose|select|recommend|decide", text, re.I)
                 or re.search(r"不要|禁止|不能|不得|不许|do not|don't|never", surrounding, re.I)):
             raise StoreError("automatic selection requires an affirmative field-specific user authorization")
         values["automatic_selection"] = list(dict.fromkeys([*values["automatic_selection"], name]))
         values["condition_evidence"]["automatic_selection." + name] = {
-            "text_basis": text, "message_id": message["id"], "start": start, "end": end,
-            "source": "explicit", "schema": VERSION}
+            **_source_evidence(text, messages, authorization.message_id), "source": "explicit"}
 
 
 def _qualification_quotes(text):
@@ -459,7 +472,7 @@ def _uses_general_goal(candidate, item, request):
 
 
 def _omitted_default_corrections(candidate, request, messages):
-    """Ask for an explicit decision; the existing provenance gate owns eligibility."""
+    """Find authorized omissions; the existing provenance gate owns eligibility."""
     missing = {}
     systems = {system.id: system for system in request.systems}
     for goal in candidate.goals or []:
@@ -493,9 +506,21 @@ def _omitted_default_corrections(candidate, request, messages):
                     continue  # Explicit/unknown/conflicting user conditions still block defaults.
                 path = (["system_conditions", scope, name] if scope is not None and len(systems) > 1
                         else ["conditions", name])
-                missing[tuple(path)] = {"path": path, "reason": "authorized_default_requires_explicit_adoption",
+                missing[tuple(path)] = {"path": path, "reason": "authorized_default_applied",
                     "authorized_default": {"source": "default", "default_rule": "local-hf-1", "value": value}}
     return list(missing.values())
+
+
+def _apply_authorized_defaults(candidate, request, messages):
+    if candidate.schema_version != VERSION:
+        return []
+    rows = _omitted_default_corrections(candidate, request, messages)
+    for row in rows:
+        path = row["path"]
+        fields = (candidate.conditions if path[0] == "conditions" else
+                  candidate.system_conditions.setdefault(path[1], {}))
+        fields[path[-1]] = FieldEvidence.model_validate(row["authorized_default"])
+    return rows
 
 
 def _validate_general_intake(candidate, request, messages, run):
@@ -514,9 +539,7 @@ def _validate_general_intake(candidate, request, messages, run):
                     field = candidate.conditions.get(name)
                     if field is None or field.source in {"unknown", "inferred"}:
                         delegated[name] = {"text_basis": text, "message_id": message["id"]}
-    corrections = _omitted_default_corrections(candidate, request, messages)
-    corrections.extend(_field_evidence_corrections(candidate, request, messages))
-    input_minimum_gaps = set()
+    corrections = _field_evidence_corrections(candidate, request, messages)
     for name, evidence in delegated.items():
         if name not in candidate.automatic_selection or name in candidate.conditions:
             corrections.append({"path": ["automatic_selection", name], "reason": "delegated_choice_is_not_unknown",
@@ -551,8 +574,6 @@ def _validate_general_intake(candidate, request, messages, run):
                     corrections.append({"path": ["goals", index, "minimum_evidence", requirement_index],
                         "reason": "minimum_evidence_requires_exact_user_wording", "invalid_value": requirement,
                         "user_text": message["text"], "registered_requirements": sorted(REQUIREMENTS)})
-                elif item.port in INPUT_TOOLS and canonical not in REQUIREMENTS and requirement not in input_rules:
-                    input_minimum_gaps.add("unsupported_minimum_evidence:" + requirement)
         if item.port in INPUT_TOOLS:
             # Report this independent input error alongside science/selection
             # errors, rather than hiding it until the next correction round.
@@ -586,21 +607,6 @@ def _validate_general_intake(candidate, request, messages, run):
         elif item.geometry_relation is not None and relation is None:
             corrections.append({"path": ["goals", index, "geometry_relation"],
                 "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text"})
-        for obligation in _general_geometry_obligations(request, message, item):
-            if obligation not in item.text_basis and not any(
-                    obligation in requirement for requirement in item.minimum_evidence):
-                corrections.append({"path": ["goals", index, "text_basis"],
-                    "reason": "preserve_general_geometry_obligation", "user_evidence": obligation})
-        single_scientific_goal = sum((goal.port not in READ_TOOLS or _uses_general_goal(candidate, goal, request))
-            and goal.port not in INPUT_TOOLS
-            and goal.port != "knowledge_answer" and (goal.port not in {"sampling", "sampling_check"}
-                or _uses_general_goal(candidate, goal, request))
-            for goal in candidate.goals or []) == 1
-        unit_text = message["text"] if single_scientific_goal else item.text_basis
-        for requirement in _unit_requirements(unit_text):
-            if requirement not in item.minimum_evidence:
-                corrections.append({"path": ["goals", index, "minimum_evidence"],
-                    "reason": "preserve_explicit_unit_requirement", "user_evidence": requirement})
         for gap_index, gap in enumerate(item.unresolved):
             if (not _qualification_quotes(message["text"]) and re.search(
                     r"(?:unregistered|registered).*(?:port|checker)|(?:port|checker).*unregistered|unsupported_(?:system|quantity)", gap, re.I)):
@@ -615,18 +621,14 @@ def _validate_general_intake(candidate, request, messages, run):
         for notice_index, notice in enumerate(candidate.notices):
             if notice.casefold().startswith(legacy_prefix):
                 corrections.append({"path": ["notices", notice_index], "reason": "legacy_qualified_scope_is_not_a_general_molecule_whitelist"})
-    prior_gaps = set(request.unresolved) | {gap for goal in request.goals for gap in goal.unresolved}
-    if input_minimum_gaps - prior_gaps and not _has_visible_notice(candidate):
-        corrections.append({"path": ["notices"], "reason": "new_minimum_evidence_requires_notice",
-                            "new_unresolved": sorted(input_minimum_gaps - prior_gaps)})
     if corrections:
         instructions = {
             "semantic_quote_not_found":
                 "Copy a contiguous exact quote from the supplied user message and use its exact message_id. Do not copy redaction/omission markers or invent wording; preserve the requested value and conditions.",
             "semantic_quote_not_unique":
-                "Use a unique fuller contiguous user quote at this field. If occurrences share a message_id, repeating that ID cannot disambiguate them. The listed contexts and offsets are diagnostic evidence, not new schema fields or authority; do not change the scientific value.",
+                "Use the exact message_id to disambiguate matching quotes in different messages. Same-message repeats bind all positions and must satisfy every applicable scope; do not change the scientific value.",
             "condition_evidence_invalid":
-                "Correct this field's source evidence using the diagnostic. An explicit value needs its exact user wording or a supported lexical alias, defaults require explicit adoption, and genuine conflicts/unknowns remain gaps. Preserve the user's physical condition; do not invent values or silently replace it with a default.",
+                "Correct this field's source evidence using the diagnostic. An explicit value needs its exact user wording or a supported lexical alias; genuine conflicts/unknowns remain gaps. Preserve the user's physical condition; do not invent values or replace it with a default.",
             "new_minimum_evidence_requires_notice":
                 "These exact input minimum-evidence requirements have no registered evaluator. Preserve every requirement and add a visible question or unsupported-scope notice in parameters.notices; do not claim a check exists, remove a minimum, or ask to reconfirm explicit user choices. Input preparation and scientific qualification are distinct.",
             "goal_requires_exact_registered_targets":
@@ -705,12 +707,11 @@ def _input_goal(item, request, messages, goal_index):
         minimum_check_version=rule, verification=item.verification or "qualified",
         original_text=item.text_basis, system_ids=item.system_refs, conditions=conditions,
         minimum_evidence=item.minimum_evidence, unresolved=unresolved,
-        identity=deepcopy(system.identity), text_evidence={"message_id": message["id"],
-            "start": start, "end": end, "text_basis": item.text_basis, "schema": VERSION,
+        identity=deepcopy(system.identity), text_evidence={**_source_evidence(item.text_basis, messages, item.message_id),
             **({"conditions": evidence} if evidence else {})})
 
 
-def _general_goal(item, request, messages, goal_index):
+def _general_goal(item, request, messages, goal_index, *, single_scientific_goal=False):
     message, start, end = _locate(item.text_basis, messages, item.message_id)
     systems = {system.id: system for system in request.systems}
     if (not item.system_refs or len(item.system_refs) != len(set(item.system_refs))
@@ -733,12 +734,18 @@ def _general_goal(item, request, messages, goal_index):
                 user_text=message["text"])
     minimum = list(item.minimum_evidence)
     minimum.extend(quote for quote in qualification_quotes if quote not in minimum)
-    conditions = {}
+    shared = _general_geometry_obligations(request, message, item)
+    units = _unit_requirements(message["text"] if single_scientific_goal else item.text_basis)
+    minimum.extend(unit for unit in units if unit not in minimum)
+    shared = list(dict.fromkeys([*shared, *units]))
+    shared_evidence = [_source_evidence(text, [message], message.get("id")) for text in shared]
+    conditions, condition_evidence = {}, {}
     for name, field in item.conditions.items():
         if field.source in {"unknown", "inferred"}:
             raise StoreError("unknown general conditions must remain Request gaps")
-        conditions[name] = _field(name, field, request, messages,
-            system=systems[item.system_refs[0]] if len(item.system_refs) == 1 else None)[0]
+        value, _, evidence = _field(name, field, request, messages,
+            system=systems[item.system_refs[0]] if len(item.system_refs) == 1 else None)
+        conditions[name], condition_evidence[name] = value, evidence
     if item.geometry_relation:
         conditions["geometry_relation"] = item.geometry_relation
     return Goal(id="goal_" + item.key, port=item.port, quantity=item.quantity or item.text_basis[:160],
@@ -748,8 +755,9 @@ def _general_goal(item, request, messages, goal_index):
         minimum_evidence=minimum, minimum_evidence_source=dict.fromkeys(minimum, "explicit"),
         unresolved=item.unresolved, identity={"requested_names": [name for identifier in item.system_refs
             for name in systems[identifier].identity.get("requested_names", [systems[identifier].label])]},
-        text_evidence={"message_id": message["id"], "start": start, "end": end,
-            "text_basis": item.text_basis, "schema": VERSION})
+        text_evidence={**_source_evidence(item.text_basis, messages, item.message_id),
+            **({"shared_constraints": shared_evidence} if shared_evidence else {}),
+            **({"conditions": condition_evidence} if condition_evidence else {})})
 
 
 IDENTITIES = {"water": ("water", "h2o", "水"), "methane": ("methane", "ch4", "甲烷"),
@@ -788,15 +796,16 @@ def _goal_grounding(request, text, system_ids, messages, *, message_id=None, ori
     message, start, end = _locate(text, messages, message_id)
     # Expand short quotes to their proposition so clipping off the named target
     # cannot bind the remaining word "energy" to an unrelated registered system.
+    locations = _quote_occurrences(text, [message], message.get("id"))
     clauses = [part for left, right, part in _propositions(message["text"])
-               if left < end and right > start]
+               if any(left < stop and right > begin for _, begin, stop in locations)]
     proposition = "，".join(clauses)
     contextual = _mentions(proposition, targets=True)
     quoted = _mentions(text, targets=True)
     # A registered geometry is available evidence, not confirmation of an
     # explicitly unknown target. Include the pronoun's preceding statement so
     # clipping the uncertainty out of text_basis cannot restore an old identity.
-    identity_context = proposition if quoted else message["text"][:end]
+    identity_context = proposition if quoted else message["text"][:max(stop for _, _, stop in locations)]
     explicitly_unknown = bool(re.search(
         r"(?:不知道|不确定|未确定)[^，,。.;；\n]{0,16}(?:哪个|什么)[^，,。.;；\n]{0,8}(?:分子|体系|对象)|"
         r"(?:分子|体系|对象)(?:的)?(?:身份|名称)?(?:目前|仍|尚)?(?:为|是)?(?:未知|不确定|未确认)|"
@@ -835,8 +844,7 @@ def _goal_grounding(request, text, system_ids, messages, *, message_id=None, ori
             raise StoreError("goal system binding contradicts its quoted proposition")
         if not named and len(request.systems) > 1:
             raise StoreError("ambiguous goal pronoun needs one confirmed system context")
-    evidence = {"message_id": message.get("id"), "text_basis": text, "start": start,
-                "end": end, "schema": VERSION}
+    evidence = _source_evidence(text, messages, message_id)
     identity = {"canonical_names": sorted(identities),
                 "requested_names": list(dict.fromkeys(entry[3] for entry in mentions)),
                 "support_status": ("supported" if identities and identities <= set(SCIENCE_IDENTITIES)
@@ -959,7 +967,9 @@ def _field(name, item, request, messages, *, system=None):
             raise StoreError("explicit condition lacks a supported lexical value basis")
         # A clipped quote must not discard the negation/uncertainty around the
         # value in its authenticated message. Ambiguous clauses stay unresolved.
-        clauses = _field_propositions(request, message, start, end, system=system)
+        clauses = [clause for _, begin, stop in _quote_occurrences(
+            item.text_basis, [message], message.get("id"))
+            for clause in _field_propositions(request, message, begin, stop, system=system)]
         pertinent = []
         for clause, scope in clauses:
             # Contrasting independent execution instructions cannot negate an
@@ -1004,6 +1014,7 @@ def _field(name, item, request, messages, *, system=None):
                     if normalized != expected and not re.search(
                             r"不|非|未|无|\b(?:not|no|never|without)\b|n't\b", clause, re.I):
                         raise StoreError("explicit condition has conflicting values in the same system scope")
+        evidence.update(_source_evidence(item.text_basis, messages, item.message_id))
         evidence.update(message_id=message.get("id"), start=start, end=end,
                         system_ref=system.id if system else None)
         if name in {"charge", "multiplicity"}:
@@ -1068,6 +1079,7 @@ def _field(name, item, request, messages, *, system=None):
             raise StoreError("a condition declared in user text cannot be labeled or overwritten as a default")
     elif item.source == "inferred":
         message, start, end = _locate(item.text_basis, messages, item.message_id)
+        evidence.update(_source_evidence(item.text_basis, messages, item.message_id))
         evidence.update(message_id=message.get("id"), start=start, end=end,
                         system_ref=system.id if system else None)
     elif item.source == "unknown":
@@ -1133,8 +1145,8 @@ def _task_geometry_clauses(request, message, item):
 
 def _general_geometry_context(request, message, item):
     """A property clause can constrain its Goal, not every Goal in the message."""
-    _, start, _ = _locate(item.text_basis, [message], item.message_id)
     occurrences = [(start + match.start(), start + match.end())
+                   for _, start, _ in _quote_occurrences(item.text_basis, [message], item.message_id)
                    for match in re.finditer(re.escape(item.quantity or ""), item.text_basis)
                    if item.quantity]
     text = message["text"]
@@ -1399,8 +1411,9 @@ def _require_energy_coverage(candidate, request, messages, goals):
         evidence = goal.text_evidence
         return (bool(_ELECTRONIC_ENERGY.search(quantity))
                 and evidence.get("message_id") == obligation["message_id"]
-                and any(evidence["start"] + match.start() < obligation["end"]
-                        and evidence["start"] + match.end() > obligation["start"]
+                and any(location["start"] + match.start() < obligation["end"]
+                        and location["start"] + match.end() > obligation["start"]
+                        for location in evidence.get("occurrences", [evidence])
                         for match in re.finditer(re.escape(quantity), goal.original_text)))
 
     def goal_targets(goal):
@@ -1525,18 +1538,22 @@ def _require_sampling_coverage(request, messages, goals):
 def _goals(candidate, request, messages, *, text_input=False):
     systems = {s.id for s in request.systems}
     goals = []
+    scientific_count = sum((item.port not in READ_TOOLS or _uses_general_goal(candidate, item, request))
+        and item.port not in INPUT_TOOLS and item.port != "knowledge_answer"
+        and (item.port not in {"sampling", "sampling_check"} or _uses_general_goal(candidate, item, request))
+        for item in candidate.goals or [])
     for goal_index, item in enumerate(candidate.goals or []):
         if candidate.schema_version == VERSION and item.port in INPUT_TOOLS:
             goals.append(_input_goal(item, request, messages, goal_index))
             continue
         if _uses_general_goal(candidate, item, request):
-            goals.append(_general_goal(item, request, messages, goal_index))
+            goals.append(_general_goal(item, request, messages, goal_index,
+                                       single_scientific_goal=scientific_count == 1))
             continue
         if item.port == "knowledge_answer":
             message, start, end = _locate(item.text_basis, messages, item.message_id)
             identity = {}
-            text_evidence = {"message_id": message["id"], "start": start, "end": end,
-                             "text_basis": item.text_basis, "schema": VERSION}
+            text_evidence = _source_evidence(item.text_basis, messages, item.message_id)
         else:
             identity, text_evidence = _goal_grounding(request, item.text_basis, item.system_refs,
                                                      messages, message_id=item.message_id, text_input=text_input)
@@ -1681,7 +1698,8 @@ def _communication(candidate, request, messages, gaps):
             scope = "read_only"
         elif re.search(r"(?:现在|开始|请)(?:执行|运行|计算)|\b(?:execute|run|compute)\s+now\b", text, re.I):
             scope = "science"
-    blocking = _registration_blocking_gaps(request, gaps) if scope == "registration_only" else gaps
+    blocking = (_registration_blocking_gaps(request, gaps) if scope == "registration_only"
+                else gaps - coverage_gaps(request).keys())
     if set(candidate.question_gaps) - set(candidate.questions):
         raise ProposalError("question_gaps keys must be the exact supplied questions.",
                             path=["parameters", "question_gaps"])
@@ -1738,6 +1756,7 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
                                      allowed_condition_keys=list(get_args(ConditionName)))
             raise correction from None
         raise _schema_error(exc, path=["parameters"]) from None
+    proposed_candidate = candidate.model_dump(mode="json")
     if candidate.schema_version == LEGACY_VERSION:
         raise ProposalError("Legacy semantic candidates are read-only; submit request-semantics-3 with current evidence.",
                             path=["parameters", "schema_version"])
@@ -1793,6 +1812,7 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
             raise StoreError("goal replacement requires an explicit user replacement phrase")
     from orca_agent.natural import bind_text_identity
     request = bind_text_identity(request, run, pending, candidate)
+    program_defaults = _apply_authorized_defaults(candidate, request, pending)
     _validate_general_intake(candidate, request, pending, run)
     values = request.model_dump(mode="json")
     grounding = request.messages + pending if initial else pending
@@ -1897,8 +1917,10 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
     updated = _missing_information(Request.model_validate(values))
     prior_gaps = set(request.unresolved) | set(question_gaps) | {gap for goal in request.goals for gap in goal.unresolved}
     current_gaps = set(updated.unresolved) | {gap for goal in updated.goals for gap in goal.unresolved}
-    new_gaps = current_gaps - prior_gaps
-    visible_question = _has_visible_notice(candidate)
+    known_coverage = coverage_gaps(updated)
+    new_gaps = current_gaps - prior_gaps - known_coverage.keys()
+    notice_contract = validate_notices(updated, candidate.notices)
+    visible_question = _has_visible_notice(candidate) or bool(notice_contract["generated"])
     if new_gaps and not visible_question:
         raise ProposalError("New unresolved conditions, including detected unsupported scope, require a visible question "
                             "or unsupported-scope notice in parameters.notices. Preserve explicit user choices; "
@@ -1920,9 +1942,16 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
         if query.get("run_id") and query["run_id"] != run.id:
             raise StoreError("semantic query cannot invent another Run reference")
     communication = _communication(candidate, updated, pending, current_gaps)
-    notice_contract = validate_notices(updated, candidate.notices)
+    communication["notices"] = list(dict.fromkeys([
+        *candidate.notices, *(entry["text"] for entry in notice_contract["generated"])]))
+    if current_gaps and not (current_gaps - known_coverage.keys()):
+        updated.normalization_status = "normalized"
     semantics = {"schema": VERSION, "kind": candidate.kind,
                  "candidate": candidate.model_dump(mode="json"),
+                 "proposed_candidate": proposed_candidate,
+                 "program_applied_defaults": program_defaults,
+                 "remarks": [{"path": ["goals", index, "system_refs_note"], "text": item.system_refs_note}
+                             for index, item in enumerate(candidate.goals or []) if item.system_refs_note],
                  "replaced_goal_ids": [g.id for g in request.goals] if candidate.goals else [],
                  **communication, "notice_contract": notice_contract}
     if active_question and not unresolved_questions:

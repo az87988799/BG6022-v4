@@ -4,13 +4,15 @@ These tests never send HTTP, run science, or rewrite the original failed Run.
 They verify current context construction, not a successful rerun of that model.
 """
 
+import hashlib
+import json
 from datetime import timedelta
 from pathlib import Path
 
 import pytest
 
 from orca_agent.context import build_context
-from orca_agent.models import PermissionSnapshot
+from orca_agent.models import PermissionSnapshot, fingerprint
 from orca_agent.store import Store, sha256_file
 from tests.unit.test_context import payload
 
@@ -90,17 +92,44 @@ def test_actual_sampling_three_sp_and_analysis_preserve_facts_within_bound(run_i
     assert data["AUTHORITY"]["request"]["goals"][0]["conditions"] == request.goals[0].conditions
     assert PermissionSnapshot.model_validate(data["AUTHORITY"]["permission"]) == run.permission
     assert data["AUTHORITY"]["related_results"] == [results[-1].id]
-    for original, projected in zip(results, data["DATA"]["results"], strict=True):
+    bodies = {row["result_id"]: row for row in data["DATA"]["results"]}
+    references = {row["result_id"]: row for row in data["DATA"].get("result_references", [])}
+    assert not (bodies.keys() & references.keys())
+    projected_by_id = {**bodies, **references}
+    assert set(projected_by_id) == {result.id for result in results}
+    assert results[-1].id in bodies  # The latest feedback always remains visible.
+    for original in results:
+        projected = projected_by_id[original.id]
+        assert projected["step_id"] == original.step_id
+        if original.id in references:
+            assert projected["record_sha256"] == fingerprint(original)
+            assert projected["operation_status"] == original.operation_status
         if "energy" in original.qualified_outputs:
-            assert projected["qualified_outputs"]["energy"]["value"] == original.qualified_outputs["energy"].value
-            assert projected["qualified_outputs"]["energy"]["unit"] == "Eh"
-            assert len(projected["source_record_sha256"]) == 64
+            output, expected = projected["qualified_outputs"]["energy"], original.qualified_outputs["energy"]
+            assert output["value"] == expected.value
+            assert output["unit"] == expected.unit == "Eh"
+            assert output["checks"]["all_passed"] is True
+            if "names" in output["checks"]:
+                assert output["checks"]["names"] == [check.name for check in expected.checks]
+            else:
+                assert output["checks"]["checked_count"] == len(expected.checks)
+            assert output["checks"]["rule_versions"] == sorted({check.rule_version for check in expected.checks})
+            assert projected["source_record_sha256"] == hashlib.sha256(json.dumps(
+                original.source, ensure_ascii=False, separators=(",", ":"), sort_keys=True,
+                allow_nan=False).encode()).hexdigest()
         else:
+            assert original.id in bodies  # Current analysis is not replaced by a reference.
             observation = projected["unqualified_observations"]["analysis"]
             assert observation["reason"] == original.observations["analysis"]["reason"]
             assert len(observation["projection_sha256"]) == 64
             assert [member.get("energy_eh") for member in observation["members"]] == [
                 member["energy_eh"] for member in original.observations["analysis"]["members"]]
+            assert [member["member_id"] for member in observation["members"]] == [
+                member["member_id"] for member in original.observations["analysis"]["members"]]
+            for member, source in zip(observation["members"], original.observations["analysis"]["members"],
+                                      strict=True):
+                assert member["status"] == source["status"]
+                assert member.get("result_id") == (source.get("source") or {}).get("result_id")
     assert run.model_dump_json() == before
     assert sha256_file(store.path(f"runs/{run.id}/run.json")) == original_hash
 

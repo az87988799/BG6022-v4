@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 from test_general_intake_correction import commit, environment, proposal
 
 from orca_agent.proposals import DecisionIntent, ProposalError
@@ -70,19 +69,13 @@ def test_t1_redaction_marker_remains_invalid_original_evidence(tmp_path):
 def test_t1_full_original_warning_preserves_optimized_relation_and_reports_minimum_gap(tmp_path):
     store, _, run, reply, original = retained(tmp_path, "T1", 2)
     parameters = reply["parameters"]
-    before = store.load_run(run.id).model_dump_json()
     original_parameters = copy.deepcopy(parameters)
-    with pytest.raises(ProposalError) as error:
-        commit(store, run, parameters)
-    reasons = {row["reason"] for row in rows(error)}
-    assert reasons == {"new_minimum_evidence_requires_notice"}
-    assert rows(error)[0]["new_unresolved"] == ["unsupported_minimum_evidence:交付初始结构"]
-    assert parameters == original_parameters
-    unchanged_run(store, run, before)
-
-    parameters["notices"] = [NOTICE]
     updated = commit(store, run, parameters)
     request = store.load_request(updated)
+    assert parameters == original_parameters
+    assert updated.decisions[-1]["semantics"]["notice_contract"]["generated"][0]["gap"] == (
+        "unsupported_minimum_evidence:交付初始结构")
+    assert request.normalization_status == "normalized"
     assert request.original_text == original
     assert [goal.conditions.get("geometry_relation") for goal in request.goals[1:3]] == ["optimized", "optimized"]
     assert request.goals[0].minimum_evidence == original_parameters["goals"][0]["minimum_evidence"]
@@ -98,81 +91,72 @@ def test_t3_original_errors_are_aggregated_without_seed_geometry_misclassificati
     with pytest.raises(ProposalError) as error:
         commit(store, run, parameters)
     reasons = {row["reason"] for row in rows(error)}
-    assert {"authorized_default_requires_explicit_adoption", "geometry_relation_is_unknown_or_ambiguous_in_user_text",
-            "new_minimum_evidence_requires_notice"} <= reasons
-    geometry_rows = [row for row in rows(error) if row["reason"] == "preserve_general_geometry_obligation"]
-    assert geometry_rows and all("固定种子" not in row["user_evidence"] and "不可固定" not in row["user_evidence"]
-                                 for row in geometry_rows)
+    assert reasons == {"geometry_relation_is_unknown_or_ambiguous_in_user_text"}
     assert parameters == original_parameters
     unchanged_run(store, run, before)
 
-    # No algorithm or science values are supplied. Preserve the whole original
-    # quote and every minimum, adopt the disclosed configured reference, and
-    # disclose the unsupported input minimum. Per-point geometry stays textual.
-    parameters["conditions"]["electronic_state"] = {
-        "source": "default", "default_rule": "local-hf-1", "value": "RKS"}
-    parameters["notices"] = [NOTICE]
+    # Test-authored scalar relation repair; default and missing notices now
+    # come from the program. No live model correction is claimed.
     for goal in parameters["goals"]:
-        goal["text_basis"] = original
         goal["geometry_relation"] = None
     updated = commit(store, run, parameters)
     request = store.load_request(updated)
     assert request.original_text == original and len(request.goals) == len(original_parameters["goals"])
     assert [g.minimum_evidence for g in request.goals] == [g["minimum_evidence"] for g in original_parameters["goals"]]
     assert all(g.conditions.get("geometry_relation") is None for g in request.goals)
+    assert request.conditions["electronic_state"] == "RKS"
+    shared = [entry["text_basis"] for goal in request.goals
+              for entry in goal.text_evidence.get("shared_constraints", [])]
+    assert shared and all("固定种子" not in text and "不可固定" not in text for text in shared)
     assert not updated.attempts and not updated.model_records and not updated.result_ids
 
 
-def test_t3_extra_field_still_rejected_without_guessing_a_schema_mapping(tmp_path):
+def test_t3_known_note_is_allowed_but_missing_target_still_rejected(tmp_path):
     store, _, run, reply, _ = retained(tmp_path, "T3", 3)
     before = store.load_run(run.id).model_dump_json()
     with pytest.raises(ProposalError) as error:
         commit(store, run, reply["parameters"])
-    assert any(entry["type"] == "extra_forbidden" and entry["loc"][-1] == "system_refs_note"
-               for entry in error.value.detail["errors"])
+    assert any(row["reason"] == "goal_requires_exact_registered_targets"
+               and row["path"] == ["parameters", "goals", 1, "system_refs"] for row in rows(error))
     unchanged_run(store, run, before)
 
 
-def test_t5_default_and_ambiguous_field_quote_reported_together(tmp_path):
+def test_t5_original_candidate_still_rejects_unsupported_lexical_condition(tmp_path):
     store, _, run, reply, _ = retained(tmp_path, "T5", 1)
-    before = store.load_run(run.id).model_dump_json()
+    original = copy.deepcopy(reply["parameters"])
     with pytest.raises(ProposalError) as error:
         commit(store, run, reply["parameters"])
-    assert "authorized_default_requires_explicit_adoption" in {row["reason"] for row in rows(error)}
-    assert "semantic_quote_not_unique" in {row["reason"] for row in rows(error)}
-    unchanged_run(store, run, before)
+    assert {row["reason"] for row in rows(error)} == {"condition_evidence_invalid"}
+    assert reply["parameters"] == original
+    assert not run.attempts and not run.model_records
 
 
-def test_t5_overlong_reason_remains_rejected_without_silent_truncation(tmp_path):
+def test_t5_overlong_reason_is_bounded_without_changing_original_or_parameters(tmp_path):
     _, _, _, reply, _ = retained(tmp_path, "T5", 2)
     before = copy.deepcopy(reply)
     assert len(reply["reason"]) == 1163
-    with pytest.raises(ValidationError) as error:
-        DecisionIntent.model_validate({key: reply[key] for key in ("action", "parameters", "reason")})
-    assert any(item["loc"] == ("reason",) and item["type"] == "string_too_long" for item in error.value.errors())
+    intent = DecisionIntent.model_validate(
+        {key: reply[key] for key in ("action", "parameters", "reason")})
+    assert len(intent.reason) == 1000
+    assert intent.reason.endswith("[reason shortened; full text in model response]")
+    assert intent.parameters == reply["parameters"] and intent.action == reply["action"]
     assert reply == before
 
 
-def test_t5_same_message_quote_diagnostic_and_explicit_fuller_quote_repair(tmp_path):
+def test_t5_shared_quote_keeps_all_locations_but_invalid_solvent_value_still_rejected(tmp_path):
     store, _, run, reply, original = retained(tmp_path, "T5", 3)
     parameters = reply["parameters"]
     before = store.load_run(run.id).model_dump_json()
     original_parameters = copy.deepcopy(parameters)
     with pytest.raises(ProposalError) as error:
         commit(store, run, parameters)
-    repeated = next(row for row in rows(error) if row["reason"] == "semantic_quote_not_unique")
-    assert repeated["path"] == ["parameters", "goals", 1, "conditions", "environment", "text_basis"]
-    assert repeated["matching_occurrence_count"] == 2
-    assert len({item["message_id"] for item in repeated["occurrences"]}) == 1
-    assert all(original[item["start"]:item["end"]] == "气相" for item in repeated["occurrences"])
-    assert "repeating that ID cannot disambiguate" in repeated["instruction"]
+    assert {row["reason"] for row in rows(error)} == {"condition_evidence_invalid"}
     lexical = next(row for row in rows(error) if row["reason"] == "condition_evidence_invalid")
     assert lexical["path"] == ["parameters", "goals", 2, "conditions", "environment"]
     assert lexical["diagnostic"] == "explicit condition lacks a supported lexical value basis"
     assert parameters == original_parameters
     unchanged_run(store, run, before)
 
-    parameters["goals"][1]["conditions"]["environment"]["text_basis"] = "分别计算气相"
     # The candidate's alias water_solvent was not authenticated by its Chinese
     # source quote. Use the literal specified solvent/model, not a new alias or
     # any program-selected environment/parameter.
@@ -183,6 +167,9 @@ def test_t5_same_message_quote_diagnostic_and_explicit_fuller_quote_repair(tmp_p
     assert [goal.minimum_evidence for goal in request.goals] == [goal.get("minimum_evidence", [])
                                                                for goal in original_parameters["goals"]]
     assert request.goals[1].conditions["environment"] == "gas_phase"
+    gas = request.goals[1].text_evidence["conditions"]["environment"]
+    assert len(gas["occurrences"]) == 2
+    assert all(original[item["start"]:item["end"]] == "气相" for item in gas["occurrences"])
     assert request.goals[2].conditions["environment"] == "C-PCM水环境"
     assert not updated.attempts and not updated.model_records and not updated.result_ids
 
@@ -257,7 +244,7 @@ def test_seed_language_is_not_an_additional_geometry_obligation(tmp_path, seed_c
 def test_invisible_notice_does_not_resolve_unsupported_minimum(tmp_path, notice):
     store, _, run, reply, _ = retained(tmp_path, "T1", 2)
     reply["parameters"]["notices"] = [notice]
-    with pytest.raises(ProposalError) as error:
-        commit(store, run, reply["parameters"])
-    assert "new_minimum_evidence_requires_notice" in {row["reason"] for row in rows(error)}
-    assert run.request_version == 1 and not run.attempts
+    updated = commit(store, run, reply["parameters"])
+    assert "unsupported_minimum_evidence:交付初始结构" in store.load_request(updated).goals[0].unresolved
+    assert updated.decisions[-1]["semantics"]["notice_contract"]["generated"]
+    assert not updated.attempts and not updated.goal_evidence

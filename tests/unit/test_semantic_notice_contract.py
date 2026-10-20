@@ -1,4 +1,4 @@
-"""Raw model declarations are selected and checked, never supplied by a renderer."""
+"""Known gaps receive program notices; model prose is retained without certification."""
 
 import copy
 import hashlib
@@ -70,26 +70,26 @@ def commit(store, run, parameters):
                             basis=current_basis(store, run))
 
 
-def test_actual_d2_accepted_notice_is_readable_but_cannot_pass_new_declaration_coverage(tmp_path):
+def test_actual_d2_notice_is_preserved_and_program_adds_coverage_declarations(tmp_path):
     store, run, parameters, response = actual_intake(tmp_path)
     assert SemanticCandidate.model_validate(response["proposal"]["parameters"]).notices == parameters["notices"]
-    before = state(store, run)
-    with pytest.raises(ProposalError, match="complete notice_choices") as rejected:
-        commit(store, run, parameters)
-    assert rejected.value.detail["missing_notice_choices"] == ["missing_geometry", "unsupported_system"]
-    assert state(store, run) == before
-    assert not list(store.path(f"runs/{run.id}/decisions").glob("*.json"))
+    before = copy.deepcopy(parameters)
+    updated = commit(store, run, parameters)
+    semantics = updated.decisions[-1]["semantics"]
+    assert {entry["kind"] for entry in semantics["notice_contract"]["generated"]} == {
+        "missing_geometry", "unsupported_system"}
+    assert semantics["proposed_candidate"]["notices"] == before["notices"]
+    assert parameters == before and not updated.calls and not updated.attempts
 
 
 @pytest.mark.parametrize("omitted", ["unsupported_system", "missing_geometry"])
-def test_one_declaration_cannot_cover_two_independent_actual_gaps(tmp_path, omitted):
+def test_one_declaration_keeps_both_gaps_and_program_supplies_the_other(tmp_path, omitted):
     store, run, parameters, _ = actual_intake(tmp_path)
     parameters["notices"] = [text for kind, text in notice_choices().items() if kind != omitted]
-    before = state(store, run)
-    with pytest.raises(ProposalError) as rejected:
-        commit(store, run, parameters)
-    assert rejected.value.detail["missing_notice_choices"] == [omitted]
-    assert state(store, run) == before
+    updated = commit(store, run, parameters)
+    contract = updated.decisions[-1]["semantics"]["notice_contract"]
+    assert [entry["kind"] for entry in contract["generated"]] == [omitted]
+    assert set(contract["required"]) == {"unsupported_system", "missing_geometry"}
 
 
 def test_explicit_synthetic_choices_register_without_rewriting_model_text_or_extra_question(tmp_path):
@@ -116,7 +116,7 @@ def test_explicit_synthetic_choices_register_without_rewriting_model_text_or_ext
         assert replayed.usage == stopped.usage and replayed.decisions == stopped.decisions
 
 
-def test_invalid_declarations_use_only_the_existing_single_correction(tmp_path):
+def test_omitted_declarations_do_not_spend_a_model_correction(tmp_path):
     store, run, parameters, _ = actual_intake(tmp_path)
     corrected = copy.deepcopy(parameters)
     corrected["notices"] = list(notice_choices().values())
@@ -124,8 +124,8 @@ def test_invalid_declarations_use_only_the_existing_single_correction(tmp_path):
                                   {"action": "normalize_request", "parameters": corrected})
     stopped = agent.execute(store, Config(), run.id, transport=transport)
     assert stopped.state == "paused", stopped.diagnostics
-    assert len(transport.sent) == stopped.usage.model_calls == 2
-    assert stopped.usage.model_tokens_used == 150
+    assert len(transport.sent) == stopped.usage.model_calls == 1
+    assert stopped.usage.model_tokens_used == 75
     assert not stopped.calls and not stopped.attempts
     assert stopped.budget == run.budget and stopped.permission == run.permission
 
@@ -248,7 +248,7 @@ def test_contract_keeps_extra_model_prose_without_certifying_its_semantics():
     before = copy.deepcopy(notices)
     checked = validate_notices(request, notices)
     assert notices == before
-    assert set(checked) == {"version", "required", "selected"}
+    assert set(checked) == {"version", "required", "selected", "generated"}
     assert "facts_passed" not in checked and "semantics_passed" not in checked
 
 
@@ -306,6 +306,7 @@ def test_persisted_legacy_registration_without_contract_is_not_revalidated_on_re
 def test_partial_or_reworded_statement_is_not_an_exact_selection(alter):
     request = _missing_information(Request(goals=[Goal(id="energy", port="energy",
         identity={"canonical_names": ["ethanol"]})]))
-    with pytest.raises(ProposalError) as rejected:
-        validate_notices(request, [alter(notice_choices()["unsupported_system"]), notice_choices()["missing_geometry"]])
-    assert rejected.value.detail["missing_notice_choices"] == ["unsupported_system"]
+    checked = validate_notices(request, [
+        alter(notice_choices()["unsupported_system"]), notice_choices()["missing_geometry"]])
+    assert checked["selected"] == ["missing_geometry"]
+    assert checked["generated"][0]["kind"] == "unsupported_system"

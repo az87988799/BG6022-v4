@@ -60,7 +60,8 @@ def test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_corr
     contract = payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
     assert prepared.input_token_bound <= 12000
     assert "electronic_state=RHF/UHF" in contract["instruction"]
-    assert "unique verbatim text_basis must match field/target" in contract["instruction"]
+    assert "verbatim text_basis must match field/target" in contract["instruction"]
+    assert "Same-message repeats bind all positions" in contract["instruction"]
     assert "temperature/standard_state only if requested" in contract["instruction"]
     assert "absent unit=unknown, no question" in contract["instruction"]
     assert 0 in contract["condition_lexicon"]["charge"]

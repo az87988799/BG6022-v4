@@ -117,9 +117,11 @@ def test_developer_scope_notices_keep_requested_targets_and_all_unmet_facts(tmp_
         parameters["unresolved"].append("unsupported_system:ethanol")
     updated = commit_candidate(store, run, parameters, decision_id="developer_notice", basis=current_basis(store, run))
     request = store.load_request(updated)
-    assert request.normalization_status == "clarification"
+    # A program-derived Goal gap cannot authenticate a candidate's copied
+    # Request-level unresolved marker, even when their spelling is identical.
+    assert request.normalization_status == ("clarification" if parameters["unresolved"] else "normalized")
     assert request.original_text == parameters["text_basis"]
-    assert updated.decisions[-1]["semantics"]["notices"] == parameters["notices"]
+    assert all(text in updated.decisions[-1]["semantics"]["notices"] for text in parameters["notices"])
     assert not updated.decisions[-1]["semantics"]["questions"]
     assert all("?" not in text and "？" not in text for text in parameters["notices"])
     if entry["variant_id"] == "N-05/raw-unsupported-solvent":

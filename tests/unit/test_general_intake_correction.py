@@ -125,20 +125,18 @@ def test_unknown_geometry_relation_is_not_invented(tmp_path, text):
                for item in rejected.value.detail["corrections"])
 
 
-def test_explicit_unit_remains_an_unverified_obligation_and_is_not_filled_in(tmp_path):
+def test_explicit_unit_is_bound_by_program_and_remains_unverified(tmp_path):
     text = "请分析乙醇振动频率，单位为 cm^-1。"
     store, config, run = environment(tmp_path, text)
     parameters = proposal(store, config, run, text=text, relation=None)
-    with pytest.raises(ProposalError) as rejected:
-        commit(store, run, parameters)
-    assert any(item["reason"] == "preserve_explicit_unit_requirement"
-               for item in rejected.value.detail["corrections"])
+    before = copy.deepcopy(parameters)
     assert parameters["goals"][0].get("minimum_evidence") is None
-    parameters["goals"][0]["minimum_evidence"] = ["单位为 cm^-1"]
-    parameters["notices"] = ["单位要求保留；当前证据不能验证单位的正确性。"]
     run = commit(store, run, parameters)
-    assert store.load_request(run).goals[0].minimum_evidence == ["单位为 cm^-1"]
-    assert not run.result_ids
+    goal = store.load_request(run).goals[0]
+    assert goal.minimum_evidence == ["单位为 cm^-1"]
+    assert goal.minimum_evidence_source == {"单位为 cm^-1": "explicit"}
+    assert goal.text_evidence["shared_constraints"][0]["text_basis"] == "单位为 cm^-1"
+    assert parameters == before and not run.result_ids and not run.goal_evidence
 
 
 def test_explicit_qualified_requirement_is_not_reclassified_as_an_available_observation(tmp_path):

@@ -1,0 +1,68 @@
+FFFFFFF................................................................. [ 32%]
+........................................................................ [ 65%]
+............s........................................................... [ 97%]
+.....                                                                    [100%]
+================================== FAILURES ===================================
+_ test_new_run_writes_have_a_separate_finite_budget_and_keep_artifact_limits __
+tests\unit\test_workflow_resource_simplification.py:59: in test_new_run_writes_have_a_separate_finite_budget_and_keep_artifact_limits
+    result = execute_call(store, run, "workspace.write", writer(n).parameters.model_dump())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\tools\dispatch.py:254: in execute_call
+    call = store.reserve_call(run, tool_name, parameters, step, consumption=consumption)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\store.py:1518: in reserve_call
+    raise StoreError("artifact writes require an authorized explicit Step")
+E   orca_agent.store.StoreError: artifact writes require an authorized explicit Step
+___________ test_write_default_and_zero_limit_are_explicitly_frozen ___________
+tests\unit\test_workflow_resource_simplification.py:79: in test_write_default_and_zero_limit_are_explicitly_frozen
+    zero_store.reserve_call(zero, "workspace.write", writer(1).parameters.model_dump())
+src\orca_agent\store.py:1518: in reserve_call
+    raise StoreError("artifact writes require an authorized explicit Step")
+E   orca_agent.store.StoreError: artifact writes require an authorized explicit Step
+_ test_legacy_snapshot_keeps_original_counter_hash_shape_and_remaining_allowance _
+tests\unit\test_workflow_resource_simplification.py:90: in test_legacy_snapshot_keeps_original_counter_hash_shape_and_remaining_allowance
+    execute_call(store, run, "workspace.write", writer(n).parameters.model_dump())
+src\orca_agent\tools\dispatch.py:254: in execute_call
+    call = store.reserve_call(run, tool_name, parameters, step, consumption=consumption)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\store.py:1518: in reserve_call
+    raise StoreError("artifact writes require an authorized explicit Step")
+E   orca_agent.store.StoreError: artifact writes require an authorized explicit Step
+_ test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund[completed] _
+tests\unit\test_workflow_resource_simplification.py:108: in test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund
+    call = store.reserve_call(run, prior.tool, prior.parameters.model_dump())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\store.py:1518: in reserve_call
+    raise StoreError("artifact writes require an authorized explicit Step")
+E   orca_agent.store.StoreError: artifact writes require an authorized explicit Step
+_ test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund[failed] _
+tests\unit\test_workflow_resource_simplification.py:108: in test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund
+    call = store.reserve_call(run, prior.tool, prior.parameters.model_dump())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\store.py:1518: in reserve_call
+    raise StoreError("artifact writes require an authorized explicit Step")
+E   orca_agent.store.StoreError: artifact writes require an authorized explicit Step
+_ test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund[unknown] _
+tests\unit\test_workflow_resource_simplification.py:108: in test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund
+    call = store.reserve_call(run, prior.tool, prior.parameters.model_dump())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\store.py:1518: in reserve_call
+    raise StoreError("artifact writes require an authorized explicit Step")
+E   orca_agent.store.StoreError: artifact writes require an authorized explicit Step
+_ test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund[reserved] _
+tests\unit\test_workflow_resource_simplification.py:108: in test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund
+    call = store.reserve_call(run, prior.tool, prior.parameters.model_dump())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\store.py:1518: in reserve_call
+    raise StoreError("artifact writes require an authorized explicit Step")
+E   orca_agent.store.StoreError: artifact writes require an authorized explicit Step
+=========================== short test summary info ===========================
+SKIPPED [1] tests\unit\test_store.py:346: creating test symlinks requires Windows developer mode/privilege
+FAILED tests/unit/test_workflow_resource_simplification.py::test_new_run_writes_have_a_separate_finite_budget_and_keep_artifact_limits
+FAILED tests/unit/test_workflow_resource_simplification.py::test_write_default_and_zero_limit_are_explicitly_frozen
+FAILED tests/unit/test_workflow_resource_simplification.py::test_legacy_snapshot_keeps_original_counter_hash_shape_and_remaining_allowance
+FAILED tests/unit/test_workflow_resource_simplification.py::test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund[completed]
+FAILED tests/unit/test_workflow_resource_simplification.py::test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund[failed]
+FAILED tests/unit/test_workflow_resource_simplification.py::test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund[unknown]
+FAILED tests/unit/test_workflow_resource_simplification.py::test_new_counter_retains_all_reservations_and_plan_ids_cannot_refund[reserved]
+7 failed, 213 passed, 1 skipped in 54.90s

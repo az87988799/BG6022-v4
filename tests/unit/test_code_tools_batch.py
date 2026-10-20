@@ -44,7 +44,7 @@ def reserve(root, index=0, value=None):
 
 def budget(**changes):
     values = dict(model_calls=2, model_tokens=100, orca_starts=3,
-                  extra_orca_starts=2, internal_work_units=20, run_seconds=60)
+                  extra_orca_starts=2, internal_work_units=20, run_seconds=60, file_writes=200)
     values.update(changes)
     return BudgetLimits(**values).model_dump(mode="json")
 
@@ -545,7 +545,8 @@ def test_workspace_rejects_partial_budget_even_when_missing_values_would_default
 def test_reference_has_its_own_frozen_thirty_start_budget_not_formal_twelve(tmp_path):
     config = Config()
     config.text.budget = BudgetLimits(orca_starts=12, extra_orca_starts=11,
-        model_calls=24, model_tokens=1_200_000, internal_work_units=10000, run_seconds=7200)
+        model_calls=24, model_tokens=1_200_000, internal_work_units=10000, run_seconds=7200,
+        file_writes=200)
     reference_budget = config.text.budget.model_copy(update={"orca_starts": 30,
         "extra_orca_starts": 29, "model_calls": 0, "model_tokens": 0,
         "internal_work_units": 30000, "run_seconds": 21600.0}).model_dump(mode="json")

@@ -103,7 +103,7 @@ TOOLS: dict[str, _Registration] = {
         description="Save bounded UTF-8 content, or patch a pinned Python base with unique exact edits, as a new immutable Artifact; returned ID/hash binds later Steps. No execution.",
         input_roles=[], output_ports=[], observation_outputs=["written_artifact"],
         effects=["read_registered_artifact", "write_artifact"], max_cores=0, max_memory_mb=0,
-        check_version="workspace-write-1", usage_counter="analysis_executions",
+        check_version="workspace-write-1", usage_counter="file_writes",
         check_contract={"code_authoring": True, "mechanical_feedback": "immutable-file-write-1"},
         preflight="orca_agent.tools.workspace.preflight",
         implementation="orca_agent.tools.workspace.write",
@@ -118,7 +118,7 @@ TOOLS: dict[str, _Registration] = {
         check_contract={"execution_available": True, "generic_observations": True,
                         "sdk_orca_declaration": {
                             "parameter": "sdk_orca", "required_for_new_code_proposals": True,
-                            "true": "Initial prepared/registered geometry and ORCA permission required before execution.",
+                            "true": "Initial prepared/registered geometry and ORCA permission required before execution; Plan approval may use a direct pending same-system prepare_geometry dependency.",
                             "false": "Analysis only; SDK ORCA requests are rejected.",
                             "legacy": "Missing historical value retains the original execution checks."},
                         "sdk_protocol": 2, "sdk_max_exchanges_per_attempt": MAX_EXCHANGES,
@@ -318,10 +318,13 @@ def get_tool(name: str) -> Tool:
     return _definition(name).tool.model_copy(deep=True)
 
 
-def call_usage_counter(tool: Tool) -> str | None:
+def call_usage_counter(tool: Tool, budget=None) -> str | None:
     """The single ToolCall accounting rule; managed Attempts use their own budgets."""
     if set(tool.effects) & {"execute_python", "execute_orca"}:
         return None
+    if tool.usage_counter == "file_writes" and (
+            budget is None or budget.file_writes is None):
+        return "analysis_executions"
     return tool.usage_counter or (
         "analysis_executions" if "write_analysis" in tool.effects or tool.output_ports
         else "evidence_reads")

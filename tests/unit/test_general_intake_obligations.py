@@ -96,7 +96,7 @@ def test_distinct_scientific_goals_keep_distinct_geometry_scopes(tmp_path):
     assert not run.result_ids and not run.attempts
 
 
-def test_independent_wording_binding_and_default_errors_are_reported_together(tmp_path):
+def test_independent_wording_and_binding_errors_are_reported_without_default_recopy(tmp_path):
     text = "请为乙醇生成结构，在固定几何上计算极化率。交付全部张量。记录随机种子。"
     store, config, run = environment(tmp_path, text)
     parameters = proposal(store, config, run, text=text, relation="fixed_initial", quantity="极化率")
@@ -114,19 +114,17 @@ def test_independent_wording_binding_and_default_errors_are_reported_together(tm
         commit(store, run, parameters)
     rows = error.value.detail["corrections"]
     assert {tuple(row["path"]) for row in rows} == {
-        ("parameters", "conditions", "electronic_state"),
         ("parameters", "goals", 0, "quantity"),
         ("parameters", "goals", 1, "minimum_evidence", 0),
         ("parameters", "goals", 2, "system_refs"),
     }
     assert parameters == before and store.load_request(run).version == 1
-    parameters["conditions"]["electronic_state"] = next(
-        row["authorized_default"] for row in rows if row["reason"] == "authorized_default_requires_explicit_adoption")
     parameters["goals"][0]["quantity"] = "生成结构"
     parameters["goals"][1]["minimum_evidence"] = ["交付全部张量"]
     parameters["goals"][2]["system_refs"] = ["target"]
     run = commit(store, run, parameters)
     goals = store.load_request(run).goals
+    assert store.load_request(run).conditions_source["electronic_state"] == "default"
     assert len(goals) == 3 and goals[1].minimum_evidence == ["交付全部张量"]
     assert not run.attempts and not run.model_records and not run.result_ids
 
@@ -242,17 +240,14 @@ def test_short_quote_cannot_drop_derived_geometry_and_independent_real_calculati
     parameters = proposal(store, config, run, text=text, relation=None, quantity="极化率")
     parameters["goals"][0]["text_basis"] = "计算极化率"
     before = copy.deepcopy(parameters)
-    with pytest.raises(ProposalError) as error:
-        commit(store, run, parameters)
-    rows = [row for row in error.value.detail["corrections"]
-            if row["reason"] == "preserve_general_geometry_obligation"]
-    assert {row["user_evidence"] for row in rows} >= {
-        "不分别优化两个结构", "第二次真实ORCA结果不得由第一份数值变换代替"}
-    assert parameters == before
-    parameters["goals"][0]["minimum_evidence"] = [row["user_evidence"] for row in rows]
     run = commit(store, run, parameters)
     goal = store.load_request(run).goals[0]
-    assert goal.minimum_evidence == parameters["goals"][0]["minimum_evidence"]
+    shared = goal.text_evidence["shared_constraints"]
+    assert {row["text_basis"] for row in shared} >= {
+        "不分别优化两个结构", "第二次真实ORCA结果不得由第一份数值变换代替"}
+    assert all(text[row["start"]:row["end"]] == row["text_basis"] for row in shared)
+    assert parameters == before
+    assert goal.minimum_evidence == parameters["goals"][0].get("minimum_evidence", [])
     assert "geometry_relation" not in goal.conditions and not run.attempts
 
 
@@ -271,16 +266,10 @@ def test_short_general_energy_quote_retains_single_point_operation_without_initi
     store, config, run = environment(tmp_path, text)
     parameters = proposal(store, config, run, text=text, relation=None, quantity="电子能")
     parameters["goals"][0]["text_basis"] = "电子能"
-    with pytest.raises(ProposalError) as error:
-        commit(store, run, parameters)
-    row = next(row for row in error.value.detail["corrections"]
-               if row["reason"] == "preserve_general_geometry_obligation")
-    assert row["user_evidence"] == "请为乙醇计算单点电子能"
-    parameters["goals"][0]["minimum_evidence"] = [row["user_evidence"]]
     run = commit(store, run, parameters)
     goal = store.load_request(run).goals[0]
     assert "geometry_relation" not in goal.conditions
-    assert goal.minimum_evidence == ["请为乙醇计算单点电子能"]
+    assert goal.text_evidence["shared_constraints"][0]["text_basis"] == "请为乙醇计算单点电子能"
     assert not run.attempts and not run.result_ids
 
 

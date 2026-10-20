@@ -1,0 +1,31 @@
+F...........F....                                                        [100%]
+================================== FAILURES ===================================
+_____ test_coverage_notice_allows_agent_plan_and_actual_prepare_dispatch ______
+tests\unit\test_workflow_semantic_simplification.py:66: in test_coverage_notice_allows_agent_plan_and_actual_prepare_dispatch
+    finished = agent.execute(store, Config(), run.id, transport=transport)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\agent.py:824: in execute
+    run, action, value = _decision(store, run, plan, results,
+src\orca_agent\agent.py:285: in _decision
+    response = send_model(store, run, prepared, transport, basis=basis,
+src\orca_agent\model_usage.py:509: in send_model
+    return transport.send(prepared, reserve=reserve, settle=settle)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\test_agent.py:44: in send
+    values = script(data) if callable(script) else copy.deepcopy(script)
+             ^^^^^^^^^^^^
+tests\unit\test_workflow_semantic_simplification.py:61: in prepare
+    step = next(step for step in store.load_plan(current).steps if step.tool == "structure.prepare")
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'steps'
+__ test_gap_cannot_borrow_coverage_provenance_from_another_scope[other_goal] __
+tests\unit\test_workflow_semantic_simplification.py:150: in test_gap_cannot_borrow_coverage_provenance_from_another_scope
+    request.goals.append(Goal(id="other", port="data", unresolved=[gap],
+E   pydantic_core._pydantic_core.ValidationError: 1 validation error for Goal
+E   evidence_contract_version
+E     Input should be 'legacy-1' or 'generic-observation-1' [type=literal_error, input_value=None, input_type=NoneType]
+E       For further information visit https://errors.pydantic.dev/2.13/v/literal_error
+=========================== short test summary info ===========================
+FAILED tests/unit/test_workflow_semantic_simplification.py::test_coverage_notice_allows_agent_plan_and_actual_prepare_dispatch
+FAILED tests/unit/test_workflow_semantic_simplification.py::test_gap_cannot_borrow_coverage_provenance_from_another_scope[other_goal]
+2 failed, 15 passed in 5.97s

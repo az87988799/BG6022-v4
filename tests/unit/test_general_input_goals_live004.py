@@ -77,20 +77,14 @@ def test_first_reply_missing_identity_message_stays_rejected_and_missing_quantit
 
 
 @pytest.mark.parametrize("index", [1, 2])
-def test_real_replies_preserve_goals_after_explicit_default_adoption_if_missing(tmp_path, index):
+def test_real_replies_preserve_goals_with_program_default_provenance_if_missing(tmp_path, index):
     store, run, proposed = replay(tmp_path, index)
-    if index == 1:
-        # This historical reply omitted two configured conditions. v42 requires
-        # an explicit decision; the retained real fixture is never rewritten.
-        with pytest.raises(ProposalError) as rejected:
-            submit(store, run, proposed)
-        rows = rejected.value.detail["corrections"]
-        assert all(row["reason"] == "authorized_default_requires_explicit_adoption" for row in rows)
-        for row in rows:
-            proposed.setdefault("conditions", {})[row["path"][-1]] = row["authorized_default"]
     before = copy.deepcopy(proposed)
     permission = run.permission.model_dump()
     run = submit(store, run, proposed)
+    if index == 1:
+        rows = run.decisions[-1]["semantics"]["program_applied_defaults"]
+        assert {row["path"][-1] for row in rows} == {"charge", "multiplicity", "electronic_state", "environment"}
     request = store.load_request(run)
     assert request.normalization_status == "normalized" and not request.unresolved
     assert proposed == before and len(request.goals) == len(proposed["goals"]) == 4

@@ -14,7 +14,7 @@ from orca_agent.proposals import ProposalError, materialize_plan
 FIXTURE = Path(__file__).parents[1] / "fixtures/incremental_plan_live005.json"
 
 
-def replay():
+def replay(*, current_candidate=True):
     data = json.loads(FIXTURE.read_bytes())
     request, prior, run = (model.model_validate(data[key]) for model, key in (
         (Request, "request"), (Plan, "prior_plan"), (Run, "run")))
@@ -25,7 +25,14 @@ def replay():
                   for reference in ([step.get("parameters", {}).get("code", {})]
                       + step.get("parameters", {}).get("inputs", {}).get("entries", []))
                   if "artifact_id" in reference}
-    return store, run, request, prior, copy.deepcopy(data["parameters"]), authorized
+    parameters = copy.deepcopy(data["parameters"])
+    if current_candidate:
+        # Derive a current proposal; the frozen response and historical Steps
+        # stay unchanged. This archived script calls the managed run_orca SDK.
+        script = parameters["steps"][-1]
+        assert script["key"] == "execute_conformer_search" and script["tool"] == "python.execute"
+        script["parameters"]["sdk_orca"] = True
+    return store, run, request, prior, parameters, authorized
 
 
 def validate(store, run, request, prior, parameters, authorized):
@@ -34,7 +41,7 @@ def validate(store, run, request, prior, parameters, authorized):
     return plan
 
 
-def test_real_last_reply_reuses_settled_history_and_equivalent_goal_route():
+def test_derived_last_reply_reuses_settled_history_and_equivalent_goal_route():
     store, run, request, prior, parameters, authorized = replay()
     before = run.model_dump(mode="json"), request.model_dump(mode="json"), copy.deepcopy(parameters)
     plan = validate(store, run, request, prior, parameters, authorized)
@@ -44,6 +51,22 @@ def test_real_last_reply_reuses_settled_history_and_equivalent_goal_route():
         assert next(step for step in plan.steps if step.id == call.step_id) == call.frozen_step
     assert plan.id == prior.id and plan.version == prior.version + 1
     assert (run.model_dump(mode="json"), request.model_dump(mode="json"), parameters) == before
+
+
+def test_raw_historical_reply_requires_explicit_sdk_mode_without_rewriting_history():
+    fixture_before = FIXTURE.read_bytes()
+    store, run, request, prior, parameters, authorized = replay(current_candidate=False)
+    before = (run.model_dump(mode="json"), request.model_dump(mode="json"),
+              prior.model_dump(mode="json"), copy.deepcopy(parameters))
+    assert "sdk_orca" not in parameters["steps"][-1]["parameters"]
+    with pytest.raises(ProposalError) as caught:
+        validate(store, run, request, prior, parameters, authorized)
+    assert caught.value.detail["code"] == "missing_sdk_orca_declaration"
+    assert caught.value.detail["path"] == [
+        "parameters", "steps", len(parameters["steps"]) - 1, "parameters", "sdk_orca"]
+    assert (run.model_dump(mode="json"), request.model_dump(mode="json"),
+            prior.model_dump(mode="json"), parameters) == before
+    assert FIXTURE.read_bytes() == fixture_before
 
 
 def test_incremental_reply_can_omit_settled_step_closure_and_untouched_goal_binding():

@@ -106,11 +106,11 @@ def test_old_affirmation_cannot_override_later_explicit_unknown(tmp_path):
     assert store.load_run(run.id).model_dump_json() == before
 
 
-def test_message_id_cannot_disambiguate_two_short_quotes_in_the_same_message(tmp_path):
+def test_repeated_quote_cannot_hide_uncertain_occurrence_in_the_same_message(tmp_path):
     store, run = scoped_query(tmp_path)
     message = store.enqueue_message(run.id, "RHF? Use RHF for water.")
     before = store.load_run(run.id).model_dump_json()
-    with pytest.raises(ValueError, match="repeated"):
+    with pytest.raises(ValueError, match="negated or uncertain"):
         amend_field(store, run, "method", "HF", "RHF", message_id=message)
     assert store.load_run(run.id).model_dump_json() == before
 

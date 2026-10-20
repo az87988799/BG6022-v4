@@ -1,4 +1,4 @@
-"""Configured defaults need explicit model adoption; no conditions are filled."""
+"""Only configured, authorized and uncontradicted omissions receive defaults."""
 
 import copy
 import hashlib
@@ -10,7 +10,6 @@ from test_general_intake_correction import environment
 
 from orca_agent.model_usage import current_basis
 from orca_agent.models import Goal, Request, SystemInput
-from orca_agent.proposals import ProposalError
 from orca_agent.semantic import (
     FieldEvidence,
     SemanticCandidate,
@@ -24,7 +23,7 @@ from orca_agent.store import StoreError
 FIXTURE = Path(__file__).parents[1] / "fixtures/code_contracts/live011-omitted-defaults.json"
 
 
-def test_original_live011_candidate_requires_explicit_adoption_then_test_authored_correction_passes(tmp_path):
+def test_original_live011_candidate_receives_program_defaults_and_preserves_model_proposal(tmp_path):
     raw = FIXTURE.read_bytes()
     retained = json.loads(raw)
     assert retained["response_record_sha256"] == "ef37badab59d25624739dfa29f25cb9d3ee72a2fd3ad92b0f63769ba9bfabde2"
@@ -40,19 +39,15 @@ def test_original_live011_candidate_requires_explicit_adoption_then_test_authore
         return [rebind(child) for child in value] if isinstance(value, list) else value
 
     proposed = rebind(original)
-    before = copy.deepcopy((run, proposed, store.load_request(run)))
-    with pytest.raises(ProposalError) as rejected:
-        commit_candidate(store, run, proposed, decision_id="rejected", basis=current_basis(store, run))
-    rows = rejected.value.detail["corrections"]
-    assert {tuple(row["path"]) for row in rows} == {("parameters", "conditions", name)
+    before = copy.deepcopy(proposed)
+    updated = commit_candidate(store, run, proposed, decision_id="normalized", basis=current_basis(store, run))
+    rows = updated.decisions[-1]["semantics"]["program_applied_defaults"]
+    assert {tuple(row["path"]) for row in rows} == {("conditions", name)
         for name in ("charge", "multiplicity", "electronic_state", "environment")}
-    assert all(row["reason"] == "authorized_default_requires_explicit_adoption" for row in rows)
+    assert all(row["reason"] == "authorized_default_applied" for row in rows)
     assert {row["path"][-1]: row["authorized_default"]["value"] for row in rows} == config.text.defaults
-    assert (run, proposed, store.load_request(run)) == before
-    # The following correction is explicitly test-authored, not model evidence.
-    proposed["conditions"] = {name: {"source": "default", "default_rule": "local-hf-1", "value": value}
-                              for name, value in config.text.defaults.items()}
-    updated = commit_candidate(store, run, proposed, decision_id="corrected", basis=current_basis(store, run))
+    assert proposed == before
+    assert updated.decisions[-1]["semantics"]["proposed_candidate"]["conditions"] == {}
     request = store.load_request(updated)
     assert {name: request.conditions[name] for name in config.text.defaults} == config.text.defaults
     assert all(request.conditions_source[name] == "default" for name in config.text.defaults)
@@ -146,7 +141,7 @@ def test_general_scientific_quantity_still_requires_explicit_adoption_despite_po
         ["system_conditions", "water", "charge"],
         ["system_conditions", "methane", "charge"],
     ]
-    assert all(row["reason"] == "authorized_default_requires_explicit_adoption" for row in rows)
+    assert all(row["reason"] == "authorized_default_applied" for row in rows)
     assert (request, candidate) == before
     adopted = FieldEvidence(source="default", default_rule="local-hf-1", value=0)
     assert _field("charge", adopted, request, messages)[:2] == (0, "default")
@@ -163,11 +158,11 @@ def test_no_default_and_existing_confirmed_values_do_not_create_new_requirement(
     assert _omitted_default_corrections(candidate, request, messages) == []
 
 
-def test_contract_says_defaults_are_available_templates_not_implicit_values(tmp_path):
+def test_contract_discloses_program_defaults_and_their_limits(tmp_path):
     store, _, run = environment(tmp_path)
     request = store.load_request(run)
     contract = action_parameters(run.permission.allowed_tools, request=request, text_input=True,
                                  code_authorized=True)["normalize_request"]
-    assert "not automatically applied" in contract["default_adoption"]
+    assert "program applies omitted applicable" in contract["default_adoption"]
     assert "source=default" in contract["default_adoption"]
     assert contract["authorized_defaults"]["values"] == request.semantic_defaults

@@ -93,7 +93,7 @@ def test_immutable_write_can_be_consumed_without_expanding_permission(tmp_path, 
     before = run.permission.model_dump()
     written_result, reference = written(store, run, writer)
     assert store.verified_own_artifacts(run) == {reference["artifact_id"]}
-    assert run.usage.analysis_executions == 1
+    assert run.usage.file_writes == 1 and run.usage.analysis_executions == 0
     assert not written_result.qualified_outputs
     run, attempt, result = execute_fixture(store, run, reference)
     assert run.permission.model_dump() == before and not run.permission.artifact_ids
@@ -205,4 +205,4 @@ def test_duplicate_writer_is_not_reexecuted(tmp_path, monkeypatch):
     written(store, run, writer)
     with pytest.raises(StoreError, match="durable Call"):
         execute_call(store, run, writer.tool, writer.parameters.model_dump(), step=writer)
-    assert run.usage.analysis_executions == 1
+    assert run.usage.file_writes == 1 and run.usage.analysis_executions == 0

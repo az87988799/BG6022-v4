@@ -325,8 +325,9 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                                         code="decision_purpose_action", path=["action"], allowed_actions=allowed)
             if proposal.action in {"stop", "clarify"}:
                 from orca_agent.proposals import validate_action_parameters
-                validate_action_parameters(proposal.action, proposal.parameters,
-                                           terminal_required=proposal.action == "stop")
+                proposal.parameters = validate_action_parameters(
+                    proposal.action, proposal.parameters,
+                    terminal_required=proposal.action == "stop")
             if {name: getattr(proposal, name) for name in basis} != basis:
                 raise StoreError("proposal version basis differs from the transmitted context")
             if set(proposal.related_results) != set(feedback):

@@ -22,7 +22,14 @@ FIXTURE = Path(__file__).parents[1] / "fixtures/phase_b/repair-cycle-v23-rejecti
 def _actual_sampling_objects():
     archived = next(row for row in json.loads(FIXTURE.read_bytes())["runs"]
                     if row["variant_id"] == "V-06/insufficient-additional-budget")
-    return Request.model_validate(archived["current_request"]), Run.model_validate(archived["run_state"])
+    request = Request.model_validate(archived["current_request"])
+    run = Run.model_validate(archived["run_state"])
+    # A derived, in-memory planning projection: keep the original 12K input and
+    # total budget limits, but isolate copy-target tests from the historical
+    # near-exhausted token balance. No persisted Run or archived receipt changes.
+    # The three actual-balance cases below load the untouched original directly.
+    run.usage.model_tokens_used = 0
+    return request, run
 
 
 @pytest.mark.parametrize("count", [1, 2])
@@ -110,10 +117,13 @@ def test_terminal_key_encoding_preserves_long_native_goal_status_id():
 def test_v23_actual_goal_and_both_correction_requirements_fit_current_context(rejection):
     # Rebuild a bounded current projection from persisted facts. This is a
     # derived offline input, not another live response or a regraded old Run.
-    archived = next(row for row in json.loads(FIXTURE.read_bytes())["runs"]
+    original_bytes = FIXTURE.read_bytes()
+    archived = next(row for row in json.loads(original_bytes)["runs"]
                     if row["variant_id"] == "V-06/insufficient-additional-budget")
     request = Request.model_validate(archived["current_request"])
     run = Run.model_validate(archived["run_state"])
+    before = copy.deepcopy((request, run))
+    assert run.budget.model_tokens - run.usage.model_tokens_used - run.usage.model_tokens_unknown == 23562
     snapshot = delivery_snapshot(request, run, {})
     feedback = {}
     if rejection is not None:
@@ -124,10 +134,12 @@ def test_v23_actual_goal_and_both_correction_requirements_fit_current_context(re
                                      feedback=feedback, now=run.created_at)
     wire = decoded(prepared)
     assert prepared.input_token_bound <= 12000 and prepared.output_token_bound == 2000
-    assert wire["AUTHORITY"]["request"]["goals"][0]["id"] == "finite_sample_internal_minimum"
-    assert wire["AUTHORITY"]["request"]["conditions"]["available_evidence"] == (
-        request.conditions["available_evidence"])
-    actions = {"initial_plan", "clarify", "stop"}
+    # The real remaining balance cannot hold both another planning turn and a
+    # complete terminal turn. Preserve the actual balance and verify the bounded
+    # partial-delivery contract instead of manufacturing another planning call.
+    assert wire["AUTHORITY"]["decision_purpose"]["kind"] == "terminal"
+    assert wire["AUTHORITY"]["delivery_snapshot_fingerprint"] == snapshot["fingerprint"]
+    actions = {"stop"}
     assert set(wire["AUTHORITY"]["decision_purpose"]["allowed_actions"]) == actions
     if wire["AUTHORITY"].get("response_contract") == "decision-intent-2":
         assert set(wire["ACTION_SCHEMAS"]) == actions
@@ -137,8 +149,30 @@ def test_v23_actual_goal_and_both_correction_requirements_fit_current_context(re
         assert set(wire["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"]) == actions
     if rejection is not None:
         assert wire["CONTROL"]["validation_error"] == feedback["validation_error"]
-    assert wire["AUTHORITY"]["permission"]["scientific_execution"] is False
-    assert wire["AUTHORITY"]["budget_limits"]["orca_starts"] == 0
+    visible = wire["DATA"]["delivery"]
+    assert visible["references"] == snapshot["references"]
+    assert {item["ref"]: (item["kind"], item["value"]) for item in visible["facts"]} == {
+        item["ref"]: (item["kind"], item["value"]) for item in snapshot["facts"]}
+    assert {item["ref"]: (item["code"], item["value"]) for item in visible["blockers"]} == {
+        item["ref"]: (item["code"], item["value"]) for item in snapshot["blockers"]}
+    assert {item["ref"]: item["relation"] for item in visible["explanations"]} == {
+        item["ref"]: item["relation"] for item in snapshot["explanations"]}
+    assert {item["ref"]: item["kind"] for item in visible["next_actions"]} == {
+        item["ref"]: item["kind"] for item in snapshot["next_actions"]}
+    assert all(item["kind"] == "stop_with_partial_results" for item in visible["next_actions"])
+    for current, original in zip(visible["goals"], snapshot["goals"], strict=True):
+        for field in ("ref", "original_text", "port", "required", "minimum_check_version",
+                      "requested_minimum_evidence", "required_fact_refs", "required_blocker_refs",
+                      "explanation_refs", "next_action_refs"):
+            assert current[field] == original[field]
+    assert "finite_sample_internal_minimum" in prepared.body()["messages"][1]["content"]
+    assert visible["resources"]["permission"]["scientific_execution"] is False
+    table = visible["resources"]["counters"]
+    counters = [dict(zip(table["columns"], row, strict=True)) for row in table["rows"]]
+    assert {row["name"]: row["limit"] for row in counters} == snapshot["resources"]["limits"]
+    assert {row["name"]: row["remaining"] for row in counters} == snapshot["resources"]["remaining"]
+    assert next(row for row in counters if row["name"] == "orca_starts")["limit"] == 0
+    assert (request, run) == before and FIXTURE.read_bytes() == original_bytes
 
 
 @pytest.mark.parametrize("revision_available", [False, True])
@@ -176,10 +210,7 @@ def test_ready_step_schema_remains_visible_when_revision_can_change_parameters(r
 
 
 def test_sampling_intake_defers_inputs_but_preserves_specification_and_restores_planning_evidence():
-    archived = next(row for row in json.loads(FIXTURE.read_bytes())["runs"]
-                    if row["variant_id"] == "V-06/insufficient-additional-budget")
-    request = Request.model_validate(archived["current_request"])
-    run = Run.model_validate(archived["run_state"])
+    request, run = _actual_sampling_objects()
     before = copy.deepcopy((request, run))
     snapshot = delivery_snapshot(request, run, {})
     intake = decoded(context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at,

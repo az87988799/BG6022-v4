@@ -93,9 +93,11 @@ def _envelope(values):
     return {name: _amount(values[name], name) for name in METRICS}
 
 
-def _budget(value, reservation):
+def _budget(value, reservation, *, allow_legacy=True):
     """Freeze every Run limit, including retries and non-accounting allowances."""
-    if not isinstance(value, dict) or set(value) != set(BudgetLimits.model_fields):
+    fields = set(BudgetLimits.model_fields)
+    accepted = [fields, fields - {"file_writes"}] if allow_legacy else [fields]
+    if not isinstance(value, dict) or set(value) not in accepted:
         raise ValueError("each slot requires complete frozen BudgetLimits")
     validated = BudgetLimits.model_validate(value).model_dump(mode="json")
     if not _same(value, validated):
@@ -163,6 +165,8 @@ def create_batch(root, *, freeze_sha256, policy, environment_root):
             if not _same(_read(anchor), identity):
                 raise ValueError("frozen batch anchor differs; paths/identity cannot reset the batch")
             return snapshot(root)
+        for row in policy["slots"]:
+            _budget(row["run_budget"], row["reservation"], allow_legacy=False)
         if root.exists() and any(root.iterdir()):
             raise ValueError("new batch root must be empty")
         root.mkdir(parents=True, exist_ok=True)

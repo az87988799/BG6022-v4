@@ -1,0 +1,24 @@
+...F......F...F..................................                        [100%]
+================================== FAILURES ===================================
+_______ test_all_native_submission_contracts_and_correction_are_literal _______
+tests\unit\test_native_immediate_schema.py:140: in test_all_native_submission_contracts_and_correction_are_literal
+    assert repair["properties"]["sdk_orca"]["anyOf"] == [{"type": "boolean"}, {"type": "null"}]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'anyOf'
+_ test_actual_live024_missing_dependencies_identify_all_omitted_historical_steps _
+tests\unit\test_plan_reference_feedback.py:83: in test_actual_live024_missing_dependencies_identify_all_omitted_historical_steps
+    assert "does not insert" in str(caught.value)
+E   AssertionError: assert 'does not insert' in 'Every referenced Step must exist in the complete Plan. Verified settled history and its closure may be carried automa...dependencies remain unchanged. Declare a new Step with its Tool and parameters instead of referring to an unknown key.'
+E    +  where 'Every referenced Step must exist in the complete Plan. Verified settled history and its closure may be carried automa...dependencies remain unchanged. Declare a new Step with its Tool and parameters instead of referring to an unknown key.' = str(ProposalError('Every referenced Step must exist in the complete Plan. Verified settled history and its closure may be ...ependencies remain unchanged. Declare a new Step with its Tool and parameters instead of referring to an unknown key.'))
+E    +    where ProposalError('Every referenced Step must exist in the complete Plan. Verified settled history and its closure may be ...ependencies remain unchanged. Declare a new Step with its Tool and parameters instead of referring to an unknown key.') = <ExceptionInfo ProposalError('Every referenced Step must exist in the complete Plan. Verified settled history and its ...es remain unchanged. Declare a new Step with its Tool and parameters instead of referring to an unknown key.') tblen=3>.value
+_ test_stripping_only_reported_extras_does_not_bypass_other_frozen_step_checks _
+tests\unit\test_plan_reference_feedback.py:130: in test_stripping_only_reported_extras_does_not_bypass_other_frozen_step_checks
+    assert candidate.steps[0].system_id != prior.steps[0].system_id
+E   AssertionError: assert 'system_ethanol' != 'system_ethanol'
+E    +  where 'system_ethanol' = Step(id='step_6a375e1de25a41d1925ee4859e7d76c7', logical_id='logical_a0d77b9d7bf84fd785ec544c9a3b2791', tool='structur...ers=ResolveParameters(system_id='system_ethanol'), geometry=None, depends_on=[], inputs={}, system_id='system_ethanol').system_id
+E    +  and   'system_ethanol' = Step(id='step_6a375e1de25a41d1925ee4859e7d76c7', logical_id='logical_a0d77b9d7bf84fd785ec544c9a3b2791', tool='structur...ers=ResolveParameters(system_id='system_ethanol'), geometry=None, depends_on=[], inputs={}, system_id='system_ethanol').system_id
+=========================== short test summary info ===========================
+FAILED tests/unit/test_native_immediate_schema.py::test_all_native_submission_contracts_and_correction_are_literal
+FAILED tests/unit/test_plan_reference_feedback.py::test_actual_live024_missing_dependencies_identify_all_omitted_historical_steps
+FAILED tests/unit/test_plan_reference_feedback.py::test_stripping_only_reported_extras_does_not_bypass_other_frozen_step_checks
+3 failed, 46 passed in 11.81s

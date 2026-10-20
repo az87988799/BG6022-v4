@@ -1,0 +1,2035 @@
+..........................................................F............. [  2%]
+........................................................................ [  5%]
+........................................................................ [  8%]
+...........................................s............................ [ 11%]
+........................................................................ [ 14%]
+........................................................................ [ 16%]
+...........................................FF........................... [ 19%]
+....................................F.FFF..FFFFFFF...................... [ 22%]
+......................................................F................. [ 25%]
+......................................F................................. [ 28%]
+........................................................................ [ 31%]
+....F................................................................... [ 33%]
+............................................................s........... [ 36%]
+.....................FF..FF............................................. [ 39%]
+........................................................................ [ 42%]
+........................................................................ [ 45%]
+........................................................................ [ 48%]
+...F.................................................................... [ 50%]
+........................................................................ [ 53%]
+........................................................................ [ 56%]
+................FFFFF................................................... [ 59%]
+........................................................................ [ 62%]
+........................................................................ [ 64%]
+........................................................................ [ 67%]
+........................................................................ [ 70%]
+........................................................................ [ 73%]
+........................................................................ [ 76%]
+........................................................................ [ 79%]
+........................................................................ [ 81%]
+..........F......................................................F...... [ 84%]
+......F................................................................. [ 87%]
+.....F...........................................s...................... [ 90%]
+........................................................................ [ 93%]
+........................................................................ [ 96%]
+...................................F.................................... [ 98%]
+.............................                                            [100%]
+================================== FAILURES ===================================
+__ test_final_slot_guard_prevents_reservation_without_increasing_old_budget ___
+
+tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1931/test_final_slot_guard_prevents0')
+
+    def test_final_slot_guard_prevents_reservation_without_increasing_old_budget(tmp_path):
+        store, original, _ = make_run(tmp_path, model_calls=1)
+        request = store.load_request(original).model_copy(deep=True)
+        request.conditions["explain_results"] = True
+        run = store.create_run(request, None, original.permission, original.budget)
+        run.agent_enabled = True
+        store.save_run(run)
+        transport = ScriptedTransport(initial_proposal)
+>       ended = agent.execute(store, Config(), run.id, transport=transport)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_bounded_protocol_delivery.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\orca_agent\agent.py:824: in execute
+    run, action, value = _decision(store, run, plan, results,
+src\orca_agent\agent.py:285: in _decision
+    response = send_model(store, run, prepared, transport, basis=basis,
+src\orca_agent\model_usage.py:517: in send_model
+    return transport.send(prepared, reserve=reserve, settle=settle)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\test_agent.py:44: in send
+    values = script(data) if callable(script) else copy.deepcopy(script)
+             ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+data = {'RESPONSE_ENVELOPE': {'action': 'stop', 'parameters': '<selected action parameters>', 'reason': '<brief explanation>'...': {'current': {}, 'geometry_relation': None, 'source': {}, 'source_evidence': {}, ...}}], ...}, 'trust': 'untrusted'}}
+
+    def initial_proposal(data):
+>       goals = data["AUTHORITY"]["request"]["goals"]
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'request'
+
+tests\unit\test_agent.py:108: KeyError
+_ test_actual_archived_observation_uses_visible_reference_in_default_build_context[True] _
+
+source_matches = True
+
+    @pytest.mark.parametrize("source_matches", [True, False])
+    def test_actual_archived_observation_uses_visible_reference_in_default_build_context(source_matches):
+        from test_bounded_live_observation_context import feedback
+    
+        from orca_agent.context import build_context
+        from orca_agent.models import (
+            BudgetLimits,
+            Goal,
+            ModelLimits,
+            OutputBinding,
+            PermissionSnapshot,
+            Plan,
+            Request,
+            Run,
+            RunConfiguration,
+            Step,
+        )
+    
+        result = feedback()
+        # This complete value fits the normal preview. The larger ranking is
+        # intentionally windowed and must not be treated as an exact duplicate.
+        observation = next(row for row in result.observation_records if row.name == "conformer_search")
+        result = result.model_copy(update={"observation_records": [observation], "observations": {}})
+        goal = Goal(id="goal_ranking", port=observation.name,
+            minimum_check_version="generic-observation-1", evidence_contract_version="generic-observation-1",
+            verification="reported_with_limitations")
+        request = Request(goals=[goal], method="B3LYP", basis="6-31G",
+            conditions={"explain_results": True, "electronic_state": "RKS", "environment": "gas_phase"})
+        step = Step(id=result.step_id, logical_id="analysis", tool="python.execute", parameters={
+            "code": {"artifact_id": "script_artifact", "sha256": observation.code_sha256},
+            "observation_names": [observation.name]})
+        plan = Plan(request_id=request.id, steps=[step],
+            goal_map={goal.id: OutputBinding(step_id=step.id, port=goal.port)})
+        run = Run(id=result.run_id, request_id=request.id, request_version=request.version,
+            plan_id=plan.id, plan_version=plan.version, result_ids=[result.id],
+            permission=PermissionSnapshot(model_execution=True, code_execution=True,
+                artifact_writes=True, allowed_tools=["python.execute", "workspace.write"]),
+            budget=BudgetLimits(model_calls=4, model_tokens=300000, input_tokens=100000,
+                output_tokens=2000, plan_revisions=2),
+            configuration=RunConfiguration(model=ModelLimits(input_tokens=100000, output_tokens=2000)))
+        run.goal_status = {goal.id: "insufficient_evidence"}
+        snapshot = {"version": "test-bounded-feedback", "fingerprint": "a" * 64,
+            "basis": {"request_id": request.id, "request_version": request.version,
+                "plan_id": plan.id, "plan_version": plan.version, "permission_version": run.permission.version,
+                "control_generation": 0}, "request_text": request.original_text, "communication": {},
+            "resources": {"permission": {}, "limits": {}, "remaining": {}, "usage": {}},
+            "references": {"s0": {"run_id": run.id if source_matches else "different_run", "result_id": result.id}},
+            "goals": [{"goal_id": goal.id, "ref": "g0", "port": goal.port,
+                "required_fact_refs": ["f0"], "explanation_refs": ["e0"],
+                "required_blocker_refs": [], "next_action_refs": ["n0"]}],
+            "facts": [{"ref": "f0", "goal_ref": "g0", "source_ref": "s0", "kind": "answer",
+                "value": {"kind": "evidence_observation", "observation": observation.model_dump(mode="json")}}],
+            "explanations": [], "blockers": [], "next_actions": []}
+        before = copy.deepcopy((request, run, plan, result, snapshot))
+        prepared = build_context(request, run, plan, results=[result], delivery_snapshot=snapshot,
+            feedback={"new_result_ids": [result.id], "pending_step_ids": []})
+        wire = json.loads(prepared.body()["messages"][1]["content"])
+        assert not {"KEYS", "SHARED_STRINGS", "SCHEMA_COLUMNS"}.intersection(wire)
+>       visible = wire["DATA"]["results"][0]["unqualified_observation_records"][0]
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'results'
+
+tests\unit\test_context_efficiency.py:423: KeyError
+_ test_actual_archived_observation_uses_visible_reference_in_default_build_context[False] _
+
+source_matches = False
+
+    @pytest.mark.parametrize("source_matches", [True, False])
+    def test_actual_archived_observation_uses_visible_reference_in_default_build_context(source_matches):
+        from test_bounded_live_observation_context import feedback
+    
+        from orca_agent.context import build_context
+        from orca_agent.models import (
+            BudgetLimits,
+            Goal,
+            ModelLimits,
+            OutputBinding,
+            PermissionSnapshot,
+            Plan,
+            Request,
+            Run,
+            RunConfiguration,
+            Step,
+        )
+    
+        result = feedback()
+        # This complete value fits the normal preview. The larger ranking is
+        # intentionally windowed and must not be treated as an exact duplicate.
+        observation = next(row for row in result.observation_records if row.name == "conformer_search")
+        result = result.model_copy(update={"observation_records": [observation], "observations": {}})
+        goal = Goal(id="goal_ranking", port=observation.name,
+            minimum_check_version="generic-observation-1", evidence_contract_version="generic-observation-1",
+            verification="reported_with_limitations")
+        request = Request(goals=[goal], method="B3LYP", basis="6-31G",
+            conditions={"explain_results": True, "electronic_state": "RKS", "environment": "gas_phase"})
+        step = Step(id=result.step_id, logical_id="analysis", tool="python.execute", parameters={
+            "code": {"artifact_id": "script_artifact", "sha256": observation.code_sha256},
+            "observation_names": [observation.name]})
+        plan = Plan(request_id=request.id, steps=[step],
+            goal_map={goal.id: OutputBinding(step_id=step.id, port=goal.port)})
+        run = Run(id=result.run_id, request_id=request.id, request_version=request.version,
+            plan_id=plan.id, plan_version=plan.version, result_ids=[result.id],
+            permission=PermissionSnapshot(model_execution=True, code_execution=True,
+                artifact_writes=True, allowed_tools=["python.execute", "workspace.write"]),
+            budget=BudgetLimits(model_calls=4, model_tokens=300000, input_tokens=100000,
+                output_tokens=2000, plan_revisions=2),
+            configuration=RunConfiguration(model=ModelLimits(input_tokens=100000, output_tokens=2000)))
+        run.goal_status = {goal.id: "insufficient_evidence"}
+        snapshot = {"version": "test-bounded-feedback", "fingerprint": "a" * 64,
+            "basis": {"request_id": request.id, "request_version": request.version,
+                "plan_id": plan.id, "plan_version": plan.version, "permission_version": run.permission.version,
+                "control_generation": 0}, "request_text": request.original_text, "communication": {},
+            "resources": {"permission": {}, "limits": {}, "remaining": {}, "usage": {}},
+            "references": {"s0": {"run_id": run.id if source_matches else "different_run", "result_id": result.id}},
+            "goals": [{"goal_id": goal.id, "ref": "g0", "port": goal.port,
+                "required_fact_refs": ["f0"], "explanation_refs": ["e0"],
+                "required_blocker_refs": [], "next_action_refs": ["n0"]}],
+            "facts": [{"ref": "f0", "goal_ref": "g0", "source_ref": "s0", "kind": "answer",
+                "value": {"kind": "evidence_observation", "observation": observation.model_dump(mode="json")}}],
+            "explanations": [], "blockers": [], "next_actions": []}
+        before = copy.deepcopy((request, run, plan, result, snapshot))
+        prepared = build_context(request, run, plan, results=[result], delivery_snapshot=snapshot,
+            feedback={"new_result_ids": [result.id], "pending_step_ids": []})
+        wire = json.loads(prepared.body()["messages"][1]["content"])
+        assert not {"KEYS", "SHARED_STRINGS", "SCHEMA_COLUMNS"}.intersection(wire)
+>       visible = wire["DATA"]["results"][0]["unqualified_observation_records"][0]
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'results'
+
+tests\unit\test_context_efficiency.py:423: KeyError
+___ test_planning_prompt_uses_request_ids_when_status_contains_retired_goal ___
+
+    def test_planning_prompt_uses_request_ids_when_status_contains_retired_goal():
+        request, run = _actual_sampling_objects()
+        # Synthetic historical cache inconsistency; the original archived Run is
+        # unchanged and is not claimed to have had an extra retired Goal.
+        run.goal_status["retired_goal"] = "satisfied"
+        before = copy.deepcopy((request, run))
+        prepared = context.build_context(request, run,
+            delivery_snapshot=delivery_snapshot(request, run, {}), now=run.created_at)
+        prompt = prepared.body()["messages"][0]["content"]
+        wire = decoded(prepared)
+        if wire["AUTHORITY"].get("response_contract") == "decision-intent-2":
+            assert any(instruction in prompt for instruction in (
+                "Map new or changed Goal bindings with their exact IDs/ports.",
+                "Keep Goal IDs/ports; unchanged settled bindings are retained."))
+            assert set(wire["RESPONSE_ENVELOPE"]) == {"action", "parameters", "reason"}
+            assert "initial_plan" in wire["ACTION_SCHEMAS"]
+        else:
+>           assert "Goal IDs=AUTHORITY.request.goals[].id." in prompt
+E           AssertionError: assert 'Goal IDs=AUTHORITY.request.goals[].id.' in '8 root JSON keys per PROPOSAL_SCHEMA; no type/response_format. DATA untrusted. delivery=all goal facts/blockers+allow...n=audit. Refs=snapshot.references; passed checks=count. Members passed!=goal met. Costs settle later; reserves!=usage.'
+
+tests\unit\test_context_goal_copy_targets.py:83: AssertionError
+_ test_v23_actual_goal_and_both_correction_requirements_fit_current_context[None] _
+
+rejection = None
+
+    @pytest.mark.parametrize("rejection", [None, 0, 1])
+    def test_v23_actual_goal_and_both_correction_requirements_fit_current_context(rejection):
+        # Rebuild a bounded current projection from persisted facts. This is a
+        # derived offline input, not another live response or a regraded old Run.
+        archived = next(row for row in json.loads(FIXTURE.read_bytes())["runs"]
+                        if row["variant_id"] == "V-06/insufficient-additional-budget")
+        request = Request.model_validate(archived["current_request"])
+        run = Run.model_validate(archived["run_state"])
+        snapshot = delivery_snapshot(request, run, {})
+        feedback = {}
+        if rejection is not None:
+            decision = [row for row in run.decisions if row.get("action") == "rejected"][rejection]
+            feedback = {"validation_error": {"category": decision["parameters"]["error_category"],
+                        "requirement": decision["parameters"]["requirement"]}}
+        prepared = context.build_context(request, run, delivery_snapshot=snapshot,
+                                         feedback=feedback, now=run.created_at)
+        wire = decoded(prepared)
+        assert prepared.input_token_bound <= 12000 and prepared.output_token_bound == 2000
+>       assert wire["AUTHORITY"]["request"]["goals"][0]["id"] == "finite_sample_internal_minimum"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'request'
+
+tests\unit\test_context_goal_copy_targets.py:127: KeyError
+_ test_v23_actual_goal_and_both_correction_requirements_fit_current_context[0] _
+
+rejection = 0
+
+    @pytest.mark.parametrize("rejection", [None, 0, 1])
+    def test_v23_actual_goal_and_both_correction_requirements_fit_current_context(rejection):
+        # Rebuild a bounded current projection from persisted facts. This is a
+        # derived offline input, not another live response or a regraded old Run.
+        archived = next(row for row in json.loads(FIXTURE.read_bytes())["runs"]
+                        if row["variant_id"] == "V-06/insufficient-additional-budget")
+        request = Request.model_validate(archived["current_request"])
+        run = Run.model_validate(archived["run_state"])
+        snapshot = delivery_snapshot(request, run, {})
+        feedback = {}
+        if rejection is not None:
+            decision = [row for row in run.decisions if row.get("action") == "rejected"][rejection]
+            feedback = {"validation_error": {"category": decision["parameters"]["error_category"],
+                        "requirement": decision["parameters"]["requirement"]}}
+        prepared = context.build_context(request, run, delivery_snapshot=snapshot,
+                                         feedback=feedback, now=run.created_at)
+        wire = decoded(prepared)
+        assert prepared.input_token_bound <= 12000 and prepared.output_token_bound == 2000
+>       assert wire["AUTHORITY"]["request"]["goals"][0]["id"] == "finite_sample_internal_minimum"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'request'
+
+tests\unit\test_context_goal_copy_targets.py:127: KeyError
+_ test_v23_actual_goal_and_both_correction_requirements_fit_current_context[1] _
+
+rejection = 1
+
+    @pytest.mark.parametrize("rejection", [None, 0, 1])
+    def test_v23_actual_goal_and_both_correction_requirements_fit_current_context(rejection):
+        # Rebuild a bounded current projection from persisted facts. This is a
+        # derived offline input, not another live response or a regraded old Run.
+        archived = next(row for row in json.loads(FIXTURE.read_bytes())["runs"]
+                        if row["variant_id"] == "V-06/insufficient-additional-budget")
+        request = Request.model_validate(archived["current_request"])
+        run = Run.model_validate(archived["run_state"])
+        snapshot = delivery_snapshot(request, run, {})
+        feedback = {}
+        if rejection is not None:
+            decision = [row for row in run.decisions if row.get("action") == "rejected"][rejection]
+            feedback = {"validation_error": {"category": decision["parameters"]["error_category"],
+                        "requirement": decision["parameters"]["requirement"]}}
+        prepared = context.build_context(request, run, delivery_snapshot=snapshot,
+                                         feedback=feedback, now=run.created_at)
+        wire = decoded(prepared)
+        assert prepared.input_token_bound <= 12000 and prepared.output_token_bound == 2000
+>       assert wire["AUTHORITY"]["request"]["goals"][0]["id"] == "finite_sample_internal_minimum"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'request'
+
+tests\unit\test_context_goal_copy_targets.py:127: KeyError
+_ test_sampling_intake_defers_inputs_but_preserves_specification_and_restores_planning_evidence _
+
+    def test_sampling_intake_defers_inputs_but_preserves_specification_and_restores_planning_evidence():
+        archived = next(row for row in json.loads(FIXTURE.read_bytes())["runs"]
+                        if row["variant_id"] == "V-06/insufficient-additional-budget")
+        request = Request.model_validate(archived["current_request"])
+        run = Run.model_validate(archived["run_state"])
+        before = copy.deepcopy((request, run))
+        snapshot = delivery_snapshot(request, run, {})
+        intake = decoded(context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at,
+            action_parameters=action_parameters(request=request),
+            user_messages=[{"id": "new_message", "text": "只检查既有采样证据，保留原判据、条件和候选。"}]))
+        current = intake["AUTHORITY"]["request"]
+        inputs = current["conditions"]["available_evidence"]
+        assert inputs == {"reference": "Request.conditions.available_evidence",
+                          "sha256": context._hash(request.conditions["available_evidence"]), "use": "planning_only"}
+        goal = current["goals"][0]
+        assert goal["conditions"]["sampling"] == request.goals[0].conditions["sampling"]
+        expected_members = [{key: value for key, value in item.items() if key not in {"artifact_id", "sha256"}}
+                            for item in request.goals[0].conditions["candidates"]]
+        assert goal["conditions"]["candidates"]["members"] == expected_members
+        assert goal["conditions"]["candidates"]["sha256"] == context._hash(request.goals[0].conditions["candidates"])
+        for field in ("conditions_source", "charge", "multiplicity", "method", "basis"):
+            assert current[field] == request.model_dump(mode="json")[field]
+        planning = decoded(context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at))
+>       assert planning["AUTHORITY"]["request"]["conditions"]["available_evidence"] == (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            request.conditions["available_evidence"])
+E       KeyError: 'request'
+
+tests\unit\test_context_goal_copy_targets.py:201: KeyError
+_ test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals[mixed_energy] _
+
+incomplete_scope = 'mixed_energy'
+
+    @pytest.mark.parametrize("incomplete_scope", ["mixed_energy", "missing_spec", "empty_candidates"])
+    def test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals(incomplete_scope):
+        request, run = _actual_sampling_objects()
+        # Alter only an in-memory copy of the actual fixture. The available source
+        # conditions must stay visible if even one Goal cannot inherit a complete
+        # frozen sampling specification.
+        if incomplete_scope == "mixed_energy":
+            request.goals.append(Goal(id="extra_energy", port="energy", original_text="existing electronic energy"))
+            run.goal_status["extra_energy"] = "insufficient_evidence"
+        elif incomplete_scope == "missing_spec":
+            request.goals[0].conditions.pop("sampling")
+        else:
+            request.goals[0].conditions["candidates"] = []
+        before = copy.deepcopy((request, run))
+        snapshot = delivery_snapshot(request, run, {})
+        prepared = context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at,
+            action_parameters=action_parameters(request=request),
+            user_messages=[{"id": "new_message", "text": "检查现有目标与条件，不改变证据。"}])
+        current = decoded(prepared)["AUTHORITY"]["request"]
+        evidence = request.conditions["available_evidence"]
+        assert current["conditions"]["available_evidence"] == {
+            "reference": "Request.conditions.available_evidence", "sha256": context._hash(evidence),
+            "members": {key: {"conditions": value.get("conditions", {})}
+                        for key, value in evidence.items() if isinstance(value, dict)},
+        }
+        if incomplete_scope == "mixed_energy":
+            assert {goal["port"] for goal in current["goals"]} == {"sampling", "energy"}
+        elif incomplete_scope == "missing_spec":
+            assert "sampling" not in current["goals"][0]["conditions"]
+        else:
+            assert current["goals"][0]["conditions"]["candidates"] == []
+        planning = decoded(context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at))
+>       assert planning["AUTHORITY"]["request"]["conditions"]["available_evidence"] == evidence
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'request'
+
+tests\unit\test_context_goal_copy_targets.py:238: KeyError
+_ test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals[missing_spec] _
+
+incomplete_scope = 'missing_spec'
+
+    @pytest.mark.parametrize("incomplete_scope", ["mixed_energy", "missing_spec", "empty_candidates"])
+    def test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals(incomplete_scope):
+        request, run = _actual_sampling_objects()
+        # Alter only an in-memory copy of the actual fixture. The available source
+        # conditions must stay visible if even one Goal cannot inherit a complete
+        # frozen sampling specification.
+        if incomplete_scope == "mixed_energy":
+            request.goals.append(Goal(id="extra_energy", port="energy", original_text="existing electronic energy"))
+            run.goal_status["extra_energy"] = "insufficient_evidence"
+        elif incomplete_scope == "missing_spec":
+            request.goals[0].conditions.pop("sampling")
+        else:
+            request.goals[0].conditions["candidates"] = []
+        before = copy.deepcopy((request, run))
+        snapshot = delivery_snapshot(request, run, {})
+        prepared = context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at,
+            action_parameters=action_parameters(request=request),
+            user_messages=[{"id": "new_message", "text": "检查现有目标与条件，不改变证据。"}])
+        current = decoded(prepared)["AUTHORITY"]["request"]
+        evidence = request.conditions["available_evidence"]
+        assert current["conditions"]["available_evidence"] == {
+            "reference": "Request.conditions.available_evidence", "sha256": context._hash(evidence),
+            "members": {key: {"conditions": value.get("conditions", {})}
+                        for key, value in evidence.items() if isinstance(value, dict)},
+        }
+        if incomplete_scope == "mixed_energy":
+            assert {goal["port"] for goal in current["goals"]} == {"sampling", "energy"}
+        elif incomplete_scope == "missing_spec":
+            assert "sampling" not in current["goals"][0]["conditions"]
+        else:
+            assert current["goals"][0]["conditions"]["candidates"] == []
+        planning = decoded(context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at))
+>       assert planning["AUTHORITY"]["request"]["conditions"]["available_evidence"] == evidence
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'request'
+
+tests\unit\test_context_goal_copy_targets.py:238: KeyError
+_ test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals[empty_candidates] _
+
+incomplete_scope = 'empty_candidates'
+
+    @pytest.mark.parametrize("incomplete_scope", ["mixed_energy", "missing_spec", "empty_candidates"])
+    def test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals(incomplete_scope):
+        request, run = _actual_sampling_objects()
+        # Alter only an in-memory copy of the actual fixture. The available source
+        # conditions must stay visible if even one Goal cannot inherit a complete
+        # frozen sampling specification.
+        if incomplete_scope == "mixed_energy":
+            request.goals.append(Goal(id="extra_energy", port="energy", original_text="existing electronic energy"))
+            run.goal_status["extra_energy"] = "insufficient_evidence"
+        elif incomplete_scope == "missing_spec":
+            request.goals[0].conditions.pop("sampling")
+        else:
+            request.goals[0].conditions["candidates"] = []
+        before = copy.deepcopy((request, run))
+        snapshot = delivery_snapshot(request, run, {})
+        prepared = context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at,
+            action_parameters=action_parameters(request=request),
+            user_messages=[{"id": "new_message", "text": "检查现有目标与条件，不改变证据。"}])
+        current = decoded(prepared)["AUTHORITY"]["request"]
+        evidence = request.conditions["available_evidence"]
+        assert current["conditions"]["available_evidence"] == {
+            "reference": "Request.conditions.available_evidence", "sha256": context._hash(evidence),
+            "members": {key: {"conditions": value.get("conditions", {})}
+                        for key, value in evidence.items() if isinstance(value, dict)},
+        }
+        if incomplete_scope == "mixed_energy":
+            assert {goal["port"] for goal in current["goals"]} == {"sampling", "energy"}
+        elif incomplete_scope == "missing_spec":
+            assert "sampling" not in current["goals"][0]["conditions"]
+        else:
+            assert current["goals"][0]["conditions"]["candidates"] == []
+        planning = decoded(context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at))
+>       assert planning["AUTHORITY"]["request"]["conditions"]["available_evidence"] == evidence
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'request'
+
+tests\unit\test_context_goal_copy_targets.py:238: KeyError
+_ test_intake_capacity_preserves_conditions_across_bounded_identity_variants[32] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000250F57ABD10>
+identity_width = 32
+
+    @pytest.mark.parametrize("identity_width", [32, 48, 64])
+    def test_intake_capacity_preserves_conditions_across_bounded_identity_variants(monkeypatch, identity_width):
+        # Different legal IDs change only identity bytes, not the old 12k limit or
+        # any authority/conditions. Reuse the full original assertions for each
+        # scope, including independently decoded model messages and planning data.
+        import sys
+    
+        original = _actual_sampling_objects
+        prepared_requests = []
+        build = context.build_context
+        def fresh_objects():
+            request, run = original()
+            suffix = (uuid4().hex + uuid4().hex)[:identity_width]
+            request.id = "request_" + suffix
+            run.request_id = request.id
+            run.id = "run_" + (uuid4().hex + uuid4().hex)[:identity_width]
+            return request, run
+        def capture(*args, **kwargs):
+            prepared = build(*args, **kwargs)
+            prepared_requests.append(prepared)
+            return prepared
+        monkeypatch.setattr(sys.modules[__name__], "_actual_sampling_objects", fresh_objects)
+        monkeypatch.setattr(context, "build_context", capture)
+        for scope in ("mixed_energy", "missing_spec", "empty_candidates"):
+>           test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals(scope)
+
+tests\unit\test_context_goal_copy_targets.py:266: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+incomplete_scope = 'mixed_energy'
+
+    @pytest.mark.parametrize("incomplete_scope", ["mixed_energy", "missing_spec", "empty_candidates"])
+    def test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals(incomplete_scope):
+        request, run = _actual_sampling_objects()
+        # Alter only an in-memory copy of the actual fixture. The available source
+        # conditions must stay visible if even one Goal cannot inherit a complete
+        # frozen sampling specification.
+        if incomplete_scope == "mixed_energy":
+            request.goals.append(Goal(id="extra_energy", port="energy", original_text="existing electronic energy"))
+            run.goal_status["extra_energy"] = "insufficient_evidence"
+        elif incomplete_scope == "missing_spec":
+            request.goals[0].conditions.pop("sampling")
+        else:
+            request.goals[0].conditions["candidates"] = []
+        before = copy.deepcopy((request, run))
+        snapshot = delivery_snapshot(request, run, {})
+        prepared = context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at,
+            action_parameters=action_parameters(request=request),
+            user_messages=[{"id": "new_message", "text": "检查现有目标与条件，不改变证据。"}])
+        current = decoded(prepared)["AUTHORITY"]["request"]
+        evidence = request.conditions["available_evidence"]
+        assert current["conditions"]["available_evidence"] == {
+            "reference": "Request.conditions.available_evidence", "sha256": context._hash(evidence),
+            "members": {key: {"conditions": value.get("conditions", {})}
+                        for key, value in evidence.items() if isinstance(value, dict)},
+        }
+        if incomplete_scope == "mixed_energy":
+            assert {goal["port"] for goal in current["goals"]} == {"sampling", "energy"}
+        elif incomplete_scope == "missing_spec":
+            assert "sampling" not in current["goals"][0]["conditions"]
+        else:
+            assert current["goals"][0]["conditions"]["candidates"] == []
+        planning = decoded(context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at))
+>       assert planning["AUTHORITY"]["request"]["conditions"]["available_evidence"] == evidence
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'request'
+
+tests\unit\test_context_goal_copy_targets.py:238: KeyError
+_ test_intake_capacity_preserves_conditions_across_bounded_identity_variants[48] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000250F5968350>
+identity_width = 48
+
+    @pytest.mark.parametrize("identity_width", [32, 48, 64])
+    def test_intake_capacity_preserves_conditions_across_bounded_identity_variants(monkeypatch, identity_width):
+        # Different legal IDs change only identity bytes, not the old 12k limit or
+        # any authority/conditions. Reuse the full original assertions for each
+        # scope, including independently decoded model messages and planning data.
+        import sys
+    
+        original = _actual_sampling_objects
+        prepared_requests = []
+        build = context.build_context
+        def fresh_objects():
+            request, run = original()
+            suffix = (uuid4().hex + uuid4().hex)[:identity_width]
+            request.id = "request_" + suffix
+            run.request_id = request.id
+            run.id = "run_" + (uuid4().hex + uuid4().hex)[:identity_width]
+            return request, run
+        def capture(*args, **kwargs):
+            prepared = build(*args, **kwargs)
+            prepared_requests.append(prepared)
+            return prepared
+        monkeypatch.setattr(sys.modules[__name__], "_actual_sampling_objects", fresh_objects)
+        monkeypatch.setattr(context, "build_context", capture)
+        for scope in ("mixed_energy", "missing_spec", "empty_candidates"):
+>           test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals(scope)
+
+tests\unit\test_context_goal_copy_targets.py:266: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+incomplete_scope = 'mixed_energy'
+
+    @pytest.mark.parametrize("incomplete_scope", ["mixed_energy", "missing_spec", "empty_candidates"])
+    def test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals(incomplete_scope):
+        request, run = _actual_sampling_objects()
+        # Alter only an in-memory copy of the actual fixture. The available source
+        # conditions must stay visible if even one Goal cannot inherit a complete
+        # frozen sampling specification.
+        if incomplete_scope == "mixed_energy":
+            request.goals.append(Goal(id="extra_energy", port="energy", original_text="existing electronic energy"))
+            run.goal_status["extra_energy"] = "insufficient_evidence"
+        elif incomplete_scope == "missing_spec":
+            request.goals[0].conditions.pop("sampling")
+        else:
+            request.goals[0].conditions["candidates"] = []
+        before = copy.deepcopy((request, run))
+        snapshot = delivery_snapshot(request, run, {})
+        prepared = context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at,
+            action_parameters=action_parameters(request=request),
+            user_messages=[{"id": "new_message", "text": "检查现有目标与条件，不改变证据。"}])
+        current = decoded(prepared)["AUTHORITY"]["request"]
+        evidence = request.conditions["available_evidence"]
+        assert current["conditions"]["available_evidence"] == {
+            "reference": "Request.conditions.available_evidence", "sha256": context._hash(evidence),
+            "members": {key: {"conditions": value.get("conditions", {})}
+                        for key, value in evidence.items() if isinstance(value, dict)},
+        }
+        if incomplete_scope == "mixed_energy":
+            assert {goal["port"] for goal in current["goals"]} == {"sampling", "energy"}
+        elif incomplete_scope == "missing_spec":
+            assert "sampling" not in current["goals"][0]["conditions"]
+        else:
+            assert current["goals"][0]["conditions"]["candidates"] == []
+        planning = decoded(context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at))
+>       assert planning["AUTHORITY"]["request"]["conditions"]["available_evidence"] == evidence
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'request'
+
+tests\unit\test_context_goal_copy_targets.py:238: KeyError
+_ test_intake_capacity_preserves_conditions_across_bounded_identity_variants[64] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000250F5AB0910>
+identity_width = 64
+
+    @pytest.mark.parametrize("identity_width", [32, 48, 64])
+    def test_intake_capacity_preserves_conditions_across_bounded_identity_variants(monkeypatch, identity_width):
+        # Different legal IDs change only identity bytes, not the old 12k limit or
+        # any authority/conditions. Reuse the full original assertions for each
+        # scope, including independently decoded model messages and planning data.
+        import sys
+    
+        original = _actual_sampling_objects
+        prepared_requests = []
+        build = context.build_context
+        def fresh_objects():
+            request, run = original()
+            suffix = (uuid4().hex + uuid4().hex)[:identity_width]
+            request.id = "request_" + suffix
+            run.request_id = request.id
+            run.id = "run_" + (uuid4().hex + uuid4().hex)[:identity_width]
+            return request, run
+        def capture(*args, **kwargs):
+            prepared = build(*args, **kwargs)
+            prepared_requests.append(prepared)
+            return prepared
+        monkeypatch.setattr(sys.modules[__name__], "_actual_sampling_objects", fresh_objects)
+        monkeypatch.setattr(context, "build_context", capture)
+        for scope in ("mixed_energy", "missing_spec", "empty_candidates"):
+>           test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals(scope)
+
+tests\unit\test_context_goal_copy_targets.py:266: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+incomplete_scope = 'mixed_energy'
+
+    @pytest.mark.parametrize("incomplete_scope", ["mixed_energy", "missing_spec", "empty_candidates"])
+    def test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals(incomplete_scope):
+        request, run = _actual_sampling_objects()
+        # Alter only an in-memory copy of the actual fixture. The available source
+        # conditions must stay visible if even one Goal cannot inherit a complete
+        # frozen sampling specification.
+        if incomplete_scope == "mixed_energy":
+            request.goals.append(Goal(id="extra_energy", port="energy", original_text="existing electronic energy"))
+            run.goal_status["extra_energy"] = "insufficient_evidence"
+        elif incomplete_scope == "missing_spec":
+            request.goals[0].conditions.pop("sampling")
+        else:
+            request.goals[0].conditions["candidates"] = []
+        before = copy.deepcopy((request, run))
+        snapshot = delivery_snapshot(request, run, {})
+        prepared = context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at,
+            action_parameters=action_parameters(request=request),
+            user_messages=[{"id": "new_message", "text": "检查现有目标与条件，不改变证据。"}])
+        current = decoded(prepared)["AUTHORITY"]["request"]
+        evidence = request.conditions["available_evidence"]
+        assert current["conditions"]["available_evidence"] == {
+            "reference": "Request.conditions.available_evidence", "sha256": context._hash(evidence),
+            "members": {key: {"conditions": value.get("conditions", {})}
+                        for key, value in evidence.items() if isinstance(value, dict)},
+        }
+        if incomplete_scope == "mixed_energy":
+            assert {goal["port"] for goal in current["goals"]} == {"sampling", "energy"}
+        elif incomplete_scope == "missing_spec":
+            assert "sampling" not in current["goals"][0]["conditions"]
+        else:
+            assert current["goals"][0]["conditions"]["candidates"] == []
+        planning = decoded(context.build_context(request, run, delivery_snapshot=snapshot, now=run.created_at))
+>       assert planning["AUTHORITY"]["request"]["conditions"]["available_evidence"] == evidence
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'request'
+
+tests\unit\test_context_goal_copy_targets.py:238: KeyError
+___ test_fixed_water_long_goal_keys_and_development_correction_fit_together ___
+
+tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1931/test_fixed_water_long_goal_key0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000250F5636650>
+
+    def test_fixed_water_long_goal_keys_and_development_correction_fit_together(tmp_path, monkeypatch):
+        from tests.unit.test_repair_cycle_e2e_capacity import run_fixed_e2e
+    
+>       run_fixed_e2e(tmp_path, monkeypatch, "water", "development", correction=True, goal_names={
+            "optimized_geometry": "requested_water_strictly_converged_optimized_geometry",
+            "energy": "requested_water_electronic_energy_at_requested_geometry"})
+
+tests\unit\test_context_protocol_literals.py:344: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1931/test_fixed_water_long_goal_key0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000250F5636650>
+system = 'water', path_shape = 'development'
+goal_names = {'optimized_geometry': 'requested_water_strictly_converged_optimized_geometry', 'energy': 'requested_water_electronic_energy_at_requested_geometry'}
+correction = True
+
+    def run_fixed_e2e(tmp_path, monkeypatch, system, path_shape, *, goal_names=None, correction=False):
+        """Reuse the fixed scope with explicit presentation variations only."""
+        config = execution._e2e_profile(Config(), category="development")
+        # Explicit synthetic executable identities satisfy the ordinary environment
+        # receipt contract; the scientific Tool boundary below never starts them.
+        config.orca_path, config.mpi_path = tmp_path / "orca-环境.synthetic", tmp_path / "mpi-环境.synthetic"
+        config.orca_path.write_bytes(b"synthetic identity; not executable")
+        config.mpi_path.write_bytes(b"synthetic identity; not executable")
+        monkeypatch.setattr(doctor, "diagnose", lambda _: {
+            "orca": {"compatible": True, "version": "6.1.1", "path": str(config.orca_path)},
+            "mpi": {"path": str(config.mpi_path)}, "evidence_kind": "offline_synthetic"})
+        actual_store_root = None
+        store_root = tmp_path / "data"
+        if path_shape != "temporary":
+            number = 3 if path_shape == "development" else 2
+            actual_store_root = execution._root(cycle.candidate_label(path_shape, number)) / "agent"
+            # Match the real deepest candidate's raw UTF-8 length and separator
+            # count while every file remains beneath pytest's temporary directory.
+            # If another platform's tmp root is already longer, test that stricter
+            # shape and record both sizes instead of shortening or using real data.
+            segments = ["p"] * max(1, len(actual_store_root.parts) - len(tmp_path.parts) - 1) + ["agent"]
+            simulated = tmp_path.joinpath(*segments)
+            padding = max(0, len(str(actual_store_root).encode("utf-8")) - len(str(simulated).encode("utf-8")))
+            segments[0] += "p" * padding
+            store_root = tmp_path.joinpath(*segments)
+            assert store_root.is_relative_to(tmp_path)
+            assert len(str(store_root).encode("utf-8")) >= len(str(actual_store_root).encode("utf-8"))
+            assert len(store_root.parts) >= len(actual_store_root.parts)
+        store = Store(store_root, environment_root=tmp_path / "environment")
+        text = _fixed_text(system)
+        run = initialize_text(store, config, text)
+        assert run.budget.model_calls == 8 and run.budget.model_tokens == 48000
+        assert run.budget.input_tokens == 12000 and run.budget.orca_starts == 1
+        assert set(run.permission.allowed_tools) == {"structure.resolve", "structure.prepare", "orca.opt", "orca.sp"}
+        assert store.load_request(run).geometry_artifact_id is None and not run.result_ids
+        tool = "orca.opt" if system == "water" else "orca.sp"
+        ports = ["optimized_geometry", "energy"] if system == "water" else ["energy"]
+        goal_names = goal_names or {port: port for port in ports}
+        assert set(goal_names) == set(ports)
+        relation = "optimized" if system == "water" else "fixed_initial"
+        normalize = {"action": "normalize_request", "parameters": candidate(store, run, kind="normalize",
+            goals=[{"key": goal_names[port], "port": port, "system_refs": [system], "text_basis": text,
+                    "geometry_relation": relation} for port in ports],
+            conditions={key: {"value": value, "source": "explicit", "text_basis": text}
+                        for key, value in config.text.defaults.items()})}
+        plan = {"action": "initial_plan", "parameters": {"steps": [
+            {"key": "identity", "tool": "structure.resolve", "system_id": system, "parameters": {"system_id": system}},
+            {"key": "prepare", "tool": "structure.prepare", "system_id": system,
+             "parameters": {"system_id": system, "charge": 0, "multiplicity": 1},
+             "inputs": {"identity": {"producer_key": "identity", "port": "resolved_identity"}}},
+            {"key": "science", "tool": tool, "system_id": system, "parameters": {},
+             "geometry": {"producer_key": "prepare", "port": "prepared_geometry"}}],
+            "goal_map": {"goal_" + goal_names[port]: {"step_key": "science", "port": port} for port in ports}}}
+    
+        def next_tool(name):
+            def proposal(data):
+                current = store.load_run(run.id)
+                step = next(item for item in store.load_plan(current).steps if item.tool == name)
+                return {"action": "call_tool", "parameters": {"step_id": step.id}}
+            return proposal
+    
+        monkeypatch.setattr(structure, "_paced_query", lambda *_, **__: (200, response(system), True))
+        generated = mock_generator(monkeypatch, system)
+        scientific_calls = []
+    
+        def synthetic_science(store, run, step, attempt, config, fault=None):
+            # The UTF-8 environment paths must survive every production read even
+            # when this test's checkout/temporary directory happens to be ASCII.
+            revalidate(store, run, step, config)
+            scientific_calls.append(step.id)
+            work = store.path(attempt.directory)
+            prepare_input(work, store.artifact_path(attempt.geometry_artifact_id), step.parameters, step.tool)
+            stdout = (_case_text(work / "geometry.xyz", "valid_final_evaluation")
+                      if step.tool == "orca.opt" else synthetic_output(work / "geometry.xyz"))
+            (work / "stdout.out").write_text(stdout, encoding="utf-8")
+            shutil.copyfile(work / "geometry.xyz", work / "job.xyz")
+            outcome = {"state": "completed", "reason": "synthetic capacity fixture; no process"}
+            return collect_result(store, run, step, attempt, outcome), outcome
+    
+        monkeypatch.setattr(electronic, "execute", synthetic_science)
+        monkeypatch.setattr(geometry, "execute", synthetic_science)
+        attempts = []
+        prepare = context.prepare_request
+        source_schemas = []
+        source_schema_by_hash = {}
+        native_schemas = []
+        native_schema_by_hash = {}
+        encoded_sources = {}
+        final_native_schemas = []
+        final_native_schema_by_hash = {}
+        schema_columns = context._schema_columns
+        def capture_schema(schema):
+            if "action" in schema.get("properties", {}):
+                source_schemas.append(deepcopy(schema))
+            encoded = schema_columns(schema)
+            key = json.dumps(encoded, sort_keys=True)
+            if key in encoded_sources:
+                assert encoded_sources[key] == schema
+            encoded_sources[key] = deepcopy(schema)
+            return encoded
+        monkeypatch.setattr(context, "_schema_columns", capture_schema)
+        share_strings = context._share_strings
+        def capture_final_schemas(value, **kwargs):
+            if ("ACTION_SCHEMAS" in value
+                    and value.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.*")):
+                final_native_schemas.append({name: deepcopy(schema if isinstance(schema, dict) and schema.get("type") == "object"
+                    else encoded_sources[json.dumps(schema, sort_keys=True)])
+                    for name, schema in value["ACTION_SCHEMAS"].items()})
+            return share_strings(value, **kwargs)
+        monkeypatch.setattr(context, "_share_strings", capture_final_schemas)
+        build_context = agent.build_context
+        def capture_context(*args, **kwargs):
+            before = deepcopy((args, kwargs))
+            try:
+                return build_context(*args, **kwargs)
+            finally:
+                # Request/Plan/Run (including frozen Calls) and every selected
+                # Result/snapshot remain exact while display digests are omitted.
+                assert (args, kwargs) == before
+        monkeypatch.setattr(agent, "build_context", capture_context)
+    
+        def capture(messages, **kwargs):
+            item = _parts(messages)
+            candidate_wire = json.loads(messages[1]["content"])
+            if "ACTION_SCHEMAS" in candidate_wire and "SHARED_STRINGS" not in candidate_wire:
+                native_schemas.append(deepcopy(candidate_wire["ACTION_SCHEMAS"]))
+            try:
+                prepared = prepare(messages, **kwargs)
+            except ValueError as exc:
+                attempts.append({**item, "error": str(exc)})
+                (tmp_path / "last-overflow.json").write_text(json.dumps({
+                    "kind": "offline_synthetic", "messages": messages, "parameters": kwargs,
+                    "error": str(exc)}, ensure_ascii=False, indent=2,
+                    default=lambda value: value.model_dump(mode="json")), encoding="utf-8")
+                raise
+            attempts.append({**item, "request_hash": prepared.request_hash,
+                             "input_bound": prepared.input_token_bound, "output_bound": prepared.output_token_bound})
+            if "SCHEMA_COLUMNS" in candidate_wire and "PROPOSAL_SCHEMA" in candidate_wire:
+                source_schema_by_hash[prepared.request_hash] = deepcopy(source_schemas[-1])
+            if "ACTION_SCHEMAS" in candidate_wire:
+                native_schema_by_hash[prepared.request_hash] = deepcopy(native_schemas[-1])
+                final_native_schema_by_hash[prepared.request_hash] = deepcopy(
+                    final_native_schemas[-1] if candidate_wire.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.*")
+                    else native_schemas[-1])
+            return prepared
+    
+        monkeypatch.setattr(context, "prepare_request", capture)
+        stages = []
+    
+        class CapacityTransport(ScriptedTransport):
+            def send(self, prepared, *, reserve, settle):
+                current = store.load_run(run.id)
+                if store.load_request(current).normalization_status == "pending":
+                    stage = "normalize"
+                elif current.plan_id is None:
+                    stage = "initial_plan"
+                else:
+                    stage = {1: "after_resolve", 2: "after_prepare", 3: "after_science"}[len(current.result_ids)]
+                stages.append(stage)
+                return super().send(prepared, reserve=reserve, settle=settle)
+    
+        scripts = [normalize, plan]
+        if correction:
+            def rejected(data):
+                return {**next_tool("structure.prepare")(data), "type": "json_object"}
+            scripts.append(rejected)
+        transport = CapacityTransport(*scripts, next_tool("structure.prepare"), next_tool(tool),
+            {"action": "stop", "parameters": {"reason": "Offline synthetic capacity fixture; no real science claim."}})
+        ended = agent.execute(store, config, run.id, transport=transport)
+        sent = []
+        for stage, record in zip(stages, ended.model_records, strict=True):
+            item = next(item for item in attempts if item.get("request_hash") == record["request_hash"])
+            sent.append({"stage": stage, **item})
+        summary = {"kind": "offline_scripted_capacity_not_real_model_or_science", "system": system,
+            "text": text, "profile": config.text.model_dump(mode="json"), "sent": sent,
+            "temporary_root_utf8_bytes": len(str(tmp_path).encode("utf-8")),
+            "path_shape": path_shape, "actual_future_store_root": str(actual_store_root) if actual_store_root else None,
+            "actual_store_utf8_bytes": len(str(actual_store_root).encode("utf-8")) if actual_store_root else None,
+            "simulated_store_root": str(store_root), "simulated_store_utf8_bytes": len(str(store_root).encode("utf-8")),
+            "actual_store_path_parts": len(actual_store_root.parts) if actual_store_root else None,
+            "simulated_store_path_parts": len(store_root.parts),
+            "synthetic_environment_paths": [str(config.orca_path), str(config.mpi_path)],
+            "conservative_total_with_output_bounds": sum(item["input_bound"] + item["output_bound"] for item in sent),
+            "actual_model_tokens": None, "synthetic_usage_is_not_budget_proof": True,
+            "state": ended.state, "diagnostics": ended.diagnostics, "all_preparation_attempts": attempts}
+        (tmp_path / "capacity.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+        count = 6 if correction else 5
+>       assert len(sent) == count and len(transport.sent) == count and not transport.scripts, summary
+E       AssertionError: {'kind': 'offline_scripted_capacity_not_real_model_or_science', 'system': 'water', 'text': '没有XYZ。请取得水分子的初始几何，以气相 RHF/...xtra_orca_starts': 0, ...}, 'defaults': {'method': 'HF', 'basis': 'STO-3G', 'charge': 0, 'multiplicity': 1, ...}}, ...}
+E       assert (3 == 6)
+E        +  where 3 = len([{'stage': 'normalize', 'system_bytes': 579, 'user_bytes': 10595, 'wire_top_level_bytes': {'SCHEMA_COLUMNS': 188, 'PRO...e_top_level_bytes': {'SCHEMA_COLUMNS': 229, 'RESPONSE_ENVELOPE': 108, 'ACTION_SCHEMAS': 1163, 'TOOLS': 884, ...}, ...}])
+
+tests\unit\test_repair_cycle_e2e_capacity.py:251: AssertionError
+_ test_projection_preserves_bound_goal_fresh_failure_and_unqualified_pending_input _
+
+    def test_projection_preserves_bound_goal_fresh_failure_and_unqualified_pending_input():
+        run, plan, results = historical_results()
+        results[1].operation_status = "failed"
+        results[1].qualified_outputs = {}
+        results[1].diagnostics = ["current raw failure, not a success"]
+        results[1].checks = {"energy": [Check(name="syntax", status="failed", rule_version="test-only-1",
+                                            detail="invalid native input")]}
+        before = copy.deepcopy((run, plan, results))
+        shown, refs = context._decision_result_references(
+>           run, plan, results, [context._result(result, 256) for result in results],
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            {"new_result_ids": [results[2].id]})
+
+tests\unit\test_context_workflow_simplification.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\unit\test_context_workflow_simplification.py:70: in <listcomp>
+    run, plan, results, [context._result(result, 256) for result in results],
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+result = Result(id='result_8ad1d1952cb1442abaa38806f57c697d', run_id='run_dcc84b7edc0e48c4b0b1744f6ae0a573', step_id='step_1', ...1111111111111111111111'}, created_at=datetime.datetime(2026, 10, 20, 10, 56, 43, 670992, tzinfo=datetime.timezone.utc))
+observation_bytes = 256
+
+    def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
+        from orca_agent.artifact_index import result_file_index
+    
+        # Revalidation prevents unchecked model_copy/mutation from laundering a
+        # failed Check into a supposedly qualified output in the model context.
+        try:
+            result = Result.model_validate(result.model_dump(mode="json"))
+        except ValueError:
+>           raise ValueError("result qualification is not valid for model context") from None
+E           ValueError: result qualification is not valid for model context
+
+src\orca_agent\context.py:896: ValueError
+_ test_real_replies_preserve_goals_with_program_default_provenance_if_missing[1] _
+
+tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1931/test_real_replies_preserve_goa0')
+index = 1
+
+    @pytest.mark.parametrize("index", [1, 2])
+    def test_real_replies_preserve_goals_with_program_default_provenance_if_missing(tmp_path, index):
+        store, run, proposed = replay(tmp_path, index)
+        before = copy.deepcopy(proposed)
+        permission = run.permission.model_dump()
+        run = submit(store, run, proposed)
+        if index == 1:
+            rows = run.decisions[-1]["semantics"]["program_applied_defaults"]
+>           assert {row["path"][-1] for row in rows} == {"charge", "multiplicity", "electronic_state", "environment"}
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: assert {'charge', 'e...multiplicity'} == {'electronic_...'environment'}
+E             
+E             Extra items in the left set:
+E             'charge'
+E             'multiplicity'
+E             Use -v to get more diff
+
+tests\unit\test_general_input_goals_live004.py:87: AssertionError
+____ test_real_last_reply_reuses_settled_history_and_equivalent_goal_route ____
+
+    def test_real_last_reply_reuses_settled_history_and_equivalent_goal_route():
+        store, run, request, prior, parameters, authorized = replay()
+        before = run.model_dump(mode="json"), request.model_dump(mode="json"), copy.deepcopy(parameters)
+>       plan = validate(store, run, request, prior, parameters, authorized)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_incremental_plan_live005.py:40: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\unit\test_incremental_plan_live005.py:32: in validate
+    plan = materialize_plan(store, run, parameters)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = namespace(load_plan=<function replay.<locals>.<lambda> at 0x00000250F5DAB380>, load_request=<function replay.<locals>.<lambda> at 0x00000250F5DA82C0>, load_result=<function replay.<locals>.<lambda> at 0x00000250F5DA9300>)
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan')
+parameters = {'goal_map': {'goal_candidate_ranking': {'port': 'energy_difference', 'step_key': 'execute_conformer_search'}, 'goal_c...ion_names': ['sampling', 'energy', 'energy_difference', 'member_table', 'sampling_check']}, 'tool': 'python.execute'}]}
+
+    def materialize_plan(store, run, parameters):
+        proposal = _validate_plan_parameters(parameters)
+        prior = store.load_plan(run)
+        request = store.load_request(run)
+        if run.input_bindings:
+            from orca_agent.input_bindings import resolved_request
+            request = resolved_request(store, run, request)
+        existing = {s.id: s for s in prior.steps} if prior else {}
+        history = {a.frozen_step.id: a.frozen_step for a in run.attempts if a.frozen_step}
+        history.update({c.frozen_step.id: c.frozen_step for c in run.calls if c.frozen_step})
+        history.update(existing)
+        settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
+        missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]
+        unknown = set(proposal.goal_map) - {goal.id for goal in request.goals}
+        if missing:
+            raise ProposalError(
+                "Map every required Request Goal ID to exactly one binding shape with its unchanged port. "
+                "A planned Step output is a route, not completion; use a gap only when no valid route or evidence exists.",
+                path=["parameters", "goal_map"],
+                missing_goals=[{"goal_id": goal.id, "port": goal.port} for goal in missing],
+                binding_shapes=goal_target_shapes(),
+                gap_bindings={goal.id: {"port": goal.port, "gap": "<describe missing evidence or capability>"}
+                              for goal in missing})
+        if unknown:
+            raise ProposalError("Use only current Request Goal IDs; a Plan cannot introduce a Goal.",
+                                code="unknown_goal_id", path=["parameters", "goal_map"],
+                                allowed_goal_ids=[goal.id for goal in request.goals])
+        keys = [s.key for s in proposal.steps]
+        if len(set(keys)) != len(keys):
+            raise ValueError("proposal Step keys must be unique")
+        ids = {key: key if key in history else new_id("step") for key in keys}
+        known_logical = {s.logical_id for s in history.values()}
+        logical = {}
+        repairs = {item.key: _code_repair_source(store, run, item, history, index=index)
+                   for index, item in enumerate(proposal.steps) if isinstance(item, ProposedCodeRepair)}
+        for item in proposal.steps:
+            if isinstance(item, ProposedCodeRepair):
+                logical[item.key] = repairs[item.key].logical_id
+                continue
+            label = item.logical_key or item.key
+            logical[item.key] = (history[item.key].logical_id if item.key in history else
+                                 label if label in known_logical else new_id("logical"))
+        steps = []
+        for index, item in enumerate(proposal.steps):
+            if isinstance(item, ProposedCodeRepair):
+                source = repairs[item.key]
+                _resolve_step_keys(source.depends_on, ids, history,
+                    path=["parameters", "steps", index, "repair_of"])
+                values = source.model_dump(mode="json")
+                values["id"] = ids[item.key]
+                values["parameters"]["code"] = item.code.model_dump(mode="json")
+                if item.inputs is not None:
+                    values["parameters"]["inputs"] = item.inputs.model_dump(mode="json")
+                declared = item.sdk_orca if item.sdk_orca is not None else source.parameters.sdk_orca
+                if declared is None:
+                    raise ProposalError(
+                        "Declare sdk_orca=true for managed ORCA calls or false for analysis only "
+                        "when repairing a legacy Python Step.",
+                        code="missing_sdk_orca_declaration",
+                        path=["parameters", "steps", index, "sdk_orca"])
+                values["parameters"]["sdk_orca"] = declared
+                try:
+                    steps.append(Step.model_validate(values))
+                except ValidationError as exc:
+                    raise _schema_error(exc, path=["parameters", "steps", index], tool=source.tool) from None
+                continue
+            if item.tool is None:
+                if item.key not in history:
+                    raise ProposalError("A retained Step must reference a known existing key. "
+                        "A new Step requires its Tool and parameters.", code="unknown_retained_step",
+                        path=["parameters", "steps", index, "key"], step_key=item.key)
+                unexpected = sorted(set(item.model_fields_set) - {"key"})
+                if unexpected:
+                    raise ProposalError(
+                        "A retained Step must use only {key:existing_step_id}, without other fields. "
+                        "For every frozen Step being reused, omit depends_on, tool and parameters; its original "
+                        "dependencies remain unchanged. Verified settled dependencies may be carried automatically; "
+                        "retain unsettled dependencies explicitly. Submitted fields are not silently removed.",
+                        code="retained_step_has_fields", path=["parameters", "steps", index],
+                        step_key=item.key, unexpected_fields=unexpected, retained_step_shape={"key": item.key})
+                missing_dependencies = [dependency for dependency in history[item.key].depends_on
+                                        if dependency not in ids]
+                if missing_dependencies:
+                    raise ProposalError(
+                        "Reusing a Step preserves its dependencies. Only verified settled dependencies may be carried "
+                        "automatically. Include each remaining dependency explicitly with {key:existing_step_id}; "
+                        "unknown or unsettled dependencies cannot be inserted implicitly.",
+                        code="missing_retained_dependency", path=["parameters", "steps", index, "key"],
+                        retained_step_id=item.key, missing_dependency_step_ids=missing_dependencies)
+                steps.append(history[item.key].model_copy(deep=True))
+                continue
+            try:
+                definition = get_tool(item.tool)
+            except ValueError:
+                raise ProposalError("Choose a Tool from the current permitted catalog.",
+                                    path=["parameters", "steps", index, "tool"]) from None
+            if item.tool == "python.execute" and "inputs" not in item.parameters:
+                source = next((attempt.frozen_step for attempt in reversed(run.attempts)
+                               if attempt.logical_id == logical[item.key]), None)
+                if source:
+                    if source.tool != "python.execute":
+                        raise ProposalError("Python input inheritance requires an existing Python Step; "
+                            "a repair cannot replace its Tool.", code="invalid_code_repair_source_tool",
+                            path=["parameters", "steps", index, "logical_key"])
+                    item.parameters["inputs"] = source.parameters.inputs.model_dump(mode="json")
+            if (definition.check_contract.get("sdk_orca_declaration")
+                    and type(item.parameters.get("sdk_orca")) is not bool):
+>               raise ProposalError(
+                    "Declare parameters.sdk_orca=true for managed ORCA calls or false for analysis only. "
+                    "ORCA requires a current prepared/registered initial geometry before this code Step; "
+                    "stage identity/geometry preparation first and keep dependent goals as gaps.",
+                    code="missing_sdk_orca_declaration",
+                    path=["parameters", "steps", index, "parameters", "sdk_orca"])
+E               orca_agent.proposals.ProposalError: Declare parameters.sdk_orca=true for managed ORCA calls or false for analysis only. ORCA requires a current prepared/registered initial geometry before this code Step; stage identity/geometry preparation first and keep dependent goals as gaps.
+
+src\orca_agent\proposals.py:652: ProposalError
+_ test_incremental_reply_can_omit_settled_step_closure_and_untouched_goal_binding _
+
+    def test_incremental_reply_can_omit_settled_step_closure_and_untouched_goal_binding():
+        store, run, request, prior, parameters, authorized = replay()
+        parameters["steps"] = [parameters["steps"][-1]]
+        parameters["goal_map"].pop("goal_initial_geometry")
+>       plan = validate(store, run, request, prior, parameters, authorized)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_incremental_plan_live005.py:53: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\unit\test_incremental_plan_live005.py:32: in validate
+    plan = materialize_plan(store, run, parameters)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = namespace(load_plan=<function replay.<locals>.<lambda> at 0x00000250F5DB4C20>, load_request=<function replay.<locals>.<lambda> at 0x00000250F5DB6660>, load_result=<function replay.<locals>.<lambda> at 0x00000250F5DB6700>)
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan')
+parameters = {'goal_map': {'goal_candidate_ranking': {'port': 'energy_difference', 'step_key': 'execute_conformer_search'}, 'goal_c...ion_names': ['sampling', 'energy', 'energy_difference', 'member_table', 'sampling_check']}, 'tool': 'python.execute'}]}
+
+    def materialize_plan(store, run, parameters):
+        proposal = _validate_plan_parameters(parameters)
+        prior = store.load_plan(run)
+        request = store.load_request(run)
+        if run.input_bindings:
+            from orca_agent.input_bindings import resolved_request
+            request = resolved_request(store, run, request)
+        existing = {s.id: s for s in prior.steps} if prior else {}
+        history = {a.frozen_step.id: a.frozen_step for a in run.attempts if a.frozen_step}
+        history.update({c.frozen_step.id: c.frozen_step for c in run.calls if c.frozen_step})
+        history.update(existing)
+        settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
+        missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]
+        unknown = set(proposal.goal_map) - {goal.id for goal in request.goals}
+        if missing:
+            raise ProposalError(
+                "Map every required Request Goal ID to exactly one binding shape with its unchanged port. "
+                "A planned Step output is a route, not completion; use a gap only when no valid route or evidence exists.",
+                path=["parameters", "goal_map"],
+                missing_goals=[{"goal_id": goal.id, "port": goal.port} for goal in missing],
+                binding_shapes=goal_target_shapes(),
+                gap_bindings={goal.id: {"port": goal.port, "gap": "<describe missing evidence or capability>"}
+                              for goal in missing})
+        if unknown:
+            raise ProposalError("Use only current Request Goal IDs; a Plan cannot introduce a Goal.",
+                                code="unknown_goal_id", path=["parameters", "goal_map"],
+                                allowed_goal_ids=[goal.id for goal in request.goals])
+        keys = [s.key for s in proposal.steps]
+        if len(set(keys)) != len(keys):
+            raise ValueError("proposal Step keys must be unique")
+        ids = {key: key if key in history else new_id("step") for key in keys}
+        known_logical = {s.logical_id for s in history.values()}
+        logical = {}
+        repairs = {item.key: _code_repair_source(store, run, item, history, index=index)
+                   for index, item in enumerate(proposal.steps) if isinstance(item, ProposedCodeRepair)}
+        for item in proposal.steps:
+            if isinstance(item, ProposedCodeRepair):
+                logical[item.key] = repairs[item.key].logical_id
+                continue
+            label = item.logical_key or item.key
+            logical[item.key] = (history[item.key].logical_id if item.key in history else
+                                 label if label in known_logical else new_id("logical"))
+        steps = []
+        for index, item in enumerate(proposal.steps):
+            if isinstance(item, ProposedCodeRepair):
+                source = repairs[item.key]
+                _resolve_step_keys(source.depends_on, ids, history,
+                    path=["parameters", "steps", index, "repair_of"])
+                values = source.model_dump(mode="json")
+                values["id"] = ids[item.key]
+                values["parameters"]["code"] = item.code.model_dump(mode="json")
+                if item.inputs is not None:
+                    values["parameters"]["inputs"] = item.inputs.model_dump(mode="json")
+                declared = item.sdk_orca if item.sdk_orca is not None else source.parameters.sdk_orca
+                if declared is None:
+                    raise ProposalError(
+                        "Declare sdk_orca=true for managed ORCA calls or false for analysis only "
+                        "when repairing a legacy Python Step.",
+                        code="missing_sdk_orca_declaration",
+                        path=["parameters", "steps", index, "sdk_orca"])
+                values["parameters"]["sdk_orca"] = declared
+                try:
+                    steps.append(Step.model_validate(values))
+                except ValidationError as exc:
+                    raise _schema_error(exc, path=["parameters", "steps", index], tool=source.tool) from None
+                continue
+            if item.tool is None:
+                if item.key not in history:
+                    raise ProposalError("A retained Step must reference a known existing key. "
+                        "A new Step requires its Tool and parameters.", code="unknown_retained_step",
+                        path=["parameters", "steps", index, "key"], step_key=item.key)
+                unexpected = sorted(set(item.model_fields_set) - {"key"})
+                if unexpected:
+                    raise ProposalError(
+                        "A retained Step must use only {key:existing_step_id}, without other fields. "
+                        "For every frozen Step being reused, omit depends_on, tool and parameters; its original "
+                        "dependencies remain unchanged. Verified settled dependencies may be carried automatically; "
+                        "retain unsettled dependencies explicitly. Submitted fields are not silently removed.",
+                        code="retained_step_has_fields", path=["parameters", "steps", index],
+                        step_key=item.key, unexpected_fields=unexpected, retained_step_shape={"key": item.key})
+                missing_dependencies = [dependency for dependency in history[item.key].depends_on
+                                        if dependency not in ids]
+                if missing_dependencies:
+                    raise ProposalError(
+                        "Reusing a Step preserves its dependencies. Only verified settled dependencies may be carried "
+                        "automatically. Include each remaining dependency explicitly with {key:existing_step_id}; "
+                        "unknown or unsettled dependencies cannot be inserted implicitly.",
+                        code="missing_retained_dependency", path=["parameters", "steps", index, "key"],
+                        retained_step_id=item.key, missing_dependency_step_ids=missing_dependencies)
+                steps.append(history[item.key].model_copy(deep=True))
+                continue
+            try:
+                definition = get_tool(item.tool)
+            except ValueError:
+                raise ProposalError("Choose a Tool from the current permitted catalog.",
+                                    path=["parameters", "steps", index, "tool"]) from None
+            if item.tool == "python.execute" and "inputs" not in item.parameters:
+                source = next((attempt.frozen_step for attempt in reversed(run.attempts)
+                               if attempt.logical_id == logical[item.key]), None)
+                if source:
+                    if source.tool != "python.execute":
+                        raise ProposalError("Python input inheritance requires an existing Python Step; "
+                            "a repair cannot replace its Tool.", code="invalid_code_repair_source_tool",
+                            path=["parameters", "steps", index, "logical_key"])
+                    item.parameters["inputs"] = source.parameters.inputs.model_dump(mode="json")
+            if (definition.check_contract.get("sdk_orca_declaration")
+                    and type(item.parameters.get("sdk_orca")) is not bool):
+>               raise ProposalError(
+                    "Declare parameters.sdk_orca=true for managed ORCA calls or false for analysis only. "
+                    "ORCA requires a current prepared/registered initial geometry before this code Step; "
+                    "stage identity/geometry preparation first and keep dependent goals as gaps.",
+                    code="missing_sdk_orca_declaration",
+                    path=["parameters", "steps", index, "parameters", "sdk_orca"])
+E               orca_agent.proposals.ProposalError: Declare parameters.sdk_orca=true for managed ORCA calls or false for analysis only. ORCA requires a current prepared/registered initial geometry before this code Step; stage identity/geometry preparation first and keep dependent goals as gaps.
+
+src\orca_agent\proposals.py:652: ProposalError
+________________ test_explicit_frozen_change_remains_rejected _________________
+
+    def test_explicit_frozen_change_remains_rejected():
+        store, run, request, prior, parameters, authorized = replay()
+        call = next(call for call in run.calls if call.tool == "workspace.write")
+        changed = call.frozen_step.parameters.model_dump(mode="json")
+        changed["content"] = "# an unauthorized change to the frozen Step\n"
+        parameters["steps"][2] = {"key": call.step_id, "tool": call.tool, "parameters": changed}
+        with pytest.raises(PlanningError, match="immutable"):
+>           validate(store, run, request, prior, parameters, authorized)
+
+tests\unit\test_incremental_plan_live005.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\unit\test_incremental_plan_live005.py:32: in validate
+    plan = materialize_plan(store, run, parameters)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = namespace(load_plan=<function replay.<locals>.<lambda> at 0x00000250F5D8F2E0>, load_request=<function replay.<locals>.<lambda> at 0x00000250F5D8D620>, load_result=<function replay.<locals>.<lambda> at 0x00000250F5D8E8E0>)
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan')
+parameters = {'goal_map': {'goal_candidate_ranking': {'port': 'energy_difference', 'step_key': 'execute_conformer_search'}, 'goal_c...ion_names': ['sampling', 'energy', 'energy_difference', 'member_table', 'sampling_check']}, 'tool': 'python.execute'}]}
+
+    def materialize_plan(store, run, parameters):
+        proposal = _validate_plan_parameters(parameters)
+        prior = store.load_plan(run)
+        request = store.load_request(run)
+        if run.input_bindings:
+            from orca_agent.input_bindings import resolved_request
+            request = resolved_request(store, run, request)
+        existing = {s.id: s for s in prior.steps} if prior else {}
+        history = {a.frozen_step.id: a.frozen_step for a in run.attempts if a.frozen_step}
+        history.update({c.frozen_step.id: c.frozen_step for c in run.calls if c.frozen_step})
+        history.update(existing)
+        settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
+        missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]
+        unknown = set(proposal.goal_map) - {goal.id for goal in request.goals}
+        if missing:
+            raise ProposalError(
+                "Map every required Request Goal ID to exactly one binding shape with its unchanged port. "
+                "A planned Step output is a route, not completion; use a gap only when no valid route or evidence exists.",
+                path=["parameters", "goal_map"],
+                missing_goals=[{"goal_id": goal.id, "port": goal.port} for goal in missing],
+                binding_shapes=goal_target_shapes(),
+                gap_bindings={goal.id: {"port": goal.port, "gap": "<describe missing evidence or capability>"}
+                              for goal in missing})
+        if unknown:
+            raise ProposalError("Use only current Request Goal IDs; a Plan cannot introduce a Goal.",
+                                code="unknown_goal_id", path=["parameters", "goal_map"],
+                                allowed_goal_ids=[goal.id for goal in request.goals])
+        keys = [s.key for s in proposal.steps]
+        if len(set(keys)) != len(keys):
+            raise ValueError("proposal Step keys must be unique")
+        ids = {key: key if key in history else new_id("step") for key in keys}
+        known_logical = {s.logical_id for s in history.values()}
+        logical = {}
+        repairs = {item.key: _code_repair_source(store, run, item, history, index=index)
+                   for index, item in enumerate(proposal.steps) if isinstance(item, ProposedCodeRepair)}
+        for item in proposal.steps:
+            if isinstance(item, ProposedCodeRepair):
+                logical[item.key] = repairs[item.key].logical_id
+                continue
+            label = item.logical_key or item.key
+            logical[item.key] = (history[item.key].logical_id if item.key in history else
+                                 label if label in known_logical else new_id("logical"))
+        steps = []
+        for index, item in enumerate(proposal.steps):
+            if isinstance(item, ProposedCodeRepair):
+                source = repairs[item.key]
+                _resolve_step_keys(source.depends_on, ids, history,
+                    path=["parameters", "steps", index, "repair_of"])
+                values = source.model_dump(mode="json")
+                values["id"] = ids[item.key]
+                values["parameters"]["code"] = item.code.model_dump(mode="json")
+                if item.inputs is not None:
+                    values["parameters"]["inputs"] = item.inputs.model_dump(mode="json")
+                declared = item.sdk_orca if item.sdk_orca is not None else source.parameters.sdk_orca
+                if declared is None:
+                    raise ProposalError(
+                        "Declare sdk_orca=true for managed ORCA calls or false for analysis only "
+                        "when repairing a legacy Python Step.",
+                        code="missing_sdk_orca_declaration",
+                        path=["parameters", "steps", index, "sdk_orca"])
+                values["parameters"]["sdk_orca"] = declared
+                try:
+                    steps.append(Step.model_validate(values))
+                except ValidationError as exc:
+                    raise _schema_error(exc, path=["parameters", "steps", index], tool=source.tool) from None
+                continue
+            if item.tool is None:
+                if item.key not in history:
+                    raise ProposalError("A retained Step must reference a known existing key. "
+                        "A new Step requires its Tool and parameters.", code="unknown_retained_step",
+                        path=["parameters", "steps", index, "key"], step_key=item.key)
+                unexpected = sorted(set(item.model_fields_set) - {"key"})
+                if unexpected:
+                    raise ProposalError(
+                        "A retained Step must use only {key:existing_step_id}, without other fields. "
+                        "For every frozen Step being reused, omit depends_on, tool and parameters; its original "
+                        "dependencies remain unchanged. Verified settled dependencies may be carried automatically; "
+                        "retain unsettled dependencies explicitly. Submitted fields are not silently removed.",
+                        code="retained_step_has_fields", path=["parameters", "steps", index],
+                        step_key=item.key, unexpected_fields=unexpected, retained_step_shape={"key": item.key})
+                missing_dependencies = [dependency for dependency in history[item.key].depends_on
+                                        if dependency not in ids]
+                if missing_dependencies:
+                    raise ProposalError(
+                        "Reusing a Step preserves its dependencies. Only verified settled dependencies may be carried "
+                        "automatically. Include each remaining dependency explicitly with {key:existing_step_id}; "
+                        "unknown or unsettled dependencies cannot be inserted implicitly.",
+                        code="missing_retained_dependency", path=["parameters", "steps", index, "key"],
+                        retained_step_id=item.key, missing_dependency_step_ids=missing_dependencies)
+                steps.append(history[item.key].model_copy(deep=True))
+                continue
+            try:
+                definition = get_tool(item.tool)
+            except ValueError:
+                raise ProposalError("Choose a Tool from the current permitted catalog.",
+                                    path=["parameters", "steps", index, "tool"]) from None
+            if item.tool == "python.execute" and "inputs" not in item.parameters:
+                source = next((attempt.frozen_step for attempt in reversed(run.attempts)
+                               if attempt.logical_id == logical[item.key]), None)
+                if source:
+                    if source.tool != "python.execute":
+                        raise ProposalError("Python input inheritance requires an existing Python Step; "
+                            "a repair cannot replace its Tool.", code="invalid_code_repair_source_tool",
+                            path=["parameters", "steps", index, "logical_key"])
+                    item.parameters["inputs"] = source.parameters.inputs.model_dump(mode="json")
+            if (definition.check_contract.get("sdk_orca_declaration")
+                    and type(item.parameters.get("sdk_orca")) is not bool):
+>               raise ProposalError(
+                    "Declare parameters.sdk_orca=true for managed ORCA calls or false for analysis only. "
+                    "ORCA requires a current prepared/registered initial geometry before this code Step; "
+                    "stage identity/geometry preparation first and keep dependent goals as gaps.",
+                    code="missing_sdk_orca_declaration",
+                    path=["parameters", "steps", index, "parameters", "sdk_orca"])
+E               orca_agent.proposals.ProposalError: Declare parameters.sdk_orca=true for managed ORCA calls or false for analysis only. ORCA requires a current prepared/registered initial geometry before this code Step; stage identity/geometry preparation first and keep dependent goals as gaps.
+
+src\orca_agent\proposals.py:652: ProposalError
+__________ test_equivalent_route_does_not_erase_explicit_wrong_rule ___________
+
+    def test_equivalent_route_does_not_erase_explicit_wrong_rule():
+        store, run, request, prior, parameters, authorized = replay()
+        parameters["goal_map"]["goal_initial_geometry"]["evidence"]["rule_version"] = "invented-1"
+        with pytest.raises(PlanningError, match="minimum scientific rule"):
+>           validate(store, run, request, prior, parameters, authorized)
+
+tests\unit\test_incremental_plan_live005.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\unit\test_incremental_plan_live005.py:32: in validate
+    plan = materialize_plan(store, run, parameters)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = namespace(load_plan=<function replay.<locals>.<lambda> at 0x00000250F5CBBA60>, load_request=<function replay.<locals>.<lambda> at 0x00000250F5CBAB60>, load_result=<function replay.<locals>.<lambda> at 0x00000250F5CBAA20>)
+run = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan')
+parameters = {'goal_map': {'goal_candidate_ranking': {'port': 'energy_difference', 'step_key': 'execute_conformer_search'}, 'goal_c...ion_names': ['sampling', 'energy', 'energy_difference', 'member_table', 'sampling_check']}, 'tool': 'python.execute'}]}
+
+    def materialize_plan(store, run, parameters):
+        proposal = _validate_plan_parameters(parameters)
+        prior = store.load_plan(run)
+        request = store.load_request(run)
+        if run.input_bindings:
+            from orca_agent.input_bindings import resolved_request
+            request = resolved_request(store, run, request)
+        existing = {s.id: s for s in prior.steps} if prior else {}
+        history = {a.frozen_step.id: a.frozen_step for a in run.attempts if a.frozen_step}
+        history.update({c.frozen_step.id: c.frozen_step for c in run.calls if c.frozen_step})
+        history.update(existing)
+        settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
+        missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]
+        unknown = set(proposal.goal_map) - {goal.id for goal in request.goals}
+        if missing:
+            raise ProposalError(
+                "Map every required Request Goal ID to exactly one binding shape with its unchanged port. "
+                "A planned Step output is a route, not completion; use a gap only when no valid route or evidence exists.",
+                path=["parameters", "goal_map"],
+                missing_goals=[{"goal_id": goal.id, "port": goal.port} for goal in missing],
+                binding_shapes=goal_target_shapes(),
+                gap_bindings={goal.id: {"port": goal.port, "gap": "<describe missing evidence or capability>"}
+                              for goal in missing})
+        if unknown:
+            raise ProposalError("Use only current Request Goal IDs; a Plan cannot introduce a Goal.",
+                                code="unknown_goal_id", path=["parameters", "goal_map"],
+                                allowed_goal_ids=[goal.id for goal in request.goals])
+        keys = [s.key for s in proposal.steps]
+        if len(set(keys)) != len(keys):
+            raise ValueError("proposal Step keys must be unique")
+        ids = {key: key if key in history else new_id("step") for key in keys}
+        known_logical = {s.logical_id for s in history.values()}
+        logical = {}
+        repairs = {item.key: _code_repair_source(store, run, item, history, index=index)
+                   for index, item in enumerate(proposal.steps) if isinstance(item, ProposedCodeRepair)}
+        for item in proposal.steps:
+            if isinstance(item, ProposedCodeRepair):
+                logical[item.key] = repairs[item.key].logical_id
+                continue
+            label = item.logical_key or item.key
+            logical[item.key] = (history[item.key].logical_id if item.key in history else
+                                 label if label in known_logical else new_id("logical"))
+        steps = []
+        for index, item in enumerate(proposal.steps):
+            if isinstance(item, ProposedCodeRepair):
+                source = repairs[item.key]
+                _resolve_step_keys(source.depends_on, ids, history,
+                    path=["parameters", "steps", index, "repair_of"])
+                values = source.model_dump(mode="json")
+                values["id"] = ids[item.key]
+                values["parameters"]["code"] = item.code.model_dump(mode="json")
+                if item.inputs is not None:
+                    values["parameters"]["inputs"] = item.inputs.model_dump(mode="json")
+                declared = item.sdk_orca if item.sdk_orca is not None else source.parameters.sdk_orca
+                if declared is None:
+                    raise ProposalError(
+                        "Declare sdk_orca=true for managed ORCA calls or false for analysis only "
+                        "when repairing a legacy Python Step.",
+                        code="missing_sdk_orca_declaration",
+                        path=["parameters", "steps", index, "sdk_orca"])
+                values["parameters"]["sdk_orca"] = declared
+                try:
+                    steps.append(Step.model_validate(values))
+                except ValidationError as exc:
+                    raise _schema_error(exc, path=["parameters", "steps", index], tool=source.tool) from None
+                continue
+            if item.tool is None:
+                if item.key not in history:
+                    raise ProposalError("A retained Step must reference a known existing key. "
+                        "A new Step requires its Tool and parameters.", code="unknown_retained_step",
+                        path=["parameters", "steps", index, "key"], step_key=item.key)
+                unexpected = sorted(set(item.model_fields_set) - {"key"})
+                if unexpected:
+                    raise ProposalError(
+                        "A retained Step must use only {key:existing_step_id}, without other fields. "
+                        "For every frozen Step being reused, omit depends_on, tool and parameters; its original "
+                        "dependencies remain unchanged. Verified settled dependencies may be carried automatically; "
+                        "retain unsettled dependencies explicitly. Submitted fields are not silently removed.",
+                        code="retained_step_has_fields", path=["parameters", "steps", index],
+                        step_key=item.key, unexpected_fields=unexpected, retained_step_shape={"key": item.key})
+                missing_dependencies = [dependency for dependency in history[item.key].depends_on
+                                        if dependency not in ids]
+                if missing_dependencies:
+                    raise ProposalError(
+                        "Reusing a Step preserves its dependencies. Only verified settled dependencies may be carried "
+                        "automatically. Include each remaining dependency explicitly with {key:existing_step_id}; "
+                        "unknown or unsettled dependencies cannot be inserted implicitly.",
+                        code="missing_retained_dependency", path=["parameters", "steps", index, "key"],
+                        retained_step_id=item.key, missing_dependency_step_ids=missing_dependencies)
+                steps.append(history[item.key].model_copy(deep=True))
+                continue
+            try:
+                definition = get_tool(item.tool)
+            except ValueError:
+                raise ProposalError("Choose a Tool from the current permitted catalog.",
+                                    path=["parameters", "steps", index, "tool"]) from None
+            if item.tool == "python.execute" and "inputs" not in item.parameters:
+                source = next((attempt.frozen_step for attempt in reversed(run.attempts)
+                               if attempt.logical_id == logical[item.key]), None)
+                if source:
+                    if source.tool != "python.execute":
+                        raise ProposalError("Python input inheritance requires an existing Python Step; "
+                            "a repair cannot replace its Tool.", code="invalid_code_repair_source_tool",
+                            path=["parameters", "steps", index, "logical_key"])
+                    item.parameters["inputs"] = source.parameters.inputs.model_dump(mode="json")
+            if (definition.check_contract.get("sdk_orca_declaration")
+                    and type(item.parameters.get("sdk_orca")) is not bool):
+>               raise ProposalError(
+                    "Declare parameters.sdk_orca=true for managed ORCA calls or false for analysis only. "
+                    "ORCA requires a current prepared/registered initial geometry before this code Step; "
+                    "stage identity/geometry preparation first and keep dependent goals as gaps.",
+                    code="missing_sdk_orca_declaration",
+                    path=["parameters", "steps", index, "parameters", "sdk_orca"])
+E               orca_agent.proposals.ProposalError: Declare parameters.sdk_orca=true for managed ORCA calls or false for analysis only. ORCA requires a current prepared/registered initial geometry before this code Step; stage identity/geometry preparation first and keep dependent goals as gaps.
+
+src\orca_agent\proposals.py:652: ProposalError
+_______ test_all_native_submission_contracts_and_correction_are_literal _______
+
+    def test_all_native_submission_contracts_and_correction_are_literal():
+        schema = ProposedPlan.model_json_schema()
+        tool = get_tool("python.execute")
+        candidate = {"action": "revise_plan", "parameters": {"steps": [{"key": "prior"}],
+            "goal_map": {"goal_geometry": {"step_key": "prior", "port": "prepared_geometry"}}}, "reason": "retain"}
+        template = {"RESPONSE_ENVELOPE": {"action": "revise_plan", "parameters": {}, "reason": "<reason>"},
+            "ACTION_SCHEMAS": {"revise_plan": schema},
+            "TOOLS": [{"name": tool.name, "parameters": tool.parameter_schema},
+                      {"name": "orca.run", "parameters": get_tool("orca.run").parameter_schema}],
+            "CONTROL": {"validation_error": {"errors": [{"type": "missing", "loc": ["parameters", "code"]}]}},
+            "AUTHORITY": {"request": {"goals": [{"id": "goal_geometry", "port": "prepared_geometry"}]},
+                "plan": {"goal_map": {"goal_geometry": {"step_id": "prior", "port": "prepared_geometry"}}},
+                "permission": {"code_execution": False}},
+            "DATA": {"rejected_proposal": {"trust": "untrusted", "proposal": candidate},
+                "results": [{"parameters": {}, "reason": "repeat", "port": "prepared_geometry",
+                    "request": {"goals": [{"id": str(index), "port": "prepared_geometry"}]},
+                    "plan": {"junk": str(index)}} for index in range(20)]}}
+        before = copy.deepcopy(template)
+        wire = _compact_native_wire(template)
+        assert template == before
+        assert wire["RESPONSE_ENVELOPE"] == template["RESPONSE_ENVELOPE"]
+        assert wire["CONTROL"] == template["CONTROL"]
+        assert wire["DATA"]["rejected_proposal"] == template["DATA"]["rejected_proposal"]
+        assert wire["AUTHORITY"]["request"]["goals"] == template["AUTHORITY"]["request"]["goals"]
+        assert wire["AUTHORITY"]["plan"]["goal_map"] == template["AUTHORITY"]["plan"]["goal_map"]
+        assert wire["AUTHORITY"]["permission"]["code_execution"] is False
+        assert "SCHEMA_COLUMNS" not in wire
+        plan = wire["ACTION_SCHEMAS"]["revise_plan"]
+        step, repair = plan["properties"]["steps"]["items"]["anyOf"]
+        assert set(step["properties"]) == set(schema["$defs"]["ProposedStep"]["properties"])
+        assert step["required"] == ["key"] and step["additionalProperties"] is False
+        assert step["properties"]["logical_key"]["default"] is None
+>       assert set(repair["properties"]) == {"key", "repair_of", "code", "inputs"}
+E       AssertionError: assert {'code', 'inp...', 'sdk_orca'} == {'code', 'inp..., 'repair_of'}
+E         
+E         Extra items in the left set:
+E         'sdk_orca'
+E         Use -v to get more diff
+
+tests\unit\test_native_immediate_schema.py:138: AssertionError
+_ test_actual_live024_missing_dependencies_identify_all_omitted_historical_steps _
+
+    def test_actual_live024_missing_dependencies_identify_all_omitted_historical_steps():
+        data, prior, request, run, store = case()
+        proposal = data["rejections"][0]["proposal"]["parameters"]
+        before = copy.deepcopy((prior, request, run, proposal))
+        dependencies = proposal["steps"][0]["depends_on"]
+        assert set(dependencies) == {step.id for step in prior.steps}
+        with pytest.raises(ProposalError) as caught:
+>           materialize_plan(store, run, proposal)
+
+tests\unit\test_plan_reference_feedback.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\orca_agent\proposals.py:556: in materialize_plan
+    settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\proposals.py:454: in _complete_incremental_plan
+    settled = settled_step_snapshots(store, run)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = namespace(load_plan=<function case.<locals>.<lambda> at 0x00000250F37F4AE0>, load_request=<function case.<locals>.<lambda> at 0x00000250F37E4F40>)
+run = Run(configuration=None, id='run_1650781da73449d785e95011d3333844', request_id='request_09526461519a4b26bf01c53b11f5d85...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan')
+
+    def settled_step_snapshots(store, run):
+        """Exact latest settled execution facts eligible for structural Plan carry."""
+        latest = {item.step_id: item for item in [*run.calls, *run.attempts] if item.step_id}
+        settled = {}
+        for identifier, record in latest.items():
+            step = record.frozen_step
+            if (step is None or step.id != identifier or step.tool != record.tool
+                    or record.state not in {"completed", "failed", "cancelled", "timed_out"}
+                    or not record.result_id or record.result_id not in run.result_ids
+                    or hasattr(record, "finished_at") and record.finished_at is None):
+                continue
+            try:
+>               result = store.load_result(run.id, record.result_id)
+                         ^^^^^^^^^^^^^^^^^
+E               AttributeError: 'types.SimpleNamespace' object has no attribute 'load_result'
+
+src\orca_agent\planning.py:36: AttributeError
+_ test_actual_live024_retained_prepare_extras_are_located_without_changing_candidate[1] _
+
+rejection_index = 1
+
+    @pytest.mark.parametrize("rejection_index", [1, 2])
+    def test_actual_live024_retained_prepare_extras_are_located_without_changing_candidate(rejection_index):
+        data, prior, request, run, store = case()
+        proposal = data["rejections"][rejection_index]["proposal"]["parameters"]
+        before = copy.deepcopy((prior, request, run, proposal))
+        with pytest.raises(ProposalError) as caught:
+>           materialize_plan(store, run, proposal)
+
+tests\unit\test_plan_reference_feedback.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\orca_agent\proposals.py:556: in materialize_plan
+    settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\proposals.py:454: in _complete_incremental_plan
+    settled = settled_step_snapshots(store, run)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = namespace(load_plan=<function case.<locals>.<lambda> at 0x00000250F71980E0>, load_request=<function case.<locals>.<lambda> at 0x00000250F7198180>)
+run = Run(configuration=None, id='run_1650781da73449d785e95011d3333844', request_id='request_09526461519a4b26bf01c53b11f5d85...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan')
+
+    def settled_step_snapshots(store, run):
+        """Exact latest settled execution facts eligible for structural Plan carry."""
+        latest = {item.step_id: item for item in [*run.calls, *run.attempts] if item.step_id}
+        settled = {}
+        for identifier, record in latest.items():
+            step = record.frozen_step
+            if (step is None or step.id != identifier or step.tool != record.tool
+                    or record.state not in {"completed", "failed", "cancelled", "timed_out"}
+                    or not record.result_id or record.result_id not in run.result_ids
+                    or hasattr(record, "finished_at") and record.finished_at is None):
+                continue
+            try:
+>               result = store.load_result(run.id, record.result_id)
+                         ^^^^^^^^^^^^^^^^^
+E               AttributeError: 'types.SimpleNamespace' object has no attribute 'load_result'
+
+src\orca_agent\planning.py:36: AttributeError
+_ test_actual_live024_retained_prepare_extras_are_located_without_changing_candidate[2] _
+
+rejection_index = 2
+
+    @pytest.mark.parametrize("rejection_index", [1, 2])
+    def test_actual_live024_retained_prepare_extras_are_located_without_changing_candidate(rejection_index):
+        data, prior, request, run, store = case()
+        proposal = data["rejections"][rejection_index]["proposal"]["parameters"]
+        before = copy.deepcopy((prior, request, run, proposal))
+        with pytest.raises(ProposalError) as caught:
+>           materialize_plan(store, run, proposal)
+
+tests\unit\test_plan_reference_feedback.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\orca_agent\proposals.py:556: in materialize_plan
+    settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\proposals.py:454: in _complete_incremental_plan
+    settled = settled_step_snapshots(store, run)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = namespace(load_plan=<function case.<locals>.<lambda> at 0x00000250F71985E0>, load_request=<function case.<locals>.<lambda> at 0x00000250F71987C0>)
+run = Run(configuration=None, id='run_1650781da73449d785e95011d3333844', request_id='request_09526461519a4b26bf01c53b11f5d85...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan')
+
+    def settled_step_snapshots(store, run):
+        """Exact latest settled execution facts eligible for structural Plan carry."""
+        latest = {item.step_id: item for item in [*run.calls, *run.attempts] if item.step_id}
+        settled = {}
+        for identifier, record in latest.items():
+            step = record.frozen_step
+            if (step is None or step.id != identifier or step.tool != record.tool
+                    or record.state not in {"completed", "failed", "cancelled", "timed_out"}
+                    or not record.result_id or record.result_id not in run.result_ids
+                    or hasattr(record, "finished_at") and record.finished_at is None):
+                continue
+            try:
+>               result = store.load_result(run.id, record.result_id)
+                         ^^^^^^^^^^^^^^^^^
+E               AttributeError: 'types.SimpleNamespace' object has no attribute 'load_result'
+
+src\orca_agent\planning.py:36: AttributeError
+_ test_synthetic_all_three_retained_shapes_validate_without_execution_or_source_changes _
+
+    def test_synthetic_all_three_retained_shapes_validate_without_execution_or_source_changes():
+        data, prior, request, run, store = case()
+        proposal = copy.deepcopy(data["rejections"][-1]["proposal"]["parameters"])
+        proposal["steps"][:3] = [{"key": step.id} for step in prior.steps]
+        before = copy.deepcopy((prior, request, run, proposal))
+>       candidate = materialize_plan(store, run, proposal)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_plan_reference_feedback.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\orca_agent\proposals.py:556: in materialize_plan
+    settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\proposals.py:454: in _complete_incremental_plan
+    settled = settled_step_snapshots(store, run)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = namespace(load_plan=<function case.<locals>.<lambda> at 0x00000250F37E5260>, load_request=<function case.<locals>.<lambda> at 0x00000250F37E5580>)
+run = Run(configuration=None, id='run_1650781da73449d785e95011d3333844', request_id='request_09526461519a4b26bf01c53b11f5d85...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan')
+
+    def settled_step_snapshots(store, run):
+        """Exact latest settled execution facts eligible for structural Plan carry."""
+        latest = {item.step_id: item for item in [*run.calls, *run.attempts] if item.step_id}
+        settled = {}
+        for identifier, record in latest.items():
+            step = record.frozen_step
+            if (step is None or step.id != identifier or step.tool != record.tool
+                    or record.state not in {"completed", "failed", "cancelled", "timed_out"}
+                    or not record.result_id or record.result_id not in run.result_ids
+                    or hasattr(record, "finished_at") and record.finished_at is None):
+                continue
+            try:
+>               result = store.load_result(run.id, record.result_id)
+                         ^^^^^^^^^^^^^^^^^
+E               AttributeError: 'types.SimpleNamespace' object has no attribute 'load_result'
+
+src\orca_agent\planning.py:36: AttributeError
+_ test_stripping_only_reported_extras_does_not_bypass_other_frozen_step_checks _
+
+    def test_stripping_only_reported_extras_does_not_bypass_other_frozen_step_checks():
+        data, prior, request, run, store = case()
+        proposal = copy.deepcopy(data["rejections"][-1]["proposal"]["parameters"])
+        proposal["steps"][1:3] = [{"key": step.id} for step in prior.steps[1:3]]
+        before = copy.deepcopy((prior, request, run, proposal))
+>       candidate = materialize_plan(store, run, proposal)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_plan_reference_feedback.py:93: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\orca_agent\proposals.py:556: in materialize_plan
+    settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\proposals.py:454: in _complete_incremental_plan
+    settled = settled_step_snapshots(store, run)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+store = namespace(load_plan=<function case.<locals>.<lambda> at 0x00000250F37E44A0>, load_request=<function case.<locals>.<lambda> at 0x00000250F37E4CC0>)
+run = Run(configuration=None, id='run_1650781da73449d785e95011d3333844', request_id='request_09526461519a4b26bf01c53b11f5d85...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan')
+
+    def settled_step_snapshots(store, run):
+        """Exact latest settled execution facts eligible for structural Plan carry."""
+        latest = {item.step_id: item for item in [*run.calls, *run.attempts] if item.step_id}
+        settled = {}
+        for identifier, record in latest.items():
+            step = record.frozen_step
+            if (step is None or step.id != identifier or step.tool != record.tool
+                    or record.state not in {"completed", "failed", "cancelled", "timed_out"}
+                    or not record.result_id or record.result_id not in run.result_ids
+                    or hasattr(record, "finished_at") and record.finished_at is None):
+                continue
+            try:
+>               result = store.load_result(run.id, record.result_id)
+                         ^^^^^^^^^^^^^^^^^
+E               AttributeError: 'types.SimpleNamespace' object has no attribute 'load_result'
+
+src\orca_agent\planning.py:36: AttributeError
+_ test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_correct_offline _
+
+tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1931/test_v2_real_shapes_reject_tra0')
+
+    def test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_correct_offline(tmp_path):
+        store = store_at(tmp_path)
+        run, _ = create_request(store, "N-01/raw-water-sp", 1, category="development", freeze_label="offline-v2-replay")
+        messages = store.read_control(run.id)["messages"]
+        before = store.load_run(run.id).model_dump_json()
+        first, second = [current_candidate(item["parameters"]) for item in V2]
+        for parameters in (first, second):
+            parameters["message_ids"] = [messages[0]["id"]]
+        with pytest.raises(StoreError, match="quote a supplied user message"):
+            commit_candidate(store, run, first, decision_id="translated_quote", basis=current_basis(store, run))
+        with pytest.raises(ProposalError, match="visible question") as caught:
+            commit_candidate(store, run, second, decision_id="unasked_ground", basis=current_basis(store, run))
+        assert caught.value.detail["path"] == ["parameters", "questions"]
+        assert "unconfirmed:electronic_state" in caught.value.detail["new_unresolved"]
+        assert "applicability:conflicting_condition:method/electronic_state" in caught.value.detail["new_unresolved"]
+        assert store.load_run(run.id).model_dump_json() == before
+        prepared = build_context(store.load_request(run), run, relevant_tools=[], user_messages=messages,
+            action_parameters=action_parameters(),
+            feedback={"validation_error": {"category": "ProposalError", "requirement": caught.value.detail}})
+        contract = payload(prepared)["ACTION_PARAMETERS"]["normalize_request"]
+        assert prepared.input_token_bound <= 12000
+        assert "electronic_state=RHF/UHF" in contract["instruction"]
+>       assert "verbatim text_basis must match field/target" in contract["instruction"]
+E       AssertionError: assert 'unique verbatim text_basis must match field/target' in 'Rules:minimum_evidence_rules; queries:query_schemas[port]; [] keeps basic checks. Lexicon lists canonical values; quo...mits. Never infer spin from parity. resolves=answered field:<field>/system:<goal_id>; question_gaps=questions to gaps.'
+
+tests\unit\test_semantic_lexicon.py:63: AssertionError
+_ test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_replacement[unsupported_minimum] _
+
+tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1931/test_actual_user_gaps_remain_g3')
+uncertainty = 'unsupported_minimum'
+
+    @pytest.mark.parametrize("uncertainty", ["missing_condition", "unsupported_quantity", "general_quantity", "unsupported_minimum"])
+    def test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_replacement(tmp_path, uncertainty):
+        store = store_at(tmp_path)
+        (tmp_path / "water.xyz").write_text("3\nsynthetic geometry\nO 0 0 0\nH 0 0.8 0.6\nH 0 -0.8 0.6\n")
+        text = "登记水的单点电子能。采用气相 RHF/STO-3G，中性单重态。本轮只登记，不启动计算。"
+        if uncertainty == "missing_condition":
+            text = text.replace("中性单重态", "单重态，电荷待确认")
+        elif uncertainty in {"unsupported_quantity", "general_quantity"}:
+            text += "还需要水的磁化率。"
+        else:
+            text += "还要求实验独立复测。"
+        run = initialize_bundle(store, Config(), bundle_at(tmp_path, goals=None, text=text,
+            geometries=[{"id": "water", "file": "water.xyz"}], allowed_tools=[]))
+        before_permission, before_usage = run.permission.model_dump(), run.usage.model_dump()
+        fields = {"method": ("HF", "RHF"), "basis": ("STO-3G", "STO-3G"),
+                  "charge": (0, "中性"), "multiplicity": (1, "单重态"),
+                  "environment": ("gas", "气相"), "electronic_state": ("RHF", "RHF")}
+        conditions = {name: {"value": value, "source": "explicit", "text_basis": quote}
+                      for name, (value, quote) in fields.items()}
+        goals = [{"key": "energy", "port": "energy", "text_basis": "水的单点电子能", "system_refs": ["water"],
+                  "geometry_relation": "fixed_initial"}]
+        if uncertainty == "missing_condition":
+            conditions["charge"] = {"source": "unknown", "value": None}
+            expected_gap = "missing:charge:water"
+        elif uncertainty in {"unsupported_quantity", "general_quantity"}:
+            goals.append({"key": "susceptibility", "port": "magnetic_susceptibility", "text_basis": "水的磁化率", "system_refs": ["water"]})
+            expected_gap = "unsupported_quantity:magnetic_susceptibility"
+            if uncertainty == "general_quantity":
+                goals[-1].update(quantity="磁化率", verification="reported_with_limitations")
+        else:
+            goals[0]["minimum_evidence"] = ["实验独立复测"]
+            expected_gap = "unsupported_minimum_evidence:实验独立复测"
+        proposed = candidate(store, run, kind="normalize", goals=goals, conditions=conditions,
+            unresolved=["missing:goal_definition"],
+            questions=["请确认待定电荷或保留未支持的用户要求。"])
+        if uncertainty != "missing_condition":
+            proposed["questions"] = []
+            proposed["notices"] = ["已登记未支持的用户要求，科学目标仍未满足。"]
+        if uncertainty == "unsupported_quantity":
+            # Freeze the historical whitelist contract. Current v3 may register an
+            # arbitrary quantity without granting execution or scientific status.
+            proposed["schema_version"] = "request-semantics-2"
+        elif uncertainty == "general_quantity":
+            proposed["notices"] = ["已登记用户要求，尚未执行计算，科学目标仍未满足。"]
+        updated = commit_candidate(store, run, proposed, decision_id="offline_actual_gap", basis=current_basis(store, run))
+        request = store.load_request(updated)
+        if uncertainty == "general_quantity":
+            assert request.normalization_status == "normalized" and not request.unresolved
+            goal = request.goals[1]
+            assert goal.port == "magnetic_susceptibility" and goal.quantity == "磁化率"
+            assert goal.original_text == "水的磁化率" and not goal.unresolved
+            assert goal.evidence_contract_version == "generic-observation-1"
+            assert goal.verification == "reported_with_limitations" and goal.required
+            assert not updated.goal_evidence and not updated.result_ids
+            assert updated.permission.model_dump() == before_permission
+            assert updated.usage.model_dump() == before_usage
+            assert not updated.permission.allowed_tools
+            assert not updated.attempts and not updated.calls and not updated.model_records
+            return
+>       assert request.normalization_status == ("normalized" if uncertainty == "unsupported_minimum" else "clarification")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert 'normalized' == 'clarification'
+E         
+E         - clarification
+E         + normalized
+
+tests\unit\test_semantic_placeholder.py:147: AssertionError
+________ test_user_unknown_minimum_requirement_preserved_as_unresolved ________
+
+tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1931/test_user_unknown_minimum_requ0')
+
+>   ???
+
+tests\unit\test_semantic_protocol_replay.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\orca_agent\semantic.py:1944: in commit_candidate
+    communication = _communication(candidate, updated, pending, current_gaps)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+candidate = SemanticCandidate(schema_version='request-semantics-3', message_ids=['message_a7db7293ff1f488ea65e4598be89af61'], kind...lved=[], questions=['实验独立复测不受当前工具支持，是否保留为未满足要求？'], notices=[], question_gaps={}, identities=[], automatic_selection={})
+request = Request(id='request_bbc625fe95df4ddbbd4d738b18248b7a', version=2, original_text='读取原始文件，并要求实验独立复测', geometry_artifact_...tion_status='clarification', condition_evidence={}, semantic_defaults={}, automatic_selection=[], selection_reasons={})
+messages = [{'id': 'message_a7db7293ff1f488ea65e4598be89af61', 'text': '读取原始文件，并要求实验独立复测', 'source': 'user', 'created_at': '2026-10-20T11:05:02.560973+00:00', ...}]
+gaps = {'unsupported_minimum_evidence:实验独立复测'}
+
+    def _communication(candidate, request, messages, gaps):
+        """Separate a recorded requirement from a scientific result or required reply."""
+        text = "\n".join(message["text"] for message in messages)
+        registration = r"(?:只|仅)(?:做)?登记|(?:只|仅)记录(?:需求|要求)|\b(?:register|registration)\s+only\b"
+        no_execution = r"不(?:要|再|得)?(?:执行|运行|启动|计算)|\b(?:do\s+not|don't|no)\s+(?:execute|run|compute|calculation)"
+        scope = "science"
+        # Only another explicit delivery instruction replaces a prior restriction;
+        # method amendments, status and resume never create execution intent.
+        for text in [request.original_text, *(entry["text"] for entry in request.messages), text]:
+            if re.search(registration, text, re.I):
+                scope = "registration_only"
+            elif re.search(no_execution, text, re.I) or re.search(r"看看结果|只(?:看|查询|读取)", text):
+                scope = "read_only"
+            elif re.search(r"(?:现在|开始|请)(?:执行|运行|计算)|\b(?:execute|run|compute)\s+now\b", text, re.I):
+                scope = "science"
+        blocking = (_registration_blocking_gaps(request, gaps) if scope == "registration_only"
+                    else gaps - coverage_gaps(request).keys())
+        if set(candidate.question_gaps) - set(candidate.questions):
+            raise ProposalError("question_gaps keys must be the exact supplied questions.",
+                                path=["parameters", "question_gaps"])
+        associations = {}
+        for question in candidate.questions:
+            declared = candidate.question_gaps.get(question)
+            if declared is not None and (not declared or set(declared) - gaps):
+                raise ProposalError("Each question must reference existing unresolved facts.",
+                                    path=["parameters", "question_gaps"])
+            if not re.search(r"[?？]|请|是否|哪个|多少|什么|需要|\b(?:what|which|whether|please|confirm|provide)\b",
+                             question, re.I):
+                raise ProposalError("Declarative notices belong in notices, not questions.",
+                                    path=["parameters", "questions"])
+            if declared is None:
+                labels = {"charge": r"电荷|charge|电子态", "multiplicity": r"多重度|multiplicity|电子态",
+                          "method": r"方法|method|条件", "basis": r"基组|basis|条件",
+                          "environment": r"环境|溶剂|气相|environment|条件",
+                          "geometry": r"几何|结构|geometry", "quantity": r"物理量|性质|quantity|property",
+                          "system": r"体系|分子|对象|system|molecule", "query": r"字段|field|读取"}
+                named = {name for name, pattern in labels.items() if re.search(pattern, question, re.I)}
+                associated = {gap for gap in blocking if any(name in gap for name in named)}
+                if not associated and len(blocking) == 1:
+                    associated = set(blocking)
+                if not associated and blocking:
+                    raise ProposalError("Ambiguous question requires question_gaps identifying its concrete missing facts.",
+                                        path=["parameters", "question_gaps"])
+            else:
+                associated = set(declared)
+            if not associated or not associated.intersection(blocking):
+>               raise ProposalError("Question does not concern a missing fact required by the current delivery scope.",
+                                    path=["parameters", "questions"])
+E               orca_agent.proposals.ProposalError: Question does not concern a missing fact required by the current delivery scope.
+
+src\orca_agent\semantic.py:1732: ProposalError
+_ test_developer_scope_notices_keep_requested_targets_and_all_unmet_facts[model_ce529a99417742409f7c7f541a5cb9e7] _
+
+tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1931/test_developer_scope_notices_k0')
+entry = {'variant_id': 'N-05/raw-unsupported-solvent', 'source_run_id': 'run_21d13ba4b66b4a9b82d79baeceb4c0a1', 'model_record_...409f7c7f541a5cb9e7', 'response_record_sha256': 'aae69206110b9e9fbbde31fd641230ce0fd05467fdf533b6e3c9b9ff3fa6725e', ...}
+
+>   ???
+E   AssertionError: assert 'normalized' == 'clarification'
+E     
+E     - clarification
+E     + normalized
+
+tests\unit\test_semantic_scope_notices.py:120: AssertionError
+_____ test_coverage_notice_allows_agent_plan_and_actual_prepare_dispatch ______
+
+tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1931/test_coverage_notice_allows_ag0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000250F724EDD0>
+
+    from orca_agent.tools.dispatch import execute_call
+    
+    
+    def test_coverage_notice_allows_agent_plan_and_actual_prepare_dispatch(tmp_path, monkeypatch):
+        store, run, parameters = intake(tmp_path, automatic=False, execution=execution(),
+            qualification=" using PBE0 and def2-SVP. Preserve initial geometry")
+        parameters["conditions"] = {name: {"source": "explicit", "value": value, "text_basis": value}
+                                    for name, value in (("method", "PBE0"), ("basis", "def2-SVP"))}
+        parameters["goals"].append({"key": "initial", "port": "prepared_geometry",
+            "quantity": "initial geometry", "text_basis": "Preserve initial geometry",
+            "minimum_evidence": ["Preserve initial geometry"], "system_refs": ["target"]})
+        before = copy.deepcopy(parameters)
+        # Actual Tool dispatch, validation, response parsing and input binding;
+        # the HTTP and managed geometry process boundaries are explicitly simulated.
+        http_calls = mock_http(monkeypatch, [(200, pubchem("CCO", "C2H6O"))])
+        preparation_calls = mock_generator(monkeypatch, state="failed")
+    
+        def plan(_):
+            current = store.load_run(run.id)
+            request = store.load_request(current)
+            assert request.normalization_status == "normalized"
+            assert request.goals[1].unresolved == ["unsupported_minimum_evidence:Preserve initial geometry"]
+            return {"action": "initial_plan", "parameters": {
+                "steps": [
+                    {"key": "resolve", "tool": "structure.resolve", "system_id": "system_target",
+                     "parameters": {"system_id": "system_target"}},
+                    {"key": "prepare", "tool": "structure.prepare", "system_id": "system_target",
+                     "parameters": {"system_id": "system_target", "charge": 0, "multiplicity": 1},
+                     "depends_on": ["resolve"], "inputs": {"identity": {
+                         "producer_key": "resolve", "port": "resolved_identity",
+                         "rule_version": "structure-identity-3"}}}],
+                "goal_map": {goal.id: {"port": goal.port, "gap": "Preparation precedes unresolved evidence."}
+                             for goal in request.goals}}}
+    
+        def prepare(data):
+            current = store.load_run(run.id)
+            assert store.load_plan(current) is not None, data["CONTROL"]
+            step = next(step for step in store.load_plan(current).steps if step.tool == "structure.prepare")
+            return {"action": "call_tool", "parameters": {"step_id": step.id}}
+    
+>       transport = ScriptedTransport({"action": "normalize_request", "parameters": parameters},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                      plan, prepare, {"action": "stop"})
+E       AssertionError: [{'category': 'ContextLimitError', 'message': 'required model context exceeds the configured global input bound, Run input limit, or remaining token reservation', 'environment_occupied': False}]
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +  and   1 = len(['https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/ethanol/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON'])
+
+tests\unit\test_workflow_semantic_simplification.py:69: AssertionError
+============================== warnings summary ===============================
+tests/unit/test_context_workflow_simplification.py::test_projection_preserves_bound_goal_fresh_failure_and_unqualified_pending_input
+  E:\BG6022-V4\.venv\Lib\site-packages\pydantic\main.py:475: UserWarning: Pydantic serializer warnings:
+    PydanticSerializationUnexpectedValue(Expected `dict[str, any]` - serialized value may not be as expected [field_name='diagnostics', input_value='current raw failure, not a success', input_type=str])
+    return self.__pydantic_serializer__.to_python(
+
+tests/unit/test_workspace_patch.py::test_targeted_patch_serialization_uses_hundreds_of_bytes_for_large_script
+  tests\unit\test_workspace_patch.py:288: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_targeted_patch_serialization_uses_hundreds_of_bytes_for_large_script(tmp_path, record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\unit\test_code_tools_batch.py:486: OS does not permit creating the real symlink fixture
+SKIPPED [1] tests\unit\test_general_preparation_xyz.py:133: explicit managed OPI preparation smoke not enabled
+SKIPPED [1] tests\unit\test_store.py:346: creating test symlinks requires Windows developer mode/privilege
+FAILED tests/unit/test_bounded_protocol_delivery.py::test_final_slot_guard_prevents_reservation_without_increasing_old_budget
+FAILED tests/unit/test_context_efficiency.py::test_actual_archived_observation_uses_visible_reference_in_default_build_context[True]
+FAILED tests/unit/test_context_efficiency.py::test_actual_archived_observation_uses_visible_reference_in_default_build_context[False]
+FAILED tests/unit/test_context_goal_copy_targets.py::test_planning_prompt_uses_request_ids_when_status_contains_retired_goal
+FAILED tests/unit/test_context_goal_copy_targets.py::test_v23_actual_goal_and_both_correction_requirements_fit_current_context[None]
+FAILED tests/unit/test_context_goal_copy_targets.py::test_v23_actual_goal_and_both_correction_requirements_fit_current_context[0]
+FAILED tests/unit/test_context_goal_copy_targets.py::test_v23_actual_goal_and_both_correction_requirements_fit_current_context[1]
+FAILED tests/unit/test_context_goal_copy_targets.py::test_sampling_intake_defers_inputs_but_preserves_specification_and_restores_planning_evidence
+FAILED tests/unit/test_context_goal_copy_targets.py::test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals[mixed_energy]
+FAILED tests/unit/test_context_goal_copy_targets.py::test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals[missing_spec]
+FAILED tests/unit/test_context_goal_copy_targets.py::test_intake_does_not_defer_member_conditions_without_all_frozen_sampling_goals[empty_candidates]
+FAILED tests/unit/test_context_goal_copy_targets.py::test_intake_capacity_preserves_conditions_across_bounded_identity_variants[32]
+FAILED tests/unit/test_context_goal_copy_targets.py::test_intake_capacity_preserves_conditions_across_bounded_identity_variants[48]
+FAILED tests/unit/test_context_goal_copy_targets.py::test_intake_capacity_preserves_conditions_across_bounded_identity_variants[64]
+FAILED tests/unit/test_context_protocol_literals.py::test_fixed_water_long_goal_keys_and_development_correction_fit_together
+FAILED tests/unit/test_context_workflow_simplification.py::test_projection_preserves_bound_goal_fresh_failure_and_unqualified_pending_input
+FAILED tests/unit/test_general_input_goals_live004.py::test_real_replies_preserve_goals_with_program_default_provenance_if_missing[1]
+FAILED tests/unit/test_incremental_plan_live005.py::test_real_last_reply_reuses_settled_history_and_equivalent_goal_route
+FAILED tests/unit/test_incremental_plan_live005.py::test_incremental_reply_can_omit_settled_step_closure_and_untouched_goal_binding
+FAILED tests/unit/test_incremental_plan_live005.py::test_explicit_frozen_change_remains_rejected
+FAILED tests/unit/test_incremental_plan_live005.py::test_equivalent_route_does_not_erase_explicit_wrong_rule
+FAILED tests/unit/test_native_immediate_schema.py::test_all_native_submission_contracts_and_correction_are_literal
+FAILED tests/unit/test_plan_reference_feedback.py::test_actual_live024_missing_dependencies_identify_all_omitted_historical_steps
+FAILED tests/unit/test_plan_reference_feedback.py::test_actual_live024_retained_prepare_extras_are_located_without_changing_candidate[1]
+FAILED tests/unit/test_plan_reference_feedback.py::test_actual_live024_retained_prepare_extras_are_located_without_changing_candidate[2]
+FAILED tests/unit/test_plan_reference_feedback.py::test_synthetic_all_three_retained_shapes_validate_without_execution_or_source_changes
+FAILED tests/unit/test_plan_reference_feedback.py::test_stripping_only_reported_extras_does_not_bypass_other_frozen_step_checks
+FAILED tests/unit/test_semantic_lexicon.py::test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_correct_offline
+FAILED tests/unit/test_semantic_placeholder.py::test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_replacement[unsupported_minimum]
+FAILED tests/unit/test_semantic_protocol_replay.py::test_user_unknown_minimum_requirement_preserved_as_unresolved
+FAILED tests/unit/test_semantic_scope_notices.py::test_developer_scope_notices_keep_requested_targets_and_all_unmet_facts[model_ce529a99417742409f7c7f541a5cb9e7]
+FAILED tests/unit/test_workflow_semantic_simplification.py::test_coverage_notice_allows_agent_plan_and_actual_prepare_dispatch
+32 failed, 2514 passed, 3 skipped, 2 warnings in 812.82s (0:13:32)

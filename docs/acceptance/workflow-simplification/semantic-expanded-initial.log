@@ -1,0 +1,61 @@
+F...........................F........................................... [ 14%]
+.........................F.........F.................................... [ 28%]
+........................................................................ [ 42%]
+.............................F......................F................... [ 56%]
+........................................................................ [ 71%]
+........................................................................ [ 85%]
+........................................................................ [ 99%]
+...                                                                      [100%]
+================================== FAILURES ===================================
+_____ test_coverage_notice_allows_agent_plan_and_actual_prepare_dispatch ______
+tests\unit\test_workflow_semantic_simplification.py:69: in test_coverage_notice_allows_agent_plan_and_actual_prepare_dispatch
+    assert len(preparation_calls) == len(http_calls) == 1, finished.diagnostics
+E   AssertionError: [{'category': 'ContextLimitError', 'message': 'required model context exceeds the configured global input bound, Run input limit, or remaining token reservation', 'environment_occupied': False}]
+E   assert 0 == 1
+E    +  where 0 = len([])
+E    +  and   1 = len(['https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/ethanol/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON'])
+_ test_developer_scope_notices_keep_requested_targets_and_all_unmet_facts[model_ce529a99417742409f7c7f541a5cb9e7] _
+tests\unit\test_semantic_scope_notices.py:120: in test_developer_scope_notices_keep_requested_targets_and_all_unmet_facts
+    assert request.normalization_status == "clarification"
+E   AssertionError: assert 'normalized' == 'clarification'
+E     
+E     - clarification
+E     + normalized
+________ test_user_unknown_minimum_requirement_preserved_as_unresolved ________
+tests\unit\test_semantic_protocol_replay.py:105: in test_user_unknown_minimum_requirement_preserved_as_unresolved
+    updated = commit_candidate(store, run, proposed, decision_id="user_requirement", basis=current_basis(store, run))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\semantic.py:1944: in commit_candidate
+    communication = _communication(candidate, updated, pending, current_gaps)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\semantic.py:1732: in _communication
+    raise ProposalError("Question does not concern a missing fact required by the current delivery scope.",
+E   orca_agent.proposals.ProposalError: Question does not concern a missing fact required by the current delivery scope.
+_ test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_replacement[unsupported_minimum] _
+tests\unit\test_semantic_placeholder.py:147: in test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_replacement
+    assert request.normalization_status == "clarification"
+E   AssertionError: assert 'normalized' == 'clarification'
+E     
+E     - clarification
+E     + normalized
+_ test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_correct_offline _
+tests\unit\test_semantic_lexicon.py:63: in test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_correct_offline
+    assert "unique verbatim text_basis must match field/target" in contract["instruction"]
+E   AssertionError: assert 'unique verbatim text_basis must match field/target' in 'Rules:minimum_evidence_rules; queries:query_schemas[port]; [] keeps basic checks. Lexicon lists canonical values; quo...mits. Never infer spin from parity. resolves=answered field:<field>/system:<goal_id>; question_gaps=questions to gaps.'
+_ test_real_replies_preserve_goals_with_program_default_provenance_if_missing[1] _
+tests\unit\test_general_input_goals_live004.py:87: in test_real_replies_preserve_goals_with_program_default_provenance_if_missing
+    assert {row["path"][-1] for row in rows} == {"electronic_state", "environment"}
+E   AssertionError: assert {'charge', 'e...multiplicity'} == {'electronic_...'environment'}
+E     
+E     Extra items in the left set:
+E     'multiplicity'
+E     'charge'
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED tests/unit/test_workflow_semantic_simplification.py::test_coverage_notice_allows_agent_plan_and_actual_prepare_dispatch
+FAILED tests/unit/test_semantic_scope_notices.py::test_developer_scope_notices_keep_requested_targets_and_all_unmet_facts[model_ce529a99417742409f7c7f541a5cb9e7]
+FAILED tests/unit/test_semantic_protocol_replay.py::test_user_unknown_minimum_requirement_preserved_as_unresolved
+FAILED tests/unit/test_semantic_placeholder.py::test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_replacement[unsupported_minimum]
+FAILED tests/unit/test_semantic_lexicon.py::test_v2_real_shapes_reject_translated_quotes_and_unasked_inference_then_correct_offline
+FAILED tests/unit/test_general_input_goals_live004.py::test_real_replies_preserve_goals_with_program_default_provenance_if_missing[1]
+6 failed, 501 passed in 164.44s (0:02:44)

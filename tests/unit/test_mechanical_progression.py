@@ -54,7 +54,7 @@ def test_three_approved_files_use_one_terminal_model_call_with_policy(tmp_path, 
     assert ended.usage.decision_rounds == 3
     assert ended.usage.orca_starts_actual == 0
     assert ended.delivery_status == "partial"  # Writing files is no scientific/Goal pass.
-    assert ended.usage.analysis_executions == 3
+    assert ended.usage.file_writes == 3 and ended.usage.analysis_executions == 0
     assert len([row for row in ended.decisions if row.get("selection") == "mechanical-feedback-1"]) == (2 if enabled else 0)
 
 
@@ -117,7 +117,8 @@ def test_saved_mechanical_decision_recovers_without_duplicate_writes(tmp_path):
     ended = agent.execute(store, config, run.id, resume=True, transport=transport)
     assert len(ended.calls) == len({call.step_id for call in ended.calls}) == 3
     assert ended.usage.model_calls == len(transport.sent) == 1
-    assert ended.usage.decision_rounds == 3 and ended.usage.analysis_executions == 3
+    assert ended.usage.decision_rounds == 3 and ended.usage.file_writes == 3
+    assert ended.usage.analysis_executions == 0
     assert len(runner._step_results(store, ended)) == 3
 
 

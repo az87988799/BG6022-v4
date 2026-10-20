@@ -127,7 +127,8 @@ def payload(prepared):
     if isinstance(results, dict) and set(results) == {"columns", "rows"}:
         value["DATA"]["results"] = [{key: cell for key, cell in zip(results["columns"], row, strict=True)
                                       if cell is not None} for row in results["rows"]]
-    for result in value.get("DATA", {}).get("results", []):
+    for result in [*value.get("DATA", {}).get("results", []),
+                   *value.get("DATA", {}).get("result_references", [])]:
         facts = {fact["ref"]: fact["value"] for fact in value.get("DATA", {}).get("delivery", {}).get("facts", [])}
         for field in ("unqualified_observations", "checks"):
             for port, observation in result.get(field, {}).items():
@@ -151,7 +152,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v75"
+    assert context.prompt_version == "agent-json-v76"
     assert "reason<=1000" in context.body()["messages"][0]["content"]
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
@@ -871,23 +872,45 @@ def test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_
     if phase == "pending_analysis":
         feedback["new_result_ids"] = [results[3].id]
         feedback["pending_step_ids"] = [plan.steps[-1].id]
+    before = [result.model_dump(mode="json") for result in results]
     context = build_context(request, run, plan, results=results, feedback=feedback, model_profile=model_profile)
     data = payload(context)
     assert context.input_token_bound <= 12000
-    assert len(data["DATA"]["results"]) == len(results)
+    bodies = {row["result_id"]: row for row in data["DATA"]["results"]}
+    references = {row["result_id"]: row for row in data["DATA"].get("result_references", [])}
+    assert not bodies.keys() & references.keys()
+    assert bodies.keys() | references.keys() == {result.id for result in results}
+    assert set(feedback["new_result_ids"]) <= bodies.keys()
+    from orca_agent.models import fingerprint
+    for original in results:
+        if original.id in references:
+            assert references[original.id]["record_sha256"] == fingerprint(original)
+            assert references[original.id]["operation_status"] == original.operation_status
+    if references:
+        assert "evidence.list(run_id)" in data["DATA"]["result_reference_rules"]
+    assert [result.model_dump(mode="json") for result in results] == before
     assert data["CONTROL"]["validation_error"] == feedback["validation_error"]
-    for projected, original in zip(data["DATA"]["results"], results, strict=True):
+    for original in results:
+        projected = bodies.get(original.id) or references[original.id]
         if "analysis" not in original.observations:
+            assert projected["qualified_outputs"]["energy"]["value"] == original.qualified_outputs["energy"].value
+            assert projected["qualified_outputs"]["energy"]["unit"] == "Eh"
             assert projected["qualified_outputs"]["energy"]["checks"]["all_passed"]
-            assert projected["qualified_outputs"]["energy"]["checks"]["checked_count"] == 9
-            assert len(projected["source_record_sha256"]) == 64
+            check = projected["qualified_outputs"]["energy"]["checks"]
+            assert check.get("checked_count", len(check.get("names", []))) == 9
+            assert len(projected.get("source_record_sha256") or
+                       projected["source"]["source_record_sha256"]) == 64
             continue
+        if original.id in references:
+            continue  # Historical member bodies remain in the hash-bound Result.
         observation = projected["unqualified_observations"]["analysis"]
         assert len(observation["members"]) == 5
         assert observation["reason"] == original.observations["analysis"]["reason"]
         assert [item.get("energy_eh") for item in observation["members"]] == [
             item["energy_eh"] for item in original.observations["analysis"]["members"]]
     assert data["AUTHORITY"]["request"]["goals"][0]["conditions"] == request.goals[0].conditions
+    if phase in {"final", "replan"}:
+        assert results[-1].id in bodies  # Current Goal binding retains every member.
     if phase == "pending_analysis":
         assert "immutable_frozen" not in data["AUTHORITY"]["plan"]["steps"][-1]
         assert data["AUTHORITY"]["plan"]["steps"][-1]["inputs"] == steps[-1].model_dump(

@@ -255,6 +255,10 @@ def _science_resources(run):
             "unsettled_attempt_ids": [item.id for item in run.attempts
                 if item.state in {"intent", "running", "unknown"}],
             "unsettled_call_ids": [item.id for item in run.calls if item.state in {"reserved", "unknown"}]}
+    if run.budget.file_writes is not None:
+        resources["limits"]["file_writes"] = run.budget.file_writes
+        resources["usage"]["file_writes"] = run.usage.file_writes
+        resources["remaining"]["file_writes"] = max(0, run.budget.file_writes - run.usage.file_writes)
     managed = (run.permission.code_execution or "orca.run" in run.permission.allowed_tools
                or run.internal_calls or any(item.execution_kind == "python" for item in run.attempts))
     if managed:
@@ -303,6 +307,9 @@ def _criterion_facts(result):
 
 def _existing_evidence_repair(request, run, goal, selection, resources):
     """Describe a possible repair; the original Tool still validates every source."""
+    from orca_agent.tools.registry import call_usage_counter, get_tool
+
+    write_counter = call_usage_counter(get_tool("workspace.write"), run.budget)
     missing_source = {"requested_observation_lacks_completed_native_source",
                       "scientific_system_observation_lacks_native_evidence",
                       "scientific_geometry_observation_lacks_native_evidence"}
@@ -318,7 +325,7 @@ def _existing_evidence_repair(request, run, goal, selection, resources):
             or selection.get("source_integrity", {}).get("status") != "verified"
             or not permission.code_execution or not permission.artifact_writes
             or not {"workspace.write", "python.execute"} <= set(permission.allowed_tools)
-            or resources["remaining"].get("analysis_executions", 0) <= 0
+            or resources["remaining"].get(write_counter, 0) <= 0
             or resources["remaining"].get("code_retries", 0) <= 0
             or any(resources.get(name) for name in ("unsettled_attempt_ids", "unsettled_call_ids",
                                                    "unsettled_internal_request_keys"))):
@@ -346,7 +353,7 @@ def _existing_evidence_repair(request, run, goal, selection, resources):
     if not sources:
         return None
     return {"source_candidates": sources,
-            "analysis_executions_remaining": resources["remaining"]["analysis_executions"],
+            write_counter + "_remaining": resources["remaining"][write_counter],
             "code_attempts_remaining": resources["remaining"]["code_retries"],
             "new_orca_starts_required": 0,
             "validation": "Planning suggestion only; source hashes, Request binding and minimum evidence must still pass the existing Tool checks."}

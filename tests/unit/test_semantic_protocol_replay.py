@@ -102,11 +102,17 @@ def test_user_unknown_minimum_requirement_preserved_as_unresolved(tmp_path):
     proposed = candidate(store, run, kind="normalize", goals=[{
         "key": "read", "port": "text_window", "text_basis": text,
         "minimum_evidence": ["实验独立复测"]}], questions=["实验独立复测不受当前工具支持，是否保留为未满足要求？"])
+    # An explicit minimum is retained automatically; asking whether to retain
+    # it is not a real missing user fact.
+    with pytest.raises(ProposalError, match="missing fact"):
+        commit_candidate(store, run, proposed, decision_id="unnecessary_question", basis=current_basis(store, run))
+    proposed["questions"] = []
     updated = commit_candidate(store, run, proposed, decision_id="user_requirement", basis=current_basis(store, run))
     request = store.load_request(updated)
     assert request.goals[0].minimum_evidence == ["实验独立复测"]
     assert request.goals[0].unresolved == ["unsupported_minimum_evidence:实验独立复测"]
-    assert request.normalization_status == "clarification"
+    assert request.normalization_status == "normalized"
+    assert updated.decisions[-1]["semantics"]["notice_contract"]["generated"]
 
 
 @pytest.mark.parametrize("requirement", ["energy", "orca-hf-2", "converged_scf@1", "converged SCF"])

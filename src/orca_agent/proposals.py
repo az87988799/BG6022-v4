@@ -4,7 +4,7 @@ import math
 import re
 from typing import Annotated, Any, Literal
 
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, field_validator
 
 from orca_agent.models import (
     CodeRef,
@@ -27,6 +27,14 @@ _CALL_TOOL_FORMS = ({"step_id": str}, {"tool": str, "parameters": dict})
 ShortRef = Annotated[str, Field(strict=True, min_length=1, max_length=64)]
 
 
+def _bounded_reason(value):
+    """Bound audit prose; the immutable model response retains the original."""
+    if isinstance(value, str) and len(value) > 1000:
+        marker = " [reason shortened; full text in model response]"
+        return value[:1000 - len(marker)] + marker
+    return value
+
+
 class GoalExplanation(Record):
     goal_ref: ShortRef
     fact_refs: list[ShortRef] = Field(min_length=1, max_length=64)
@@ -44,6 +52,7 @@ class TerminalExplanation(Record):
 class StopParameters(Record):
     reason: str = Field(default="", strict=True, max_length=1000)
     delivery: TerminalExplanation | None = None
+    bound_reason = field_validator("reason", mode="before")(_bounded_reason)
 
 
 class ContractStopParameters(StopParameters):
@@ -63,6 +72,7 @@ class DecisionIntent(Record):
     action: str = Field(strict=True)
     parameters: dict[str, Any]
     reason: str = Field(strict=True, max_length=1000)
+    bound_reason = field_validator("reason", mode="before")(_bounded_reason)
 
 
 def action_parameter_schema(action, *, immediate=True, terminal_required=False):
@@ -138,7 +148,7 @@ def validate_action_parameters(action, values, *, terminal_required=False):
         model = ((ContractStopParameters if terminal_required else StopParameters)
                  if action == "stop" else ClarifyParameters)
         try:
-            model.model_validate(values)
+            return model.model_validate(values).model_dump(exclude_unset=True)
         except ValidationError as exc:
             error = _schema_error(exc, path=["parameters"])
             if action == "clarify":
@@ -651,6 +661,22 @@ def materialize_plan(store, run, parameters):
         # visible to the existing conflict/applicability checks.
         from orca_agent.applicability import effective_conditions
         fields = definition.parameter_schema.get("properties", {})
+        if "write_input_artifact" in definition.effects and "system_id" in fields:
+            parameter_system = item.parameters.get("system_id")
+            if parameter_system is not None and not isinstance(parameter_system, str):
+                raise ProposalError("Use the declared system identifier string.",
+                                    path=["parameters", "steps", index, "parameters", "system_id"])
+            if item.system_id is None:
+                item.system_id = parameter_system
+            elif parameter_system is not None and parameter_system != item.system_id:
+                raise ProposalError(
+                    "Step.system_id and parameters.system_id must refer to the same requested system; "
+                    "declaring either one is sufficient.",
+                    path=["parameters", "steps", index, "parameters", "system_id"])
+            if item.system_id is not None and item.system_id not in {system.id for system in request.systems}:
+                raise ProposalError(
+                    "Use a system identifier declared in the current Request.",
+                    path=["parameters", "steps", index, "parameters", "system_id"])
         values = effective_conditions(request, system_id=item.system_id)["conditions"]
         inherited = {key: value for key, value in values.items()
                      if key in fields and value is not None}

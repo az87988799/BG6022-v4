@@ -256,6 +256,8 @@ class Store:
             validate_code_inputs(self, permission, step)
         budget = budget or BudgetLimits()
         budget = BudgetLimits.model_validate(budget.model_dump())
+        if budget.file_writes is None:
+            budget.file_writes = budget.artifact_count
         if plan is not None and len(plan.steps) > budget.logical_steps:
             raise BudgetExceeded("initial logical Step count exceeds the configured budget")
         science_steps = ([s.logical_id for s in plan.steps
@@ -277,7 +279,8 @@ class Store:
             from orca_agent.planning import validate_tool_call_budget
             validate_tool_call_budget(plan, run)
             for step in plan.steps:
-                validate_code_inputs(self, permission, step, run=run, request=request, plan=plan)
+                validate_code_inputs(self, permission, step, run=run, request=request, plan=plan,
+                                     allow_future_geometry=True)
         self._write_json(
             f"runs/{run.id}/request-revisions/{request.version}.json", request, immutable=True
         )
@@ -583,7 +586,7 @@ class Store:
                           "elapsed_seconds", "cpu_seconds", "extra_orca_starts_reserved",
                           "model_calls", "model_tokens_used", "model_tokens_unknown",
                           "plan_revisions", "decision_rounds",
-                          "evidence_reads", "analysis_executions", "identity_queries", "structure_preparations", "knowledge_queries",
+                          "evidence_reads", "analysis_executions", "file_writes", "identity_queries", "structure_preparations", "knowledge_queries",
                           "internal_work_units", "code_retries"):
                 if getattr(run.usage, field) < getattr(previous.usage, field):
                     raise StoreError(f"cumulative usage cannot decrease: {field}")
@@ -1535,7 +1538,7 @@ class Store:
                 import importlib
                 module, name = definition.preflight.rsplit(".", 1)
                 getattr(importlib.import_module(module), name)(self, run, params, tool, consumption)
-            counter = call_usage_counter(definition)
+            counter = call_usage_counter(definition, run.budget)
             if counter is None:
                 raise StoreError("managed execution requires an Attempt, not ToolCall accounting")
             if getattr(run.usage, counter) >= getattr(run.budget, counter):
@@ -1689,7 +1692,7 @@ class Store:
             from orca_agent.planning import validate_code_inputs
             for step in plan.steps if plan else []:
                 validate_code_inputs(self, run.permission, step, run=run,
-                                     request=next_request, plan=plan)
+                                     request=next_request, plan=plan, allow_future_geometry=True)
                 if ("execute_orca" in get_tool(step.tool).effects and step.geometry
                         and step.geometry.artifact_id):
                     try:

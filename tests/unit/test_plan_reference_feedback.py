@@ -9,8 +9,9 @@ from types import SimpleNamespace
 import pytest
 
 from orca_agent.models import Plan, Request, Run
-from orca_agent.planning import PlanningError, validate_revision
+from orca_agent.planning import PlanningError, settled_step_snapshots, validate_revision
 from orca_agent.proposals import ProposalError, materialize_plan
+from orca_agent.store import StoreError
 from tests.unit.test_proposals import single, source
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/code_contracts/live024-plan-reference-rejections.json"
@@ -23,13 +24,48 @@ def case():
     prior = Plan.model_validate(data["plan"])
     request = Request.model_validate(data["request"])
     run = Run.model_validate(data["run_context"])
-    store = SimpleNamespace(load_plan=lambda _: prior, load_request=lambda _: request)
+    def missing_result(*_):
+        # This exact historical fixture contains no Result bodies. Calls alone
+        # cannot prove the settlement required for automatic history carry.
+        raise StoreError("historical fixture does not include Result bodies")
+
+    store = SimpleNamespace(load_plan=lambda _: prior, load_request=lambda _: request,
+                            load_result=missing_result)
     return data, prior, request, run, store
+
+
+def current_submission(data, index):
+    """Synthetic declaration for today's schema; never rewrite archived input."""
+    proposal = copy.deepcopy(data["rejections"][index]["proposal"]["parameters"])
+    for step in proposal["steps"]:
+        if step.get("tool") == "python.execute":
+            step["parameters"]["sdk_orca"] = True
+    return proposal
+
+
+def test_missing_archived_results_cannot_establish_settled_history():
+    _, _, _, run, store = case()
+    before = run.model_copy(deep=True)
+    assert run.calls and run.result_ids
+    with pytest.raises(StoreError, match="does not include Result"):
+        store.load_result(run.id, run.result_ids[0])
+    assert settled_step_snapshots(store, run) == {}
+    assert run == before
+
+
+def test_original_legacy_submission_requires_explicit_sdk_declaration():
+    data, _, _, run, store = case()
+    proposal = data["rejections"][0]["proposal"]["parameters"]
+    before = copy.deepcopy((run, proposal))
+    with pytest.raises(ProposalError) as caught:
+        materialize_plan(store, run, proposal)
+    assert caught.value.detail["code"] == "missing_sdk_orca_declaration"
+    assert (run, proposal) == before
 
 
 def test_actual_live024_missing_dependencies_identify_all_omitted_historical_steps():
     data, prior, request, run, store = case()
-    proposal = data["rejections"][0]["proposal"]["parameters"]
+    proposal = current_submission(data, 0)
     before = copy.deepcopy((prior, request, run, proposal))
     dependencies = proposal["steps"][0]["depends_on"]
     assert set(dependencies) == {step.id for step in prior.steps}
@@ -44,7 +80,7 @@ def test_actual_live024_missing_dependencies_identify_all_omitted_historical_ste
     assert detail["missing_references"] == [
         {"key": key, "path": ["parameters", "steps", 0, "depends_on", index]}
         for index, key in enumerate(dependencies)]
-    assert "does not insert" in str(caught.value)
+    assert "retain unsettled Steps explicitly" in str(caught.value)
     assert (prior, request, run, proposal) == before
     assert not run.attempts and not run.usage.orca_starts_reserved
 
@@ -52,7 +88,7 @@ def test_actual_live024_missing_dependencies_identify_all_omitted_historical_ste
 @pytest.mark.parametrize("rejection_index", [1, 2])
 def test_actual_live024_retained_prepare_extras_are_located_without_changing_candidate(rejection_index):
     data, prior, request, run, store = case()
-    proposal = data["rejections"][rejection_index]["proposal"]["parameters"]
+    proposal = current_submission(data, rejection_index)
     before = copy.deepcopy((prior, request, run, proposal))
     with pytest.raises(ProposalError) as caught:
         materialize_plan(store, run, proposal)
@@ -69,7 +105,7 @@ def test_actual_live024_retained_prepare_extras_are_located_without_changing_can
 
 def test_synthetic_all_three_retained_shapes_validate_without_execution_or_source_changes():
     data, prior, request, run, store = case()
-    proposal = copy.deepcopy(data["rejections"][-1]["proposal"]["parameters"])
+    proposal = current_submission(data, -1)
     proposal["steps"][:3] = [{"key": step.id} for step in prior.steps]
     before = copy.deepcopy((prior, request, run, proposal))
     candidate = materialize_plan(store, run, proposal)
@@ -85,13 +121,18 @@ def test_synthetic_all_three_retained_shapes_validate_without_execution_or_sourc
     # not runtime authorization or a real model correction. No Plan is activated.
 
 
-def test_stripping_only_reported_extras_does_not_bypass_other_frozen_step_checks():
+def test_current_submission_does_not_bypass_explicit_frozen_step_changes():
     data, prior, request, run, store = case()
-    proposal = copy.deepcopy(data["rejections"][-1]["proposal"]["parameters"])
-    proposal["steps"][1:3] = [{"key": step.id} for step in prior.steps[1:3]]
+    proposal = current_submission(data, -1)
+    proposal["steps"][:3] = [{"key": step.id} for step in prior.steps]
+    writer = prior.steps[2]
+    parameters = writer.parameters.model_dump(mode="json")
+    parameters["content"] += "\n# Synthetic changed frozen input; never executed.\n"
+    proposal["steps"][2] = {"key": writer.id, "tool": writer.tool,
+                            "parameters": parameters, "depends_on": list(writer.depends_on)}
     before = copy.deepcopy((prior, request, run, proposal))
     candidate = materialize_plan(store, run, proposal)
-    assert candidate.steps[0].system_id != prior.steps[0].system_id
+    assert candidate.steps[2].parameters.content != prior.steps[2].parameters.content
     with pytest.raises(PlanningError, match="reserved Step inputs and parameters are immutable"):
         validate_revision(request, prior, request, candidate, run)
     assert (prior, request, run, proposal) == before

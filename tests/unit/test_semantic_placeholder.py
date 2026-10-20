@@ -144,7 +144,7 @@ def test_actual_user_gaps_remain_goals_and_clarification_after_placeholder_repla
         assert not updated.permission.allowed_tools
         assert not updated.attempts and not updated.calls and not updated.model_records
         return
-    assert request.normalization_status == "clarification"
+    assert request.normalization_status == ("normalized" if uncertainty == "unsupported_minimum" else "clarification")
     assert "missing:goal_definition" not in request.unresolved
     assert expected_gap in {gap for goal in request.goals for gap in goal.unresolved}
     assert all(goal.id != "raw_request" and goal.id != "goal_raw_request" for goal in request.goals)

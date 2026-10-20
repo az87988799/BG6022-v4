@@ -1,0 +1,197 @@
+.FFFF.F.....................FFFF..............FFFF.FFFF.F............... [ 48%]
+.....F....FFFFFFFFFF................F..................F.F.............. [ 97%]
+.F..                                                                     [100%]
+================================== FAILURES ===================================
+_ test_t1_full_original_warning_preserves_optimized_relation_and_reports_minimum_gap _
+tests\unit\test_refreeze_normalization_repair.py:75: in test_t1_full_original_warning_preserves_optimized_relation_and_reports_minimum_gap
+    with pytest.raises(ProposalError) as error:
+E   Failed: DID NOT RAISE ProposalError
+_ test_t3_original_errors_are_aggregated_without_seed_geometry_misclassification _
+tests\unit\test_refreeze_normalization_repair.py:101: in test_t3_original_errors_are_aggregated_without_seed_geometry_misclassification
+    assert {"authorized_default_requires_explicit_adoption", "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+E   AssertionError: assert {'authorized_...uires_notice'} <= {'geometry_re...in_user_text'}
+E     
+E     Extra items in the left set:
+E     'authorized_default_requires_explicit_adoption'
+E     'new_minimum_evidence_requires_notice'
+____ test_t3_extra_field_still_rejected_without_guessing_a_schema_mapping _____
+tests\unit\test_refreeze_normalization_repair.py:132: in test_t3_extra_field_still_rejected_without_guessing_a_schema_mapping
+    for entry in error.value.detail["errors"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'errors'
+_________ test_t5_default_and_ambiguous_field_quote_reported_together _________
+tests\unit\test_refreeze_normalization_repair.py:141: in test_t5_default_and_ambiguous_field_quote_reported_together
+    assert "authorized_default_requires_explicit_adoption" in {row["reason"] for row in rows(error)}
+E   AssertionError: assert 'authorized_default_requires_explicit_adoption' in {'condition_evidence_invalid'}
+___ test_t5_same_message_quote_diagnostic_and_explicit_fuller_quote_repair ____
+tests\unit\test_refreeze_normalization_repair.py:165: in test_t5_same_message_quote_diagnostic_and_explicit_fuller_quote_repair
+    repeated = next(row for row in rows(error) if row["reason"] == "semantic_quote_not_unique")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   StopIteration
+________ test_invisible_notice_does_not_resolve_unsupported_minimum[] _________
+tests\unit\test_refreeze_normalization_repair.py:262: in test_invisible_notice_does_not_resolve_unsupported_minimum
+    with pytest.raises(ProposalError) as error:
+E   Failed: DID NOT RAISE ProposalError
+_____ test_invisible_notice_does_not_resolve_unsupported_minimum[\u200b] ______
+tests\unit\test_refreeze_normalization_repair.py:262: in test_invisible_notice_does_not_resolve_unsupported_minimum
+    with pytest.raises(ProposalError) as error:
+E   Failed: DID NOT RAISE ProposalError
+______ test_invisible_notice_does_not_resolve_unsupported_minimum[ \t\n] ______
+tests\unit\test_refreeze_normalization_repair.py:262: in test_invisible_notice_does_not_resolve_unsupported_minimum
+    with pytest.raises(ProposalError) as error:
+E   Failed: DID NOT RAISE ProposalError
+_ test_original_live011_candidate_requires_explicit_adoption_then_test_authored_correction_passes _
+tests\unit\test_omitted_authorized_defaults.py:44: in test_original_live011_candidate_requires_explicit_adoption_then_test_authored_correction_passes
+    with pytest.raises(ProposalError) as rejected:
+E   Failed: DID NOT RAISE ProposalError
+_ test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label[value_observation] _
+tests\unit\test_omitted_authorized_defaults.py:149: in test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label
+    assert all(row["reason"] == "authorized_default_requires_explicit_adoption" for row in rows)
+E   assert False
+E    +  where False = all(<generator object test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label.<locals>.<genexpr> at 0x000001BBC7E6D220>)
+_ test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label[unresolved] _
+tests\unit\test_omitted_authorized_defaults.py:149: in test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label
+    assert all(row["reason"] == "authorized_default_requires_explicit_adoption" for row in rows)
+E   assert False
+E    +  where False = all(<generator object test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label.<locals>.<genexpr> at 0x000001BBC7E6F5E0>)
+_ test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label[artifacts] _
+tests\unit\test_omitted_authorized_defaults.py:149: in test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label
+    assert all(row["reason"] == "authorized_default_requires_explicit_adoption" for row in rows)
+E   assert False
+E    +  where False = all(<generator object test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label.<locals>.<genexpr> at 0x000001BBC63D0AD0>)
+_ test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label[observations] _
+tests\unit\test_omitted_authorized_defaults.py:149: in test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label
+    assert all(row["reason"] == "authorized_default_requires_explicit_adoption" for row in rows)
+E   assert False
+E    +  where False = all(<generator object test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label.<locals>.<genexpr> at 0x000001BBC7CCEF60>)
+___ test_contract_says_defaults_are_available_templates_not_implicit_values ___
+tests\unit\test_omitted_authorized_defaults.py:171: in test_contract_says_defaults_are_available_templates_not_implicit_values
+    assert "not automatically applied" in contract["default_adoption"]
+E   AssertionError: assert 'not automatically applied' in 'The program applies omitted applicable authorized_defaults with source=default and default_rule. Explicit user values, unknowns, conflicts and delegated choices take precedence; defaults never select an unauthorized method or basis.'
+_ test_actual_d2_accepted_notice_is_readable_but_cannot_pass_new_declaration_coverage _
+tests\unit\test_semantic_notice_contract.py:77: in test_actual_d2_accepted_notice_is_readable_but_cannot_pass_new_declaration_coverage
+    with pytest.raises(ProposalError, match="complete notice_choices") as rejected:
+E   Failed: DID NOT RAISE ProposalError
+_ test_one_declaration_cannot_cover_two_independent_actual_gaps[unsupported_system] _
+tests\unit\test_semantic_notice_contract.py:89: in test_one_declaration_cannot_cover_two_independent_actual_gaps
+    with pytest.raises(ProposalError) as rejected:
+E   Failed: DID NOT RAISE ProposalError
+_ test_one_declaration_cannot_cover_two_independent_actual_gaps[missing_geometry] _
+tests\unit\test_semantic_notice_contract.py:89: in test_one_declaration_cannot_cover_two_independent_actual_gaps
+    with pytest.raises(ProposalError) as rejected:
+E   Failed: DID NOT RAISE ProposalError
+______ test_invalid_declarations_use_only_the_existing_single_correction ______
+tests\unit\test_semantic_notice_contract.py:127: in test_invalid_declarations_use_only_the_existing_single_correction
+    assert len(transport.sent) == stopped.usage.model_calls == 2
+E   AssertionError: assert 1 == 2
+E    +  where 1 = BudgetUsage(internal_work_units=0, internal_calls_by_purpose={}, code_retries=0, orca_starts_reserved=0, orca_starts_a...lysis_executions=0, file_writes=0, logical_steps=[], identity_queries=0, structure_preparations=0, knowledge_queries=0).model_calls
+E    +    where BudgetUsage(internal_work_units=0, internal_calls_by_purpose={}, code_retries=0, orca_starts_reserved=0, orca_starts_a...lysis_executions=0, file_writes=0, logical_steps=[], identity_queries=0, structure_preparations=0, knowledge_queries=0) = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...reopened_terminal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='legacy').usage
+___ test_contract_keeps_extra_model_prose_without_certifying_its_semantics ____
+tests\unit\test_semantic_notice_contract.py:251: in test_contract_keeps_extra_model_prose_without_certifying_its_semantics
+    assert set(checked) == {"version", "required", "selected"}
+E   AssertionError: assert {'generated',...d', 'version'} == {'required', ...d', 'version'}
+E     
+E     Extra items in the left set:
+E     'generated'
+E     Use -v to get more diff
+___ test_partial_or_reworded_statement_is_not_an_exact_selection[<lambda>0] ___
+tests\unit\test_semantic_notice_contract.py:309: in test_partial_or_reworded_statement_is_not_an_exact_selection
+    with pytest.raises(ProposalError) as rejected:
+E   Failed: DID NOT RAISE ProposalError
+___ test_partial_or_reworded_statement_is_not_an_exact_selection[<lambda>1] ___
+tests\unit\test_semantic_notice_contract.py:309: in test_partial_or_reworded_statement_is_not_an_exact_selection
+    with pytest.raises(ProposalError) as rejected:
+E   Failed: DID NOT RAISE ProposalError
+___ test_partial_or_reworded_statement_is_not_an_exact_selection[<lambda>2] ___
+tests\unit\test_semantic_notice_contract.py:309: in test_partial_or_reworded_statement_is_not_an_exact_selection
+    with pytest.raises(ProposalError) as rejected:
+E   Failed: DID NOT RAISE ProposalError
+_ test_derived_n05_proposals_require_separate_notice_without_changing_requested_solvent[model_fee62a3393374eeda10e7a490beb4cf1] _
+tests\unit\test_semantic_unsupported_notice.py:40: in test_derived_n05_proposals_require_separate_notice_without_changing_requested_solvent
+    with pytest.raises(ProposalError, match="parameters.notices") as rejected:
+E   Failed: DID NOT RAISE ProposalError
+_ test_derived_n05_proposals_require_separate_notice_without_changing_requested_solvent[model_d608bd9cfc3b4de7af27946414aea22d] _
+tests\unit\test_semantic_unsupported_notice.py:40: in test_derived_n05_proposals_require_separate_notice_without_changing_requested_solvent
+    with pytest.raises(ProposalError, match="parameters.notices") as rejected:
+E   Failed: DID NOT RAISE ProposalError
+________ test_unsupported_notice_must_contain_visible_text[questions0] ________
+tests\unit\test_semantic_unsupported_notice.py:101: in test_unsupported_notice_must_contain_visible_text
+    with pytest.raises(ProposalError) as rejected:
+E   Failed: DID NOT RAISE ProposalError
+________ test_unsupported_notice_must_contain_visible_text[questions1] ________
+tests\unit\test_semantic_unsupported_notice.py:104: in test_unsupported_notice_must_contain_visible_text
+    assert rejected.value.detail["new_unresolved"] == [GAP]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'new_unresolved'
+________ test_unsupported_notice_must_contain_visible_text[questions2] ________
+tests\unit\test_semantic_unsupported_notice.py:104: in test_unsupported_notice_must_contain_visible_text
+    assert rejected.value.detail["new_unresolved"] == [GAP]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'new_unresolved'
+________ test_unsupported_notice_must_contain_visible_text[questions3] ________
+tests\unit\test_semantic_unsupported_notice.py:104: in test_unsupported_notice_must_contain_visible_text
+    assert rejected.value.detail["new_unresolved"] == [GAP]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'new_unresolved'
+________ test_unsupported_notice_must_contain_visible_text[questions4] ________
+tests\unit\test_semantic_unsupported_notice.py:104: in test_unsupported_notice_must_contain_visible_text
+    assert rejected.value.detail["new_unresolved"] == [GAP]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'new_unresolved'
+__ test_independent_wording_binding_and_default_errors_are_reported_together __
+tests\unit\test_general_intake_obligations.py:116: in test_independent_wording_binding_and_default_errors_are_reported_together
+    assert {tuple(row["path"]) for row in rows} == {
+E   AssertionError: assert {('parameters...system_refs')} == {('parameters...system_refs')}
+E     
+E     Extra items in the right set:
+E     ('parameters', 'conditions', 'electronic_state')
+E     Use -v to get more diff
+_ test_short_quote_cannot_drop_derived_geometry_and_independent_real_calculation_obligations _
+tests\unit\test_general_intake_obligations.py:245: in test_short_quote_cannot_drop_derived_geometry_and_independent_real_calculation_obligations
+    with pytest.raises(ProposalError) as error:
+E   Failed: DID NOT RAISE ProposalError
+_ test_short_general_energy_quote_retains_single_point_operation_without_initial_hash _
+tests\unit\test_general_intake_obligations.py:274: in test_short_general_energy_quote_retains_single_point_operation_without_initial_hash
+    with pytest.raises(ProposalError) as error:
+E   Failed: DID NOT RAISE ProposalError
+__ test_message_id_cannot_disambiguate_two_short_quotes_in_the_same_message ___
+tests\unit\test_semantic_grounding_production.py:113: in test_message_id_cannot_disambiguate_two_short_quotes_in_the_same_message
+    with pytest.raises(ValueError, match="repeated"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'repeated'
+E     Actual message: 'explicit condition has a negated or uncertain value basis'
+=========================== short test summary info ===========================
+FAILED tests/unit/test_refreeze_normalization_repair.py::test_t1_full_original_warning_preserves_optimized_relation_and_reports_minimum_gap
+FAILED tests/unit/test_refreeze_normalization_repair.py::test_t3_original_errors_are_aggregated_without_seed_geometry_misclassification
+FAILED tests/unit/test_refreeze_normalization_repair.py::test_t3_extra_field_still_rejected_without_guessing_a_schema_mapping
+FAILED tests/unit/test_refreeze_normalization_repair.py::test_t5_default_and_ambiguous_field_quote_reported_together
+FAILED tests/unit/test_refreeze_normalization_repair.py::test_t5_same_message_quote_diagnostic_and_explicit_fuller_quote_repair
+FAILED tests/unit/test_refreeze_normalization_repair.py::test_invisible_notice_does_not_resolve_unsupported_minimum[]
+FAILED tests/unit/test_refreeze_normalization_repair.py::test_invisible_notice_does_not_resolve_unsupported_minimum[\u200b]
+FAILED tests/unit/test_refreeze_normalization_repair.py::test_invisible_notice_does_not_resolve_unsupported_minimum[ \t\n]
+FAILED tests/unit/test_omitted_authorized_defaults.py::test_original_live011_candidate_requires_explicit_adoption_then_test_authored_correction_passes
+FAILED tests/unit/test_omitted_authorized_defaults.py::test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label[value_observation]
+FAILED tests/unit/test_omitted_authorized_defaults.py::test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label[unresolved]
+FAILED tests/unit/test_omitted_authorized_defaults.py::test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label[artifacts]
+FAILED tests/unit/test_omitted_authorized_defaults.py::test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label[observations]
+FAILED tests/unit/test_omitted_authorized_defaults.py::test_contract_says_defaults_are_available_templates_not_implicit_values
+FAILED tests/unit/test_semantic_notice_contract.py::test_actual_d2_accepted_notice_is_readable_but_cannot_pass_new_declaration_coverage
+FAILED tests/unit/test_semantic_notice_contract.py::test_one_declaration_cannot_cover_two_independent_actual_gaps[unsupported_system]
+FAILED tests/unit/test_semantic_notice_contract.py::test_one_declaration_cannot_cover_two_independent_actual_gaps[missing_geometry]
+FAILED tests/unit/test_semantic_notice_contract.py::test_invalid_declarations_use_only_the_existing_single_correction
+FAILED tests/unit/test_semantic_notice_contract.py::test_contract_keeps_extra_model_prose_without_certifying_its_semantics
+FAILED tests/unit/test_semantic_notice_contract.py::test_partial_or_reworded_statement_is_not_an_exact_selection[<lambda>0]
+FAILED tests/unit/test_semantic_notice_contract.py::test_partial_or_reworded_statement_is_not_an_exact_selection[<lambda>1]
+FAILED tests/unit/test_semantic_notice_contract.py::test_partial_or_reworded_statement_is_not_an_exact_selection[<lambda>2]
+FAILED tests/unit/test_semantic_unsupported_notice.py::test_derived_n05_proposals_require_separate_notice_without_changing_requested_solvent[model_fee62a3393374eeda10e7a490beb4cf1]
+FAILED tests/unit/test_semantic_unsupported_notice.py::test_derived_n05_proposals_require_separate_notice_without_changing_requested_solvent[model_d608bd9cfc3b4de7af27946414aea22d]
+FAILED tests/unit/test_semantic_unsupported_notice.py::test_unsupported_notice_must_contain_visible_text[questions0]
+FAILED tests/unit/test_semantic_unsupported_notice.py::test_unsupported_notice_must_contain_visible_text[questions1]
+FAILED tests/unit/test_semantic_unsupported_notice.py::test_unsupported_notice_must_contain_visible_text[questions2]
+FAILED tests/unit/test_semantic_unsupported_notice.py::test_unsupported_notice_must_contain_visible_text[questions3]
+FAILED tests/unit/test_semantic_unsupported_notice.py::test_unsupported_notice_must_contain_visible_text[questions4]
+FAILED tests/unit/test_general_intake_obligations.py::test_independent_wording_binding_and_default_errors_are_reported_together
+FAILED tests/unit/test_general_intake_obligations.py::test_short_quote_cannot_drop_derived_geometry_and_independent_real_calculation_obligations
+FAILED tests/unit/test_general_intake_obligations.py::test_short_general_energy_quote_retains_single_point_operation_without_initial_hash
+FAILED tests/unit/test_semantic_grounding_production.py::test_message_id_cannot_disambiguate_two_short_quotes_in_the_same_message
+33 failed, 115 passed in 31.65s

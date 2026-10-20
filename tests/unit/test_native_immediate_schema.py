@@ -135,13 +135,17 @@ def test_all_native_submission_contracts_and_correction_are_literal():
     assert set(step["properties"]) == set(schema["$defs"]["ProposedStep"]["properties"])
     assert step["required"] == ["key"] and step["additionalProperties"] is False
     assert step["properties"]["logical_key"]["default"] is None
-    assert set(repair["properties"]) == {"key", "repair_of", "code", "inputs"}
+    assert set(repair["properties"]) == {"key", "repair_of", "code", "inputs", "sdk_orca"}
     assert repair["required"] == ["key", "repair_of", "code"] and repair["additionalProperties"] is False
+    assert repair["properties"]["sdk_orca"]["type"] == ["boolean", "null"]
+    assert repair["properties"]["sdk_orca"]["default"] is None
     assert repair["properties"]["code"]["properties"]["sha256"]["pattern"] == "^[a-f0-9]{64}$"
     assert isinstance(wire["TOOLS"], list)  # Table encoding must not hide protected child paths.
     python = wire["TOOLS"][0]
     assert python["name"] == "python.execute"
-    assert set(python["parameters"]["properties"]) == {"code", "inputs", "observation_names", "conditions"}
+    assert set(python["parameters"]["properties"]) == {"code", "inputs", "observation_names", "conditions", "sdk_orca"}
+    assert python["parameters"]["properties"]["sdk_orca"]["type"] == ["boolean", "null"]
+    assert python["parameters"]["properties"]["sdk_orca"]["default"] is None
     code = python["parameters"]["properties"]["code"]["properties"]
     assert code["sha256"]["pattern"] == "^[a-f0-9]{64}$"
     assert code["version"]["minimum"] == 1 and code["version"]["default"] == 1

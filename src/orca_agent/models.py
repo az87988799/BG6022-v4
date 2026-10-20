@@ -504,7 +504,7 @@ class Tool(Record):
     check_contract: dict[str, Any] = Field(default_factory=dict)
     preflight: str | None = None
     recovery: str | None = None
-    usage_counter: Literal["identity_queries", "structure_preparations", "knowledge_queries", "analysis_executions"] | None = None
+    usage_counter: Literal["identity_queries", "structure_preparations", "knowledge_queries", "analysis_executions", "file_writes"] | None = None
 
 
 class PermissionSnapshot(Record):
@@ -549,6 +549,8 @@ class BudgetLimits(Record):
     decision_rounds: Annotated[int, Field(ge=0)] = 0
     evidence_reads: Annotated[int, Field(ge=0)] = 0
     analysis_executions: Annotated[int, Field(ge=0)] = 0
+    # Missing in historical snapshots means the original shared analysis counter.
+    file_writes: Annotated[int, Field(strict=True, ge=0)] | None = None
     corrections_per_proposal: Annotated[int, Field(ge=0)] = 0
     transport_retries: Annotated[int, Field(ge=0)] = 0
     identity_queries: Annotated[int, Field(strict=True, ge=0)] = 0
@@ -560,6 +562,13 @@ class BudgetLimits(Record):
     artifact_count: Annotated[int, Field(strict=True, ge=0)] = 200
     artifact_bytes: Annotated[int, Field(strict=True, ge=0)] = 256 * 1024 * 1024
     artifact_total_bytes: Annotated[int, Field(strict=True, ge=0)] = 256 * 1024 * 1024
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_shape(self, handler):
+        value = handler(self)
+        if self.file_writes is None:
+            value.pop("file_writes", None)
+        return value
 
 
 class ResourceLimits(Record):
@@ -719,10 +728,18 @@ class BudgetUsage(Record):
     decision_rounds: Annotated[int, Field(ge=0)] = 0
     evidence_reads: Annotated[int, Field(ge=0)] = 0
     analysis_executions: Annotated[int, Field(ge=0)] = 0
+    file_writes: Annotated[int, Field(strict=True, ge=0)] = 0
     logical_steps: list[Identifier] = Field(default_factory=list)
     identity_queries: Annotated[int, Field(strict=True, ge=0)] = 0
     structure_preparations: Annotated[int, Field(strict=True, ge=0)] = 0
     knowledge_queries: Annotated[int, Field(strict=True, ge=0)] = 0
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_shape(self, handler):
+        value = handler(self)
+        if self.file_writes == 0:
+            value.pop("file_writes", None)
+        return value
 
 
 class Attempt(Record):

@@ -64,17 +64,27 @@ TERMINAL_INPUT_ENVELOPE = 10000
 TERMINAL_SECONDS = 60
 
 
-def terminal_delivery_due(request, run):
-    """Preserve the last call/round for an explicitly required explanation.
+def terminal_delivery_due(request, run, *, now=None, prepared=None):
+    """Keep one bounded explanation before another decision could crowd it out.
 
     Context construction and its locked send-time check call this after the
     current decision round is charged. This selects a purpose only: zero
     remaining calls still fails the ordinary reservation, and unmet goals stay
-    unmet. Token/time capacity remains subject to the existing exact preflight.
+    unmet. Only a constructed request establishes current decision cost; an
+    input ceiling is not a predicted request size. The future final envelope
+    remains conservative and the terminal payload still passes exact preflight.
     """
-    return request.conditions.get("explain_results") is True and (
-        run.budget.model_calls - run.usage.model_calls <= 1
-        or run.budget.decision_rounds - run.usage.decision_rounds <= 0)
+    if request.conditions.get("explain_results") is not True:
+        return False
+    now = now or utc_now()
+    margin = final_explanation_budget(request, run, purpose=DecisionPurpose("planning", ()),
+                                     prepared=prepared, now=now)
+    current_tokens = prepared.reserved_tokens if prepared is not None else 0
+    current_seconds = prepared.timeout_seconds if prepared is not None else 0
+    return (run.budget.model_calls - run.usage.model_calls <= 1
+            or run.budget.decision_rounds - run.usage.decision_rounds <= 0
+            or margin["remaining_tokens_before_this_request"] < current_tokens + margin["future_answer_tokens"]
+            or (run.deadline - now).total_seconds() < current_seconds + margin["future_answer_seconds"])
 
 
 def final_explanation_budget(request, run, *, final_only=False, purpose=None,
@@ -408,8 +418,15 @@ def send_model(store, run, prepared, transport, *, basis, logical_id, batch=None
                 from orca_agent.runner import _step_results
                 plan = store.load_plan(run)
                 actual = current_decision_purpose(user_request, run, plan, pending_messages=pending,
-                    ready_step_ids=[step.id for step in _ready(plan, _step_results(store, run))])
-                if actual.kind != purpose.kind or not set(purpose.allowed_actions) <= set(actual.allowed_actions):
+                    ready_step_ids=[step.id for step in _ready(plan, _step_results(store, run))],
+                    prepared=request)
+                # A program-selected partial delivery narrows an already legal
+                # stop action. Its exact snapshot and real capacity are still
+                # checked below; it cannot replace pending normalization.
+                terminal_narrowing = (purpose.kind == "terminal" and actual.kind == "planning"
+                    and set(purpose.allowed_actions) <= {"stop", "clarify"})
+                if ((actual.kind != purpose.kind and not terminal_narrowing)
+                        or not set(purpose.allowed_actions) <= set(actual.allowed_actions)):
                     raise StoreError("decision purpose no longer matches legal actions")
                 if authority.get("basis") != basis:
                     raise StoreError("prepared decision basis differs from reservation")

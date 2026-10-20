@@ -166,7 +166,7 @@ def test_patch_uses_original_nonoverlapping_offsets_and_preserves_original_artif
     assert store.artifact_path(base.id).read_bytes() == raw
     assert store.load_artifact(base.id).sha256 == old_hash
     assert run.permission.model_dump(mode="json") == old_permission
-    assert run.usage.analysis_executions == 1
+    assert run.usage.file_writes == 1 and run.usage.analysis_executions == 0
     assert not run.attempts and not result.qualified_outputs
     assert run.usage.orca_starts_actual == run.usage.model_calls == 0
 
@@ -251,7 +251,7 @@ def test_settled_writer_base_needs_no_expansion_of_permission_and_new_coderef_ke
     with pytest.raises(PlanningError, match="permission snapshot"):
         validate_code_inputs(store, permission(), consumer)
     assert store.artifact_path(base.id).read_bytes() == b"print('OLD')\n"
-    assert not run.attempts and run.usage.analysis_executions == 2
+    assert not run.attempts and run.usage.file_writes == 2 and run.usage.analysis_executions == 0
 
 
 def test_write_rechecks_base_changed_after_preflight_and_keeps_charged_failed_receipt(tmp_path):
@@ -260,14 +260,14 @@ def test_write_rechecks_base_changed_after_preflight_and_keeps_charged_failed_re
 
     def change_after_reservation(point):
         if point == "after_call_reserved":
-            assert run.usage.analysis_executions == 1
+            assert run.usage.file_writes == 1 and run.usage.analysis_executions == 0
             source.write_bytes(b"print('CHANGED')\n")
 
     result = execute_call(store, run, step.tool, step.parameters.model_dump(), step=step,
                           fault=change_after_reservation)
     assert result.operation_status == "failed" and not result.artifact_ids
     assert not result.observations and not result.qualified_outputs
-    assert run.calls[0].state == "failed" and run.usage.analysis_executions == 1
+    assert run.calls[0].state == "failed" and run.usage.file_writes == 1 and run.usage.analysis_executions == 0
     assert not store.path(f"runs/{run.id}/calls/{run.calls[0].id}/files/{step.parameters.name}").exists()
 
 

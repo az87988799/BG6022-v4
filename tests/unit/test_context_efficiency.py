@@ -400,7 +400,7 @@ def test_actual_archived_observation_uses_visible_reference_in_default_build_con
         permission=PermissionSnapshot(model_execution=True, code_execution=True,
             artifact_writes=True, allowed_tools=["python.execute", "workspace.write"]),
         budget=BudgetLimits(model_calls=4, model_tokens=300000, input_tokens=100000,
-            output_tokens=2000, plan_revisions=2),
+            output_tokens=2000, plan_revisions=2, decision_rounds=8),
         configuration=RunConfiguration(model=ModelLimits(input_tokens=100000, output_tokens=2000)))
     run.goal_status = {goal.id: "insufficient_evidence"}
     snapshot = {"version": "test-bounded-feedback", "fingerprint": "a" * 64,

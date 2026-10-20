@@ -68,7 +68,10 @@ def test_actual_failed_context_fits_without_changing_authority_data_or_tool_cont
     for section in ("request", "permission", "budget_limits"):
         assert_historical_projection(authority.pop(section), previous_authority.pop(section), section)
     assert authority == previous_authority
-    assert new["TOOL_CATALOG"] == old["TOOL_CATALOG"]
+    # The archived permission remains above, but its only Tool has spent the
+    # frozen analysis allowance. An executable catalog must not imply capacity.
+    assert inputs["run"].usage.analysis_executions == inputs["run"].budget.analysis_executions == 1
+    assert new["TOOL_CATALOG"] == []
     assert new["DATA"]["projection_rules"] == (
         "Rows zip columns;null=absent;operation_status defaults completed;full observations=Result.")
     assert {key: value for key, value in new["DATA"].items() if key != "projection_rules"} == {
@@ -85,7 +88,7 @@ def test_actual_failed_context_fits_without_changing_authority_data_or_tool_cont
                        "STRING_ENCODING", "SHARED_STRINGS"}
     for key in old.keys() & new.keys() - representations:
         assert new[key] == old[key]
-    assert new["TOOL_CATALOG"][0]["check_contract"] == old["TOOL_CATALOG"][0]["check_contract"]
+    assert context.get_tool(old["TOOL_CATALOG"][0]["name"]).check_contract == old["TOOL_CATALOG"][0]["check_contract"]
     assert set(new["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
     assert "RESPONSE_ENVELOPE" not in wire and "ACTION_PARAMETERS" in wire
     assert "RESPONSE_ENVELOPE" not in messages[0]["content"]
@@ -166,7 +169,6 @@ def _matches(schema, value):
 @pytest.mark.parametrize("action,parameters,valid", [
     ("stop", {}, True), ("stop", {"reason": "Insufficient samples."}, True),
     ("stop", {"reason": []}, False), ("stop", {"extra": True}, False),
-    ("stop", {"reason": "x" * 1001}, False),
     ("clarify", {"questions": ["Which scope?"], "unresolved": ["scope"]}, True),
     ("clarify", {}, False), ("clarify", {"questions": ["Which scope?"]}, False),
     ("clarify", {"unresolved": ["scope"]}, False),

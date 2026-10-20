@@ -98,8 +98,8 @@ def test_different_tools_share_the_execution_accounting_rule():
 def test_over_budget_initial_plan_leaves_no_run(tmp_path):
     request, plan, run = writing_plan([writer(n) for n in range(5)])
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
-    with pytest.raises(PlanningError, match="analysis_executions"):
-        store.create_run(request, plan, run.permission, run.budget)
+    with pytest.raises(PlanningError, match="file_writes"):
+        store.create_run(request, plan, run.permission, run.budget.model_copy(update={"file_writes": 4}))
     assert not list(store.root.glob("runs/*/run.json"))
 
 
@@ -108,11 +108,11 @@ def test_store_revision_uses_actual_charged_calls_without_recharging_retained_wr
 
     request, plan, envelope = writing_plan([writer(0), writer(1)])
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
-    limits = envelope.budget.model_copy(update={"plan_revisions": 2})
+    limits = envelope.budget.model_copy(update={"plan_revisions": 2, "file_writes": 4})
     run = store.create_run(request, plan, envelope.permission, limits)
     for step in plan.steps:
         execute_call(store, run, step.tool, step.parameters.model_dump(), step=step)
-    assert run.usage.analysis_executions == 2 and len(run.calls) == 2
+    assert run.usage.file_writes == 2 and run.usage.analysis_executions == 0 and len(run.calls) == 2
     candidate = plan.model_copy(deep=True, update={
         "version": 2, "steps": [*plan.steps, writer(2), writer(3), writer(4)]})
     before = store.load_run(run.id).model_dump()
@@ -123,7 +123,7 @@ def test_store_revision_uses_actual_charged_calls_without_recharging_retained_wr
     updated = store.commit_revision(run, candidate, basis=current_basis(store, run), decision_id="within_budget")
     for step in candidate.steps[-2:]:
         execute_call(store, updated, step.tool, step.parameters.model_dump(), step=step)
-    assert updated.usage.analysis_executions == 4 and len(updated.calls) == 4
+    assert updated.usage.file_writes == 4 and updated.usage.analysis_executions == 0 and len(updated.calls) == 4
     assert updated.budget.analysis_executions == 4
 
 

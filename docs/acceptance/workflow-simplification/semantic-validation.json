@@ -1,0 +1,267 @@
+{
+  "schema": "workflow-semantic-validation-1",
+  "recorded_at_utc": "2026-10-20T11:03:30.114618+00:00",
+  "base_commit_at_report": "80966b138258ea79e0402b9345316c9781d216b5",
+  "authority": "docs/decisions/0055-simplify-workflow-and-refreeze.md",
+  "scope": [
+    "Apply only authorized, omitted and uncontradicted defaults with default provenance; no selection of undeclared method/basis.",
+    "Generate independently established coverage notices while preserving minima, unresolved facts and unverified status.",
+    "Bind all same-message exact quote ranges, retain shared geometry/unit source references, reject real conflicts and cross-message ambiguity.",
+    "Allow only bounded system_refs_note as nonexecuting remarks; unknown scientific/execution fields remain forbidden.",
+    "Consume complete current general-identity-3 quote ranges at structure.resolve; historical v1/v2 and missing ranges retain unique-quote requirement."
+  ],
+  "original_evidence": {
+    "preserved": true,
+    "retained_response_hash_checks": "tests/unit/test_refreeze_normalization_repair.py::retained and existing fixture digest checks",
+    "effective_candidate": "Run.decisions[].semantics.candidate",
+    "parsed_original_candidate": "Run.decisions[].semantics.proposed_candidate",
+    "raw_model_response": "Existing immutable model response remains authoritative; proposed_candidate includes schema defaults and is not a byte-for-byte raw response.",
+    "developer_authored_repairs_are_not_live_llm_evidence": true
+  },
+  "provenance": {
+    "defaults": "semantics.program_applied_defaults",
+    "notices": "semantics.notice_contract.generated (source=program), also displayed in semantics.notices",
+    "shared_constraints": "Goal.text_evidence.shared_constraints, exact message ranges",
+    "repeated_quotes": "text evidence occurrences + compatible primary start/end",
+    "notes": "semantics.remarks; never Goal execution fields"
+  },
+  "validation_runs": [
+    {
+      "path": "docs/acceptance/workflow-simplification/semantic-initial.log",
+      "sha256": "4cc2fb8b789159bfee0ef8b859ed81ea896e35a30c2025b4b4482095b6a0f044",
+      "bytes": 18162,
+      "mtime_utc": "2026-10-20T10:44:11.897847+00:00",
+      "passed": 115,
+      "failed": 33,
+      "interpretation": "Initial post-change tests; obsolete explicit-default/notice/repeated-quote expectations, not pre-change baseline failures."
+    },
+    {
+      "path": "docs/acceptance/workflow-simplification/semantic-followup.log",
+      "sha256": "47c22f6c8abb681ffd20b12bcd62438d886e815554280fb5e63058a35af62bd7",
+      "bytes": 265,
+      "mtime_utc": "2026-10-20T10:48:23.962091+00:00",
+      "passed": 147,
+      "failed": 0,
+      "interpretation": "Revised contract expectations with all original scientific rejection checks retained."
+    },
+    {
+      "path": "docs/acceptance/workflow-simplification/semantic-agent-path-initial.log",
+      "sha256": "32ef7753e1994f6fa825862a7c80b2546fae71e47ce70d49a6b84097a4e2866f",
+      "bytes": 2339,
+      "mtime_utc": "2026-10-20T10:50:25.833963+00:00",
+      "passed": 15,
+      "failed": 2,
+      "interpretation": "New test fixtures: missing method/basis correctly restricted action purpose; one invalid synthetic legacy-version value."
+    },
+    {
+      "path": "docs/acceptance/workflow-simplification/semantic-agent-path-followup.log",
+      "sha256": "c893fb1dcd8affa3f9378c7954b31fafcb1e14adee6ddd9d08623a457fd1fe80",
+      "bytes": 1156,
+      "mtime_utc": "2026-10-20T10:51:36.157903+00:00",
+      "passed": 16,
+      "failed": 1,
+      "interpretation": "Corrected fixture reached resolve; preparation blocked by 12K ContextLimitError. No budget increase."
+    },
+    {
+      "path": "docs/acceptance/workflow-simplification/semantic-expanded-initial.log",
+      "sha256": "b13a50641cb662883c507b22dc8c18e36a95b7d5a9b0b3e53e118b72fbc8d59c",
+      "bytes": 5335,
+      "mtime_utc": "2026-10-20T10:55:26.488830+00:00",
+      "passed": 501,
+      "failed": 6,
+      "interpretation": "Expanded semantic regression: five obsolete expectations/test assumptions plus the already observed Agent 12K context failure."
+    },
+    {
+      "path": "docs/acceptance/workflow-simplification/semantic-expanded-followup.log",
+      "sha256": "003e80a23c22d1083edeb6e5625187a0109832224330921978a390b19898f520",
+      "bytes": 915,
+      "mtime_utc": "2026-10-20T10:57:00.088215+00:00",
+      "passed": 77,
+      "failed": 1,
+      "interpretation": "Remaining fixture distinguished candidate Request-level marker from program-derived Goal-level coverage provenance."
+    },
+    {
+      "path": "docs/acceptance/workflow-simplification/semantic-scope-agent-final.log",
+      "sha256": "55329c97be322b806b7712d310f071b2be201a5e565342e5d155bf2585e339b9",
+      "bytes": 1156,
+      "mtime_utc": "2026-10-20T10:57:46.789653+00:00",
+      "passed": 27,
+      "failed": 1,
+      "interpretation": "Scope expectations passed; old context module loaded before context repair, Agent path still exceeded 12K."
+    },
+    {
+      "path": "docs/acceptance/workflow-simplification/semantic-identity-consumer.log",
+      "sha256": "0485029cdc8ce5747dd1c64209d74ee310af121f934f5e8f46e04d7a074da299",
+      "bytes": 184,
+      "mtime_utc": "2026-10-20T11:01:44.802301+00:00",
+      "passed": 106,
+      "failed": 0,
+      "interpretation": "Later run includes same 12K Agent path, current repeated-identity consumer tests, simple-name resolution and structure Tool regressions; all passed."
+    }
+  ],
+  "latest_command": ".venv/Scripts/python.exe -m pytest tests/unit/test_workflow_semantic_simplification.py tests/unit/test_simple_name_resolution.py tests/unit/test_structure_tools.py -q --tb=short",
+  "expanded_command": "$semanticTests = @(rg --files tests/unit | Where-Object { $_ -match 'test_(semantic|general_intake|general_input_goals|general_collection|omitted|workflow_semantic|refreeze_normal)' }); .venv/Scripts/python.exe -m pytest @semanticTests -q --tb=short",
+  "latest_result": {
+    "passed": 106,
+    "failed": 0,
+    "seconds": 50.01,
+    "agent_path": "normalization -> initial_plan -> actual structure.resolve dispatch/parser/binding -> actual structure.prepare dispatch with explicitly simulated failed process boundary",
+    "input_token_limit": 12000,
+    "no_budget_increase": true,
+    "minima_and_coverage_gaps_remain": true,
+    "goal_not_marked_satisfied": true
+  },
+  "ruff": "Passed on owned production and changed semantic tests; final consumer update also passed.",
+  "source_hashes": [
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "21a916e68b2aee273f12194e8677d1ea28f3125eafd756dfa935cf539bd52a17",
+      "bytes": 137686,
+      "mtime_utc": "2026-10-20T10:44:54.474983+00:00"
+    },
+    {
+      "path": "src/orca_agent/semantic_notices.py",
+      "sha256": "c844c707085d2841879e59b9adfadf46d5b84729d96ad3fcab5423fb70fa7983",
+      "bytes": 6630,
+      "mtime_utc": "2026-10-20T10:48:58.206099+00:00"
+    },
+    {
+      "path": "src/orca_agent/tools/structure.py",
+      "sha256": "b1aa926dcd97da53e241f901ce2388fee6da91ae0acc7cc8f50b3ee10fd69693",
+      "bytes": 58842,
+      "mtime_utc": "2026-10-20T10:59:38.390035+00:00"
+    }
+  ],
+  "test_hashes": [
+    {
+      "path": "tests/unit/test_workflow_semantic_simplification.py",
+      "sha256": "dbd2b2de492b8436797839a8423f4e1c864318faae1ef2e10d59f28fa1a29efd",
+      "bytes": 13490,
+      "mtime_utc": "2026-10-20T11:00:44.456712+00:00"
+    },
+    {
+      "path": "tests/unit/test_refreeze_normalization_repair.py",
+      "sha256": "730b9df4932de0c47c8d7366382c3657e802dbd7f1cd7654f908fee66dd42476",
+      "bytes": 13721,
+      "mtime_utc": "2026-10-20T10:46:17.189663+00:00"
+    },
+    {
+      "path": "tests/unit/test_omitted_authorized_defaults.py",
+      "sha256": "a34055cce76e6ff33639ddb21fd4b71e20b4d4a665fd72adc9ec3095092014f2",
+      "bytes": 8688,
+      "mtime_utc": "2026-10-20T10:45:37.691773+00:00"
+    },
+    {
+      "path": "tests/unit/test_semantic_notice_contract.py",
+      "sha256": "f207ff07ce90d57329f9c8b7d856159f4ceba2bf6c5cbd84e177be71abc9286c",
+      "bytes": 17259,
+      "mtime_utc": "2026-10-20T10:46:17.190663+00:00"
+    },
+    {
+      "path": "tests/unit/test_semantic_unsupported_notice.py",
+      "sha256": "8209c4bf7d5b9a7d0c95156135d4d6c2c3bfc80a38e30bf4134d7e375f4f7ec6",
+      "bytes": 4608,
+      "mtime_utc": "2026-10-20T10:46:39.115150+00:00"
+    },
+    {
+      "path": "tests/unit/test_general_intake_obligations.py",
+      "sha256": "8779fbce7b5d69d8b168cc190f0fb9a2174aa73dccc62e43db31158c6654ed32",
+      "bytes": 17331,
+      "mtime_utc": "2026-10-20T10:46:17.191662+00:00"
+    },
+    {
+      "path": "tests/unit/test_semantic_grounding_production.py",
+      "sha256": "30545689c4f08e0c58b095643957a2c375eb84ba423ab99dddb673b7c616244e",
+      "bytes": 7310,
+      "mtime_utc": "2026-10-20T10:46:17.192664+00:00"
+    },
+    {
+      "path": "tests/unit/test_general_intake_correction.py",
+      "sha256": "29085766bf98763945520325ffa70d20a22a18ed7811b70c8a8c72494f7c3b9a",
+      "bytes": 10052,
+      "mtime_utc": "2026-10-20T10:52:35.077183+00:00"
+    },
+    {
+      "path": "tests/unit/test_general_input_goals_live004.py",
+      "sha256": "2ddd61335027ff995d04df6663544557beef8964a20d9c101a65ae3d16f9b154",
+      "bytes": 11733,
+      "mtime_utc": "2026-10-20T10:56:02.710330+00:00"
+    },
+    {
+      "path": "tests/unit/test_semantic_scope_notices.py",
+      "sha256": "30fbc119d74857d5fb0492b6074b7d58dc557a94aa952d2f0ed48d7d8e71ad48",
+      "bytes": 10814,
+      "mtime_utc": "2026-10-20T10:57:29.955094+00:00"
+    },
+    {
+      "path": "tests/unit/test_semantic_protocol_replay.py",
+      "sha256": "fe6c7b5cfda4c2c6e87f59d727b5722deb0d2daf239f938dc890b2e9cabd62bf",
+      "bytes": 8101,
+      "mtime_utc": "2026-10-20T10:56:02.707330+00:00"
+    },
+    {
+      "path": "tests/unit/test_semantic_placeholder.py",
+      "sha256": "088553c5e63c0943820d5d6e2a6202e14099abaee2ee2b884ac110de1f9ae221",
+      "bytes": 19556,
+      "mtime_utc": "2026-10-20T10:56:02.708330+00:00"
+    },
+    {
+      "path": "tests/unit/test_semantic_lexicon.py",
+      "sha256": "a4d62ba84b3cc204910d86fbcfba42a7943a16fc88af07eb9ad60d56e4368052",
+      "bytes": 6331,
+      "mtime_utc": "2026-10-20T10:56:02.709329+00:00"
+    }
+  ],
+  "dependency_hashes_at_report": [
+    {
+      "path": "src/orca_agent/context.py",
+      "sha256": "bf512db0c081b995d13e545bbb0f4a6e3921e1d7903cfd8be0847e59efb9b926",
+      "bytes": 219704,
+      "mtime_utc": "2026-10-20T10:58:45.419726+00:00"
+    },
+    {
+      "path": "src/orca_agent/readable_context.py",
+      "sha256": "ddfc374ff16204413fcde7c5d7f34b48cef10ce331f15bf4c2146bcc312b90c6",
+      "bytes": 17973,
+      "mtime_utc": "2026-10-20T10:39:36.943200+00:00"
+    },
+    {
+      "path": "src/orca_agent/decision_purpose.py",
+      "sha256": "f8b8a1d5be21e0cbf0be74714c9395a6dabac95774ad1b70a8b9b81ce8747717",
+      "bytes": 10965,
+      "mtime_utc": "2026-10-20T10:37:32.446430+00:00"
+    },
+    {
+      "path": "src/orca_agent/model_usage.py",
+      "sha256": "df66a0aeb92f3dd66fb9166106b7dc0ba43955d844bde438b288ba5488467c22",
+      "bytes": 30250,
+      "mtime_utc": "2026-10-20T10:51:48.199283+00:00"
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "2ee61174f78889bdd25bdc4e837468ef1120504c9cc9d4ffcec122e1abcad0f5",
+      "bytes": 43158,
+      "mtime_utc": "2026-10-20T11:00:05.740513+00:00"
+    }
+  ],
+  "timing_limits": [
+    "Concurrent agents edited other runtime modules during exploratory runs; initial logs are not asserted to be a single frozen product snapshot.",
+    "Source hashes above describe files at report time; complete stable-snapshot integration and live authorization execution belong to the root task.",
+    "No known remaining semantic test failure; the formerly failing 12K Agent path passed in the later 106-test run after the context repair."
+  ],
+  "effects": {
+    "real_llm_calls": 0,
+    "real_orca_starts": 0,
+    "external_network_requests": 0,
+    "http": "httpx.MockTransport/synthetic fixtures only",
+    "geometry_process": "simulated in the new Agent path; existing structure tests report their own offline worker scope",
+    "committed_or_pushed": false
+  },
+  "historical_boundaries": [
+    "No previous run/evidence fixture was rewritten.",
+    "Legacy semantic and identity records remain readable; old decisions are not re-normalized on resume.",
+    "Historical v1/v2 identity evidence cannot acquire repeated-range acceptance.",
+    "No budget, permission, Goal minimum or scientific qualification was relaxed."
+  ],
+  "test_authorship_note": "The overlong-reason test in test_refreeze_normalization_repair.py was updated by root; this report hashes the shared final test file without claiming sole authorship."
+}

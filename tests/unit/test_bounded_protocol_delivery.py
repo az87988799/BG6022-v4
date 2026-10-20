@@ -133,18 +133,31 @@ def test_representative_eight_call_budget_delivers_required_model_explanation(tm
     assert completed.usage.orca_starts_actual == 0
 
 
-def test_final_slot_guard_prevents_reservation_without_increasing_old_budget(tmp_path):
+@pytest.mark.parametrize("remaining_calls", [0, 1])
+def test_final_slot_guard_prevents_reservation_without_increasing_old_budget(tmp_path, remaining_calls):
     store, original, _ = make_run(tmp_path, model_calls=1)
     request = store.load_request(original).model_copy(deep=True)
     request.conditions["explain_results"] = True
     run = store.create_run(request, None, original.permission, original.budget)
     run.agent_enabled = True
+    run.usage.model_calls = 1 - remaining_calls
     store.save_run(run)
-    transport = ScriptedTransport(initial_proposal)
+    before_budget = run.budget.model_copy(deep=True)
+    transport = ScriptedTransport({"action": "stop", "reason": "No task evidence was collected."})
     ended = agent.execute(store, Config(), run.id, transport=transport)
-    assert ended.state == "budget_exhausted" and not transport.sent
-    assert ended.usage.model_calls == ended.usage.model_tokens_unknown == ended.usage.model_tokens_used == 0
-    assert not ended.model_records and ended.budget.model_calls == 1
+    assert ended.budget == before_budget and ended.budget.model_calls == 1
+    assert ended.usage.model_calls == 1 and ended.usage.model_tokens_unknown == 0
+    assert not ended.calls and not ended.attempts and ended.usage.orca_starts_actual == 0
+    if remaining_calls:
+        assert ended.state == "failed" and ended.delivery_status == "partial"
+        assert len(transport.sent) == len(ended.model_records) == len(ended.terminal_deliveries) == 1
+        assert transport.sent[0]["AUTHORITY"]["decision_purpose"] == {
+            "kind": "terminal", "allowed_actions": ["stop"]}
+        assert ended.usage.model_tokens_used == 75
+    else:
+        assert ended.state == "budget_exhausted" and ended.delivery_status == "partial"
+        assert not transport.sent and not ended.model_records and not ended.terminal_deliveries
+        assert ended.usage.model_tokens_used == 0 and ended.fallback_report_receipts
     report = build_report(store, ended)
     assert not report["user_goal_complete"] and report["goal_facts"][0]["gaps"]
 

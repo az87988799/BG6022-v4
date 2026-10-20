@@ -154,6 +154,24 @@ def _alias_in(text, canonical):
                if alias.isascii() else alias in text for alias in ALIASES[canonical])
 
 
+def _complete_quote_positions(message, evidence):
+    """Current program bindings must contain every exact range in this message."""
+    text = evidence.get("text_basis")
+    locations = evidence.get("occurrences")
+    if (not message or not isinstance(text, str) or not text.strip()
+            or not isinstance(locations, list) or not locations):
+        return False
+    expected = [{"message_id": message.get("id"), "start": match.start(), "end": match.end()}
+                for match in re.finditer(re.escape(text), message["text"])]
+    if (locations != expected or any(type(row.get(name)) is not int
+            for row in locations if isinstance(row, dict) for name in ("start", "end"))):
+        return False
+    primary = {"message_id": evidence.get("message_id"),
+               "start": evidence.get("start"), "end": evidence.get("end")}
+    return (all(type(primary[name]) is int for name in ("start", "end"))
+            and primary in expected)
+
+
 def _requirement(store, run, system_id):
     request = store.load_request(run)
     system = next((item for item in request.systems if item.id == system_id), None)
@@ -166,8 +184,11 @@ def _requirement(store, run, system_id):
         text = evidence.get("text_basis", "")
         requested = identity.get("requested_names", [])
         query = identity.get("query_name")
+        authenticated = bool(message and text and message["text"].count(text) == 1)
+        if identity.get("contract") == "general-identity-3" and "occurrences" in evidence:
+            authenticated = _complete_quote_positions(message, evidence)
         if (system.geometry_source != "prepare" or identity.get("explicitly_unknown")
-                or message is None or not text or message["text"].count(text) != 1
+                or not authenticated
                 or len(requested) != 1 or requested[0] not in text
                 or not isinstance(query, str) or not 0 < len(query) <= 100
                 or any(ord(char) < 32 for char in query)):
