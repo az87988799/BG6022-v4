@@ -65,6 +65,13 @@ def test_final_sent_view_preserves_only_registry_collector_explanation(monkeypat
     assert prepared.input_token_bound <= run.budget.input_tokens
     assert len(attempted) >= (2 if force_fallback else 1)
     for view in [*attempted, final]:
+        rules = view["TASK_CODE_RULES"]
+        assert "JSON schema shape, not Python code" in rules
+        assert "None/True/False" in rules and "json.dumps" in rules
+        assert "do not copy null/true/false as Python identifiers" in rules
+        shape = rules.split("observations.json=", 1)[1].split("]} ", 1)[0] + "]}"
+        assert shape.startswith("{version:1,observations:[{name:Goal.port,value:finite JSON,unit:string|null,sources:[{")
+        assert "location:string|null}],formula:string|null,artifacts:[task-relative filename],limitations:[]}]}" in shape
         projected = {tool["name"]: tool for tool in view["TOOLS"]}
         for name, capability in [("python.execute", "task_manifest"), ("orca.run", "none")]:
             tool = projected[name]
@@ -79,4 +86,3 @@ def test_final_sent_view_preserves_only_registry_collector_explanation(monkeypat
         ordinary = projected["workspace.write"]
         assert "named_observation_collector" not in ordinary and "output_contract" not in ordinary
     assert (request, run, snapshot) == before
-

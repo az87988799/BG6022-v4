@@ -66,7 +66,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v92"
+PROMPT_VERSION = "agent-json-v93"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -111,6 +111,10 @@ _PLAN_RULES = (
     "Revisions may omit unchanged completed Goal bindings and settled dependencies; the program retains their exact definitions. "
     "Declare new work and changed bindings explicitly; unknown references and frozen edits are rejected.")
 
+_OBSERVATION_JSON_NOTE = (
+    "JSON schema shape, not Python code. In Python use None/True/False and write JSON with json.dumps; "
+    "do not copy null/true/false as Python identifiers. ")
+
 _CODE_GUIDANCE = (
     "Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. "
     "New python.execute Steps explicitly declare sdk_orca:true for internal ORCA, false for analysis only. "
@@ -125,6 +129,7 @@ _CODE_GUIDANCE = (
     "binary data and documentation index hits do not establish an output format or input syntax. "
     "Use returned manual references for an explicit section query, never assume a linked page was read. "
     "No shell/subprocess/network/host paths. "
+    + _OBSERVATION_JSON_NOTE +
     "Write observations.json={version:1,observations:[{name:Goal.port,value:finite JSON,unit:string|null,"
     "sources:[{internal_request_key:SDK request_key,filename:files key,location:string|null}],"
     "formula:string|null,artifacts:[task-relative filename],limitations:[]}]} "
@@ -2098,6 +2103,7 @@ def _capacity_code_rules(native):
         "Keep Goals/conditions/minima/routes. Python:analysis budget; same-logical retries also code_retries. "
         "Save completed members; SDK waits count in deadline. "
         "Inspect results; read gaps, no code reread. Binary/manual index!=format proof. "
+        + _OBSERVATION_JSON_NOTE +
         "observations.json={version:1,observations:[{name:Goal.port,value:finite JSON,"
         "unit:string|null,sources:[{filename:task-relative path,location:string|null}],formula:string|null,"
         "artifacts:[task-relative filename],limitations:[]}]} names=observation_names. "
@@ -3819,6 +3825,7 @@ def build_context(
                 "Stage workspace.write then revise_plan using real Artifact ID/hash; no placeholders/future values. "
                 "Python CodeRef must contain Python. parameters.inputs=InputManifest; Step.inputs binds evidence ports. "
                 "Future outputs use step_key+unchanged port; otherwise declare a gap. No shell/subprocess/network/host paths. "
+                + _OBSERVATION_JSON_NOTE +
                 "Write observations.json={version:1,observations:[{name:Goal.port,value:finite JSON,unit:string|null,"
                 "sources:[{internal_request_key:SDK key,filename:original files key,location:string|null}],"
                 "formula:string|null,artifacts:[task-relative filename],limitations:[]}]} "
