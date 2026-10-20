@@ -14,6 +14,34 @@ from orca_agent.store import StoreError
 ConditionName = Literal["method", "basis", "charge", "multiplicity", "electronic_state", "environment",
                         "temperature_K", "standard_state"]
 SELECTION_VERSION = "condition-selection-1"
+GENERAL_SELECTION_VERSION = "condition-selection-2"
+
+
+def general_admission_enabled(store, run):
+    configuration = store.run_configuration(run) if store is not None else run.configuration
+    policy = configuration.execution.native_input_policy if configuration is not None else None
+    return policy is not None and policy.profile == "managed-native-1"
+
+
+def selection_version(store, run):
+    return GENERAL_SELECTION_VERSION if general_admission_enabled(store, run) else SELECTION_VERSION
+
+
+def selection_available(store, run):
+    """Identity queries establish a graph, independently of method selection."""
+    from orca_agent.tools.registry import get_tool
+
+    if run.attempts:
+        return False
+    general = general_admission_enabled(store, run)
+    for call in run.calls:
+        effects = get_tool(call.tool).effects
+        if "write_input_artifact" not in effects:
+            continue
+        if (not general or "query_external_identity" not in effects
+                or call.state not in {"completed", "failed", "cancelled"}):
+            return False
+    return True
 
 # Keep punctuation belonging to a chemical identifier, including basis suffixes
 # such as (d,p). Closing prose parentheses and sentence punctuation delimit it.
@@ -127,15 +155,13 @@ def _source(store, run, reference, *, path):
 
 def selected_request(store, run, prior, parameters):
     """Recompute the complete permitted revision; callers cannot broaden it."""
-    from orca_agent.tools.registry import get_tool
-
     parameters = SelectionParameters.model_validate(parameters)
     if parameters.request_version != prior.version:
         raise StoreError("condition selection refers to a stale Request")
     if set(parameters.choices) - set(selectable_conditions(prior)):
         raise StoreError("condition selection is outside the unchanged user authorization")
-    if run.attempts or any("write_input_artifact" in get_tool(call.tool).effects for call in run.calls):
-        raise StoreError("select conditions before identity/geometry preparation or managed execution")
+    if not selection_available(store, run):
+        raise StoreError("select conditions before geometry preparation or managed execution; identity queries must be complete")
     values = prior.model_dump(mode="json")
     corrections = []
     for name, choice in parameters.choices.items():
@@ -165,7 +191,7 @@ def selected_request(store, run, prior, parameters):
             # or a generic method recommendation; use explicit/authorized defaults.
             raise StoreError("electronic state selection requires molecule-specific evidence; preserve the missing condition")
         value = _value(name, choice.value)
-        if name in {"method", "basis"} and not any(_mentions_identifier(value, source["quote"])
+        if not general_admission_enabled(store, run) and name in {"method", "basis"} and not any(_mentions_identifier(value, source["quote"])
                 for source in sources if source["kind"] == "official_document"):
             corrections.extend(_selection_error(["choices", name, "value"], "selected_value_absent_from_official_quote",
                 "This selected value must occur as a complete identifier in a quoted official source, not a prefix of another method/basis. Retrieve and quote an exact official passage containing the value; do not invent supporting text or substitute a project guide.").detail["corrections"])
@@ -178,7 +204,7 @@ def selected_request(store, run, prior, parameters):
         values["condition_evidence"]["request." + name] = {
             "value": value, "source": "auto_selected", "request_version": prior.version,
             "authorization": deepcopy(authorization), "reason": choice.reason,
-            "sources": sources, "schema": SELECTION_VERSION}
+            "sources": sources, "schema": selection_version(store, run)}
     if corrections:
         raise ProposalError("Correct the identified selection fields using retrieved evidence; no condition was selected.",
                             path=["parameters", "choices"], corrections=corrections)
@@ -187,7 +213,7 @@ def selected_request(store, run, prior, parameters):
 
 
 def validate_selection_revision(store, run, prior, proposed, record):
-    if not isinstance(record, dict) or set(record) != {"schema", "parameters"} or record["schema"] != SELECTION_VERSION:
+    if not isinstance(record, dict) or set(record) != {"schema", "parameters"} or record["schema"] != selection_version(store, run):
         raise StoreError("invalid condition selection record")
     expected = selected_request(store, run, prior, record["parameters"])
     if proposed != expected:
@@ -200,4 +226,4 @@ def commit_selections(store, run, parameters, *, decision_id, basis, related_res
     proposed = selected_request(store, run, prior, parameters)
     return store.commit_revision(run, None, request=proposed, decision_id=decision_id, basis=basis,
         related_results=related_results, fault=fault,
-        selection_record={"schema": SELECTION_VERSION, "parameters": parameters.model_dump(mode="json")})
+        selection_record={"schema": selection_version(store, run), "parameters": parameters.model_dump(mode="json")})

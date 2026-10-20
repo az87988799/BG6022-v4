@@ -33,6 +33,9 @@ CONDITION_FIELDS = ("method", "basis", "charge", "multiplicity", "electronic_sta
 
 def profile_contract(policy: NativeInputPolicy) -> dict:
     """Public guidance from the admission definitions, with the frozen limits."""
+    if policy.profile == "managed-native-1":
+        from orca_agent.orca.native_managed import profile_contract as managed_contract
+        return managed_contract(policy)
     return {"profile": policy.profile, "admission_version": ADMISSION_VERSION,
             "limits": policy.model_dump(mode="json", exclude={"profile"}),
             "methods": sorted(METHODS.values()), "basis_spellings": sorted(BASES),
@@ -66,7 +69,10 @@ def profile_contract(policy: NativeInputPolicy) -> dict:
             "unknown_syntax": "rejected; no fallback to input-1", "scientific_validation": "unverified"}
 
 
-def canonical_native_condition(name, value):
+def canonical_native_condition(name, value, policy=None):
+    if getattr(policy, "profile", policy) == "managed-native-1":
+        from orca_agent.orca.native_managed import canonical_managed_condition
+        return canonical_managed_condition(name, value)
     if name in {"charge", "multiplicity"}:
         return value if type(value) is int else None
     if not isinstance(value, str):

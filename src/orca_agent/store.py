@@ -1757,6 +1757,10 @@ class Store:
                 # These are current selections only; all Call/Result/Artifact
                 # histories survive. Reacquisition needs a new validated Plan.
                 updated.input_bindings = {}
+                if (selection_record or {}).get("schema") == "condition-selection-2":
+                    from orca_agent.input_bindings import carry_selected_identity_inputs
+                    updated.input_bindings = carry_selected_identity_inputs(
+                        self, updated, next_request, run.input_bindings)
                 updated.goal_status = {goal.id: "insufficient_evidence" for goal in next_request.goals}
                 for goal in next_request.goals:
                     selection = current_goal_evidence(self, run, next_request, goal, prior_plan)

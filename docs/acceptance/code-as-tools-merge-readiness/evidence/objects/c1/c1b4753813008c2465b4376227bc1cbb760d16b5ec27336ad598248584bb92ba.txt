@@ -1,0 +1,35 @@
+import ctypes, errno, json, os, socket, subprocess
+from pathlib import Path
+import numpy as np
+import opi
+from rdkit import Chem
+assert np.dot(np.array([1., 2.]), np.array([3., 4.])) == 11
+assert Chem.MolFromSmiles("CCO").GetNumAtoms() == 3
+facts = {"uid": os.getuid(), "status": Path("/proc/self/status").read_text(),
+         "cgroup": Path("/proc/self/cgroup").read_text(),
+         "mountinfo": Path("/proc/self/mountinfo").read_text(), "denied": {}}
+def deny(name, call):
+    try:
+        value = call()
+    except OSError as exc:
+        facts["denied"][name] = {"errno": exc.errno, "type": type(exc).__name__}
+    else:
+        raise AssertionError("unexpected access: " + name + ": " + str(value))
+deny("orca_read", lambda: Path("/opt/orca/orca").read_bytes())
+deny("orca_exec", lambda: subprocess.run(["/opt/orca/orca", "--version"]))
+deny("shell_exec", lambda: subprocess.run(["/bin/sh", "-c", "true"]))
+deny("fork", os.fork)
+deny("socket_external", lambda: socket.create_connection(("1.1.1.1", 443), timeout=.2))
+deny("socket_loopback", lambda: socket.create_connection(("127.0.0.1", 445), timeout=.2))
+deny("root_write", lambda: Path("/usr/forbidden").write_text("x"))
+deny("control_write", lambda: Path("/work/control/heartbeat").write_text("x"))
+deny("cgroup_write", lambda: Path("/sys/fs/cgroup/memory.max").write_text("max"))
+for name in ("/var/run/docker.sock", "/run/guest-services", "/mnt/c", "/mnt/e", "/mnt/wsl"):
+    assert not Path(name).exists(), name
+libc = ctypes.CDLL(None, use_errno=True)
+libc.syscall.restype = ctypes.c_long
+ctypes.set_errno(0)
+result = libc.syscall(57)
+assert result == -1 and ctypes.get_errno() == errno.EPERM
+facts["raw_fork_errno"] = ctypes.get_errno()
+Path("boundary.json").write_text(json.dumps(facts, indent=2))

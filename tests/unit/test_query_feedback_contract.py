@@ -254,12 +254,24 @@ def test_specific_path_correction_cannot_be_dropped_as_generic_call_guidance():
                                  prepared=prepared, now=values["now"])
 
 
-def _query_run(tmp_path):
+def _query_run(tmp_path, *, current_capacity=False):
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
     run, _ = CASES.create_request(store, "V-07/array-location", 1)
     # The offline test has no shared live ledger and cannot send a real request.
     run.batch_category = None
     store.save_run(run)
+    if current_capacity:
+        # Exercise the current feedback contract in a separate synthetic Run.
+        # The frozen V-07 Run and its historical 12k/32k envelope stay intact.
+        historical = store.path(f"runs/{run.id}/run.json")
+        before = historical.read_bytes()
+        run = store.create_run(store.load_request(run), None, run.permission,
+            run.budget.model_copy(update={"input_tokens": 64000, "model_tokens": 1200000}),
+            configuration=run.configuration.model_copy(update={"model":
+                run.configuration.model.model_copy(update={"input_tokens": 64000})}))
+        run.agent_enabled = True
+        store.save_run(run)
+        assert historical.read_bytes() == before
     return store, run
 
 
@@ -283,6 +295,8 @@ def _step_for(data, goal_id):
 
 
 def _call_contract(data):
+    if "ACTION_SCHEMAS" in data:
+        return data["ACTION_SCHEMAS"]["call_tool"]
     schema = data["PROPOSAL_SCHEMA"]
     return next(branch["properties"]["parameters"] for branch in schema["oneOf"]
                 if branch["properties"]["action"] == {"const": "call_tool"})
@@ -306,7 +320,7 @@ class CapturedTransport(ScriptedTransport):
 
 
 def test_v07_four_calls_read_in_user_order_and_publish_exact_raw_value(tmp_path, candidates):
-    store, run = _query_run(tmp_path)
+    store, run = _query_run(tmp_path, current_capacity=True)
     original = store.load_request(run).model_dump(mode="json")
     transport = CapturedTransport(
         _initial_plan, _planned_call("raw_geometry_slice"),
@@ -328,7 +342,7 @@ def test_v07_four_calls_read_in_user_order_and_publish_exact_raw_value(tmp_path,
     assert value["scientific_status"] == "unverified" and value["units"] is None
     source = json.loads(store.artifact_path(completed.calls[-1].parameters["artifact_id"]).read_bytes())
     assert value["value"] == source["Geometries"][0]["Dipole_Moment"][0]["dipoleMagnitude"]
-    assert all(prepared.input_token_bound <= 12000 for prepared in transport.prepared)
+    assert all(prepared.input_token_bound <= 64000 for prepared in transport.prepared)
     assert transport.prepared[-1].input_token_bound <= 10000
     # ScriptedTransport settles 75 synthetic tokens; the real pre-send margin
     # still runs, but this is not a worst-case four-request token certificate.
@@ -340,13 +354,38 @@ def test_v07_four_calls_read_in_user_order_and_publish_exact_raw_value(tmp_path,
     assert set(contract["properties"]["step_id"]["enum"]) == steps
     if "pending_step_ids" in feedback.get("CONTROL", {}):
         assert set(feedback["CONTROL"]["pending_step_ids"]) == steps
-    assert set(contract["properties"]["tool"]["enum"]) == {"evidence.discover", "evidence.value"}
-    assert "read_registered_artifact" not in contract["properties"]["tool"]["enum"]
-    assert feedback["ACTION_PARAMETERS"]["call_tool"] == {
-        "step_id": _step_for(feedback, "raw_geometry_slice")["id"]}
     assert _step_for(feedback, "raw_field_observation")["parameters"]["path"] == value["path"]
-    assert {tuple(branch["required"]) for branch in contract["oneOf"]} == {
-        ("step_id",), ("tool", "parameters")}
+    if "ACTION_SCHEMAS" in feedback:
+        # The native protocol advertises immediate readers by their tool name;
+        # call_tool remains the disjoint planned-Step form.
+        assert set(contract["properties"]) == {"step_id"}
+        assert {name for name in feedback["ACTION_SCHEMAS"] if name.startswith("evidence.")} == {
+            "evidence.value"}
+        assert "read_registered_artifact" not in feedback["ACTION_SCHEMAS"]
+    else:
+        assert set(contract["properties"]["tool"]["enum"]) == {"evidence.discover", "evidence.value"}
+        assert "read_registered_artifact" not in contract["properties"]["tool"]["enum"]
+        assert feedback["ACTION_PARAMETERS"]["call_tool"] == {
+            "step_id": _step_for(feedback, "raw_geometry_slice")["id"]}
+        assert {tuple(branch["required"]) for branch in contract["oneOf"]} == {
+            ("step_id",), ("tool", "parameters")}
+
+
+def test_v07_historical_small_envelope_stops_without_expanding_its_snapshot(tmp_path):
+    store, run = _query_run(tmp_path)
+    budget_path = store.path(f"runs/{run.id}/budget.json")
+    before = budget_path.read_bytes()
+    transport = CapturedTransport(
+        _initial_plan, _planned_call("raw_geometry_slice"),
+        _planned_call("raw_field_observation"), {"action": "stop", "parameters": {}},
+    )
+    completed = agent.execute(store, Config(data_root=store.root), run.id, transport=transport)
+    assert completed.state == "failed"
+    assert any(item["category"] == "ContextLimitError" for item in completed.diagnostics)
+    assert completed.budget.input_tokens == 12000 and completed.budget.model_tokens == 32000
+    assert budget_path.read_bytes() == before
+    assert all(prepared.input_token_bound <= 12000 for prepared in transport.prepared)
+    assert not completed.attempts and completed.usage.orca_starts_actual == 0
 
 
 @pytest.mark.parametrize("mistake", ["hybrid", "effect_name"])

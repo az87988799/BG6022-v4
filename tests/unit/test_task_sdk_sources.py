@@ -9,7 +9,9 @@ from pathlib import Path
 import pytest
 
 from orca_agent import task_sdk
+from orca_agent.models import NativeInputPolicy
 from orca_agent.task_observations import collect
+from orca_agent.tools.managed import _archive
 from tests.unit.test_task_observation_conditions import archived_case
 
 
@@ -153,4 +155,119 @@ def test_collector_rejects_privileged_fields_added_to_source_declaration(tmp_pat
     source = task_sdk.receipt_source(archived_response(store, run), "stdout.out")
     source[field] = {"forged": "passed"}
     with pytest.raises(ValueError, match="Extra inputs are not permitted"):
+        collected(tmp_path, store, run, result, source)
+
+
+def pinned_source_case(tmp_path, *, names=("first/data.out", "second/data.out")):
+    """Actual archive mapping, with synthetic settled receipts and no execution."""
+    store, run, _, _, result = archived_case(tmp_path)
+    run.configuration = run.configuration.model_copy(update={"execution":
+        run.configuration.execution.model_copy(update={
+            "native_input_policy": NativeInputPolicy(profile="managed-native-1")})})
+    folder = tmp_path / "native-files"
+    for name in names:
+        path = folder / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("explicit source: " + name + "\n", encoding="utf-8")
+    files = _archive(store, run, run.attempts[0], folder, "")
+    receipt = run.internal_calls[0]
+    receipt.artifact_ids = [reference["artifact_id"] for reference in files.values()]
+    receipt.response = {**response(), "files": files}
+    task_response = {**response(), "files": {
+        name: str(store.artifact_path(reference["artifact_id"])) for name, reference in files.items()}}
+    return store, run, result, task_response
+
+
+@pytest.mark.parametrize("names,selected", [
+    (("stdout.out",), "stdout.out"),
+    (("first/data.out", "second/data.out"), "first/data.out"),
+    (("first/data.out", "second/data.out"), "second/data.out"),
+])
+def test_pinned_receipt_resolves_exact_file_keys_with_duplicate_basenames(tmp_path, names, selected):
+    store, run, result, receipt = pinned_source_case(tmp_path, names=names)
+    before = run.model_dump(mode="json")
+    source = task_sdk.receipt_source(receipt, selected)
+    records = collected(tmp_path, store, run, result, source)
+    actual, = records[0].sources
+    pinned = run.internal_calls[0].response["files"][selected]
+    assert (actual.artifact_id, actual.sha256) == (pinned["artifact_id"], pinned["sha256"])
+    assert store.load_artifact(actual.artifact_id).source["task_path"] == selected
+    assert records[0].validation_status == "unverified"
+    assert run.model_dump(mode="json") == before
+    assert run.usage.orca_starts_actual == run.usage.model_calls == 0
+
+
+@pytest.mark.parametrize("change", [
+    "missing_key", "invalid_files", "invalid_reference", "hash", "not_member",
+    "wrong_original_key", "duplicate_member", "altered_bytes", "wrong_parent",
+])
+def test_pinned_source_rejects_inconsistent_archived_identity_without_basename_fallback(tmp_path, change):
+    store, run, result, receipt = pinned_source_case(tmp_path)
+    original = run.internal_calls[0]
+    name = "first/data.out"
+    source = task_sdk.receipt_source(receipt, name)
+    files = original.response["files"]
+    reference = files[name]
+    if change == "missing_key":
+        del files[name]
+    elif change == "invalid_files":
+        original.response["files"] = []
+    elif change == "invalid_reference":
+        files[name] = receipt["files"][name]
+    elif change == "hash":
+        reference["sha256"] = "0" * 64
+    elif change == "not_member":
+        original.artifact_ids.remove(reference["artifact_id"])
+    elif change == "wrong_original_key":
+        files[name] = dict(files["second/data.out"])
+    elif change == "duplicate_member":
+        original.artifact_ids.append(reference["artifact_id"])
+    elif change == "altered_bytes":
+        store.artifact_path(reference["artifact_id"]).write_text("tampered", encoding="utf-8")
+    else:
+        path = tmp_path / "other-parent.out"
+        path.write_text("different producer", encoding="utf-8")
+        artifact = store.import_artifact(path, "raw_evidence", run_id=run.id,
+            attempt_id="another_attempt", source={"task_path": name})
+        files[name] = {"artifact_id": artifact.id, "sha256": artifact.sha256}
+        original.artifact_ids.append(artifact.id)
+    with pytest.raises((ValueError, RuntimeError), match="internal source|original Attempt|hash"):
+        collected(tmp_path, store, run, result, source)
+
+
+@pytest.mark.parametrize("name", ["data.out", "FIRST/data.out", "invented/data.out"])
+def test_task_side_aliases_cannot_select_an_archived_file_by_basename(tmp_path, name):
+    store, run, result, receipt = pinned_source_case(tmp_path)
+    receipt["files"][name] = receipt["files"]["first/data.out"]
+    source = task_sdk.receipt_source(receipt, name)
+    with pytest.raises(ValueError, match="exact pinned receipt reference"):
+        collected(tmp_path, store, run, result, source)
+
+
+def test_pre_response_flat_receipts_remain_readable_without_adding_provenance(tmp_path):
+    store, run, _, _, result = archived_case(tmp_path)
+    assert not run.internal_calls[0].response
+    run.configuration = run.configuration.model_copy(update={"execution":
+        run.configuration.execution.model_copy(update={
+            "native_input_policy": NativeInputPolicy(profile="managed-native-1")})})
+    source = task_sdk.receipt_source(archived_response(store, run), "stdout.out")
+    assert collected(tmp_path, store, run, result, source) == result.observation_records
+
+
+@pytest.mark.parametrize("name", ["first/data.out", "data.out"])
+def test_pre_response_receipts_cannot_guess_nested_source_identity(tmp_path, name):
+    store, run, result, receipt = pinned_source_case(tmp_path, names=("first/data.out",))
+    run.internal_calls[0].response = {}
+    receipt["files"]["data.out"] = receipt["files"]["first/data.out"]
+    source = task_sdk.receipt_source(receipt, name)
+    with pytest.raises(ValueError, match="missing or ambiguous|exact archived file key"):
+        collected(tmp_path, store, run, result, source)
+
+
+def test_historical_profile_does_not_upgrade_nested_source_admission(tmp_path):
+    store, run, result, receipt = pinned_source_case(tmp_path)
+    run.configuration = run.configuration.model_copy(update={"execution":
+        run.configuration.execution.model_copy(update={"native_input_policy": NativeInputPolicy()})})
+    source = task_sdk.receipt_source(receipt, "first/data.out")
+    with pytest.raises(ValueError, match="missing or ambiguous"):
         collected(tmp_path, store, run, result, source)

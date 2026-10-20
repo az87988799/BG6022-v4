@@ -23,12 +23,14 @@ from orca_agent.store import ControlChanged, StoreError
 from orca_agent.tools import structure
 
 
-def intake(tmp_path, name="ethanol", *, qualification="", automatic=True):
+def intake(tmp_path, name="ethanol", *, qualification="", automatic=True, execution=None, state=None):
     store, config = text_environment(tmp_path,
-        defaults={"charge": 0, "multiplicity": 1, "electronic_state": "RKS", "environment": "gas_phase"},
+        defaults={"charge": 0, "multiplicity": 1, "electronic_state": "RKS", "environment": "gas_phase", **(state or {})},
         permission={"model_execution": True, "artifact_writes": True, "external_identity_queries": True,
                     "geometry_preparation": True,
                     "allowed_tools": ["structure.resolve", "structure.prepare", "knowledge.search"]})
+    if execution is not None:
+        config.execution = execution
     text = f"Optimize {name} and report polarizability{qualification}."
     if automatic:
         text += " Choose the method and basis."

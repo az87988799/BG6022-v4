@@ -103,7 +103,11 @@ def test_compact_writer_context_preserves_contract_or_fails_closed(tmp_path, mon
     else:
         prepared = context.build_context(request, run, plan, results=[result], delivery_snapshot=snapshot)
         assert prepared.input_token_bound <= input_tokens
-        assert "Retain depends_on transitively, including completed Steps." in prepared.body()["messages"][0]["content"]
+        # Decision 0038 retains settled dependency closure in the program;
+        # the current prompt must describe that contract, not the old demand
+        # that the model repeat every historical dependency.
+        prompt = prepared.body()["messages"][0]["content"]
+        assert "Settled dependency closure is retained automatically; unknown refs are rejected." in prompt
     assert len(calls) > 1
     for wire in calls:
         assert "ACTION_SCHEMAS" in wire and "PROPOSAL_SCHEMA" not in wire

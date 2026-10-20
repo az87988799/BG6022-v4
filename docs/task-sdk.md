@@ -26,7 +26,7 @@ record = {
 - 每次调用只声明所选文件。未调用的收据、未选文件以及未声明的产物不会被补入；多来源观察必须逐项显式列出。
 - `location` 是最多 1000 字符的声明，不证明已读取该位置。辅助函数也不证明脚本正确解析了值、单位或公式。
 
-任务侧收据是可变数据，辅助函数不是安全边界。现有收集器仍独立按当前 Run 的原收据、原 Attempt 和已归档文件重新绑定 Artifact ID/hash，并核验文件身份。实际条件来自可信收据；脚本不能填 `checks`、`status`、`actual_conditions` 或授予科学资格。多个显式来源的实际条件分别保留，只汇总共同条件并报告冲突。原声明格式与手写来源继续可用。
+任务侧收据是可变数据，辅助函数不是安全边界。现有收集器仍独立按当前 Run 的原收据、原 Attempt 和已归档文件重新绑定 Artifact ID/hash，并核验文件身份。新通用策略通过持久化收据的精确原文件键绑定来源，允许 `first/data.out` 与 `second/data.out` 共存；不按 basename 猜测。已存在的收据文件映射缺项、hash 不符或原键不符时拒绝，不回退到模糊匹配。旧策略及早期没有文件映射的平铺来源保留原兼容范围。实际条件来自可信收据；脚本不能填 `checks`、`status`、`actual_conditions` 或授予科学资格。多个显式来源的实际条件分别保留，只汇总共同条件并报告冲突。原声明格式与手写来源继续可用。
 
 ## 部署与验证范围
 
@@ -63,3 +63,5 @@ print(json.dumps({"source": source,
 2026-10-20 已复用缓存 wheelhouse 和固定本地基础镜像离线构建新版 SDK 镜像，并通过真实容器内纯 Python 导入、显式来源声明、错误文件/未知状态拒绝及 SDK hash 烟测。`inspect_environment` 在本地配置更新前后均通过；仅更新 gitignored `config.local.toml` 的新 Run 镜像与 manifest 身份，其余配置、历史 Run 快照、旧镜像及卷保留。详见[构建与烟测摘要](acceptance/model-context-efficiency/sdk-runtime.json)，完整构建日志留在忽略的 `data/model-context-efficiency/sdk-runtime-build-001`。
 
 本次没有网络下载、真实模型、ORCA 或 MPI 启动；纯 Python 烟测不构成完整任务隔离、SDK 计算链或科学验收。新版本的这些真实验证仍未开展。
+
+上述为上下文优化交付时点。随后合并核验已同步两个 Linux 示例的 SDK 镜像，并在该镜像执行四核 SDK→ORCA、`receipt_source` 观察归档及真实隔离探针；范围、成本和限制见[合并与步骤 6 前置检查](acceptance/code-as-tools-merge-readiness/report.md)。这些开发者探针不计作真实模型自主任务或步骤 7 正式验收。

@@ -440,13 +440,24 @@ def test_passed_check_counts_retain_rules_and_every_nonpassing_detail(replay):
 
 
 def test_planning_schema_transport_and_raw_array_sidecar_report_roundtrip(tmp_path, monkeypatch):
+    from orca_agent.config import load_config
     from orca_agent.report import build_report
     from orca_agent.store import Store
     from tests.unit.test_phase_b_model_cases import (
+        CASES,
         test_v07_all_requested_reads_precede_completion_within_frozen_model_budget,
     )
 
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
+    initialize = CASES.initialize_agent
+    current_profile = load_config(Path("config.code.example.toml"))
+    def initialize_current_capacity(store, config, request, permission, budget, **kwargs):
+        config = config.model_copy(update={"model": config.model.model_copy(update={
+            "input_tokens": current_profile.model.input_tokens})})
+        budget = budget.model_copy(update={"input_tokens": current_profile.model.input_tokens,
+            "model_tokens": current_profile.text.budget.model_tokens})
+        return initialize(store, config, request, permission, budget, **kwargs)
+    monkeypatch.setattr(CASES, "initialize_agent", initialize_current_capacity)
     prepared_requests = []
     prepare = context.prepare_request
     def capture(*args, **kwargs):
@@ -454,14 +465,16 @@ def test_planning_schema_transport_and_raw_array_sidecar_report_roundtrip(tmp_pa
         prepared_requests.append(prepared)
         return prepared
     monkeypatch.setattr(context, "prepare_request", capture)
-    # The existing production Agent test retains its original 4 HTTP/3 read
-    # and full user-goal completion assertions. Its transport is synthetic.
+    # This schema/sidecar regression freezes the current capacity before Run
+    # creation. Its original 4 HTTP/3 read and full completion assertions stay;
+    # historical fixture bytes and the separate small-envelope guards stay.
     test_v07_all_requested_reads_precede_completion_within_frozen_model_budget(store, "array-location")
     run_path, = store.path("runs").glob("*/run.json")
     run = store.load_run(run_path.parent.name)
     by_hash = {request.request_hash: request for request in prepared_requests}
     requests = [by_hash[record["request_hash"]] for record in run.model_records]
-    assert len(requests) == 4 and all(request.input_token_bound <= 12000 for request in requests)
+    assert len(requests) == 4 and all(request.input_token_bound <= current_profile.model.input_tokens
+                                    for request in requests)
     assert any("KEYS" in json.loads(request.body()["messages"][1]["content"]) for request in requests)
     for request, record in zip(requests, run.model_records, strict=True):
         native = json.loads(request.body()["messages"][1]["content"])["AUTHORITY"]

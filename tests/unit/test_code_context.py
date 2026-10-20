@@ -44,9 +44,11 @@ def test_settled_failed_python_retains_repair_schema_and_frozen_code_identity(tm
         feedback={"new_result_ids": [result.id]})
     wire = decoded(prepared)
     assert "revise_plan" in wire["AUTHORITY"]["decision_purpose"]["allowed_actions"]
-    assert "retaining logical_id and every non-code field" in wire["TASK_CODE_RULES"]
+    assert "retains logical_id, system, conditions, observation names and dependencies" in wire["TASK_CODE_RULES"]
+    assert "inputs:optional replacement InputManifest" in wire["TASK_CODE_RULES"]
+    assert "Omitted inputs preserve the old manifest" in wire["TASK_CODE_RULES"]
     assert "repair_of:failed frozen_step.id" in wire["TASK_CODE_RULES"]
-    assert "do not add the replacement writer as a dependency" in wire["TASK_CODE_RULES"]
+    assert "Do not add the replacement writer as a dependency" in wire["TASK_CODE_RULES"]
     assert not context._frozen_completed(plan, run, [result])
     if "TOOLS" in wire:
         tool, = [tool for tool in wire["TOOLS"] if tool["name"] == "python.execute"]
@@ -109,7 +111,21 @@ def test_actual_live028_disclosure_gaps_remain_visible_without_rewriting_results
     assert frequencies["value"] == [value for value in data["raw_frequency_values"] if value > 1e-6]
     assert not any("filter" in text.casefold() for text in frequencies["limitations"])
     assert all(record["validation_status"] == "unverified" for record in records.values())
-    assert view["unqualified_observation_records"] == data["result"]["observation_records"]
+    original_geometry = next(item for item in data["result"]["observation_records"]
+                             if item["name"] == "optimized_geometry")
+    projection = geometry["value_projection"]
+    assert projection["partial"] is True and projection["complete"] is False
+    assert projection["omitted_bytes"] > 0
+    encoded_geometry = json.dumps(original_geometry["value"], ensure_ascii=False,
+                                  separators=(",", ":"), sort_keys=True, allow_nan=False).encode("utf-8")
+    assert projection["sha256"] == hashlib.sha256(encoded_geometry).hexdigest()
+    assert original_geometry["value"].startswith(geometry["value"])
+    restored = copy.deepcopy(view["unqualified_observation_records"])
+    for item in restored:
+        if item["name"] == "optimized_geometry":
+            item.pop("value_projection")
+            item["value"] = original_geometry["value"]
+    assert restored == data["result"]["observation_records"]
     assert "qualified_outputs" not in view and result == before
     # Prompt guidance does not retrospectively restore omitted modes, infer a
     # unit, add a limitation to historical evidence or create a scientific pass.
@@ -185,18 +201,35 @@ def test_actual_collected_observation_returns_to_same_loop_with_unverified_value
     assert "No fabricated evidence/code/paths" not in prompt
     assert run.permission.scientific_execution is False
     assert "filename:task-relative path" in wire["TASK_CODE_RULES"]
-    assert "internal_request_key" not in wire["TASK_CODE_RULES"]
+    assert "internal_request_key:SDK request_key,filename:files key" not in wire["TASK_CODE_RULES"]
+    assert "without run_orca" in wire["TASK_CODE_RULES"]
     assert "No shell/subprocess/network/host paths" in wire["TASK_CODE_RULES"]
     assert "Observations unqualified" in wire["TASK_CODE_RULES"]
     feedback = next(item for item in wire["DATA"]["results"] if item["result_id"] == result.id)
-    assert feedback["unqualified_observation_records"] == [item.model_dump(mode="json") for item in result.observation_records]
-    observed, = feedback["unqualified_observation_records"]
+    visible_records = []
+    for item in feedback["unqualified_observation_records"]:
+        if "delivery_fact_ref" in item:
+            assert set(item) == {"delivery_fact_ref", "field", "name"}
+            assert item["field"] == "observation"
+            fact = next(fact for fact in wire["DATA"]["delivery"]["facts"]
+                        if fact["ref"] == item["delivery_fact_ref"])
+            assert fact["value"]["kind"] == "evidence_observation"
+            record = fact["value"]["observation"]
+            assert record["name"] == item["name"]
+            visible_records.append(record)
+        else:
+            visible_records.append(item)
+    assert visible_records == [item.model_dump(mode="json") for item in result.observation_records]
+    observed, = visible_records
     assert observed["value"] == "observed text" and observed["validation_status"] == "unverified"
     assert observed["sources"] and observed["limitations"] and "qualified_outputs" not in feedback
 
 
-def selection_context(tmp_path, *, source=None, authorized=True, systems=(), native_only=False):
+def selection_context(tmp_path, *, source=None, authorized=True, systems=(), native_only=False, general=False):
     config = load_config(Path("config.code.example.toml"))
+    if not general:
+        from orca_agent.models import NativeInputPolicy
+        config.execution = config.execution.model_copy(update={"native_input_policy": NativeInputPolicy()})
     original = "Compute the requested property; choose a suitable method and basis from documentation."
     request = Request(original_text=original, method=None, basis=None,
         systems=list(systems),
@@ -394,6 +427,159 @@ def test_scientific_sdk_guidance_declares_current_source_and_resource_limits(tmp
     assert all(str(value) not in rules for value in (192, 1024))
 
 
+def test_managed_profile_guidance_opens_scientific_choices_and_retains_execution_authority(tmp_path):
+    request, run, prepared, wire = selection_context(tmp_path, general=True)
+    native = wire["AUTHORITY"]["native_input_contract"]
+    assert native == profile_contract(run.configuration.execution.native_input_policy)
+    assert native["profile"] == "managed-native-1"
+    assert native["admission_version"] == "native-orca-input-3"
+    assert native["scientific_validation"] == "unverified"
+    assert isinstance(native["methods"], str) and "Open explicit ORCA method label" in native["methods"]
+    assert "Open orbital basis label" in native["basis_spellings"]
+    assert "no H-Ar restriction" in native["elements"]
+    assert all(state in native["wavefunction"] for state in ("UHF", "UKS", "ROHF", "ROKS"))
+    assert all(job in native["jobs"] for job in ("independent Opt", "NumFreq", "relaxed"))
+    rules = wire["TASK_CODE_RULES"]
+    assert "method/basis/element/spin are not restricted to the historical analytic profile" in rules
+    assert "exactly one explicit RHF or RKS keyword" not in rules
+    assert "Follow AUTHORITY.native_input_contract" in rules
+    assert "AUTHORITY.execution_resources.maxcore_mb per process" in rules
+    assert "No shell/subprocess/network/host paths" in rules
+    assert "Observations unqualified" in rules and "Unknown units stay null" in rules
+    assert "orca:index.html" in rules and "manual_references" in rules
+    assert wire["AUTHORITY"]["permission"]["allowed_tools"] == run.permission.allowed_tools
+    assert prepared.input_token_bound <= run.budget.input_tokens
+    assert Store(tmp_path / "data").load_request(run) == request
+
+
+def test_managed_profile_guidance_supports_original_direct_and_imported_analysis_sources(tmp_path):
+    _, _, _, wire = selection_context(tmp_path, general=True)
+    rules = wire["TASK_CODE_RULES"]
+    assert "Compute through managed SDK or direct orca.run" in rules
+    assert "completed direct ORCA outputs through a frozen input manifest" in rules
+    assert "archived admission record and original conditions without a new ORCA call" in rules
+    assert "Analysis of authorized existing input files" in rules
+    assert "only trusted admission evidence establishes actual calculation conditions" in rules
+    assert "unknown conditions remain unknown" in rules
+    assert "explicit scientific evidence requirements still apply" in rules
+    assert "Cross-system comparisons retain each source's conditions" in rules
+    assert "bind each calculation to its requested system" in rules
+    assert "Direct ORCA outputs and registered inputs use their frozen task-relative filenames" in rules
+    assert "optimized needs an optimization output/final XYZ" in rules
+    assert "optimization final geometry=job.xyz" in rules
+    assert "completed SDK native receipt with verified original provenance" not in rules
+    assert "separate Python parsing imported stdout lacks scientific Goal condition provenance" not in rules
+    assert "Temperature/standard-state evidence remains unsupported" not in rules
+    assert "unresolved temperature/standard-state requirements remain gaps" in rules
+
+
+def test_managed_repair_prompt_combines_general_admission_sdk_sources_and_exact_edits(tmp_path, monkeypatch):
+    store, original, _ = case(tmp_path, monkeypatch)
+    request, plan = store.load_request(original), store.load_plan(original)
+    configuration = original.configuration.model_copy(update={
+        "execution": load_config(Path("config.code.example.toml")).execution,
+        "model": original.configuration.model.model_copy(update={"input_tokens": 64000})})
+    permission = original.permission.model_copy(update={"model_execution": True,
+        "scientific_execution": True, "allowed_tools": ["python.execute", "orca.run", "workspace.write"]})
+    budget = original.budget.model_copy(update={"model_calls": 4, "model_tokens": 64000,
+        "input_tokens": 64000, "output_tokens": 2000, "decision_rounds": 12, "orca_starts": 2})
+    run = store.create_run(request, plan, permission, budget, configuration=configuration)
+    _, result = settle(store, run)
+    snapshot = collect_delivery_snapshot(store, run, request, plan, [result])
+    wire = decoded(context.build_context(request, run, plan, results=[result],
+        delivery_snapshot=snapshot, feedback={"new_result_ids": [result.id]}))
+    rules = wire["TASK_CODE_RULES"]
+    assert wire["AUTHORITY"]["native_input_contract"]["profile"] == "managed-native-1"
+    assert "method/basis/element/spin are not restricted to the historical analytic profile" in rules
+    assert "from orca_task_sdk import receipt_source" in rules
+    assert "Use exact original files keys; this declares sources, not science qualification" in rules
+    assert "workspace.write with base:old CodeRef" in rules
+    assert "edits:[{old:unique exact fragment,new:replacement}]" in rules
+    assert "Nonoverlapping edits match the original file and produce a new Artifact" in rules
+    assert "repair_of:failed frozen_step.id" in rules
+    assert "Observations unqualified" in rules
+    assert run.usage.orca_starts_reserved == 0 and run.usage.model_calls == 0
+
+
+def test_managed_compact_exhausted_native_context_retains_original_analysis_sources(tmp_path, monkeypatch):
+    request, run, _, _ = selection_context(tmp_path, general=True)
+    run.usage.orca_starts_reserved = run.budget.orca_starts
+    snapshot = collect_delivery_snapshot(Store(tmp_path / "data"), run, request)
+    original_prepare = context.prepare_request
+
+    def require_tightest_projection(messages, **kwargs):
+        if "native admission details omitted" not in messages[-1]["content"]:
+            raise ValueError("conservative input token bound exceeds test initial views")
+        return original_prepare(messages, **kwargs)
+
+    monkeypatch.setattr(context, "prepare_request", require_tightest_projection)
+    before = run.model_copy(deep=True)
+    prepared = context.build_context(request, run, delivery_snapshot=snapshot)
+    wire = decoded(prepared)
+    assert wire["AUTHORITY"]["native_input_contract"]["new_start_capacity"] == 0
+    rules = wire["TASK_CODE_RULES"]
+    assert "No new starts or key changes to regain quota" in rules
+    assert "SDK sources need original filename+internal_request_key" in rules
+    assert "Direct ORCA outputs and registered inputs use frozen task-relative filenames" in rules
+    assert "original hashes and conditions remain checked" in rules
+    assert "unknown conditions remain unknown" in rules
+    assert "Scientific Goals require completed SDK provenance" not in rules
+    assert run == before
+
+
+@pytest.mark.parametrize("general", [False, True])
+def test_identity_lookup_only_preserves_condition_selection_in_managed_profile(tmp_path, general):
+    from orca_agent.models import ToolCall
+
+    request, run, _, initial_wire = selection_context(tmp_path, general=general)
+    initial_rules = initial_wire["CONDITION_SELECTION_RULES"]
+    assert ("Identity lookup may precede selection" in initial_rules) is general
+    run.calls.append(ToolCall(tool="structure.resolve", parameters={"system_id": "molecule"},
+                              state="completed", request_version=request.version))
+    snapshot = collect_delivery_snapshot(Store(tmp_path / "data"), run, request)
+    before = run.model_copy(deep=True)
+    prepared = context.build_context(request, run, delivery_snapshot=snapshot)
+    wire = decoded(prepared)
+    assert ("select_conditions" in wire["AUTHORITY"]["decision_purpose"]["allowed_actions"]) is general
+    assert ("select_conditions" in wire["ACTION_SCHEMAS"]) is general
+    if general:
+        rules = wire["CONDITION_SELECTION_RULES"]
+        assert "Choose before geometry preparation or execution" in rules
+        assert "explicit values/unknowns stay fixed" in rules
+        assert "Method/basis require official documentation" in rules
+    assert run == before
+
+
+def test_managed_native_only_context_exposes_general_contract_without_python_permission(tmp_path):
+    _, run, prepared, wire = selection_context(tmp_path, native_only=True, general=True)
+    assert "TASK_CODE_RULES" not in wire
+    assert wire["AUTHORITY"]["native_input_contract"]["profile"] == "managed-native-1"
+    assert wire["AUTHORITY"]["native_input_contract"] == profile_contract(run.configuration.execution.native_input_policy)
+    assert "python.execute" not in {tool["name"] for tool in wire["TOOLS"]}
+    assert wire["AUTHORITY"]["permission"]["code_execution"] is False
+    assert prepared.input_token_bound <= run.budget.input_tokens
+
+
+def test_native_only_exhausted_compaction_preserves_authority_without_python_rules(tmp_path, monkeypatch):
+    request, run, _, _ = selection_context(tmp_path, native_only=True, general=True)
+    run.usage.orca_starts_reserved = run.budget.orca_starts
+    snapshot = collect_delivery_snapshot(Store(tmp_path / "data"), run, request)
+    original_prepare = context.prepare_request
+
+    def require_exhausted_projection(messages, **kwargs):
+        if '"new_start_capacity":0' not in messages[-1]["content"]:
+            raise ValueError("conservative input token bound exceeds test initial views")
+        return original_prepare(messages, **kwargs)
+
+    monkeypatch.setattr(context, "prepare_request", require_exhausted_projection)
+    before = run.model_copy(deep=True)
+    wire = decoded(context.build_context(request, run, delivery_snapshot=snapshot))
+    assert wire["AUTHORITY"]["native_input_contract"]["new_start_capacity"] == 0
+    assert "TASK_CODE_RULES" not in wire
+    assert wire["AUTHORITY"]["permission"]["code_execution"] is False
+    assert run == before
+
+
 @pytest.mark.parametrize("permission", [False, True])
 def test_python_without_native_authorization_does_not_advertise_sdk_execution(tmp_path, monkeypatch, permission):
     store, original, _ = case(tmp_path, monkeypatch)
@@ -401,7 +587,9 @@ def test_python_without_native_authorization_does_not_advertise_sdk_execution(tm
     run = store.create_run(request, plan, original.permission.model_copy(update={
         "model_execution": True, "scientific_execution": permission}),
         original.budget.model_copy(update={"model_calls": 4, "model_tokens": 48000,
-            "input_tokens": 12000, "output_tokens": 2000, "decision_rounds": 12}))
+            "input_tokens": 64000, "output_tokens": 2000, "decision_rounds": 12}),
+        configuration=original.configuration.model_copy(update={"model":
+            original.configuration.model.model_copy(update={"input_tokens": 64000})}))
     snapshot = collect_delivery_snapshot(store, run, request, plan)
     prepared = context.build_context(request, run, plan, delivery_snapshot=snapshot)
     rules = decoded(prepared)["TASK_CODE_RULES"]
@@ -413,7 +601,7 @@ def test_python_without_native_authorization_does_not_advertise_sdk_execution(tm
         assert "File tasks need no ORCA." in rules
     assert "run_orca(" not in rules and "%maxcore" not in rules
     assert "orca.run" not in run.permission.allowed_tools
-    assert prepared.input_token_bound <= 12000
+    assert prepared.input_token_bound <= run.budget.input_tokens == run.configuration.model.input_tokens == 64000
 
 
 @pytest.mark.parametrize("source,authorized", [("unknown", True), (None, False)])
@@ -427,7 +615,7 @@ def test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_hist
     request, run = objects()
     prepared = context.build_context(request, run)
     wire = decoded(prepared)
-    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v70"
+    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v73"
     assert {"agent-json-v22", "agent-json-v34", "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41", "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47"} <= DECISION_CONTRACT_PROMPT_VERSIONS
     assert "TASK_CODE_RULES" not in wire and "native_input_contract" not in wire["AUTHORITY"]
     assert run.permission.code_execution is False
@@ -438,7 +626,9 @@ def test_context_code_allowance_counts_historical_attempts_without_rewriting_usa
     request, plan = store.load_request(original), store.load_plan(original)
     run = store.create_run(request, plan, original.permission.model_copy(update={"model_execution": True}),
         original.budget.model_copy(update={"model_calls": 4, "model_tokens": 48000,
-            "input_tokens": 12000, "output_tokens": 2000, "decision_rounds": 12}))
+            "input_tokens": 64000, "output_tokens": 2000, "decision_rounds": 12}),
+        configuration=original.configuration.model_copy(update={"model":
+            original.configuration.model.model_copy(update={"input_tokens": 64000})}))
     for step in plan.steps:
         attempt = store.reserve_attempt(run, step)
         store.finish_attempt(run, attempt.id, state="failed", started=False, termination_confirmed=True)

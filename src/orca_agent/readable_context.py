@@ -51,8 +51,8 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
     if not semantic_intake:
         evidence = request.pop("condition_evidence", {})
         if evidence:
-            request["condition_evidence_ref"] = {
-                "source": "immutable Request.condition_evidence", "sha256": fingerprint(evidence)}
+            request.setdefault("condition_evidence_ref", {
+                "source": "immutable Request.condition_evidence", "sha256": fingerprint(evidence)})
         request.pop("semantic_defaults", None)
     actions = authority["decision_purpose"]["allowed_actions"]
     read_available = (authority["cumulative_usage"].get("evidence_reads", 0)

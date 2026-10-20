@@ -56,9 +56,8 @@ class ResolveParameters(Record):
 
 class PrepareParameters(Record):
     system_id: Identifier
-    # The currently enabled preparation capability supports neutral singlets
-    # only. Preflight still requires these values to match confirmed Request
-    # conditions; defaults never resolve an unknown user charge or spin.
+    # Preflight requires explicit values to match confirmed Request conditions;
+    # defaults never resolve an unknown user charge or spin.
     charge: ElectronicInteger = 0
     multiplicity: Annotated[ElectronicInteger, Field(ge=1)] = 1
 
@@ -199,24 +198,29 @@ def validate_call_inputs(store, run, parameters, tool, consumption=None):
     request, system, canonical, evidence = _requirement(store, run, params.system_id)
     if tool == "structure.prepare":
         from orca_agent.applicability import effective_conditions
+        from orca_agent.condition_selection import general_admission_enabled
         if run.permission.max_cores < PREPARE_CORES or run.permission.max_memory_mb < PREPARE_MEMORY_MB:
             raise ValueError("preparation resources exceed the frozen permission snapshot")
         conditions = effective_conditions(request, system_id=system.id)
-        if (params.charge != 0 or params.multiplicity != 1
+        general = general_admission_enabled(store, run)
+        if ((not general and (params.charge != 0 or params.multiplicity != 1))
                 or conditions["conditions"].get("charge") != params.charge
                 or conditions["conditions"].get("multiplicity") != params.multiplicity
                 or any("charge" in reason or "multiplicity" in reason
                        for reason in conditions["reasons"])):
-            raise ValueError("preparation requires confirmed neutral singlet conditions matching its parameters")
+            raise ValueError("preparation requires confirmed charge and multiplicity matching its parameters and frozen admission profile")
         if system.identity.get("ambiguities"):
             raise ValueError("initial geometry cannot silently resolve the frozen identity ambiguities")
-        _bound_identity(store, run, consumption or {}, canonical)
+        document, _ = _bound_identity(store, run, consumption or {}, canonical)
+        if general:
+            _validate_preparation_state(document, params)
     return {"canonical_name": canonical, "system_id": system.id, "text_evidence": evidence,
             "general_identity": system.identity.get("contract") == "general-identity-2",
             "requested_identity": system.identity}
 
 
 def _bound_identity(store, run, consumption, canonical):
+    from orca_agent.condition_selection import general_admission_enabled
     binding = consumption.get("identity", {})
     if binding.get("port") != "resolved_identity" or binding.get("status") != "qualified":
         raise ValueError("preparation requires the qualified resolved_identity input")
@@ -239,17 +243,33 @@ def _bound_identity(store, run, consumption, canonical):
     if binding.get("artifact_hashes", {}).get(artifact.id) != artifact.sha256:
         raise ValueError("identity input Artifact changed after reservation")
     document = _read_json(path, MAX_GEOMETRY_BYTES)
+    general = general_admission_enabled(store, run)
     if (document.get("schema") != rule or document.get("canonical_name") != canonical
-            or document.get("charge") != 0):
+            or not general and document.get("charge") != 0):
         raise ValueError("identity snapshot conflicts with current requested identity")
     graph = _general_graph(document.get("smiles")) if rule == GENERAL_IDENTITY_RULE else None
-    if graph and (graph["radical_electrons"] or graph["stereochemistry"]):
-        raise ValueError("current initial-geometry guarantee excludes radicals and stereochemical centers/bonds")
+    if graph:
+        if graph["unspecified_stereochemistry"]:
+            raise ValueError("initial geometry cannot silently choose unspecified stereochemistry")
+        if not general and (graph["radical_electrons"] or graph["stereochemistry"]):
+            raise ValueError("historical initial-geometry profile excludes radicals and stereochemical centers/bonds")
+        if document.get("graph") != graph or document.get("charge") != graph["formal_charge"]:
+            raise ValueError("identity snapshot differs from its complete graph or formal charge")
     if rule == GENERAL_IDENTITY_RULE and document.get("alias_verified") is not True:
         raise ValueError("lookup alias lacks independently retrieved PubChem name evidence")
     if document.get("elements") != (graph["elements"] if graph else _validate_smiles(document.get("smiles"), canonical)):
         raise ValueError("identity atom mapping differs from its complete graph")
     return document, artifact
+
+
+def _validate_preparation_state(document, params):
+    from rdkit import Chem
+    if document.get("charge") != params.charge:
+        raise ValueError("preparation charge differs from the resolved molecular identity")
+    electrons = sum(Chem.GetPeriodicTable().GetAtomicNumber(element)
+                    for element in document["elements"]) - params.charge
+    if electrons < 0 or params.multiplicity > electrons + 1 or (electrons - params.multiplicity + 1) % 2:
+        raise ValueError("confirmed multiplicity is inconsistent with the electron count; spin is not inferred")
 
 
 def _versions():
@@ -613,7 +633,41 @@ def resolve(store, run, call):
         return _finish(store, run, call, failure)
 
 
-def validate_prepared_geometry(xyz, canonical, expected_elements, *, graph=None):
+def _validate_coordinate_stereochemistry(atoms, smiles):
+    """Check specified tetrahedral/double-bond labels against emitted coordinates."""
+    from rdkit import Chem
+
+    molecule = Chem.AddHs(Chem.MolFromSmiles(smiles))
+    Chem.AssignStereochemistry(molecule, cleanIt=True, force=True)
+    expected_atoms = {atom.GetIdx(): atom.GetProp("_CIPCode") for atom in molecule.GetAtoms()
+                      if atom.HasProp("_CIPCode")}
+    expected_bonds = {bond.GetIdx(): bond.GetStereo() for bond in molecule.GetBonds()
+                      if bond.GetStereo() in {Chem.BondStereo.STEREOE, Chem.BondStereo.STEREOZ}}
+    if len(molecule.GetAtoms()) != len(atoms):
+        raise ValueError("stereochemistry reference atom mapping differs")
+    generated = Chem.Mol(molecule)
+    Chem.RemoveStereochemistry(generated)
+    conformer = Chem.Conformer(len(atoms))
+    conformer.Set3D(True)
+    for index, atom in enumerate(atoms):
+        conformer.SetAtomPosition(index, atom[1:])
+    generated.AddConformer(conformer)
+    Chem.AssignStereochemistryFrom3D(generated)
+    Chem.AssignStereochemistry(generated, cleanIt=True, force=True)
+    if (any(not generated.GetAtomWithIdx(index).HasProp("_CIPCode")
+            or generated.GetAtomWithIdx(index).GetProp("_CIPCode") != expected
+            for index, expected in expected_atoms.items())
+            or any(generated.GetBondWithIdx(index).GetStereo() != expected
+                   for index, expected in expected_bonds.items())):
+        raise ValueError("generated coordinates differ from the specified stereochemistry")
+    # Exotic stereo types must not acquire a guarantee from the checks above.
+    supported = {Chem.StereoType.Atom_Tetrahedral, Chem.StereoType.Bond_Double}
+    if any(item.type not in supported for item in Chem.FindPotentialStereo(molecule)):
+        raise ValueError("coordinate stereochemistry checker does not cover this RDKit stereo type")
+    return {"tetrahedral_centers": len(expected_atoms), "double_bonds": len(expected_bonds)}
+
+
+def validate_prepared_geometry(xyz, canonical, expected_elements, *, graph=None, smiles=None):
     from orca_agent.models import CalculationParameters
     from orca_agent.tools.registry import validate_geometry
     if len(xyz.encode("utf-8")) > MAX_GEOMETRY_BYTES:
@@ -645,7 +699,11 @@ def validate_prepared_geometry(xyz, canonical, expected_elements, *, graph=None)
                 raise ValueError("generated geometry has a graph bond outside bounded covalent distances")
         if any(math.dist(atom[1:], other[1:]) < 0.4 for index, atom in enumerate(atoms) for other in atoms[:index]):
             raise ValueError("generated geometry has an abnormal short distance")
+        stereo = {}
+        if smiles is not None and graph["stereochemistry"]:
+            stereo = _validate_coordinate_stereochemistry(atoms, smiles)
         return {"elements": expected_elements, "atom_mapping": list(range(len(atoms))), "unit": "angstrom",
+                **({"stereochemistry_checked": stereo, "isotopes": graph["isotopes"]} if smiles is not None else {}),
                 "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified"}
     atoms = validate_geometry(xyz, CalculationParameters())
     if [atom[0] for atom in atoms] != expected_elements:
@@ -665,11 +723,13 @@ def validate_prepared_geometry(xyz, canonical, expected_elements, *, graph=None)
 def _generate(store, run, call, document, params):
     """One bounded managed process; no model-provided code or executable path."""
     from orca_agent.backends.local import new_job_name, run_managed
+    from orca_agent.condition_selection import general_admission_enabled
     directory = _call_directory(store, run, call)
     worker_input = directory / "worker-input.json"
     _publish(worker_input, _json_bytes({"smiles": document["smiles"], "canonical_name": document["canonical_name"],
                                       "charge": params.charge, "multiplicity": params.multiplicity,
-                                      "identity_rule": document["schema"]}))
+                                      "identity_rule": document["schema"],
+                                      "general_admission": general_admission_enabled(store, run)}))
     environment = {key: value for key, value in os.environ.items()
                    if key.upper() in {"SYSTEMROOT", "WINDIR", "TEMP", "TMP", "PATH"}}
     environment.update(OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1")
@@ -713,6 +773,7 @@ def _generate(store, run, call, document, params):
 
 
 def prepare(store, run, call):
+    from orca_agent.condition_selection import general_admission_enabled
     requirement = validate_call_inputs(store, run, call.parameters, call.tool, call.consumption)
     if recovered := _begin(store, run, call):
         return recovered
@@ -723,6 +784,7 @@ def prepare(store, run, call):
               "charge": params.charge, "multiplicity": params.multiplicity,
               "generator": "opi.Structure.from_smiles", "random_seed": None,
               "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+              "admission_profile": "managed-native-1" if general_admission_enabled(store, run) else "historical",
               "timeout_seconds": min(PREPARE_TIMEOUT_SECONDS,
                   store.run_configuration(run).resources.script_timeout_seconds)}
     artifacts = []
@@ -763,7 +825,8 @@ def prepare(store, run, call):
         if worker.get("versions") != source["versions"]:
             raise ValueError("worker dependency versions differ")
         geometry = validate_prepared_geometry(xyz, requirement["canonical_name"], document["elements"],
-                                             graph=document.get("graph"))
+                                             graph=document.get("graph"),
+                                             smiles=document["smiles"] if general_admission_enabled(store, run) else None)
         source.update(**geometry, sha256=artifact.sha256)
         rule = GENERAL_PREPARATION_RULE if requirement["general_identity"] else PREPARATION_RULE
         check = {"name": "initial_geometry_identity", "status": "passed", "rule_version": rule,
@@ -783,11 +846,16 @@ def prepare(store, run, call):
 def _worker(path):
     data = _read_json(Path(path), 4096)
     params = PrepareParameters(system_id="worker", charge=data["charge"], multiplicity=data["multiplicity"])
-    if params.charge != 0 or params.multiplicity != 1:
+    if not data.get("general_admission") and (params.charge != 0 or params.multiplicity != 1):
         raise ValueError("worker requires neutral singlet")
     versions = _versions()
     graph = _general_graph(data["smiles"]) if data.get("identity_rule") == GENERAL_IDENTITY_RULE else None
     elements = graph["elements"] if graph else _validate_smiles(data["smiles"], data["canonical_name"])
+    if graph:
+        if graph["unspecified_stereochemistry"]:
+            raise ValueError("initial geometry cannot silently choose unspecified stereochemistry")
+        if data.get("general_admission"):
+            _validate_preparation_state({"charge": graph["formal_charge"], "elements": elements}, params)
     from opi.input.structures import Structure
     structure = Structure.from_smiles(data["smiles"], charge=params.charge, multiplicity=params.multiplicity)
     xyz = structure.to_xyz_block()
@@ -798,7 +866,8 @@ def _worker(path):
     # Retain bounded raw generation evidence even when validation rejects it.
     # Only successful validation publishes the worker receipt used for input qualification.
     _publish(directory / "prepared.xyz", raw)
-    validate_prepared_geometry(xyz, data["canonical_name"], elements, graph=graph)
+    validate_prepared_geometry(xyz, data["canonical_name"], elements, graph=graph,
+                               smiles=data["smiles"] if data.get("general_admission") else None)
     _publish(directory / "worker-result.json", _json_bytes({"sha256": hashlib.sha256(raw).hexdigest(),
                                                            "versions": versions}))
 

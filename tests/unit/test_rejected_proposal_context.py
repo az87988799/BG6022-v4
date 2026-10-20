@@ -167,9 +167,16 @@ def test_large_code_correction_fits_historical_12k_without_losing_authority_or_e
 
 def test_real_offline_decision_third_call_receives_only_second_rejected_candidate(tmp_path):
     store, original, artifact = make_run(tmp_path, two_goals=True)
+    historical = store.path(f"runs/{original.id}/run.json")
+    before = historical.read_bytes()
+    # This checks correction provenance, not the old 12k fixture's capacity.
+    # Freeze sufficient capacity on a new Run; do not enlarge the original.
     run = store.create_run(store.load_request(original), None,
         original.permission.model_copy(update={"code_execution": True}),
-        original.budget.model_copy(update={"corrections_per_proposal": 2}), configuration=original.configuration)
+        original.budget.model_copy(update={"corrections_per_proposal": 2,
+            "input_tokens": 64000, "model_tokens": 1200000}),
+        configuration=original.configuration.model_copy(update={"model":
+            original.configuration.model.model_copy(update={"input_tokens": 64000})}))
     first = {"action": "initial_plan", "parameters": {"steps": [{"key": "read_a", "tool": "evidence.value",
         "parameters": {"artifact_id": artifact.id, "path": [{"kind": "key", "key": "a"}]}}],
         "goal_map": {"a": {"step_key": "read_a", "port": "value_observation"}}}}
@@ -191,6 +198,7 @@ def test_real_offline_decision_third_call_receives_only_second_rejected_candidat
     assert not updated.calls and not updated.attempts and updated.usage.orca_starts_actual == 0
     assert [item.get("action") for item in updated.decisions[:2]] == ["rejected", "rejected"]
     assert updated.decisions[-1]["id"] == transport.tickets[2]
+    assert historical.read_bytes() == before
 
 
 def test_rejected_candidate_survives_restart_without_resetting_correction_budget(tmp_path, monkeypatch):

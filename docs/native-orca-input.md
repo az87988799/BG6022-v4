@@ -1,6 +1,23 @@
 # 本地原生 ORCA 输入的已实现边界
 
-此文分别记录历史 `native-orca-input-1` 与显式配置 `bounded-analytic-1` 后使用的 `native-orca-input-2`。准入不等于科学检查通过；运行仍必须经过统一执行入口、固定资源与预算、实际操作系统隔离和原始证据归档。以下首先保留版本 1 的范围；新版本见后文。
+当前 Code as Tools 示例配置使用 `managed-native-1` / `native-orca-input-3`。以下先说明当前策略，再保留版本 1/2 的历史契约。准入不等于科学检查通过；所有路径共用执行入口、冻结资源与预算、操作系统隔离和原始证据归档。决定见 [0050](decisions/0050-code-as-tools-general-admission.md)。
+
+## 当前：通用受管输入（版本 3）
+
+新建 Run 使用 [config.code.example.toml](../config.code.example.toml) 的 `execution.native_input_policy.profile = "managed-native-1"`。方法和轨道基组为明确标签，不再按首个用例白名单准入；XYZ 不再限 H–Ar，不再要求气相或 RHF/RKS 单重态。显式电子态包括 RHF、RKS、UHF、UKS、ROHF、ROKS、AnySCF；输入与 Request/Step 的方法、基组、电荷、多重度、态和环境必须一致。`*-3c` 可声明 `basis = "built-in"`。ORCA 决定科学关键词是否有效；所有修饰符均保留，`actual_conditions` 只说明准入输入的明确选择，不冒充独立输出核验。
+
+受管作业结构包括 SP、独立 Opt、Freq/AnFreq、NumFreq、Opt+Freq、有限松弛 Scan、TDDFT/CIS 响应。支持科学块内标量参数及受管几何 Constraints/Scan；CPCM/SMD 的溶剂或介电常数明确比较。迭代、扫描点、数值差分及响应根计入声明工作单位；它是保守任务槽位，不是实测 SCF/能量求值次数。配置中的原子数、迭代上限可修改并在新 Run 冻结，不再强制旧 32 原子上限。示例为 1024 原子，实际仍受 XYZ 字节、资源、时限和预算限制。
+
+执行边界仍要求固定依赖清单的 `xyzfile`、`NoAutoStart`、显式 MaxCore 和 SCF MaxIter/AutoTRAH false，优化及响应另有相应有限控制。未建立契约的外部程序、多作业/隐藏循环、重启文件、任意文件路径与控制嵌套明确拒绝。自定义基组文件、任意 ORCA 嵌套语法、全部 ORCA 复合工作流并未因此获得支持；不能把开放科学标签宣称为全部 ORCA 请求保证。完整模型可见契约由 [native_managed.py](../src/orca_agent/orca/native_managed.py) 的同一规则生成。
+
+结构准备允许身份已确认且状态一致的离子、自由基和已指定立体结构，实际 OPI/RDKit 依赖失败如实保留。已完成的身份查询可以先于方法选择，之后复用经重新验证的原身份绑定；不得改写原 Call/Result 或复用已准备几何。条件选择保留授权、官方原文/hash及理由，取消“所选名称必须逐字出现在摘录中”的门槛。资料查询可用 `orca:index.html` 和返回的 `orca:contents/...html` 引用读取固定 ORCA 6.1 官方手册，仍一次有界 GET、禁止重定向和域外链接。
+
+通用观察逐来源记录条件，允许不同体系/条件的派生比较及独立阶段。冻结输入文件或既有直接 ORCA 原始输出可以供新的 Python 分析，不强迫为分析再次启动 ORCA。明确条件不匹配、未知但必需的条件、来源篡改、缺失体系证据和最低科学检查要求仍产生缺口；观察不自动成为 QualifiedOutput。
+
+已冻结的无策略 Run 和 `bounded-analytic-1` Run 继续使用原序列化、准入及结果事实，不自动升级。真实证据、失败与未验证项见 [本轮报告](acceptance/code-as-tools-general-admission/report.md)。
+
+## 历史：版本 1
+
 
 原生输入以不可变 Artifact 引用与 SHA-256 绑定。适配器在复制前校验原始输入和全部依赖的准确字节，保存为独立尝试中的 `job.inp`、依赖文件和 `input-manifest.json`。已存在的尝试输入不可覆盖，源文件不可为符号链接、重解析点或硬链接；已有工作目录仅允许协调者预先保存的 `intent.json`。输入上限为 1 MiB；全部依赖合计不超过 10 MiB，最多 32 项。
 

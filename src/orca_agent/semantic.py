@@ -204,7 +204,7 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
         "New target identities: exact name/text_basis/message_id; key binds system_refs. query_name stays inferred until source-checked. "
         "General quantity quotes user; verification=reported_with_limitations unless user requires qualified evidence. "
         "automatic_selection[field]={text_basis,message_id}: explicit authorization only, not unknown. "
-        "Retrieve sources -> select_conditions -> resolve/prepare. Never infer spin from parity. "
+        "Retrieve sources -> select_conditions before geometry preparation/execution; identity queries may precede selection when the frozen profile permits. Never infer spin from parity. "
         "resolves=answered field:<field>/system:<goal_id>; question_gaps=questions to gaps.",
         "notice_contract_version": NOTICE_CONTRACT_VERSION,
         "notice_choices": notice_choices(),
@@ -278,7 +278,7 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
             "Preserve every requested quantity and genuine ambiguity. Do not declare a molecule unsupported from the legacy_qualified_scope. "
             "If the user delegates a condition choice, put its exact authorization in automatic_selection[field]={text_basis,message_id}, "
             "omit that field from conditions, and do not mark it unknown/inferred or add a pending-source gap. "
-            "Then knowledge.search -> select_conditions -> structure.resolve/prepare. These are available actions, not missing user answers. "
+            "Then knowledge.search -> select_conditions before structure.prepare/execution; identity queries may precede selection when the frozen profile permits. These are available actions, not missing user answers. "
             "When Request.conditions.explain_results=true, final delivery already explains actual conditions and verification; "
             "do not create another knowledge_answer Goal for that delivery requirement. knowledge_answer is for independent knowledge questions. "
             "identities[].name is exact user text; key binds system_refs; query_name is an inferred lookup alias until source-checked. "

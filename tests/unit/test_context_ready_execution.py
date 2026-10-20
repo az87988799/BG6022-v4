@@ -7,6 +7,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
+from test_decision_purpose_capacity import decoded
 from test_general_input_goals_live004 import completed_input_chain
 from test_plan_goal_binding_contract import matches
 
@@ -198,9 +199,12 @@ def test_retained_live009_projection_records_both_completed_steps_without_rewrit
     prepared = build_context(request, run, plan, results=results, delivery_snapshot=snapshot,
         feedback={"pending_step_ids": [], "new_result_ids": [run.calls[-1].result_id]},
         now=run.created_at + timedelta(seconds=60))
-    wire = json.loads(prepared.body()["messages"][1]["content"])
+    # This retained context uses the public key/string-pool projection. Decode
+    # only its transmitted bytes; shared "completed" is not an unknown state.
+    wire = decoded(prepared)
     assert wire["CONTROL"]["pending_step_ids"] == []
     assert set(wire["AUTHORITY"]["step_execution"]) == {step.id for step in plan.steps}
+    assert wire["AUTHORITY"]["step_execution"] == _recorded_step_execution(plan, run)
     assert all(entry["state"] == "completed" for entries in wire["AUTHORITY"]["step_execution"].values()
                for entry in entries)
     assert "call_tool" not in wire["ACTION_SCHEMAS"]

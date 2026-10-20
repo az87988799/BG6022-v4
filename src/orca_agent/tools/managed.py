@@ -52,8 +52,11 @@ def native_input_binding(store, run, step):
     from orca_agent.input_bindings import prepared_geometry
     from orca_agent.orca.native_profile import canonical_native_condition
 
-    if store.run_configuration(run).execution.native_input_policy is None:
+    policy = store.run_configuration(run).execution.native_input_policy
+    if policy is None:
         return None
+    def canonical(name, value):
+        return canonical_native_condition(name, value, policy=policy)
     request, plan = store.load_request(run), store.load_plan(run)
     if step not in plan.steps:
         raise ValueError("native input binding requires the current frozen Step")
@@ -64,18 +67,18 @@ def native_input_binding(store, run, step):
     assessment = effective_conditions(request, system_id=system_id)
     if assessment["reasons"]:
         raise ValueError("native conditions unresolved: " + ",".join(assessment["reasons"]))
-    conditions = {name: canonical_native_condition(name, value)
+    conditions = {name: canonical(name, value)
                   for name, value in assessment["conditions"].items()}
     if any(value is None for value in conditions.values()):
         raise ValueError("current Request condition is unsupported by the frozen native execution profile")
     for name, value in step.parameters.conditions.items():
-        if name in CONDITION_FIELDS and canonical_native_condition(name, value) != conditions[name]:
+        if name in CONDITION_FIELDS and canonical(name, value) != conditions[name]:
             raise ValueError("Step condition conflicts with current Request: " + name)
     for goal in request.goals:
         target = plan.goal_map.get(goal.id)
         if (target and target.step_id == step.id) or system_id in goal.system_ids:
             for name, value in goal.conditions.items():
-                if name in CONDITION_FIELDS and canonical_native_condition(name, value) != conditions[name]:
+                if name in CONDITION_FIELDS and canonical(name, value) != conditions[name]:
                     raise ValueError("Goal condition conflicts with native execution: " + name)
     if system and system.geometry_source == "prepare":
         geometry_id = prepared_geometry(store, run, request, system_id)
