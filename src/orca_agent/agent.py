@@ -17,6 +17,7 @@ from orca_agent.decision_purpose import (
 from orca_agent.llm import DeepSeekTransport, proposal_recovery_kind
 from orca_agent.model_usage import current_basis, send_model
 from orca_agent.models import EvidenceRef, Proposal, fingerprint, utc_now
+from orca_agent.planning import InvalidPythonTask
 from orca_agent.proposals import (
     call_tool_instruction,
     call_tool_parameter_shapes,
@@ -992,7 +993,7 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     from orca_agent.file_references import FileReferenceError
                     try:
                         result, outcome = _science(store, config, run, step, results, batch, fault)
-                    except (FileReferenceError, UnchangedFailedInput) as exc:
+                    except (FileReferenceError, UnchangedFailedInput, InvalidPythonTask) as exc:
                         _record_admission_error(store, run, step, decision_id, exc, before)
                         force_redecision = True
                         continue

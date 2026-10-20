@@ -6,6 +6,7 @@ success. The caller authenticates user message IDs against the control record.
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import re
 
@@ -28,6 +29,10 @@ class PlanningError(ValueError):
     def __init__(self, message, *, detail=None):
         super().__init__(message)
         self.detail = detail
+
+
+class InvalidPythonTask(PlanningError):
+    """Known source rejection before a managed task can reserve execution."""
 
 
 def settled_step_snapshots(store, run):
@@ -145,6 +150,45 @@ def _concrete_reference(reference: EvidenceRef, run: Run) -> None:
                  "concrete Artifact is outside the permission snapshot")
 
 
+def _validate_python_task_content(store, run, step, *, plan=None, allow_pending=False):
+    """Reject only empty task programs under the Run's explicit frozen policy."""
+    if (run is None or run.configuration is None
+            or run.configuration.task_code_policy != "nonempty-python-1"
+            or "execute_python" not in get_tool(step.tool).effects):
+        return
+    from orca_agent.orca.native import read_pinned_input
+    from orca_agent.task_sdk import MAX_REQUEST_BYTES
+
+    code = step.parameters.code
+    if isinstance(code, CodeRef):
+        raw = read_pinned_input(store.artifact_path(code.artifact_id), code.sha256, limit=MAX_REQUEST_BYTES)
+    elif allow_pending and isinstance(code, ProducerFileRef):
+        plan = plan if plan is not None else store.load_plan(run)
+        producer = next((item for item in plan.steps if item.id == code.producer_step_id), None) if plan else None
+        if producer is None or not get_tool(producer.tool).check_contract.get("code_authoring"):
+            return  # Unknown future bytes remain deferred; consumption checks the concrete file.
+        from orca_agent.tools.workspace import _content
+        raw = _content(store, run, producer.parameters).encode("utf-8")
+    else:
+        return
+    position = next((i for i, item in enumerate(plan.steps) if item.id == step.id), None) if plan else None
+    path = (["parameters", "steps", position, "parameters", "code"] if position is not None
+            else ["parameters", "code"])
+    try:
+        module = ast.parse(raw, filename="<task>", mode="exec")
+    except (SyntaxError, ValueError, RecursionError) as exc:
+        raise InvalidPythonTask("Python task code has invalid syntax; correct the source before execution.", detail={
+            "code": "invalid_python_task", "path": path, "step_id": step.id,
+            "line": getattr(exc, "lineno", None), "column": getattr(exc, "offset", None),
+            "requirement": "Supply valid Python task code; no source bytes were executed or rewritten."}) from None
+    if not any(not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)
+                    and isinstance(node.value.value, str)) for node in module.body):
+        raise InvalidPythonTask("Python task code is empty or contains only comments/docstrings.", detail={
+            "code": "empty_python_task", "path": path, "step_id": step.id,
+            "requirement": "Write the complete authorized task implementation before executing it. "
+                "A statement is not proof of scientific correctness; original source and Goal checks still apply."})
+
+
 def validate_code_inputs(store, permission, step, *, run=None, request=None, plan=None,
                          allow_future_geometry=False):
     """Verify pinned task files at consumption; a declaration cannot expand access."""
@@ -167,6 +211,7 @@ def validate_code_inputs(store, permission, step, *, run=None, request=None, pla
         store.artifact_path(reference.artifact_id)
         artifact = store.load_artifact(reference.artifact_id)
         _require(artifact.sha256 == reference.sha256, "task input hash differs from pinned Artifact")
+    _validate_python_task_content(store, run, step, plan=plan, allow_pending=allow_future_geometry)
     if (run is not None and getattr(step.parameters, "sdk_orca", None) is True
             and not any(attempt.step_id == step.id for attempt in run.attempts)):
         from orca_agent.tools.managed import validate_sdk_orca_preconditions

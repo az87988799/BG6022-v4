@@ -66,7 +66,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v86"
+PROMPT_VERSION = "agent-json-v87"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -2143,7 +2143,7 @@ def _immediate_tool_names(catalog, run):
             or tool.get("check_contract", {}).get("immediate")]
 
 
-def _code_authoring_example(run, catalog, action):
+def _code_authoring_contract(run, catalog):
     if (not _simplified_workflow(run) or not run.permission.code_execution
             or not run.permission.artifact_writes or run.usage.analysis_executions >= run.budget.analysis_executions):
         return None
@@ -2152,13 +2152,15 @@ def _code_authoring_example(run, catalog, action):
                      and tool.get("check_contract", {}).get("generic_observations")), None)
     if not writer or not consumer:
         return None
-    return {"action": action, "reason": "Author code and bind its immutable file; replace the placeholder with authorized analysis.",
-        "parameters": {"steps": [
-            {"key": "write_code", "tool": writer["name"], "parameters": {
-                "name": "task.py", "role": "python", "content": "# Replace with authorized analysis code.\n"}},
-            {"key": "analyze", "tool": consumer["name"], "parameters": {
-                "code": {"producer_key": "write_code", "port": "written_artifact"},
-                "sdk_orca": False, "observation_names": []}}], "goal_map": {}}}
+    return {"meaning": "Field map only, not a runnable Plan or task implementation.",
+        "writer": {"tool": writer["name"], "fields": {
+            "parameters.name": "chosen basename", "parameters.role": "python",
+            "parameters.content": "complete authorized task code, not a placeholder/comment-only script"}},
+        "consumer": {"tool": consumer["name"], "fields": {
+            "parameters.code": "producer_key=writer Step.key, port=written_artifact",
+            "parameters.sdk_orca": "explicit true for managed ORCA, false for analysis only",
+            "parameters.observation_names": "the output names this code actually emits"}},
+        "goal_routes": "Bind each chosen producer to unchanged Goal ports; unplanned work remains a gap."}
 
 
 def _action_examples(request, run, plan, catalog, final_only, control):
@@ -2235,9 +2237,9 @@ def _action_examples(request, run, plan, catalog, final_only, control):
         examples.pop("initial_plan", None)
         references = {}
     for action in ("initial_plan", "revise_plan"):
-        if action in examples and (authoring := _code_authoring_example(run, catalog, action)):
-            examples[action] = {}  # The complete envelope replaces the old placeholder Plan.
-            references["code_authoring_example"] = authoring
+        if action in examples and (authoring := _code_authoring_contract(run, catalog)):
+            examples[action] = {}  # The schema and field map contain no executable placeholder.
+            references["code_authoring_contract"] = authoring
     return examples, references
 
 
@@ -3610,10 +3612,10 @@ def build_context(
         if _simplified_workflow(run):
             template["PLAN_RULES"] = template["PLAN_RULES"].replace(
                 "map required Goal.port/gap", "bind pending Goal producers; verified settled Goal evidence is retained")
-            if "code_authoring_example" in references:
+            if "code_authoring_contract" in references:
                 template["PLAN_RULES"] = (
                     "Unique keys; unchanged Goal ports. Completed definitions retained; frozen edits/unknown refs rejected. "
-                    "Bind pending outputs or use verified settled evidence. Example emits no observations or scientific result.")
+                    "Bind pending outputs or use verified settled evidence. Write complete task code; field maps are not implementations.")
                 template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
                     "Plan writers and consumers together. code/input accepts {producer_key,port:'written_artifact'}; "
                     "manifest entries use producer_key with port:'written_artifact'/'prepared_geometry' or file_key:<exact filename>, "
@@ -3621,7 +3623,7 @@ def build_context(
                     "Unknown filename: execute producer first, inspect Result.source.files, then add analysis; pending Goals may be gaps. "
                     "Never guess filenames from ports or relabel execution collections as written_artifact. "
                     "The program adds dependencies and binds actual Artifact identity/hash before execution. ",
-                    "Use PLAN_REFERENCES.code_authoring_example. Manifest entries require target_path/purpose; "
+                    "Use PLAN_REFERENCES.code_authoring_contract and current Tool schemas. Manifest entries require target_path/purpose; "
                     "port only written_artifact/prepared_geometry. Raw execution files use exact file_key, "
                     "not port:artifacts/observations (collections). "
                     "Unknown filename: execute producer, inspect Result.source.files, then add analysis; pending Goals may be gaps. "

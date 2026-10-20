@@ -10,7 +10,7 @@ import unicodedata
 from copy import deepcopy
 from typing import Any, Literal, get_args
 
-from pydantic import Field, ValidationError
+from pydantic import Field, TypeAdapter, ValidationError
 
 from orca_agent.applicability import (
     PROFILE,
@@ -335,7 +335,7 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
         current["source_reference_rules"] = (
             "Goals, explicit conditions and automatic_selection authorization may supply source_refs instead of "
             "recopying text_basis/message_id. References name authenticated user fragments; the program retains "
-            "the exact source and any intervening text. Keep quantity as the user's physical quantity phrase. "
+            "the exact source and any intervening text. Quantity labels do not authorize physical claims. "
             "A reference does not prove an arbitrary field value. Exact text_basis remains accepted, including "
             "a shorter quote contained in the referenced source. A Goal's exact quantity can supply an omitted quote. "
             "Environment values use gas_phase, CPCM(solvent), or SMD(solvent); retain the user's model and solvent. "
@@ -347,10 +347,18 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
         current["instruction"] = current["instruction"].replace(
             "Retrieve sources -> select_conditions before geometry preparation/execution; identity queries may precede selection when the frozen profile permits.",
             "Select authorized method/basis before scientific execution; sources are optional, reasoning is required. Geometry preparation may precede selection.")
+        current["instruction"] = current["instruction"].replace(
+            "General quantity quotes user",
+            "General quantity is a display label grounded in authenticated text_basis")
         if "generated_task_intent" in current:
             current["generated_task_intent"] = current["generated_task_intent"].replace(
                 "Then knowledge.search -> select_conditions before structure.prepare/execution; identity queries may precede selection when the frozen profile permits.",
                 "Then select_conditions before scientific execution; retrieved sources are optional and geometry preparation may precede selection.")
+            current["generated_task_intent"] = current["generated_task_intent"].replace(
+                "Every general scientific Goal must supply quantity as an exact user phrase and a stable port identifier "
+                "chosen for that quantity; absence of a registered property port/checker is not an unresolved user fact.",
+                "Each general Goal supplies quantity and a stable port. A nonliteral label becomes an authenticated "
+                "source excerpt; full text_basis retains the obligation. Checker absence is not an unresolved user fact.")
     return contract
 
 
@@ -413,6 +421,21 @@ def _apply_source_references(candidate, messages, *, enabled):
     return records, corrections
 
 
+def _source_quantity_label(text):
+    """A bounded literal display excerpt; the complete source remains the Goal."""
+    validator = TypeAdapter(ScientificLabel)
+    try:
+        return validator.validate_python(text)
+    except ValidationError:
+        # Never join separated words or rewrite scientific symbols. A long or
+        # multiline source uses one literal span under the existing label bound.
+        for span in re.findall(r"[^\x00-\x1f\x7f]+", text):
+            value = span.strip()[:160].rstrip()
+            if value:
+                return validator.validate_python(value)
+    return None
+
+
 def _apply_general_program_fields(candidate, request, messages):
     """Mechanical additions do not change explicit physical choices."""
     rows = []
@@ -435,10 +458,28 @@ def _apply_general_program_fields(candidate, request, messages):
                          "proposed_value": item.analysis_goal_ref,
                          "action": "retained_as_nonexecuting_remark"})
             item.analysis_goal_ref = None
-        if not _uses_general_goal(candidate, item, request):
+        general = _uses_general_goal(candidate, item, request)
+        if not general and item.port not in INPUT_TOOLS:
             continue
         matches = _quote_occurrences(item.text_basis, messages, item.message_id)
         if not matches or len({entry[0]["id"] for entry in matches}) != 1:
+            continue
+        if (candidate.schema_version == VERSION
+                and (item.quantity is None or item.quantity not in item.text_basis)):
+            if (item.port in INPUT_TOOLS and _text_geometry_relation(
+                    request, [{"text": item.text_basis}], item.system_refs) == "optimized"):
+                raise ProposalError("An optimized quantity requires its separate scientific Goal; "
+                                    "an input preparation Goal cannot substitute for it.",
+                                    path=["parameters", "goals", index, "quantity"])
+            value = _source_quantity_label(item.text_basis)
+            if value is not None:
+                rows.append({"path": ["goals", index, "quantity"],
+                             "proposed_value": item.quantity, "value": value,
+                             "source": "authenticated_goal_text_basis",
+                             "rule": "source-quantity-label-1",
+                             "complete_source_field": "original_text"})
+                item.quantity = value
+        if not general:
             continue
         relation = _general_goal_geometry_relation(request, matches[0][0], item)
         if relation is not None and item.geometry_relation is None:
@@ -2477,6 +2518,12 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
     if candidate.goals is not None:
         goals = _goals(candidate, request, grounding,
             text_input=run.science_baseline_policy == "first_science_plan")
+        for row in program_fields:
+            if row.get("rule") == "source-quantity-label-1":
+                item = candidate.goals[row["path"][1]]
+                goal = next(goal for goal in goals if goal.id == "goal_" + item.key)
+                goal.text_evidence["quantity_canonicalization"] = {
+                    key: value for key, value in row.items() if key != "path"}
         values["goals"] = [goal.model_dump() for goal in goals]
         if simplified_workflow(run) and not any(goal.required for goal in goals):
             # Preserve the actionable missing-energy correction before the

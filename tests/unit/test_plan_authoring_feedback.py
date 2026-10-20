@@ -16,13 +16,18 @@ from tests.unit.test_context import payload
 from tests.unit.test_simplified_file_references import _case, _proposal
 
 
-def test_complete_authoring_envelope_materializes_real_two_step_contract(tmp_path):
+def test_authoring_field_map_cannot_be_submitted_as_an_executable_plan(tmp_path):
     store, run, request, _ = _case(tmp_path)
     catalog, _ = context._tools(run, run.permission.allowed_tools)
-    example = context._code_authoring_example(run, catalog, "initial_plan")
-    assert set(example) == {"action", "reason", "parameters"}
-    intent = DecisionIntent.model_validate(example)
-    plan = materialize_plan(store, run, intent.parameters)
+    contract = context._code_authoring_contract(run, catalog)
+    assert set(contract) == {"meaning", "writer", "consumer", "goal_routes"}
+    assert contract["writer"]["tool"] == "workspace.write"
+    assert contract["consumer"]["tool"] == "python.execute"
+    assert "complete authorized task code" in contract["writer"]["fields"]["parameters.content"]
+    with pytest.raises(ValueError):
+        DecisionIntent.model_validate(contract)
+    # A separately authored real implementation still uses the unchanged schema.
+    plan = materialize_plan(store, run, _proposal())
     assert len(plan.steps) == 2
     writer, consumer = plan.steps
     assert writer.tool == "workspace.write" and writer.parameters.role == "python"
@@ -30,7 +35,8 @@ def test_complete_authoring_envelope_materializes_real_two_step_contract(tmp_pat
     assert consumer.parameters.code.port == "written_artifact"
     assert consumer.depends_on == [writer.id]
     assert consumer.parameters.sdk_orca is False and consumer.parameters.observation_names == []
-    assert all(binding.gap for binding in plan.goal_map.values())
+    assert plan.goal_map["report"].step_id == consumer.id
+    assert plan.goal_map["report"].port == "artifacts"
     assert not run.calls and not run.attempts and not run.result_ids
     assert store.load_request(run) == request
 

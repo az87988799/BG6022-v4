@@ -794,6 +794,7 @@ class RunConfiguration(Record):
     mechanical_progression: bool = Field(default=False, strict=True)
     workflow_policy: Literal["simplified-1"] | None = None
     observation_delivery_policy: Literal["reported-observation-1", "reported-observation-2"] | None = None
+    task_code_policy: Literal["nonempty-python-1"] | None = None
 
     @model_serializer(mode="wrap")
     def preserve_historical_workflow(self, handler):
@@ -802,6 +803,8 @@ class RunConfiguration(Record):
             value.pop("workflow_policy", None)
         if self.observation_delivery_policy is None:
             value.pop("observation_delivery_policy", None)
+        if self.task_code_policy is None:
+            value.pop("task_code_policy", None)
         return value
 
     @model_validator(mode="before")
