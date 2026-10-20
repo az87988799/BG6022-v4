@@ -315,6 +315,8 @@ Plan 是当前可执行 Step 的有向无环图，绑定 Request 版本，并记
 
 按 [0071](decisions/0071-preserve-current-execution-failure.md)，当前未修复失败的有界日志诊断不会被普通查询预览窗口挤掉；只投影已核验的历史读取或执行时保存的同源摘要，已修复失败不再占据当前诊断窗口。上下文上限、原件、历史结果与科学资格保持。
 
+首次科学计划的直接科学生产者约束仅用于旧资格目标；通用观察可以绑定显式分析步骤，其上游原生计算及真实来源、条件、最低证据仍按原执行链核验。观察与资格端口同名不继承旧资格保证，见 [0073](decisions/0073-first-science-generic-analysis-route.md)。
+
 核性质输入的纯语法顺序可按 [0066](decisions/0066-coordinate-first-nuclear-block-formatting.md) 在新冻结原生策略中自动整理：仅移动现有完整核性质块至唯一坐标声明后，原科学内容、原始输入、差异审计和所有执行/科学检查保留。
 
 开发任务可按 [0067](decisions/0067-workflow-budget-within-existing-total-limits.md) 在既有总 tokens、实际计算、时间和 campaign 上限内明确选择足够的有限工作流额度，父候选须完整继承其配置；不改变旧 Run、清零累计用量或重复启动相同失败输入。

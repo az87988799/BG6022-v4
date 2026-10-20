@@ -670,7 +670,8 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     if (run.science_baseline_policy == "first_science_plan" and run.initial_science_steps is None
             and any(_science(step) for step in next_plan.steps)):
         for goal in next_request.goals:
-            if goal.required and goal.port in {"energy", "optimized_geometry", "dipole_moment"}:
+            if (goal.required and goal.evidence_contract_version == "legacy-1"
+                    and goal.port in {"energy", "optimized_geometry", "dipole_moment"}):
                 binding = next_plan.goal_map.get(goal.id)
                 if simplified_workflow(run) and binding is not None and binding.gap is not None:
                     continue
