@@ -505,6 +505,25 @@ def list_artifacts(store, run_id, offset=0, limit=40):
         _clock(started)
         ids.extend(store.load_result(run.id, result_id).artifact_ids)
     ids = list(dict.fromkeys(ids))
+    internal_logs = {}
+    if run.configuration and run.configuration.workflow_policy == "simplified-1":
+        # A failed internal call's real log must not sit behind the outer
+        # Python output and dozens of coordinator records. This only reorders
+        # already visible IDs; normal permission and content checks still apply.
+        visible = set(ids)
+        for receipt in reversed(run.internal_calls):
+            if receipt.state not in {"failed", "timed_out", "cancelled"}:
+                continue
+            recorded_files = receipt.response.get("files", {})
+            if not isinstance(recorded_files, dict):
+                continue
+            for name in ("stdout.out", "stderr.txt"):
+                ref = recorded_files.get(name, {})
+                identifier = ref.get("artifact_id") if isinstance(ref, dict) else None
+                if isinstance(identifier, str) and identifier in visible and identifier in receipt.artifact_ids:
+                    internal_logs.setdefault(identifier, {
+                        "internal_request_key": receipt.request_key, "operation_status": receipt.state})
+        ids = [*internal_logs, *(identifier for identifier in ids if identifier not in internal_logs)]
     requested = {"kind": "artifacts", "start": offset, "stop": offset + limit}
     available_stop = max(offset, min(len(ids), offset + limit))
     response = {"run_id": run_id, "inventory_sha256": hashlib.sha256(_encoded(ids)).hexdigest(),
@@ -514,6 +533,7 @@ def list_artifacts(store, run_id, offset=0, limit=40):
     for artifact_id in ids[offset:offset + limit]:
         artifact = store.load_artifact(artifact_id)
         item = artifact.model_dump(mode="json")
+        item.update(basename=Path(artifact.path).name, **internal_logs.get(artifact_id, {}))
         if verified_bytes + artifact.size > MAX_SOURCE_BYTES:
             item["integrity"] = {"status": "not_verified", "reason": "content_verification_byte_limit"}
         else:

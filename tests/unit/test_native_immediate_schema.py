@@ -130,7 +130,19 @@ def test_all_native_submission_contracts_and_correction_are_literal():
     assert wire["AUTHORITY"]["plan"]["goal_map"] == template["AUTHORITY"]["plan"]["goal_map"]
     assert wire["AUTHORITY"]["permission"]["code_execution"] is False
     assert "SCHEMA_COLUMNS" not in wire
-    plan = wire["ACTION_SCHEMAS"]["revise_plan"]
+
+    def resolve_shared_schema(node):
+        # Resolve only declared JSON Pointers, never display aliases. Literal
+        # defaults/examples remain untouched so alias leakage still fails.
+        if isinstance(node, dict):
+            reference = node.get("$ref", "")
+            if set(node) == {"$ref"} and reference.startswith("#/SCHEMA_DEFINITIONS/"):
+                return resolve_shared_schema(wire["SCHEMA_DEFINITIONS"][reference.rsplit("/", 1)[-1]])
+            return {key: value if key in {"const", "enum", "default", "examples"}
+                    else resolve_shared_schema(value) for key, value in node.items()}
+        return [resolve_shared_schema(value) for value in node] if isinstance(node, list) else node
+
+    plan = resolve_shared_schema(wire["ACTION_SCHEMAS"]["revise_plan"])
     step, repair = plan["properties"]["steps"]["items"]["anyOf"]
     assert set(step["properties"]) == set(schema["$defs"]["ProposedStep"]["properties"])
     assert step["required"] == ["key"] and step["additionalProperties"] is False
@@ -145,7 +157,7 @@ def test_all_native_submission_contracts_and_correction_are_literal():
         concrete = plan["$defs"]["CodeRef"]
         assert concrete["properties"]["sha256"]["pattern"] == "^[a-f0-9]{64}$"
     assert isinstance(wire["TOOLS"], list)  # Table encoding must not hide protected child paths.
-    python = wire["TOOLS"][0]
+    python = {**wire["TOOLS"][0], "parameters": resolve_shared_schema(wire["TOOLS"][0]["parameters"])}
     assert python["name"] == "python.execute"
     assert set(python["parameters"]["properties"]) == {"code", "inputs", "observation_names", "conditions", "sdk_orca"}
     assert python["parameters"]["properties"]["sdk_orca"]["type"] == ["boolean", "null"]

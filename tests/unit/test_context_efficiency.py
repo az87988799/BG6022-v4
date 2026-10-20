@@ -12,6 +12,8 @@ from orca_agent.context_efficiency import (
     context_json,
     expand_observation_references,
     optimize_context_wire,
+    reference_observation_sources,
+    share_schema_definitions,
 )
 from orca_agent.proposals import action_parameter_schema
 from orca_agent.tools.registry import get_tool
@@ -58,6 +60,60 @@ def native_wire():
 
 def optimize(wire):
     return optimize_context_wire(wire, simplify_schema=_compact_planning_schema)
+
+
+def test_shared_schema_subtrees_expand_exactly_and_keep_local_refs_and_literals():
+    common = {"type": "object", "properties": {f"key_{i}": {"type": "string"}
+                                             for i in range(20)},
+              "required": ["key_0"], "additionalProperties": False}
+    schema = {"type": "object", "properties": {"one": copy.deepcopy(common),
+        "two": copy.deepcopy(common), "literal": {"const": copy.deepcopy(common)},
+        "local": {"$ref": "#/$defs/item"}}, "$defs": {"item": {"type": "number"}}}
+    wire = {"ACTION_SCHEMAS": {"first": schema, "second": copy.deepcopy(schema)},
+            "TOOLS": [{"name": "test", "parameters": copy.deepcopy(common)}]}
+    before = copy.deepcopy(wire)
+    shared = share_schema_definitions(wire)
+    assert "SCHEMA_DEFINITIONS" in shared
+
+    def restore(node):
+        if isinstance(node, dict):
+            if set(node) == {"$ref"} and node["$ref"].startswith("#/SCHEMA_DEFINITIONS/"):
+                return copy.deepcopy(shared["SCHEMA_DEFINITIONS"][node["$ref"].rsplit("/", 1)[-1]])
+            return {key: value if key in {"const", "enum", "default", "examples"} else restore(value)
+                    for key, value in node.items()}
+        return [restore(value) for value in node] if isinstance(node, list) else node
+
+    assert restore(shared["ACTION_SCHEMAS"]) == wire["ACTION_SCHEMAS"]
+    assert restore(shared["TOOLS"]) == wire["TOOLS"]
+    assert wire == before and len(context_json(shared)) < len(context_json(wire))
+
+
+@pytest.mark.parametrize("columnar", [False, True])
+def test_shared_source_metadata_keeps_relative_conditions_and_source_locations_exact(columnar):
+    core = {"artifact_id": "source_artifact", "sha256": "a" * 64,
+            "run_id": "run_original", "result_id": "result_original",
+            "provenance": {"contract": "provenance-1", "detail": "shared source detail " * 20}}
+    records = [{"name": f"observation_{i}", "value": i,
+                "sources": [{**copy.deepcopy(core), "location": {"line": i + 1},
+                             "actual_conditions": {"observation_actual_conditions_ref": "."}}],
+                "actual_conditions": {"charge": i}} for i in range(3)]
+    row = {"result_id": "result_original", "unqualified_observation_records": records}
+    results = {"columns": list(row), "rows": [list(row.values())]} if columnar else [row]
+    wire = {"DATA": {"results": results}}
+    before = copy.deepcopy(wire)
+    shared = reference_observation_sources(wire)
+    assert "observation_sources" in shared["DATA"]
+    result = shared["DATA"]["results"]
+    shown = result["rows"][0][1] if columnar else result[0]["unqualified_observation_records"]
+    for original, projected in zip(records, shown, strict=True):
+        source, = projected["sources"]
+        reference = source["observation_source_ref"]
+        assert {**shared["DATA"]["observation_sources"][reference],
+                **{key: value for key, value in source.items() if key != "observation_source_ref"}
+                } == original["sources"][0]
+        assert source["actual_conditions"]["observation_actual_conditions_ref"] == "."
+        assert projected["actual_conditions"] == original["actual_conditions"]
+    assert wire == before and len(context_json(shared)) < len(context_json(wire))
 
 
 def test_visible_duplicate_uses_actual_result_identity_and_expands_without_fact_changes():

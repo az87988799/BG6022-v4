@@ -229,7 +229,7 @@ def test_actual_collected_observation_returns_to_same_loop_with_unverified_value
 
 
 def selection_context(tmp_path, *, source=None, authorized=True, systems=(), native_only=False, general=False,
-                      simplified=False):
+                      simplified=False, goal=None):
     config = load_config(Path("config.code.example.toml"))
     config.workflow_policy = "simplified-1" if simplified else None
     if not general:
@@ -238,7 +238,7 @@ def selection_context(tmp_path, *, source=None, authorized=True, systems=(), nat
     original = "Compute the requested property; choose a suitable method and basis from documentation."
     request = Request(original_text=original, method=None, basis=None,
         systems=list(systems),
-        goals=[Goal(id="frequencies", port="vibrational_frequencies", quantity="vibrational frequencies",
+        goals=[goal or Goal(id="frequencies", port="vibrational_frequencies", quantity="vibrational frequencies",
             minimum_check_version="generic-observation-1", evidence_contract_version="generic-observation-1",
             verification="reported_with_limitations")],
         conditions={"electronic_state": "RKS", "environment": "gas_phase"},
@@ -618,11 +618,36 @@ def test_missing_conditions_do_not_become_selectable_without_usable_user_authori
     assert "select_conditions" not in wire["ACTION_SCHEMAS"]
 
 
+@pytest.mark.parametrize("source,authorized", [("unknown", True), (None, False)])
+def test_simplified_scientific_goal_still_requires_usable_condition_authorization(tmp_path, source, authorized):
+    goal = Goal(id="frequencies", port="vibrational_frequencies", quantity="vibrational frequencies",
+        minimum_check_version="generic-observation-1", evidence_contract_version="generic-observation-1",
+        verification="reported_with_limitations", system_ids=["molecule"],
+        conditions={"electronic_state": "RKS"})
+    request, run, _, wire = selection_context(tmp_path, source=source, authorized=authorized,
+        general=True, simplified=True, systems=[SystemInput(id="molecule")], goal=goal)
+    assert request.method is None and run.configuration.workflow_policy == "simplified-1"
+    assert wire["AUTHORITY"]["decision_purpose"]["allowed_actions"] == ["clarify", "stop"]
+    assert "select_conditions" not in wire["ACTION_SCHEMAS"]
+
+
+def test_simplified_report_goal_does_not_require_unrelated_scientific_conditions(tmp_path):
+    goal = Goal(id="report", port="artifact_metadata", quantity="original filenames and hashes",
+        minimum_check_version="generic-observation-1", evidence_contract_version="generic-observation-1",
+        verification="reported_with_limitations", system_ids=["molecule"])
+    request, run, _, wire = selection_context(tmp_path, source="unknown", authorized=False,
+        general=True, simplified=True, systems=[SystemInput(id="molecule")], goal=goal)
+    assert request.method is None and run.configuration.workflow_policy == "simplified-1"
+    purpose = wire["AUTHORITY"]["decision_purpose"]
+    assert purpose["kind"] == "planning" and "initial_plan" in purpose["allowed_actions"]
+    assert "select_conditions" not in wire["ACTION_SCHEMAS"]
+
+
 def test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_history_survives():
     request, run = objects()
     prepared = context.build_context(request, run)
     wire = decoded(prepared)
-    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v77"
+    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v78"
     assert {"agent-json-v22", "agent-json-v34", "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41", "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47"} <= DECISION_CONTRACT_PROMPT_VERSIONS
     assert "TASK_CODE_RULES" not in wire and "native_input_contract" not in wire["AUTHORITY"]
     assert run.permission.code_execution is False

@@ -93,7 +93,18 @@ def result_file_index(result: Result, *, max_bytes=MAX_INDEX_BYTES, max_rows=MAX
     usable = [row for row in rows if row and len(digest_sets[row["artifact_id"]]) == 1]
     # Present task outputs before sealed inputs and coordinator files. This is
     # display order only: no file is selected, bound, read or executed for users.
-    usable.sort(key=lambda row: (not row["file_key"].startswith("task/"), row["file_key"]))
+    def priority(row):
+        name = row["file_key"]
+        basename = name.rsplit("/", 1)[-1]
+        if (("sdk/" in name or name.startswith("internal/"))
+                and basename in {"stdout.out", "stderr.txt", "response.json"}):
+            return 0, name
+        if name in {"task/stdout.out", "task/stderr.txt", "task/observations.json"}:
+            return 1, name
+        if basename in {"job.inp", "native.inp", "worker-outcome.json"}:
+            return 2, name
+        return (3 if name.startswith("task/") else 4), name
+    usable.sort(key=priority)
     invalid = len(source) - len(usable)
     index = {"source": origin, "result_id": result.id,
              **({"attempt_id": result.attempt_id} if result.attempt_id else {"call_id": result.call_id}),

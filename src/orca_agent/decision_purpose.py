@@ -7,7 +7,7 @@ an unmet goal; it does not reserve an imaginary later answer.
 import json
 from dataclasses import dataclass
 
-from orca_agent.applicability import CONDITION_FIELDS, effective_conditions
+from orca_agent.applicability import CONDITION_FIELDS, effective_conditions, preparation_conditions
 
 # These prompt versions require the same purpose and terminal snapshot guards.
 # Keep older recorded requests readable without silently upgrading their contract.
@@ -15,7 +15,7 @@ DECISION_CONTRACT_PROMPT_VERSIONS = frozenset({
     "agent-json-v22", "agent-json-v23", "agent-json-v24", "agent-json-v25", "agent-json-v26", "agent-json-v27",
     "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32", "agent-json-v33", "agent-json-v34",
     "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41",
-    "agent-json-v74", "agent-json-v75", "agent-json-v76", "agent-json-v77",
+    "agent-json-v74", "agent-json-v75", "agent-json-v76", "agent-json-v77", "agent-json-v78",
     "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47",
     "agent-json-v48", "agent-json-v49", "agent-json-v50", "agent-json-v51", "agent-json-v52", "agent-json-v53", "agent-json-v54", "agent-json-v55", "agent-json-v56", "agent-json-v57", "agent-json-v58", "agent-json-v59", "agent-json-v60", "agent-json-v61", "agent-json-v62", "agent-json-v63", "agent-json-v64", "agent-json-v65", "agent-json-v66", "agent-json-v67", "agent-json-v68", "agent-json-v69", "agent-json-v70", "agent-json-v71", "agent-json-v73"})
 
@@ -69,9 +69,22 @@ def terminal_actions(request, run):
                 and goal.port in {"artifacts", "observations"}
                 and not request.systems and not goal.system_ids and not request.geometry_artifact_id):
             continue
-        for system_id in goal.system_ids or [None]:
-            values = effective_conditions(request, goal, system_id)["conditions"]
-            if any(values.get(field) is None for field in CONDITION_FIELDS if field not in selectable):
+        # Input acquisition and derived/report Goals do not themselves consume
+        # a complete electronic-structure setup. The actual science boundary
+        # still validates every condition before execution.
+        preparation = goal.port == "prepared_geometry"
+        required = (("charge", "multiplicity") if preparation else CONDITION_FIELDS)
+        if goal.port == "resolved_identity" or (
+                goal.evidence_contract_version == "generic-observation-1"
+                and run.configuration is not None
+                and run.configuration.workflow_policy == "simplified-1"
+                and not any(name in goal.conditions for name in CONDITION_FIELDS)):
+            continue
+        for system_id in goal.system_ids or (
+                [request.systems[0].id] if len(request.systems) == 1 else [None]):
+            values = (preparation_conditions(request, system_id) if preparation else
+                      effective_conditions(request, goal, system_id))["conditions"]
+            if any(values.get(field) is None for field in required if field not in selectable):
                 return ("clarify", "stop")
     return ("stop",)
 

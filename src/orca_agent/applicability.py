@@ -37,6 +37,8 @@ def effective_conditions(request, goal=None, system_id=None):
 
 System declarations are scoped overrides of general Request settings. A Goal is
 an additional constraint, never an override of the applicable system setting.
+An explicitly declared Goal may supply an otherwise absent condition; an
+explicit unknown or conflicting declaration remains unresolved.
 Only legacy HF neutral-singlet requests inherit the historical state/environment.
 """
     reasons, origins, values = [], {}, {}
@@ -71,12 +73,20 @@ Only legacy HF neutral-singlet requests inherit the historical state/environment
         value = canonical_condition(name, value)
         if goal and name in goal.conditions:
             constraint = canonical_condition(name, goal.conditions[name])
+            # Absence of a shared value is not a second question when this
+            # exact Goal already supplies it. Explicit null/unknown declarations
+            # remain authoritative and cannot be silently overwritten.
+            absent = (value is None and name not in request.conditions
+                and getattr(request, name, None) is None
+                and request.conditions_source.get(name) not in {
+                    "explicit", "unknown", "not_applicable", "inferred"}
+                and not (system and name in system.conditions))
             workflow = request.condition_evidence.get("workflow_policy", {})
             scoped_default = (workflow.get("version") == "simplified-1"
                 and name == "environment" and constraint is not None
                 and request.conditions_source.get(name) == "default"
                 and not (system and name in system.conditions))
-            if scoped_default:
+            if absent or scoped_default:
                 value, origin = constraint, "goal:" + goal.id
             if value is None or constraint is None:
                 reasons.append("unknown_condition:" + name)
@@ -89,6 +99,57 @@ Only legacy HF neutral-singlet requests inherit the historical state/environment
         reasons.append("unresolved_request_or_goal")
     return {"version": PURPOSE_VERSION, "conditions": values, "sources": origins,
             "reasons": list(dict.fromkeys(reasons)), "status": "unresolved" if reasons else "passed"}
+
+
+def preparation_conditions(request, system_id=None):
+    """Resolve only the state consumed by geometry preparation.
+
+    The same initial geometry can serve several environments. Shared charge and
+    multiplicity can be recovered from agreeing Goal declarations, without
+    inventing a shared solvent, method or calculation result.
+    """
+    fields = ("charge", "multiplicity")
+    shared = effective_conditions(request, system_id=system_id)
+    values = {name: shared["conditions"][name] for name in fields}
+    sources = {name: shared["sources"][name] for name in fields}
+    reasons = [reason for reason in shared["reasons"]
+               if reason == "unresolved_request_or_goal" or reason.startswith("unknown_system:")
+               or any(reason.endswith(":" + name) for name in fields)]
+    goals = [goal for goal in request.goals
+             if not goal.system_ids or system_id in goal.system_ids]
+    for name in fields:
+        declared = [(goal, effective_conditions(request, goal, system_id))
+                    for goal in goals if name in goal.conditions]
+        if not declared:
+            continue
+        scoped = [assessment["conditions"][name] for _, assessment in declared]
+        invalid = [reason for _, assessment in declared for reason in assessment["reasons"]
+                   if reason.endswith(":" + name)]
+        if invalid or None in scoped or any(value != scoped[0] for value in scoped):
+            values[name] = None
+            reasons.extend(invalid or ["conflicting_goal_condition:" + name])
+        elif values[name] is None:
+            values[name] = scoped[0]
+            sources[name] = "goal:" + ",".join(goal.id for goal, _ in declared)
+            reasons = [reason for reason in reasons if reason != "unknown_condition:" + name]
+    return {"version": PURPOSE_VERSION, "conditions": values, "sources": sources,
+            "reasons": list(dict.fromkeys(reasons)), "status": "unresolved" if reasons else "passed"}
+
+
+def step_condition_goals(request, plan, step):
+    """Use the Step's own Goal routes before considering same-system fallback."""
+    system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
+    mapped = [goal for goal in request.goals
+              if plan.goal_map.get(goal.id) and (
+                  plan.goal_map[goal.id].step_id == step.id
+                  or plan.goal_map[goal.id].evidence
+                  and plan.goal_map[goal.id].evidence.producer_step_id == step.id)]
+    if system_id is not None and any(
+            goal.system_ids and system_id not in goal.system_ids for goal in mapped):
+        raise ValueError("Goal producer is bound to a different requested system")
+    selected = mapped or [goal for goal in request.goals
+                          if not goal.system_ids or system_id in goal.system_ids]
+    return [goal for goal in selected if any(name in goal.conditions for name in CONDITION_FIELDS)]
 
 
 def current_conditions(request, goal, actual, system_id=None):
@@ -222,11 +283,31 @@ def validate_generic_conditions(request, plan, step):
         constraints.update(system.conditions)
     goals = [goal for goal in request.goals if (
         plan.goal_map.get(goal.id) and plan.goal_map[goal.id].step_id == step.id)]
+    # Goals describe separate requested evaluations. In particular, a shared
+    # SDK task may compute gas and solvent results; merging their constraints
+    # creates a false conflict before either calculation can start.
+    scoped_goals = step_condition_goals(request, plan, step)
+    scoped = [effective_conditions(request, goal, system.id if system else None)
+              for goal in scoped_goals]
+    for assessment in scoped:
+        conflicts = [reason for reason in assessment["reasons"] if reason.startswith("conflicting_")]
+        if conflicts:
+            raise ValueError(",".join(conflicts))
     for goal in goals:
         for name, value in goal.conditions.items():
+            if name in CONDITION_FIELDS:
+                continue
             if name in constraints and canonical_condition(name, value) != canonical_condition(name, constraints[name]):
                 raise ValueError("conflicting_goal_condition:" + name)
             constraints[name] = value
+    for name in CONDITION_FIELDS:
+        choices = [assessment["conditions"][name] for assessment in scoped]
+        if choices:
+            # An explicit Step value must fit one requested evaluation. The
+            # execution boundary binds its complete admitted condition set.
+            if name in declared and canonical_condition(name, declared[name]) not in choices:
+                raise ValueError("step changes request condition:" + name)
+            constraints.pop(name, None)
     for name, expected in constraints.items():
         if name in declared and canonical_condition(name, declared[name]) != canonical_condition(name, expected):
             raise ValueError("step changes request condition:" + name)

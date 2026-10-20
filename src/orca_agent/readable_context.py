@@ -162,6 +162,16 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
                     for original, shorter in pairs:
                         value = value.replace(original, shorter)
                     wire["INTENT_RULES"][field] = value
+            # Keep this projection semantic rather than matching an earlier
+            # long paragraph byte-for-byte: source rules evolve independently.
+            wire["INTENT_RULES"]["source_reference_rules"] = (
+                "source_refs cite authenticated user fragments in place of text_basis/message_id. "
+                "A supplied quote may be any exact contained substring; an exact Goal quantity can fill an omitted quote. "
+                "Preserve source and intervening text. Citations alone do not verify field values. "
+                "value_basis optionally quotes an exact literal for any explicit condition; program checks the value. "
+                "environment=gas_phase/CPCM(solvent)/SMD(solvent), retaining model+solvent. "
+                "Only omitted unambiguous geometry_relation is filled; conflicts fail. "
+                "analysis_goal_ref inherits legacy sampling only.")
         if request["normalization_status"] == "pending" and "source_fragments" not in contract:
             wire["INTENT_RULES"]["instruction"] = (
                 "Interpret current user text: emit schema_version, message_ids, kind=normalize, text_basis, "

@@ -11,13 +11,21 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping, Sequence
+from contextvars import ContextVar
 from copy import deepcopy
 from datetime import datetime
+from functools import wraps
 from typing import Any
 
-from orca_agent.applicability import effective_conditions
+from orca_agent.applicability import effective_conditions, preparation_conditions
 from orca_agent.config import ModelProfile
-from orca_agent.context_efficiency import REFERENCE_GUIDANCE, context_json, optimize_context_wire
+from orca_agent.context_efficiency import (
+    REFERENCE_GUIDANCE,
+    context_json,
+    optimize_context_wire,
+    reference_observation_sources,
+    share_schema_definitions,
+)
 from orca_agent.decision_purpose import (
     classify_decision_purpose,
     relevant_result_ids,
@@ -26,7 +34,12 @@ from orca_agent.decision_purpose import (
     settled_failed_python_attempts,
     terminal_actions,
 )
-from orca_agent.llm import PreparedRequest, _has_credential, prepare_request
+from orca_agent.llm import (
+    PreparedRequest,
+    _has_credential,
+    input_token_upper_bound,
+    prepare_request,
+)
 from orca_agent.model_output_policy import select_output_tokens
 from orca_agent.model_usage import final_explanation_budget, terminal_delivery_due
 from orca_agent.models import (
@@ -50,7 +63,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v77"
+PROMPT_VERSION = "agent-json-v78"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -298,7 +311,39 @@ _PRIVATE_KEYS = {
 
 
 class ContextLimitError(ValueError):
-    """Authority does not fit; the caller must use a narrower explicit context."""
+    """No faithful view fits; diagnostics contain sizes, never prompt contents."""
+
+    def __init__(self, message, *, diagnostics=None):
+        super().__init__(message)
+        self.diagnostics = diagnostics or {}
+
+
+_CONTEXT_MEASUREMENTS = ContextVar("context_measurements", default=None)
+
+
+def _measured_context(builder):
+    """Collect every actual outbound candidate, including rejected requests."""
+    @wraps(builder)
+    def measured(request, run, *args, **kwargs):
+        candidates = []
+        token = _CONTEXT_MEASUREMENTS.set(candidates)
+        try:
+            return builder(request, run, *args, **kwargs)
+        except ContextLimitError as exc:
+            exc.diagnostics = {
+                "version": "context-capacity-1",
+                "input_bound_basis": "UTF-8 content bytes plus fixed transport framing; not measured tokenizer usage",
+                "run_input_limit": run.budget.input_tokens,
+                "configured_input_limit": (run.configuration.model if run.configuration else ModelLimits()).input_tokens,
+                "remaining_model_tokens": run.budget.model_tokens - run.usage.model_tokens_used
+                    - run.usage.model_tokens_unknown,
+                "candidate_count": len(candidates),
+                "candidates": candidates,
+            }
+            raise
+        finally:
+            _CONTEXT_MEASUREMENTS.reset(token)
+    return measured
 
 
 def _json(value: Any) -> str:
@@ -523,6 +568,21 @@ def _prepare_context_request(messages, **kwargs):
     if type(limit) is int and 1 <= limit <= limits.output_tokens:
         messages, kwargs["max_output_tokens"] = optimize_model_messages(messages, limit,
             source_references=source_references)
+    if (measurements := _CONTEXT_MEASUREMENTS.get()) is not None:
+        wire = json.loads(messages[1]["content"]) if len(messages) == 2 else {}
+        def encoded_bytes(value):
+            return len(_json(value).encode("utf-8"))
+        content_bytes = sum(len(message["content"].encode("utf-8")) for message in messages)
+        bound = input_token_upper_bound({"messages": messages})
+        measurements.append({
+            "input_token_bound": bound, "output_token_bound": kwargs.get("max_output_tokens"),
+            "content_bytes": content_bytes, "framing_bound": bound - content_bytes,
+            "system_bytes": sum(len(message["content"].encode("utf-8"))
+                                for message in messages if message["role"] == "system"),
+            "sections": {key: encoded_bytes(value) for key, value in wire.items()},
+            "state_sections": {section: {key: encoded_bytes(value) for key, value in wire.get(section, {}).items()}
+                               for section in ("AUTHORITY", "DATA") if isinstance(wire.get(section), dict)},
+        })
     return prepare_request(messages, **kwargs)
 
 
@@ -769,7 +829,8 @@ def _evidence_observation(value, budget, *, task_frame_indices=()):
             if key == "artifacts" and isinstance(item, dict):
                 # File discovery needs copyable identities, not the complete
                 # producer provenance repeated on every inventory row.
-                item = {name: item[name] for name in ("id", "basename", "sha256", "role", "size", "integrity")
+                item = {name: item[name] for name in ("id", "basename", "sha256", "role", "size", "integrity",
+                                                     "internal_request_key", "operation_status")
                         if name in item}
             if visible and len(_json([*visible, item]).encode("utf-8")) > window:
                 break
@@ -790,6 +851,24 @@ def _evidence_observation(value, budget, *, task_frame_indices=()):
             elif value[key][len(visible):] and isinstance(value[key][len(visible)], dict):
                 page["next_line"] = value[key][len(visible)].get("line")
             projected["context_page"] = page
+            if key == "artifacts":
+                # The next call must continue after what the model actually
+                # saw, not after the larger immutable Tool response.
+                projected["tool_coverage"] = projected.get("coverage")
+                projected["next_offset"] = page["next_offset"]
+                projected["status"] = "partial"
+                projected["coverage"] = {
+                    "version": "evidence-coverage-1", "requested": value.get("coverage", {}).get("requested"),
+                    "returned": {"kind": "artifacts", "start": value.get("offset", 0),
+                                 "stop": page["next_offset"]},
+                    "complete": False, "truncated": True, "reason": "context_byte_limit",
+                    "next_cursor": {"run_id": value.get("run_id"),
+                                    "inventory_sha256": value.get("inventory_sha256"),
+                                    "next_start": page["next_offset"]},
+                }
+                projected["continuation"] = {"tool": "evidence.list", "parameters": {
+                    "run_id": value.get("run_id"), "offset": page["next_offset"],
+                    "limit": min(40, max(1, len(visible)))}}
     if set(value) - set(projected):
         projected["projection_sha256"] = _hash(value)
     return projected
@@ -976,6 +1055,56 @@ def _check_summary(checks) -> dict[str, Any]:
     return summary
 
 
+def _diagnostic_records(diagnostics, budget):
+    """Keep each failed internal call and its log addresses under projection."""
+    safe = _safe(diagnostics)
+    if len(_json(safe).encode("utf-8")) <= budget:
+        return safe
+    log_count = sum(len(row.get("evidence", [])) for row in safe
+                    if isinstance(row, dict) and row.get("category") == "internal_orca_failed")
+    # Real ORCA input errors include banners and source locations after the
+    # useful error text. A 128-byte suffix loses the error even though it keeps
+    # some output. Match the collector's bounded four calls/two logs, reserving
+    # a useful minimum for each; final request admission still enforces its cap.
+    text_budget = max(512, min(1024, budget // max(1, log_count) - 192))
+    projected = []
+    other = []
+    internal_count = 0
+    for original, row in zip(diagnostics, safe, strict=True):
+        if not isinstance(row, dict) or row.get("category") != "internal_orca_failed":
+            other.append(row)
+            continue
+        if internal_count >= 4:
+            other.append(row)
+            continue
+        internal_count += 1
+        row["evidence"] = row.get("evidence", [])[:2]
+        for log in row.get("evidence", []):
+            text = log.get("text")
+            if not isinstance(text, str) or len(text.encode("utf-8")) <= text_budget:
+                continue
+            raw = text.encode("utf-8")
+            tail = raw[-text_budget:].decode("utf-8", errors="ignore")
+            omitted = len(raw) - len(tail.encode("utf-8"))
+            log["text"] = tail
+            log["truncated"] = True
+            log["text_projection"] = {"omitted_preview_prefix_bytes": omitted, "excerpt_sha256": _hash(text),
+                                      "source_window_unchanged": True}
+        row["projection"] = {"complete": False, "record_sha256": _hash(original),
+                             "meaning": "Diagnostic excerpt; original log Artifact remains queryable."}
+        projected.append(row)
+    if other:
+        # Ordinary diagnostics share one remainder. A minimum per record lets
+        # arbitrarily many small records evade the requested observation bound.
+        remaining = max(0, budget - len(_json(projected).encode("utf-8")) - 2)
+        bounded = _bounded_data(other, remaining)
+        if isinstance(bounded, list):
+            projected.extend(bounded)
+        else:
+            projected.append({"category": "diagnostics_projection", "count": len(other), **bounded})
+    return projected
+
+
 def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
     from orca_agent.artifact_index import result_file_index
 
@@ -1013,7 +1142,7 @@ def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
         # Preserve each output's provenance/status/limits. Oversized values use
         # explicit previews into immutable evidence, never implied completeness.
         "unqualified_observation_records": _observation_records(result, observation_bytes),
-        "untrusted_diagnostics": _bounded_data(result.diagnostics, max(4096, observation_bytes)
+        "untrusted_diagnostics": _diagnostic_records(result.diagnostics, max(4096, observation_bytes)
             if result.operation_status != "completed" else observation_bytes),
         "artifact_ids": result.artifact_ids[:3], "artifact_count": len(result.artifact_ids),
         "source": _source_summary(result.source),
@@ -1033,7 +1162,12 @@ def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
     files = result.source.get("files")
     if isinstance(files, dict):
         diagnostic_artifacts = []
-        for name in ("task/stdout.out", "task/stderr.txt"):
+        names = [name for name in files if isinstance(name, str)
+                 and name.rsplit("/", 1)[-1] in {"stdout.out", "stderr.txt", "response.json"}
+                 and (result.operation_status != "completed" and ("sdk/" in name or name.startswith("internal/"))
+                      or name in {"task/stdout.out", "task/stderr.txt"})]
+        names.sort(key=lambda name: (not ("sdk/" in name or name.startswith("internal/")), name))
+        for name in names[:8]:
             source = files.get(name)
             if (isinstance(source, dict) and isinstance(source.get("artifact_id"), str)
                     and source["artifact_id"] in result.artifact_ids
@@ -1225,7 +1359,8 @@ def _file_index_literal_paths(wire, literal_paths):
     return literal_paths
 
 
-def _share_strings(value, *, share_lists=False, short_references=False, _compare_children=True, literal_paths=()):
+def _share_strings(value, *, share_lists=False, short_references=False, _compare_children=True,
+                   literal_paths=(), _share_objects=True, _max_object_bytes=16384):
     """Lossless sharing of strings and repeated scientific fact objects."""
     literal_paths = _file_index_literal_paths(value, literal_paths)
     counts = {}
@@ -1305,7 +1440,7 @@ def _share_strings(value, *, share_lists=False, short_references=False, _compare
         elif isinstance(item, dict):
             literal = _json(item)
             size = len(literal.encode("utf-8"))
-            if path not in native_ancestors and (minimum_literal <= size <= 16384
+            if path not in native_ancestors and (minimum_literal <= size <= _max_object_bytes
                                                 if share_lists else size >= 100):
                 object_counts[literal] = object_counts.get(literal, 0) + 1
             for key, child in item.items():
@@ -1313,7 +1448,8 @@ def _share_strings(value, *, share_lists=False, short_references=False, _compare
         elif isinstance(item, list):
             literal = _json(item)
             if (share_lists and path not in native_ancestors
-                    and (1 if short_references else 16 if small_literals else 100) <= len(literal.encode("utf-8")) <= 16384):
+                    and (1 if short_references else 16 if small_literals else 100)
+                        <= len(literal.encode("utf-8")) <= _max_object_bytes):
                 object_counts[literal] = object_counts.get(literal, 0) + 1
             for child in item:
                 count(child, (*path, "[]"))
@@ -1326,7 +1462,7 @@ def _share_strings(value, *, share_lists=False, short_references=False, _compare
             indices[item] = len(shared)
             shared.append(item)
     object_indices = {}
-    for item, occurrences in object_counts.items():
+    for item, occurrences in (object_counts.items() if _share_objects else ()):
         # Pool entries are literal JSON, so no hidden recursive reference can
         # change source conditions or an untrusted object's original meaning.
         size = len(item.encode("utf-8"))
@@ -1436,14 +1572,22 @@ def _share_strings(value, *, share_lists=False, short_references=False, _compare
             '@rows zip @columns; @absent=missing indices; @keys=dict+@rest. Emit decoded with path trust.'}
     if not share_lists:
         wire["STRING_ENCODING"] = wire["STRING_ENCODING"].replace("@rows zip @columns", "zip @columns/@rows")
-    if share_lists and _compare_children:
+    if share_lists and _compare_children and _share_objects and _max_object_bytes == 16384:
         parent_literals = _share_strings(value, share_lists=True, short_references=short_references,
                                         _compare_children=False, literal_paths=literal_paths)
+        # A repeated large parent may be cheap locally yet force all its nested
+        # repeated facts into one uncompressed literal pool entry. Compare the
+        # complete strings/tables candidate too; the decoder stays identical.
+        nested_literals = _share_strings(value, share_lists=True, short_references=short_references,
+                                         literal_paths=literal_paths, _share_objects=False)
+        small_objects = _share_strings(value, share_lists=True, short_references=short_references,
+                                       literal_paths=literal_paths, _max_object_bytes=256)
         # Pool reachability and index widths can change after parent selection.
         # Retain the cheaper complete encoding, not only a local cost estimate.
         if short_references:
             wire = _short_pool_references(wire, literal_paths=literal_paths)
-        return min((wire, parent_literals), key=lambda item: len(_json(item).encode("utf-8")))
+        return min((wire, parent_literals, nested_literals, small_objects),
+                   key=lambda item: len(_json(item).encode("utf-8")))
     return _short_pool_references(wire, literal_paths=literal_paths) if short_references else wire
 
 
@@ -1580,6 +1724,37 @@ def _failed_attempt_history(run, *, native=False):
             for attempt in (settled_failed_native_attempts(run) if native else settled_failed_python_attempts(run))]
 
 
+def _superseded_failures(run, results):
+    """Execution repair can supersede a failure without qualifying its science."""
+    if not _simplified_workflow(run):
+        return {}
+    by_id = {result.id: result for result in results}
+    completed = [attempt for attempt in run.attempts
+        if attempt.state == "completed" and attempt.finished_at is not None
+        and attempt.frozen_step is not None
+        and (attempt.frozen_step.id, attempt.frozen_step.logical_id, attempt.frozen_step.tool)
+            == (attempt.step_id, attempt.logical_id, attempt.tool)
+        and (result := by_id.get(attempt.result_id)) is not None
+        and (result.run_id, result.attempt_id, result.step_id, result.operation_status)
+            == (run.id, attempt.id, attempt.step_id, "completed")]
+    superseded = {}
+    for failed in [*settled_failed_python_attempts(run), *settled_failed_native_attempts(run)]:
+        later = [attempt for attempt in completed
+                 if (attempt.logical_id, attempt.execution_kind) == (failed.logical_id, failed.execution_kind)
+                 and attempt.number > failed.number
+                 and attempt.finished_at > failed.finished_at]
+        if later:
+            replacement = max(later, key=lambda attempt: attempt.finished_at)
+            superseded[failed.id] = {
+                "attempt_id": failed.id, "state": failed.state, "result_id": failed.result_id,
+                "logical_id": failed.logical_id, "step_id": failed.step_id,
+                "frozen_step_sha256": fingerprint(failed.frozen_step),
+                "superseded_by": replacement.id, "replacement_result_id": replacement.result_id,
+                "meaning": "Later same-logical execution completed; historical failure/cost remains; science unqualified.",
+            }
+    return superseded
+
+
 def _call_execution(run, result):
     """Bind settled Tool effects to their own Result, including immediate reads."""
     if result.run_id != run.id or result.call_id is None:
@@ -1696,6 +1871,83 @@ def _consumed_read_previews(run, originals, projected):
         view.update(retained)
 
 
+def _settled_history_references(run, originals, projected, feedback):
+    """Old successful reads/writes need identities, not another copy of their body.
+
+    Failed work, fresh feedback, scientific outputs and all task observation
+    records remain full. Only receipts whose effects cannot establish a new
+    scientific fact are compacted here.
+    """
+    fresh = set(feedback.get("new_result_ids", ()))
+    for original, view in zip(originals, projected, strict=True):
+        effects = set(_call_execution(run, original).get("effects", ()))
+        if (original.id in fresh or original.id not in run.processed_feedback
+                or original.operation_status != "completed" or original.observation_records
+                or original.qualified_outputs or not effects
+                or effects - {"read_registered_artifact", "write_artifact", "create_artifact",
+                              "query_external_document", "query_external_identity", "archive_retrieved_evidence"}
+                or any(check.status != "passed" for checks in original.checks.values() for check in checks)):
+            continue
+        keep = {key: view[key] for key in ("result_id", "step_id", "run_id", "operation_status",
+                                          "artifact_ids", "artifact_count") if key in view}
+        keep["history_reference"] = {
+            "record_sha256": fingerprint(original), "call_id": original.call_id,
+            "tool": _call_execution(run, original)["tool"],
+            "observation_names": list(original.observations),
+            "meaning": "Previously consumed immutable Result; body omitted, not new feedback or an empty result.",
+        }
+        written = original.observations.get("written_artifact")
+        if isinstance(written, dict):
+            keep["written_artifact"] = {key: written[key] for key in (
+                "artifact_id", "sha256", "name", "bytes", "role") if key in written}
+        view.clear()
+        view.update(keep)
+
+
+def _capacity_code_rules(native):
+    """Concise authoring contract; schemas and frozen execution limits stay full."""
+    rules = (
+        "Plan writers+consumers together; code/input={producer_key,port:'written_artifact'}; "
+        "manifest={producer_key,port|file_key,target_path,purpose}. Program binds dependencies/IDs/hashes. "
+        "parameters.inputs=InputManifest; Step.inputs=evidence ports. No invented IDs, shell/subprocess/network/host paths. "
+        "Keep all Goals/conditions/minimum evidence/valid routes. Independent Python tasks use analysis budget; "
+        "same-logical retries also use code_retries. Save completed members; SDK waits consume script deadline. "
+        "Inspect each new result. Read missing evidence only; written code needs no reread. Binary data/manual indexes "
+        "do not prove formats. observations.json={version:1,observations:[{name:Goal.port,value:finite JSON,"
+        "unit:string|null,sources:[{filename:task-relative path,location:string|null}],formula:string|null,"
+        "artifacts:[task-relative filename],limitations:[]}]} with names=observation_names. "
+        "Keep complete sequences incl negative/zero, all structures, failures/exclusions and finite search scope. "
+        "Label subsets; never infer units/global optimum/scientific pass. Derived values retain formulas and original "
+        "sources/method/geometry relations. No authored checks/status/actual_conditions. Observations unqualified."
+    )
+    if native["AUTHORITY"].get("failed_python_attempts") or native["AUTHORITY"].get("failed_native_attempts"):
+        rules += (
+            " Repair: key:new,repair_of:failed frozen_step.id,code:new Python ref or input:new native ref,"
+            "inputs:optional replacement InputManifest. Omitted inputs preserve the old manifest. "
+            "Program retains logical_id/system/conditions/names/dependencies/Goal routes. History is not ready work."
+        )
+    if "native_input_contract" in native["AUTHORITY"]:
+        rules += (
+            " ORCA follows native_input_contract/execution_resources. Program materializes omitted approved state/"
+            "resource/iteration controls; conflicts fail. TD NRoots stays explicit. orca.run.input is ORCA, never XYZ. "
+            "python.execute declares sdk_orca=true/false; true requires the qualified initial geometry or same-system "
+            "structure.prepare dependency. Task geometry cannot replace that identity anchor. "
+            "from orca_task_sdk import run_orca,receipt_source,checkpoint. "
+            "run_orca(input_path,dependencies=(),request_key='calculation',purpose='new_candidate',retry_of=None). "
+            "Dependencies=relative XYZ basenames. Stable key+input reuses receipt; changed input needs new key. "
+            "purpose=new_candidate|plan_addition|failure_retry; retry_of=prior failed key. "
+            "Unknown work:reconcile; all calls share budget. Check receipt.operation_status before parsing. "
+            "files maps original filenames to read-only copies; inspect keys, never guess filenames. "
+            "logs=stdout.out/stderr.txt; input=job.inp. receipt_source(receipt,'stdout.out',location='lines ...') "
+            "declares original SDK source/internal_request_key, not scientific qualification. Direct ORCA analysis "
+            "uses frozen task-relative filenames. Cite original outputs and local derived files. "
+            "checkpoint(state,request_key='batch_1',requires_decision=True,reason='Assess observations') saves JSON/keys "
+            "and exits for a decision; no blind replay/stack restoration. "
+            "ORCA %maxcore uses AUTHORITY.execution_resources.maxcore_mb per process, never total_memory_mb."
+        )
+    return rules
+
+
 def _conditions(value: Any) -> Any:
     """Geometry bytes stay behind registered references; verified coordinates may be summarized."""
     if isinstance(value, dict):
@@ -1801,7 +2053,8 @@ def _input_step_examples(request, catalog):
     if len(request.systems) != 1 or request.systems[0].geometry_source != "prepare":
         return []
     system = request.systems[0]
-    known = {**effective_conditions(request, system_id=system.id)["conditions"], "system_id": system.id}
+    known = {**effective_conditions(request, system_id=system.id)["conditions"],
+             **preparation_conditions(request, system.id)["conditions"], "system_id": system.id}
     examples = []
     for entry in catalog:
         tool = get_tool(entry["name"])
@@ -2589,11 +2842,22 @@ def assess_terminal_capacity(request, run, delivery_snapshot, *, now=None, model
             "reserved_tokens": prepared.reserved_tokens, "envelope": run.budget.input_tokens}
 
 
-def _compact_native_wire(native, *, schema_columns=False, legacy=False):
+def _compact_native_wire(native, *, schema_columns=False, legacy=False, concise=False):
     """Compress facts while keeping every submitted contract directly copyable."""
     from orca_agent.readable_context import native_schema
 
     native = deepcopy(native)
+    if concise and "TASK_CODE_RULES" in native:
+        native["TASK_CODE_RULES"] = _capacity_code_rules(native)
+        native = reference_observation_sources(native)
+        for receipt in native.get("DATA", {}).get("internal_call_summaries", []):
+            if receipt.get("state") == "completed":
+                # Every receipt identity/outcome and cumulative budget remains.
+                # Large repeated metadata already lives in immutable receipts
+                # and observation provenance; it is not another current result.
+                receipt.pop("conditions", None)
+                receipt.pop("resource_usage", None)
+                receipt["details_ref"] = "Run.internal_calls[request_key]"
     immediate = {tool["name"] for tool in native.get("TOOLS", []) if tool.get("immediate")}
     if legacy:
         # Non-code historical profiles retain their v46 bounded display. This
@@ -2605,7 +2869,7 @@ def _compact_native_wire(native, *, schema_columns=False, legacy=False):
                 tool["parameters"] = _schema_columns(_compact_planning_schema(_schema(tool["parameters"])))
         native["SCHEMA_COLUMNS"] = "ACTION_SCHEMAS.* and TOOLS[].parameters: " + SCHEMA_COLUMNS
         return _terminal_key_encoding(_share_strings(native, share_lists=True, short_references=True))
-    literal_paths = {("ACTION_SCHEMAS",), ("RESPONSE_ENVELOPE",), ("CONTROL",),
+    literal_paths = {("ACTION_SCHEMAS",), ("SCHEMA_DEFINITIONS",), ("RESPONSE_ENVELOPE",), ("CONTROL",),
         ("TOOLS", "[]", "name"), ("TOOLS", "[]", "parameters"), ("TOOLS", "[]", "parameters_ref"),
         ("AUTHORITY", "request", "goals", "[]", "id"),
         ("AUTHORITY", "request", "goals", "[]", "port"), ("AUTHORITY", "plan", "goal_map"),
@@ -2622,6 +2886,7 @@ def _compact_native_wire(native, *, schema_columns=False, legacy=False):
     for tool in native.get("TOOLS", []):
         if isinstance(tool.get("parameters"), dict):
             tool["parameters"] = _compact_planning_schema(native_schema(tool["parameters"]))
+    native = share_schema_definitions(native)
     if schema_columns:
         # The last capacity tier may encode JSON Schema structure only. Every
         # submission field, enum/const/default and numeric bound stays literal;
@@ -2632,10 +2897,15 @@ def _compact_native_wire(native, *, schema_columns=False, legacy=False):
             if isinstance(tool.get("parameters"), dict):
                 tool["parameters"] = _schema_columns(tool["parameters"])
         native["SCHEMA_COLUMNS"] = "ACTION_SCHEMAS.* and TOOLS[].parameters: " + SCHEMA_COLUMNS
+        if native.get("SCHEMA_DEFINITIONS"):
+            native["SCHEMA_DEFINITIONS"] = {key: _schema_columns(value)
+                                           for key, value in native["SCHEMA_DEFINITIONS"].items()}
+            native["SCHEMA_COLUMNS"] += " SCHEMA_DEFINITIONS.* uses the same schema columns."
     return _terminal_key_encoding(_share_strings(native, share_lists=True, short_references=True,
                                                 literal_paths=literal_paths), literal_paths=literal_paths)
 
 
+@_measured_context
 def build_context(
     request: Request,
     run: Run,
@@ -2906,7 +3176,11 @@ def build_context(
             authority["code_attempt_allowance"].update({
                 "derivation": "max(persisted code_retries, retries of the same logical Python task)",
                 "meaning": "independent planned Python tasks use analysis budget; failure retries also use this allowance"})
-        failed_python = _failed_attempt_history(run)
+        superseded_failures = _superseded_failures(run, results)
+        if superseded_failures:
+            authority["prior_failed_attempts"] = list(superseded_failures.values())
+        failed_python = [row for row in _failed_attempt_history(run)
+                         if row["attempt_id"] not in superseded_failures]
         if failed_python:
             safe_history = _safe(failed_python)
             if safe_history != failed_python:
@@ -3324,6 +3598,8 @@ def build_context(
                                  for projected, original in zip(projected_results, visible_results, strict=True)]
         if compact:
             _consumed_read_previews(run, visible_results, projected_results)
+            if observation_bytes == 256 and _simplified_workflow(run):
+                _settled_history_references(run, visible_results, projected_results, feedback or {})
         reused_windows = _reuse_read_windows(run, visible_results, projected_results)
         tool_effects = {}
         for original, result in zip(visible_results, projected_results, strict=True):
@@ -3354,7 +3630,7 @@ def build_context(
                 "Previously requested reads only. coverage describes Tool return; context_page describes visible preview. "
                 "consumed_read omits prior body/checks/query parameters; immutable Result/Call retains them. "
                 "Different windows remain separate; no automatic file reads. "
-                "Do not repeat the same window to obtain hidden lines: use context_page.next_line on the same Artifact. "
+                "Do not repeat the same window: use continuation.parameters, next_offset or context_page.next_line. "
                 "A successful workspace.write preserves your authored bytes; rereading your entire script is not "
                 "a prerequisite to execution. Read specific missing external formats or failure locations.")
             if reused_windows:
@@ -3385,6 +3661,8 @@ def build_context(
             if len(request.systems) == 1:
                 known = {key: value for key, value in effective_conditions(
                     request, system_id=request.systems[0].id)["conditions"].items() if value is not None}
+                known.update({key: value for key, value in preparation_conditions(
+                    request, request.systems[0].id)["conditions"].items() if value is not None})
                 known["system_id"] = request.systems[0].id
             native_template = {**template, "AUTHORITY": deepcopy(authority), "DATA": deepcopy(template["DATA"]),
                                "TOOL_CATALOG": native_catalog}
@@ -3496,7 +3774,8 @@ def build_context(
                     prepared = _prepare_context_request([
                         {"role": "system", "content": native_fallback_prompt},
                         {"role": "user", "content": _json(_compact_native_wire(native_fallback,
-                            schema_columns=observation_bytes == 256, legacy=not run.permission.code_execution))}],
+                            schema_columns=observation_bytes == 256, legacy=not run.permission.code_execution,
+                            concise=observation_bytes == 256 and _simplified_workflow(run)))}],
                         prompt_version=PROMPT_VERSION, max_output_tokens=run.budget.output_tokens,
                         timeout_seconds=min((run.configuration.model if run.configuration else ModelLimits()).timeout_seconds,
                                             remaining_seconds),
@@ -3653,7 +3932,8 @@ def build_context(
     if native_fallback is not None:
         # Use the existing reversible schema columns for every schema in the
         # intent fallback, with the scope declared beside its decoding rule.
-        wire = _compact_native_wire(native_fallback, schema_columns=True, legacy=not run.permission.code_execution)
+        wire = _compact_native_wire(native_fallback, schema_columns=True,
+                                    legacy=not run.permission.code_execution, concise=_simplified_workflow(run))
         try:
             prepared = _prepare_context_request([
                 {"role": "system", "content": native_fallback_prompt}, {"role": "user", "content": _json(wire)}],

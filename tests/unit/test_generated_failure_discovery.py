@@ -55,10 +55,14 @@ def test_failed_task_has_authorized_discovery_schema_and_exact_diagnostic_refere
     store, run, result, wire, traceback = failed_case(tmp_path, monkeypatch)
     feedback = next(item for item in wire["DATA"]["results"] if item["result_id"] == result.id)
     source = result.source["files"]["task/stderr.txt"]
-    assert source["artifact_id"] not in feedback["artifact_ids"]
-    assert feedback["diagnostic_artifacts"] == [
-        {"task_path": name, **result.source["files"][name]}
-        for name in ("task/stdout.out", "task/stderr.txt")]
+    assert source["artifact_id"] not in feedback.get("artifact_ids", [])
+    assert {item["task_path"]: {key: value for key, value in item.items() if key != "task_path"}
+            for item in feedback["diagnostic_artifacts"]} == {
+                name: result.source["files"][name] for name in ("task/stdout.out", "task/stderr.txt")}
+    index = feedback["file_index"]
+    assert index["files"][0] == {"file_key": "task/stderr.txt", **source}
+    assert index["omitted"] == index["total"] - len(index["files"]) > 0
+    assert "byte_limit" in index["omission_reasons"]
     assert traceback not in str(wire)
     assert "evidence.list" in wire["ACTION_SCHEMAS"]
     assert wire["ACTION_SCHEMAS"]["evidence.list"]["required"] == ["run_id"]

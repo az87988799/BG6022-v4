@@ -279,13 +279,14 @@ def test_actual_error_shapes_use_one_bounded_correction_without_any_tool(tmp_pat
     assert [item["action"] for item in final.decisions] == ["rejected", "rejected"]
     correction = transport.sent[1]["CONTROL"]["validation_error"]
     # The archived eight-field reply is sent unchanged into decision-intent-2:
-    # execution IDs are now supplied by the program, so those five old envelope
-    # fields and the actually invalid `type` are all rejected, never stripped.
+    # execution IDs are supplied by the program, so those five old envelope
+    # fields are rejected. The exact type=json_object transport metadata is
+    # normalized under 0057; the archived response itself stays unchanged.
     assert transport.sent[0]["AUTHORITY"]["response_contract"] == "decision-intent-2"
     assert sorted(correction["requirement"], key=lambda item: item["loc"]) == [
         {"type": "extra_forbidden", "loc": [name]} for name in (
             "control_generation", "permission_version", "plan_version", "related_results",
-            "request_version", "type")]
+            "request_version")]
     assert all(row["parameters"]["recovery_kind"] == "correction" for row in final.decisions)
 
 

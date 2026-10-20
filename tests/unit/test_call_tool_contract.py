@@ -85,16 +85,18 @@ def test_actual_response_schema_binds_contract_only_to_call_action():
             assert (len(keys) >= schema["minProperties"]) is (set(keys) == set(Proposal.model_fields))
 
 
-def test_no_reader_budget_omits_immediate_contract_but_preserves_ready_step(tmp_path):
+def test_no_reader_budget_omits_calls_but_preserves_pending_step_fact(tmp_path):
     store, run, _ = make_run(tmp_path, initial_plan=True)
     run.usage.evidence_reads = run.budget.evidence_reads
     data = payload(build_context(store.load_request(run), run, store.load_plan(run),
                                  feedback={"pending_step_ids": ["read_a"]}))
-    contract = data["PROPOSAL_SCHEMA"]["then"]["properties"]["parameters"]
-    assert contract == call_tool_parameters_schema(immediate=False, step_ids=["read_a"])
-    assert contract["required"] == ["step_id"] and contract["maxProperties"] == 1
-    assert set(contract["properties"]) == {"step_id"}
-    assert data["ACTION_PARAMETERS"]["call_tool"] == {"step_id": "read_a"}
+    # Being pending cannot grant another read after its budget is exhausted.
+    assert "call_tool" not in data["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"]
+    assert "then" not in data["PROPOSAL_SCHEMA"]
+    assert "call_tool" not in data["ACTION_PARAMETERS"]
+    assert data["TOOL_CATALOG"] == []
+    assert data["CONTROL"]["pending_step_ids"] == ["read_a"]
+    assert run.usage.evidence_reads == run.budget.evidence_reads
 
 
 def test_no_call_action_has_no_call_contract():

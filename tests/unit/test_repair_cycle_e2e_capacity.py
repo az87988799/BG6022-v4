@@ -231,7 +231,7 @@ def run_fixed_e2e(tmp_path, monkeypatch, system, path_shape, *, goal_names=None,
     scripts = [normalize, plan]
     if correction:
         def rejected(data):
-            return {**next_tool("structure.prepare")(data), "type": "json_object"}
+            return {**next_tool("structure.prepare")(data), "unexpected_transport_field": True}
         scripts.append(rejected)
     transport = CapacityTransport(*scripts, next_tool("structure.prepare"), next_tool(tool),
         {"action": "stop", "parameters": {"reason": "Offline synthetic capacity fixture; no real science claim."}})
@@ -299,6 +299,6 @@ def run_fixed_e2e(tmp_path, monkeypatch, system, path_shape, *, goal_names=None,
         rejected_decisions = [decision for decision in ended.decisions if decision.get("action") == "rejected"]
         assert len(rejected_decisions) == 1
         assert transport.sent[3]["CONTROL"]["validation_error"]["requirement"] == [
-            {"type": "extra_forbidden", "loc": ["type"]}]
+            {"type": "extra_forbidden", "loc": ["unexpected_transport_field"]}]
         assert ended.usage.model_calls == 6 and ended.usage.model_tokens_used == 450
     return summary

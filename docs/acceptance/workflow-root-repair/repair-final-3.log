@@ -1,0 +1,34 @@
+........................................................................ [ 10%]
+........................................................................ [ 21%]
+.F...................................................................... [ 32%]
+........................................................................ [ 42%]
+........................................................................ [ 53%]
+........................................................................ [ 64%]
+........................................................................ [ 75%]
+............................................F........................... [ 85%]
+........................................................................ [ 96%]
+.......................                                                  [100%]
+================================== FAILURES ===================================
+_____ test_real_t5_goal_conditions_allow_planning_before_method_selection _____
+tests\unit\test_goal_scoped_execution_conditions.py:56: in test_real_t5_goal_conditions_allow_planning_before_method_selection
+    assert purpose.kind == "planning"
+E   AssertionError: assert 'terminal' == 'planning'
+E     
+E     - planning
+E     + terminal
+_ test_energy_coverage_keeps_the_requested_target_relation_and_required_status[False-False-True] _
+tests\unit\test_semantic_energy_coverage.py:203: in test_energy_coverage_keeps_the_requested_target_relation_and_required_status
+    commit(store, run, proposed(store, run, [item]))
+tests\unit\test_semantic_energy_coverage.py:67: in commit
+    return commit_candidate(store, run, parameters, decision_id=identifier, basis=current_basis(store, run))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\semantic.py:2436: in commit_candidate
+    condition_request = Request.model_validate(values) if simplified_workflow(run) else request
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 1 validation error for Request
+E     Value error, a scientific request requires at least one mandatory goal [type=value_error, input_value={'id': 'request_fb5d71668...'selection_reasons': {}}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/value_error
+=========================== short test summary info ===========================
+FAILED tests/unit/test_goal_scoped_execution_conditions.py::test_real_t5_goal_conditions_allow_planning_before_method_selection
+FAILED tests/unit/test_semantic_energy_coverage.py::test_energy_coverage_keeps_the_requested_target_relation_and_required_status[False-False-True]
+2 failed, 669 passed in 410.06s (0:06:50)

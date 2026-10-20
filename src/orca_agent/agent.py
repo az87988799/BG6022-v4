@@ -8,7 +8,7 @@ import psutil
 
 from orca_agent import runner
 from orca_agent.backends import local
-from orca_agent.context import build_context
+from orca_agent.context import ContextLimitError, build_context
 from orca_agent.decision_purpose import DECISION_CONTRACT_PROMPT_VERSIONS
 from orca_agent.llm import DeepSeekTransport, proposal_recovery_kind
 from orca_agent.model_usage import current_basis, send_model
@@ -927,9 +927,15 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
             unfinished = any(a.finished_at is None for a in run.attempts)
             run.state = (active_terminal(run).terminal_state if active_terminal(run) else "unknown" if unfinished else
                          "budget_exhausted" if isinstance(exc, BudgetExceeded) else "failed")
-            run.diagnostics.append({"category": type(exc).__name__,
-                                    "message": message,
-                                    "environment_occupied": isinstance(exc, EnvironmentBusy)})
+            diagnostic = {"category": type(exc).__name__, "message": message,
+                          "environment_occupied": isinstance(exc, EnvironmentBusy)}
+            if isinstance(exc, ContextLimitError) and exc.diagnostics:
+                # Rejected candidates never reach the transport's request
+                # archive. Preserve their numeric capacity breakdown here so
+                # failures can be diagnosed without reconstructing a later Run.
+                if not _has_credential(json.dumps(exc.diagnostics, ensure_ascii=False)):
+                    diagnostic["context_capacity"] = exc.diagnostics
+            run.diagnostics.append(diagnostic)
         runner._goals(store, run, store.load_plan(run), results)
         if run.state == "unknown":
             run.usage.resource_usage_complete = False

@@ -91,6 +91,21 @@ def payload(prepared):
         for tool in value.get("TOOLS", []):
             if "parameters" in tool:
                 tool["parameters"] = expand_schema(tool["parameters"])
+        value["SCHEMA_DEFINITIONS"] = {key: expand_schema(schema)
+                                      for key, schema in value.get("SCHEMA_DEFINITIONS", {}).items()}
+    if value.get("SCHEMA_DEFINITIONS"):
+        def resolve_schema(node):
+            if isinstance(node, dict):
+                reference = node.get("$ref", "")
+                if set(node) == {"$ref"} and reference.startswith("#/SCHEMA_DEFINITIONS/"):
+                    return resolve_schema(value["SCHEMA_DEFINITIONS"][reference.rsplit("/", 1)[-1]])
+                return {key: child if key in {"const", "enum", "default", "examples"} else resolve_schema(child)
+                        for key, child in node.items()}
+            return [resolve_schema(child) for child in node] if isinstance(node, list) else node
+        value["ACTION_SCHEMAS"] = {key: resolve_schema(schema) for key, schema in value["ACTION_SCHEMAS"].items()}
+        for tool in value.get("TOOLS", []):
+            if isinstance(tool.get("parameters"), dict):
+                tool["parameters"] = resolve_schema(tool["parameters"])
     if value.get("SCHEMA_COLUMNS", "").startswith("PROPOSAL_SCHEMA and PARAMETER_SCHEMAS.*:"):
         from tests.unit.test_decision_purpose_capacity import expand_schema
 
@@ -127,6 +142,12 @@ def payload(prepared):
     if isinstance(results, dict) and set(results) == {"columns", "rows"}:
         value["DATA"]["results"] = [{key: cell for key, cell in zip(results["columns"], row, strict=True)
                                       if cell is not None} for row in results["rows"]]
+    for result in value.get("DATA", {}).get("results", []):
+        for row in result.get("unqualified_observation_records", []):
+            for source in row.get("sources", []):
+                if "observation_source_ref" in source:
+                    reference = source.pop("observation_source_ref")
+                    source.update(value["DATA"]["observation_sources"][reference])
     for result in [*value.get("DATA", {}).get("results", []),
                    *value.get("DATA", {}).get("result_references", [])]:
         facts = {fact["ref"]: fact["value"] for fact in value.get("DATA", {}).get("delivery", {}).get("facts", [])}
@@ -152,7 +173,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v77"
+    assert context.prompt_version == "agent-json-v78"
     assert "reason<=1000" in context.body()["messages"][0]["content"]
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)

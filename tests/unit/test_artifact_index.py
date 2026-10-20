@@ -109,6 +109,18 @@ def test_large_index_has_bounded_bytes_rows_and_explicit_omissions(limit):
     assert result_file_index(recorded(dict(reversed(list(files.items())))), max_bytes=limit) == index
 
 
+def test_internal_error_logs_precede_coordinator_metadata_in_bounded_index():
+    files = {f"sealed/metadata-{number:03d}.json": {
+        "artifact_id": f"metadata_{number}", "sha256": "a" * 64} for number in range(30)}
+    files["internal/child/task/stdout.out"] = {"artifact_id": "orca_log", "sha256": "b" * 64}
+    result = recorded(files, state="failed")
+    before = result.model_copy(deep=True)
+    index = result_file_index(result, max_bytes=1024)
+    assert index["files"][0]["artifact_id"] == "orca_log"
+    assert index["files"][0]["file_key"] == "internal/child/task/stdout.out"
+    assert size(index) <= 1024 and index["omitted"] > 0 and result == before
+
+
 @pytest.mark.parametrize("receipt_name", [None, [], {}, "../not_relative"])
 def test_invalid_writer_receipt_name_cannot_crash_or_advertise_a_file(receipt_name):
     result = Result(id="written", run_id="run", call_id="call", operation_status="completed",
@@ -155,6 +167,7 @@ def test_completed_writer_uses_real_receipt_metadata_and_existing_hash_gate(tmp_
     before = run.permission.model_copy(deep=True)
     plan = materialize_plan(store, run, {"steps": [{"key": writer.id},
         {"key": "consume", "tool": "python.execute", "parameters": {
+            "sdk_orca": False,
             "code": {key: row[key] for key in ("artifact_id", "sha256")},
             "observation_names": ["artifacts"]}}],
         "goal_map": {"report": {"step_key": "consume", "port": "artifacts"}}})
@@ -210,6 +223,7 @@ def test_current_result_index_binds_code_and_manifest_without_extra_list_round(t
     assert (request, run, plan, result, snapshot) == before
     proposal = {"steps": [{"key": plan.steps[0].id},
         {"key": "followup", "tool": "python.execute", "parameters": {
+            "sdk_orca": False,
             "code": {key: code[key] for key in ("artifact_id", "sha256")},
             "inputs": {"entries": [{**{key: data[key] for key in ("artifact_id", "sha256")},
                 "target_path": "report.csv", "purpose": "previous_report"}]},

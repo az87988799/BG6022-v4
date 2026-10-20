@@ -245,13 +245,21 @@ def test_specific_path_correction_cannot_be_dropped_as_generic_call_guidance():
     values["feedback"]["validation_error"]["requirement"]["requirement"] += (
         " Dipole_Moment is an array: preserve its index 0 before dipoleMagnitude.")
     expected = copy.deepcopy(values["feedback"]["validation_error"])
+    before = copy.deepcopy(values)
     prepared = build_context(**values)
-    assert decoded(prepared)["CONTROL"]["validation_error"] == expected
-    # The stronger diagnostic can still exhaust this exact historical balance;
-    # projection never edits it to buy room or relaxes the final-answer reserve.
-    with pytest.raises(BudgetExceeded, match="required final explanation"):
-        validate_delivery_margin(values["request"], values["run"], purpose=prepared_decision_purpose(prepared),
-                                 prepared=prepared, now=values["now"])
+    sent = decoded(prepared)
+    assert sent["CONTROL"]["validation_error"] == expected
+    # This historical balance cannot fund another planning correction plus its
+    # answer. The returned request is already the terminal explanation, with
+    # the specific diagnostic intact; it needs no second future answer reserve.
+    purpose = prepared_decision_purpose(prepared)
+    assert purpose.kind == "terminal" and purpose.allowed_actions == ("stop",)
+    assessment = validate_delivery_margin(values["request"], values["run"], purpose=purpose,
+                                          prepared=prepared, now=values["now"])
+    assert assessment["can_send_before_final"] is True
+    assert assessment["future_answer_calls"] == assessment["future_answer_tokens"] == 0
+    assert prepared.reserved_tokens <= assessment["remaining_tokens_before_this_request"]
+    assert values == before
 
 
 def _query_run(tmp_path, *, current_capacity=False):

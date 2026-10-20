@@ -1,4 +1,8 @@
-"""Replay the final live006 rejection structurally, without execution or API calls."""
+"""Structural replay, with explicit current SDK declaration added to old replies.
+
+The archived bytes remain unchanged. The original missing-declaration rejection
+is tested separately; these fixtures perform no execution or API calls.
+"""
 
 import copy
 import hashlib
@@ -17,7 +21,7 @@ FIXTURE = Path(__file__).parents[1] / "fixtures/incremental_repair_live006.json"
 SOURCE = "step_3e65727f4d5e4ad980da838453fd88e1"
 
 
-def replay():
+def replay(*, complete_declaration=True):
     data = json.loads(FIXTURE.read_bytes())
     steps = {step["id"]: step for step in data["prior_plan"]["steps"]}
     for call in data["run"]["calls"]:
@@ -30,10 +34,19 @@ def replay():
     results = {item["id"]: Result.model_validate(item) for item in data["results"]}
     store = SimpleNamespace(load_plan=lambda _: prior, load_request=lambda _: request,
                             load_result=lambda _, identifier: results[identifier])
+    if complete_declaration:
+        data["parameters"]["steps"][0]["sdk_orca"] = True
     return store, run, request, prior, data["parameters"]
 
 
-def test_real_last_reply_replaces_failed_step_without_rewriting_attempt_or_budget():
+def test_archived_last_reply_without_current_sdk_declaration_is_still_rejected():
+    store, run, _, _, parameters = replay(complete_declaration=False)
+    with pytest.raises(ProposalError) as rejected:
+        materialize_plan(store, run, parameters)
+    assert rejected.value.detail["code"] == "missing_sdk_orca_declaration"
+
+
+def test_declaration_completed_last_reply_preserves_attempt_and_budget():
     store, run, request, prior, parameters = replay()
     before = copy.deepcopy((run, request, prior, parameters))
     candidate = materialize_plan(store, run, parameters)
@@ -69,6 +82,7 @@ def test_real_reply_full_repair_form_retains_the_same_frozen_noncode_contract():
     full["logical_key"] = full.pop("logical_id")
     full.pop("id")
     full["parameters"]["code"] = repair["code"]
+    full["parameters"]["sdk_orca"] = True
     parameters["steps"] = [full]
     before = copy.deepcopy((run, request, prior, parameters))
     candidate = materialize_plan(store, run, parameters)
@@ -79,8 +93,9 @@ def test_real_reply_full_repair_form_retains_the_same_frozen_noncode_contract():
     assert source.id not in {step.id for step in candidate.steps}
     assert replacement.model_dump(exclude={"id", "parameters"}) == source.model_dump(
         exclude={"id", "parameters"})
-    assert replacement.parameters.model_dump(exclude={"code"}) == source.parameters.model_dump(
-        exclude={"code"})
+    assert replacement.parameters.sdk_orca is True
+    assert replacement.parameters.model_dump(exclude={"code", "sdk_orca"}) == source.parameters.model_dump(
+        exclude={"code", "sdk_orca"})
     assert (run, request, prior, parameters) == before
 
 
@@ -108,7 +123,7 @@ def test_repair_still_requires_the_exact_settled_failed_attempt(change):
     assert rejected.value.detail["code"] == "invalid_code_repair_reference"
 
 
-def input_repair_case(tmp_path, *, same_code=False):
+def input_repair_case(tmp_path, monkeypatch, *, same_code=False):
     store, run, request, prior, parameters = replay()
     source = next(step for step in prior.steps if step.id == SOURCE)
     geometry = json.loads(FIXTURE.read_bytes())["prepared_geometry"]
@@ -133,12 +148,17 @@ def input_repair_case(tmp_path, *, same_code=False):
     store.verified_own_artifacts = lambda _: authorized
     store.load_artifact = lambda identifier: archived[identifier]
     store.artifact_path = lambda identifier: archived[identifier].path
+    # These tests isolate immutable repair references and file admission. Real
+    # SDK initial-geometry admission is covered by test_sdk_geometry_preflight.
+    monkeypatch.setattr("orca_agent.tools.managed.validate_sdk_orca_preconditions",
+                        lambda *args, **kwargs: None)
     return store, run, request, prior, parameters, authorized
 
 
 @pytest.mark.parametrize("same_code", [False, True])
-def test_real006_explicit_coords_manifest_repairs_input_without_changing_old_attempt(tmp_path, same_code):
-    store, run, request, prior, parameters, authorized = input_repair_case(tmp_path, same_code=same_code)
+def test_real006_explicit_coords_manifest_repairs_input_without_changing_old_attempt(tmp_path, monkeypatch, same_code):
+    store, run, request, prior, parameters, authorized = input_repair_case(
+        tmp_path, monkeypatch, same_code=same_code)
     before = copy.deepcopy((run, request, prior, parameters))
     candidate = materialize_plan(store, run, parameters)
     validate_revision(request, prior, request, candidate, run, authorized_artifacts=authorized)
@@ -154,8 +174,8 @@ def test_real006_explicit_coords_manifest_repairs_input_without_changing_old_att
 
 
 @pytest.mark.parametrize("change", ["unauthorized_input", "wrong_hash", "unchanged_inputs", "conditions"])
-def test_explicit_input_repair_preserves_original_admission_gates(tmp_path, change):
-    store, run, request, prior, parameters, authorized = input_repair_case(tmp_path, same_code=True)
+def test_explicit_input_repair_preserves_original_admission_gates(tmp_path, monkeypatch, change):
+    store, run, request, prior, parameters, authorized = input_repair_case(tmp_path, monkeypatch, same_code=True)
     proposed = parameters["steps"][0]
     if change == "unauthorized_input":
         proposed["inputs"]["entries"][0]["artifact_id"] = "foreign_or_unsettled_artifact"
@@ -170,6 +190,7 @@ def test_explicit_input_repair_preserves_original_admission_gates(tmp_path, chan
         full.pop("id")
         full["parameters"]["inputs"] = proposed["inputs"]
         full["parameters"]["conditions"] = {"analysis_scope": "different task purpose"}
+        full["parameters"]["sdk_orca"] = True
         parameters["steps"] = [full]
     before = copy.deepcopy((run, request, prior, parameters))
     with pytest.raises(PlanningError):

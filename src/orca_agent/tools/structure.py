@@ -223,11 +223,11 @@ def validate_call_inputs(store, run, parameters, tool, consumption=None):
         raise ValueError("structure Tool execution effect was not authorized")
     request, system, canonical, evidence = _requirement(store, run, params.system_id)
     if tool == "structure.prepare":
-        from orca_agent.applicability import effective_conditions
+        from orca_agent.applicability import preparation_conditions
         from orca_agent.condition_selection import general_admission_enabled
         if run.permission.max_cores < PREPARE_CORES or run.permission.max_memory_mb < PREPARE_MEMORY_MB:
             raise ValueError("preparation resources exceed the frozen permission snapshot")
-        conditions = effective_conditions(request, system_id=system.id)
+        conditions = preparation_conditions(request, system.id)
         general = general_admission_enabled(store, run)
         if ((not general and (params.charge != 0 or params.multiplicity != 1))
                 or conditions["conditions"].get("charge") != params.charge

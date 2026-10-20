@@ -168,7 +168,7 @@ def test_new_workflow_prompt_exposes_program_bound_files_and_optional_method_sou
     _, run, prepared, wire = selection_context(
         tmp_path, general=True, simplified=True, native_only=native_only)
     assert run.configuration.workflow_policy == "simplified-1"
-    assert prepared.prompt_version == "agent-json-v77"
+    assert prepared.prompt_version == "agent-json-v78"
     assert "producer_key" in wire["TASK_CODE_RULES"]
     assert "missing controls are rejected, never filled in" not in wire["TASK_CODE_RULES"]
     assert "program-materialized" in wire["TASK_CODE_RULES"] if native_only else (

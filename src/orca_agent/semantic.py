@@ -12,7 +12,7 @@ from typing import Any, Literal, get_args
 
 from pydantic import Field, ValidationError
 
-from orca_agent.applicability import PROFILE, canonical_condition
+from orca_agent.applicability import PROFILE, canonical_condition, effective_conditions
 from orca_agent.condition_selection import (
     commit_selections as commit_selections,
 )
@@ -331,10 +331,12 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
             "Goals, explicit conditions and automatic_selection authorization may supply source_refs instead of "
             "recopying text_basis/message_id. References name authenticated user fragments; the program retains "
             "the exact source and any intervening text. Keep quantity as the user's physical quantity phrase. "
-            "A reference does not prove an arbitrary field value. Exact text_basis remains accepted. "
+            "A reference does not prove an arbitrary field value. Exact text_basis remains accepted, including "
+            "a shorter quote contained in the referenced source. A Goal's exact quantity can supply an omitted quote. "
             "Environment values use gas_phase, CPCM(solvent), or SMD(solvent); retain the user's model and solvent. "
             "value_basis may identify an exact literal value phrase inside the source. The program records the "
-            "raw phrase and separately checks the canonical model/solvent mapping; a citation alone is insufficient. "
+            "raw phrase for any explicit condition and separately checks its value or canonical mapping; "
+            "a citation alone is insufficient. "
             "The program supplies an omitted unambiguous geometry_relation; conflicting relations remain errors. "
             "analysis_goal_ref is only a legacy sampling specification reference, not a general Goal dependency.")
         current["instruction"] = current["instruction"].replace(
@@ -389,14 +391,20 @@ def _apply_source_references(candidate, messages, *, enabled):
         start, end = min(ref["start"] for ref in refs), max(ref["end"] for ref in refs)
         text = message["text"][start:end]
         if (item.message_id is not None and item.message_id != message_id
-                or item.text_basis and item.text_basis != text):
+                or item.text_basis and item.text_basis not in text):
             corrections.append({"path": ["parameters", *path], "reason": "source_reference_conflicts_with_supplied_text"})
             continue
         # The retained source can be longer than the model-authored text bound;
         # it is bounded by the authenticated message, not generated audit prose.
-        item.text_basis, item.message_id = text, message_id
+        supplied_text = item.text_basis
+        # A condition's supplied short quote is also its literal value witness.
+        # Keep it narrow so an unrelated number elsewhere in a large reference
+        # cannot authenticate a different proposed value.
+        item.text_basis = supplied_text if isinstance(item, FieldEvidence) and supplied_text else text
+        item.message_id = message_id
         records.append({"path": path, "source_refs": list(item.source_refs),
-                        "message_id": message_id, "start": start, "end": end})
+                        "message_id": message_id, "start": start, "end": end,
+                        **({"supplied_text_basis": supplied_text} if supplied_text else {})})
     return records, corrections
 
 
@@ -404,6 +412,15 @@ def _apply_general_program_fields(candidate, request, messages):
     """Mechanical additions do not change explicit physical choices."""
     rows = []
     for index, item in enumerate(candidate.goals or []):
+        # The quantity already is a model-proposed exact source quote. Requiring
+        # a second identical copy adds no evidence; locate it before any use.
+        if not item.text_basis and not item.source_refs and item.quantity:
+            matches = _quote_occurrences(item.quantity, messages, item.message_id)
+            if matches and len({entry[0]["id"] for entry in matches}) == 1:
+                item.text_basis = item.quantity
+                item.message_id = matches[0][0]["id"]
+                rows.append({"path": ["goals", index, "text_basis"], "value": item.quantity,
+                             "source": "authenticated_quantity_quote"})
         frozen_sampling = any(goal.evidence_contract_version != "generic-observation-1"
                               and goal.port in {"sampling", "sampling_check"}
                               and goal.conditions.get("sampling") for goal in request.goals)
@@ -423,6 +440,16 @@ def _apply_general_program_fields(candidate, request, messages):
             item.geometry_relation = relation
             rows.append({"path": ["goals", index, "geometry_relation"],
                          "value": relation, "source": "program_grounded_user_constraint"})
+        elif (relation is None and item.geometry_relation == "fixed_initial"
+                and _task_geometry_clauses(request, matches[0][0], item)):
+            # A per-candidate SP label is not an initial-XYZ hash restriction.
+            # Keep the authentic geometry obligations instead of introducing
+            # an impossible single-geometry condition across all candidates.
+            rows.append({"path": ["goals", index, "geometry_relation"],
+                         "proposed_value": item.geometry_relation,
+                         "action": "retained_as_nonexecuting_remark",
+                         "reason": "derived_geometries_have_no_single_initial_binding"})
+            item.geometry_relation = None
     return rows
 
 
@@ -919,7 +946,7 @@ def _registered_identity(system):
 def _propositions(text):
     """Small bounded clause splitter retaining question punctuation and offsets."""
     return [(match.start(), match.end(), match.group()) for match in re.finditer(
-        r"[^，,。.;；\n!?？]+[!?？]?", text)]
+        r"(?:[^，,。.;；\n!?？]|(?<=\d)\.(?=\d))+[!?？]?", text)]
 
 
 def _goal_grounding(request, text, system_ids, messages, *, message_id=None, original_identity=None,
@@ -1072,7 +1099,8 @@ def _environment_mapping(value, text):
         raise StoreError("environment model or solvent remains ambiguous in the user source")
     return (f"{model.upper()}({solvent})", solvent_match.group(),
             {"model": model, "solvent": solvent, "source": "program_checked_component_mapping",
-             "raw_phrase": text, "proposed_value": value})
+             "raw_phrase": text, "proposed_value": value,
+             "model_basis": model_match.group(), "solvent_basis": solvent_match.group()})
 
 
 def _field(name, item, request, messages, *, system=None):
@@ -1082,9 +1110,9 @@ def _field(name, item, request, messages, *, system=None):
                          + ", ".join(get_args(ConditionName)))
     value = item.value
     if item.value_basis is not None:
-        if (not _simplified_request(request) or name != "environment" or item.source != "explicit"
+        if (not _simplified_request(request) or item.source != "explicit"
                 or item.value_basis not in item.text_basis):
-            raise StoreError("literal environment value_basis requires authenticated explicit user wording")
+            raise StoreError("literal value_basis requires authenticated explicit user wording")
     environment_mapping = None
     if name == "environment" and item.source == "explicit" and _simplified_request(request):
         message, start, end = _locate(item.text_basis, messages, item.message_id)
@@ -1143,6 +1171,8 @@ def _field(name, item, request, messages, *, system=None):
             if name == "environment" and _simplified_request(request):
                 raise StoreError("environment must retain a literal user value; supply value_basis for a proposed canonical mapping")
             raise StoreError("explicit condition lacks a supported lexical value basis")
+        if item.value_basis is not None and not any(present(token, item.value_basis) for token in tokens):
+            raise StoreError("value_basis contradicts the proposed condition value")
         # A clipped quote must not discard the negation/uncertainty around the
         # value in its authenticated message. Ambiguous clauses stay unresolved.
         clauses = [clause for _, begin, stop in _quote_occurrences(
@@ -1374,8 +1404,10 @@ def _general_scalar_geometry_relation(request, message, item, context):
         # A true initial-geometry scalar Goal is still expressible alongside
         # candidate generation; per-candidate or transformed-coordinate Goals
         # have no single initial hash/optimized-result relation.
-        return "fixed_initial" if relation == "fixed_initial" and re.search(
-            r"初始几何|\binitial\s+geometry\b", context, re.I) else None
+        initial = re.search(r"初始几何|\binitial\s+geometry\b", context, re.I)
+        fixed_local = (_simplified_request(request) and not _DERIVED_GEOMETRY.search(context)
+                       and re.search(r"固定几何|\bfixed\s+geometry\b", context, re.I))
+        return "fixed_initial" if relation == "fixed_initial" and (initial or fixed_local) else None
     if relation == "fixed_initial" and not re.search(
             r"初始几何|固定几何|(?:保持|使用|共用).{0,20}(?:相同|同一份).{0,20}(?:坐标|几何)|"
             r"\b(?:(?:initial|fixed)\s+geometry|(?:keep|use|share)\s+(?:the\s+)?same\s+(?:coordinates|geometry))\b",
@@ -1482,6 +1514,312 @@ def _text_geometry_relation(request, messages, system_ids):
 
 _ELECTRONIC_ENERGY = re.compile(
     r"电子能(?:量)?|单点能|\b(?:electronic|single[- ]point|sp)\s+energ(?:y|ies)\b", re.I)
+_ENERGY_NAME = re.compile(
+    r"(?:电子|单点|绝对|总)(?:电子)?能(?:量)?|"
+    r"(?<![A-Za-z0-9_])(?:electronic|single[- ]point|sp|absolute|total)\s+"
+    r"(?:electronic\s+)?energ(?:y|ies)(?![A-Za-z0-9_])", re.I)
+_ENERGY_DISPLAY = (
+    r"(?:数值|值|数据|结果|表格?|排名|排序|比较|曲线|图|清单)|"
+    r"(?:values?|data|results?|tables?|rankings?|ranks?|comparisons?|curves?|plots?|lists?)")
+_ENERGY_VALUE_PREFIX = re.compile(
+    r"(?:[\s'’()（）/:-]|"
+    r"请|为|对|的|它|该|这些|各|每个|全部|所有|原始|实际|真实|最终|初始|优化后|优化|所得|ORCA|"
+    r"\b(?:the|a|an|its|their|for|of|each|all|both|original|actual|final|initial|optimized|"
+    r"computed|calculated|reported|individual|numeric|numerical|molecular|resulting|ORCA|s)\b)*",
+    re.I)
+_ENERGY_REQUEST_VERB = (
+    r"给出|报告|计算|算|登记|记录|需要|要求|求|交付|完成|取消|撤回|"
+    r"\b(?:report|give|calculate|compute|register|record|need|want|deliver|cancel|withdraw)\b")
+_ENERGY_ITEM_BOUNDARY = r"[，,。.;；:：、\n]|\band\b|以及|和|与|及"
+_ENERGY_PURPOSE_CLAUSE = r"用于|用作|用来|以便|作为|来|\b(?:in\s+order\s+to|so\s+that)\b"
+_ENERGY_TRAILING_CLAUSE = (
+    _ENERGY_PURPOSE_CLAUSE + r"|同时|然后|之后|之前|"
+    r"\b(?:but|with|without|on|at|in|for|under|using|to|of|from|"
+    r"by|via|through|after|before|during|within|because|that|which)\b")
+
+
+def _energy_target_names(request):
+    """Only authenticated target labels may qualify a physical quantity."""
+    return {name for system in request.systems for name in (
+        system.label, *system.identity.get("requested_names", ()),
+        *system.identity.get("canonical_names", ())) if isinstance(name, str) and name}
+
+
+def _energy_phrase_prefix(text, *, source):
+    if source:
+        actions = list(re.finditer(_ENERGY_REQUEST_VERB, text, re.I))
+        if not actions:
+            return text
+        action = actions[0]
+        for following in actions[1:]:
+            framing = text[action.end():following.start()]
+            # A chained command or condition clause may precede the actual
+            # output ("同一计算类型下完成..."). Do not search arbitrary nouns for
+            # the last verb: "未登记变换的电子能" must retain its full modifier.
+            if not framing.strip() or re.search(r"(?:下|前|后|再|并|然后|\bthen)\s*$", framing, re.I):
+                action = following
+        return text[action.end():]
+    return re.sub(r"^\s*(?:请|please\s+)?(?:" + _ENERGY_REQUEST_VERB + r")\s*",
+                  "", text, count=1, flags=re.I)
+
+
+def _energy_quantity_kinds(text, *, target_names=(), source=False):
+    """Recognize direct energy noun phrases, not arbitrary energy substrings.
+
+    Energy may be a displayed value or a difference. When it modifies another
+    quantity (an error, count, threshold, derivative, etc.), that other head
+    noun cannot satisfy an energy obligation. Display forms are grammar, not
+    a list of scientific task/port names. Both prefix and suffix must be
+    accounted for: unknown mathematical modifiers never certify raw energy.
+    Source propositions additionally allow a leading request/action clause.
+    """
+    kinds = set()
+    for match in _ENERGY_NAME.finditer(text):
+        before, after = text[:match.start()], text[match.end():]
+        # Limit the head analysis to this list item and the current imperative.
+        before = re.split(_ENERGY_ITEM_BOUNDARY, before, flags=re.I)[-1]
+        before = _energy_phrase_prefix(before, source=source)
+        difference = re.search(r"相对\s*$|\brelative\s*$|"
+                               r"\bdifference\s+(?:in|of|between)\s+(?:the\s+)?$",
+                               before, re.I)
+        suffix = re.match(r"\s*(?:差(?:值)?|\bdifferences?\b)", after, re.I)
+        if suffix:
+            after = after[suffix.end():]
+        # In "error of total energy", energy is a complement of "error".
+        # Direct display heads ("values of ...") preserve the physical value.
+        complement = re.search(
+            r"(.+?)\b(?:of|for|in|on|about|with)\s+(?:the\s+)?"
+            r"(?:(?:reported|calculated|computed)\s+)*$", before, re.I)
+        if (complement and not difference
+                and not re.fullmatch(r"\s*(?:(?:the|all|actual|individual|numeric|numerical|"
+                                     r"calculated|computed|reported)\s+)*(?:" + _ENERGY_DISPLAY + r")\s*",
+                                     complement[1], re.I)):
+            continue
+        if difference:
+            before = before[:difference.start()]
+        elif complement:
+            before = before[:complement.start()]
+        # Target names describe which molecule's energy is meant; they are not
+        # open-ended model-authored modifiers. Remaining text must consist
+        # entirely of known non-transforming value qualifiers.
+        names = set(target_names) | {entry[3] for entry in _mentions(text, targets=True)}
+        for name in sorted(names, key=len, reverse=True):
+            pattern = (r"(?<![\w])" + re.escape(name) + r"(?![\w])"
+                       if name.isascii() else re.escape(name))
+            before = re.sub(pattern, " ", before, flags=re.I)
+        if _ENERGY_VALUE_PREFIX.fullmatch(before) is None:
+            continue
+        # Consume only value/display suffixes. A remaining noun is a different
+        # requested quantity, even when it shares units with energy.
+        tail = re.sub(r"^\s*(?:的\s*)?(?:(?:" + _ENERGY_DISPLAY + r")\s*)*",
+                      "", after, count=1, flags=re.I)
+        tail = re.sub(
+            r"^\s*[\[(（]?\s*(?:(?:in|单位为?|用)\s*)?"
+            r"(?:Hartree|Eh|a\.?u\.?|eV|kJ/mol|kcal/mol)\b\s*[\])）]?\s*",
+            "", tail, count=1, flags=re.I)
+        if not re.match(r"^\s*(?:$|[，,。.;；:：、\n!?？]|以及|和|与|及|并|\band\b|"
+                        + _ENERGY_TRAILING_CLAUSE + r")", tail, re.I):
+            continue
+        kinds.add("difference" if difference or suffix else "absolute")
+    return kinds
+
+
+def _energy_quantity_phrases(text, *, source=False):
+    """Keep unknown energy quantities as literal, bounded source requirements.
+
+    Failure to classify a noun phrase is not permission to discard it. Only
+    request framing and explicit purpose clauses are excluded; unknown
+    mathematical, method and scope modifiers stay in the phrase. A preposition
+    alone is not a purpose boundary: "for each conformer" can qualify the output.
+    """
+    for part in re.split(_ENERGY_ITEM_BOUNDARY, text, flags=re.I):
+        matches = list(_ENERGY_NAME.finditer(part))
+        if not matches:
+            continue
+        first = matches[0]
+        prefix = _energy_phrase_prefix(part[:first.start()], source=source)
+        suffix = re.split(_ENERGY_PURPOSE_CLAUSE, part[matches[-1].end():], maxsplit=1, flags=re.I)[0]
+        phrase = (prefix + part[first.start():matches[-1].end()] + suffix).strip()
+        if phrase:
+            yield phrase
+
+
+def _energy_source_requirements(text, target_names):
+    requirements, pending_conditions = [], []
+
+    def append(phrase, *, condition=None):
+        kinds = _energy_quantity_kinds(phrase, target_names=target_names)
+        source = {"source_quantity": phrase}
+        if condition is not None:
+            # These are two exact source fragments sharing one noun phrase,
+            # not a reconstructed quotation.
+            source.update(source_condition=condition, source_condition_field="environment")
+        if kinds:
+            requirements.extend({"energy_kinds": [kind], **source} for kind in sorted(kinds))
+        else:
+            requirements.append({"literal_quantity": phrase, **source})
+
+    environment_values = {str(value) for name, value in LEXICAL_ALIASES if name == "environment"}
+    environment_values.update(alias for (name, _), aliases in LEXICAL_ALIASES.items()
+                              if name == "environment" for alias in aliases)
+    environment_atom = "|".join(re.escape(value) for value in sorted(environment_values, key=len, reverse=True))
+    for part in re.split(_ENERGY_ITEM_BOUNDARY, text, flags=re.I):
+        phrases = list(_energy_quantity_phrases(part, source=True))
+        if not phrases:
+            fragment = _energy_phrase_prefix(part, source=True).strip()
+            if re.fullmatch(r"(?:ORCA\s*)?(?:" + environment_atom
+                            + r")(?:\s*(?:环境|溶剂|environment|solvent))?", fragment, re.I):
+                pending_conditions.append(fragment)
+            else:
+                pending_conditions.clear()
+            continue
+        for phrase in phrases:
+            append(phrase)
+            # In a bounded condition list, an earlier environment may share
+            # the final item's physical quantity ("气相与…水环境下的电子能").
+            # Keep both environments; do not invent a quantity for other
+            # energy-free phrases or remove transforms after this boundary.
+            energy = _ENERGY_NAME.search(phrase)
+            boundaries = list(re.finditer(
+                r"(?:环境|溶剂|\benvironment\b|\bsolvent\b)(?:\s*(?:下|中))?\s*(?:的)?\s*",
+                phrase[:energy.start()], re.I))
+            if boundaries:
+                shared_quantity = phrase[boundaries[-1].end():]
+                for condition in pending_conditions:
+                    append(shared_quantity, condition=condition)
+            pending_conditions.clear()
+    return requirements
+
+
+def _energy_condition_contexts(request, goal):
+    """Use the execution resolver's values and provenance for every bound scope."""
+    for system_id in goal.system_ids or [None]:
+        assessment = effective_conditions(request, goal, system_id)
+        values, proofs = dict(assessment["conditions"]), {}
+        for name, value in values.items():
+            if any(reason.endswith(":" + name) or (
+                    "method/electronic_state" in reason and name in {"method", "electronic_state"})
+                   for reason in assessment["reasons"]):
+                values[name] = None
+                continue
+            if name in goal.conditions:
+                evidence = goal.text_evidence.get("conditions", {}).get(name, {})
+            else:
+                origin = assessment["sources"].get(name, "")
+                scope = origin.removeprefix("system:") if origin.startswith("system:") else "request"
+                evidence = request.condition_evidence.get(f"{scope}.{name}", {})
+            if canonical_condition(name, evidence.get("value")) == value:
+                proofs[name] = evidence
+        for name in CONDITIONS - values.keys():
+            if name in goal.conditions:
+                values[name] = goal.conditions[name]
+                proofs[name] = goal.text_evidence.get("conditions", {}).get(name, {})
+        yield values, proofs
+
+
+def _energy_quantity_with_conditions(obligation, conditions, proofs):
+    """Separate proven effective conditions from an unknown energy phrase.
+
+    Only exact value tokens from this Goal's authenticated effective condition
+    evidence can be consumed. Quotes are never removed wholesale: they may
+    include a mathematical transform or another requested quantity.
+    """
+    quantity = obligation["source_quantity"]
+    matched_conditions = set()
+    for name, evidence in proofs.items():
+        value = conditions.get(name)
+        if (name not in CONDITIONS or evidence.get("source") != "explicit"
+                or canonical_condition(name, evidence.get("value")) != value
+                or evidence.get("message_id") != obligation["message_id"]
+                or not any(location["start"] < obligation["end"]
+                           and location["end"] > obligation["start"]
+                           for location in evidence.get("occurrences", [evidence]))):
+            continue
+        aliases = LEXICAL_ALIASES.get((name, value), ())
+        tokens = {str(value), *aliases}
+        mapped = False
+        if name == "environment":
+            mapping = _environment_mapping(value, quantity)
+            if mapping:
+                tokens.update((mapping[2]["model_basis"], mapping[2]["solvent_basis"]))
+                mapped = True
+        # Literal occurrence alone does not prove that an arbitrary word is a
+        # condition ("normalized" cannot be invented as a method to erase it).
+        # Require documented value vocabulary, checked model components, or
+        # the condition's own label in the source phrase.
+        if not (aliases or mapped or re.search(SELECTION_LABELS[name], quantity, re.I)):
+            continue
+        changed = False
+        for token in sorted(tokens, key=len, reverse=True):
+            pattern = (r"(?<![a-z0-9_.+\-])" + re.escape(token) + r"(?![a-z0-9_.+\-])"
+                       if token.isascii() else re.escape(token))
+            quantity, count = re.subn(pattern, "\0", quantity, flags=re.I)
+            changed |= bool(count)
+        if changed:
+            matched_conditions.add(name)
+            labels = SELECTION_LABELS[name] + (r"|模型|\bmodel\b" if name == "environment" else "")
+            connector = (r"(?:\s|[()（）]|在|使用|采用|下|中|的|为|按|"
+                         r"\b(?:with|using|under|in|at|of|the)\b|" + labels + r")")
+            quantity = re.sub(connector + r"*\0(?:" + connector + r")*", " ", quantity, flags=re.I)
+    return quantity.strip(), matched_conditions
+
+
+def _energy_condition_mentions(name, phrase, *, labels=True):
+    if labels and re.search(SELECTION_LABELS[name], phrase, re.I):
+        return True
+    if name == "environment" and re.search(r"(?<![a-z0-9])(?:c[-\s]?pcm|smd)(?![a-z0-9])", phrase, re.I):
+        return True
+    for (field, _), aliases in LEXICAL_ALIASES.items():
+        if field != name:
+            continue
+        for alias in aliases:
+            pattern = (r"(?<![a-z0-9_.+\-])" + re.escape(alias) + r"(?![a-z0-9_.+\-])"
+                       if alias.isascii() else re.escape(alias))
+            if re.search(pattern, phrase, re.I):
+                return True
+    return False
+
+
+def _energy_source_condition_quantities(request, goal, obligation):
+    """Check source conditions before either physical-kind or literal matching."""
+    source, quantities = obligation["source_quantity"], []
+    for conditions, proofs in _energy_condition_contexts(request, goal):
+        unqualified, matched = _energy_quantity_with_conditions(obligation, conditions, proofs)
+        if obligation.get("source_condition"):
+            shared = {**obligation, "source_quantity": obligation["source_condition"]}
+            _, condition_matches = _energy_quantity_with_conditions(shared, conditions, proofs)
+            if obligation["source_condition_field"] not in condition_matches:
+                return None
+            matched |= condition_matches
+        # A recognized managed environment must remain an actual condition,
+        # even if the quantity repeats the source verbatim. A default cannot
+        # silently take over a missing explicit environment.
+        if ("environment" not in matched
+                and _energy_condition_mentions("environment", source, labels=False)):
+            return None
+        declared = {name for name, value in conditions.items() if value is not None} | goal.conditions.keys()
+        if any(name not in matched and _energy_condition_mentions(name, source)
+               for name in declared & CONDITIONS):
+            return None
+        quantities.append(unqualified)
+    return quantities
+
+
+def _literal_energy_matches(request, goal, obligation, quantities):
+    literal, quantity = obligation["literal_quantity"], goal.quantity or ""
+    names = _energy_target_names(request)
+    for unqualified in quantities:
+        normalized = {re.sub(r"\s+", " ", value).strip().casefold() for value in (literal, unqualified)}
+        if any(re.sub(r"\s+", " ", phrase).strip().casefold() in normalized
+               for phrase in _energy_quantity_phrases(quantity)):
+            continue
+        requested = _energy_quantity_kinds(unqualified, target_names=names)
+        supplied = _energy_quantity_kinds(quantity, target_names=names)
+        if not requested or not requested <= supplied:
+            return False
+    return True
+
+
 _GOAL_REPLACEMENT = (
     r"(?:改|换)(?:成|为)|替换|撤回.{0,24}目标|取消.{0,24}目标|"
     r"(?:replace\s+.+\s+with|change\s+.+\s+to|withdraw\s+.+goal)")
@@ -1515,6 +1853,7 @@ def _explicit_energy_requests(request, messages):
     lexicons as grounding. A model's Goal key or clipped quote is not input.
     """
     obligations = []
+    target_names = _energy_target_names(request)
     carry = set()
     relations = {}
     for message in messages:
@@ -1537,7 +1876,11 @@ def _explicit_energy_requests(request, messages):
                 targets = names or carry
                 withdrawn = (re.search(r"(?:取消|撤回).{0,24}目标|\b(?:cancel|withdraw).{0,40}goal\b", part, re.I)
                              and not re.search(_NEGATED_GOAL_CHANGE, part, re.I))
-                if withdrawn and _ELECTRONIC_ENERGY.search(part):
+                energy_text = re.sub(r"目标|\bgoals?\b", "", part, flags=re.I) if withdrawn else part
+                energy_requirements = (_energy_source_requirements(energy_text, target_names)
+                                       if _simplified_request(request)
+                                       else [{}] if _ELECTRONIC_ENERGY.search(part) else [])
+                if withdrawn and energy_requirements:
                     # Explicit cancellation retires earlier matching quantity
                     # requests even during first normalization of several messages.
                     prior_targets = {item["target"] for item in obligations}
@@ -1554,6 +1897,8 @@ def _explicit_energy_requests(request, messages):
                     r"不(?:要|再|得)?(?:执行|运行|启动)(?:任何)?(?:计算|程序|任务)|"
                     r"\bwithout\s+(?:executing|running|starting)\s+(?:any\s+)?(?:calculations?|computations?|orca|jobs?)\b",
                     " ", part, flags=re.I)
+                if _simplified_request(request):
+                    energy_requirements = _energy_source_requirements(quantity_text, target_names)
                 if re.search(r"不要|不得|不(?:再|必|需|想)?(?:给出|报告|计算|提供|登记|记录|要求|需要)|"
                              r"无[须需]|或者|也许|可能需要|\b(?:not|no|never|without|if|either|or|maybe|perhaps)\b|n't\b",
                              quantity_text, re.I):
@@ -1562,18 +1907,21 @@ def _explicit_energy_requests(request, messages):
                 if relation:
                     for target in targets or {None}:
                         relations[target] = relation
-                if not _ELECTRONIC_ENERGY.search(part):
+                if not energy_requirements:
                     continue
                 # Only explicit imperatives or compact requested-quantity names
                 # are covered; mentions in explanations are outside this rule.
-                if not re.search(r"给出|报告|计算|算|登记|记录|需要|要求|求|\b(?:report|give|calculate|compute|register|need|want)\b",
-                                 part, re.I) and not re.fullmatch(
+                if not re.search(_ENERGY_REQUEST_VERB, part, re.I) and not re.fullmatch(
                                      r"\s*(?:[\w -]+的)?(?:单点|优化后的)?电子能(?:量)?\s*", part):
                     continue
                 for target in targets or {None}:
-                    obligations.append({"target": target, "geometry_relation": relation or relations.get(target),
-                                        "message_id": message.get("id"),
-                                        "start": start + left, "end": start + right})
+                    # Different physical quantities may be separate Goals.
+                    # Do not require one Goal to bundle energy and its difference.
+                    for requirement in energy_requirements:
+                        obligations.append({"target": target, "geometry_relation": relation or relations.get(target),
+                                            "message_id": message.get("id"),
+                                            "start": start + left, "end": start + right,
+                                            **requirement})
     return obligations
 
 
@@ -1587,6 +1935,29 @@ def _require_energy_coverage(candidate, request, messages, goals):
         # an unrelated energy mention in a key/reason/other clause cannot cover it.
         quantity = goal.quantity or ""
         evidence = goal.text_evidence
+        if _simplified_request(request):
+            # The calculation and its requested table/ranking often occur in
+            # different clauses. The Goal binds both through its source range;
+            # requiring the delivery phrase at the calculation's character
+            # offset duplicates grounding and rejects the same physical output.
+            quantities = _energy_source_condition_quantities(request, goal, obligation)
+            if quantities is None:
+                return False
+            literal = obligation.get("literal_quantity")
+            if literal is not None:
+                # Unknown qualifiers cannot be assumed equivalent to raw energy
+                # or disappear from source obligations. Preserve their complete
+                # authenticated noun phrase, including transforms and scope.
+                matches = _literal_energy_matches(request, goal, obligation, quantities)
+            else:
+                requested = set(obligation["energy_kinds"])
+                supplied = _energy_quantity_kinds(quantity, target_names=_energy_target_names(request))
+                matches = bool(requested) and requested <= supplied
+            return (matches
+                    and evidence.get("message_id") == obligation["message_id"]
+                    and any(location["start"] < obligation["end"]
+                            and location["end"] > obligation["start"]
+                            for location in evidence.get("occurrences", [evidence])))
         return (bool(_ELECTRONIC_ENERGY.search(quantity))
                 and evidence.get("message_id") == obligation["message_id"]
                 and any(location["start"] + match.start() < obligation["end"]
@@ -1817,7 +2188,6 @@ def _goals(candidate, request, messages, *, text_input=False):
                                         if member else identity), text_evidence=text_evidence))
     if not goals or len(goals) > 8:
         raise StoreError("normalization requires one to eight bounded goals")
-    _require_energy_coverage(candidate, request, messages, goals)
     _require_sampling_coverage(request, messages, goals)
     return goals
 
@@ -2057,8 +2427,18 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
             if name in PHYSICAL and field.source in {"unknown", "inferred"}:
                 values["unresolved"].append(marker)
     if candidate.goals is not None:
-        values["goals"] = [g.model_dump() for g in _goals(candidate, request, grounding,
-            text_input=run.science_baseline_policy == "first_science_plan")]
+        goals = _goals(candidate, request, grounding,
+            text_input=run.science_baseline_policy == "first_science_plan")
+        values["goals"] = [goal.model_dump() for goal in goals]
+        if simplified_workflow(run) and not any(goal.required for goal in goals):
+            # Preserve the actionable missing-energy correction before the
+            # Request shape validator rejects an entirely optional goal set.
+            _require_energy_coverage(candidate, request, grounding, goals)
+        # Consume the already authenticated current conditions, using the same
+        # scope resolver as execution. Goal construction still validates
+        # inheritance against the original Request above.
+        condition_request = Request.model_validate(values) if simplified_workflow(run) else request
+        _require_energy_coverage(candidate, condition_request, grounding, goals)
     for goal_id, system_ids in candidate.goal_bindings.items():
         goal = next((g for g in values["goals"] if g["id"] == goal_id), None)
         if (goal is None or not system_ids or len(system_ids) != len(set(system_ids))

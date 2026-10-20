@@ -132,8 +132,9 @@ def validate_sdk_orca_preconditions(store, run, step, *, request=None, plan=None
 
 def native_input_binding(store, run, step, *, request=None, plan=None):
     """Consume current trusted geometry/conditions, never task-authored claims."""
-    from orca_agent.applicability import CONDITION_FIELDS, effective_conditions
+    from orca_agent.applicability import CONDITION_FIELDS, step_condition_goals
     from orca_agent.orca.native_profile import canonical_native_condition
+    from orca_agent.task_observations import _native_current_conditions
 
     policy = store.run_configuration(run).execution.native_input_policy
     if policy is None:
@@ -148,37 +149,35 @@ def native_input_binding(store, run, step, *, request=None, plan=None):
         raise ValueError("native execution requires an explicit requested system")
     system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
     system = next((item for item in request.systems if item.id == system_id), None)
-    assessment = effective_conditions(request, system_id=system_id)
-    if assessment["reasons"]:
-        raise ValueError("native conditions unresolved: " + ",".join(assessment["reasons"]))
-    conditions = {name: canonical(name, value)
-                  for name, value in assessment["conditions"].items()}
-    condition_sources = dict(assessment["sources"])
-    if any(value is None for value in conditions.values()):
-        raise ValueError("current Request condition is unsupported by the frozen native execution profile")
     simplified = store.run_configuration(run).workflow_policy == "simplified-1"
     related_goals = [goal for goal in request.goals if (
         (plan.goal_map.get(goal.id) and plan.goal_map[goal.id].step_id == step.id)
         or system_id in goal.system_ids or not goal.system_ids)]
-    mapped_goals = [goal for goal in related_goals if (
-        plan.goal_map.get(goal.id) and plan.goal_map[goal.id].step_id == step.id)]
-    selected_goals = mapped_goals or related_goals
-    environments = {conditions["environment"]}
-    if (simplified and request.conditions_source.get("environment") == "default"
-            and not (system and "environment" in system.conditions)):
-        scoped_environments = set()
-        for goal in selected_goals:
-            if "environment" in goal.conditions:
-                value = canonical("environment", goal.conditions["environment"])
-                if value is None:
-                    raise ValueError("Goal environment has no admitted execution mapping")
-                scoped_environments.add(value)
-        if scoped_environments:
-            environments = scoped_environments
-            condition_sources["environment"] = "goal:" + ",".join(
-                goal.id for goal in selected_goals if "environment" in goal.conditions)
-            if conditions["environment"] not in environments:
-                conditions["environment"] = sorted(environments)[0]
+    selected_goals = step_condition_goals(request, plan, step) if simplified else related_goals
+    # Resolve each intended evaluation before requiring a complete setup.
+    # Goal-specific values must never be lost merely because no shared value
+    # exists (for example a gas/water comparison).
+    projected = request
+    if simplified:
+        projected = request.model_copy(update={"condition_evidence": {
+            **request.condition_evidence, "workflow_policy": {"version": "simplified-1"}}})
+    assessments = [_native_current_conditions(projected, goal, system_id, policy=policy)
+                   for goal in selected_goals or [None]]
+    for assessment in assessments:
+        if assessment["reasons"]:
+            raise ValueError("native conditions unresolved: " + ",".join(assessment["reasons"]))
+    conditions = dict(assessments[0]["conditions"])
+    condition_sources = dict(assessments[0]["sources"])
+    environments = {assessment["conditions"]["environment"] for assessment in assessments}
+    for name in CONDITION_FIELDS:
+        variants = {assessment["conditions"][name] for assessment in assessments}
+        if None in variants:
+            raise ValueError("current Request condition is unsupported by the frozen native execution profile")
+        if len(variants) > 1 and not (simplified and name == "environment"):
+            raise ValueError("native Step requires separate evaluations for differing Goal condition: " + name)
+    if simplified and any("environment" in goal.conditions for goal in selected_goals):
+        condition_sources["environment"] = "goal:" + ",".join(
+            goal.id for goal in selected_goals if "environment" in goal.conditions)
     for name, value in step.parameters.conditions.items():
         if simplified and name == "environment":
             selected = canonical(name, value)
@@ -190,14 +189,6 @@ def native_input_binding(store, run, step, *, request=None, plan=None):
             continue
         if name in CONDITION_FIELDS and canonical(name, value) != conditions[name]:
             raise ValueError("Step condition conflicts with current Request: " + name)
-    for goal in selected_goals if simplified else request.goals:
-        target = plan.goal_map.get(goal.id)
-        if (target and target.step_id == step.id) or system_id in goal.system_ids:
-            for name, value in goal.conditions.items():
-                if simplified and name == "environment" and canonical(name, value) in environments:
-                    continue
-                if name in CONDITION_FIELDS and canonical(name, value) != conditions[name]:
-                    raise ValueError("Goal condition conflicts with native execution: " + name)
     geometry_id, geometry, geometry_bytes = _initial_geometry(store, run, request, system_id)
     policy = store.run_configuration(run).execution.native_input_policy
     relations = [scope.get("geometry_relation") for scope in (
@@ -516,6 +507,52 @@ def _collect_sdk_errors(store, run, attempt, root, files, diagnostics):
             "unscanned_response_files": max(0, len(paths) - 32)})
 
 
+def _collect_internal_failures(store, run, attempt, diagnostics):
+    """Project settled child failures from registered evidence, never task assertions."""
+    from orca_agent.llm import _has_credential
+
+    failed = [receipt for receipt in run.internal_calls
+              if receipt.parent_attempt_id == attempt.id
+              and receipt.state in {"failed", "timed_out", "cancelled"}]
+    for receipt in reversed(failed[-4:]):
+        diagnostic = {"category": "internal_orca_failed", "request_key": receipt.request_key,
+                      "operation_status": receipt.state, "evidence": []}
+        for artifact_id in receipt.artifact_ids:
+            artifact = store.load_artifact(artifact_id)
+            name = artifact.source.get("task_path")
+            if name not in {"stdout.out", "stderr.txt"}:
+                continue
+            if artifact.run_id != run.id or artifact.attempt_id != attempt.id:
+                diagnostic["evidence_error"] = "internal log is not owned by this Attempt"
+                continue
+            reference = {"filename": name, "artifact_id": artifact.id, "sha256": artifact.sha256}
+            try:
+                # The archive remains authoritative. Only its verified bounded
+                # tail enters feedback, alongside the directly readable identity.
+                path = store.artifact_path(artifact.id)
+                with path.open("rb") as stream:
+                    offset = max(0, artifact.size - 2048)
+                    stream.seek(offset)
+                    raw = stream.read(2048)
+                text = raw.decode("utf-8", errors="replace")
+                if _has_credential(text):
+                    text = "[redacted credential-bearing internal error]"
+                reference.update({"text": text, "byte_start": offset,
+                                  "truncated": offset > 0, "total_bytes": artifact.size})
+            except (ValueError, OSError) as exc:
+                # Keep the verified identity discoverable without claiming its
+                # damaged/missing content was read successfully.
+                reference["read_error"] = type(exc).__name__
+            diagnostic["evidence"].append(reference)
+            if len(diagnostic["evidence"]) == 2:
+                break
+        diagnostics.append(diagnostic)
+    if len(failed) > 4:
+        diagnostics.append({"category": "internal_orca_failures_bounded",
+                            "shown": 4, "total": len(failed),
+                            "omitted": len(failed) - 4})
+
+
 def collect_result(store, run, step, attempt, outcome):
     """Keep actual files; no fixed JSON requirement or implicit scientific parser."""
     root = store.path(attempt.directory)
@@ -552,8 +589,18 @@ def collect_result(store, run, step, attempt, outcome):
                                 "artifact_id": artifact.id, "sha256": artifact.sha256}
                     for artifact_id in receipt.artifact_ids:
                         artifact = store.load_artifact(artifact_id)
-                        files[f"internal/{receipt.request_key}/{artifact_id}"] = {
+                        # Keep common original log/input names discoverable.
+                        # The Artifact identity and hash remain authoritative;
+                        # coordinator records and other names retain their IDs.
+                        name = artifact.source.get("task_path")
+                        key = f"internal/{receipt.request_key}/{artifact_id}"
+                        if name in {"stdout.out", "stderr.txt", "job.inp"}:
+                            key = f"internal/{receipt.request_key}/task/{name}"
+                            if key in files and files[key]["artifact_id"] != artifact_id:
+                                key = f"internal/{receipt.request_key}/{artifact_id}"
+                        files[key] = {
                             "artifact_id": artifact_id, "sha256": artifact.sha256}
+            _collect_internal_failures(store, run, attempt, diagnostics)
         except Exception as exc:
             diagnostics.append({"category": "collection_error", "detail": str(exc)})
     else:

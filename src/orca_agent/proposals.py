@@ -77,6 +77,24 @@ class DecisionIntent(Record):
     reason: str = Field(strict=True, max_length=1000)
     bound_reason = field_validator("reason", mode="before")(_bounded_reason)
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_envelope(cls, values):
+        """Normalize only unambiguous transport forms, never execution content."""
+        if not isinstance(values, dict):
+            return values
+        values = dict(values)
+        if values.get("type") == "json_object":
+            values.pop("type")
+        if (values.get("schema_version") == "request-semantics-3"
+                and values.get("kind") in {"normalize", "amend", "replace_goals", "clarify", "continue", "status"}
+                and "action" not in values and "parameters" not in values):
+            # The semantic schema still validates every field, message and
+            # permission. This merely restores the missing action envelope;
+            # the immutable provider response retains the original shape.
+            return {"action": "normalize_request", "parameters": values, "reason": ""}
+        return values
+
 
 def action_parameter_schema(action, *, immediate=True, terminal_required=False):
     if action == "stop":
@@ -557,11 +575,13 @@ def _materialize_file_parameters(store, run, parameters, definition, ids, histor
 
 def _complete_incremental_plan(store, run, proposal, prior, request, history):
     """Carry exact settled history; never insert an omitted pending operation."""
+    from orca_agent.file_references import simplified_workflow
     from orca_agent.planning import settled_step_snapshots
 
     settled = settled_step_snapshots(store, run)
     supplied = {item.key for item in proposal.steps}
     replaced = {item.repair_of for item in proposal.steps if isinstance(item, ProposedCodeRepair)}
+    replacements = {item.repair_of: item.key for item in proposal.steps if isinstance(item, ProposedCodeRepair)}
     latest_attempts = {item.logical_id: item for item in run.attempts}
     for item in proposal.steps:
         if not isinstance(item, ProposedStep) or item.tool is None or item.key in history:
@@ -582,6 +602,7 @@ def _complete_incremental_plan(store, run, proposal, prior, request, history):
             # The full repair form has the same existing validation boundary:
             # validate_revision still permits changing only the code reference.
             replaced.add(source.step_id)
+            replacements[source.step_id] = item.key
     carried = set()
 
     def carry(identifier):
@@ -601,7 +622,17 @@ def _complete_incremental_plan(store, run, proposal, prior, request, history):
                 continue
             if binding.step_id in replaced or (binding.evidence
                     and binding.evidence.producer_step_id in replaced):
-                continue  # A replacement needs an explicit new Goal route.
+                if not simplified_workflow(run):
+                    continue
+                source_id = binding.step_id or binding.evidence.producer_step_id
+                key = replacements[source_id]
+                if binding.evidence:
+                    proposal.goal_map[identifier] = EvidenceGoalTarget(
+                        evidence=EvidenceRef(producer_step_id=key, port=binding.evidence.port,
+                            rule_version=binding.evidence.rule_version), port=binding.port)
+                else:
+                    proposal.goal_map[identifier] = FutureGoalTarget(step_key=key, port=binding.port)
+                continue
             if binding.gap is not None:
                 proposal.goal_map[identifier] = GapGoalTarget(gap=binding.gap, port=binding.port)
             elif binding.step_id in settled:
@@ -794,7 +825,7 @@ def materialize_plan(store, run, parameters):
         # confirmed Request conditions is not a second scientific decision.
         # Only declared fields are inherited; explicit proposal values remain
         # visible to the existing conflict/applicability checks.
-        from orca_agent.applicability import effective_conditions
+        from orca_agent.applicability import effective_conditions, preparation_conditions
         fields = definition.parameter_schema.get("properties", {})
         if "write_input_artifact" in definition.effects and "system_id" in fields:
             parameter_system = item.parameters.get("system_id")
@@ -812,7 +843,13 @@ def materialize_plan(store, run, parameters):
                 raise ProposalError(
                     "Use a system identifier declared in the current Request.",
                     path=["parameters", "steps", index, "parameters", "system_id"])
-        values = effective_conditions(request, system_id=item.system_id)["conditions"]
+        if "prepare_geometry" in definition.effects:
+            values = preparation_conditions(request, item.system_id)["conditions"]
+        else:
+            mapped = [goal for goal in request.goals if isinstance(
+                target := proposal.goal_map.get(goal.id), FutureGoalTarget) and target.step_key == item.key]
+            values = effective_conditions(
+                request, mapped[0] if len(mapped) == 1 else None, item.system_id)["conditions"]
         inherited = {key: value for key, value in values.items()
                      if key in fields and value is not None}
         if "system_id" in fields and item.system_id is not None:
@@ -887,6 +924,8 @@ def materialize_plan(store, run, parameters):
                 "If that output is not yet available, use {gap,port} with the same port.",
                 path=["parameters", "goal_map", goal_id, "port"], expected=requested_goals[goal_id].port)
         evidence = value.get("evidence", {})
+        if evidence.get("producer_step_id") in ids:
+            value["evidence"] = {**evidence, "producer_step_id": ids[evidence["producer_step_id"]]}
         if (evidence.get("producer_step_id") in settled
                 and evidence.get("port") == value["port"]):
             from orca_agent.planning import _compatible_rule

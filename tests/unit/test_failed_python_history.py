@@ -159,7 +159,7 @@ def test_multiple_failures_are_not_replaced_by_later_success_or_budget_exhaustio
     run.usage.code_retries = 2
     before = run.model_copy(deep=True)
     assert settled_failed_python_attempts(run) == [first, second]
-    assert [row["attempt_id"] for row in context._failed_python_history(run)] == [first.id, second.id]
+    assert [row["attempt_id"] for row in context._failed_attempt_history(run)] == [first.id, second.id]
     assert run == before
 
 
@@ -184,7 +184,7 @@ def test_live022_fixture_keeps_failure_that_final_model_context_omitted():
 @pytest.mark.parametrize("schema_columns", [False, True])
 def test_compaction_preserves_literal_full_repair_contract(tmp_path, monkeypatch, schema_columns):
     _, run, _, _, _, _, _, _ = failed_then_writer(tmp_path, monkeypatch)
-    history = context._failed_python_history(run)
+    history = context._failed_attempt_history(run)
     template = {"AUTHORITY": {"failed_python_attempts": history, "permission": {"code_execution": True}},
         "ACTION_SCHEMAS": {}, "TOOLS": [], "DATA": {"untrusted_copies": [history] * 30}}
     before = copy.deepcopy(template)
@@ -234,7 +234,7 @@ def test_safe_projection_cannot_silently_change_a_valid_frozen_contract(tmp_path
     results = [store.load_result(run.id, identifier) for identifier in relevant_result_ids(
         run, plan, feedback_ids=[writer.id])]
     snapshot = collect_delivery_snapshot(store, run, request, plan, results)
-    history = context._failed_python_history(run)
+    history = context._failed_attempt_history(run)
     assert context._safe(history) != history
     before = copy.deepcopy((run, request, plan, results))
     with pytest.raises(context.ContextLimitError, match="cannot be safely displayed without changes"):

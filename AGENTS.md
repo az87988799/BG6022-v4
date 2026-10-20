@@ -2,6 +2,8 @@
 
 本文件适用于整个仓库。用户已指定 [ORCA-Agent-Project-Blueprint.md](docs/ORCA-Agent-Project-Blueprint.md) 为唯一现行总蓝图，并要求遵守其中原则。2026-10-18 用户明确采用 [Code as Tools 专项实施方案](docs/CODE-AS-TOOLS-IMPLEMENTATION-PLAN.md)，且指定冲突处以该方案为准；相关契约已同步至总蓝图，决策见 [0031](docs/decisions/0031-code-as-tools-contract.md)。实现相关功能前，阅读蓝图对应契约及验收要求；不得仅凭本文件摘要实施。
 
+2026-10-21 用户明确授权根据真实 LLM 失败根本修复并删除冲突旧流程规则，具体范围与替代契约见 [0057](docs/decisions/0057-repair-evidence-driven-workflow.md)。同源短引文、逐目标条件、同逻辑修复继承和有界反馈采用统一生产实现，不恢复已移除的重复机械门槛；实际目标、科学检查、执行隔离、累计预算及历史事实保持有效。
+
 ## 任务范围与权威
 
 - 后续按用户逐次提供的详细实现方案执行，每次明确本次范围和退出条件；总蓝图本身不授权一次性实施全部阶段。

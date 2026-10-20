@@ -1,6 +1,9 @@
 """Offline symbolic repairs, retained goal lineage and bounded Python accounting."""
 
 import copy
+import json
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -9,6 +12,7 @@ from orca_agent.model_usage import current_basis
 from orca_agent.models import (
     BudgetLimits,
     CodeRef,
+    EvidenceRef,
     Goal,
     OutputBinding,
     PermissionSnapshot,
@@ -19,7 +23,12 @@ from orca_agent.models import (
     fingerprint,
 )
 from orca_agent.planning import PlanningError, additional_code_attempts_used, validate_revision
-from orca_agent.proposals import ProposalError, materialize_plan
+from orca_agent.proposals import (
+    ProposalError,
+    _complete_incremental_plan,
+    _validate_plan_parameters,
+    materialize_plan,
+)
 from orca_agent.store import BudgetExceeded, Store
 from orca_agent.tools import managed
 from orca_agent.tools.dispatch import execute_call
@@ -221,3 +230,71 @@ def test_same_logical_retry_consumes_both_retry_and_analysis_limits(tmp_path, mo
     assert additional_code_attempts_used(run) == 1
     with pytest.raises(BudgetExceeded, match="analysis|retry"):
         store.reserve_attempt(run, plan.steps[0])
+
+
+@pytest.mark.parametrize("native", [False, True])
+@pytest.mark.parametrize("evidence", [False, True])
+def test_compact_repair_inherits_all_goal_routes_and_required_rules(tmp_path, monkeypatch, native, evidence):
+    store, run, request, prior, codes = case(tmp_path, monkeypatch, native=native)
+    old, _ = settle(store, run, prior.steps[0])
+    if evidence:
+        prior.goal_map["report"] = OutputBinding(port="artifacts", evidence=EvidenceRef(
+            producer_step_id=old.step_id, port="artifacts", rule_version="generic-observation-1"))
+        monkeypatch.setattr(store, "load_plan", lambda _: prior)
+    before = copy.deepcopy((request, prior, run))
+    proposed = {"steps": [{"key": "repair", "repair_of": old.step_id,
+        "input" if native else "code": {"artifact_id": codes[1].id}}]}
+    candidate = materialize_plan(store, run, proposed)
+    validate_revision(request, prior, request, candidate, run)
+    replacement = next(step for step in candidate.steps if step.logical_id == old.logical_id)
+    target = candidate.goal_map["report"]
+    assert target.gap is None
+    if evidence:
+        assert target.evidence.producer_step_id == replacement.id
+        assert target.evidence.rule_version == "generic-observation-1"
+        assert target.evidence.result_id is target.evidence.run_id is None
+    else:
+        assert target.step_id == replacement.id
+    assert (request, prior, run) == before
+
+
+def test_explicit_repair_goal_map_is_validated_and_does_not_remove_request_goals(tmp_path, monkeypatch):
+    store, run, request, prior, codes = case(tmp_path, monkeypatch)
+    old, _ = settle(store, run, prior.steps[0])
+    parameters = {"steps": [{"key": "repair", "repair_of": old.step_id,
+                            "code": {"artifact_id": codes[1].id}}],
+                  "goal_map": {"report": {"step_key": "repair", "port": "energy"}}}
+    with pytest.raises(ProposalError, match="physical quantity"):
+        materialize_plan(store, run, parameters)
+    parameters["goal_map"] = {"report": {"gap": "still lacks evidence", "port": "artifacts"}}
+    candidate = materialize_plan(store, run, parameters)
+    assert candidate.goal_map["report"].gap == "still lacks evidence"
+    assert request.goals[0].required and run.goal_status["report"] == "insufficient_evidence"
+
+
+def test_real_t3_compact_repair_preserves_seven_omitted_goal_routes(monkeypatch):
+    """Real model proposal and approved Plan; this replays route completion only."""
+    root = Path(__file__).parents[2] / (
+        "docs/acceptance/code-as-tools-step7-refreeze-3/evidence/T3/data/runs/"
+        "run_46a2c5ba355a47249334fa194b1d33f9")
+    original = json.loads((root / "decisions/model_d61194fc0a344292845b1ae8cf9972b4.json").read_bytes())
+    response = json.loads((root / "model/model_22c3b8a0267a421dbaca90ee5dc93c2f.response.json").read_bytes())
+    request, prior = Request.model_validate(original["request"]), Plan.model_validate(original["plan"])
+    proposal = _validate_plan_parameters(copy.deepcopy(response["proposal"]["parameters"]))
+    repaired = next(item for item in proposal.steps if hasattr(item, "repair_of"))
+    missing = {identifier: binding for identifier, binding in prior.goal_map.items()
+               if binding.step_id == repaired.repair_of}
+    assert len(missing) == 7 and not proposal.goal_map
+    history = {step.id: step for step in prior.steps}
+    # Settledness is exercised through real Store receipts above; here the
+    # archived candidate is replayed without reconstructing or mutating a Run.
+    monkeypatch.setattr("orca_agent.planning.settled_step_snapshots", lambda *args: history)
+    run = SimpleNamespace(configuration=RunConfiguration(workflow_policy="simplified-1"),
+                          calls=[], attempts=[])
+    before = copy.deepcopy((request, prior, response))
+    _complete_incremental_plan(None, run, proposal, prior, request, history)
+    assert set(proposal.goal_map) == {goal.id for goal in request.goals}
+    for identifier, binding in missing.items():
+        assert proposal.goal_map[identifier].step_key == repaired.key
+        assert proposal.goal_map[identifier].port == binding.port
+    assert (request, prior, response) == before

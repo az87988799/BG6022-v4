@@ -39,13 +39,14 @@ def checkpoint_case(tmp_path, monkeypatch, *, needs_more=False, state="completed
             evidence_contract_version="generic-observation-1", verification="reported_with_limitations",
             minimum_evidence=["purpose_preserved@1"])])
     step = Step(id="first_batch", logical_id="first_batch", tool="python.execute",
-                parameters={"code": reference, "observation_names": ["artifacts"]})
+                parameters={"code": reference, "observation_names": ["artifacts"], "sdk_orca": False})
     plan = Plan(request_id=request.id, steps=[step],
                 goal_map={"report": OutputBinding(step_id=step.id, port="artifacts")})
     run = store.create_run(request, plan, PermissionSnapshot(code_execution=True,
         artifact_writes=True, model_execution=True, artifact_ids=[code.id], allowed_tools=["python.execute"]),
         BudgetLimits(model_calls=4, model_tokens=100000, input_tokens=24000, output_tokens=2000,
-            decision_rounds=4, plan_revisions=2, code_retries=2, corrections_per_proposal=0),
+            decision_rounds=4, plan_revisions=2, code_retries=2, corrections_per_proposal=0,
+            analysis_executions=2),
         configuration=Config().run_configuration())
     run.agent_enabled = True
     store.save_run(run)
@@ -88,7 +89,8 @@ def test_paired_observations_choose_stop_or_a_new_continuation_step(
         assert data["AUTHORITY"]["goal_status"]["report"] == "insufficient_evidence"
         return {"action": "revise_plan", "parameters": {
             "steps": [{"key": step.id}, {"key": "next_batch", "tool": "python.execute",
-                "parameters": {"code": step.parameters.code.model_dump(), "observation_names": ["artifacts"]},
+                "parameters": {"code": step.parameters.code.model_dump(), "observation_names": ["artifacts"],
+                               "sdk_orca": False},
                 "depends_on": [step.id]}],
             "goal_map": {"report": {"step_key": "next_batch", "port": "artifacts"}}}}
 

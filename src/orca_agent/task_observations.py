@@ -329,7 +329,7 @@ def _native_current_conditions(request, goal, system_id, *, policy=None):
         "systems": [system.model_copy(deep=True, update={"conditions": mapping(system.conditions)})
                     for system in request.systems],
     })
-    constraint = goal.model_copy(deep=True, update={"conditions": mapping(goal.conditions)})
+    constraint = goal.model_copy(deep=True, update={"conditions": mapping(goal.conditions)}) if goal else None
     return effective_conditions(projected, constraint, system_id)
 
 

@@ -37,6 +37,116 @@ def context_json(wire):
                       separators=(",", ":"), allow_nan=False)
 
 
+def share_schema_definitions(wire):
+    """Share exact closed schema subtrees using ordinary JSON Pointer references.
+
+    Only schema nodes with no local references are eligible. A definition with
+    a local $ref remains in its original schema scope; data, defaults and enum
+    literals are never traversed as schema instructions.
+    """
+    shared = deepcopy(wire)
+    if "SCHEMA_DEFINITIONS" in shared:
+        return shared
+    roots = list(shared.get("ACTION_SCHEMAS", {}).values())
+    roots += [tool["parameters"] for tool in shared.get("TOOLS", [])
+              if isinstance(tool.get("parameters"), dict)]
+    counts = {}
+    literal_keys = {"const", "enum", "default", "examples"}
+
+    def closed(node):
+        if isinstance(node, dict):
+            return "$ref" not in node and all(closed(value) for key, value in node.items()
+                                               if key not in literal_keys)
+        return all(closed(value) for value in node) if isinstance(node, list) else True
+
+    def count(node, *, schema_node=True):
+        if isinstance(node, dict):
+            # properties/$defs are maps of schemas, not schemas themselves.
+            if schema_node and closed(node):
+                literal = context_json(node)
+                if len(literal.encode("utf-8")) >= 160:
+                    counts[literal] = counts.get(literal, 0) + 1
+            for key, value in node.items():
+                if key not in literal_keys:
+                    count(value, schema_node=key not in {"properties", "$defs", "patternProperties"})
+        elif isinstance(node, list):
+            for value in node:
+                count(value)
+
+    for root in roots:
+        count(root)
+    candidates = {literal for literal, count in counts.items() if count > 1}
+    definitions = {}
+
+    def replace(node, *, schema_node=True):
+        if isinstance(node, dict):
+            literal = context_json(node) if schema_node and closed(node) else None
+            if literal in candidates:
+                key = definitions.setdefault(literal, f"schema_{len(definitions)}")
+                return {"$ref": "#/SCHEMA_DEFINITIONS/" + key}
+            return {key: value if key in literal_keys else replace(
+                value, schema_node=key not in {"properties", "$defs", "patternProperties"})
+                    for key, value in node.items()}
+        return [replace(value) for value in node] if isinstance(node, list) else node
+
+    shared["ACTION_SCHEMAS"] = {name: replace(schema)
+                                for name, schema in shared.get("ACTION_SCHEMAS", {}).items()}
+    for tool in shared.get("TOOLS", []):
+        if isinstance(tool.get("parameters"), dict):
+            tool["parameters"] = replace(tool["parameters"])
+    if definitions:
+        shared["SCHEMA_DEFINITIONS"] = {name: json.loads(literal) for literal, name in definitions.items()}
+        shared["SCHEMA_REFERENCE_RULES"] = (
+            "#/SCHEMA_DEFINITIONS/... resolves at this context root; all other $ref targets stay within their schema. "
+            "References are schema definitions, never output fields.")
+    return shared if len(context_json(shared)) < len(context_json(wire)) else deepcopy(wire)
+
+
+def reference_observation_sources(wire):
+    """Factor repeated provenance, keeping each source's location and conditions.
+
+    A source's conditions may explicitly reference its containing observation.
+    Those fields remain adjacent to that observation, never moved into a shared
+    entry where the relative reference would have a different meaning.
+    """
+    projected = deepcopy(wire)
+    data = projected.get("DATA", {})
+    if "observation_sources" in data:
+        return projected
+    results = data.get("results", [])
+    if isinstance(results, dict) and set(results) == {"columns", "rows"}:
+        columns = results["columns"]
+        records = [row[columns.index("unqualified_observation_records")] for row in results["rows"]
+                   if "unqualified_observation_records" in columns]
+    else:
+        records = [result.get("unqualified_observation_records", []) for result in results]
+    sources = [source for rows in records if isinstance(rows, list)
+               for row in rows for source in row.get("sources", []) if isinstance(source, dict)]
+    counts = {}
+    for source in sources:
+        core = {key: value for key, value in source.items() if key not in {"location", "actual_conditions"}}
+        if "artifact_id" in core and "sha256" in core and "observation_source_ref" not in core:
+            key = context_json(core)
+            counts[key] = counts.get(key, 0) + 1
+    shared = {}
+    for source in sources:
+        core = {key: value for key, value in source.items() if key not in {"location", "actual_conditions"}}
+        literal = context_json(core)
+        if counts.get(literal, 0) < 2:
+            continue
+        reference = shared.setdefault(literal, f"source_{len(shared)}")
+        local = {key: value for key, value in source.items() if key in {"location", "actual_conditions"}}
+        source.clear()
+        source.update({"observation_source_ref": reference, **local})
+    if shared:
+        data["observation_sources"] = {name: json.loads(literal) for literal, name in shared.items()}
+        data["observation_source_rules"] = (
+            "sources[].observation_source_ref resolves in DATA.observation_sources; "
+            "merge that exact provenance with the adjacent location/actual_conditions. "
+            "Relative condition references still resolve in the containing observation.")
+    return projected if len(context_json(projected)) < len(context_json(wire)) else deepcopy(wire)
+
+
 def _reference_duplicates(wire, source_references=None):
     data = wire.get("DATA", {})
     delivery = data.get("delivery", {})

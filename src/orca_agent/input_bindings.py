@@ -35,7 +35,7 @@ def input_purpose(request, system_id):
 
 def _identity_origin_request(store, run, request, call, *, port="resolved_identity"):
     """Reuse inputs only across authenticated choices, never user edits."""
-    from orca_agent.applicability import effective_conditions
+    from orca_agent.applicability import preparation_conditions
     from orca_agent.condition_selection import (
         GENERAL_SELECTION_VERSION,
         SIMPLIFIED_SELECTION_VERSION,
@@ -63,8 +63,8 @@ def _identity_origin_request(store, run, request, call, *, port="resolved_identi
                 or revision.goals != original.goals or revision.original_text != original.original_text):
             raise ValueError("identity_reuse_cannot_change_identity_geometry_or_user_purpose")
         if port == "prepared_geometry":
-            before = effective_conditions(original, system_id=call.parameters["system_id"])["conditions"]
-            after = effective_conditions(revision, system_id=call.parameters["system_id"])["conditions"]
+            before = preparation_conditions(original, call.parameters["system_id"])["conditions"]
+            after = preparation_conditions(revision, call.parameters["system_id"])["conditions"]
             if any(before.get(name) != after.get(name) for name in ("charge", "multiplicity")):
                 raise ValueError("prepared_geometry_reuse_cannot_change_electronic_preparation_state")
     if revision != request:

@@ -34,12 +34,13 @@ def matches(schema, value, root):
 
     The matrix below tests the outer disjoint target forms with valid existing
     EvidenceRef values. It does not claim to add EvidenceRef's existing runtime
-    source/permission checks to JSON Schema.
+    source/permission checks to JSON Schema. The default annotation is accepted
+    without applying it or changing the supplied value.
     """
     assert set(schema) <= {"$ref", "$defs", "type", "properties", "additionalProperties",
                            "required", "minProperties", "maxProperties", "anyOf", "pattern", "items",
                            "minItems", "maxItems", "propertyNames", "allOf", "oneOf", "if", "then",
-                           "const", "enum", "minLength", "maxLength"}
+                           "const", "enum", "minLength", "maxLength", "default"}
     if "$ref" in schema:
         assert schema["$ref"].startswith("#/$defs/")
         return matches(root["$defs"][schema["$ref"].split("/")[-1]], value, root)

@@ -44,6 +44,8 @@ def agent_budget(**overrides):
 
 def _missing_information(request):
     """Maintain only program-generated missing markers; preserve user uncertainty."""
+    from orca_agent.applicability import PROFILE, canonical_condition, effective_conditions
+
     request = request.model_copy(deep=True)
     systems = {system.id: system for system in request.systems}
     input_ports = {port for tool in catalog() if "write_input_artifact" in tool["effects"]
@@ -84,12 +86,11 @@ def _missing_information(request):
                         system.geometry_artifact_id if system else request.geometry_artifact_id)
             if geometry is None and not (system and system.geometry_source == "prepare"):
                 goal.unresolved.append(f"missing:geometry{suffix}")
+            conditions = effective_conditions(request, goal, system_id)["conditions"]
             for name in _PHYSICAL:
-                value = system.conditions.get(name, getattr(request, name)) if system else getattr(request, name)
-                if value is None:
+                if conditions[name] is None:
                     goal.unresolved.append(f"missing:{name}{suffix}")
         goal.unresolved = list(dict.fromkeys(goal.unresolved))
-        from orca_agent.applicability import PROFILE, canonical_condition, effective_conditions
         for system_id in selected:
             assessed = effective_conditions(request, goal, system_id)
             goal.unresolved.extend("applicability:" + reason for reason in assessed["reasons"]

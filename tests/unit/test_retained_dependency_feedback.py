@@ -41,7 +41,7 @@ def test_actual_live018_missing_retained_dependency_is_locatable_without_repairi
     assert detail["path"] == ["parameters", "steps", index, "key"]
     assert detail["retained_step_id"] == retained.id
     assert detail["missing_dependency_step_ids"] == missing
-    assert "not automatically" in str(caught.value)
+    assert "unknown or unsettled dependencies cannot be inserted implicitly" in str(caught.value)
     assert (prior, request, run, proposal) == before
     assert not run.attempts and not run.calls and not run.usage.model_calls
 
@@ -54,6 +54,10 @@ def test_synthetic_closure_restoration_uses_exact_retained_steps_without_executi
                for dependency in step.depends_on if dependency not in keys}
     assert missing
     proposal["steps"][:0] = [{"key": key} for key in sorted(missing)]
+    # The historical reply predates explicit SDK effects. Only this synthetic
+    # control supplies the declaration; the hash-bound original stays intact.
+    python = next(item for item in proposal["steps"] if item.get("tool") == "python.execute")
+    python["parameters"]["sdk_orca"] = True
     before = copy.deepcopy((prior, request, run))
     candidate = materialize_plan(store, run, proposal)
     for old in prior.steps:
