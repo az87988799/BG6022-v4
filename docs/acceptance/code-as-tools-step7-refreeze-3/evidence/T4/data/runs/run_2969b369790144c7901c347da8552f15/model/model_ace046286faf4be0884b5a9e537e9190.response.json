@@ -1,0 +1,141 @@
+{
+  "request_hash": "ef92e5e727842ea9cbee444979ee21a7c22c8c688d6730f1da561e7db8d0ea06",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_acetone",
+          "tool": "structure.resolve",
+          "system_id": "system_acetone",
+          "parameters": {}
+        },
+        {
+          "key": "prepare_acetone",
+          "tool": "structure.prepare",
+          "depends_on": [
+            "resolve_acetone"
+          ],
+          "system_id": "system_acetone",
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_acetone",
+              "port": "resolved_identity"
+            }
+          },
+          "parameters": {}
+        },
+        {
+          "key": "write_job_input",
+          "tool": "workspace.write",
+          "parameters": {
+            "name": "job.inp",
+            "role": "orca",
+            "content": "! B3LYP def2-TZVP RKS TDDFT NoAutoStart\n%maxcore 192\n%scf\n  MaxIter 256\n  AutoTRAH false\nend\n%tddft\n  NRoots 5\n  MaxIter 128\n  TDA false\nend\n* xyzfile 0 1 acetone.xyz\n"
+          }
+        },
+        {
+          "key": "write_analysis_script",
+          "tool": "workspace.write",
+          "parameters": {
+            "name": "analyze_tddft.py",
+            "role": "python",
+            "content": "import json, os, re, csv\nfrom orca_task_sdk import run_orca, receipt_source\n\nREQUEST_KEY = 'tddft_b3lyp_def2tzvp'\nreceipt = run_orca('job.inp', dependencies=('acetone.xyz',), request_key=REQUEST_KEY, purpose='new_candidate')\nfiles = receipt.get('files', {}) or {}\nstdout_key = None\nfor key in files:\n    if str(key).endswith('stdout.out') or os.path.basename(str(key)) == 'stdout.out':\n        stdout_key = key\n        break\nif stdout_key is None:\n    raise RuntimeError('ORCA receipt did not provide stdout.out; files keys: ' + repr(list(files.keys())))\nwith open(files[stdout_key], 'r', encoding='utf-8', errors='replace') as fh:\n    text = fh.read()\n\ndef parse_states(text):\n    states = []\n    block_pat = re.compile(r'STATE\\s+(\\d+):\\s+E=\\s*([-+]?\\d+(?:\\.\\d+)?)\\s*au\\s+([-+]?\\d+(?:\\.\\d+)?)\\s*eV\\s+([-+]?\\d+(?:\\.\\d+)?)\\s*nm', re.I)\n    for m in block_pat.finditer(text):\n        tail = text[m.end():m.end()+2500]\n        fm = re.search(r'fosc\\s*=\\s*([-+]?\\d+(?:\\.\\d+)?(?:[Ee][-+]?\\d+)?)', tail, re.I)\n        if not fm:\n            fm = re.search(r'\\bf\\s*=\\s*([-+]?\\d+(?:\\.\\d+)?(?:[Ee][-+]?\\d+)?)', tail, re.I)\n        fosc = float(fm.group(1)) if fm else None\n        states.append({'state': int(m.group(1)), 'energy_eV': float(m.group(3)), 'wavelength_nm': float(m.group(4)), 'oscillator_strength_length_gauge': fosc})\n    if states:\n        return sorted(states, key=lambda x: x['state'])\n    table_pat = re.compile(r'^\\s*(\\d+)\\s+([-+]?\\d+(?:\\.\\d+)?)\\s+([-+]?\\d+(?:\\.\\d+)?)\\s+([-+]?\\d+(?:\\.\\d+)?)\\s*$', re.M)\n    for m in table_pat.finditer(text):\n        state = int(m.group(1))\n        energy_ev = float(m.group(2))\n        a = float(m.group(3))\n        b = float(m.group(4))\n        if a > 10.0:\n            wavelength_nm = a\n            fosc = b\n        else:\n            wavelength_nm = None\n            fosc = a\n        states.append({'state': state, 'energy_eV': energy_ev, 'wavelength_nm': wavelength_nm, 'oscillator_strength_length_gauge': fosc})\n    return sorted(states, key=lambda x: x['state'])\n\nstates = parse_states(text)\nif not states:\n    for m in re.finditer(r'STATE\\s+(\\d+):\\s+E=\\s*([-+]?\\d+(?:\\.\\d+)?)\\s*au\\s+([-+]?\\d+(?:\\.\\d+)?)\\s*eV', text, re.I):\n        states.append({'state': int(m.group(1)), 'energy_eV': float(m.group(3)), 'wavelength_nm': None, 'oscillator_strength_length_gauge': None})\n    states = sorted(states, key=lambda x: x['state'])\nif not states:\n    raise RuntimeError('Could not parse TDDFT states from stdout.out')\nstates = sorted(states, key=lambda x: (x['energy_eV'], x['state']))[:5]\nstates = sorted(states, key=lambda x: x['state'])\nfor s in states:\n    if s['wavelength_nm'] is None and s['energy_eV'] > 0:\n        s['wavelength_nm'] = 1239.841984 / s['energy_eV']\n    if s['oscillator_strength_length_gauge'] is None:\n        raise RuntimeError('Missing oscillator strength for state ' + str(s['state']))\n\nwith open('absorption.csv', 'w', newline='', encoding='utf-8') as fh:\n    writer = csv.writer(fh)\n    writer.writerow(['state', 'energy_eV', 'wavelength_nm', 'oscillator_strength_length_gauge'])\n    for s in states:\n        writer.writerow([s['state'], s['energy_eV'], s['wavelength_nm'], s['oscillator_strength_length_gauge']])\n\nlow = min(states, key=lambda s: s['energy_eV'])\nweak = min(states, key=lambda s: s['oscillator_strength_length_gauge'])\nstrong = max(states, key=lambda s: s['oscillator_strength_length_gauge'])\nmethod_choice = 'Full linear-response TDDFT was requested over TDA because it retains coupling between excitation and de-excitation amplitudes and is the more complete linear-response treatment for vertical singlet excitations. TDA is an approximation that neglects those coupling terms; it is cheaper but not chosen here. B3LYP/def2-TZVP is used within the frozen budget. This is a method-choice rationale, not an experimental validation.'\ntransition = 'Among the five lowest singlet vertical excitations, state ' + str(low['state']) + ' is the lowest-energy state (E=' + format(low['energy_eV'], '.6f') + ' eV, fosc=' + format(low['oscillator_strength_length_gauge'], '.6f') + '). The weakest state is ' + str(weak['state']) + ' (fosc=' + format(weak['oscillator_strength_length_gauge'], '.6f') + ') and the strongest is ' + str(strong['state']) + ' (fosc=' + format(strong['oscillator_strength_length_gauge'], '.6f') + '). The low-energy weak feature is consistent with a weakly allowed or symmetry-forbidden n->pi* transition; the stronger feature is consistent with a more allowed pi->pi* transition. These are vertical TDDFT results, not experimental absorption maxima or adiabatic excitation energies.'\ndelivery = {'geometry': 'acetone.xyz', 'input': 'job.inp', 'raw_response': 'stdout.out from ORCA receipt', 'absorption_table': 'absorption.csv', 'report': 'report.md', 'script': 'analyze_tddft.py', 'data_table': 'absorption.csv', 'random_seed': 1701, 'limitations': 'Initial prepared geometry, not optimized; vertical TDDFT values are not experimental peaks.'}\n\nwith open('report.md', 'w', encoding='utf-8') as fh:\n    fh.write('''# Acetone TDDFT vertical excitations\n\nGeometry: initial prepared geometry `acetone.xyz` from structure.prepare; not optimized.\n\nConditions: gas phase, charge 0, multiplicity 1, RKS, B3LYP/def2-TZVP, full linear-response TDDFT (TDA false), 5 roots.\n\nMethod choice: ''')\n    fh.write(method_choice)\n    fh.write('''\n\n| State | Energy (eV) | Wavelength (nm) | fosc (length gauge) |\n|---:|---:|---:|---:|\n''')\n    for s in states:\n        fh.write('| ' + str(s['state']) + ' | ' + format(s['energy_eV'], '.6f') + ' | ' + format(s['wavelength_nm'], '.3f') + ' | ' + format(s['oscillator_strength_length_gauge'], '.6f') + ' |' + os.linesep)\n    fh.write('''\n''')\n    fh.write(transition)\n    fh.write('''\n\nLimitations: The geometry is an initial prepared structure, not a relaxed minimum. Vertical excitation energies are not experimental absorption peaks or adiabatic excitation energies. def2-TZVP lacks diffuse augmentation, so diffuse/Rydberg states may be less well described.\n\nRandom seed: 1701. No stochastic search or structure-generation algorithm was used in this managed ORCA calculation.\n''')\n\nstdout_src = receipt_source(receipt, stdout_key, location='TDDFT excited states section')\njob_src = {'filename': 'job.inp', 'location': 'full input'}\ngeom_src = {'filename': 'acetone.xyz', 'location': 'prepared geometry used'}\nobservations = [\n    {'name': 'method_choice_explanation', 'value': method_choice, 'unit': None, 'sources': [job_src, stdout_src], 'formula': None, 'artifacts': ['report.md'], 'limitations': ['Method-choice rationale, not an experimental validation.']},\n    {'name': 'vertical_excitations', 'value': states, 'unit': 'eV (energy); nm (wavelength); dimensionless (oscillator strength)', 'sources': [stdout_src], 'formula': 'Vertical excitation energies and length-gauge oscillator strengths as printed by ORCA TDDFT', 'artifacts': ['absorption.csv'], 'limitations': ['Vertical TDDFT results; not experimental absorption peaks or adiabatic energies.']},\n    {'name': 'excitation_table', 'value': states, 'unit': 'eV (energy); nm (wavelength); dimensionless (oscillator strength)', 'sources': [stdout_src], 'formula': 'Same parsed TDDFT table, preserving all five states including weak/zero oscillator strengths', 'artifacts': ['absorption.csv'], 'limitations': ['Values are printed by ORCA and parsed; no experimental correction.']},\n    {'name': 'transition_analysis', 'value': transition, 'unit': None, 'sources': [stdout_src, job_src], 'formula': 'Comparison of printed fosc values; no fitting', 'artifacts': ['report.md'], 'limitations': ['Qualitative assignment based on oscillator strengths; no experimental spectra.']},\n    {'name': 'delivery_contents', 'value': delivery, 'unit': None, 'sources': [job_src, geom_src, stdout_src], 'formula': None, 'artifacts': ['absorption.csv', 'report.md'], 'limitations': ['Initial geometry; vertical TDDFT limitations as stated.']},\n    {'name': 'random_seed', 'value': 1701, 'unit': None, 'sources': [], 'formula': None, 'artifacts': ['report.md'], 'limitations': ['No random-number-consuming search was used; seed recorded for reproducibility.']}\n]\nwith open('observations.json', 'w', encoding='utf-8') as fh:\n    json.dump({'version': 1, 'observations': observations}, fh, indent=2, allow_nan=False)\nprint('wrote observations.json and artifacts')\n"
+          }
+        },
+        {
+          "key": "run_and_analyze",
+          "tool": "python.execute",
+          "depends_on": [
+            "write_job_input",
+            "prepare_acetone",
+            "write_analysis_script"
+          ],
+          "system_id": "system_acetone",
+          "parameters": {
+            "code": {
+              "producer_key": "write_analysis_script",
+              "port": "written_artifact"
+            },
+            "sdk_orca": true,
+            "observation_names": [
+              "method_choice_explanation",
+              "vertical_excitations",
+              "excitation_table",
+              "transition_analysis",
+              "delivery_contents",
+              "random_seed"
+            ],
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "producer_key": "write_job_input",
+                  "port": "written_artifact",
+                  "target_path": "job.inp",
+                  "purpose": "ORCA TDDFT input"
+                },
+                {
+                  "producer_key": "prepare_acetone",
+                  "port": "prepared_geometry",
+                  "target_path": "acetone.xyz",
+                  "purpose": "initial prepared geometry"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "goal_map": {
+        "goal_geometry": {
+          "step_key": "prepare_acetone",
+          "port": "prepared_geometry"
+        },
+        "goal_method_choice": {
+          "step_key": "run_and_analyze",
+          "port": "method_choice_explanation"
+        },
+        "goal_excitations": {
+          "step_key": "run_and_analyze",
+          "port": "vertical_excitations"
+        },
+        "goal_excitation_table": {
+          "step_key": "run_and_analyze",
+          "port": "excitation_table"
+        },
+        "goal_transition_analysis": {
+          "step_key": "run_and_analyze",
+          "port": "transition_analysis"
+        },
+        "goal_delivery": {
+          "step_key": "run_and_analyze",
+          "port": "delivery_contents"
+        },
+        "goal_random_seed": {
+          "step_key": "run_and_analyze",
+          "port": "random_seed"
+        }
+      }
+    },
+    "reason": "Initial plan: resolve and prepare acetone, write the ORCA B3LYP/def2-TZVP full linear-response TDDFT input with 5 roots, run it via the managed SDK, and parse all excited states into the requested table, analysis, delivery contents, and seed record."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_acetone\",\"tool\":\"structure.resolve\",\"system_id\":\"system_acetone\",\"parameters\":{}},{\"key\":\"prepare_acetone\",\"tool\":\"structure.prepare\",\"depends_on\":[\"resolve_acetone\"],\"system_id\":\"system_acetone\",\"inputs\":{\"identity\":{\"producer_key\":\"resolve_acetone\",\"port\":\"resolved_identity\"}},\"parameters\":{}},{\"key\":\"write_job_input\",\"tool\":\"workspace.write\",\"parameters\":{\"name\":\"job.inp\",\"role\":\"orca\",\"content\":\"! B3LYP def2-TZVP RKS TDDFT NoAutoStart\\n%maxcore 192\\n%scf\\n  MaxIter 256\\n  AutoTRAH false\\nend\\n%tddft\\n  NRoots 5\\n  MaxIter 128\\n  TDA false\\nend\\n* xyzfile 0 1 acetone.xyz\\n\"}},{\"key\":\"write_analysis_script\",\"tool\":\"workspace.write\",\"parameters\":{\"name\":\"analyze_tddft.py\",\"role\":\"python\",\"content\":\"import json, os, re, csv\\nfrom orca_task_sdk import run_orca, receipt_source\\n\\nREQUEST_KEY = 'tddft_b3lyp_def2tzvp'\\nreceipt = run_orca('job.inp', dependencies=('acetone.xyz',), request_key=REQUEST_KEY, purpose='new_candidate')\\nfiles = receipt.get('files', {}) or {}\\nstdout_key = None\\nfor key in files:\\n    if str(key).endswith('stdout.out') or os.path.basename(str(key)) == 'stdout.out':\\n        stdout_key = key\\n        break\\nif stdout_key is None:\\n    raise RuntimeError('ORCA receipt did not provide stdout.out; files keys: ' + repr(list(files.keys())))\\nwith open(files[stdout_key], 'r', encoding='utf-8', errors='replace') as fh:\\n    text = fh.read()\\n\\ndef parse_states(text):\\n    states = []\\n    block_pat = re.compile(r'STATE\\\\s+(\\\\d+):\\\\s+E=\\\\s*([-+]?\\\\d+(?:\\\\.\\\\d+)?)\\\\s*au\\\\s+([-+]?\\\\d+(?:\\\\.\\\\d+)?)\\\\s*eV\\\\s+([-+]?\\\\d+(?:\\\\.\\\\d+)?)\\\\s*nm', re.I)\\n    for m in block_pat.finditer(text):\\n        tail = text[m.end():m.end()+2500]\\n        fm = re.search(r'fosc\\\\s*=\\\\s*([-+]?\\\\d+(?:\\\\.\\\\d+)?(?:[Ee][-+]?\\\\d+)?)', tail, re.I)\\n        if not fm:\\n            fm = re.search(r'\\\\bf\\\\s*=\\\\s*([-+]?\\\\d+(?:\\\\.\\\\d+)?(?:[Ee][-+]?\\\\d+)?)', tail, re.I)\\n        fosc = float(fm.group(1)) if fm else None\\n        states.append({'state': int(m.group(1)), 'energy_eV': float(m.group(3)), 'wavelength_nm': float(m.group(4)), 'oscillator_strength_length_gauge': fosc})\\n    if states:\\n        return sorted(states, key=lambda x: x['state'])\\n    table_pat = re.compile(r'^\\\\s*(\\\\d+)\\\\s+([-+]?\\\\d+(?:\\\\.\\\\d+)?)\\\\s+([-+]?\\\\d+(?:\\\\.\\\\d+)?)\\\\s+([-+]?\\\\d+(?:\\\\.\\\\d+)?)\\\\s*$', re.M)\\n    for m in table_pat.finditer(text):\\n        state = int(m.group(1))\\n        energy_ev = float(m.group(2))\\n        a = float(m.group(3))\\n        b = float(m.group(4))\\n        if a > 10.0:\\n            wavelength_nm = a\\n            fosc = b\\n        else:\\n            wavelength_nm = None\\n            fosc = a\\n        states.append({'state': state, 'energy_eV': energy_ev, 'wavelength_nm': wavelength_nm, 'oscillator_strength_length_gauge': fosc})\\n    return sorted(states, key=lambda x: x['state'])\\n\\nstates = parse_states(text)\\nif not states:\\n    for m in re.finditer(r'STATE\\\\s+(\\\\d+):\\\\s+E=\\\\s*([-+]?\\\\d+(?:\\\\.\\\\d+)?)\\\\s*au\\\\s+([-+]?\\\\d+(?:\\\\.\\\\d+)?)\\\\s*eV', text, re.I):\\n        states.append({'state': int(m.group(1)), 'energy_eV': float(m.group(3)), 'wavelength_nm': None, 'oscillator_strength_length_gauge': None})\\n    states = sorted(states, key=lambda x: x['state'])\\nif not states:\\n    raise RuntimeError('Could not parse TDDFT states from stdout.out')\\nstates = sorted(states, key=lambda x: (x['energy_eV'], x['state']))[:5]\\nstates = sorted(states, key=lambda x: x['state'])\\nfor s in states:\\n    if s['wavelength_nm'] is None and s['energy_eV'] > 0:\\n        s['wavelength_nm'] = 1239.841984 / s['energy_eV']\\n    if s['oscillator_strength_length_gauge'] is None:\\n        raise RuntimeError('Missing oscillator strength for state ' + str(s['state']))\\n\\nwith open('absorption.csv', 'w', newline='', encoding='utf-8') as fh:\\n    writer = csv.writer(fh)\\n    writer.writerow(['state', 'energy_eV', 'wavelength_nm', 'oscillator_strength_length_gauge'])\\n    for s in states:\\n        writer.writerow([s['state'], s['energy_eV'], s['wavelength_nm'], s['oscillator_strength_length_gauge']])\\n\\nlow = min(states, key=lambda s: s['energy_eV'])\\nweak = min(states, key=lambda s: s['oscillator_strength_length_gauge'])\\nstrong = max(states, key=lambda s: s['oscillator_strength_length_gauge'])\\nmethod_choice = 'Full linear-response TDDFT was requested over TDA because it retains coupling between excitation and de-excitation amplitudes and is the more complete linear-response treatment for vertical singlet excitations. TDA is an approximation that neglects those coupling terms; it is cheaper but not chosen here. B3LYP/def2-TZVP is used within the frozen budget. This is a method-choice rationale, not an experimental validation.'\\ntransition = 'Among the five lowest singlet vertical excitations, state ' + str(low['state']) + ' is the lowest-energy state (E=' + format(low['energy_eV'], '.6f') + ' eV, fosc=' + format(low['oscillator_strength_length_gauge'], '.6f') + '). The weakest state is ' + str(weak['state']) + ' (fosc=' + format(weak['oscillator_strength_length_gauge'], '.6f') + ') and the strongest is ' + str(strong['state']) + ' (fosc=' + format(strong['oscillator_strength_length_gauge'], '.6f') + '). The low-energy weak feature is consistent with a weakly allowed or symmetry-forbidden n->pi* transition; the stronger feature is consistent with a more allowed pi->pi* transition. These are vertical TDDFT results, not experimental absorption maxima or adiabatic excitation energies.'\\ndelivery = {'geometry': 'acetone.xyz', 'input': 'job.inp', 'raw_response': 'stdout.out from ORCA receipt', 'absorption_table': 'absorption.csv', 'report': 'report.md', 'script': 'analyze_tddft.py', 'data_table': 'absorption.csv', 'random_seed': 1701, 'limitations': 'Initial prepared geometry, not optimized; vertical TDDFT values are not experimental peaks.'}\\n\\nwith open('report.md', 'w', encoding='utf-8') as fh:\\n    fh.write('''# Acetone TDDFT vertical excitations\\n\\nGeometry: initial prepared geometry `acetone.xyz` from structure.prepare; not optimized.\\n\\nConditions: gas phase, charge 0, multiplicity 1, RKS, B3LYP/def2-TZVP, full linear-response TDDFT (TDA false), 5 roots.\\n\\nMethod choice: ''')\\n    fh.write(method_choice)\\n    fh.write('''\\n\\n| State | Energy (eV) | Wavelength (nm) | fosc (length gauge) |\\n|---:|---:|---:|---:|\\n''')\\n    for s in states:\\n        fh.write('| ' + str(s['state']) + ' | ' + format(s['energy_eV'], '.6f') + ' | ' + format(s['wavelength_nm'], '.3f') + ' | ' + format(s['oscillator_strength_length_gauge'], '.6f') + ' |' + os.linesep)\\n    fh.write('''\\n''')\\n    fh.write(transition)\\n    fh.write('''\\n\\nLimitations: The geometry is an initial prepared structure, not a relaxed minimum. Vertical excitation energies are not experimental absorption peaks or adiabatic excitation energies. def2-TZVP lacks diffuse augmentation, so diffuse/Rydberg states may be less well described.\\n\\nRandom seed: 1701. No stochastic search or structure-generation algorithm was used in this managed ORCA calculation.\\n''')\\n\\nstdout_src = receipt_source(receipt, stdout_key, location='TDDFT excited states section')\\njob_src = {'filename': 'job.inp', 'location': 'full input'}\\ngeom_src = {'filename': 'acetone.xyz', 'location': 'prepared geometry used'}\\nobservations = [\\n    {'name': 'method_choice_explanation', 'value': method_choice, 'unit': None, 'sources': [job_src, stdout_src], 'formula': None, 'artifacts': ['report.md'], 'limitations': ['Method-choice rationale, not an experimental validation.']},\\n    {'name': 'vertical_excitations', 'value': states, 'unit': 'eV (energy); nm (wavelength); dimensionless (oscillator strength)', 'sources': [stdout_src], 'formula': 'Vertical excitation energies and length-gauge oscillator strengths as printed by ORCA TDDFT', 'artifacts': ['absorption.csv'], 'limitations': ['Vertical TDDFT results; not experimental absorption peaks or adiabatic energies.']},\\n    {'name': 'excitation_table', 'value': states, 'unit': 'eV (energy); nm (wavelength); dimensionless (oscillator strength)', 'sources': [stdout_src], 'formula': 'Same parsed TDDFT table, preserving all five states including weak/zero oscillator strengths', 'artifacts': ['absorption.csv'], 'limitations': ['Values are printed by ORCA and parsed; no experimental correction.']},\\n    {'name': 'transition_analysis', 'value': transition, 'unit': None, 'sources': [stdout_src, job_src], 'formula': 'Comparison of printed fosc values; no fitting', 'artifacts': ['report.md'], 'limitations': ['Qualitative assignment based on oscillator strengths; no experimental spectra.']},\\n    {'name': 'delivery_contents', 'value': delivery, 'unit': None, 'sources': [job_src, geom_src, stdout_src], 'formula': None, 'artifacts': ['absorption.csv', 'report.md'], 'limitations': ['Initial geometry; vertical TDDFT limitations as stated.']},\\n    {'name': 'random_seed', 'value': 1701, 'unit': None, 'sources': [], 'formula': None, 'artifacts': ['report.md'], 'limitations': ['No random-number-consuming search was used; seed recorded for reproducibility.']}\\n]\\nwith open('observations.json', 'w', encoding='utf-8') as fh:\\n    json.dump({'version': 1, 'observations': observations}, fh, indent=2, allow_nan=False)\\nprint('wrote observations.json and artifacts')\\n\"}},{\"key\":\"run_and_analyze\",\"tool\":\"python.execute\",\"depends_on\":[\"write_job_input\",\"prepare_acetone\",\"write_analysis_script\"],\"system_id\":\"system_acetone\",\"parameters\":{\"code\":{\"producer_key\":\"write_analysis_script\",\"port\":\"written_artifact\"},\"sdk_orca\":true,\"observation_names\":[\"method_choice_explanation\",\"vertical_excitations\",\"excitation_table\",\"transition_analysis\",\"delivery_contents\",\"random_seed\"],\"inputs\":{\"version\":1,\"entries\":[{\"producer_key\":\"write_job_input\",\"port\":\"written_artifact\",\"target_path\":\"job.inp\",\"purpose\":\"ORCA TDDFT input\"},{\"producer_key\":\"prepare_acetone\",\"port\":\"prepared_geometry\",\"target_path\":\"acetone.xyz\",\"purpose\":\"initial prepared geometry\"}]}}}],\"goal_map\":{\"goal_geometry\":{\"step_key\":\"prepare_acetone\",\"port\":\"prepared_geometry\"},\"goal_method_choice\":{\"step_key\":\"run_and_analyze\",\"port\":\"method_choice_explanation\"},\"goal_excitations\":{\"step_key\":\"run_and_analyze\",\"port\":\"vertical_excitations\"},\"goal_excitation_table\":{\"step_key\":\"run_and_analyze\",\"port\":\"excitation_table\"},\"goal_transition_analysis\":{\"step_key\":\"run_and_analyze\",\"port\":\"transition_analysis\"},\"goal_delivery\":{\"step_key\":\"run_and_analyze\",\"port\":\"delivery_contents\"},\"goal_random_seed\":{\"step_key\":\"run_and_analyze\",\"port\":\"random_seed\"}}},\"reason\":\"Initial plan: resolve and prepare acetone, write the ORCA B3LYP/def2-TZVP full linear-response TDDFT input with 5 roots, run it via the managed SDK, and parse all excited states into the requested table, analysis, delivery contents, and seed record.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 13996,
+    "completion_tokens": 18678,
+    "total_tokens": 32674,
+    "prompt_cache_hit_tokens": 7424,
+    "prompt_cache_miss_tokens": 6572
+  },
+  "response_hash": "51c543e366e7eae2ac631b428ec0a96b6c1e9469263d44eb21697712c1959fb5",
+  "response_bytes": 72605,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "d66593cd-2926-4704-b126-25142a4d9119",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 74.64100000000326
+}

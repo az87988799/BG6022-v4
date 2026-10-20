@@ -1,0 +1,365 @@
+{
+  "run_id": "run_2969b369790144c7901c347da8552f15",
+  "parent_attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+  "call": {
+    "request_key": "tddft_b3lyp_def2tzvp",
+    "input_fingerprint": "dd08af1ddb20e5e59547b5bb6fbd67c9600ebb4da580e44c5d68e0b2e4fa5509",
+    "purpose": "new_candidate",
+    "retry_of": null,
+    "tool": "orca.run",
+    "code": {
+      "artifact_id": "artifact_b628eb2fc1434e83a7325b48c1a08292",
+      "sha256": "198db07a4fa3ce007b84cd66fe5f2c80604fa5f7f15c900880b1bbabfa3be8df",
+      "language": "orca",
+      "version": 1
+    },
+    "inputs": {
+      "version": 1,
+      "entries": [
+        {
+          "artifact_id": "artifact_0a9104f6959b4b26ad1296f9a0f11317",
+          "sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+          "target_path": "acetone.xyz",
+          "purpose": "native_dependency"
+        }
+      ]
+    },
+    "conditions": {
+      "admission_version": "native-orca-input-3",
+      "execution_impact": {
+        "orca_starts": 1,
+        "postprocess_starts": 0,
+        "external_programs": false,
+        "internal_work_units": 6,
+        "work_unit_contract": "declared-managed-workload-1",
+        "work_unit_meaning": "conservative declared task slots, not measured SCF/evaluation counts",
+        "optimization_evaluation_slots": 1,
+        "scan_points": 1,
+        "derivative_slots": 0,
+        "response_roots": 5,
+        "scf_maxiter": 256,
+        "geom_maxiter": 0,
+        "response_maxiter": 128
+      },
+      "input_binding": {
+        "request_id": "request_b96c9bde14844a47954488e389f2c904",
+        "request_version": 3,
+        "step_id": "step_a067763749104c239c7bb7bd3abf4055",
+        "system_id": "system_acetone",
+        "conditions": {
+          "method": "b3lyp",
+          "basis": "def2-tzvp",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "rks",
+          "environment": "gas_phase"
+        },
+        "condition_sources": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "system:system_acetone",
+          "multiplicity": "system:system_acetone",
+          "electronic_state": "request.conditions",
+          "environment": "system:system_acetone"
+        },
+        "geometry_artifact_id": "artifact_957d1d23d02c4af390699d9b8155e46e",
+        "geometry_sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+        "allow_task_geometry": true,
+        "initial_atom_symbols": [
+          "C",
+          "C",
+          "O",
+          "C",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H"
+        ],
+        "workflow_policy": "simplified-1"
+      }
+    },
+    "goal": {
+      "request_id": "request_b96c9bde14844a47954488e389f2c904",
+      "request_version": 3,
+      "step_id": "step_a067763749104c239c7bb7bd3abf4055",
+      "goals": [
+        {
+          "id": "goal_geometry",
+          "port": "prepared_geometry",
+          "required": true,
+          "minimum_check_version": "structure-prepare-3",
+          "evidence_contract_version": "legacy-1",
+          "verification": "reported_with_limitations",
+          "quantity": "合理结构",
+          "original_text": "生成合理结构",
+          "identity": {
+            "contract": "general-identity-3",
+            "requested_names": [
+              "丙酮"
+            ],
+            "canonical_names": [],
+            "query_name": "acetone",
+            "query_name_source": "inferred_translation_or_alias",
+            "ambiguities": [],
+            "text_evidence": {
+              "message_id": "message_fb50425b39bc40f0b6db368146b9cbfa",
+              "text_basis": "丙酮（中性、单重态、气相）",
+              "start": 2,
+              "end": 15,
+              "schema": "request-semantics-3"
+            }
+          },
+          "text_evidence": {
+            "message_id": "message_fb50425b39bc40f0b6db368146b9cbfa",
+            "text_basis": "生成合理结构",
+            "start": 15,
+            "end": 21,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_acetone"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_method_choice",
+          "port": "method_choice_explanation",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "说明选用完整TDDFT还是TDA及选择依据",
+          "original_text": "说明选用完整TDDFT还是TDA及选择依据",
+          "identity": {
+            "requested_names": [
+              "丙酮"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_fb50425b39bc40f0b6db368146b9cbfa",
+            "text_basis": "说明选用完整TDDFT还是TDA及选择依据",
+            "start": 48,
+            "end": 69,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_acetone"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_excitations",
+          "port": "vertical_excitations",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "最低5个单重垂直电子激发",
+          "original_text": "计算该几何上最低5个单重垂直电子激发",
+          "identity": {
+            "requested_names": [
+              "丙酮"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_fb50425b39bc40f0b6db368146b9cbfa",
+            "text_basis": "计算该几何上最低5个单重垂直电子激发",
+            "start": 70,
+            "end": 88,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_acetone"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_excitation_table",
+          "port": "excitation_table",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+          "original_text": "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+          "identity": {
+            "requested_names": [
+              "丙酮"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_fb50425b39bc40f0b6db368146b9cbfa",
+            "text_basis": "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+            "start": 89,
+            "end": 131,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_acetone"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_transition_analysis",
+          "port": "transition_analysis",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "分析低能态与较强跃迁的区别",
+          "original_text": "分析低能态与较强跃迁的区别",
+          "identity": {
+            "requested_names": [
+              "丙酮"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_fb50425b39bc40f0b6db368146b9cbfa",
+            "text_basis": "分析低能态与较强跃迁的区别",
+            "start": 133,
+            "end": 146,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_acetone"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_delivery",
+          "port": "delivery_contents",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制",
+          "original_text": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制",
+          "identity": {
+            "requested_names": [
+              "丙酮"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_fb50425b39bc40f0b6db368146b9cbfa",
+            "text_basis": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制",
+            "start": 147,
+            "end": 188,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_acetone"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_random_seed",
+          "port": "random_seed",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "种子 1701",
+          "original_text": "统一采用种子 1701 并在报告中记录",
+          "identity": {
+            "requested_names": [
+              "丙酮"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_fb50425b39bc40f0b6db368146b9cbfa",
+            "text_basis": "统一采用种子 1701 并在报告中记录",
+            "start": 255,
+            "end": 274,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_acetone"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        }
+      ]
+    },
+    "resources": {
+      "cores": 4,
+      "memory_mb": 1024,
+      "maxcore_mb": 192,
+      "timeout_seconds": 900.0
+    },
+    "actual_conditions": {},
+    "state": "reserved",
+    "attempt_id": "internal_49e2c31093744c8ca7d152b68ba5dd78",
+    "parent_attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+    "work_units": 6,
+    "started": false,
+    "execution_handle": null,
+    "resource_usage": {},
+    "result_id": null,
+    "artifact_ids": [],
+    "response": {},
+    "created_at": "2026-10-20T16:12:08.261149Z",
+    "finished_at": null
+  },
+  "configuration": {
+    "version": 2,
+    "resources": {
+      "max_cores": 4,
+      "total_memory_mb": 1024,
+      "maxcore_mb": 192,
+      "environment_concurrency": 1,
+      "job_timeout_seconds": 900.0,
+      "script_timeout_seconds": 1200.0,
+      "collection_timeout_seconds": 180.0
+    },
+    "model": {
+      "model_name": "deepseek-flash",
+      "input_tokens": 64000,
+      "output_tokens": 32768,
+      "timeout_seconds": 180.0,
+      "response_bytes": 524288,
+      "proposal_bytes": 131072,
+      "messages": 64
+    },
+    "model_profile": "thinking_low",
+    "execution": {
+      "backend": "linux-container",
+      "image_id": "sha256:9f94e9441855d81fcfdf694b9330808cfeee12637ef1093532f56ad129000df3",
+      "manifest_sha256": "cfad02c520be38c57130d9e25fc6420874f6248dfa6c762cc4621e4336f0cba4",
+      "docker_context": "desktop-linux",
+      "docker_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+      "native_input_policy": {
+        "profile": "managed-native-1",
+        "max_atoms": 1024,
+        "max_geom_iterations": 128,
+        "max_scf_iterations": 256,
+        "max_response_iterations": 128,
+        "allow_task_geometry": true
+      }
+    },
+    "mechanical_progression": true,
+    "workflow_policy": "simplified-1"
+  },
+  "permission_version": 1
+}

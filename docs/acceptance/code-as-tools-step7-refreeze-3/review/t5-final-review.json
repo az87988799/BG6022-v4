@@ -1,0 +1,2430 @@
+{
+  "review_version": "read-only-terminal-review-1",
+  "task": "T5",
+  "run_id": "run_4c98667882294f5d86fd0d0424a0174b",
+  "review_status": "complete",
+  "task_status": "failed",
+  "delivery_status": "partial",
+  "created_at_utc": "2026-10-20T16:23:43.526742+00:00",
+  "first_read_sample_at_utc": "2026-10-20T16:20:32.048827+00:00",
+  "observation_timing": "post-outcome and post-postverify; no preregistration or advance scientific approval claimed",
+  "scope": {
+    "read_only_evidence_and_source_inspection": true,
+    "only_new_review_written": "docs/acceptance/code-as-tools-step7-refreeze-3/review/t5-final-review.json",
+    "product_or_run_mutated": false,
+    "tests_executed": false,
+    "product_functions_called": false,
+    "context_reconstruction_or_replay": false,
+    "model_or_orca_or_network_or_docker_calls": false,
+    "independent_reference_calculation": "not_authorized_or_run",
+    "scientific_numerical_validation": "not_exercised_no_calculation"
+  },
+  "summary_zh": [
+    "首次规范化因 source_refs 与较短 text_basis 不完全相等被聚合拒绝14处；第二次省略重复引文并使用原片段引用后被接受。此首次拒绝不是最终失败直接原因。",
+    "第二次Request v2为normalized，unresolved为空，七Goal保留。气相与CPCM(water)、中性/单重态保存在两个energy Goal条件中，fixed_initial由程序补入。",
+    "程序后续条件消费者不把一般Goal条件当作空Request/system条件的补充值；terminal_actions又对包括prepared_geometry在内的Goal逐一要求所有非自动选型条件。其后的真实第三请求只能clarify/stop，缺少initial_plan/select_conditions/call_tool。",
+    "第三次模型选择stop；程序接受交付合同并标记Run failed/partial。零身份查询、零几何准备、零Python、零ORCA，不能归因于科学执行失败、上下文超限或用尽预算。",
+    "原文和Goal级环境保真与下游可执行性不同：终态投影/报告将所有Goal当前charge/multiplicity/environment显示为null，丢失Goal级已知值在有效条件视图中的效果。并非原始规范化数据被删除。"
+  ],
+  "terminal_outcome": {
+    "finished_at_utc": "2026-10-20T16:19:33.413002+00:00",
+    "run_id": "run_4c98667882294f5d86fd0d0424a0174b",
+    "state": "failed",
+    "goal_status": {
+      "goal_prepared_geometry": "insufficient_evidence",
+      "goal_gas_energy": "insufficient_evidence",
+      "goal_solvent_energy": "insufficient_evidence",
+      "goal_energy_difference": "insufficient_evidence",
+      "goal_raw_input_output": "insufficient_evidence",
+      "goal_shared_xyz_hash": "insufficient_evidence",
+      "goal_random_seed": "insufficient_evidence"
+    },
+    "delivery_status": "partial",
+    "usage": {
+      "internal_work_units": 0,
+      "internal_calls_by_purpose": {},
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 3,
+      "model_tokens_used": 34966,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 0,
+      "decision_rounds": 3,
+      "evidence_reads": 0,
+      "analysis_executions": 0,
+      "logical_steps": [],
+      "identity_queries": 0,
+      "structure_preparations": 0,
+      "knowledge_queries": 0
+    },
+    "driver_wall_seconds": 79.45300000000861,
+    "error": null,
+    "settlement": {
+      "known_usage": {
+        "model_calls": 3,
+        "wall_seconds": 79.45300000000861,
+        "model_tokens": 34966,
+        "orca_starts": 0,
+        "internal_work_units": 0
+      },
+      "unknown_fields": {}
+    },
+    "independent_reference": "not_run_in_this_user_authorized_first_round"
+  },
+  "run_snapshot": {
+    "request_id": "request_7ce2b1da9e5845e198a1728ca0ccd7cb",
+    "request_version": 2,
+    "plan_id": null,
+    "plan_version": null,
+    "state": "failed",
+    "delivery_status": "partial",
+    "goal_status": {
+      "goal_prepared_geometry": "insufficient_evidence",
+      "goal_gas_energy": "insufficient_evidence",
+      "goal_solvent_energy": "insufficient_evidence",
+      "goal_energy_difference": "insufficient_evidence",
+      "goal_raw_input_output": "insufficient_evidence",
+      "goal_shared_xyz_hash": "insufficient_evidence",
+      "goal_random_seed": "insufficient_evidence"
+    },
+    "usage": {
+      "internal_work_units": 0,
+      "internal_calls_by_purpose": {},
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 3,
+      "model_tokens_used": 34966,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 0,
+      "decision_rounds": 3,
+      "evidence_reads": 0,
+      "analysis_executions": 0,
+      "logical_steps": [],
+      "identity_queries": 0,
+      "structure_preparations": 0,
+      "knowledge_queries": 0
+    },
+    "attempts": [],
+    "calls": [],
+    "internal_calls": [],
+    "result_ids": [],
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_4966c68314914c048248e37aded15239",
+        "error_category": "ProposalError"
+      }
+    ],
+    "processed_messages": [
+      "message_e903ece75f5e4ad3bcc6491540b5c5e0"
+    ],
+    "processed_feedback": [],
+    "goal_evidence": {}
+  },
+  "model_chain": [
+    {
+      "record": {
+        "id": "model_4966c68314914c048248e37aded15239",
+        "logical_id": "decision_300450ef7079ea3c22b470e9_1",
+        "request_hash": "25207c318441086d706cc9dc1ede229e4ac2db0d0ce50821811af731724ec97f",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "input_reserved": 22330,
+        "output_reserved": 32768,
+        "cost_reserved_usd": "0.0460206",
+        "created_at": "2026-10-20T16:18:15.057061+00:00",
+        "status": "known",
+        "prompt_version": "agent-json-v77",
+        "sdk_version": "2.28.0",
+        "model": "deepseek-flash",
+        "token_bound_version": "deepseek-v41-utf8-upper-v2",
+        "model_profile": "thinking_low",
+        "transport_limits": {
+          "model_name": "deepseek-flash",
+          "input_tokens": 64000,
+          "output_tokens": 32768,
+          "timeout_seconds": 180.0,
+          "response_bytes": 524288,
+          "proposal_bytes": 131072,
+          "messages": 64
+        },
+        "delivery_snapshot_sha256": "6e0c8950f46e8048ce7b0ea7c29e7e84d178fc7d7b227da8f203f3abb699bd31",
+        "response_record_sha256": "23f7c7c1037fd06e20a383498ed39f534c87bfc9d5ae5f8deede80c80a504aaa",
+        "response_hash": "7e1b52703d3965ed18920175f0b5b46d60148c9db6cd95914cd3361f323871ad",
+        "error_category": null,
+        "provider_request_id": null,
+        "response_model": "deepseek-flash",
+        "latency_seconds": 54.23399999999674,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 5679,
+          "completion_tokens": 13175,
+          "total_tokens": 18854,
+          "prompt_cache_hit_tokens": 2048,
+          "prompt_cache_miss_tokens": 3631
+        },
+        "input_tokens": 5679,
+        "output_tokens": 13175,
+        "total_tokens": 18854,
+        "cost_known_usd": "0.0175137"
+      },
+      "request_file": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/model/model_4966c68314914c048248e37aded15239.request.json",
+        "sha256": "25207c318441086d706cc9dc1ede229e4ac2db0d0ce50821811af731724ec97f",
+        "bytes": 23521,
+        "mtime_utc": "2026-10-20T16:18:15.067068+00:00"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/model/model_4966c68314914c048248e37aded15239.response.json",
+        "sha256": "23f7c7c1037fd06e20a383498ed39f534c87bfc9d5ae5f8deede80c80a504aaa",
+        "bytes": 13257,
+        "mtime_utc": "2026-10-20T16:19:09.360891+00:00"
+      },
+      "request_file_hash_matches_record": true,
+      "response_file_hash_matches_record": true,
+      "raw_content_sha256": "103f1f7b38a2642b6294dffe2904fe4f66d62b4846b8ba52e6d424bea5e030d8",
+      "raw_content_parses_to_archived_proposal": true,
+      "proposal": {
+        "action": "normalize_request",
+        "parameters": {
+          "schema_version": "request-semantics-3",
+          "message_ids": [
+            "message_e903ece75f5e4ad3bcc6491540b5c5e0"
+          ],
+          "kind": "normalize",
+          "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "automatic_selection": {
+            "method": {
+              "text_basis": "自行选择同一方法与基组",
+              "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+              "source_refs": [
+                "source_0b7ba4e403271a48"
+              ]
+            },
+            "basis": {
+              "text_basis": "自行选择同一方法与基组",
+              "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+              "source_refs": [
+                "source_0b7ba4e403271a48"
+              ]
+            }
+          },
+          "identities": [
+            {
+              "key": "ethanol",
+              "name": "乙醇",
+              "query_name": "ethanol",
+              "text_basis": "乙醇（中性、单重态）",
+              "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0"
+            }
+          ],
+          "goals": [
+            {
+              "key": "prepared_geometry",
+              "port": "prepared_geometry",
+              "quantity": "一份结构",
+              "system_refs": [
+                "ethanol"
+              ],
+              "required": true,
+              "verification": "reported_with_limitations",
+              "text_basis": "生成一份结构",
+              "source_refs": [
+                "source_0b7ba4e403271a48"
+              ]
+            },
+            {
+              "key": "gas_energy",
+              "port": "energy",
+              "quantity": "单点电子能量",
+              "system_refs": [
+                "ethanol"
+              ],
+              "conditions": {
+                "charge": {
+                  "source": "explicit",
+                  "value": 0,
+                  "text_basis": "中性",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ]
+                },
+                "multiplicity": {
+                  "source": "explicit",
+                  "value": 1,
+                  "text_basis": "单重态",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ]
+                },
+                "environment": {
+                  "source": "explicit",
+                  "value": "gas_phase",
+                  "text_basis": "气相",
+                  "value_basis": "气相",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ]
+                }
+              },
+              "required": true,
+              "verification": "reported_with_limitations",
+              "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+              "source_refs": [
+                "source_0b7ba4e403271a48",
+                "source_3bc68adf74c1e642"
+              ]
+            },
+            {
+              "key": "solvent_energy",
+              "port": "energy",
+              "quantity": "单点电子能量",
+              "system_refs": [
+                "ethanol"
+              ],
+              "conditions": {
+                "charge": {
+                  "source": "explicit",
+                  "value": 0,
+                  "text_basis": "中性",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ]
+                },
+                "multiplicity": {
+                  "source": "explicit",
+                  "value": 1,
+                  "text_basis": "单重态",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ]
+                },
+                "environment": {
+                  "source": "explicit",
+                  "value": "CPCM(water)",
+                  "text_basis": "ORCA C-PCM水环境",
+                  "value_basis": "ORCA C-PCM水环境",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ]
+                }
+              },
+              "required": true,
+              "verification": "reported_with_limitations",
+              "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+              "source_refs": [
+                "source_0b7ba4e403271a48",
+                "source_3bc68adf74c1e642"
+              ]
+            },
+            {
+              "key": "energy_difference",
+              "port": "energy_difference",
+              "quantity": "kJ/mol差值",
+              "system_refs": [
+                "ethanol"
+              ],
+              "required": true,
+              "verification": "reported_with_limitations",
+              "text_basis": "按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释",
+              "source_refs": [
+                "source_80572fbfb5904dea"
+              ]
+            },
+            {
+              "key": "raw_input_output",
+              "port": "artifact_metadata",
+              "quantity": "两份原始输入输出",
+              "system_refs": [
+                "ethanol"
+              ],
+              "required": true,
+              "verification": "reported_with_limitations",
+              "text_basis": "交付两份原始输入输出",
+              "source_refs": [
+                "source_80572fbfb5904dea"
+              ]
+            },
+            {
+              "key": "shared_xyz_hash",
+              "port": "artifact_metadata",
+              "quantity": "共用XYZ及hash",
+              "system_refs": [
+                "ethanol"
+              ],
+              "required": true,
+              "verification": "reported_with_limitations",
+              "text_basis": "共用XYZ及hash",
+              "source_refs": [
+                "source_80572fbfb5904dea"
+              ]
+            },
+            {
+              "key": "random_seed",
+              "port": "sampling",
+              "quantity": "种子 1701",
+              "system_refs": [
+                "ethanol"
+              ],
+              "required": true,
+              "verification": "reported_with_limitations",
+              "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+              "source_refs": [
+                "source_2a47e49387c5db9a"
+              ]
+            }
+          ],
+          "unresolved": []
+        },
+        "reason": "Normalized request: ethanol identity, prepared geometry, two single-point energy Goals with explicit neutral/singlet charge and multiplicity and gas/CPCM(water) environments, delegated method/basis in automatic_selection, energy difference, delivery artifacts, and seed 1701. Verification is reported_with_limitations because no qualified minimum-evidence demand is explicit. Shared geometry is retained via source references; explain_results is handled by final delivery, so no knowledge_answer Goal is added."
+      }
+    },
+    {
+      "record": {
+        "id": "model_32198b590eca4bd2bc837b6e7496c4ce",
+        "logical_id": "decision_300450ef7079ea3c22b470e9_2",
+        "request_hash": "cb210375382b21b4fd1814e6e046f4220ead8dd51648e7181adbbf81d5528ff6",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "input_reserved": 31581,
+        "output_reserved": 32768,
+        "cost_reserved_usd": "0.0487959",
+        "created_at": "2026-10-20T16:19:09.725753+00:00",
+        "status": "known",
+        "prompt_version": "agent-json-v77",
+        "sdk_version": "2.28.0",
+        "model": "deepseek-flash",
+        "token_bound_version": "deepseek-v41-utf8-upper-v2",
+        "model_profile": "thinking_low",
+        "transport_limits": {
+          "model_name": "deepseek-flash",
+          "input_tokens": 64000,
+          "output_tokens": 32768,
+          "timeout_seconds": 180.0,
+          "response_bytes": 524288,
+          "proposal_bytes": 131072,
+          "messages": 64
+        },
+        "delivery_snapshot_sha256": "6e0c8950f46e8048ce7b0ea7c29e7e84d178fc7d7b227da8f203f3abb699bd31",
+        "response_record_sha256": "e3146d9fab5573ace3353b26173195050e31daf65f60fb069cd84aa5714b9ebd",
+        "response_hash": "b08220f86df54fe347410cb0bde0bb54837dade4fc89809fc90fe30e34d0f2e2",
+        "error_category": null,
+        "provider_request_id": null,
+        "response_model": "deepseek-flash",
+        "latency_seconds": 18.593999999997322,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 8085,
+          "completion_tokens": 4349,
+          "total_tokens": 12434,
+          "prompt_cache_hit_tokens": 2048,
+          "prompt_cache_miss_tokens": 6037
+        },
+        "input_tokens": 8085,
+        "output_tokens": 4349,
+        "total_tokens": 12434,
+        "cost_known_usd": "0.0076443"
+      },
+      "request_file": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/model/model_32198b590eca4bd2bc837b6e7496c4ce.request.json",
+        "sha256": "cb210375382b21b4fd1814e6e046f4220ead8dd51648e7181adbbf81d5528ff6",
+        "bytes": 33482,
+        "mtime_utc": "2026-10-20T16:19:09.735747+00:00"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/model/model_32198b590eca4bd2bc837b6e7496c4ce.response.json",
+        "sha256": "e3146d9fab5573ace3353b26173195050e31daf65f60fb069cd84aa5714b9ebd",
+        "bytes": 10963,
+        "mtime_utc": "2026-10-20T16:19:28.367179+00:00"
+      },
+      "request_file_hash_matches_record": true,
+      "response_file_hash_matches_record": true,
+      "raw_content_sha256": "7ec479aadbf5252e43e54b9ddb76e962dbfe5e54cac56085be94fb9da7d14a01",
+      "raw_content_parses_to_archived_proposal": true,
+      "proposal": {
+        "action": "normalize_request",
+        "parameters": {
+          "schema_version": "request-semantics-3",
+          "message_ids": [
+            "message_e903ece75f5e4ad3bcc6491540b5c5e0"
+          ],
+          "kind": "normalize",
+          "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "identities": [
+            {
+              "key": "ethanol",
+              "name": "乙醇",
+              "query_name": "ethanol",
+              "text_basis": "乙醇（中性、单重态）",
+              "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0"
+            }
+          ],
+          "automatic_selection": {
+            "method": {
+              "source_refs": [
+                "source_0b7ba4e403271a48"
+              ]
+            },
+            "basis": {
+              "source_refs": [
+                "source_0b7ba4e403271a48"
+              ]
+            }
+          },
+          "goals": [
+            {
+              "key": "prepared_geometry",
+              "port": "prepared_geometry",
+              "quantity": "一份结构",
+              "required": true,
+              "source_refs": [
+                "source_0b7ba4e403271a48"
+              ],
+              "system_refs": [
+                "ethanol"
+              ],
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "gas_energy",
+              "port": "energy",
+              "quantity": "单点电子能量",
+              "required": true,
+              "conditions": {
+                "charge": {
+                  "source": "explicit",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ],
+                  "value": 0
+                },
+                "multiplicity": {
+                  "source": "explicit",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ],
+                  "value": 1
+                },
+                "environment": {
+                  "source": "explicit",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ],
+                  "value": "gas_phase"
+                }
+              },
+              "source_refs": [
+                "source_0b7ba4e403271a48"
+              ],
+              "system_refs": [
+                "ethanol"
+              ],
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "solvent_energy",
+              "port": "energy",
+              "quantity": "单点电子能量",
+              "required": true,
+              "conditions": {
+                "charge": {
+                  "source": "explicit",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ],
+                  "value": 0
+                },
+                "multiplicity": {
+                  "source": "explicit",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ],
+                  "value": 1
+                },
+                "environment": {
+                  "source": "explicit",
+                  "source_refs": [
+                    "source_0b7ba4e403271a48"
+                  ],
+                  "value": "CPCM(water)"
+                }
+              },
+              "source_refs": [
+                "source_0b7ba4e403271a48"
+              ],
+              "system_refs": [
+                "ethanol"
+              ],
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "energy_difference",
+              "port": "energy_difference",
+              "quantity": "kJ/mol差值",
+              "required": true,
+              "source_refs": [
+                "source_80572fbfb5904dea"
+              ],
+              "system_refs": [
+                "ethanol"
+              ],
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "raw_input_output",
+              "port": "artifact_metadata",
+              "quantity": "两份原始输入输出",
+              "required": true,
+              "source_refs": [
+                "source_80572fbfb5904dea"
+              ],
+              "system_refs": [
+                "ethanol"
+              ],
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "shared_xyz_hash",
+              "port": "artifact_metadata",
+              "quantity": "共用XYZ及hash",
+              "required": true,
+              "source_refs": [
+                "source_80572fbfb5904dea"
+              ],
+              "system_refs": [
+                "ethanol"
+              ],
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "random_seed",
+              "port": "sampling",
+              "quantity": "种子 1701",
+              "required": true,
+              "source_refs": [
+                "source_2a47e49387c5db9a"
+              ],
+              "system_refs": [
+                "ethanol"
+              ],
+              "verification": "reported_with_limitations"
+            }
+          ],
+          "unresolved": []
+        },
+        "reason": "Corrects the rejected proposal by removing conflicting text_basis copies from goals, their conditions, and delegated method/basis selections, while retaining exact source_refs to the supplied current-message fragments. Preserves ethanol identity, prepared geometry, explicit neutral/singlet charge and multiplicity, gas and ORCA C-PCM(water) single-point energy goals, energy difference, delivery artifacts, seed 1701, and reported_with_limitations verification. No geometry_relation is imposed; shared geometry and no separate optimization are retained through the source references."
+      }
+    },
+    {
+      "record": {
+        "id": "model_b60ce68e07644c1bac95e6db0e6d929f",
+        "logical_id": "decision_341e74899b5526463d94505e_1",
+        "request_hash": "a332dafbcb07e776576cb4b72b62802fa618f0e8c801f12e4335f5e83bf3ad09",
+        "basis": {
+          "request_version": 2,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "input_reserved": 9622,
+        "output_reserved": 32768,
+        "cost_reserved_usd": "0.0422082",
+        "created_at": "2026-10-20T16:19:28.727004+00:00",
+        "status": "known",
+        "prompt_version": "agent-json-v77",
+        "sdk_version": "2.28.0",
+        "model": "deepseek-flash",
+        "token_bound_version": "deepseek-v41-utf8-upper-v2",
+        "model_profile": "thinking_low",
+        "transport_limits": {
+          "model_name": "deepseek-flash",
+          "input_tokens": 64000,
+          "output_tokens": 32768,
+          "timeout_seconds": 180.0,
+          "response_bytes": 524288,
+          "proposal_bytes": 131072,
+          "messages": 64
+        },
+        "delivery_snapshot_sha256": "62b1bafd04bcaa716e28e769929045e1e86595f59ecb97dee0e85df3506ccbbd",
+        "response_record_sha256": "3e0cda327dfb9d70e99bcc2acc358664cb45709f0429a79d335a47971096834a",
+        "response_hash": "7468959360c609e305c71da9a5c3e07b7c5d099deb60c18ddec5c78697cc067a",
+        "error_category": null,
+        "provider_request_id": null,
+        "response_model": "deepseek-flash",
+        "latency_seconds": 4.125,
+        "http_status": 200,
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 2811,
+          "completion_tokens": 867,
+          "total_tokens": 3678,
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 2811
+        },
+        "input_tokens": 2811,
+        "output_tokens": 867,
+        "total_tokens": 3678,
+        "cost_known_usd": "0.0018837"
+      },
+      "request_file": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/model/model_b60ce68e07644c1bac95e6db0e6d929f.request.json",
+        "sha256": "a332dafbcb07e776576cb4b72b62802fa618f0e8c801f12e4335f5e83bf3ad09",
+        "bytes": 10281,
+        "mtime_utc": "2026-10-20T16:19:28.739004+00:00"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/model/model_b60ce68e07644c1bac95e6db0e6d929f.response.json",
+        "sha256": "3e0cda327dfb9d70e99bcc2acc358664cb45709f0429a79d335a47971096834a",
+        "bytes": 4198,
+        "mtime_utc": "2026-10-20T16:19:32.909178+00:00"
+      },
+      "request_file_hash_matches_record": true,
+      "response_file_hash_matches_record": true,
+      "raw_content_sha256": "7f72333048b7c8829421027cf3912a3146da424ec5f91b8ab67ec1ab6e6c6266",
+      "raw_content_parses_to_archived_proposal": true,
+      "proposal": {
+        "action": "stop",
+        "parameters": {
+          "delivery": {
+            "version": "terminal-delivery-1",
+            "snapshot_ref": "current",
+            "goal_explanations": [
+              {
+                "goal_ref": "g1",
+                "fact_refs": [
+                  "f1",
+                  "f2"
+                ],
+                "explanation_ref": "e1",
+                "blocker_refs": [
+                  "b1"
+                ],
+                "next_action_ref": "n1"
+              },
+              {
+                "goal_ref": "g2",
+                "fact_refs": [
+                  "f3",
+                  "f4"
+                ],
+                "explanation_ref": "e2",
+                "blocker_refs": [
+                  "b2"
+                ],
+                "next_action_ref": "n2"
+              },
+              {
+                "goal_ref": "g3",
+                "fact_refs": [
+                  "f5",
+                  "f6"
+                ],
+                "explanation_ref": "e3",
+                "blocker_refs": [
+                  "b3"
+                ],
+                "next_action_ref": "n3"
+              },
+              {
+                "goal_ref": "g4",
+                "fact_refs": [
+                  "f7",
+                  "f8"
+                ],
+                "explanation_ref": "e4",
+                "blocker_refs": [
+                  "b4"
+                ],
+                "next_action_ref": "n4"
+              },
+              {
+                "goal_ref": "g5",
+                "fact_refs": [
+                  "f9",
+                  "f10"
+                ],
+                "explanation_ref": "e5",
+                "blocker_refs": [
+                  "b5"
+                ],
+                "next_action_ref": "n5"
+              },
+              {
+                "goal_ref": "g6",
+                "fact_refs": [
+                  "f11",
+                  "f12"
+                ],
+                "explanation_ref": "e6",
+                "blocker_refs": [
+                  "b6"
+                ],
+                "next_action_ref": "n6"
+              },
+              {
+                "goal_ref": "g7",
+                "fact_refs": [
+                  "f13",
+                  "f14"
+                ],
+                "explanation_ref": "e7",
+                "blocker_refs": [
+                  "b7"
+                ],
+                "next_action_ref": "n7"
+              }
+            ]
+          }
+        },
+        "reason": "All required goals lack evidence bindings; no scientific artifacts or results were delivered, so stop with per-goal blockers and next actions."
+      }
+    }
+  ],
+  "all_rejection_requirements": [
+    {
+      "id": "model_4966c68314914c048248e37aded15239",
+      "basis": {
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "rejected",
+      "related_results": [],
+      "reason": "rejected",
+      "parameters": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": {
+          "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+          "path": [
+            "parameters"
+          ],
+          "corrections": [
+            {
+              "path": [
+                "parameters",
+                "goals",
+                0
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                1
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                2
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                3
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                4
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                5
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                1,
+                "conditions",
+                "charge"
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                1,
+                "conditions",
+                "multiplicity"
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                1,
+                "conditions",
+                "environment"
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                2,
+                "conditions",
+                "charge"
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                2,
+                "conditions",
+                "multiplicity"
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "goals",
+                2,
+                "conditions",
+                "environment"
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "automatic_selection",
+                "method"
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            },
+            {
+              "path": [
+                "parameters",
+                "automatic_selection",
+                "basis"
+              ],
+              "reason": "source_reference_conflicts_with_supplied_text",
+              "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "intake": {
+    "source_fragments_from_actual_first_request": [
+      {
+        "end": 75,
+        "id": "source_0b7ba4e403271a48",
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。"
+      },
+      {
+        "end": 111,
+        "id": "source_3bc68adf74c1e642",
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 75,
+        "text": "除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。"
+      },
+      {
+        "end": 178,
+        "id": "source_80572fbfb5904dea",
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 111,
+        "text": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。"
+      },
+      {
+        "end": 233,
+        "id": "source_0a115db30095a686",
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 178,
+        "text": "说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。"
+      },
+      {
+        "end": 306,
+        "id": "source_2a47e49387c5db9a",
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 235,
+        "text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。"
+      }
+    ],
+    "source_reference_rules_from_actual_first_request": "Goals, explicit conditions and automatic_selection authorization may supply source_refs instead of recopying text_basis/message_id. References name authenticated user fragments; the program retains the exact source and any intervening text. Keep quantity as the user's physical quantity phrase. A reference does not prove an arbitrary field value. Exact text_basis remains accepted. Environment values use gas_phase, CPCM(solvent), or SMD(solvent); retain the user's model and solvent. value_basis may identify an exact literal value phrase inside the source. The program records the raw phrase and separately checks the canonical model/solvent mapping; a citation alone is insufficient. The program supplies an omitted unambiguous geometry_relation; conflicting relations remain errors. analysis_goal_ref is only a legacy sampling specification reference, not a general Goal dependency.",
+    "rejection_count": 14,
+    "rejection_reason_counts": {
+      "source_reference_conflicts_with_supplied_text": 14
+    },
+    "confirmed_rule": "semantic.py:391-394 compares nonempty text_basis against the entire selected source span. A valid shorter substring still fails when used together with source_refs.",
+    "successful_correction": "Second proposal omits repeated text_basis/message_id on referenced Goals, conditions and authorizations; program expands fragment references. It also removes source_3bc68adf74c1e642 from the two energy Goals; that second sentence remains unchanged in full Request.original_text and model-visible request_text.",
+    "accepted_request": {
+      "id": "request_7ce2b1da9e5845e198a1728ca0ccd7cb",
+      "version": 2,
+      "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "geometry_artifact_id": null,
+      "charge": null,
+      "multiplicity": null,
+      "method": null,
+      "basis": null,
+      "conditions_source": {
+        "electronic_state": "default"
+      },
+      "goals": [
+        {
+          "id": "goal_prepared_geometry",
+          "port": "prepared_geometry",
+          "required": true,
+          "minimum_check_version": "structure-prepare-3",
+          "evidence_contract_version": "legacy-1",
+          "verification": "reported_with_limitations",
+          "quantity": "一份结构",
+          "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+          "identity": {
+            "contract": "general-identity-3",
+            "requested_names": [
+              "乙醇"
+            ],
+            "canonical_names": [],
+            "query_name": "ethanol",
+            "query_name_source": "inferred_translation_or_alias",
+            "ambiguities": [],
+            "text_evidence": {
+              "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+              "text_basis": "乙醇（中性、单重态）",
+              "start": 2,
+              "end": 12,
+              "schema": "request-semantics-3"
+            }
+          },
+          "text_evidence": {
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+            "start": 0,
+            "end": 75,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_ethanol"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_gas_energy",
+          "port": "energy",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "单点电子能量",
+          "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+          "identity": {
+            "requested_names": [
+              "乙醇"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+            "start": 0,
+            "end": 75,
+            "schema": "request-semantics-3",
+            "shared_constraints": [
+              {
+                "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+                "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+                "start": 46,
+                "end": 74,
+                "schema": "request-semantics-3"
+              }
+            ],
+            "conditions": {
+              "charge": {
+                "value": 0,
+                "source": "explicit",
+                "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+                "request_version": null,
+                "system_ref": "system_ethanol",
+                "default_rule": null,
+                "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+                "source_refs": [
+                  "source_0b7ba4e403271a48"
+                ],
+                "value_basis": null,
+                "start": 0,
+                "end": 75,
+                "schema": "request-semantics-3"
+              },
+              "multiplicity": {
+                "value": 1,
+                "source": "explicit",
+                "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+                "request_version": null,
+                "system_ref": "system_ethanol",
+                "default_rule": null,
+                "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+                "source_refs": [
+                  "source_0b7ba4e403271a48"
+                ],
+                "value_basis": null,
+                "start": 0,
+                "end": 75,
+                "schema": "request-semantics-3"
+              },
+              "environment": {
+                "value": "gas_phase",
+                "source": "explicit",
+                "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+                "request_version": null,
+                "system_ref": "system_ethanol",
+                "default_rule": null,
+                "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+                "source_refs": [
+                  "source_0b7ba4e403271a48"
+                ],
+                "value_basis": null,
+                "start": 0,
+                "end": 75,
+                "schema": "request-semantics-3"
+              }
+            }
+          },
+          "system_ids": [
+            "system_ethanol"
+          ],
+          "conditions": {
+            "charge": 0,
+            "multiplicity": 1,
+            "environment": "gas_phase",
+            "geometry_relation": "fixed_initial"
+          },
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_solvent_energy",
+          "port": "energy",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "单点电子能量",
+          "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+          "identity": {
+            "requested_names": [
+              "乙醇"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+            "start": 0,
+            "end": 75,
+            "schema": "request-semantics-3",
+            "shared_constraints": [
+              {
+                "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+                "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+                "start": 46,
+                "end": 74,
+                "schema": "request-semantics-3"
+              }
+            ],
+            "conditions": {
+              "charge": {
+                "value": 0,
+                "source": "explicit",
+                "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+                "request_version": null,
+                "system_ref": "system_ethanol",
+                "default_rule": null,
+                "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+                "source_refs": [
+                  "source_0b7ba4e403271a48"
+                ],
+                "value_basis": null,
+                "start": 0,
+                "end": 75,
+                "schema": "request-semantics-3"
+              },
+              "multiplicity": {
+                "value": 1,
+                "source": "explicit",
+                "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+                "request_version": null,
+                "system_ref": "system_ethanol",
+                "default_rule": null,
+                "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+                "source_refs": [
+                  "source_0b7ba4e403271a48"
+                ],
+                "value_basis": null,
+                "start": 0,
+                "end": 75,
+                "schema": "request-semantics-3"
+              },
+              "environment": {
+                "value": "CPCM(water)",
+                "source": "explicit",
+                "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+                "request_version": null,
+                "system_ref": "system_ethanol",
+                "default_rule": null,
+                "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+                "source_refs": [
+                  "source_0b7ba4e403271a48"
+                ],
+                "value_basis": null,
+                "normalization": {
+                  "model": "cpcm",
+                  "solvent": "water",
+                  "source": "program_checked_component_mapping",
+                  "raw_phrase": "请为乙醇（中性、单重态）生成一份结构；保持完全相同的原子顺序和坐标；自行选择同一方法与基组；分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+                  "proposed_value": "CPCM(water)"
+                },
+                "start": 0,
+                "end": 75,
+                "schema": "request-semantics-3"
+              }
+            }
+          },
+          "system_ids": [
+            "system_ethanol"
+          ],
+          "conditions": {
+            "charge": 0,
+            "multiplicity": 1,
+            "environment": "CPCM(water)",
+            "geometry_relation": "fixed_initial"
+          },
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_energy_difference",
+          "port": "energy_difference",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "kJ/mol差值",
+          "original_text": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。",
+          "identity": {
+            "requested_names": [
+              "乙醇"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。",
+            "start": 111,
+            "end": 178,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_ethanol"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_raw_input_output",
+          "port": "artifact_metadata",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "两份原始输入输出",
+          "original_text": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。",
+          "identity": {
+            "requested_names": [
+              "乙醇"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。",
+            "start": 111,
+            "end": 178,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_ethanol"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_shared_xyz_hash",
+          "port": "artifact_metadata",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "共用XYZ及hash",
+          "original_text": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。",
+          "identity": {
+            "requested_names": [
+              "乙醇"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。",
+            "start": 111,
+            "end": 178,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_ethanol"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        },
+        {
+          "id": "goal_random_seed",
+          "port": "sampling",
+          "required": true,
+          "minimum_check_version": "generic-observation-1",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "quantity": "种子 1701",
+          "original_text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "identity": {
+            "requested_names": [
+              "乙醇"
+            ]
+          },
+          "text_evidence": {
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "start": 235,
+            "end": 306,
+            "schema": "request-semantics-3"
+          },
+          "system_ids": [
+            "system_ethanol"
+          ],
+          "conditions": {},
+          "minimum_evidence": [],
+          "minimum_evidence_source": {},
+          "unresolved": []
+        }
+      ],
+      "systems": [
+        {
+          "id": "system_ethanol",
+          "geometry_artifact_id": null,
+          "conditions": {},
+          "conditions_source": {},
+          "atom_mapping": [],
+          "label": "乙醇",
+          "identity": {
+            "contract": "general-identity-3",
+            "requested_names": [
+              "乙醇"
+            ],
+            "canonical_names": [],
+            "query_name": "ethanol",
+            "query_name_source": "inferred_translation_or_alias",
+            "ambiguities": [],
+            "text_evidence": {
+              "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+              "text_basis": "乙醇（中性、单重态）",
+              "start": 2,
+              "end": 12,
+              "schema": "request-semantics-3"
+            }
+          },
+          "geometry_source": "prepare"
+        }
+      ],
+      "messages": [
+        {
+          "id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+          "text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "source": "user",
+          "created_at": "2026-10-20T16:18:13.390890+00:00",
+          "request_version": 1
+        }
+      ],
+      "unresolved": [],
+      "conditions": {
+        "explain_results": true,
+        "electronic_state": "RKS"
+      },
+      "normalization_status": "normalized",
+      "condition_evidence": {
+        "workflow_policy": {
+          "version": "simplified-1",
+          "source": "run_configuration"
+        },
+        "request.electronic_state": {
+          "value": "RKS",
+          "source": "default",
+          "text_basis": "",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": "local-hf-1",
+          "message_id": null,
+          "source_refs": [],
+          "value_basis": null,
+          "message_ids": [
+            "message_e903ece75f5e4ad3bcc6491540b5c5e0"
+          ],
+          "schema": "request-semantics-3"
+        },
+        "automatic_selection.method": {
+          "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+          "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+          "start": 0,
+          "end": 75,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        },
+        "automatic_selection.basis": {
+          "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+          "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+          "start": 0,
+          "end": 75,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        }
+      },
+      "semantic_defaults": {
+        "charge": 0,
+        "electronic_state": "RKS",
+        "environment": "gas_phase",
+        "multiplicity": 1
+      },
+      "automatic_selection": [
+        "method",
+        "basis"
+      ],
+      "selection_reasons": {}
+    },
+    "program_source_references": [
+      {
+        "path": [
+          "goals",
+          0
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      },
+      {
+        "path": [
+          "goals",
+          1
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      },
+      {
+        "path": [
+          "goals",
+          2
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      },
+      {
+        "path": [
+          "goals",
+          3
+        ],
+        "source_refs": [
+          "source_80572fbfb5904dea"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 111,
+        "end": 178
+      },
+      {
+        "path": [
+          "goals",
+          4
+        ],
+        "source_refs": [
+          "source_80572fbfb5904dea"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 111,
+        "end": 178
+      },
+      {
+        "path": [
+          "goals",
+          5
+        ],
+        "source_refs": [
+          "source_80572fbfb5904dea"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 111,
+        "end": 178
+      },
+      {
+        "path": [
+          "goals",
+          6
+        ],
+        "source_refs": [
+          "source_2a47e49387c5db9a"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 235,
+        "end": 306
+      },
+      {
+        "path": [
+          "goals",
+          1,
+          "conditions",
+          "charge"
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      },
+      {
+        "path": [
+          "goals",
+          1,
+          "conditions",
+          "multiplicity"
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      },
+      {
+        "path": [
+          "goals",
+          1,
+          "conditions",
+          "environment"
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      },
+      {
+        "path": [
+          "goals",
+          2,
+          "conditions",
+          "charge"
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      },
+      {
+        "path": [
+          "goals",
+          2,
+          "conditions",
+          "multiplicity"
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      },
+      {
+        "path": [
+          "goals",
+          2,
+          "conditions",
+          "environment"
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      },
+      {
+        "path": [
+          "automatic_selection",
+          "method"
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      },
+      {
+        "path": [
+          "automatic_selection",
+          "basis"
+        ],
+        "source_refs": [
+          "source_0b7ba4e403271a48"
+        ],
+        "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+        "start": 0,
+        "end": 75
+      }
+    ],
+    "program_fields": [
+      {
+        "path": [
+          "goals",
+          1,
+          "geometry_relation"
+        ],
+        "value": "fixed_initial",
+        "source": "program_grounded_user_constraint"
+      },
+      {
+        "path": [
+          "goals",
+          2,
+          "geometry_relation"
+        ],
+        "value": "fixed_initial",
+        "source": "program_grounded_user_constraint"
+      }
+    ],
+    "program_applied_defaults": [
+      {
+        "path": [
+          "conditions",
+          "electronic_state"
+        ],
+        "reason": "authorized_default_applied",
+        "authorized_default": {
+          "source": "default",
+          "default_rule": "local-hf-1",
+          "value": "RKS"
+        }
+      }
+    ]
+  },
+  "post_normalization_failure": {
+    "confidence": "confirmed_by_actual_request_response_and_static_source; no runtime replay",
+    "actual_third_authority": {
+      "basis": {
+        "control_generation": 1,
+        "permission_version": 1,
+        "plan_version": null,
+        "request_version": 2
+      },
+      "contract_required": true,
+      "decision_purpose": {
+        "allowed_actions": [
+          "clarify",
+          "stop"
+        ],
+        "kind": "clarification"
+      },
+      "delivery_snapshot_fingerprint": "137b9153ebcb116ff15ad33d7cb91712f8007e36174647de7880b2a9cc57d7de",
+      "related_results": [],
+      "remaining": {
+        "correction_calls": 2,
+        "decision_rounds_after_this_round": 37,
+        "final_answer_calls": 1,
+        "model_calls_after_this_request": 21,
+        "model_tokens_before_this_request": 1168712,
+        "seconds": 7124.687
+      },
+      "response_contract": "decision-intent-2",
+      "run_id": "run_4c98667882294f5d86fd0d0424a0174b"
+    },
+    "actual_third_schema_actions": [
+      "clarify",
+      "stop"
+    ],
+    "automatic_selection_retained": [
+      "method",
+      "basis"
+    ],
+    "request_and_system_values": {
+      "request_charge": null,
+      "request_multiplicity": null,
+      "request_conditions": {
+        "explain_results": true,
+        "electronic_state": "RKS"
+      },
+      "systems": [
+        {
+          "id": "system_ethanol",
+          "conditions": {},
+          "conditions_source": {}
+        }
+      ]
+    },
+    "scoped_energy_goal_values": [
+      {
+        "id": "goal_gas_energy",
+        "conditions": {
+          "charge": 0,
+          "multiplicity": 1,
+          "environment": "gas_phase",
+          "geometry_relation": "fixed_initial"
+        },
+        "source_evidence": {
+          "charge": {
+            "value": 0,
+            "source": "explicit",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+            "request_version": null,
+            "system_ref": "system_ethanol",
+            "default_rule": null,
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "source_refs": [
+              "source_0b7ba4e403271a48"
+            ],
+            "value_basis": null,
+            "start": 0,
+            "end": 75,
+            "schema": "request-semantics-3"
+          },
+          "multiplicity": {
+            "value": 1,
+            "source": "explicit",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+            "request_version": null,
+            "system_ref": "system_ethanol",
+            "default_rule": null,
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "source_refs": [
+              "source_0b7ba4e403271a48"
+            ],
+            "value_basis": null,
+            "start": 0,
+            "end": 75,
+            "schema": "request-semantics-3"
+          },
+          "environment": {
+            "value": "gas_phase",
+            "source": "explicit",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+            "request_version": null,
+            "system_ref": "system_ethanol",
+            "default_rule": null,
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "source_refs": [
+              "source_0b7ba4e403271a48"
+            ],
+            "value_basis": null,
+            "start": 0,
+            "end": 75,
+            "schema": "request-semantics-3"
+          }
+        }
+      },
+      {
+        "id": "goal_solvent_energy",
+        "conditions": {
+          "charge": 0,
+          "multiplicity": 1,
+          "environment": "CPCM(water)",
+          "geometry_relation": "fixed_initial"
+        },
+        "source_evidence": {
+          "charge": {
+            "value": 0,
+            "source": "explicit",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+            "request_version": null,
+            "system_ref": "system_ethanol",
+            "default_rule": null,
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "source_refs": [
+              "source_0b7ba4e403271a48"
+            ],
+            "value_basis": null,
+            "start": 0,
+            "end": 75,
+            "schema": "request-semantics-3"
+          },
+          "multiplicity": {
+            "value": 1,
+            "source": "explicit",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+            "request_version": null,
+            "system_ref": "system_ethanol",
+            "default_rule": null,
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "source_refs": [
+              "source_0b7ba4e403271a48"
+            ],
+            "value_basis": null,
+            "start": 0,
+            "end": 75,
+            "schema": "request-semantics-3"
+          },
+          "environment": {
+            "value": "CPCM(water)",
+            "source": "explicit",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。",
+            "request_version": null,
+            "system_ref": "system_ethanol",
+            "default_rule": null,
+            "message_id": "message_e903ece75f5e4ad3bcc6491540b5c5e0",
+            "source_refs": [
+              "source_0b7ba4e403271a48"
+            ],
+            "value_basis": null,
+            "normalization": {
+              "model": "cpcm",
+              "solvent": "water",
+              "source": "program_checked_component_mapping",
+              "raw_phrase": "请为乙醇（中性、单重态）生成一份结构；保持完全相同的原子顺序和坐标；自行选择同一方法与基组；分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+              "proposed_value": "CPCM(water)"
+            },
+            "start": 0,
+            "end": 75,
+            "schema": "request-semantics-3"
+          }
+        }
+      }
+    ],
+    "terminal_conditions_from_persisted_snapshot": [
+      {
+        "id": "goal_prepared_geometry",
+        "current_conditions": {
+          "system_ethanol": {
+            "method": null,
+            "basis": null,
+            "charge": null,
+            "multiplicity": null,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.unknown",
+            "basis": "request.unknown",
+            "charge": "request.unknown",
+            "multiplicity": "request.unknown",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ]
+      },
+      {
+        "id": "goal_gas_energy",
+        "current_conditions": {
+          "system_ethanol": {
+            "method": null,
+            "basis": null,
+            "charge": null,
+            "multiplicity": null,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.unknown",
+            "basis": "request.unknown",
+            "charge": "request.unknown",
+            "multiplicity": "request.unknown",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ]
+      },
+      {
+        "id": "goal_solvent_energy",
+        "current_conditions": {
+          "system_ethanol": {
+            "method": null,
+            "basis": null,
+            "charge": null,
+            "multiplicity": null,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.unknown",
+            "basis": "request.unknown",
+            "charge": "request.unknown",
+            "multiplicity": "request.unknown",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ]
+      },
+      {
+        "id": "goal_energy_difference",
+        "current_conditions": {
+          "system_ethanol": {
+            "method": null,
+            "basis": null,
+            "charge": null,
+            "multiplicity": null,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.unknown",
+            "basis": "request.unknown",
+            "charge": "request.unknown",
+            "multiplicity": "request.unknown",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ]
+      },
+      {
+        "id": "goal_raw_input_output",
+        "current_conditions": {
+          "system_ethanol": {
+            "method": null,
+            "basis": null,
+            "charge": null,
+            "multiplicity": null,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.unknown",
+            "basis": "request.unknown",
+            "charge": "request.unknown",
+            "multiplicity": "request.unknown",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ]
+      },
+      {
+        "id": "goal_shared_xyz_hash",
+        "current_conditions": {
+          "system_ethanol": {
+            "method": null,
+            "basis": null,
+            "charge": null,
+            "multiplicity": null,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.unknown",
+            "basis": "request.unknown",
+            "charge": "request.unknown",
+            "multiplicity": "request.unknown",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ]
+      },
+      {
+        "id": "goal_random_seed",
+        "current_conditions": {
+          "system_ethanol": {
+            "method": null,
+            "basis": null,
+            "charge": null,
+            "multiplicity": null,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.unknown",
+            "basis": "request.unknown",
+            "charge": "request.unknown",
+            "multiplicity": "request.unknown",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ]
+      }
+    ],
+    "source_chain": [
+      "natural.py:60-61 skips physical missing-condition derivation for non-legacy scientific check versions; :105-106 marks this accepted Request normalized because all unresolved lists are empty.",
+      "applicability.py:47-65 obtains values from Request/system. :72-84 treats a Goal condition as a constraint, not a value replacing None; the sole simplified environment override requires request.conditions_source.environment == default, which this Request lacks.",
+      "decision_purpose.py:65-75 checks effective_conditions for every Goal except narrowly listed read/unsystemed generic cases. The first prepared_geometry Goal is not exempt; charge/multiplicity/environment are None while only method/basis are selectable, so clarify/stop is returned before checking later Goals.",
+      "context.py:2702-2716 gives this classification precedence over ordinary planning and returns terminal/clarification context; :1913-1914 uses the same rule at send-lock recheck.",
+      "Actual third request AUTHORITY.decision_purpose.kind=clarification, allowed_actions=[clarify,stop]; all seven next-action choices in the delivery snapshot are stop_with_partial_results. Actual model chooses stop and persisted terminal contract passes."
+    ],
+    "direct_cause": "premature clarification/stop routing after accepted Goal-scoped conditions; model chose stop within those restricted actions",
+    "design_gap": "normalization, effective-condition applicability, and decision routing disagree about accepted Goal-scoped physical conditions; an input acquisition Goal is additionally required to have all science conditions before geometry preparation can be planned",
+    "not_confirmed_or_claimed": [
+      "No numerical science failure occurred.",
+      "No evidence that the model would certainly succeed with additional actions.",
+      "No runtime instrumentation or reproduction performed.",
+      "No claim that full end-to-end same-geometry/solvent settings were validated."
+    ],
+    "historical_report_caveat": "report.txt stop diagnostics lists the earlier proposal_rejected because that is the only diagnostic; actual last action is accepted stop. Reading only the report diagnostic would misidentify the immediate failure."
+  },
+  "task_scope_preservation": {
+    "full_original_text_matches_control": true,
+    "gas_and_water_goals": "Both explicit canonical environment values retained in Goal.conditions and authenticated evidence; no collapse to a single environment in stored Request.",
+    "shared_geometry": "Two energy Goals have fixed_initial; full original retains same atom order/coordinates and no separate optimizations. No geometry generated, so execution enforcement untested.",
+    "same_method_basis": "automatic_selection method/basis retained with same source paragraph; no values selected and no execution.",
+    "energy_difference": "Goal exact source includes deltaE = water minus gas, Eh/kJ/mol delivery and sign explanation. No numerical result available.",
+    "restrictions": "Same settings except solvent, prohibition of separate optimizations and of hydration-free-energy/thermal/standard-state claims remain in full original. The accepted energy Goal source span no longer contains the second sentence; only fixed_initial is structurally supplied. No claim of all restrictions being mechanically enforced.",
+    "seed": "Seed 1701 and cannot-fix disclosure retained in dedicated sampling Goal; no random algorithm run."
+  },
+  "qualification_and_completion": {
+    "evidence_reading": "No Tool Result; raw model/request records are available and hashed.",
+    "operation_success": "Normalization accepted only; no scientific operation launched.",
+    "scientific_output_qualification": "not_exercised",
+    "terminal_explanation_contract": "passed",
+    "terminal_explanation_contract_is_scientific_success": false,
+    "user_goal_completion": false,
+    "goal_status": {
+      "goal_prepared_geometry": "insufficient_evidence",
+      "goal_gas_energy": "insufficient_evidence",
+      "goal_solvent_energy": "insufficient_evidence",
+      "goal_energy_difference": "insufficient_evidence",
+      "goal_raw_input_output": "insufficient_evidence",
+      "goal_shared_xyz_hash": "insufficient_evidence",
+      "goal_random_seed": "insufficient_evidence"
+    }
+  },
+  "terminal_delivery_metadata": {
+    "decision_id": "model_b60ce68e07644c1bac95e6db0e6d929f",
+    "contract_version": "terminal-delivery-1",
+    "basis": {
+      "request_version": 2,
+      "plan_version": null,
+      "permission_version": 1,
+      "control_generation": 1
+    },
+    "snapshot_fingerprint": "137b9153ebcb116ff15ad33d7cb91712f8007e36174647de7880b2a9cc57d7de",
+    "explanation": {
+      "version": "terminal-delivery-1",
+      "snapshot_ref": "current",
+      "goal_explanations": [
+        {
+          "goal_ref": "g1",
+          "fact_refs": [
+            "f1",
+            "f2"
+          ],
+          "explanation_ref": "e1",
+          "blocker_refs": [
+            "b1"
+          ],
+          "next_action_ref": "n1"
+        },
+        {
+          "goal_ref": "g2",
+          "fact_refs": [
+            "f3",
+            "f4"
+          ],
+          "explanation_ref": "e2",
+          "blocker_refs": [
+            "b2"
+          ],
+          "next_action_ref": "n2"
+        },
+        {
+          "goal_ref": "g3",
+          "fact_refs": [
+            "f5",
+            "f6"
+          ],
+          "explanation_ref": "e3",
+          "blocker_refs": [
+            "b3"
+          ],
+          "next_action_ref": "n3"
+        },
+        {
+          "goal_ref": "g4",
+          "fact_refs": [
+            "f7",
+            "f8"
+          ],
+          "explanation_ref": "e4",
+          "blocker_refs": [
+            "b4"
+          ],
+          "next_action_ref": "n4"
+        },
+        {
+          "goal_ref": "g5",
+          "fact_refs": [
+            "f9",
+            "f10"
+          ],
+          "explanation_ref": "e5",
+          "blocker_refs": [
+            "b5"
+          ],
+          "next_action_ref": "n5"
+        },
+        {
+          "goal_ref": "g6",
+          "fact_refs": [
+            "f11",
+            "f12"
+          ],
+          "explanation_ref": "e6",
+          "blocker_refs": [
+            "b6"
+          ],
+          "next_action_ref": "n6"
+        },
+        {
+          "goal_ref": "g7",
+          "fact_refs": [
+            "f13",
+            "f14"
+          ],
+          "explanation_ref": "e7",
+          "blocker_refs": [
+            "b7"
+          ],
+          "next_action_ref": "n7"
+        }
+      ]
+    },
+    "contract_status": "passed",
+    "terminal_state": "failed",
+    "report_status": "rendered",
+    "report_version": "terminal-report-1",
+    "report_path": "runs/run_4c98667882294f5d86fd0d0424a0174b/deliveries/model_b60ce68e07644c1bac95e6db0e6d929f.md",
+    "report_sha256": "551ca4c87c632ce8933f9fac1edeaa66a6662d1617ac27795da99c83cfee0e28",
+    "report_error": null
+  },
+  "postverify": {
+    "started_at_utc": "2026-10-20T16:19:33.414003+00:00",
+    "finished_at_utc": "2026-10-20T16:20:00.305061+00:00",
+    "command": [
+      "E:\\BG6022-V4\\.venv\\Scripts\\python.exe",
+      "scripts/code_tools_acceptance.py",
+      "verify",
+      "--inspect-runtime",
+      "--directory",
+      "docs\\acceptance\\code-as-tools-step7-refreeze-3\\freeze"
+    ],
+    "returncode": 0,
+    "stdout": "{\n  \"status\": \"matched\",\n  \"code_commit\": \"89d55708d9d879ea7c7d28860199056185df2795\",\n  \"manifest_sha256\": \"b866badff1a79317ac67854cde99d0d4d9df329cec6ef0d4060bb47e2fa3b44c\",\n  \"runtime_metadata_verified\": true,\n  \"scientific_execution_performed\": false,\n  \"runtime_reobserved\": true,\n  \"evaluation_sha256\": \"c362b88d3dc1dc3b989140b534d968186144f887d9362a78da6ac1a5c827a6c6\",\n  \"task_slots\": 60,\n  \"limits\": {\n    \"rows\": 60,\n    \"model_calls\": 600,\n    \"model_tokens\": 30000000,\n    \"orca_starts\": 390,\n    \"internal_work_units\": 858000,\n    \"wall_seconds\": 321600.0\n  },\n  \"model_calls\": 0,\n  \"orca_starts\": 0\n}\n",
+    "stderr": "",
+    "stdout_sha256": "f3374ef9b14e81ca78d74765d340af5fb0fb2b0011a8925f65a20ef12bbac509"
+  },
+  "evidence_files": [
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/run.json",
+      "sha256": "22be3d5548a8e846bed83350c5488ade42db027224b4ce600a8f6eb91c62cb8b",
+      "bytes": 100405,
+      "mtime_utc": "2026-10-20T16:19:33.249719+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/control.json",
+      "sha256": "81d8d5dcbb500e6af0a3ec9c5597524b678f7cc773bc4ad1619b7c712d1f1ad7",
+      "bytes": 1079,
+      "mtime_utc": "2026-10-20T16:18:13.393891+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/configuration.json",
+      "sha256": "6fdc22a88591849a7376c5e6cc02d59930a9cf819cad516af10f59737cf182bc",
+      "bytes": 1180,
+      "mtime_utc": "2026-10-20T16:18:13.323774+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/budget.json",
+      "sha256": "bb5653774fca40d7a7cc8fd43140722cf4b745246ccd2538014d2a3bdf5c46aa",
+      "bytes": 660,
+      "mtime_utc": "2026-10-20T16:18:13.316758+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/permission.json",
+      "sha256": "e0daad588bab55f3e56c80780fa3cd6890842e4950ed73d34afe2a2b53a7cab5",
+      "bytes": 662,
+      "mtime_utc": "2026-10-20T16:18:13.310771+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/request-revisions/1.json",
+      "sha256": "6cd597d1e2df369513a20059a4ee902bd0df7d1ed27e821d09494b5d3916ac3d",
+      "bytes": 2859,
+      "mtime_utc": "2026-10-20T16:18:13.304759+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/decisions/model_32198b590eca4bd2bc837b6e7496c4ce.json",
+      "sha256": "06aa4c28e0293b6f3304b82bbeddd10c0183fbc4bd817c907b473e16e398cc34",
+      "bytes": 47164,
+      "mtime_utc": "2026-10-20T16:19:28.523564+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T5/start.json",
+      "sha256": "b97a01a12cbf21d87d874dc8a417b3fed1cc6ef533d9bb79af186eaaa719610b",
+      "bytes": 731,
+      "mtime_utc": "2026-10-20T16:18:13.793892+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T5/outcome.json",
+      "sha256": "13429888d0654a4b567819f05cabb04615145c09e401f5b91962e00aafd281c6",
+      "bytes": 1600,
+      "mtime_utc": "2026-10-20T16:19:33.414003+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T5/post-verify.json",
+      "sha256": "a5718efb2d48c8dadf8b762d4c33d913d52284139758576db743bea01c20406e",
+      "bytes": 1160,
+      "mtime_utc": "2026-10-20T16:20:00.306085+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T5/report.json",
+      "sha256": "456167b217593e55c811243b62f30cb9f2127591e647e0a20baea082c78e8e4f",
+      "bytes": 67394,
+      "mtime_utc": "2026-10-20T16:20:00.335068+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T5/report.txt",
+      "sha256": "551ca4c87c632ce8933f9fac1edeaa66a6662d1617ac27795da99c83cfee0e28",
+      "bytes": 6074,
+      "mtime_utc": "2026-10-20T16:20:00.336075+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/deliveries/model_b60ce68e07644c1bac95e6db0e6d929f.md",
+      "sha256": "551ca4c87c632ce8933f9fac1edeaa66a6662d1617ac27795da99c83cfee0e28",
+      "bytes": 6074,
+      "mtime_utc": "2026-10-20T16:19:33.219713+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/model/model_32198b590eca4bd2bc837b6e7496c4ce.delivery.json",
+      "sha256": "6e0c8950f46e8048ce7b0ea7c29e7e84d178fc7d7b227da8f203f3abb699bd31",
+      "bytes": 8471,
+      "mtime_utc": "2026-10-20T16:19:09.728754+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/model/model_4966c68314914c048248e37aded15239.delivery.json",
+      "sha256": "6e0c8950f46e8048ce7b0ea7c29e7e84d178fc7d7b227da8f203f3abb699bd31",
+      "bytes": 8471,
+      "mtime_utc": "2026-10-20T16:18:15.061067+00:00"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T5-001/data/runs/run_4c98667882294f5d86fd0d0424a0174b/model/model_b60ce68e07644c1bac95e6db0e6d929f.delivery.json",
+      "sha256": "62b1bafd04bcaa716e28e769929045e1e86595f59ecb97dee0e85df3506ccbbd",
+      "bytes": 39673,
+      "mtime_utc": "2026-10-20T16:19:28.732004+00:00"
+    }
+  ],
+  "source_evidence": [
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "1bbd376ca17d5e80ed01c1a09824cf22830a57975a7f146699769fc840022c94",
+      "bytes": 150407,
+      "mtime_utc": "2026-10-20T14:10:14.392358+00:00",
+      "excerpts": [
+        {
+          "start_line": 368,
+          "end_line": 399,
+          "text": "368: def _apply_source_references(candidate, messages, *, enabled):\n369:     available = {entry[\"id\"]: entry for entry in source_fragments(messages)}\n370:     records, corrections = [], []\n371:     items = [([\"goals\", index], item) for index, item in enumerate(candidate.goals or [])]\n372:     items += [([\"conditions\", name], item) for name, item in candidate.conditions.items()]\n373:     items += [([\"system_conditions\", system, name], item)\n374:               for system, fields in candidate.system_conditions.items() for name, item in fields.items()]\n375:     items += [([\"goals\", index, \"conditions\", name], item)\n376:               for index, goal in enumerate(candidate.goals or []) for name, item in goal.conditions.items()]\n377:     items += [([\"automatic_selection\", name], item) for name, item in candidate.automatic_selection.items()]\n378:     for path, item in items:\n379:         if not item.source_refs:\n380:             continue\n381:         refs = [available.get(key) for key in item.source_refs]\n382:         if (not enabled or any(ref is None for ref in refs)\n383:                 or len({ref[\"message_id\"] for ref in refs if ref}) != 1):\n384:             corrections.append({\"path\": [\"parameters\", *path, \"source_refs\"],\n385:                                 \"reason\": \"source_reference_outside_current_user_message\"})\n386:             continue\n387:         message_id = refs[0][\"message_id\"]\n388:         message = next(message for message in messages if message[\"id\"] == message_id)\n389:         start, end = min(ref[\"start\"] for ref in refs), max(ref[\"end\"] for ref in refs)\n390:         text = message[\"text\"][start:end]\n391:         if (item.message_id is not None and item.message_id != message_id\n392:                 or item.text_basis and item.text_basis != text):\n393:             corrections.append({\"path\": [\"parameters\", *path], \"reason\": \"source_reference_conflicts_with_supplied_text\"})\n394:             continue\n395:         # The retained source can be longer than the model-authored text bound;\n396:         # it is bounded by the authenticated message, not generated audit prose.\n397:         item.text_basis, item.message_id = text, message_id\n398:         records.append({\"path\": path, \"source_refs\": list(item.source_refs),\n399:                         \"message_id\": message_id, \"start\": start, \"end\": end})"
+        },
+        {
+          "start_line": 593,
+          "end_line": 625,
+          "text": "593: def _omitted_default_corrections(candidate, request, messages):\n594:     \"\"\"Find authorized omissions; the existing provenance gate owns eligibility.\"\"\"\n595:     missing = {}\n596:     systems = {system.id: system for system in request.systems}\n597:     for goal in candidate.goals or []:\n598:         if (not goal.required or goal.port in READ_TOOLS and not _uses_general_goal(candidate, goal, request)\n599:                 or goal.port in INPUT_TOOLS\n600:                 or goal.port == \"knowledge_answer\"\n601:                 or goal.port in {\"sampling\", \"sampling_check\", \"unresolved\", \"artifacts\", \"observations\"}\n602:                     and not _uses_general_goal(candidate, goal, request)\n603:                 or not (goal.system_refs or systems or request.geometry_artifact_id)):\n604:             continue\n605:         scopes = goal.system_refs or (list(systems) if len(systems) == 1 else [None])\n606:         for scope in scopes:\n607:             system = systems.get(scope)\n608:             if scope is not None and system is None:\n609:                 continue  # The normal Goal binding check owns an unknown scope.\n610:             scoped = candidate.system_conditions.get(scope, {})\n611:             for name in get_args(ConditionName):\n612:                 if (name not in PHYSICAL or name not in request.semantic_defaults\n613:                         or name in candidate.automatic_selection or name in candidate.conditions\n614:                         or name in scoped or name in goal.conditions):\n615:                     continue\n616:                 prior = (system.conditions.get(name) if system and name in system.conditions else\n617:                          request.conditions.get(name, getattr(request, name, None)))\n618:                 if prior is not None:\n619:                     continue  # Omitting a restatement does not erase an existing value.\n620:                 value = request.semantic_defaults[name]\n621:                 evidence = FieldEvidence(source=\"default\", default_rule=\"local-hf-1\", value=value)\n622:                 try:\n623:                     _field(name, evidence, request, request.messages + messages, system=system)\n624:                 except StoreError:\n625:                     continue  # Explicit/unknown/conflicting user conditions still block defaults."
+        },
+        {
+          "start_line": 1051,
+          "end_line": 1075,
+          "text": "1051: def _environment_mapping(value, text):\n1052:     \"\"\"Map model + solvent components, not a whitelist of complete user phrases.\"\"\"\n1053:     from orca_agent.orca.native_managed import canonical_managed_condition\n1054: \n1055:     proposed = \"CPCM(water)\" if value == \"water_solvent\" else value\n1056:     canonical = canonical_managed_condition(\"environment\", proposed)\n1057:     match = re.fullmatch(r\"(cpcm|smd)\\((.+)\\)\", canonical or \"\")\n1058:     if not match:\n1059:         return None\n1060:     model, solvent = match.groups()\n1061:     model_pattern = (r\"(?<![a-z0-9])c[-\\s]?pcm(?![a-z0-9])\" if model == \"cpcm\"\n1062:                      else r\"(?<![a-z0-9])smd(?![a-z0-9])\")\n1063:     model_match = re.search(model_pattern, text, re.I)\n1064:     # Solvent identifiers remain open. Water's elemental/formula spelling is a\n1065:     # component translation, not a list of allowed C-PCM sentence templates.\n1066:     solvent_pattern = (r\"水|\\b(?:water|h2o|aqueous)\\b\" if solvent == \"water\"\n1067:                        else r\"(?<![\\w])\" + re.escape(solvent) + r\"(?![\\w])\")\n1068:     solvent_match = re.search(solvent_pattern, text, re.I)\n1069:     if not model_match or not solvent_match:\n1070:         return None\n1071:     if re.search(r\"或者|或是|还是|\\bor\\b|[?？]\", text, re.I):\n1072:         raise StoreError(\"environment model or solvent remains ambiguous in the user source\")\n1073:     return (f\"{model.upper()}({solvent})\", solvent_match.group(),\n1074:             {\"model\": model, \"solvent\": solvent, \"source\": \"program_checked_component_mapping\",\n1075:              \"raw_phrase\": text, \"proposed_value\": value})"
+        },
+        {
+          "start_line": 2103,
+          "end_line": 2115,
+          "text": "2103:     values.update(version=request.version + 1, messages=request.messages + pending)\n2104:     updated = _missing_information(Request.model_validate(values))\n2105:     prior_gaps = set(request.unresolved) | set(question_gaps) | {gap for goal in request.goals for gap in goal.unresolved}\n2106:     current_gaps = set(updated.unresolved) | {gap for goal in updated.goals for gap in goal.unresolved}\n2107:     known_coverage = coverage_gaps(updated)\n2108:     new_gaps = current_gaps - prior_gaps - known_coverage.keys()\n2109:     notice_contract = validate_notices(updated, candidate.notices)\n2110:     visible_question = _has_visible_notice(candidate) or bool(notice_contract[\"generated\"])\n2111:     if new_gaps and not visible_question:\n2112:         raise ProposalError(\"New unresolved conditions, including detected unsupported scope, require a visible question \"\n2113:                             \"or unsupported-scope notice in parameters.notices. Preserve explicit user choices; \"\n2114:                             \"do not ask to reconfirm them.\",\n2115:                             path=[\"parameters\", \"questions\"], new_unresolved=sorted(new_gaps))"
+        }
+      ]
+    },
+    {
+      "path": "src/orca_agent/natural.py",
+      "sha256": "637521d9a74f46ca6e1a49ef7517d99d860b0fe728802ebb19b03de33a593e6f",
+      "bytes": 28610,
+      "mtime_utc": "2026-10-20T14:04:47.649880+00:00",
+      "excerpts": [
+        {
+          "start_line": 45,
+          "end_line": 61,
+          "text": "45: def _missing_information(request):\n46:     \"\"\"Maintain only program-generated missing markers; preserve user uncertainty.\"\"\"\n47:     request = request.model_copy(deep=True)\n48:     systems = {system.id: system for system in request.systems}\n49:     input_ports = {port for tool in catalog() if \"write_input_artifact\" in tool[\"effects\"]\n50:                    for port in tool[\"output_ports\"]}\n51:     for goal in request.goals:\n52:         if goal.evidence_contract_version != \"generic-observation-1\" and goal.port not in input_ports:\n53:             goal.unresolved = [item for item in goal.unresolved if not item.startswith((\"missing:\", \"applicability:\"))]\n54:         if goal.minimum_check_version == \"unresolved-1\":\n55:             goal.unresolved.append(\"missing:goal_definition\")\n56:         if (goal.evidence_contract_version != \"generic-observation-1\"\n57:                 and goal.port in {\"sampling\", \"sampling_check\"}) and not (\n58:                 goal.conditions.get(\"sampling\") and goal.conditions.get(\"candidates\")):\n59:             goal.unresolved.append(\"missing:sampling_specification\")\n60:         if goal.minimum_check_version not in _SCIENTIFIC_RULES:\n61:             continue"
+        },
+        {
+          "start_line": 104,
+          "end_line": 107,
+          "text": "104:         goal.unresolved = list(dict.fromkeys(goal.unresolved))\n105:     request.normalization_status = (\"clarification\" if request.unresolved\n106:                                     or any(goal.unresolved for goal in request.goals) else \"normalized\")\n107:     return Request.model_validate(request.model_dump())"
+        }
+      ]
+    },
+    {
+      "path": "src/orca_agent/applicability.py",
+      "sha256": "c17af2ad5fa666c0b683be0c2bbbcdf530ccfa77aeecd5579f44f6915c905040",
+      "bytes": 28773,
+      "mtime_utc": "2026-10-20T14:02:45.237188+00:00",
+      "excerpts": [
+        {
+          "start_line": 35,
+          "end_line": 91,
+          "text": "35: def effective_conditions(request, goal=None, system_id=None):\n36:     \"\"\"Resolve scoped conditions without overwriting unknowns or Goal conflicts.\n37: \n38: System declarations are scoped overrides of general Request settings. A Goal is\n39: an additional constraint, never an override of the applicable system setting.\n40: Only legacy HF neutral-singlet requests inherit the historical state/environment.\n41: \"\"\"\n42:     reasons, origins, values = [], {}, {}\n43:     system = next((s for s in request.systems if s.id == system_id), None)\n44:     if system_id is not None and system is None:\n45:         reasons.append(\"unknown_system:\" + system_id)\n46:     for name in CONDITION_FIELDS:\n47:         if name in request.conditions:\n48:             value, origin = request.conditions[name], \"request.conditions\"\n49:             if (hasattr(request, name) and getattr(request, name) is not None\n50:                     and canonical_condition(name, value) != canonical_condition(name, getattr(request, name))):\n51:                 reasons.append(\"conflicting_request_condition:\" + name)\n52:         elif hasattr(request, name):\n53:             value, origin = getattr(request, name), \"request.\" + request.conditions_source.get(name, \"unknown\")\n54:         else:\n55:             legacy = (canonical_condition(\"method\", request.method) == \"HF\"\n56:                       and request.charge == 0 and request.multiplicity == 1\n57:                       and all(item.evidence_contract_version == \"legacy-1\" for item in request.goals))\n58:             value, origin = ((PROFILE[name], \"default:fixed-rhf-profile-1\") if legacy\n59:                              else (None, \"unknown:unspecified_condition\"))\n60:         if request.conditions_source.get(name) in {\"unknown\", \"not_applicable\", \"inferred\"}:\n61:             value, origin = None, \"request.\" + request.conditions_source[name]\n62:         if system and name in system.conditions:\n63:             value, origin = system.conditions[name], \"system:\" + system.id\n64:             if system.conditions_source.get(name) in {\"unknown\", \"not_applicable\", \"inferred\"}:\n65:                 value = None\n66:         # RHF is a method spelling with an explicit restricted-state meaning.\n67:         method_value = (system.conditions.get(\"method\") if system and \"method\" in system.conditions\n68:                         else request.conditions.get(\"method\", request.method))\n69:         if name == \"electronic_state\" and method_value == \"RHF\" and canonical_condition(name, value) != \"RHF\":\n70:             reasons.append(\"conflicting_condition:method/electronic_state\")\n71:         value = canonical_condition(name, value)\n72:         if goal and name in goal.conditions:\n73:             constraint = canonical_condition(name, goal.conditions[name])\n74:             workflow = request.condition_evidence.get(\"workflow_policy\", {})\n75:             scoped_default = (workflow.get(\"version\") == \"simplified-1\"\n76:                 and name == \"environment\" and constraint is not None\n77:                 and request.conditions_source.get(name) == \"default\"\n78:                 and not (system and name in system.conditions))\n79:             if scoped_default:\n80:                 value, origin = constraint, \"goal:\" + goal.id\n81:             if value is None or constraint is None:\n82:                 reasons.append(\"unknown_condition:\" + name)\n83:             elif constraint != value:\n84:                 reasons.append(\"conflicting_goal_condition:\" + name)\n85:         values[name], origins[name] = value, origin\n86:         if value is None:\n87:             reasons.append(\"unknown_condition:\" + name)\n88:     if request.unresolved or (goal and goal.unresolved):\n89:         reasons.append(\"unresolved_request_or_goal\")\n90:     return {\"version\": PURPOSE_VERSION, \"conditions\": values, \"sources\": origins,\n91:             \"reasons\": list(dict.fromkeys(reasons)), \"status\": \"unresolved\" if reasons else \"passed\"}"
+        }
+      ]
+    },
+    {
+      "path": "src/orca_agent/decision_purpose.py",
+      "sha256": "b185bcfebd89a38ed503e92e84f963af4d5c19eec39e47504885f8170c7839c0",
+      "bytes": 11820,
+      "mtime_utc": "2026-10-20T14:11:21.500643+00:00",
+      "excerpts": [
+        {
+          "start_line": 47,
+          "end_line": 76,
+          "text": "47: def terminal_actions(request, run):\n48:     \"\"\"Only actual user unknowns justify a clarification instead of delivery.\"\"\"\n49:     from orca_agent.semantic import CONDITIONS, selectable_conditions\n50: \n51:     communication = next((item.get(\"semantics\", {}) for item in reversed(run.decisions)\n52:         if item.get(\"request_version\") == request.version and item.get(\"semantics\")), {})\n53:     if communication.get(\"awaiting_reply\") and communication.get(\"questions\"):\n54:         return (\"clarify\", \"stop\")\n55:     explicit_gaps = [*request.unresolved, *(gap for goal in request.goals for gap in goal.unresolved)]\n56:     selectable = set(selectable_conditions(request))\n57:     fields = CONDITIONS | {\"system\", \"quantity\", \"geometry_relation\"}\n58:     # These are the existing intake field markers, including scoped missing\n59:     # conditions. Optional temperature/standard state require an explicit gap;\n60:     # their ordinary absence never creates a new question.\n61:     if any(gap in fields or len(parts := gap.split(\":\")) >= 2\n62:            and parts[0] in {\"unknown\", \"missing\", \"field\", \"unconfirmed\", \"ambiguous\"}\n63:            and parts[1] in fields for gap in explicit_gaps):\n64:         return (\"clarify\", \"stop\")\n65:     for goal in request.goals:\n66:         if goal.minimum_check_version in {\"evidence-read-1\", \"knowledge-answer-1\"}:\n67:             continue\n68:         if (goal.evidence_contract_version == \"generic-observation-1\"\n69:                 and goal.port in {\"artifacts\", \"observations\"}\n70:                 and not request.systems and not goal.system_ids and not request.geometry_artifact_id):\n71:             continue\n72:         for system_id in goal.system_ids or [None]:\n73:             values = effective_conditions(request, goal, system_id)[\"conditions\"]\n74:             if any(values.get(field) is None for field in CONDITION_FIELDS if field not in selectable):\n75:                 return (\"clarify\", \"stop\")\n76:     return (\"stop\",)"
+        }
+      ]
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "sha256": "c9121a6d7bb2181b910294f3cfc7d86f61d0ea9a913b3a5f376617b953f71abc",
+      "bytes": 231326,
+      "mtime_utc": "2026-10-20T14:16:22.987826+00:00",
+      "excerpts": [
+        {
+          "start_line": 1908,
+          "end_line": 1924,
+          "text": "1908: def current_decision_purpose(request, run, plan=None, *, pending_messages=False, ready_step_ids=(),\n1909:                              prepared=None):\n1910:     \"\"\"Recheck the same program action classification under the send lock.\"\"\"\n1911:     if pending_messages:\n1912:         return classify_decision_purpose((\"normalize_request\",), pending_messages=True)\n1913:     if \"clarify\" in terminal_actions(request, run):\n1914:         return classify_decision_purpose((\"clarify\", \"stop\"), clarification=True)\n1915:     if terminal_delivery_due(request, run, prepared=prepared):\n1916:         return classify_decision_purpose(terminal_actions(request, run))\n1917:     final_only = (request.conditions.get(\"explain_results\") is True\n1918:         and all(run.goal_status.get(goal.id) == \"satisfied\" for goal in request.goals if goal.required))\n1919:     catalog, _ = _tools(run, ())\n1920:     actions, _ = _action_examples(request, run, plan, catalog, final_only,\n1921:                                   {\"pending_step_ids\": list(ready_step_ids)})\n1922:     if set(actions) <= {\"stop\", \"clarify\"}:\n1923:         actions = terminal_actions(request, run)\n1924:     return classify_decision_purpose(actions)"
+        },
+        {
+          "start_line": 2697,
+          "end_line": 2716,
+          "text": "2697:     final_only = (not pending_ids and not semantic_intake and request.conditions.get(\"explain_results\") is True and all(\n2698:         run.goal_status.get(goal.id) == \"satisfied\" for goal in request.goals if goal.required))\n2699:     early_control = {\"pending_step_ids\": (feedback or {}).get(\"pending_step_ids\", [])}\n2700:     early_examples, _ = _action_examples(request, run, plan, catalog, final_only, early_control)\n2701:     effective_actions = action_parameters if action_parameters is not None else early_examples\n2702:     genuine_clarification = (not pending_ids and not semantic_intake\n2703:                              and \"clarify\" in terminal_actions(request, run))\n2704:     if genuine_clarification:\n2705:         effective_actions = (\"clarify\", \"stop\")\n2706:     elif delivery_snapshot and not pending_ids and not semantic_intake and terminal_delivery_due(request, run, now=now):\n2707:         effective_actions = terminal_actions(request, run)\n2708:     if delivery_snapshot and not pending_ids and set(effective_actions) <= {\"stop\", \"clarify\"}:\n2709:         effective_actions = terminal_actions(request, run)\n2710:     purpose = classify_decision_purpose(effective_actions, pending_messages=bool(pending_ids),\n2711:         clarification=genuine_clarification or request.normalization_status == \"clarification\" and bool(pending_ids))\n2712:     delivery_budget = final_explanation_budget(request, run, final_only=final_only,\n2713:         purpose=purpose if delivery_snapshot else None, now=now)\n2714:     if delivery_snapshot and purpose.kind in {\"terminal\", \"clarification\"}:\n2715:         return _terminal_context(request, run, delivery_snapshot, purpose, feedback or {},\n2716:             user_messages, generation, now, model_profile)"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "All diagnosis reads existing retained files and source. No tests, context regeneration, model, ORCA, network or container access.",
+    "Per-Goal physical-condition differences are directly observed; success after a fix is not established.",
+    "Provider amount actually billed is unknown; persisted token-based cost estimate is not invoice evidence.",
+    "No independent scientific reference or numerical verification was run."
+  ]
+}

@@ -184,7 +184,7 @@ def main():
                      "prepare.json", "knowledge-audit.json", "budget-check.json",
                      "report.txt", "report.json", "batch-after.json"):
             driver_files.append(collect(directory / name, Path(task) / name, name,
-                                        required=name != "report.json" and name != "batch-after.json"))
+                                        required=name not in {"report.txt", "report.json", "batch-after.json"}))
         rows.append({"task": task, "run_id": state["id"], "local_data_root": str(data),
                      "state": state["state"], "goal_status": state["goal_status"],
                      "delivery_status": state["delivery_status"], "usage": state["usage"],

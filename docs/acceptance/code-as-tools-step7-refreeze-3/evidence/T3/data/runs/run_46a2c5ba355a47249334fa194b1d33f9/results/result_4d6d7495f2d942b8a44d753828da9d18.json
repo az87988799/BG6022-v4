@@ -1,0 +1,908 @@
+{
+  "id": "result_4d6d7495f2d942b8a44d753828da9d18",
+  "run_id": "run_46a2c5ba355a47249334fa194b1d33f9",
+  "step_id": null,
+  "attempt_id": null,
+  "call_id": "call_4155526f8bf148699af5be92a36d4ddf",
+  "supersedes_result_id": null,
+  "operation_status": "completed",
+  "checks": {
+    "text_window": [
+      {
+        "name": "bounded_evidence_read",
+        "status": "passed",
+        "detail": "operation only; content and observed values remain scientifically unverified",
+        "source": {
+          "artifact_id": "artifact_1fb760602ea5425f9236ed3e4a7530ca",
+          "sha256": "a22c99f8ebc956c979080f6b6c6c5a690fa1d378814cb277a04ac0b75dc8b290",
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        },
+        "rule_version": "evidence-read-1"
+      }
+    ]
+  },
+  "qualified_outputs": {},
+  "observations": {
+    "text_window": {
+      "artifact_id": "artifact_1fb760602ea5425f9236ed3e4a7530ca",
+      "sha256": "a22c99f8ebc956c979080f6b6c6c5a690fa1d378814cb277a04ac0b75dc8b290",
+      "role": "code",
+      "file": "artifacts/artifact_1fb760602ea5425f9236ed3e4a7530ca/files/dihedral_scan.py",
+      "source": {
+        "call_id": "call_05ef8b0fae8e4aa8bf384d212cf2b0f3",
+        "role": "python",
+        "name": "dihedral_scan.py"
+      },
+      "view": {
+        "type": "raw_text",
+        "version": "1"
+      },
+      "path": [],
+      "geometry_indices": [],
+      "stage": "unknown",
+      "units": null,
+      "conditions": "unknown",
+      "scientific_status": "unverified",
+      "validation": "unverified observation; not a scientific qualification",
+      "lines": [
+        {
+          "line": 1,
+          "text": "import json, math, re, shutil"
+        },
+        {
+          "line": 2,
+          "text": "from pathlib import Path"
+        },
+        {
+          "line": 3,
+          "text": "from orca_task_sdk import run_orca, checkpoint"
+        },
+        {
+          "line": 4,
+          "text": ""
+        },
+        {
+          "line": 5,
+          "text": "ANGLES = [-180, -120, -60, 0, 60, 120, 180]"
+        },
+        {
+          "line": 6,
+          "text": "GEOM = 'butane_initial.xyz'"
+        },
+        {
+          "line": 7,
+          "text": "HARTREE_TO_KJ = 2625.4996394799"
+        },
+        {
+          "line": 8,
+          "text": "REFINEMENT_CRITERION = ("
+        },
+        {
+          "line": 9,
+          "text": "    'Predeclared refinement rule: after the seven coarse constrained optimizations, sort points by actual dihedral. '"
+        },
+        {
+          "line": 10,
+          "text": "    'Refine only if (i) adjacent relative energies show a slope sign change bracketing an interior extremum, or '"
+        },
+        {
+          "line": 11,
+          "text": "    '(ii) an adjacent pair differs by >2.0 kJ/mol while the lower-energy point is not at a requested angle and a midpoint could lower the energy by >0.5 kJ/mol; add at most two midpoints. '"
+        },
+        {
+          "line": 12,
+          "text": "    'Do not refine if the coarse curve is monotonic, all adjacent differences <0.5 kJ/mol, or convergence failures prevent reliable comparison. '"
+        },
+        {
+          "line": 13,
+          "text": "    'This is a numerical sampling criterion, not transition-state validation.'"
+        },
+        {
+          "line": 14,
+          "text": ")"
+        },
+        {
+          "line": 15,
+          "text": ""
+        },
+        {
+          "line": 16,
+          "text": "def read_lines(path):"
+        },
+        {
+          "line": 17,
+          "text": "    with open(path, 'r', encoding='utf-8', errors='replace') as f:"
+        },
+        {
+          "line": 18,
+          "text": "        return f.readlines()"
+        },
+        {
+          "line": 19,
+          "text": ""
+        },
+        {
+          "line": 20,
+          "text": "def parse_xyz(path):"
+        },
+        {
+          "line": 21,
+          "text": "    lines = read_lines(path)"
+        },
+        {
+          "line": 22,
+          "text": "    n = int(lines[0].split()[0])"
+        },
+        {
+          "line": 23,
+          "text": "    atoms = []"
+        },
+        {
+          "line": 24,
+          "text": "    for line in lines[2:2+n]:"
+        },
+        {
+          "line": 25,
+          "text": "        p = line.split()"
+        },
+        {
+          "line": 26,
+          "text": "        atoms.append((p[0], float(p[1]), float(p[2]), float(p[3])))"
+        },
+        {
+          "line": 27,
+          "text": "    return atoms"
+        },
+        {
+          "line": 28,
+          "text": ""
+        },
+        {
+          "line": 29,
+          "text": "def vsub(a,b):"
+        },
+        {
+          "line": 30,
+          "text": "    return (a[0]-b[0], a[1]-b[1], a[2]-b[2])"
+        },
+        {
+          "line": 31,
+          "text": ""
+        },
+        {
+          "line": 32,
+          "text": "def vdot(a,b):"
+        },
+        {
+          "line": 33,
+          "text": "    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]"
+        },
+        {
+          "line": 34,
+          "text": ""
+        },
+        {
+          "line": 35,
+          "text": "def vcross(a,b):"
+        },
+        {
+          "line": 36,
+          "text": "    return (a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0])"
+        },
+        {
+          "line": 37,
+          "text": ""
+        },
+        {
+          "line": 38,
+          "text": "def vscale(a,s):"
+        },
+        {
+          "line": 39,
+          "text": "    return (a[0]*s, a[1]*s, a[2]*s)"
+        },
+        {
+          "line": 40,
+          "text": ""
+        },
+        {
+          "line": 41,
+          "text": "def vnorm(a):"
+        },
+        {
+          "line": 42,
+          "text": "    return math.sqrt(vdot(a,a))"
+        },
+        {
+          "line": 43,
+          "text": ""
+        },
+        {
+          "line": 44,
+          "text": "def dist(a,b):"
+        },
+        {
+          "line": 45,
+          "text": "    return math.sqrt(sum((a[i]-b[i])**2 for i in range(1,4)))"
+        },
+        {
+          "line": 46,
+          "text": ""
+        },
+        {
+          "line": 47,
+          "text": "def carbon_indices(atoms):"
+        },
+        {
+          "line": 48,
+          "text": "    carbons = [i for i,a in enumerate(atoms) if a[0].upper() == 'C']"
+        },
+        {
+          "line": 49,
+          "text": "    if len(carbons) != 4:"
+        },
+        {
+          "line": 50,
+          "text": "        raise ValueError('expected 4 carbons in butane, got %d' % len(carbons))"
+        },
+        {
+          "line": 51,
+          "text": "    adj = {i: [] for i in carbons}"
+        },
+        {
+          "line": 52,
+          "text": "    for i in carbons:"
+        },
+        {
+          "line": 53,
+          "text": "        for j in carbons:"
+        },
+        {
+          "line": 54,
+          "text": "            if i < j and dist(atoms[i], atoms[j]) < 1.8:"
+        },
+        {
+          "line": 55,
+          "text": "                adj[i].append(j); adj[j].append(i)"
+        },
+        {
+          "line": 56,
+          "text": "    ends = [i for i in carbons if len(adj[i]) == 1]"
+        },
+        {
+          "line": 57,
+          "text": "    if len(ends) != 2:"
+        },
+        {
+          "line": 58,
+          "text": "        raise ValueError('could not find butane carbon chain endpoints: %s' % str(ends))"
+        },
+        {
+          "line": 59,
+          "text": "    start, target = ends"
+        },
+        {
+          "line": 60,
+          "text": "    stack = [(start, [start])]"
+        },
+        {
+          "line": 61,
+          "text": "    while stack:"
+        },
+        {
+          "line": 62,
+          "text": "        node, path = stack.pop()"
+        },
+        {
+          "line": 63,
+          "text": "        if node == target and len(path) == 4:"
+        },
+        {
+          "line": 64,
+          "text": "            return path"
+        },
+        {
+          "line": 65,
+          "text": "        for nb in adj[node]:"
+        },
+        {
+          "line": 66,
+          "text": "            if nb not in path:"
+        },
+        {
+          "line": 67,
+          "text": "                stack.append((nb, path + [nb]))"
+        },
+        {
+          "line": 68,
+          "text": "    raise ValueError('could not order four-carbon chain')"
+        },
+        {
+          "line": 69,
+          "text": ""
+        },
+        {
+          "line": 70,
+          "text": "def dihedral_deg(atoms, idx):"
+        },
+        {
+          "line": 71,
+          "text": "    p0 = atoms[idx[0]][1:]"
+        },
+        {
+          "line": 72,
+          "text": "    p1 = atoms[idx[1]][1:]"
+        },
+        {
+          "line": 73,
+          "text": "    p2 = atoms[idx[2]][1:]"
+        },
+        {
+          "line": 74,
+          "text": "    p3 = atoms[idx[3]][1:]"
+        },
+        {
+          "line": 75,
+          "text": "    b0 = vsub(p0,p1)"
+        },
+        {
+          "line": 76,
+          "text": "    b1 = vsub(p2,p1)"
+        },
+        {
+          "line": 77,
+          "text": "    b2 = vsub(p3,p2)"
+        },
+        {
+          "line": 78,
+          "text": "    b1n = vscale(b1, 1.0/vnorm(b1))"
+        },
+        {
+          "line": 79,
+          "text": "    v = vsub(b0, vscale(b1n, vdot(b0,b1n)))"
+        },
+        {
+          "line": 80,
+          "text": "    w = vsub(b2, vscale(b1n, vdot(b2,b1n)))"
+        },
+        {
+          "line": 81,
+          "text": "    x = vdot(v,w)"
+        },
+        {
+          "line": 82,
+          "text": "    y = vdot(vcross(b1n,v),w)"
+        },
+        {
+          "line": 83,
+          "text": "    return math.degrees(math.atan2(y,x))"
+        },
+        {
+          "line": 84,
+          "text": ""
+        },
+        {
+          "line": 85,
+          "text": "def read_text_if_exists(path):"
+        },
+        {
+          "line": 86,
+          "text": "    try:"
+        },
+        {
+          "line": 87,
+          "text": "        with open(path, 'r', encoding='utf-8', errors='replace') as f:"
+        },
+        {
+          "line": 88,
+          "text": "            return f.read()"
+        },
+        {
+          "line": 89,
+          "text": "    except Exception:"
+        },
+        {
+          "line": 90,
+          "text": "        return ''"
+        },
+        {
+          "line": 91,
+          "text": ""
+        },
+        {
+          "line": 92,
+          "text": "def find_text(files):"
+        },
+        {
+          "line": 93,
+          "text": "    for key in ['stdout.out','job.out','output.out']:"
+        },
+        {
+          "line": 94,
+          "text": "        if key in files:"
+        },
+        {
+          "line": 95,
+          "text": "            return key, files[key]"
+        },
+        {
+          "line": 96,
+          "text": "    for key,path in files.items():"
+        },
+        {
+          "line": 97,
+          "text": "        if key.lower().endswith('.out'):"
+        },
+        {
+          "line": 98,
+          "text": "            return key, path"
+        },
+        {
+          "line": 99,
+          "text": "    return None, None"
+        },
+        {
+          "line": 100,
+          "text": ""
+        },
+        {
+          "line": 101,
+          "text": "def last_energy(text):"
+        },
+        {
+          "line": 102,
+          "text": "    ms = re.findall(r'FINAL SINGLE POINT ENERGY\\s+(-?\\d+(?:\\.\\d+)?)', text)"
+        },
+        {
+          "line": 103,
+          "text": "    return float(ms[-1]) if ms else None"
+        },
+        {
+          "line": 104,
+          "text": ""
+        },
+        {
+          "line": 105,
+          "text": "def is_converged(text):"
+        },
+        {
+          "line": 106,
+          "text": "    return ('HURRAY! THE OPTIMIZATION HAS CONVERGED' in text) or ('THE OPTIMIZATION HAS CONVERGED' in text)"
+        },
+        {
+          "line": 107,
+          "text": ""
+        },
+        {
+          "line": 108,
+          "text": "atoms = parse_xyz(GEOM)"
+        },
+        {
+          "line": 109,
+          "text": "cidx = carbon_indices(atoms)"
+        },
+        {
+          "line": 110,
+          "text": "orca_idx = [i+1 for i in cidx]"
+        },
+        {
+          "line": 111,
+          "text": "Path('refinement_criterion.txt').write_text(REFINEMENT_CRITERION + '\\n', encoding='utf-8')"
+        },
+        {
+          "line": 112,
+          "text": ""
+        },
+        {
+          "line": 113,
+          "text": "records = []"
+        },
+        {
+          "line": 114,
+          "text": "sources_by_name = {name: [] for name in ['sampling','energy','optimized_geometry','member_table','energy_difference','sampling_check','random_seed']}"
+        },
+        {
+          "line": 115,
+          "text": ""
+        },
+        {
+          "line": 116,
+          "text": "for angle in ANGLES:"
+        },
+        {
+          "line": 117,
+          "text": "    tag = str(angle).replace('-', 'm')"
+        },
+        {
+          "line": 118,
+          "text": "    key = 'coarse_dihedral_' + tag"
+        },
+        {
+          "line": 119,
+          "text": "    inp = 'scan_' + tag + '.inp'"
+        },
+        {
+          "line": 120,
+          "text": "    input_text = '! r2SCAN-3c RKS NoAutoStart\\n%maxcore 192\\n%scf\\n  MaxIter 256\\n  AutoTRAH false\\nend\\n%geom\\n  MaxIter 128\\n  Constraints\\n    {D %d %d %d %d %.1f C}\\n  end\\nend\\n* xyzfile 0 1 %s\\n' % (orca_idx[0], orca_idx[1], orca_idx[2], orca_idx[3], float(angle), GEOM)"
+        },
+        {
+          "line": 121,
+          "text": "    Path(inp).write_text(input_text, encoding='utf-8')"
+        },
+        {
+          "line": 122,
+          "text": "    rec = {"
+        },
+        {
+          "line": 123,
+          "text": "        'requested_angle_deg': angle,"
+        },
+        {
+          "line": 124,
+          "text": "        'actual_angle_deg': None,"
+        },
+        {
+          "line": 125,
+          "text": "        'energy_hartree': None,"
+        },
+        {
+          "line": 126,
+          "text": "        'converged': False,"
+        },
+        {
+          "line": 127,
+          "text": "        'structure_file': None,"
+        },
+        {
+          "line": 128,
+          "text": "        'stdout_file': None,"
+        },
+        {
+          "line": 129,
+          "text": "        'stderr_file': None,"
+        },
+        {
+          "line": 130,
+          "text": "        'request_key': key,"
+        },
+        {
+          "line": 131,
+          "text": "        'operation_status': None,"
+        },
+        {
+          "line": 132,
+          "text": "        'error': None,"
+        },
+        {
+          "line": 133,
+          "text": "        'files_keys': []"
+        },
+        {
+          "line": 134,
+          "text": "    }"
+        },
+        {
+          "line": 135,
+          "text": "    try:"
+        },
+        {
+          "line": 136,
+          "text": "        res = run_orca(inp, dependencies=(GEOM,), request_key=key, purpose='new_candidate')"
+        },
+        {
+          "line": 137,
+          "text": "        rec['operation_status'] = res.get('operation_status')"
+        },
+        {
+          "line": 138,
+          "text": "        files = res.get('files') or {}"
+        },
+        {
+          "line": 139,
+          "text": "        rec['files_keys'] = sorted(files.keys())"
+        },
+        {
+          "line": 140,
+          "text": "        xyz_keys = [k for k in files.keys() if k.lower().endswith('.xyz') and k != GEOM]"
+        },
+        {
+          "line": 141,
+          "text": "        geom_key = 'job.xyz' if 'job.xyz' in files else (xyz_keys[0] if xyz_keys else None)"
+        },
+        {
+          "line": 142,
+          "text": "        if geom_key:"
+        },
+        {
+          "line": 143,
+          "text": "            out_xyz = 'member_' + tag + '.xyz'"
+        },
+        {
+          "line": 144,
+          "text": "            shutil.copyfile(files[geom_key], out_xyz)"
+        },
+        {
+          "line": 145,
+          "text": "            rec['structure_file'] = out_xyz"
+        },
+        {
+          "line": 146,
+          "text": "            final_atoms = parse_xyz(out_xyz)"
+        },
+        {
+          "line": 147,
+          "text": "            rec['actual_angle_deg'] = dihedral_deg(final_atoms, cidx)"
+        },
+        {
+          "line": 148,
+          "text": "            sources_by_name['optimized_geometry'].append({'internal_request_key': key, 'filename': geom_key, 'location': 'final optimized geometry'})"
+        },
+        {
+          "line": 149,
+          "text": "            sources_by_name['member_table'].append({'internal_request_key': key, 'filename': geom_key, 'location': 'final optimized geometry'})"
+        },
+        {
+          "line": 150,
+          "text": "        log_key, log_path = find_text(files)"
+        },
+        {
+          "line": 151,
+          "text": "        if log_key:"
+        },
+        {
+          "line": 152,
+          "text": "            text = read_text_if_exists(log_path)"
+        },
+        {
+          "line": 153,
+          "text": "            rec['energy_hartree'] = last_energy(text)"
+        },
+        {
+          "line": 154,
+          "text": "            rec['converged'] = is_converged(text)"
+        },
+        {
+          "line": 155,
+          "text": "            out_log = 'member_' + tag + '.out'"
+        },
+        {
+          "line": 156,
+          "text": "            Path(out_log).write_text(text, encoding='utf-8')"
+        },
+        {
+          "line": 157,
+          "text": "            rec['stdout_file'] = out_log"
+        },
+        {
+          "line": 158,
+          "text": "            loc_e = 'FINAL SINGLE POINT ENERGY' if rec['energy_hartree'] is not None else 'optimization/convergence log'"
+        },
+        {
+          "line": 159,
+          "text": "            sources_by_name['energy'].append({'internal_request_key': key, 'filename': log_key, 'location': loc_e})"
+        },
+        {
+          "line": 160,
+          "text": "            sources_by_name['member_table'].append({'internal_request_key': key, 'filename': log_key, 'location': 'energy and convergence status'})"
+        },
+        {
+          "line": 161,
+          "text": "            sources_by_name['sampling'].append({'internal_request_key': key, 'filename': log_key, 'location': 'requested dihedral %s deg' % angle})"
+        },
+        {
+          "line": 162,
+          "text": "        if 'stderr.txt' in files:"
+        },
+        {
+          "line": 163,
+          "text": "            out_err = 'member_' + tag + '.err.txt'"
+        },
+        {
+          "line": 164,
+          "text": "            shutil.copyfile(files['stderr.txt'], out_err)"
+        },
+        {
+          "line": 165,
+          "text": "            rec['stderr_file'] = out_err"
+        },
+        {
+          "line": 166,
+          "text": "    except Exception as e:"
+        },
+        {
+          "line": 167,
+          "text": "        rec['error'] = str(e)"
+        },
+        {
+          "line": 168,
+          "text": "        rec['operation_status'] = 'sdk_exception'"
+        },
+        {
+          "line": 169,
+          "text": "        rec['input_file'] = inp"
+        },
+        {
+          "line": 170,
+          "text": "    records.append(rec)"
+        },
+        {
+          "line": 171,
+          "text": ""
+        },
+        {
+          "line": 172,
+          "text": "success = [r for r in records if r.get('energy_hartree') is not None and not r.get('error')]"
+        },
+        {
+          "line": 173,
+          "text": "min_e = min([r['energy_hartree'] for r in success]) if success else None"
+        },
+        {
+          "line": 174,
+          "text": "energy_diff = []"
+        },
+        {
+          "line": 175,
+          "text": "for r in success:"
+        },
+        {
+          "line": 176,
+          "text": "    rel = (r['energy_hartree'] - min_e) * HARTREE_TO_KJ"
+        },
+        {
+          "line": 177,
+          "text": "    energy_diff.append({"
+        },
+        {
+          "line": 178,
+          "text": "        'requested_angle_deg': r['requested_angle_deg'],"
+        },
+        {
+          "line": 179,
+          "text": "        'actual_angle_deg': r['actual_angle_deg'],"
+        },
+        {
+          "line": 180,
+          "text": "        'energy_hartree': r['energy_hartree'],"
+        },
+        {
+          "line": 181,
+          "text": "        'relative_energy_kj_mol': rel"
+        },
+        {
+          "line": 182,
+          "text": "    })"
+        },
+        {
+          "line": 183,
+          "text": "    sources_by_name['energy_difference'].append({'internal_request_key': r['request_key'], 'filename': r.get('stdout_file') or '', 'location': 'FINAL SINGLE POINT ENERGY'})"
+        },
+        {
+          "line": 184,
+          "text": ""
+        },
+        {
+          "line": 185,
+          "text": "obs = []"
+        },
+        {
+          "line": 186,
+          "text": "def add(name, value, unit, sources, formula=None, artifacts=None, limitations=None):"
+        },
+        {
+          "line": 187,
+          "text": "    obs.append({"
+        },
+        {
+          "line": 188,
+          "text": "        'name': name,"
+        },
+        {
+          "line": 189,
+          "text": "        'value': value,"
+        },
+        {
+          "line": 190,
+          "text": "        'unit': unit,"
+        },
+        {
+          "line": 191,
+          "text": "        'sources': sources,"
+        },
+        {
+          "line": 192,
+          "text": "        'formula': formula,"
+        },
+        {
+          "line": 193,
+          "text": "        'artifacts': artifacts or [],"
+        },
+        {
+          "line": 194,
+          "text": "        'limitations': limitations or []"
+        },
+        {
+          "line": 195,
+          "text": "    })"
+        },
+        {
+          "line": 196,
+          "text": ""
+        },
+        {
+          "line": 197,
+          "text": "add('sampling', {'requested_angles_deg': ANGLES, 'actual_angles_deg': [r['actual_angle_deg'] for r in records], 'method': 'r2SCAN-3c', 'basis': 'built-in', 'job': 'constrained geometry optimization at fixed central C-C-C-C dihedral'}, 'deg', sources_by_name['sampling'], artifacts=[r.get('structure_file') for r in records if r.get('structure_file')], limitations=['Constrained optimizations fix the dihedral; they do not validate transition states.'])"
+        },
+        {
+          "line": 198,
+          "text": "add('energy', [{'requested_angle_deg': r['requested_angle_deg'], 'actual_angle_deg': r['actual_angle_deg'], 'energy_hartree': r['energy_hartree'], 'converged': r['converged']} for r in records], 'hartree', sources_by_name['energy'], artifacts=[r.get('stdout_file') for r in records if r.get('stdout_file')], limitations=['Only parsed output-evidenced FINAL SINGLE POINT ENERGY values are included; failed/nonconverged points remain in member_table.'])"
+        },
+        {
+          "line": 199,
+          "text": "add('optimized_geometry', [{'requested_angle_deg': r['requested_angle_deg'], 'actual_angle_deg': r['actual_angle_deg'], 'structure_file': r.get('structure_file'), 'converged': r['converged']} for r in records], 'deg', sources_by_name['optimized_geometry'], artifacts=[r.get('structure_file') for r in records if r.get('structure_file')], limitations=['Structures are final geometries from each constrained optimization; nonconverged jobs are not treated as successful points.'])"
+        },
+        {
+          "line": 200,
+          "text": "add('member_table', records, None, sources_by_name['member_table'], artifacts=[a for r in records for a in [r.get('structure_file'), r.get('stdout_file'), r.get('stderr_file'), r.get('input_file')] if a], limitations=['Failed members and exclusion reasons are retained; no failed member is counted as a successful point.'])"
+        }
+      ],
+      "returned_bytes": 9758,
+      "status": "observed",
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      }
+    }
+  },
+  "observation_records": [],
+  "diagnostics": [],
+  "artifact_ids": [
+    "artifact_1fb760602ea5425f9236ed3e4a7530ca"
+  ],
+  "source": {
+    "call_id": "call_05ef8b0fae8e4aa8bf384d212cf2b0f3",
+    "role": "python",
+    "name": "dihedral_scan.py",
+    "tool": "evidence.text",
+    "consumption": {
+      "_decision_id": "model_e0ce98ef03664a7fba52aae194310d6e"
+    },
+    "request_version": 3,
+    "plan_version": 1
+  },
+  "created_at": "2026-10-20T15:45:29.635095Z"
+}

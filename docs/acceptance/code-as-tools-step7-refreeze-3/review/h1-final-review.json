@@ -1,0 +1,613 @@
+{
+  "schema_version": 1,
+  "reviewed_at_utc": "2026-10-20T16:28:26.598137+00:00",
+  "task": "H1",
+  "repeat": 1,
+  "run_id": "run_bbe1bb04a0be428a9eaafed8b3852844",
+  "scope": "Read-only saved evidence review; no model, ORCA, tests, context reconstruction, source or Run edits. Driver outcome became available during the originally requested stage review.",
+  "state": "failed",
+  "delivery_status": "partial",
+  "user_goal_complete": false,
+  "outcome_finished_at_utc": "2026-10-20T16:25:22.858841+00:00",
+  "usage": {
+    "internal_work_units": 1,
+    "internal_calls_by_purpose": {},
+    "code_retries": 0,
+    "orca_starts_reserved": 1,
+    "orca_starts_actual": 1,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 5.796999999991385,
+    "cpu_seconds": 10.645422,
+    "resource_usage_complete": false,
+    "logical_attempts": {
+      "logical_7ec5c16da4bf44eca24b38f2da3324c2": 1
+    },
+    "fingerprint_attempts": {
+      "04e72a31b481b9621fa87bd7a0f68ce6340e1484c51ef7110a9cfdc7387476a2": 1
+    },
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 11,
+    "model_tokens_used": 207725,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 0,
+    "decision_rounds": 13,
+    "evidence_reads": 0,
+    "analysis_executions": 0,
+    "file_writes": 1,
+    "logical_steps": [
+      "logical_7ec5c16da4bf44eca24b38f2da3324c2",
+      "logical_a44eef99f834498995aafc2d609cea51",
+      "logical_d9d3d30a121f4d45925d345e3e3c8429",
+      "logical_fcf363953ec14fb096d76b06390157dd"
+    ],
+    "identity_queries": 1,
+    "structure_preparations": 1,
+    "knowledge_queries": 3
+  },
+  "goal_status": {
+    "goal_prepare_structure": "satisfied",
+    "goal_giao_nuclear_shielding": "insufficient_evidence",
+    "goal_shielding_tensor_and_isotropic": "insufficient_evidence",
+    "goal_isotropic_trace_consistency": "insufficient_evidence",
+    "goal_deliver_artifacts": "insufficient_evidence",
+    "goal_random_seed_record": "insufficient_evidence",
+    "goal_shielding_constants_not_chemical_shift": "insufficient_evidence"
+  },
+  "confirmed_findings": [
+    "The approved native ORCA attempt completed with exit code 0 and a normal termination marker. Its actual output contains total shielding tensors for C, N and H, and the isotropic summary.",
+    "The executed source uses the NMR simple keyword and an eprnmr block containing only Ori = GIAO. It contains no Nuclei directive. The eprnmr block precedes xyzfile, and this actual input succeeded; block-before-coordinate placement alone is not a demonstrated failure for this form.",
+    "The managed input adds only %pal nprocs 4 end ahead of the approved source. Source and materialized inputs have distinct hashes, and both archived artifacts match the Result evidence chain. The prepared and consumed hcn.xyz hashes match.",
+    "After ORCA completion the Run stopped on ContextLimitError before any new model decision or evidence read. No analysis script or observation extraction executed. The scientific Result remains unverified with no qualified_outputs or observation_records.",
+    "Only the prepared-geometry Goal is recorded satisfied. The six science, consistency and deliverable Goals remain insufficient_evidence; raw ORCA success does not complete the user task."
+  ],
+  "proposal_history": {
+    "rejections": [
+      {
+        "id": "model_ebb0973b925a415bbce3092959eca84b",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+            "path": [
+              "parameters"
+            ],
+            "corrections": [
+              {
+                "path": [
+                  "parameters",
+                  "automatic_selection",
+                  "method"
+                ],
+                "reason": "source_reference_conflicts_with_supplied_text",
+                "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "automatic_selection",
+                  "basis"
+                ],
+                "reason": "source_reference_conflicts_with_supplied_text",
+                "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "model_39f374e9d4f045bf9afb951bef90a86d",
+        "parameters": {
+          "error_category": "ValidationError",
+          "recovery_kind": "correction",
+          "requirement": [
+            {
+              "type": "value_error",
+              "loc": []
+            }
+          ]
+        }
+      },
+      {
+        "id": "model_6e4ab41244ae4d78bdd8d3929b191a59",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Each Goal target must use exactly one binding shape. A Step binding is a future output route, not goal completion; do not combine it with a gap.",
+            "errors": [
+              {
+                "type": "missing",
+                "loc": [
+                  "parameters",
+                  "steps",
+                  3,
+                  "repair_of"
+                ]
+              },
+              {
+                "type": "dict_type",
+                "loc": [
+                  "parameters",
+                  "goal_map"
+                ]
+              },
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "steps",
+                  3,
+                  "tool"
+                ]
+              },
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "steps",
+                  3,
+                  "system_id"
+                ]
+              },
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "steps",
+                  3,
+                  "depends_on"
+                ]
+              },
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "steps",
+                  3,
+                  "conditions"
+                ]
+              },
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "steps",
+                  3,
+                  "observation_names"
+                ]
+              }
+            ],
+            "step_fields": [
+              "key",
+              "logical_key",
+              "tool",
+              "parameters",
+              "system_id",
+              "geometry",
+              "depends_on",
+              "inputs"
+            ],
+            "step_instruction": "Proposed Steps require key, not the stored Step.id field. Retain an existing Step with {key:existing_step_id}; the program reuses its frozen contents. Do not copy stored id/logical_id/immutable_frozen metadata into a proposal. A new Step uses key/tool/parameters and its declared dependencies; a repair uses logical_key for the prior logical_id, subject to the existing repair rules.",
+            "code_repair_fields": [
+              "key",
+              "repair_of",
+              "code",
+              "input",
+              "inputs",
+              "sdk_orca"
+            ],
+            "code_repair_instruction": "Use {key:new_key,repair_of:failed_step_id,code:CodeRef,inputs?:InputManifest}; simplified-1 native repairs use input instead of code. Omitted inputs retain the frozen manifest; explicit inputs replace only authorized task copies. Code/native input or input copies must change. The latest settled failed Attempt's other contract fields stay frozen. Verified settled dependencies are carried automatically; declare any unsettled dependencies explicitly. It still requires code permission and every existing repair gate.",
+            "code": "goal_target_shape",
+            "path": [
+              "parameters",
+              "goal_map"
+            ],
+            "binding_shapes": [
+              [
+                "step_key",
+                "port"
+              ],
+              [
+                "evidence",
+                "port"
+              ],
+              [
+                "gap",
+                "port"
+              ]
+            ],
+            "step_target_instruction": "A stored Goal route uses step_id; the equivalent proposal route uses step_key with that same existing Step ID and unchanged port. Verified settled Steps may be carried; retain an unsettled referenced Step explicitly with {key:existing_step_id}. Do not copy step_id into goal_map."
+          }
+        }
+      }
+    ],
+    "first_rejected_plan": {
+      "model_id": "model_39f374e9d4f045bf9afb951bef90a86d",
+      "input": "! PBE0 def2-TZVP RKS TightSCF NoAutoStart\n%maxcore 192\n%scf\n  MaxIter 200\n  AutoTRAH false\nend\n* xyzfile 0 1 hcn.xyz\n%eprnmr\n  Ori = GIAO\n  Nuclei = all\n  NMRShielding 2\nend\n",
+      "status": "rejected, never executed",
+      "diagnostic_limit": "Run preserves only root value_error for this rejection; this review does not infer its exact validator cause."
+    },
+    "second_rejected_plan": {
+      "model_id": "model_6e4ab41244ae4d78bdd8d3929b191a59",
+      "status": "rejected, never written or executed",
+      "static_observations": [
+        "goal_map was a list, and executable fields appeared outside Step.parameters; recorded correction retains the detailed schema errors.",
+        "The unexecuted Python source references n_atom although it declares natom.",
+        "The unexecuted source calculates isotropic=trace/3 then checks trace-3*isotropic; this is not an independent comparison with the ORCA printed isotropic value."
+      ],
+      "not_final_failure_cause": true
+    },
+    "accepted_plan_model_id": "model_af983974b84147bfb368f2b39d4ad76f",
+    "plan_id": "plan_ab1749ff3fc6408cb543c7c8017c6d15",
+    "plan_version": 1,
+    "method_selection": {
+      "action": "select_conditions",
+      "parameters": {
+        "request_version": 2,
+        "choices": {
+          "method": {
+            "value": "PBE0",
+            "reason": "HCN is a small 3-atom closed-shell molecule, so a hybrid DFT method is affordable. PBE0 is one of the user-allowed choices and provides a balanced description for GIAO NMR shielding without the cost of a larger method; RHF would be cheaper but less suitable for correlated shielding response."
+          },
+          "basis": {
+            "value": "def2-TZVP",
+            "reason": "The user allows def2-SVP or def2-TZVP. For a 3-atom molecule the larger def2-TZVP triple-zeta basis is still low-cost and is preferable for magnetic shielding tensor and isotropic values, reducing basis-set sensitivity. No additional reference/experimental calibration is required."
+          }
+        }
+      },
+      "reason": "Select the user-authorized method and basis before any scientific ORCA execution. PBE0/def2-TZVP is practical for the tiny HCN system and appropriate for requested GIAO shieldings; geometry preparation can then be followed by the fixed-geometry shielding calculation."
+    },
+    "post_science_model_requests": 0
+  },
+  "knowledge_before_science": {
+    "document_id": "orca:contents/spectroscopyproperties/nmr.html",
+    "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/spectroscopyproperties/nmr.html",
+    "accessed_at": "2026-10-20T16:22:12.655047+00:00",
+    "document_sha256": "e04122c788d0dc9fba301eec17198b4ea8f7df19cdb75543e822fa1ad0b9659c",
+    "excerpt_sha256": "ba7a7524e451d95ab894cc008ce5595b24a172a32b7f72c821b1c23aceea5f5a",
+    "document_artifact_id": "artifact_23536ca0f70d4f4897bd4b0946ff8a97",
+    "document_archive_complete": true,
+    "coverage": {
+      "complete": false,
+      "scope": "bounded matched document paragraphs and table rows",
+      "paragraph_indices": [
+        2,
+        34,
+        121
+      ],
+      "paragraph_count": 128,
+      "table_row_labels": {}
+    }
+  },
+  "actual_input": {
+    "source": "! PBE0 def2-TZVP RKS NMR NoAutoStart\n%maxcore 192\n%scf MaxIter 256 AutoTRAH false end\n%eprnmr Ori = GIAO end\n* xyzfile 0 1 hcn.xyz\n",
+    "materialized": "%pal nprocs 4 end\n! PBE0 def2-TZVP RKS NMR NoAutoStart\n%maxcore 192\n%scf MaxIter 256 AutoTRAH false end\n%eprnmr Ori = GIAO end\n* xyzfile 0 1 hcn.xyz\n",
+    "only_change_is_parallel_prefix": true,
+    "source_sha256": "142a95710a3280c191556617543e004f7cd0d2a1408268bf3b550fcd6cc0c779",
+    "materialized_sha256": "7161c18da9e5a48c83bf96defb8eb1292ae2655ace36cd7cf2339ff1c5acea9d",
+    "geometry_sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+    "geometry_matches_prepared": true
+  },
+  "execution": {
+    "attempt_id": "attempt_ebf59aabcd8141ad91847b436c59d5bb",
+    "result_id": "result_a32eb7228fb749f790f513f81582c182",
+    "operation_status": "completed",
+    "exit_code": 0,
+    "reason": "workload_tree_exited",
+    "not_started": false,
+    "actual_start_status": "confirmed",
+    "wall_seconds": 5.796999999991385,
+    "peak_memory_bytes": 757125120,
+    "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+    "stdout_markers": [
+      {
+        "line": 1020,
+        "text": "Chemical shifts                         ... YES (   3 nuclei)"
+      },
+      {
+        "line": 1084,
+        "text": "Nucleus   0C :"
+      },
+      {
+        "line": 1097,
+        "text": "Total shielding tensor (ppm):"
+      },
+      {
+        "line": 1116,
+        "text": "Nucleus   1N :"
+      },
+      {
+        "line": 1129,
+        "text": "Total shielding tensor (ppm):"
+      },
+      {
+        "line": 1148,
+        "text": "Nucleus   2H :"
+      },
+      {
+        "line": 1161,
+        "text": "Total shielding tensor (ppm):"
+      },
+      {
+        "line": 1186,
+        "text": "Nucleus  Element    Isotropic     Anisotropy"
+      },
+      {
+        "line": 1305,
+        "text": "****ORCA TERMINATED NORMALLY****"
+      }
+    ],
+    "stderr_empty": true,
+    "scientific_validation": "unverified",
+    "qualified_outputs": {},
+    "observation_records": []
+  },
+  "terminal": {
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_ebb0973b925a415bbce3092959eca84b",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_39f374e9d4f045bf9afb951bef90a86d",
+        "error_category": "ValidationError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_6e4ab41244ae4d78bdd8d3929b191a59",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "ContextLimitError",
+        "message": "required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+        "environment_occupied": false
+      }
+    ],
+    "direct_cause": "ContextLimitError after successful native result collection, before post-result model feedback/analysis",
+    "remaining_model_calls": 13,
+    "remaining_total_model_tokens": 992275,
+    "input_token_limit": 64000,
+    "remaining_evidence_reads": 12,
+    "remaining_analysis_executions": 4,
+    "no_global_budget_exhaustion_claim": true,
+    "exact_failed_context_size": "unverified; no saved failed request and no context reconstruction authorized",
+    "fallback_report_count": 1
+  },
+  "limits": [
+    "No independent numerical reference calculation was authorized or performed.",
+    "This review inspected raw presence of tensors/isotropic output but did not compute numerical validation or fabricate missing reports/tables.",
+    "Resource costs are recorded lower bounds: resource_usage_complete=false.",
+    "Earlier ready/running snapshots were transient; final counts are taken from the settled driver outcome."
+  ],
+  "artifact_hash_checks": [
+    {
+      "name": "task/job.inp",
+      "artifact_id": "artifact_125c7eac6616442782e4f28dcd25908e",
+      "source_sha256": "7161c18da9e5a48c83bf96defb8eb1292ae2655ace36cd7cf2339ff1c5acea9d",
+      "actual_sha256": "7161c18da9e5a48c83bf96defb8eb1292ae2655ace36cd7cf2339ff1c5acea9d",
+      "matched": true
+    },
+    {
+      "name": "task/source-input.inp",
+      "artifact_id": "artifact_2821cf966da24470965eb920ee9e2ea5",
+      "source_sha256": "142a95710a3280c191556617543e004f7cd0d2a1408268bf3b550fcd6cc0c779",
+      "actual_sha256": "142a95710a3280c191556617543e004f7cd0d2a1408268bf3b550fcd6cc0c779",
+      "matched": true
+    },
+    {
+      "name": "task/hcn.xyz",
+      "artifact_id": "artifact_08b307399e1d4281b83232fed85aa737",
+      "source_sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+      "actual_sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+      "matched": true
+    },
+    {
+      "name": "task/stdout.out",
+      "artifact_id": "artifact_686a489984aa4c90bcedfcf24fbaf9f6",
+      "source_sha256": "71dc5178361375a17c36b8697a79ff762b9ba249d36331950c0c282a1b333319",
+      "actual_sha256": "71dc5178361375a17c36b8697a79ff762b9ba249d36331950c0c282a1b333319",
+      "matched": true
+    },
+    {
+      "name": "task/stderr.txt",
+      "artifact_id": "artifact_5dcc141bac6e46fd9473d58353262297",
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matched": true
+    },
+    {
+      "name": "execution.json",
+      "artifact_id": "artifact_3d4c4f3eab504583ac07b27b65979713",
+      "source_sha256": "0fef1bd2d909423638f27aa7597d22f7fbde5b90d56d76601f75a674bcdeb331",
+      "actual_sha256": "0fef1bd2d909423638f27aa7597d22f7fbde5b90d56d76601f75a674bcdeb331",
+      "matched": true
+    },
+    {
+      "name": "prepared.json",
+      "artifact_id": "artifact_0e89f0c5c3554b19a979a340f96ab629",
+      "source_sha256": "1f9d24a314237807f1ecdfca934a25a37e9a5510f8c2891295ff1cec40674abe",
+      "actual_sha256": "1f9d24a314237807f1ecdfca934a25a37e9a5510f8c2891295ff1cec40674abe",
+      "matched": true
+    }
+  ],
+  "source_files": [
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/run.json",
+      "sha256": "0222b24197f175b321e134b92fb68b13eb855fcebf5d57508bdc7cc8e68472c6",
+      "bytes": 137721
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/H1/outcome.json",
+      "sha256": "770ff1cb52113351b3c18d74a968261029ff289736d7843be8e529947b4316cc",
+      "bytes": 2049
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/H1/report.json",
+      "sha256": "5bab0e52317ba15d275be91e3ff9d2bcd2ff8ca33b53b2208a377876528cc6f3",
+      "bytes": 261760
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/H1/start.json",
+      "sha256": "85ee74b337290a7159427472f00a2984262b72b2fb4fd17e3d561d19e4e674f6",
+      "bytes": 731
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/H1/post-verify.json",
+      "sha256": "46a796225c7438ded32cf757b9988c0213eba602722d3b0cb030a2b1e5ca4696",
+      "bytes": 1160
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_ebb0973b925a415bbce3092959eca84b.request.json",
+      "sha256": "fc3b5569b2e450893edb0267adbae11140e3fe367f1e9c6237ae04e319b559cd",
+      "bytes": 24695
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_ebb0973b925a415bbce3092959eca84b.response.json",
+      "sha256": "a4a0b46dbf6c6d7e4e96fb6e4cbfca12399b0127b9ee4166951fd5d4bbd9559b",
+      "bytes": 14128
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_2c883dea68ef4b8394dc9ca13d2a8d8b.request.json",
+      "sha256": "ac81562d7a2e5a901e3a8bbcb79b46b706b2569d71e15d7faf29109a13645a2c",
+      "bytes": 32679
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_2c883dea68ef4b8394dc9ca13d2a8d8b.response.json",
+      "sha256": "60d3332f1fcb6893b0cf60f9d9f1302a5c5873fb5747d305bb082290e97a7613",
+      "bytes": 14573
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_79666fbe99e14dd9b006dfc3d38ed290.request.json",
+      "sha256": "d33fcf06f5cdd976ac75e9b00305768cb7147ed6c89b1c9162abcf32db6a7c5d",
+      "bytes": 60805
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_79666fbe99e14dd9b006dfc3d38ed290.response.json",
+      "sha256": "5ce526557ecc4b59c24b698cf68171b55bd7d8af5a8787f86379a1cb3826cac9",
+      "bytes": 2899
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_39f374e9d4f045bf9afb951bef90a86d.request.json",
+      "sha256": "f6fbf3c1dae14160707f5c663c708464c778bc0c0e17688f18e4eb4b87f6edb9",
+      "bytes": 67239
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_39f374e9d4f045bf9afb951bef90a86d.response.json",
+      "sha256": "cfa187771c501bea7eaab349765698df8be3a120442ad35ab58e5f59883ae590",
+      "bytes": 7310
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_6e4ab41244ae4d78bdd8d3929b191a59.request.json",
+      "sha256": "f2819e8ef87baddb877748abc1354951a58373935fea083b555f8f04c81a68ac",
+      "bytes": 63703
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_6e4ab41244ae4d78bdd8d3929b191a59.response.json",
+      "sha256": "1d6bdd341db21efd0c83058d377cc4ebc96dfdd3343adeb54177468a42d09aa6",
+      "bytes": 21709
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_af983974b84147bfb368f2b39d4ad76f.request.json",
+      "sha256": "799de56412553f9a9253268ba2c277897e013a9054777978a03fe82b2193b733",
+      "bytes": 66067
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_af983974b84147bfb368f2b39d4ad76f.response.json",
+      "sha256": "475f7b5ae89d74d3bebd2c5c73a8055868a88df0bf3ea23b7b6607e04bbcf4d8",
+      "bytes": 6953
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_cf9d9022d7704864b34102963b19031e.request.json",
+      "sha256": "a8e3d63e577673f11d707b3a449e80e94808432a42fad65f1bf04ee282d5c7ae",
+      "bytes": 69306
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/model/model_cf9d9022d7704864b34102963b19031e.response.json",
+      "sha256": "036bc8fb5f7095eb18a1f89bcc72926faf17fca22d78407735c2ed454ef97af1",
+      "bytes": 2273
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/results/result_3f5aa768b6f8477bb3cf3e3326455f5e.json",
+      "sha256": "2df814053fb22e24aeed27e3a77f49bb6f7b650efe253fd72635d285b46b3621",
+      "bytes": 15213
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/runs/run_bbe1bb04a0be428a9eaafed8b3852844/results/result_a32eb7228fb749f790f513f81582c182.json",
+      "sha256": "b104ea3e36c3c56c7424af012d69fcef2156aa12794e04a821beff44549aac72",
+      "bytes": 20055
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_125c7eac6616442782e4f28dcd25908e/artifact.json",
+      "sha256": "7a3f8079148727e4acacb0403529d2ad2ac6788a13ea0ddce2d951fec8f0b45a",
+      "bytes": 466
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_125c7eac6616442782e4f28dcd25908e/files/job.inp",
+      "sha256": "7161c18da9e5a48c83bf96defb8eb1292ae2655ace36cd7cf2339ff1c5acea9d",
+      "bytes": 149
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_2821cf966da24470965eb920ee9e2ea5/artifact.json",
+      "sha256": "497a8c7c6cf8f21af50add63f17f2f751f75e9eed4578ac1b8b6ddde8640776a",
+      "bytes": 484
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_2821cf966da24470965eb920ee9e2ea5/files/source-input.inp",
+      "sha256": "142a95710a3280c191556617543e004f7cd0d2a1408268bf3b550fcd6cc0c779",
+      "bytes": 131
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_08b307399e1d4281b83232fed85aa737/artifact.json",
+      "sha256": "7a79f98d24f524769b6a86c5a7df7aa70ed497d62768dce5dcb3d8e835595b27",
+      "bytes": 466
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_08b307399e1d4281b83232fed85aa737/files/hcn.xyz",
+      "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+      "bytes": 289
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_686a489984aa4c90bcedfcf24fbaf9f6/artifact.json",
+      "sha256": "c69ea5c43282cb94f7003ccd76427fbf6e6c14ae761f2116c5735a362c9d2376",
+      "bytes": 474
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_686a489984aa4c90bcedfcf24fbaf9f6/files/stdout.out",
+      "sha256": "71dc5178361375a17c36b8697a79ff762b9ba249d36331950c0c282a1b333319",
+      "bytes": 61620
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_5dcc141bac6e46fd9473d58353262297/artifact.json",
+      "sha256": "3e12e53ef5e9556a5cc89c6091e9b6db9d6c3d3d0d726ad1b6cb1ad50dd276c1",
+      "bytes": 470
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_5dcc141bac6e46fd9473d58353262297/files/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_3d4c4f3eab504583ac07b27b65979713/artifact.json",
+      "sha256": "dc7917f0197847f6a08e38ac2fac4d8a3a0c8e7534b45e6058418ba6c7e9e647",
+      "bytes": 671
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_3d4c4f3eab504583ac07b27b65979713/files/execution.json",
+      "sha256": "0fef1bd2d909423638f27aa7597d22f7fbde5b90d56d76601f75a674bcdeb331",
+      "bytes": 12882
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_0e89f0c5c3554b19a979a340f96ab629/artifact.json",
+      "sha256": "df631a90359401f2d666f309f48a6be641501a7842c7681ffdbbffb36d7256a4",
+      "bytes": 668
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-H1-001/data/artifacts/artifact_0e89f0c5c3554b19a979a340f96ab629/files/prepared.json",
+      "sha256": "1f9d24a314237807f1ecdfca934a25a37e9a5510f8c2891295ff1cec40674abe",
+      "bytes": 4224
+    }
+  ]
+}

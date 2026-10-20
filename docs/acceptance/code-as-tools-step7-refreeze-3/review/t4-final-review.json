@@ -1,0 +1,2160 @@
+{
+  "recorded_at_utc": "2026-10-20T16:22:01.132301+00:00",
+  "task": "T4",
+  "repeat": 1,
+  "run_id": "run_2969b369790144c7901c347da8552f15",
+  "review_kind": "Independent final failure-chain review from existing archived evidence; no scientific recomputation.",
+  "source_records": {
+    "start": {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T4/start.json",
+      "sha256": "2462fe102c972e7088a3ae25fbd1a64e300404dc4155dd9e2cb4232de18635ab"
+    },
+    "run": {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/run.json",
+      "sha256": "9a5a3192068035bbbd8465ce60d70a8beebd15573e8152928ad701f4a705fd9b"
+    },
+    "driver_outcome": {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T4/outcome.json",
+      "sha256": "1862aaa2fcd489f35fa2ad111fbbeb3bfff03bc709076218bf745e72e9962d49"
+    },
+    "parent_result": {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_a7e1a520d40f47d3959eacd459656c2a.json",
+      "sha256": "047171ea4bd5309e48445e7eb69d6b124da56e509f0d205f3ecfbc7addd67430"
+    },
+    "production_context_source": {
+      "path": "src/orca_agent/context.py",
+      "sha256": "c9121a6d7bb2181b910294f3cfc7d86f61d0ea9a913b3a5f376617b953f71abc"
+    }
+  },
+  "terminal_facts": {
+    "state": "failed",
+    "delivery_status": "partial",
+    "goal_status": {
+      "goal_geometry": "satisfied",
+      "goal_method_choice": "insufficient_evidence",
+      "goal_excitations": "insufficient_evidence",
+      "goal_excitation_table": "insufficient_evidence",
+      "goal_transition_analysis": "insufficient_evidence",
+      "goal_delivery": "insufficient_evidence",
+      "goal_random_seed": "insufficient_evidence"
+    },
+    "model_calls": 16,
+    "model_tokens_used": 343256,
+    "model_tokens_unknown": 0,
+    "orca_starts_reserved": 1,
+    "orca_starts_actual": 1,
+    "python_attempts": 1,
+    "internal_work_units": 6,
+    "evidence_reads": 10,
+    "file_writes": 2,
+    "plan_revisions": 0,
+    "code_retries": 0,
+    "driver_wall_seconds": 390.93700000000536
+  },
+  "confirmed_failure_chain": [
+    {
+      "layer": "ORCA input",
+      "cause": "The simple keyword line contains TDDFT, rejected by actual ORCA as unrecognized or duplicated.",
+      "evidence": "Archived native stdout lines 181-186: INPUT ERROR / UNRECOGNIZED OR DUPLICATED KEYWORD(S) IN SIMPLE INPUT LINE / TDDFT. Actual job.inp line 2 retains this keyword; the original model-authored input has it too.",
+      "consequence": "The native call exits with code 4 before producing the requested excited states. The admitted input condition/workload metadata does not prove ORCA syntax acceptance or scientific success."
+    },
+    {
+      "layer": "generated Python",
+      "cause": "The script reads and parses the returned stdout without checking the failed receipt operation_status.",
+      "evidence": "Generated script has run_orca at line 5 and no operation_status check; line 50 raises Could not parse TDDFT states from stdout.out.",
+      "consequence": "The Python parser error is secondary to the native input failure; it is not evidence that a successful TDDFT calculation merely used an unexpected output format."
+    },
+    {
+      "layer": "recovery evidence selection",
+      "cause": "Recovery stayed in read-only actions and repeatedly selected parent or structure-preparation files instead of the failed internal ORCA stdout.",
+      "evidence": "10 successful read calls: 8 evidence.text, 2 evidence.list. The selected text files include parent stderr twice, parent execution.json twice, prepared.xyz, the original job.inp, structure.prepare worker-outcome.json, and task acetone.xyz. No read selected the internal stdout/stderr artifacts.",
+      "consequence": "No valid repair or revise_plan proposal was submitted, no replacement script/input was written, and no second execution was reserved. The one invalid JSON response was rejected before a valid action; its raw payload is retained only by source reference."
+    },
+    {
+      "layer": "model-visible discovery",
+      "cause": "Full evidence.list results contained 33 files including native stdout, but the sent request preview showed the first 18 and omitted the 15 later entries.",
+      "evidence": "Decoded actual stored requests retain context_page.next_offset=18, shown=18, omitted_from_result=15, alongside Tool coverage.complete=true and next_offset=null. The native stdout ID and its input-error literal do not appear in the inspected post-failure requests. Both actual list calls used offset=0.",
+      "consequence": "The file remained discoverable via context pagination, but the provided preview foregrounded preparation/parent artifacts and did not expose the internal failure file directly. This is an observed projection limitation; it does not prove that the model could never have requested the next page."
+    },
+    {
+      "layer": "terminal runtime",
+      "cause": "ContextLimitError while constructing the next decision after the final evidence.text result.",
+      "evidence": "Run diagnostics retain the input-envelope error; the last stored/sent model response is model_75d3220071124644b1d4ef914b1d6ee9, whose chosen Artifact was acetone.xyz despite a reason saying stderr. No 17th model request or final model stop proposal exists.",
+      "consequence": "The Run ends failed/partial via the program fallback. This is distinct from ORCA syntax failure and from total model/ORCA budget exhaustion."
+    }
+  ],
+  "repair_contract_facts": {
+    "valid_repair_proposals": 0,
+    "accepted_plan_revisions": 0,
+    "replacement_writes_after_failure": 0,
+    "retry_attempts": 0,
+    "revise_plan_advertised_in_post_failure_requests": true,
+    "note": "No submitted repair was rejected by same-input protection or another execution gate. A repair entry point existed, but the model did not select it."
+  },
+  "remaining_budget_at_terminal": {
+    "model_calls": 8,
+    "model_tokens": 856744,
+    "orca_starts": 11,
+    "evidence_reads": 2,
+    "input_tokens_per_request": 64000,
+    "configured_input_tokens": 64000,
+    "note": "No context rebuild was performed. The exact failed candidate size and which compression branch exceeded its bound are not established by this review."
+  },
+  "native_execution": {
+    "request_key": "tddft_b3lyp_def2tzvp",
+    "state": "failed",
+    "execution_record": {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_9e0ce92a9aaa4e5ea64b0e07a65c144d/files/execution.json",
+      "sha256": "fdbfb42e9a871d8e9c6b633a2016c1282e8c38c8201a8e46ca4d437aca69a887",
+      "artifact_id": "artifact_9e0ce92a9aaa4e5ea64b0e07a65c144d",
+      "metadata": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_9e0ce92a9aaa4e5ea64b0e07a65c144d/artifact.json",
+        "sha256": "be38c7cf84ce594f03d24abe51a9f09c660342383993e200b143ef7bf2c1c7a7"
+      },
+      "role": "execution_record",
+      "size": 7892,
+      "run_id": "run_2969b369790144c7901c347da8552f15",
+      "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+      "source": {
+        "imported_from": "E:\\BG6022-V4\\data\\code-tools-refreeze-3-batch\\workspaces\\formal-T4-001\\data\\runs\\run_2969b369790144c7901c347da8552f15\\steps\\step_a067763749104c239c7bb7bd3abf4055\\attempt-001\\internal\\tddft_b3lyp_def2tzvp\\execution.json"
+      }
+    },
+    "facts": {
+      "state": "failed",
+      "reason": "nonzero_exit_code",
+      "exit_code": 4,
+      "not_started": false,
+      "actual_start_status": "confirmed",
+      "collection_error": null
+    },
+    "resource_facts": {
+      "wall_seconds": 6.75,
+      "peak_memory_bytes": 272490496,
+      "oom_killed": false,
+      "complete": false,
+      "usage_scope": "last successful cgroup observation before container termination"
+    },
+    "actual_conditions": {
+      "method": "B3LYP",
+      "basis": "def2-TZVP",
+      "electronic_state": "RKS",
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "input_keywords": [
+        "B3LYP",
+        "def2-TZVP",
+        "RKS",
+        "TDDFT",
+        "NoAutoStart"
+      ],
+      "input_blocks": {
+        "pal": {
+          "nprocs": "4"
+        },
+        "maxcore": 192,
+        "scf": {
+          "maxiter": "256",
+          "autotrah": "false"
+        },
+        "tddft": {
+          "nroots": "5",
+          "maxiter": "128",
+          "tda": "false"
+        }
+      },
+      "atom_count": 10,
+      "run_type": "single_point",
+      "origin": "admitted_native_input",
+      "geometry_sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+      "input_geometry_sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+      "input_geometry_relation": "exact_initial",
+      "initial_geometry_sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+      "request_version": 3,
+      "system_id": "system_acetone",
+      "scientific_validation": "unverified",
+      "condition_verification": "explicit input selectors only; all modifiers retained, output not independently verified",
+      "collection_error": null
+    },
+    "source_artifacts": {
+      "acetone.xyz": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_8dc82774af2f48c4bda9cd8d8d33474f/files/acetone.xyz",
+        "sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+        "artifact_id": "artifact_8dc82774af2f48c4bda9cd8d8d33474f",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_8dc82774af2f48c4bda9cd8d8d33474f/artifact.json",
+          "sha256": "a47cbf828ff2b0678c5f16392ff7ad9e11f59c392f86d8fcf99e4b0adb0f4087"
+        },
+        "role": "raw_evidence",
+        "size": 955,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "task_path": "acetone.xyz"
+        }
+      },
+      "input-manifest.json": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_298d251a4e8f40099d7615488465eeba/files/input-manifest.json",
+        "sha256": "c3281abe8353de9762605d5b5d4a65cd725b704e0f844c2776f9a5d9623c3b4e",
+        "artifact_id": "artifact_298d251a4e8f40099d7615488465eeba",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_298d251a4e8f40099d7615488465eeba/artifact.json",
+          "sha256": "64ed66a8d0e238f76797dd71e05efecd43a1bc7d9e772fcb495b0dc6a039b5c4"
+        },
+        "role": "raw_evidence",
+        "size": 4384,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "task_path": "input-manifest.json"
+        }
+      },
+      "job.inp": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_21f2d101933d4c5898c1509fb7d8977e/files/job.inp",
+        "sha256": "8210e8ae054173a1072c2372876f7eb69217e70ca7fa8d84f871530975d16c54",
+        "artifact_id": "artifact_21f2d101933d4c5898c1509fb7d8977e",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_21f2d101933d4c5898c1509fb7d8977e/artifact.json",
+          "sha256": "76895506eb2546482bf711633fdbbc8b0694f1bbe82273a19f1659750fede5f0"
+        },
+        "role": "raw_evidence",
+        "size": 175,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "task_path": "job.inp"
+        }
+      },
+      "source-input.inp": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_46e548c266e840a9813b403fe255b5bd/files/source-input.inp",
+        "sha256": "198db07a4fa3ce007b84cd66fe5f2c80604fa5f7f15c900880b1bbabfa3be8df",
+        "artifact_id": "artifact_46e548c266e840a9813b403fe255b5bd",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_46e548c266e840a9813b403fe255b5bd/artifact.json",
+          "sha256": "d4a5f250ee8d6e8e7c1467908c2ad0cf2e5cd3dc9f566783a6cf73d8c5fa1ff6"
+        },
+        "role": "raw_evidence",
+        "size": 179,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "task_path": "source-input.inp"
+        }
+      },
+      "stderr.txt": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_6b1a4f72c1074655a3eba3fdbb761895/files/stderr.txt",
+        "sha256": "6e1437133d58b7d9f774733e0fe489cd70bed3b993aac5638087d6fe9bca9f14",
+        "artifact_id": "artifact_6b1a4f72c1074655a3eba3fdbb761895",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_6b1a4f72c1074655a3eba3fdbb761895/artifact.json",
+          "sha256": "e80dab74c09622faa6f31ee4d025d58b8bd67e0a0155c39aabaf252aaafedc5d"
+        },
+        "role": "raw_evidence",
+        "size": 59,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "task_path": "stderr.txt"
+        }
+      },
+      "stdout.out": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_7e3c89697dfa4c3381cd6ea12c9f0182/files/stdout.out",
+        "sha256": "277bb9661199fed09419fc8555a64b5ce7d76e01dc75cc1ec996c2dc24058213",
+        "artifact_id": "artifact_7e3c89697dfa4c3381cd6ea12c9f0182",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_7e3c89697dfa4c3381cd6ea12c9f0182/artifact.json",
+          "sha256": "541da322c391fabc4ef10bc713fa495ad41da9170f9a7d7b5809fa2de6aaaae9"
+        },
+        "role": "raw_evidence",
+        "size": 12966,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "task_path": "stdout.out"
+        }
+      }
+    }
+  },
+  "python_script": {
+    "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_ed09446288f5440bb6b87d1665ccfede/files/analyze_tddft.py",
+    "sha256": "193e6b8647f371632a29d3d16e9be3f12f1c3a6ac72c35b58e1b7e2d1d4e819d",
+    "artifact_id": "artifact_ed09446288f5440bb6b87d1665ccfede",
+    "metadata": {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_ed09446288f5440bb6b87d1665ccfede/artifact.json",
+      "sha256": "d772a71473b2af30fd5fb70808f07b990c335119704b3e8a0e027d12401944db"
+    },
+    "role": "code",
+    "size": 8344,
+    "run_id": "run_2969b369790144c7901c347da8552f15",
+    "attempt_id": null,
+    "source": {
+      "call_id": "call_4c160be3f2134138a95603775ec51afa",
+      "role": "python",
+      "name": "analyze_tddft.py"
+    }
+  },
+  "parent_stderr": {
+    "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_dad543790f474ba2a55daae85e8da6c0/files/stderr.txt",
+    "sha256": "f98b48b98875f21db16479d5b86c5853d96a1c46bfb93a26646138f2de0a239d",
+    "artifact_id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+    "metadata": {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_dad543790f474ba2a55daae85e8da6c0/artifact.json",
+      "sha256": "a2e424386fa4e66b4a20a0fba1e185eddea28f1af3c147e11c6e52164ca4ff8e"
+    },
+    "role": "raw_evidence",
+    "size": 488,
+    "run_id": "run_2969b369790144c7901c347da8552f15",
+    "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+    "source": {
+      "task_path": "task/stderr.txt"
+    }
+  },
+  "read_sequence": [
+    {
+      "call_id": "call_b9afb2ba798044bbae688f3f482985cf",
+      "created_at": "2026-10-20T16:12:42.116747Z",
+      "tool": "evidence.text",
+      "parameters": {
+        "artifact_id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+        "start_line": 1,
+        "lines": 200
+      },
+      "state": "completed",
+      "result": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_b7e880de3fd04cfb8d422249c64a2931.json",
+        "sha256": "6176498ec3877e6fa007e83176c9b3e2977ec67905a5cb781d533b9205346df0"
+      },
+      "model_id": "model_b09aff001bd1404aae76fde20f1405dc",
+      "model_action_reason": "The frozen Python Step step_a067763749104c239c7bb7bd3abf4055 (attempt_bd8580e8c8814842aed5ccc2c9168f15) failed, and CONTROL.pending_step_ids is empty, so recovery requires inspecting the failed task's captured stderr (and later the managed ORCA internal stdout/stderr) before deciding whether to repair the Python analysis code, the native input, or both. No new evidence is fabricated here; this reads the archived task file of the failed attempt.",
+      "selected_artifact": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_dad543790f474ba2a55daae85e8da6c0/files/stderr.txt",
+        "sha256": "f98b48b98875f21db16479d5b86c5853d96a1c46bfb93a26646138f2de0a239d",
+        "artifact_id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_dad543790f474ba2a55daae85e8da6c0/artifact.json",
+          "sha256": "a2e424386fa4e66b4a20a0fba1e185eddea28f1af3c147e11c6e52164ca4ff8e"
+        },
+        "role": "raw_evidence",
+        "size": 488,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "task_path": "task/stderr.txt"
+        }
+      },
+      "returned_coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 10
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "returned_bytes": 488
+    },
+    {
+      "call_id": "call_28bfb578400644b29c8d47cbfa32af08",
+      "created_at": "2026-10-20T16:12:52.358811Z",
+      "tool": "evidence.list",
+      "parameters": {
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "offset": 0,
+        "limit": 200
+      },
+      "state": "completed",
+      "result": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_f9fc3441be8d48c1b006bae79580e862.json",
+        "sha256": "14d56d71811ad5d618caafa1c85a3c56caab54a65a1d50c75580ac84d56e0a9c"
+      },
+      "model_id": "model_bcf4b416493f4289ae4d441528948d5a",
+      "model_action_reason": "The TDDFT Python Step failed with 'Could not parse TDDFT states from stdout.out' and the task stdout.out is empty. I need the full file list of the failed attempt and the nested ORCA call before deciding whether to repair the parser or the ORCA invocation.",
+      "total": 33,
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "artifacts",
+          "start": 0,
+          "stop": 200
+        },
+        "returned": {
+          "kind": "artifacts",
+          "start": 0,
+          "stop": 33
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "native_stdout_present_in_full_result": true,
+      "native_stdout_zero_based_index": 27
+    },
+    {
+      "call_id": "call_42e2f9de55f94116980fc93dcf45b5b1",
+      "created_at": "2026-10-20T16:13:10.477805Z",
+      "tool": "evidence.text",
+      "parameters": {
+        "artifact_id": "artifact_5df8d0e035434a6c8d8d377783b5b8c1",
+        "start_line": 1,
+        "lines": 200
+      },
+      "state": "completed",
+      "result": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_2c88970493eb4d72b56d18ae6c7fd4b2.json",
+        "sha256": "ef9931a01779d62af012ce273322f2688d6c56189c9fbfcab7ef0bad4b70969e"
+      },
+      "model_id": "model_7d8357cca4404f2fbda13b9c23a42193",
+      "model_action_reason": "The failed Python step's ORCA call left a 0-byte stdout, so I need the archived execution record to see the actual ORCA operation status, files, and failure cause before deciding whether to repair input or parser.",
+      "selected_artifact": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_5df8d0e035434a6c8d8d377783b5b8c1/files/execution.json",
+        "sha256": "1de9ba9079e1bc3aa39e39ed7636e5f45cb19a23c7aff6e2235343fe5418c427",
+        "artifact_id": "artifact_5df8d0e035434a6c8d8d377783b5b8c1",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_5df8d0e035434a6c8d8d377783b5b8c1/artifact.json",
+          "sha256": "a3afd0f77e1234f2d2e9435045268422c84e4c59811e1c5bf5be6af71130d779"
+        },
+        "role": "execution_record",
+        "size": 11930,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "imported_from": "E:\\BG6022-V4\\data\\code-tools-refreeze-3-batch\\workspaces\\formal-T4-001\\data\\runs\\run_2969b369790144c7901c347da8552f15\\steps\\step_a067763749104c239c7bb7bd3abf4055\\attempt-001\\execution.json"
+        }
+      },
+      "returned_coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "returned_bytes": 6428
+    },
+    {
+      "call_id": "call_1b617d6d70804cfab9e79c094958f090",
+      "created_at": "2026-10-20T16:13:35.517972Z",
+      "tool": "evidence.text",
+      "parameters": {
+        "artifact_id": "artifact_5df8d0e035434a6c8d8d377783b5b8c1",
+        "start_line": 1,
+        "lines": 200
+      },
+      "state": "completed",
+      "result": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_6ab9f301487944598e764d8edf26019c.json",
+        "sha256": "1be82b4076e7f369897959ac86403ab75360659f488f6a76992baa96c17ef678"
+      },
+      "model_id": "model_4af9c37c5dac4afea455c6165ddb21be",
+      "model_action_reason": "The Python Step failed with 'Could not parse TDDFT states from stdout.out'. Before authoring a repaired parser or input, I must inspect the actual SDK execution record for the ORCA call to see whether ORCA completed and what output/error files it produced.",
+      "selected_artifact": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_5df8d0e035434a6c8d8d377783b5b8c1/files/execution.json",
+        "sha256": "1de9ba9079e1bc3aa39e39ed7636e5f45cb19a23c7aff6e2235343fe5418c427",
+        "artifact_id": "artifact_5df8d0e035434a6c8d8d377783b5b8c1",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_5df8d0e035434a6c8d8d377783b5b8c1/artifact.json",
+          "sha256": "a3afd0f77e1234f2d2e9435045268422c84e4c59811e1c5bf5be6af71130d779"
+        },
+        "role": "execution_record",
+        "size": 11930,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "imported_from": "E:\\BG6022-V4\\data\\code-tools-refreeze-3-batch\\workspaces\\formal-T4-001\\data\\runs\\run_2969b369790144c7901c347da8552f15\\steps\\step_a067763749104c239c7bb7bd3abf4055\\attempt-001\\execution.json"
+        }
+      },
+      "returned_coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "returned_bytes": 6428
+    },
+    {
+      "call_id": "call_f09b1a93bd8441bb9952c92c5f617677",
+      "created_at": "2026-10-20T16:13:46.347288Z",
+      "tool": "evidence.text",
+      "parameters": {
+        "artifact_id": "artifact_957d1d23d02c4af390699d9b8155e46e",
+        "start_line": 1,
+        "lines": 40
+      },
+      "state": "completed",
+      "result": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_e54c6d90920548eaa944199cbf38a399.json",
+        "sha256": "60fefddbf231c7c8bfdbedd259a7b15e8af786c9e38a52cc398c5dad83e92abe"
+      },
+      "model_id": "model_61e4c152f4004c1baffe15dc0a046e39",
+      "model_action_reason": "The frozen Python step failed with a nonzero ORCA exit. I need the actual stderr text to diagnose the native input before authoring a repair Step; no Step is currently ready, so recovery must be evidence-driven.",
+      "selected_artifact": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_957d1d23d02c4af390699d9b8155e46e/files/prepared.xyz",
+        "sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+        "artifact_id": "artifact_957d1d23d02c4af390699d9b8155e46e",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_957d1d23d02c4af390699d9b8155e46e/artifact.json",
+          "sha256": "eac8e8b7a4e8cc4c0bbbde96ad789ee274e7b0ecdbcd232e359c52eeaa02bc22"
+        },
+        "role": "prepared_geometry_candidate",
+        "size": 955,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": null,
+        "source": {
+          "run_id": "run_2969b369790144c7901c347da8552f15",
+          "call_id": "call_7733fae192d948a7a30d1e74f9777ea5",
+          "step_id": "step_bd20967a515d41c58c26de1ce2c1d954",
+          "request_version": 3
+        }
+      },
+      "returned_coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 41
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 14
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "returned_bytes": 955
+    },
+    {
+      "call_id": "call_9a8b8c42c35d42539bfaefc4dcd6286e",
+      "created_at": "2026-10-20T16:13:55.339328Z",
+      "tool": "evidence.text",
+      "parameters": {
+        "artifact_id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+        "start_line": 1,
+        "lines": 80
+      },
+      "state": "completed",
+      "result": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_69f829bb46ba47b29f8977d079eb806e.json",
+        "sha256": "ea1d53edc863eff9a7e6d8dd6d5d655af47084388dc59e5a395b3e2b965dc31d"
+      },
+      "model_id": "model_2bef7776ed4743bfb90ef0e5d4626f7c",
+      "model_action_reason": "The TDDFT Python step failed, and its diagnostic stderr artifact is empty per the recorded hash. I need to inspect the actual error text before deciding whether to repair the script, correct the ORCA input, or revise the plan.",
+      "selected_artifact": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_dad543790f474ba2a55daae85e8da6c0/files/stderr.txt",
+        "sha256": "f98b48b98875f21db16479d5b86c5853d96a1c46bfb93a26646138f2de0a239d",
+        "artifact_id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_dad543790f474ba2a55daae85e8da6c0/artifact.json",
+          "sha256": "a2e424386fa4e66b4a20a0fba1e185eddea28f1af3c147e11c6e52164ca4ff8e"
+        },
+        "role": "raw_evidence",
+        "size": 488,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "task_path": "task/stderr.txt"
+        }
+      },
+      "returned_coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 81
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 10
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "returned_bytes": 488
+    },
+    {
+      "call_id": "call_dd2e2729a8e84239b33e0f88336dbe07",
+      "created_at": "2026-10-20T16:14:04.277587Z",
+      "tool": "evidence.text",
+      "parameters": {
+        "artifact_id": "artifact_38ecebe7ee5d402ca3eb255b716282aa",
+        "start_line": 1,
+        "lines": 80
+      },
+      "state": "completed",
+      "result": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_7717fec562394c429c766113d2077995.json",
+        "sha256": "d9cd30e0622723d5c3104715ff2af615121d6c5d697d08c1cdbbd3aac7e03d69"
+      },
+      "model_id": "model_695bd95b229f4b5d9730a1c929d07639",
+      "model_action_reason": "The Python TDDFT step failed because ORCA stdout contained no parseable states. I need to inspect the actual ORCA input that was submitted before planning a repair.",
+      "selected_artifact": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_38ecebe7ee5d402ca3eb255b716282aa/files/job.inp",
+        "sha256": "0c4909fc4f6226f4f83e7539d760a9de897af540328e6e495f6e673c137f57c2",
+        "artifact_id": "artifact_38ecebe7ee5d402ca3eb255b716282aa",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_38ecebe7ee5d402ca3eb255b716282aa/artifact.json",
+          "sha256": "4bce56a88c0438fa19acb82367a68273724a62ae8496a049e24732063ddec6c4"
+        },
+        "role": "native_input",
+        "size": 167,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": null,
+        "source": {
+          "call_id": "call_bcba7039d4a04015b47713990f556196",
+          "role": "orca",
+          "name": "job.inp"
+        }
+      },
+      "returned_coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 81
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 13
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "returned_bytes": 167
+    },
+    {
+      "call_id": "call_4a84e6aebec44aea9f4d8a8f1dd36f71",
+      "created_at": "2026-10-20T16:14:13.454439Z",
+      "tool": "evidence.list",
+      "parameters": {
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "offset": 0,
+        "limit": 100
+      },
+      "state": "completed",
+      "result": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_f893ea9ced7e4d55aaeb0e1d7d345201.json",
+        "sha256": "791e4b72fd9083026d127f01868b42c4bbb54739b4d1520473ed1a9197bef9b9"
+      },
+      "model_id": "model_e2b13365041e414698f0bf8eb63d6bcc",
+      "model_action_reason": "Python TDDFT step failed because stdout.out was empty and parsing raised RuntimeError. No Step is ready, so I first inspect the run's archived attempts/outputs to distinguish an ORCA execution failure from a parser bug before revising the Plan.",
+      "total": 33,
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "artifacts",
+          "start": 0,
+          "stop": 100
+        },
+        "returned": {
+          "kind": "artifacts",
+          "start": 0,
+          "stop": 33
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "native_stdout_present_in_full_result": true,
+      "native_stdout_zero_based_index": 27
+    },
+    {
+      "call_id": "call_a3a30195fbda4fa3b4057df6bf5b9153",
+      "created_at": "2026-10-20T16:15:50.721903Z",
+      "tool": "evidence.text",
+      "parameters": {
+        "artifact_id": "artifact_812b43f838eb41aba50bab3e2c129fee",
+        "start_line": 1,
+        "lines": 80
+      },
+      "state": "completed",
+      "result": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_3fde6e5a0f2c4853bf7e2081b658aedf.json",
+        "sha256": "60615b1aed665d2930f9c92441e6af58951d43b9b0a725035ac1f549b884a0df"
+      },
+      "model_id": "model_1fbb27c39fba475e893e5f2f06d22877",
+      "model_action_reason": "The TDDFT Python step failed because it could not parse states from an empty stdout.out. Before spending another ORCA start on a repaired script, inspect the archived worker-outcome.json from the failed attempt: it should reveal the actual ORCA receipt status, the real output file names in receipt.files, and any ORCA error text needed to fix the parser and diagnosis.",
+      "selected_artifact": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_812b43f838eb41aba50bab3e2c129fee/files/worker-outcome.json",
+        "sha256": "944169580d21033c6480eed8b44de7f7d36f7000894e61cbda45b40b4d82987f",
+        "artifact_id": "artifact_812b43f838eb41aba50bab3e2c129fee",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_812b43f838eb41aba50bab3e2c129fee/artifact.json",
+          "sha256": "69c8586c519f3a4c2ad18b5936a067b72579a4b9b21bb82979b7553748d4f880"
+        },
+        "role": "structure_execution",
+        "size": 2726,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": null,
+        "source": {
+          "run_id": "run_2969b369790144c7901c347da8552f15",
+          "call_id": "call_7733fae192d948a7a30d1e74f9777ea5",
+          "step_id": "step_bd20967a515d41c58c26de1ce2c1d954",
+          "request_version": 3
+        }
+      },
+      "returned_coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 81
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 71
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "returned_bytes": 2726
+    },
+    {
+      "call_id": "call_242fd58aa6634f968f427dec4709ede7",
+      "created_at": "2026-10-20T16:16:01.832576Z",
+      "tool": "evidence.text",
+      "parameters": {
+        "artifact_id": "artifact_5379bec3f0874d30a192b4ca6501b8dc",
+        "start_line": 1,
+        "lines": 200
+      },
+      "state": "completed",
+      "result": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/results/result_4891fe832a8a4cd299940fb28953fc12.json",
+        "sha256": "94cc303c522f71694941fd34265c0eda2ae4ea97844d5099c224bcaa59cdedf9"
+      },
+      "model_id": "model_75d3220071124644b1d4ef914b1d6ee9",
+      "model_action_reason": "The only planned Python TDDFT step failed with nonzero exit code; reading its stderr is the fastest way to identify the exact failure before proposing a repair.",
+      "selected_artifact": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_5379bec3f0874d30a192b4ca6501b8dc/files/acetone.xyz",
+        "sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+        "artifact_id": "artifact_5379bec3f0874d30a192b4ca6501b8dc",
+        "metadata": {
+          "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/artifacts/artifact_5379bec3f0874d30a192b4ca6501b8dc/artifact.json",
+          "sha256": "c6ab9578c2a943520e571180fb728a61ae05e86b5dbedd42ca80d08332edc0d3"
+        },
+        "role": "raw_evidence",
+        "size": 955,
+        "run_id": "run_2969b369790144c7901c347da8552f15",
+        "attempt_id": "attempt_bd8580e8c8814842aed5ccc2c9168f15",
+        "source": {
+          "task_path": "task/acetone.xyz"
+        }
+      },
+      "returned_coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 14
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      },
+      "returned_bytes": 955
+    }
+  ],
+  "model_record_index": [
+    {
+      "id": "model_bca172e975df4ea8ac01460e6455830f",
+      "created_at": "2026-10-20T16:09:40.841803+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 5700,
+      "output_tokens": 7792,
+      "total_tokens": 13492,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_bca172e975df4ea8ac01460e6455830f.request.json",
+        "sha256": "d78796bbfb364b602a4a575b162e5658bbaaf18a3b1c939f5063a4d9e49c5470"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_bca172e975df4ea8ac01460e6455830f.response.json",
+        "sha256": "d7bad956f0303733bb00a56761c1cee2fe7d315e714d9390fc1dc3dd09a89954"
+      },
+      "proposal_action": "normalize_request"
+    },
+    {
+      "id": "model_087455354bc845cf89d60426eb020985",
+      "created_at": "2026-10-20T16:10:16.040063+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 14117,
+      "output_tokens": 2005,
+      "total_tokens": 16122,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_087455354bc845cf89d60426eb020985.request.json",
+        "sha256": "b5c21788f068ddc259f5b7109a88045c068c2b26ab2a6aa0f5d60e3a36c2cb8d"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_087455354bc845cf89d60426eb020985.response.json",
+        "sha256": "dac5fac0b1ba412ab1f674bc020e1d6249037cc52ab13b3a58a037aecebaf966"
+      },
+      "proposal_action": "select_conditions"
+    },
+    {
+      "id": "model_ace046286faf4be0884b5a9e537e9190",
+      "created_at": "2026-10-20T16:10:29.163426+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 13996,
+      "output_tokens": 18678,
+      "total_tokens": 32674,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_ace046286faf4be0884b5a9e537e9190.request.json",
+        "sha256": "ef92e5e727842ea9cbee444979ee21a7c22c8c688d6730f1da561e7db8d0ea06"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_ace046286faf4be0884b5a9e537e9190.response.json",
+        "sha256": "803f4c86225722e04989095ccbf0440ad24ee17a5af0118f5f599e81c5354d5c"
+      },
+      "proposal_action": "initial_plan"
+    },
+    {
+      "id": "model_a0b835999f334d049b2bbed488955348",
+      "created_at": "2026-10-20T16:11:47.830087+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 16340,
+      "output_tokens": 142,
+      "total_tokens": 16482,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_a0b835999f334d049b2bbed488955348.request.json",
+        "sha256": "c6999181a96dafec7d76a078d4d71935e2e3b4a91f076ea3de6f8367bdb1afac"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_a0b835999f334d049b2bbed488955348.response.json",
+        "sha256": "17bf8bd7801c5e6463a3a34e29756048bc884fe8979c7c9d429926e42fa4817d"
+      },
+      "proposal_action": "call_tool"
+    },
+    {
+      "id": "model_35851c14554e45348b29598c064db048",
+      "created_at": "2026-10-20T16:11:53.721949+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 17349,
+      "output_tokens": 742,
+      "total_tokens": 18091,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_35851c14554e45348b29598c064db048.request.json",
+        "sha256": "7d3ffa6a4373e6de49d351021126c344f19cc3625d6470e4f1f9a41eb576824f"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_35851c14554e45348b29598c064db048.response.json",
+        "sha256": "d44dc91bb936fc36e8eab95feeaf984f9158f99d8ac5e3dc3f247dc4759f66c7"
+      },
+      "proposal_action": "call_tool"
+    },
+    {
+      "id": "model_b09aff001bd1404aae76fde20f1405dc",
+      "created_at": "2026-10-20T16:12:30.180938+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 19171,
+      "output_tokens": 2385,
+      "total_tokens": 21556,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_b09aff001bd1404aae76fde20f1405dc.request.json",
+        "sha256": "846575bba77bd2e353a69e1ada519045a374ea5a8c5dd7828ce724e88bff8a2b"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_b09aff001bd1404aae76fde20f1405dc.response.json",
+        "sha256": "ccbb6f4cfac4cca9f4e1c900ec96d9ebc6cb93f360829980c3fa7c4061be7693"
+      },
+      "proposal_action": "evidence.text"
+    },
+    {
+      "id": "model_bcf4b416493f4289ae4d441528948d5a",
+      "created_at": "2026-10-20T16:12:47.030787+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 18184,
+      "output_tokens": 831,
+      "total_tokens": 19015,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_bcf4b416493f4289ae4d441528948d5a.request.json",
+        "sha256": "ba199b8f565b69fb6f551387f1be5548e1c1df7b3c55f2e62fa70990f2d39d0d"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_bcf4b416493f4289ae4d441528948d5a.response.json",
+        "sha256": "10c7dff15499ea4a44ae312b626dc1402a4bfd5957311985d138936df963919f"
+      },
+      "proposal_action": "evidence.list"
+    },
+    {
+      "id": "model_7d8357cca4404f2fbda13b9c23a42193",
+      "created_at": "2026-10-20T16:12:58.089956+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 19350,
+      "output_tokens": 2105,
+      "total_tokens": 21455,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_7d8357cca4404f2fbda13b9c23a42193.request.json",
+        "sha256": "31d63cf9e13f46250bdb44ebe1cb6e314fdf3f8a4eab666026bd9c3852454de2"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_7d8357cca4404f2fbda13b9c23a42193.response.json",
+        "sha256": "4e911b53aaa780fb419dcd2ed878a32f727716530f5b1a0dc97ce54dbb1af17f"
+      },
+      "proposal_action": "evidence.text"
+    },
+    {
+      "id": "model_4af9c37c5dac4afea455c6165ddb21be",
+      "created_at": "2026-10-20T16:13:15.657636+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 19735,
+      "output_tokens": 3918,
+      "total_tokens": 23653,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_4af9c37c5dac4afea455c6165ddb21be.request.json",
+        "sha256": "a249bac6015f53c834ce03c05f26409c18cbb9ce20fe46f56f711cac9a70be3f"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_4af9c37c5dac4afea455c6165ddb21be.response.json",
+        "sha256": "d92553cec9f69876f5072f80178760490df0cc3ae4f05b050e51a26289135397"
+      },
+      "proposal_action": "evidence.text"
+    },
+    {
+      "id": "model_61e4c152f4004c1baffe15dc0a046e39",
+      "created_at": "2026-10-20T16:13:41.179081+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 19783,
+      "output_tokens": 796,
+      "total_tokens": 20579,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_61e4c152f4004c1baffe15dc0a046e39.request.json",
+        "sha256": "058b54b8f126f4624b294c5f448beb643e70c5bd05483780930590a9307089ef"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_61e4c152f4004c1baffe15dc0a046e39.response.json",
+        "sha256": "3f999c936c8b5dab3719fa30fdaff609c5a62fef48963a18ae8dc0712e5d9aec"
+      },
+      "proposal_action": "evidence.text"
+    },
+    {
+      "id": "model_2bef7776ed4743bfb90ef0e5d4626f7c",
+      "created_at": "2026-10-20T16:13:51.380521+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 19289,
+      "output_tokens": 389,
+      "total_tokens": 19678,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_2bef7776ed4743bfb90ef0e5d4626f7c.request.json",
+        "sha256": "02f6be71e6394f421a60c7c7f137947a79787a20ce304a214e9086e0067f3a6b"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_2bef7776ed4743bfb90ef0e5d4626f7c.response.json",
+        "sha256": "78944a6c4a6527dc1093fe2fcfd6c5c7525ee44c9a89ece26393600cf949dfe9"
+      },
+      "proposal_action": "evidence.text"
+    },
+    {
+      "id": "model_695bd95b229f4b5d9730a1c929d07639",
+      "created_at": "2026-10-20T16:14:00.786983+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 19612,
+      "output_tokens": 384,
+      "total_tokens": 19996,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_695bd95b229f4b5d9730a1c929d07639.request.json",
+        "sha256": "6834cf206ba5b6d8aee2084c0c07d4b48103a83e9105b371a614dae0ff068f63"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_695bd95b229f4b5d9730a1c929d07639.response.json",
+        "sha256": "1c1eb146376aa1629c4f5d284e4946c48f98192cef88f267e627836186f7557a"
+      },
+      "proposal_action": "evidence.text"
+    },
+    {
+      "id": "model_e2b13365041e414698f0bf8eb63d6bcc",
+      "created_at": "2026-10-20T16:14:09.320253+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 19645,
+      "output_tokens": 542,
+      "total_tokens": 20187,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_e2b13365041e414698f0bf8eb63d6bcc.request.json",
+        "sha256": "79bc3138e30c3ce9c1aacbfc7107cee9e901f02e7167e46aeb6e51cc78d696ae"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_e2b13365041e414698f0bf8eb63d6bcc.response.json",
+        "sha256": "0ddbb07af267bcbafbd43a5252a1deaea8801647bb2698c61750f41fc545dc6a"
+      },
+      "proposal_action": "evidence.list"
+    },
+    {
+      "id": "model_e852c4e76aff44dba4abe87e114f8e7f",
+      "created_at": "2026-10-20T16:14:19.083776+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": "invalid_proposal_json",
+      "input_tokens": 20523,
+      "output_tokens": 5625,
+      "total_tokens": 26148,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_e852c4e76aff44dba4abe87e114f8e7f.request.json",
+        "sha256": "608913fa7ec4afdd09d749162b3521141f513af7f599f156a7d8226090d79921"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_e852c4e76aff44dba4abe87e114f8e7f.response.json",
+        "sha256": "bd527bc3b90dab15b01586bcd9a9342201ad989bd4f8808c1ebf3ecd8a8a7361"
+      },
+      "proposal_action": null
+    },
+    {
+      "id": "model_1fbb27c39fba475e893e5f2f06d22877",
+      "created_at": "2026-10-20T16:14:53.264973+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 20542,
+      "output_tokens": 11933,
+      "total_tokens": 32475,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_1fbb27c39fba475e893e5f2f06d22877.request.json",
+        "sha256": "a78627036a4b74bbb770881f16a6258b32e2d1047e0f5d90ac364a8c6f83a329"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_1fbb27c39fba475e893e5f2f06d22877.response.json",
+        "sha256": "6d12d5e5c94757515afdecfec0231fd4c0c43e3b562377f4766e01046d00982e"
+      },
+      "proposal_action": "evidence.text"
+    },
+    {
+      "id": "model_75d3220071124644b1d4ef914b1d6ee9",
+      "created_at": "2026-10-20T16:15:55.708579+00:00",
+      "status": "known",
+      "finish_reason": "stop",
+      "error_category": null,
+      "input_tokens": 20676,
+      "output_tokens": 977,
+      "total_tokens": 21653,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_75d3220071124644b1d4ef914b1d6ee9.request.json",
+        "sha256": "8a49167dbb89c18d9dd0e96c1e6a5ab0cc10f5ef9b2d5cc4ee84e28505889e95"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_75d3220071124644b1d4ef914b1d6ee9.response.json",
+        "sha256": "6f4e0a46be0f205fb97901e575969cccf0214da2706cf298572636cedfe9f6fb"
+      },
+      "proposal_action": "evidence.text"
+    }
+  ],
+  "actual_prompt_audits": [
+    {
+      "model_id": "model_b09aff001bd1404aae76fde20f1405dc",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_b09aff001bd1404aae76fde20f1405dc.request.json",
+        "sha256": "846575bba77bd2e353a69e1ada519045a374ea5a8c5dd7828ce724e88bff8a2b"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": []
+      },
+      "inventory_projections": []
+    },
+    {
+      "model_id": "model_bcf4b416493f4289ae4d441528948d5a",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_bcf4b416493f4289ae4d441528948d5a.request.json",
+        "sha256": "ba199b8f565b69fb6f551387f1be5548e1c1df7b3c55f2e62fa70990f2d39d0d"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": []
+      },
+      "inventory_projections": []
+    },
+    {
+      "model_id": "model_7d8357cca4404f2fbda13b9c23a42193",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_7d8357cca4404f2fbda13b9c23a42193.request.json",
+        "sha256": "31d63cf9e13f46250bdb44ebe1cb6e314fdf3f8a4eab666026bd9c3852454de2"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": []
+      },
+      "inventory_projections": [
+        {
+          "context_page": {
+            "meaning": "context preview only; Tool coverage is recorded separately",
+            "next_offset": 18,
+            "omitted_from_result": 15,
+            "shown": 18
+          },
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "complete": true,
+            "next_cursor": null,
+            "reason": null,
+            "requested": {
+              "start": 0,
+              "kind": "artifacts",
+              "stop": 200
+            },
+            "returned": {
+              "start": 0,
+              "kind": "artifacts",
+              "stop": 33
+            },
+            "truncated": false
+          },
+          "offset": 0,
+          "next_offset": null,
+          "total": 33,
+          "shown_artifacts": [
+            {
+              "id": "artifact_c9299946865a41c4b43ef05a09491eec",
+              "basename": "pubchem-response.json",
+              "role": "identity_raw_response",
+              "size": 300
+            },
+            {
+              "id": "artifact_2b04d21005f449e785eb12d4fc223157",
+              "basename": "identity.json",
+              "role": "resolved_identity",
+              "size": 3184
+            },
+            {
+              "id": "artifact_812b43f838eb41aba50bab3e2c129fee",
+              "basename": "worker-outcome.json",
+              "role": "structure_execution",
+              "size": 2726
+            },
+            {
+              "id": "artifact_024e40d2768646e6bcd33fe2350898f2",
+              "basename": "stdout.out",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_abb68a6fb40a46929c098724ca4c89fa",
+              "basename": "stderr.txt",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_957d1d23d02c4af390699d9b8155e46e",
+              "basename": "prepared.xyz",
+              "role": "prepared_geometry_candidate",
+              "size": 955
+            },
+            {
+              "id": "artifact_38ecebe7ee5d402ca3eb255b716282aa",
+              "basename": "job.inp",
+              "role": "native_input",
+              "size": 167
+            },
+            {
+              "id": "artifact_ed09446288f5440bb6b87d1665ccfede",
+              "basename": "analyze_tddft.py",
+              "role": "code",
+              "size": 8344
+            },
+            {
+              "id": "artifact_2b7f7d2f31fa4f25b36aa68ca721a3b8",
+              "basename": "inputs.json",
+              "role": "raw_evidence",
+              "size": 992
+            },
+            {
+              "id": "artifact_79efc8a5279c4fe3b33ed37233992e0d",
+              "basename": "task.py",
+              "role": "raw_evidence",
+              "size": 8344
+            },
+            {
+              "id": "artifact_d9d29ed00f074c58bb88175ffac430f5",
+              "basename": "dependency-0",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1d65c3fb3ae140c1bee28f7dc8fc4f70",
+              "basename": "native.inp",
+              "role": "raw_evidence",
+              "size": 179
+            },
+            {
+              "id": "artifact_5379bec3f0874d30a192b4ca6501b8dc",
+              "basename": "acetone.xyz",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1cf2862a47da49d5945aac208edaf5e1",
+              "basename": "job.inp",
+              "role": "raw_evidence",
+              "size": 167
+            },
+            {
+              "id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+              "basename": "stderr.txt",
+              "role": "raw_evidence",
+              "size": 488
+            },
+            {
+              "id": "artifact_e37581c898394d2a8aa0850e09f6da8b",
+              "basename": "stdout.out",
+              "role": "raw_evidence",
+              "size": 0
+            },
+            {
+              "id": "artifact_fac0562c605441cbbd42e7a73f93d75a",
+              "basename": "boundary.json",
+              "role": "execution_record",
+              "size": 1450
+            },
+            {
+              "id": "artifact_5df8d0e035434a6c8d8d377783b5b8c1",
+              "basename": "execution.json",
+              "role": "execution_record",
+              "size": 11930
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "model_4af9c37c5dac4afea455c6165ddb21be",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_4af9c37c5dac4afea455c6165ddb21be.request.json",
+        "sha256": "a249bac6015f53c834ce03c05f26409c18cbb9ce20fe46f56f711cac9a70be3f"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": []
+      },
+      "inventory_projections": [
+        {
+          "context_page": {
+            "omitted_from_result": 15,
+            "meaning": "context preview only; Tool coverage is recorded separately",
+            "next_offset": 18,
+            "shown": 18
+          },
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "complete": true,
+            "next_cursor": null,
+            "reason": null,
+            "requested": {
+              "start": 0,
+              "kind": "artifacts",
+              "stop": 200
+            },
+            "returned": {
+              "start": 0,
+              "kind": "artifacts",
+              "stop": 33
+            },
+            "truncated": false
+          },
+          "offset": 0,
+          "next_offset": null,
+          "total": 33,
+          "shown_artifacts": [
+            {
+              "id": "artifact_c9299946865a41c4b43ef05a09491eec",
+              "basename": "pubchem-response.json",
+              "role": "identity_raw_response",
+              "size": 300
+            },
+            {
+              "id": "artifact_2b04d21005f449e785eb12d4fc223157",
+              "basename": "identity.json",
+              "role": "resolved_identity",
+              "size": 3184
+            },
+            {
+              "id": "artifact_812b43f838eb41aba50bab3e2c129fee",
+              "basename": "worker-outcome.json",
+              "role": "structure_execution",
+              "size": 2726
+            },
+            {
+              "id": "artifact_024e40d2768646e6bcd33fe2350898f2",
+              "basename": "stdout.out",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_abb68a6fb40a46929c098724ca4c89fa",
+              "basename": "stderr.txt",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_957d1d23d02c4af390699d9b8155e46e",
+              "basename": "prepared.xyz",
+              "role": "prepared_geometry_candidate",
+              "size": 955
+            },
+            {
+              "id": "artifact_38ecebe7ee5d402ca3eb255b716282aa",
+              "basename": "job.inp",
+              "role": "native_input",
+              "size": 167
+            },
+            {
+              "id": "artifact_ed09446288f5440bb6b87d1665ccfede",
+              "basename": "analyze_tddft.py",
+              "role": "code",
+              "size": 8344
+            },
+            {
+              "id": "artifact_2b7f7d2f31fa4f25b36aa68ca721a3b8",
+              "basename": "inputs.json",
+              "role": "raw_evidence",
+              "size": 992
+            },
+            {
+              "id": "artifact_79efc8a5279c4fe3b33ed37233992e0d",
+              "basename": "task.py",
+              "role": "raw_evidence",
+              "size": 8344
+            },
+            {
+              "id": "artifact_d9d29ed00f074c58bb88175ffac430f5",
+              "basename": "dependency-0",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1d65c3fb3ae140c1bee28f7dc8fc4f70",
+              "basename": "native.inp",
+              "role": "raw_evidence",
+              "size": 179
+            },
+            {
+              "id": "artifact_5379bec3f0874d30a192b4ca6501b8dc",
+              "basename": "acetone.xyz",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1cf2862a47da49d5945aac208edaf5e1",
+              "basename": "job.inp",
+              "role": "raw_evidence",
+              "size": 167
+            },
+            {
+              "id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+              "basename": "stderr.txt",
+              "role": "raw_evidence",
+              "size": 488
+            },
+            {
+              "id": "artifact_e37581c898394d2a8aa0850e09f6da8b",
+              "basename": "stdout.out",
+              "role": "raw_evidence",
+              "size": 0
+            },
+            {
+              "id": "artifact_fac0562c605441cbbd42e7a73f93d75a",
+              "basename": "boundary.json",
+              "role": "execution_record",
+              "size": 1450
+            },
+            {
+              "id": "artifact_5df8d0e035434a6c8d8d377783b5b8c1",
+              "basename": "execution.json",
+              "role": "execution_record",
+              "size": 11930
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "model_61e4c152f4004c1baffe15dc0a046e39",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_61e4c152f4004c1baffe15dc0a046e39.request.json",
+        "sha256": "058b54b8f126f4624b294c5f448beb643e70c5bd05483780930590a9307089ef"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": []
+      },
+      "inventory_projections": [
+        {
+          "context_page": {
+            "meaning": "context preview only; Tool coverage is recorded separately",
+            "next_offset": 18,
+            "shown": 18,
+            "omitted_from_result": 15
+          },
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "complete": true,
+            "next_cursor": null,
+            "reason": null,
+            "requested": {
+              "start": 0,
+              "kind": "artifacts",
+              "stop": 200
+            },
+            "returned": {
+              "start": 0,
+              "kind": "artifacts",
+              "stop": 33
+            },
+            "truncated": false
+          },
+          "offset": 0,
+          "next_offset": null,
+          "total": 33,
+          "shown_artifacts": [
+            {
+              "id": "artifact_c9299946865a41c4b43ef05a09491eec",
+              "basename": "pubchem-response.json",
+              "role": "identity_raw_response",
+              "size": 300
+            },
+            {
+              "id": "artifact_2b04d21005f449e785eb12d4fc223157",
+              "basename": "identity.json",
+              "role": "resolved_identity",
+              "size": 3184
+            },
+            {
+              "id": "artifact_812b43f838eb41aba50bab3e2c129fee",
+              "basename": "worker-outcome.json",
+              "role": "structure_execution",
+              "size": 2726
+            },
+            {
+              "id": "artifact_024e40d2768646e6bcd33fe2350898f2",
+              "basename": "stdout.out",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_abb68a6fb40a46929c098724ca4c89fa",
+              "basename": "stderr.txt",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_957d1d23d02c4af390699d9b8155e46e",
+              "basename": "prepared.xyz",
+              "role": "prepared_geometry_candidate",
+              "size": 955
+            },
+            {
+              "id": "artifact_38ecebe7ee5d402ca3eb255b716282aa",
+              "basename": "job.inp",
+              "role": "native_input",
+              "size": 167
+            },
+            {
+              "id": "artifact_ed09446288f5440bb6b87d1665ccfede",
+              "basename": "analyze_tddft.py",
+              "role": "code",
+              "size": 8344
+            },
+            {
+              "id": "artifact_2b7f7d2f31fa4f25b36aa68ca721a3b8",
+              "basename": "inputs.json",
+              "role": "raw_evidence",
+              "size": 992
+            },
+            {
+              "id": "artifact_79efc8a5279c4fe3b33ed37233992e0d",
+              "basename": "task.py",
+              "role": "raw_evidence",
+              "size": 8344
+            },
+            {
+              "id": "artifact_d9d29ed00f074c58bb88175ffac430f5",
+              "basename": "dependency-0",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1d65c3fb3ae140c1bee28f7dc8fc4f70",
+              "basename": "native.inp",
+              "role": "raw_evidence",
+              "size": 179
+            },
+            {
+              "id": "artifact_5379bec3f0874d30a192b4ca6501b8dc",
+              "basename": "acetone.xyz",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1cf2862a47da49d5945aac208edaf5e1",
+              "basename": "job.inp",
+              "role": "raw_evidence",
+              "size": 167
+            },
+            {
+              "id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+              "basename": "stderr.txt",
+              "role": "raw_evidence",
+              "size": 488
+            },
+            {
+              "id": "artifact_e37581c898394d2a8aa0850e09f6da8b",
+              "basename": "stdout.out",
+              "role": "raw_evidence",
+              "size": 0
+            },
+            {
+              "id": "artifact_fac0562c605441cbbd42e7a73f93d75a",
+              "basename": "boundary.json",
+              "role": "execution_record",
+              "size": 1450
+            },
+            {
+              "id": "artifact_5df8d0e035434a6c8d8d377783b5b8c1",
+              "basename": "execution.json",
+              "role": "execution_record",
+              "size": 11930
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "model_2bef7776ed4743bfb90ef0e5d4626f7c",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_2bef7776ed4743bfb90ef0e5d4626f7c.request.json",
+        "sha256": "02f6be71e6394f421a60c7c7f137947a79787a20ce304a214e9086e0067f3a6b"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": []
+      },
+      "inventory_projections": []
+    },
+    {
+      "model_id": "model_695bd95b229f4b5d9730a1c929d07639",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_695bd95b229f4b5d9730a1c929d07639.request.json",
+        "sha256": "6834cf206ba5b6d8aee2084c0c07d4b48103a83e9105b371a614dae0ff068f63"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": []
+      },
+      "inventory_projections": []
+    },
+    {
+      "model_id": "model_e2b13365041e414698f0bf8eb63d6bcc",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_e2b13365041e414698f0bf8eb63d6bcc.request.json",
+        "sha256": "79bc3138e30c3ce9c1aacbfc7107cee9e901f02e7167e46aeb6e51cc78d696ae"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": []
+      },
+      "inventory_projections": []
+    },
+    {
+      "model_id": "model_e852c4e76aff44dba4abe87e114f8e7f",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_e852c4e76aff44dba4abe87e114f8e7f.request.json",
+        "sha256": "608913fa7ec4afdd09d749162b3521141f513af7f599f156a7d8226090d79921"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": []
+      },
+      "inventory_projections": [
+        {
+          "context_page": {
+            "meaning": "context preview only; Tool coverage is recorded separately",
+            "next_offset": 18,
+            "omitted_from_result": 15,
+            "shown": 18
+          },
+          "coverage": {
+            "requested": {
+              "start": 0,
+              "kind": "artifacts",
+              "stop": 100
+            },
+            "truncated": false,
+            "returned": {
+              "kind": "artifacts",
+              "start": 0,
+              "stop": 33
+            },
+            "reason": null,
+            "complete": true,
+            "version": "evidence-coverage-1",
+            "next_cursor": null
+          },
+          "offset": 0,
+          "next_offset": null,
+          "total": 33,
+          "shown_artifacts": [
+            {
+              "id": "artifact_c9299946865a41c4b43ef05a09491eec",
+              "basename": "pubchem-response.json",
+              "role": "identity_raw_response",
+              "size": 300
+            },
+            {
+              "id": "artifact_2b04d21005f449e785eb12d4fc223157",
+              "basename": "identity.json",
+              "role": "resolved_identity",
+              "size": 3184
+            },
+            {
+              "id": "artifact_812b43f838eb41aba50bab3e2c129fee",
+              "basename": "worker-outcome.json",
+              "role": "structure_execution",
+              "size": 2726
+            },
+            {
+              "id": "artifact_024e40d2768646e6bcd33fe2350898f2",
+              "basename": "stdout.out",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_abb68a6fb40a46929c098724ca4c89fa",
+              "basename": "stderr.txt",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_957d1d23d02c4af390699d9b8155e46e",
+              "basename": "prepared.xyz",
+              "role": "prepared_geometry_candidate",
+              "size": 955
+            },
+            {
+              "id": "artifact_38ecebe7ee5d402ca3eb255b716282aa",
+              "basename": "job.inp",
+              "role": "native_input",
+              "size": 167
+            },
+            {
+              "id": "artifact_ed09446288f5440bb6b87d1665ccfede",
+              "basename": "analyze_tddft.py",
+              "role": "code",
+              "size": 8344
+            },
+            {
+              "id": "artifact_2b7f7d2f31fa4f25b36aa68ca721a3b8",
+              "basename": "inputs.json",
+              "role": "raw_evidence",
+              "size": 992
+            },
+            {
+              "id": "artifact_79efc8a5279c4fe3b33ed37233992e0d",
+              "basename": "task.py",
+              "role": "raw_evidence",
+              "size": 8344
+            },
+            {
+              "id": "artifact_d9d29ed00f074c58bb88175ffac430f5",
+              "basename": "dependency-0",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1d65c3fb3ae140c1bee28f7dc8fc4f70",
+              "basename": "native.inp",
+              "role": "raw_evidence",
+              "size": 179
+            },
+            {
+              "id": "artifact_5379bec3f0874d30a192b4ca6501b8dc",
+              "basename": "acetone.xyz",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1cf2862a47da49d5945aac208edaf5e1",
+              "basename": "job.inp",
+              "role": "raw_evidence",
+              "size": 167
+            },
+            {
+              "id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+              "basename": "stderr.txt",
+              "role": "raw_evidence",
+              "size": 488
+            },
+            {
+              "id": "artifact_e37581c898394d2a8aa0850e09f6da8b",
+              "basename": "stdout.out",
+              "role": "raw_evidence",
+              "size": 0
+            },
+            {
+              "id": "artifact_fac0562c605441cbbd42e7a73f93d75a",
+              "basename": "boundary.json",
+              "role": "execution_record",
+              "size": 1450
+            },
+            {
+              "id": "artifact_5df8d0e035434a6c8d8d377783b5b8c1",
+              "basename": "execution.json",
+              "role": "execution_record",
+              "size": 11930
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "model_1fbb27c39fba475e893e5f2f06d22877",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_1fbb27c39fba475e893e5f2f06d22877.request.json",
+        "sha256": "a78627036a4b74bbb770881f16a6258b32e2d1047e0f5d90ac364a8c6f83a329"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": [],
+        "validation_error": {
+          "category": "invalid_proposal_json",
+          "requirement": "invalid_proposal_json"
+        }
+      },
+      "inventory_projections": [
+        {
+          "context_page": {
+            "meaning": "context preview only; Tool coverage is recorded separately",
+            "next_offset": 18,
+            "omitted_from_result": 15,
+            "shown": 18
+          },
+          "coverage": {
+            "requested": {
+              "start": 0,
+              "kind": "artifacts",
+              "stop": 100
+            },
+            "truncated": false,
+            "returned": {
+              "kind": "artifacts",
+              "start": 0,
+              "stop": 33
+            },
+            "reason": null,
+            "complete": true,
+            "version": "evidence-coverage-1",
+            "next_cursor": null
+          },
+          "offset": 0,
+          "next_offset": null,
+          "total": 33,
+          "shown_artifacts": [
+            {
+              "id": "artifact_c9299946865a41c4b43ef05a09491eec",
+              "basename": "pubchem-response.json",
+              "role": "identity_raw_response",
+              "size": 300
+            },
+            {
+              "id": "artifact_2b04d21005f449e785eb12d4fc223157",
+              "basename": "identity.json",
+              "role": "resolved_identity",
+              "size": 3184
+            },
+            {
+              "id": "artifact_812b43f838eb41aba50bab3e2c129fee",
+              "basename": "worker-outcome.json",
+              "role": "structure_execution",
+              "size": 2726
+            },
+            {
+              "id": "artifact_024e40d2768646e6bcd33fe2350898f2",
+              "basename": "stdout.out",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_abb68a6fb40a46929c098724ca4c89fa",
+              "basename": "stderr.txt",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_957d1d23d02c4af390699d9b8155e46e",
+              "basename": "prepared.xyz",
+              "role": "prepared_geometry_candidate",
+              "size": 955
+            },
+            {
+              "id": "artifact_38ecebe7ee5d402ca3eb255b716282aa",
+              "basename": "job.inp",
+              "role": "native_input",
+              "size": 167
+            },
+            {
+              "id": "artifact_ed09446288f5440bb6b87d1665ccfede",
+              "basename": "analyze_tddft.py",
+              "role": "code",
+              "size": 8344
+            },
+            {
+              "id": "artifact_2b7f7d2f31fa4f25b36aa68ca721a3b8",
+              "basename": "inputs.json",
+              "role": "raw_evidence",
+              "size": 992
+            },
+            {
+              "id": "artifact_79efc8a5279c4fe3b33ed37233992e0d",
+              "basename": "task.py",
+              "role": "raw_evidence",
+              "size": 8344
+            },
+            {
+              "id": "artifact_d9d29ed00f074c58bb88175ffac430f5",
+              "basename": "dependency-0",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1d65c3fb3ae140c1bee28f7dc8fc4f70",
+              "basename": "native.inp",
+              "role": "raw_evidence",
+              "size": 179
+            },
+            {
+              "id": "artifact_5379bec3f0874d30a192b4ca6501b8dc",
+              "basename": "acetone.xyz",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1cf2862a47da49d5945aac208edaf5e1",
+              "basename": "job.inp",
+              "role": "raw_evidence",
+              "size": 167
+            },
+            {
+              "id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+              "basename": "stderr.txt",
+              "role": "raw_evidence",
+              "size": 488
+            },
+            {
+              "id": "artifact_e37581c898394d2a8aa0850e09f6da8b",
+              "basename": "stdout.out",
+              "role": "raw_evidence",
+              "size": 0
+            },
+            {
+              "id": "artifact_fac0562c605441cbbd42e7a73f93d75a",
+              "basename": "boundary.json",
+              "role": "execution_record",
+              "size": 1450
+            },
+            {
+              "id": "artifact_5df8d0e035434a6c8d8d377783b5b8c1",
+              "basename": "execution.json",
+              "role": "execution_record",
+              "size": 11930
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "model_75d3220071124644b1d4ef914b1d6ee9",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T4-001/data/runs/run_2969b369790144c7901c347da8552f15/model/model_75d3220071124644b1d4ef914b1d6ee9.request.json",
+        "sha256": "8a49167dbb89c18d9dd0e96c1e6a5ab0cc10f5ef9b2d5cc4ee84e28505889e95"
+      },
+      "message_index": 1,
+      "native_stdout_id_present_in_actual_request": false,
+      "native_input_error_literal_present_in_actual_request": false,
+      "revise_plan_in_actual_action_schemas": true,
+      "control": {
+        "pending_step_ids": []
+      },
+      "inventory_projections": [
+        {
+          "context_page": {
+            "meaning": "context preview only; Tool coverage is recorded separately",
+            "next_offset": 18,
+            "omitted_from_result": 15,
+            "shown": 18
+          },
+          "coverage": {
+            "requested": {
+              "start": 0,
+              "kind": "artifacts",
+              "stop": 100
+            },
+            "truncated": false,
+            "returned": {
+              "kind": "artifacts",
+              "start": 0,
+              "stop": 33
+            },
+            "reason": null,
+            "complete": true,
+            "next_cursor": null,
+            "version": "evidence-coverage-1"
+          },
+          "offset": 0,
+          "next_offset": null,
+          "total": 33,
+          "shown_artifacts": [
+            {
+              "id": "artifact_c9299946865a41c4b43ef05a09491eec",
+              "basename": "pubchem-response.json",
+              "role": "identity_raw_response",
+              "size": 300
+            },
+            {
+              "id": "artifact_2b04d21005f449e785eb12d4fc223157",
+              "basename": "identity.json",
+              "role": "resolved_identity",
+              "size": 3184
+            },
+            {
+              "id": "artifact_812b43f838eb41aba50bab3e2c129fee",
+              "basename": "worker-outcome.json",
+              "role": "structure_execution",
+              "size": 2726
+            },
+            {
+              "id": "artifact_024e40d2768646e6bcd33fe2350898f2",
+              "basename": "stdout.out",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_abb68a6fb40a46929c098724ca4c89fa",
+              "basename": "stderr.txt",
+              "role": "structure_execution",
+              "size": 0
+            },
+            {
+              "id": "artifact_957d1d23d02c4af390699d9b8155e46e",
+              "basename": "prepared.xyz",
+              "role": "prepared_geometry_candidate",
+              "size": 955
+            },
+            {
+              "id": "artifact_38ecebe7ee5d402ca3eb255b716282aa",
+              "basename": "job.inp",
+              "role": "native_input",
+              "size": 167
+            },
+            {
+              "id": "artifact_ed09446288f5440bb6b87d1665ccfede",
+              "basename": "analyze_tddft.py",
+              "role": "code",
+              "size": 8344
+            },
+            {
+              "id": "artifact_2b7f7d2f31fa4f25b36aa68ca721a3b8",
+              "basename": "inputs.json",
+              "role": "raw_evidence",
+              "size": 992
+            },
+            {
+              "id": "artifact_79efc8a5279c4fe3b33ed37233992e0d",
+              "basename": "task.py",
+              "role": "raw_evidence",
+              "size": 8344
+            },
+            {
+              "id": "artifact_d9d29ed00f074c58bb88175ffac430f5",
+              "basename": "dependency-0",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1d65c3fb3ae140c1bee28f7dc8fc4f70",
+              "basename": "native.inp",
+              "role": "raw_evidence",
+              "size": 179
+            },
+            {
+              "id": "artifact_5379bec3f0874d30a192b4ca6501b8dc",
+              "basename": "acetone.xyz",
+              "role": "raw_evidence",
+              "size": 955
+            },
+            {
+              "id": "artifact_1cf2862a47da49d5945aac208edaf5e1",
+              "basename": "job.inp",
+              "role": "raw_evidence",
+              "size": 167
+            },
+            {
+              "id": "artifact_dad543790f474ba2a55daae85e8da6c0",
+              "basename": "stderr.txt",
+              "role": "raw_evidence",
+              "size": 488
+            },
+            {
+              "id": "artifact_e37581c898394d2a8aa0850e09f6da8b",
+              "basename": "stdout.out",
+              "role": "raw_evidence",
+              "size": 0
+            },
+            {
+              "id": "artifact_fac0562c605441cbbd42e7a73f93d75a",
+              "basename": "boundary.json",
+              "role": "execution_record",
+              "size": 1450
+            },
+            {
+              "id": "artifact_5df8d0e035434a6c8d8d377783b5b8c1",
+              "basename": "execution.json",
+              "role": "execution_record",
+              "size": 11930
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "run_diagnostics": [
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_e852c4e76aff44dba4abe87e114f8e7f",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "ContextLimitError",
+      "message": "required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+      "environment_occupied": false
+    }
+  ],
+  "rejected_decisions": [
+    {
+      "id": "model_e852c4e76aff44dba4abe87e114f8e7f",
+      "basis": {
+        "request_version": 3,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "rejected",
+      "related_results": [],
+      "reason": "rejected",
+      "parameters": {
+        "error_category": "invalid_proposal_json",
+        "recovery_kind": "correction",
+        "requirement": "invalid_proposal_json"
+      }
+    }
+  ],
+  "assessment_limits": [
+    "Only the geometry input goal is recorded satisfied; this does not establish the five excitation energies, oscillator strengths, interpretation, or complete user delivery.",
+    "No independent reference/control calculation was authorized or run. No numeric scientific pass is claimed.",
+    "Resource usage is incomplete and is a recorded lower bound; the 6 internal work units are reserved declared slots, not measured SCF or excitation evaluations.",
+    "The observed source-selection mistakes and hidden later inventory rows are confirmed; how much each caused the model failure cannot be isolated without another experiment, which was not performed.",
+    "No model, ORCA, test, context rebuild, or replacement Run was executed for this review. Stored prompt encoding was decoded as data only."
+  ],
+  "actions": {
+    "product_modified": false,
+    "freeze_modified": false,
+    "run_modified": false,
+    "scripts_modified": false,
+    "review_only_file_written": "docs/acceptance/code-as-tools-step7-refreeze-3/review/t4-final-review.json"
+  }
+}

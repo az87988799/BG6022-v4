@@ -1,0 +1,903 @@
+{
+  "id": "model_2c883dea68ef4b8394dc9ca13d2a8d8b",
+  "basis": {
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 1
+  },
+  "request": {
+    "id": "request_de695c174c6a4a6c8d89736e2ef8e7f8",
+    "version": 2,
+    "original_text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "geometry_artifact_id": null,
+    "charge": 0,
+    "multiplicity": 1,
+    "method": null,
+    "basis": null,
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "environment": "explicit",
+      "electronic_state": "default"
+    },
+    "goals": [
+      {
+        "id": "goal_prepare_structure",
+        "port": "prepared_geometry",
+        "required": true,
+        "minimum_check_version": "structure-prepare-3",
+        "evidence_contract_version": "legacy-1",
+        "verification": "qualified",
+        "quantity": "生成并保存一份合理结构",
+        "original_text": "生成并保存一份合理结构",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "氰化氢HCN"
+          ],
+          "canonical_names": [],
+          "query_name": "hydrogen cyanide",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_463797f2c4694968b4606f71062d200f",
+            "text_basis": "氰化氢HCN",
+            "start": 2,
+            "end": 8,
+            "schema": "request-semantics-3"
+          }
+        },
+        "text_evidence": {
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "text_basis": "生成并保存一份合理结构",
+          "start": 25,
+          "end": 36,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_giao_nuclear_shielding",
+        "port": "giao_nuclear_shielding",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "全部3个原子核的GIAO核磁屏蔽",
+        "original_text": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "text_basis": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。",
+          "start": 37,
+          "end": 64,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {
+          "geometry_relation": "fixed_initial"
+        },
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_shielding_tensor_and_isotropic",
+        "port": "shielding_tensor_and_isotropic",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数",
+        "original_text": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "text_basis": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。",
+          "start": 128,
+          "end": 211,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_isotropic_trace_consistency",
+        "port": "isotropic_trace_consistency",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "核对各向同性值与该核总张量迹的一致性",
+        "original_text": "核对各向同性值与该核总张量迹的一致性",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "text_basis": "核对各向同性值与该核总张量迹的一致性",
+          "start": 192,
+          "end": 210,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_deliver_artifacts",
+        "port": "deliverables",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限",
+        "original_text": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "text_basis": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。",
+          "start": 211,
+          "end": 250,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_random_seed_record",
+        "port": "random_seed_record",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "original_text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "start": 337,
+          "end": 408,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_shielding_constants_not_chemical_shift",
+        "port": "shielding_constants_not_chemical_shift",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "屏蔽常数，不要求参考物或实验谱",
+        "original_text": "此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "text_basis": "此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。",
+          "start": 250,
+          "end": 312,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      }
+    ],
+    "systems": [
+      {
+        "id": "system_hcn",
+        "geometry_artifact_id": null,
+        "conditions": {},
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": "氰化氢HCN",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "氰化氢HCN"
+          ],
+          "canonical_names": [],
+          "query_name": "hydrogen cyanide",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_463797f2c4694968b4606f71062d200f",
+            "text_basis": "氰化氢HCN",
+            "start": 2,
+            "end": 8,
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_463797f2c4694968b4606f71062d200f",
+        "text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "source": "user",
+        "created_at": "2026-10-20T16:20:57.825624+00:00",
+        "request_version": 1
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "electronic_state": "RKS"
+    },
+    "normalization_status": "normalized",
+    "condition_evidence": {
+      "workflow_policy": {
+        "version": "simplified-1",
+        "source": "run_configuration"
+      },
+      "request.charge": {
+        "value": 0,
+        "source": "explicit",
+        "text_basis": "中性",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_463797f2c4694968b4606f71062d200f",
+        "source_refs": [],
+        "value_basis": null,
+        "start": 15,
+        "end": 17,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_463797f2c4694968b4606f71062d200f"
+        ]
+      },
+      "request.multiplicity": {
+        "value": 1,
+        "source": "explicit",
+        "text_basis": "单重态",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_463797f2c4694968b4606f71062d200f",
+        "source_refs": [],
+        "value_basis": null,
+        "start": 18,
+        "end": 21,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_463797f2c4694968b4606f71062d200f"
+        ]
+      },
+      "request.environment": {
+        "value": "gas_phase",
+        "source": "explicit",
+        "text_basis": "气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_463797f2c4694968b4606f71062d200f",
+        "source_refs": [],
+        "value_basis": null,
+        "start": 22,
+        "end": 24,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_463797f2c4694968b4606f71062d200f"
+        ]
+      },
+      "request.electronic_state": {
+        "value": "RKS",
+        "source": "default",
+        "text_basis": "",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": "local-hf-1",
+        "message_id": null,
+        "source_refs": [],
+        "value_basis": null,
+        "message_ids": [
+          "message_463797f2c4694968b4606f71062d200f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.method": {
+        "message_id": "message_463797f2c4694968b4606f71062d200f",
+        "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。",
+        "start": 64,
+        "end": 128,
+        "schema": "request-semantics-3",
+        "source": "explicit"
+      },
+      "automatic_selection.basis": {
+        "message_id": "message_463797f2c4694968b4606f71062d200f",
+        "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。",
+        "start": 64,
+        "end": 128,
+        "schema": "request-semantics-3",
+        "source": "explicit"
+      }
+    },
+    "semantic_defaults": {
+      "charge": 0,
+      "electronic_state": "RKS",
+      "environment": "gas_phase",
+      "multiplicity": 1
+    },
+    "automatic_selection": [
+      "method",
+      "basis"
+    ],
+    "selection_reasons": {}
+  },
+  "plan": null,
+  "related_results": [],
+  "user_message_ids": [
+    "message_463797f2c4694968b4606f71062d200f"
+  ],
+  "semantics": {
+    "schema": "request-semantics-3",
+    "kind": "normalize",
+    "candidate": {
+      "schema_version": "request-semantics-3",
+      "message_ids": [
+        "message_463797f2c4694968b4606f71062d200f"
+      ],
+      "kind": "normalize",
+      "text_basis": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "conditions": {
+        "charge": {
+          "value": 0,
+          "source": "explicit",
+          "text_basis": "中性",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": null,
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "source_refs": [],
+          "value_basis": null
+        },
+        "multiplicity": {
+          "value": 1,
+          "source": "explicit",
+          "text_basis": "单重态",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": null,
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "source_refs": [],
+          "value_basis": null
+        },
+        "environment": {
+          "value": "gas_phase",
+          "source": "explicit",
+          "text_basis": "气相",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": null,
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "source_refs": [],
+          "value_basis": null
+        },
+        "electronic_state": {
+          "value": "RKS",
+          "source": "default",
+          "text_basis": "",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": "local-hf-1",
+          "message_id": null,
+          "source_refs": [],
+          "value_basis": null
+        }
+      },
+      "system_conditions": {},
+      "goals": [
+        {
+          "key": "prepare_structure",
+          "port": "prepared_geometry",
+          "text_basis": "生成并保存一份合理结构",
+          "source_refs": [],
+          "system_refs": [
+            "system_hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "生成并保存一份合理结构",
+          "verification": null
+        },
+        {
+          "key": "giao_nuclear_shielding",
+          "port": "giao_nuclear_shielding",
+          "text_basis": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。",
+          "source_refs": [],
+          "system_refs": [
+            "system_hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": "fixed_initial",
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "全部3个原子核的GIAO核磁屏蔽",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "shielding_tensor_and_isotropic",
+          "port": "shielding_tensor_and_isotropic",
+          "text_basis": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。",
+          "source_refs": [],
+          "system_refs": [
+            "system_hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "isotropic_trace_consistency",
+          "port": "isotropic_trace_consistency",
+          "text_basis": "核对各向同性值与该核总张量迹的一致性",
+          "source_refs": [],
+          "system_refs": [
+            "system_hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "核对各向同性值与该核总张量迹的一致性",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "deliver_artifacts",
+          "port": "deliverables",
+          "text_basis": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。",
+          "source_refs": [],
+          "system_refs": [
+            "system_hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "random_seed_record",
+          "port": "random_seed_record",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "source_refs": [],
+          "system_refs": [
+            "system_hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "shielding_constants_not_chemical_shift",
+          "port": "shielding_constants_not_chemical_shift",
+          "text_basis": "此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。",
+          "source_refs": [],
+          "system_refs": [
+            "system_hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "屏蔽常数，不要求参考物或实验谱",
+          "verification": "reported_with_limitations"
+        }
+      ],
+      "replaces": [],
+      "goal_bindings": {},
+      "resolves": [],
+      "unresolved": [],
+      "questions": [],
+      "notices": [],
+      "question_gaps": {},
+      "identities": [
+        {
+          "key": "hcn",
+          "name": "氰化氢HCN",
+          "query_name": "hydrogen cyanide",
+          "text_basis": "氰化氢HCN",
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "ambiguities": []
+        }
+      ],
+      "automatic_selection": {
+        "method": {
+          "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。",
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "source_refs": [
+            "source_cd055e6d4defe95f"
+          ]
+        },
+        "basis": {
+          "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。",
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "source_refs": [
+            "source_cd055e6d4defe95f"
+          ]
+        }
+      }
+    },
+    "proposed_candidate": {
+      "schema_version": "request-semantics-3",
+      "message_ids": [
+        "message_463797f2c4694968b4606f71062d200f"
+      ],
+      "kind": "normalize",
+      "text_basis": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "conditions": {
+        "charge": {
+          "value": 0,
+          "source": "explicit",
+          "text_basis": "中性",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": null,
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "source_refs": [],
+          "value_basis": null
+        },
+        "multiplicity": {
+          "value": 1,
+          "source": "explicit",
+          "text_basis": "单重态",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": null,
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "source_refs": [],
+          "value_basis": null
+        },
+        "environment": {
+          "value": "gas_phase",
+          "source": "explicit",
+          "text_basis": "气相",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": null,
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "source_refs": [],
+          "value_basis": null
+        }
+      },
+      "system_conditions": {},
+      "goals": [
+        {
+          "key": "prepare_structure",
+          "port": "prepared_geometry",
+          "text_basis": "生成并保存一份合理结构",
+          "source_refs": [],
+          "system_refs": [
+            "hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "生成并保存一份合理结构",
+          "verification": null
+        },
+        {
+          "key": "giao_nuclear_shielding",
+          "port": "giao_nuclear_shielding",
+          "text_basis": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。",
+          "source_refs": [],
+          "system_refs": [
+            "hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": "fixed_initial",
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "全部3个原子核的GIAO核磁屏蔽",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "shielding_tensor_and_isotropic",
+          "port": "shielding_tensor_and_isotropic",
+          "text_basis": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。",
+          "source_refs": [],
+          "system_refs": [
+            "hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "isotropic_trace_consistency",
+          "port": "isotropic_trace_consistency",
+          "text_basis": "核对各向同性值与该核总张量迹的一致性",
+          "source_refs": [],
+          "system_refs": [
+            "hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "核对各向同性值与该核总张量迹的一致性",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "deliver_artifacts",
+          "port": "deliverables",
+          "text_basis": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。",
+          "source_refs": [],
+          "system_refs": [
+            "hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "random_seed_record",
+          "port": "random_seed_record",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "source_refs": [],
+          "system_refs": [
+            "hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "shielding_constants_not_chemical_shift",
+          "port": "shielding_constants_not_chemical_shift",
+          "text_basis": "此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。",
+          "source_refs": [],
+          "system_refs": [
+            "hcn"
+          ],
+          "system_refs_note": null,
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "analysis_goal_ref": null,
+          "quantity": "屏蔽常数，不要求参考物或实验谱",
+          "verification": "reported_with_limitations"
+        }
+      ],
+      "replaces": [],
+      "goal_bindings": {},
+      "resolves": [],
+      "unresolved": [],
+      "questions": [],
+      "notices": [],
+      "question_gaps": {},
+      "identities": [
+        {
+          "key": "hcn",
+          "name": "氰化氢HCN",
+          "query_name": "hydrogen cyanide",
+          "text_basis": "氰化氢HCN",
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "ambiguities": []
+        }
+      ],
+      "automatic_selection": {
+        "method": {
+          "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。",
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "source_refs": [
+            "source_cd055e6d4defe95f"
+          ]
+        },
+        "basis": {
+          "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。",
+          "message_id": "message_463797f2c4694968b4606f71062d200f",
+          "source_refs": [
+            "source_cd055e6d4defe95f"
+          ]
+        }
+      }
+    },
+    "program_applied_defaults": [
+      {
+        "path": [
+          "conditions",
+          "electronic_state"
+        ],
+        "reason": "authorized_default_applied",
+        "authorized_default": {
+          "source": "default",
+          "default_rule": "local-hf-1",
+          "value": "RKS"
+        }
+      }
+    ],
+    "program_source_references": [
+      {
+        "path": [
+          "automatic_selection",
+          "method"
+        ],
+        "source_refs": [
+          "source_cd055e6d4defe95f"
+        ],
+        "message_id": "message_463797f2c4694968b4606f71062d200f",
+        "start": 64,
+        "end": 128
+      },
+      {
+        "path": [
+          "automatic_selection",
+          "basis"
+        ],
+        "source_refs": [
+          "source_cd055e6d4defe95f"
+        ],
+        "message_id": "message_463797f2c4694968b4606f71062d200f",
+        "start": 64,
+        "end": 128
+      }
+    ],
+    "program_fields": [],
+    "remarks": [],
+    "replaced_goal_ids": [
+      "raw_request"
+    ],
+    "questions": [],
+    "notices": [],
+    "question_gaps": {},
+    "delivery_scope": "science",
+    "awaiting_reply": false,
+    "notice_contract": {
+      "version": "registration-notices-2",
+      "required": {},
+      "selected": [],
+      "generated": []
+    }
+  }
+}

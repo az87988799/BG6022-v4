@@ -1,0 +1,1430 @@
+{
+  "recorded_at_utc": "2026-10-20T15:43:12.165062+00:00",
+  "task": "T3",
+  "repeat": 1,
+  "run_id": "run_46a2c5ba355a47249334fa194b1d33f9",
+  "status": "partial",
+  "scope": "intake_only",
+  "terminal_review": false,
+  "review_kind": "Read-only first rejection to second normalization acceptance; ongoing Run is not a task result.",
+  "product_commit": "89d55708d9d879ea7c7d28860199056185df2795",
+  "source_records": {
+    "start": {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T3/start.json",
+      "sha256": "c87a77c8c1b22f20bc822d00f0afcbad5a1197a9508be4c6dac5b1c2b3b70fa4",
+      "bytes": 731
+    },
+    "run_observed_snapshot": {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/run.json",
+      "sha256": "85b896973d44fd042e361c0a7c373e4380988b397872c240e92cfb41dfcc5deb",
+      "bytes": 96669
+    },
+    "product_freeze_event": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/freeze/product-freeze-event.json",
+      "sha256": "43fc21e3f41f9ea267dbf7cf933bfb85536a0ad92d1c189ad085a69997738727",
+      "bytes": 494
+    },
+    "semantic_source": {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "1bbd376ca17d5e80ed01c1a09824cf22830a57975a7f146699769fc840022c94",
+      "bytes": 150407
+    },
+    "accepted_normalization": {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/decisions/model_099e3515d70d40fa81ea48f47370df6d.json",
+      "sha256": "49dce86db8b678f74bbeff24fcff130a0dfe31e0a8a42a4efe4eac506323d7c7",
+      "bytes": 44829
+    },
+    "selected_conditions": {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/decisions/model_fb7551e4fb464a2fb4d1d8e7beb53eb5.json",
+      "sha256": "3f82902faf002fb993ca4465c378fc24e8e7b5301aac4560cd5739a5882cbf25",
+      "bytes": 26478
+    }
+  },
+  "current_snapshot": {
+    "observed_at_utc": "2026-10-20T15:43:12.165062+00:00",
+    "run_state": "running",
+    "driver_outcome_present": false,
+    "model_calls_reserved_or_known": 8,
+    "known_model_tokens_used": 135859,
+    "model_tokens_unknown_reserved": 96763,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "note": "Run state/usage are a live snapshot. Temporary waiting_user/ready and in-flight reservations are not terminal outcomes."
+  },
+  "confirmed_findings": [
+    {
+      "finding": "First rejection aggregates eight issues in one correction: five citation-representation conflicts, two scalar geometry_relation restrictions, one exact quantity phrase restriction.",
+      "evidence": "Full Run.decisions[action=rejected].parameters.requirement retained in rounds[0].rejection, not inferred only from the next prompt."
+    },
+    {
+      "finding": "All five rejected short field quotes are correct contiguous substrings of their supplied authenticated fragments, with matching message IDs.",
+      "mechanism": "semantic.py:391-394 requires nonempty text_basis to equal the complete referenced span, so correct shorter source text is rejected as a representation conflict before field evaluation.",
+      "schema_prompt_gap": "Actual schema permits text_basis and source_refs together; source_reference_rules offers source_refs instead of copying, but does not explicitly state the full-span-equality restriction for both supplied fields."
+    },
+    {
+      "finding": "Both proposed optimized labels for point energy/point structures were rejected as unsupported scalar geometry relations, not as a prohibition on the requested constrained optimizations.",
+      "mechanism": "semantic.py:731-738 rejects a non-null proposed relation when the program derives none; 1359-1397 treats task/candidate geometry as non-scalar. Feedback explicitly permits null while retaining coordinate and calculation obligations.",
+      "limit": "No counterfactual semantic execution was performed; this review does not independently prove every natural-language geometry classification."
+    },
+    {
+      "finding": "The proposed random_seed quantity 随机数种子 1701 is not one contiguous user phrase; the original has 使用随机数，请统一采用种子 1701. The second candidate uses the exact phrase 种子 1701.",
+      "mechanism": "semantic.py:720-722 uses exact substring membership. The rejected wording communicates the same seed intent, but violates this representation rule; the seed value itself was not rejected."
+    },
+    {
+      "finding": "The second candidate removed source_refs from the five short condition/authorization quotes, set both scalar geometry relations to null, and replaced the seed phrase. It was accepted as Request version 2.",
+      "goal_keys_preserved": true,
+      "goal_count": 8,
+      "accepted_evidence": "75e89d8d4356e64ef4cb4e3e45e1cb5fab7715303f2e5a6762d00f31d6eaa5f6"
+    },
+    {
+      "finding": "The next model selected r2SCAN-3c / built-in without knowledge sources; the accepted condition-selection decision shows optional documentation selection is usable.",
+      "selected_request_version": 3,
+      "choices": {
+        "method": {
+          "value": "r2SCAN-3c",
+          "reason": "Request delegates method/basis for a gas-phase, closed-shell (RKS, singlet) conformational scan of butane explicitly for relative electronic energies. A self-contained *-3c composite (r2SCAN meta-GGA plus def2-mTZVPP-quality basis and D4 dispersion) is efficient enough for 7 constrained optimizations within the frozen budgets (12 ORCA starts, 192 MB/core, 4 cores) while treating the dispersion that dominates butane conformer energetics. Constrained optimizations at fixed dihedral are not vibrational or transition-state validation; convergence and the fixed-dihedral energies remain the reported evidence, so the composite's approximations are recorded as a limitation rather than a validated result.",
+          "sources": []
+        },
+        "basis": {
+          "value": "built-in",
+          "reason": "r2SCAN-3c is a self-contained composite whose def2-mTZVPP-quality orbital basis and dispersion correction are implied by the method keyword; no competing orbital-basis keyword is added, avoiding a conflicting basis selector. This is a selection, not scientific validation: absolute/relative energies remain unverified until actual ORCA outputs are inspected.",
+          "sources": []
+        }
+      },
+      "limit": "These are model-selected conditions and rationale, not independent scientific validation, measured cost, or completed ORCA execution."
+    }
+  ],
+  "interpretation": {
+    "supported": "T3 recovered from its first intake rejection inside the original Run and existing correction budget. It must not be reported as a normalization failure or whole-task success at this stage.",
+    "not_established": "No final Plan, full execution result, seven-point scan completeness, convergence, refinement decision, or scientific/reference validity is established by this intake review."
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "model_record_id": "model_b47314cd96cd47fd88cfb1f60e0239f7",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_b47314cd96cd47fd88cfb1f60e0239f7.request.json",
+        "sha256": "2d2b7cd94f0e1ea618168eaa91bf94612db54382be2ca188737ff5088547807c",
+        "bytes": 24321
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_b47314cd96cd47fd88cfb1f60e0239f7.response.json",
+        "sha256": "081e4a26d706d5d85b43b614f093cf573ce752ce57f1ae822b954d8bfb68ff84",
+        "bytes": 14400
+      },
+      "request_message_index": 1,
+      "action": "normalize_request",
+      "finish_reason": "stop",
+      "error_category": null,
+      "http_status": 200,
+      "model_usage": {
+        "prompt_tokens": 5871,
+        "completion_tokens": 7406,
+        "total_tokens": 13277,
+        "prompt_cache_hit_tokens": 2048,
+        "prompt_cache_miss_tokens": 3823
+      },
+      "response_complete_json": true,
+      "response_record_hash_matches_run": true,
+      "normalize_schema_canonical_sha256": "9436cca1e287f07824443ec82d9d9135b2b23d881b9bf03a79e139ed8f511383",
+      "schema_evidence": {
+        "conditions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/FieldEvidence"
+          },
+          "maxProperties": 8,
+          "propertyNames": {
+            "enum": [
+              "method",
+              "basis",
+              "charge",
+              "multiplicity",
+              "electronic_state",
+              "environment",
+              "temperature_K",
+              "standard_state"
+            ]
+          },
+          "type": "object"
+        },
+        "automatic_selection": {
+          "additionalProperties": {
+            "additionalProperties": false,
+            "properties": {
+              "message_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_refs": {
+                "items": {
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                  "type": "string"
+                },
+                "maxItems": 16,
+                "type": "array"
+              },
+              "text_basis": {
+                "maxLength": 1000,
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "maxProperties": 8,
+          "propertyNames": {
+            "enum": [
+              "method",
+              "basis",
+              "charge",
+              "multiplicity",
+              "electronic_state",
+              "environment",
+              "temperature_K",
+              "standard_state"
+            ]
+          },
+          "type": "object"
+        },
+        "goals": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "analysis_goal_ref": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "conditions": {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/FieldEvidence"
+                    },
+                    "maxProperties": 8,
+                    "propertyNames": {
+                      "enum": [
+                        "method",
+                        "basis",
+                        "charge",
+                        "multiplicity",
+                        "electronic_state",
+                        "environment",
+                        "temperature_K",
+                        "standard_state"
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  "geometry_relation": {
+                    "enum": [
+                      "fixed_initial",
+                      "optimized",
+                      null
+                    ]
+                  },
+                  "key": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "type": "string"
+                  },
+                  "message_id": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "minimum_evidence": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 8,
+                    "type": "array"
+                  },
+                  "port": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "maxLength": 256,
+                    "minLength": 1,
+                    "pattern": "^[^\\s\\x00-\\x1f\\x7f](?:[^\\x00-\\x1f\\x7f]*[^\\s\\x00-\\x1f\\x7f])?$",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "query": {
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "required": {
+                    "type": "boolean"
+                  },
+                  "source_refs": {
+                    "items": {
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                      "type": "string"
+                    },
+                    "maxItems": 16,
+                    "type": "array"
+                  },
+                  "system_refs": {
+                    "items": {
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                      "type": "string"
+                    },
+                    "maxItems": 5,
+                    "type": "array"
+                  },
+                  "system_refs_note": {
+                    "maxLength": 1000,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "text_basis": {
+                    "maxLength": 1000,
+                    "type": "string"
+                  },
+                  "unresolved": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 8,
+                    "type": "array"
+                  },
+                  "verification": {
+                    "enum": [
+                      "qualified",
+                      "reported_with_limitations",
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "port"
+                ],
+                "type": "object"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "field_evidence": {
+          "additionalProperties": false,
+          "properties": {
+            "default_rule": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "message_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "request_version": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "source": {
+              "enum": [
+                "explicit",
+                "default",
+                "inherited",
+                "inferred",
+                "unknown",
+                "not_applicable"
+              ]
+            },
+            "source_refs": {
+              "items": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "type": "string"
+              },
+              "maxItems": 16,
+              "type": "array"
+            },
+            "system_ref": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "text_basis": {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            "value": {},
+            "value_basis": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "source"
+          ],
+          "type": "object"
+        }
+      },
+      "source_reference_rules_as_sent": "Goals, explicit conditions and automatic_selection authorization may supply source_refs instead of recopying text_basis/message_id. References name authenticated user fragments; the program retains the exact source and any intervening text. Keep quantity as the user's physical quantity phrase. A reference does not prove an arbitrary field value. Exact text_basis remains accepted. Environment values use gas_phase, CPCM(solvent), or SMD(solvent); retain the user's model and solvent. value_basis may identify an exact literal value phrase inside the source. The program records the raw phrase and separately checks the canonical model/solvent mapping; a citation alone is insufficient. The program supplies an omitted unambiguous geometry_relation; conflicting relations remain errors. analysis_goal_ref is only a legacy sampling specification reference, not a general Goal dependency.",
+      "source_fragments_as_sent": [
+        {
+          "end": 41,
+          "id": "source_5a4c92d0b49df6e5",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 0,
+          "text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。"
+        },
+        {
+          "end": 136,
+          "id": "source_e02a5dd2d05a85f1",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 41,
+          "text": "自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。"
+        },
+        {
+          "end": 203,
+          "id": "source_dec6e385948a57cf",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 136,
+          "text": "请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。"
+        },
+        {
+          "end": 239,
+          "id": "source_74f65b8e07aba1b7",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 203,
+          "text": "如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。"
+        },
+        {
+          "end": 299,
+          "id": "source_7ebc78b70f1ff3a5",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 239,
+          "text": "交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。"
+        },
+        {
+          "end": 372,
+          "id": "source_474a5d6df3d6fbc5",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 301,
+          "text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。"
+        }
+      ],
+      "field_references": [
+        {
+          "path": [
+            "parameters",
+            "conditions",
+            "charge"
+          ],
+          "submitted": {
+            "source": "explicit",
+            "value": 0,
+            "text_basis": "中性",
+            "source_refs": [
+              "source_5a4c92d0b49df6e5"
+            ],
+            "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4"
+          },
+          "referenced_fragments": [
+            {
+              "end": 41,
+              "id": "source_5a4c92d0b49df6e5",
+              "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+              "start": 0,
+              "text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。"
+            }
+          ],
+          "supplied_text_equals_single_fragment": false,
+          "supplied_text_is_exact_substring": true
+        },
+        {
+          "path": [
+            "parameters",
+            "conditions",
+            "multiplicity"
+          ],
+          "submitted": {
+            "source": "explicit",
+            "value": 1,
+            "text_basis": "单重态",
+            "source_refs": [
+              "source_5a4c92d0b49df6e5"
+            ],
+            "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4"
+          },
+          "referenced_fragments": [
+            {
+              "end": 41,
+              "id": "source_5a4c92d0b49df6e5",
+              "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+              "start": 0,
+              "text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。"
+            }
+          ],
+          "supplied_text_equals_single_fragment": false,
+          "supplied_text_is_exact_substring": true
+        },
+        {
+          "path": [
+            "parameters",
+            "conditions",
+            "environment"
+          ],
+          "submitted": {
+            "source": "explicit",
+            "value": "gas_phase",
+            "text_basis": "气相",
+            "source_refs": [
+              "source_5a4c92d0b49df6e5"
+            ],
+            "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4"
+          },
+          "referenced_fragments": [
+            {
+              "end": 41,
+              "id": "source_5a4c92d0b49df6e5",
+              "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+              "start": 0,
+              "text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。"
+            }
+          ],
+          "supplied_text_equals_single_fragment": false,
+          "supplied_text_is_exact_substring": true
+        },
+        {
+          "path": [
+            "parameters",
+            "automatic_selection",
+            "method"
+          ],
+          "submitted": {
+            "text_basis": "自行选择一种方法和基组并说明依据",
+            "source_refs": [
+              "source_e02a5dd2d05a85f1"
+            ],
+            "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4"
+          },
+          "referenced_fragments": [
+            {
+              "end": 136,
+              "id": "source_e02a5dd2d05a85f1",
+              "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+              "start": 41,
+              "text": "自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。"
+            }
+          ],
+          "supplied_text_equals_single_fragment": false,
+          "supplied_text_is_exact_substring": true
+        },
+        {
+          "path": [
+            "parameters",
+            "automatic_selection",
+            "basis"
+          ],
+          "submitted": {
+            "text_basis": "自行选择一种方法和基组并说明依据",
+            "source_refs": [
+              "source_e02a5dd2d05a85f1"
+            ],
+            "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4"
+          },
+          "referenced_fragments": [
+            {
+              "end": 136,
+              "id": "source_e02a5dd2d05a85f1",
+              "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+              "start": 41,
+              "text": "自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。"
+            }
+          ],
+          "supplied_text_equals_single_fragment": false,
+          "supplied_text_is_exact_substring": true
+        }
+      ],
+      "proposed_goals": [
+        {
+          "key": "initial_geometry",
+          "port": "prepared_geometry",
+          "quantity": "初始结构",
+          "system_refs": [
+            "butane"
+          ],
+          "source_refs": [
+            "source_7ebc78b70f1ff3a5"
+          ],
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "required": true,
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "dihedral_scan",
+          "port": "sampling",
+          "quantity": "中心C-C-C-C二面角",
+          "system_refs": [
+            "butane"
+          ],
+          "source_refs": [
+            "source_5a4c92d0b49df6e5"
+          ],
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "required": true,
+          "verification": "reported_with_limitations",
+          "geometry_relation": null
+        },
+        {
+          "key": "point_energies",
+          "port": "energy",
+          "quantity": "电子能量",
+          "system_refs": [
+            "butane"
+          ],
+          "source_refs": [
+            "source_e02a5dd2d05a85f1"
+          ],
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "required": true,
+          "verification": "reported_with_limitations",
+          "geometry_relation": "optimized"
+        },
+        {
+          "key": "point_structures",
+          "port": "optimized_geometry",
+          "quantity": "所有点的结构",
+          "system_refs": [
+            "butane"
+          ],
+          "source_refs": [
+            "source_7ebc78b70f1ff3a5"
+          ],
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "required": true,
+          "verification": "reported_with_limitations",
+          "geometry_relation": "optimized"
+        },
+        {
+          "key": "member_table",
+          "port": "member_table",
+          "quantity": "每个实际角度、优化是否收敛和电子能量",
+          "system_refs": [
+            "butane"
+          ],
+          "source_refs": [
+            "source_e02a5dd2d05a85f1"
+          ],
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "required": true,
+          "verification": "reported_with_limitations",
+          "geometry_relation": null
+        },
+        {
+          "key": "energy_curve",
+          "port": "energy_difference",
+          "quantity": "相对能量曲线",
+          "system_refs": [
+            "butane"
+          ],
+          "source_refs": [
+            "source_e02a5dd2d05a85f1"
+          ],
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "required": true,
+          "verification": "reported_with_limitations",
+          "geometry_relation": null
+        },
+        {
+          "key": "refinement_check",
+          "port": "sampling_check",
+          "quantity": "根据数值结果判断是否需要局部加密",
+          "system_refs": [
+            "butane"
+          ],
+          "source_refs": [
+            "source_dec6e385948a57cf"
+          ],
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "required": true,
+          "verification": "reported_with_limitations",
+          "geometry_relation": null
+        },
+        {
+          "key": "random_seed",
+          "port": "random_seed",
+          "quantity": "随机数种子 1701",
+          "system_refs": [
+            "butane"
+          ],
+          "source_refs": [
+            "source_474a5d6df3d6fbc5"
+          ],
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "required": true,
+          "verification": "reported_with_limitations",
+          "geometry_relation": null
+        }
+      ],
+      "control_as_sent": {
+        "pending_step_ids": []
+      },
+      "rejection": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "charge"
+            ],
+            "reason": "source_reference_conflicts_with_supplied_text",
+            "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+          },
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "multiplicity"
+            ],
+            "reason": "source_reference_conflicts_with_supplied_text",
+            "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+          },
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "environment"
+            ],
+            "reason": "source_reference_conflicts_with_supplied_text",
+            "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+          },
+          {
+            "path": [
+              "parameters",
+              "automatic_selection",
+              "method"
+            ],
+            "reason": "source_reference_conflicts_with_supplied_text",
+            "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+          },
+          {
+            "path": [
+              "parameters",
+              "automatic_selection",
+              "basis"
+            ],
+            "reason": "source_reference_conflicts_with_supplied_text",
+            "instruction": "Use the supplied source fragments from one current user message; do not change user conditions."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "geometry_relation"
+            ],
+            "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+            "instruction": "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "geometry_relation"
+            ],
+            "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+            "instruction": "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              7,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          }
+        ]
+      },
+      "accepted_request_version": null,
+      "accepted_decision_record": null
+    },
+    {
+      "round": 2,
+      "model_record_id": "model_099e3515d70d40fa81ea48f47370df6d",
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_099e3515d70d40fa81ea48f47370df6d.request.json",
+        "sha256": "77f4a831104138336fb5bade8c3fb3d87065f14dc4f1b251ae74fee5367ab59c",
+        "bytes": 34280
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_099e3515d70d40fa81ea48f47370df6d.response.json",
+        "sha256": "f50dbd0adf08cc2a3f01890dbfa72d660ad9592a9586801567800c8619c767df",
+        "bytes": 14054
+      },
+      "request_message_index": 1,
+      "action": "normalize_request",
+      "finish_reason": "stop",
+      "error_category": null,
+      "http_status": 200,
+      "model_usage": {
+        "prompt_tokens": 8396,
+        "completion_tokens": 6850,
+        "total_tokens": 15246,
+        "prompt_cache_hit_tokens": 2048,
+        "prompt_cache_miss_tokens": 6348
+      },
+      "response_complete_json": true,
+      "response_record_hash_matches_run": true,
+      "normalize_schema_canonical_sha256": "9436cca1e287f07824443ec82d9d9135b2b23d881b9bf03a79e139ed8f511383",
+      "schema_evidence": {
+        "conditions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/FieldEvidence"
+          },
+          "maxProperties": 8,
+          "propertyNames": {
+            "enum": [
+              "method",
+              "basis",
+              "charge",
+              "multiplicity",
+              "electronic_state",
+              "environment",
+              "temperature_K",
+              "standard_state"
+            ]
+          },
+          "type": "object"
+        },
+        "automatic_selection": {
+          "additionalProperties": {
+            "additionalProperties": false,
+            "properties": {
+              "message_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_refs": {
+                "items": {
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                  "type": "string"
+                },
+                "maxItems": 16,
+                "type": "array"
+              },
+              "text_basis": {
+                "maxLength": 1000,
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "maxProperties": 8,
+          "propertyNames": {
+            "enum": [
+              "method",
+              "basis",
+              "charge",
+              "multiplicity",
+              "electronic_state",
+              "environment",
+              "temperature_K",
+              "standard_state"
+            ]
+          },
+          "type": "object"
+        },
+        "goals": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "analysis_goal_ref": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "conditions": {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/FieldEvidence"
+                    },
+                    "maxProperties": 8,
+                    "propertyNames": {
+                      "enum": [
+                        "method",
+                        "basis",
+                        "charge",
+                        "multiplicity",
+                        "electronic_state",
+                        "environment",
+                        "temperature_K",
+                        "standard_state"
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  "geometry_relation": {
+                    "enum": [
+                      "fixed_initial",
+                      "optimized",
+                      null
+                    ]
+                  },
+                  "key": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "type": "string"
+                  },
+                  "message_id": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "minimum_evidence": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 8,
+                    "type": "array"
+                  },
+                  "port": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "maxLength": 256,
+                    "minLength": 1,
+                    "pattern": "^[^\\s\\x00-\\x1f\\x7f](?:[^\\x00-\\x1f\\x7f]*[^\\s\\x00-\\x1f\\x7f])?$",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "query": {
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "required": {
+                    "type": "boolean"
+                  },
+                  "source_refs": {
+                    "items": {
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                      "type": "string"
+                    },
+                    "maxItems": 16,
+                    "type": "array"
+                  },
+                  "system_refs": {
+                    "items": {
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                      "type": "string"
+                    },
+                    "maxItems": 5,
+                    "type": "array"
+                  },
+                  "system_refs_note": {
+                    "maxLength": 1000,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "text_basis": {
+                    "maxLength": 1000,
+                    "type": "string"
+                  },
+                  "unresolved": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 8,
+                    "type": "array"
+                  },
+                  "verification": {
+                    "enum": [
+                      "qualified",
+                      "reported_with_limitations",
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "port"
+                ],
+                "type": "object"
+              },
+              "maxItems": 8,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "field_evidence": {
+          "additionalProperties": false,
+          "properties": {
+            "default_rule": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "message_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "request_version": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "source": {
+              "enum": [
+                "explicit",
+                "default",
+                "inherited",
+                "inferred",
+                "unknown",
+                "not_applicable"
+              ]
+            },
+            "source_refs": {
+              "items": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "type": "string"
+              },
+              "maxItems": 16,
+              "type": "array"
+            },
+            "system_ref": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "text_basis": {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            "value": {},
+            "value_basis": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "source"
+          ],
+          "type": "object"
+        }
+      },
+      "source_reference_rules_as_sent": "Goals, explicit conditions and automatic_selection authorization may supply source_refs instead of recopying text_basis/message_id. References name authenticated user fragments; the program retains the exact source and any intervening text. Keep quantity as the user's physical quantity phrase. A reference does not prove an arbitrary field value. Exact text_basis remains accepted. Environment values use gas_phase, CPCM(solvent), or SMD(solvent); retain the user's model and solvent. value_basis may identify an exact literal value phrase inside the source. The program records the raw phrase and separately checks the canonical model/solvent mapping; a citation alone is insufficient. The program supplies an omitted unambiguous geometry_relation; conflicting relations remain errors. analysis_goal_ref is only a legacy sampling specification reference, not a general Goal dependency.",
+      "source_fragments_as_sent": [
+        {
+          "end": 41,
+          "id": "source_5a4c92d0b49df6e5",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 0,
+          "text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。"
+        },
+        {
+          "end": 136,
+          "id": "source_e02a5dd2d05a85f1",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 41,
+          "text": "自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。"
+        },
+        {
+          "end": 203,
+          "id": "source_dec6e385948a57cf",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 136,
+          "text": "请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。"
+        },
+        {
+          "end": 239,
+          "id": "source_74f65b8e07aba1b7",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 203,
+          "text": "如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。"
+        },
+        {
+          "end": 299,
+          "id": "source_7ebc78b70f1ff3a5",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 239,
+          "text": "交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。"
+        },
+        {
+          "end": 372,
+          "id": "source_474a5d6df3d6fbc5",
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "start": 301,
+          "text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。"
+        }
+      ],
+      "field_references": [
+        {
+          "path": [
+            "parameters",
+            "conditions",
+            "charge"
+          ],
+          "submitted": {
+            "source": "explicit",
+            "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+            "text_basis": "中性",
+            "value": 0
+          },
+          "referenced_fragments": [],
+          "supplied_text_equals_single_fragment": null,
+          "supplied_text_is_exact_substring": null
+        },
+        {
+          "path": [
+            "parameters",
+            "conditions",
+            "multiplicity"
+          ],
+          "submitted": {
+            "source": "explicit",
+            "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+            "text_basis": "单重态",
+            "value": 1
+          },
+          "referenced_fragments": [],
+          "supplied_text_equals_single_fragment": null,
+          "supplied_text_is_exact_substring": null
+        },
+        {
+          "path": [
+            "parameters",
+            "conditions",
+            "environment"
+          ],
+          "submitted": {
+            "source": "explicit",
+            "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+            "text_basis": "气相",
+            "value": "gas_phase"
+          },
+          "referenced_fragments": [],
+          "supplied_text_equals_single_fragment": null,
+          "supplied_text_is_exact_substring": null
+        },
+        {
+          "path": [
+            "parameters",
+            "automatic_selection",
+            "method"
+          ],
+          "submitted": {
+            "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+            "text_basis": "自行选择一种方法和基组并说明依据"
+          },
+          "referenced_fragments": [],
+          "supplied_text_equals_single_fragment": null,
+          "supplied_text_is_exact_substring": null
+        },
+        {
+          "path": [
+            "parameters",
+            "automatic_selection",
+            "basis"
+          ],
+          "submitted": {
+            "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+            "text_basis": "自行选择一种方法和基组并说明依据"
+          },
+          "referenced_fragments": [],
+          "supplied_text_equals_single_fragment": null,
+          "supplied_text_is_exact_substring": null
+        }
+      ],
+      "proposed_goals": [
+        {
+          "key": "initial_geometry",
+          "port": "prepared_geometry",
+          "quantity": "初始结构",
+          "required": true,
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "source_refs": [
+            "source_7ebc78b70f1ff3a5"
+          ],
+          "system_refs": [
+            "butane"
+          ],
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "dihedral_scan",
+          "port": "sampling",
+          "quantity": "中心C-C-C-C二面角",
+          "required": true,
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "source_refs": [
+            "source_5a4c92d0b49df6e5"
+          ],
+          "system_refs": [
+            "butane"
+          ],
+          "geometry_relation": null,
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "point_energies",
+          "port": "energy",
+          "quantity": "电子能量",
+          "required": true,
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "source_refs": [
+            "source_e02a5dd2d05a85f1"
+          ],
+          "system_refs": [
+            "butane"
+          ],
+          "geometry_relation": null,
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "point_structures",
+          "port": "optimized_geometry",
+          "quantity": "所有点的结构",
+          "required": true,
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "source_refs": [
+            "source_7ebc78b70f1ff3a5"
+          ],
+          "system_refs": [
+            "butane"
+          ],
+          "geometry_relation": null,
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "member_table",
+          "port": "member_table",
+          "quantity": "每个实际角度、优化是否收敛和电子能量",
+          "required": true,
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "source_refs": [
+            "source_e02a5dd2d05a85f1"
+          ],
+          "system_refs": [
+            "butane"
+          ],
+          "geometry_relation": null,
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "energy_curve",
+          "port": "energy_difference",
+          "quantity": "相对能量曲线",
+          "required": true,
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "source_refs": [
+            "source_e02a5dd2d05a85f1"
+          ],
+          "system_refs": [
+            "butane"
+          ],
+          "geometry_relation": null,
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "refinement_check",
+          "port": "sampling_check",
+          "quantity": "根据数值结果判断是否需要局部加密",
+          "required": true,
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "source_refs": [
+            "source_dec6e385948a57cf"
+          ],
+          "system_refs": [
+            "butane"
+          ],
+          "geometry_relation": null,
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "random_seed",
+          "port": "random_seed",
+          "quantity": "种子 1701",
+          "required": true,
+          "message_id": "message_10aa6f563f2442a694e5aa8d1ec458a4",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "source_refs": [
+            "source_474a5d6df3d6fbc5"
+          ],
+          "system_refs": [
+            "butane"
+          ],
+          "geometry_relation": null,
+          "verification": "reported_with_limitations"
+        }
+      ],
+      "control_as_sent": {
+        "pending_step_ids": [],
+        "validation_error": {
+          "category": "ProposalError",
+          "requirement": {
+            "corrections": [
+              {
+                "instruction": "Use the supplied source fragments from one current user message; do not change user conditions.",
+                "path": [
+                  "parameters",
+                  "conditions",
+                  "charge"
+                ],
+                "reason": "source_reference_conflicts_with_supplied_text"
+              },
+              {
+                "instruction": "Use the supplied source fragments from one current user message; do not change user conditions.",
+                "path": [
+                  "parameters",
+                  "conditions",
+                  "multiplicity"
+                ],
+                "reason": "source_reference_conflicts_with_supplied_text"
+              },
+              {
+                "instruction": "Use the supplied source fragments from one current user message; do not change user conditions.",
+                "path": [
+                  "parameters",
+                  "conditions",
+                  "environment"
+                ],
+                "reason": "source_reference_conflicts_with_supplied_text"
+              },
+              {
+                "instruction": "Use the supplied source fragments from one current user message; do not change user conditions.",
+                "path": [
+                  "parameters",
+                  "automatic_selection",
+                  "method"
+                ],
+                "reason": "source_reference_conflicts_with_supplied_text"
+              },
+              {
+                "instruction": "Use the supplied source fragments from one current user message; do not change user conditions.",
+                "path": [
+                  "parameters",
+                  "automatic_selection",
+                  "basis"
+                ],
+                "reason": "source_reference_conflicts_with_supplied_text"
+              },
+              {
+                "instruction": "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification.",
+                "path": [
+                  "parameters",
+                  "goals",
+                  2,
+                  "geometry_relation"
+                ],
+                "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text"
+              },
+              {
+                "instruction": "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification.",
+                "path": [
+                  "parameters",
+                  "goals",
+                  3,
+                  "geometry_relation"
+                ],
+                "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text"
+              },
+              {
+                "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity.",
+                "path": [
+                  "parameters",
+                  "goals",
+                  7,
+                  "quantity"
+                ],
+                "reason": "general_quantity_requires_exact_user_phrase"
+              }
+            ],
+            "path": [
+              "parameters"
+            ],
+            "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in."
+          }
+        }
+      },
+      "rejection": null,
+      "accepted_request_version": 2,
+      "accepted_decision_record": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/decisions/model_099e3515d70d40fa81ea48f47370df6d.json",
+        "sha256": "49dce86db8b678f74bbeff24fcff130a0dfe31e0a8a42a4efe4eac506323d7c7",
+        "bytes": 44829
+      }
+    }
+  ],
+  "actions": {
+    "product_modified": false,
+    "freeze_modified": false,
+    "run_or_script_modified": false,
+    "tests_run": 0,
+    "new_model_calls": 0,
+    "new_orca_calls": 0,
+    "new_run_started": false,
+    "review_only_file_written": "docs/acceptance/code-as-tools-step7-refreeze-3/review/t3-intake-review.json"
+  },
+  "limitations": [
+    "This file is a point-in-time intake record. Later terminal review should be a new record; preserve this one and its hash.",
+    "Mutable Run hash binds only the bytes read at recorded_at_utc; immutable model and accepted-decision records anchor the reviewed intake.",
+    "Read-only local JSON/source inspection only; no live call, numerical reference calculation, test, retry, intervention, or product injection."
+  ]
+}

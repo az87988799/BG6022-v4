@@ -1,0 +1,1721 @@
+{
+  "recorded_at_utc": "2026-10-20T16:13:57.060871+00:00",
+  "task": "T3",
+  "run_id": "run_46a2c5ba355a47249334fa194b1d33f9",
+  "scope": "terminal_read_only_diagnosis",
+  "review_status": "complete",
+  "task_status": "failed",
+  "delivery_status": "partial",
+  "product_commit": "89d55708d9d879ea7c7d28860199056185df2795",
+  "prior_partial_records_preserved": [
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/review/t3-intake-review.json",
+      "sha256": "ce074536afd5a5cfb4e7b4caed80d39ada9edaf8a8c9f951a4e948eda2e99c4c",
+      "bytes": 55662
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/review/t3-execution-progress.json",
+      "sha256": "68bdf71cf7e62716a17788d43f79d44f51a60a425f99e083df1c29642746dfbc",
+      "bytes": 80302
+    }
+  ],
+  "terminal_facts": {
+    "driver_outcome": {
+      "finished_at_utc": "2026-10-20T16:08:11.972431+00:00",
+      "run_id": "run_46a2c5ba355a47249334fa194b1d33f9",
+      "state": "failed",
+      "goal_status": {
+        "goal_initial_geometry": "satisfied",
+        "goal_dihedral_scan": "insufficient_evidence",
+        "goal_point_energies": "insufficient_evidence",
+        "goal_point_structures": "insufficient_evidence",
+        "goal_member_table": "insufficient_evidence",
+        "goal_energy_curve": "insufficient_evidence",
+        "goal_refinement_check": "insufficient_evidence",
+        "goal_random_seed": "insufficient_evidence"
+      },
+      "delivery_status": "partial",
+      "usage": {
+        "internal_work_units": 774,
+        "internal_calls_by_purpose": {
+          "new_candidate": 6
+        },
+        "code_retries": 1,
+        "orca_starts_reserved": 6,
+        "orca_starts_actual": 6,
+        "postprocess_starts": 0,
+        "elapsed_seconds": 1157.3130000000092,
+        "cpu_seconds": 3567.091933,
+        "resource_usage_complete": false,
+        "logical_attempts": {
+          "logical_84de5c95d2ae4273bb9dee91feec3b63": 2
+        },
+        "fingerprint_attempts": {
+          "1954aa39ebef6ed000353a928f1a38cbd251bd0ed17883c769f9906e745aafb1": 1,
+          "28769d96af1029828759637ed1ecf49befffeeb3771f7020c555bb2f29fe6e78": 1
+        },
+        "extra_orca_starts_reserved": 5,
+        "model_calls": 14,
+        "model_tokens_used": 338495,
+        "model_tokens_unknown": 0,
+        "plan_revisions": 1,
+        "decision_rounds": 17,
+        "evidence_reads": 5,
+        "analysis_executions": 2,
+        "file_writes": 2,
+        "logical_steps": [
+          "logical_00badbcf8ec34331bf9450c5daa63da6",
+          "logical_719a53e57c5a45ed9d7b7a3aac71b567",
+          "logical_84de5c95d2ae4273bb9dee91feec3b63",
+          "logical_9adfcca09a9b41868f633d7efd47c9c6",
+          "logical_c0516d11f548441fafad41ba1425e40e"
+        ],
+        "identity_queries": 1,
+        "structure_preparations": 1,
+        "knowledge_queries": 0
+      },
+      "driver_wall_seconds": 1720.4839999999967,
+      "error": null,
+      "settlement": {
+        "known_usage": {
+          "model_calls": 14,
+          "wall_seconds": 1720.4839999999967,
+          "model_tokens": 338495,
+          "orca_starts": 6,
+          "internal_work_units": 774
+        },
+        "unknown_fields": {}
+      },
+      "independent_reference": "not_run_in_this_user_authorized_first_round"
+    },
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_b47314cd96cd47fd88cfb1f60e0239f7",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_30c4085b5a964a169ace1d0a80db7977",
+        "error_category": "truncated"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_773f6901e4934f5f909dd1409b296f43",
+        "error_category": "empty_content"
+      },
+      {
+        "category": "ContextLimitError",
+        "message": "required model context exceeds the configured global input bound, Run input limit, or remaining token reservation",
+        "environment_occupied": false
+      }
+    ],
+    "final_result_id": "result_3695289b84f740e5af2d617b44f7a282",
+    "final_result_created_at": "2026-10-20T16:08:01.383778Z",
+    "last_attempt_finished_at": "2026-10-20T16:08:02.818646Z",
+    "last_model_call_created_at": "2026-10-20T15:46:20.069443+00:00",
+    "model_calls_after_completed_attempt": 0,
+    "final_result_feedback_processed": false,
+    "model_terminal_deliveries": 0,
+    "fallback_report_count": 1,
+    "fallback_report_status": "rendered"
+  },
+  "confirmed_findings": [
+    {
+      "finding": "The immediate terminal cause is ContextLimitError while preparing the next model decision after the repaired Python result; it is not an ORCA execution failure.",
+      "evidence": "The final Run diagnostic and report stop_reason name ContextLimitError. Last model call predates Attempt 2. The completed final Result is not in processed_feedback and no model terminal delivery exists.",
+      "mechanism": "agent.py:279-295 builds context before send_model; the loop requests another decision for unprocessed results (795-798). context.py:3686 raises the recorded error after available projections fail. agent.py:927-933 records failed for a settled ValueError, and then publishes the fallback report.",
+      "uncertainty": "Exact rejected context token bound, selected projection and section sizes were not persisted. No context rebuild, product function call or offline replay was performed; no specific oversized section is claimed as proven."
+    },
+    {
+      "finding": "Seven goal failures are explicitly caused by the active Plan routes being gaps, despite seven archived observation records existing.",
+      "evidence": "Plan 1 maps the seven scientific goals to coarse_scan. Model call 14 submitted revise_plan with steps only, including repair_of. Plan 2 keeps initial_geometry but replaces all seven routes with the standard missing-evidence gap. Run.goal_evidence is empty.",
+      "mechanism": "proposals.py:601-604 deliberately skips previous routes whose Step is replaced; 676-680 fills omitted required routes with gaps. goals.py:16-17 treats the gap as missing without selecting the new Result. The repair shorthand carried execution conditions but did not carry these goal routes.",
+      "limit": "This route gap is distinct from a scientific source mismatch. It also does not mean remapping alone would make the unfinished scan scientifically complete."
+    },
+    {
+      "finding": "Six actual ORCA calls and the repaired Python operation completed, and the final observation archive was accepted.",
+      "evidence": "All six execution receipts report exit_code=0, actual_start_status=confirmed, and archived outputs contain normal termination and optimization-converged markers. Final Result operation_status=completed, execution_completed=true, evidence_collection_complete=true, diagnostics=[], seven observations each archived_source_binding passed.",
+      "limit": "The observations remain scientifically unverified; markers and byte binding are not an independent scientific qualification. Conditions differ in input_blocks because each dihedral constraint is different; this is retained as a limitation, not a rejected archive."
+    },
+    {
+      "finding": "The seventh required +180 degree point was never launched because of the generated script own 950-second before-next-point check.",
+      "evidence": "dihedral_scan.py:16 sets TIME_BUDGET_S=950. Lines188-192 append a not_attempted failure and continue when elapsed time exceeds it. scan_results.json explicitly records +180 not_attempted. No scan_dih_p180 internal call exists.",
+      "distinction": "The script message calls this a frozen script budget, but the actual frozen parent limit is 1200 seconds and each ORCA job has 900 seconds; 950 is model-authored task logic. Parent Python exited 0 after 1155 seconds, not by a recorded timeout. Six of twelve ORCA reservations remained."
+    },
+    {
+      "finding": "Delivery remains incomplete independently of the context failure and Plan gap.",
+      "evidence": "Only six of seven prescribed angles have members. sampling_check records candidate [40.0] and decision_status=deferred_to_main_decision_loop; no model decision followed. Task directory has numerical relative-energy observations but no rendered curve artifact. The script does not plot one.",
+      "limit": "No additional computation, decision or inferred completion is supplied by this review."
+    },
+    {
+      "finding": "The generated actual-dihedral observations disagree substantially with the target labels; this inconsistency was not rejected by the task script.",
+      "evidence": "For example target -180 is reported near 0, and target 0 near 180. Script lines44-65 define its angle formula; lines234-245 mark completion when energy, convergence and any non-null angle exist, without comparing target and actual angles.",
+      "interpretation": "A convention/formula problem in generated angle analysis is a plausible explanation, not a demonstrated ORCA constraint failure. No independent geometry recomputation was performed."
+    }
+  ],
+  "excluded_as_observed_terminal_causes": {
+    "artifact_quota": "No quota diagnostic. 190 registered artifact metadata entries total 19297879 bytes, below frozen count800 and total268435456 limits; final collection completed.",
+    "observation_source_hash_rejection": "None observed: all seven archived_source_binding checks passed and final Result diagnostics are empty.",
+    "model_call_or_total_token_exhaustion": "14/24 model calls and 338495/1200000 known tokens, unknown0. The saved diagnostic is context construction, not total-budget exhaustion.",
+    "orca_or_script_outer_timeout": "Six calls completed and repaired Python execution exit0. The missing seventh point is a task-local prelaunch time check."
+  },
+  "unmeasured_context_details": {
+    "input_token_limit": 64000,
+    "global_model_input_limit": 64000,
+    "exact_rejected_input_token_bound": null,
+    "exact_rejected_section_sizes": null,
+    "context_rebuilt": false,
+    "attribution_to_specific_section": "not_established"
+  },
+  "plans": [
+    {
+      "model_record_id": "model_d61194fc0a344292845b1ae8cf9972b4",
+      "plan_version": 1,
+      "materialized_goal_map": {
+        "goal_initial_geometry": {
+          "step_id": "step_a30ed635ff944f8b8664b1bd6788b41a",
+          "port": "prepared_geometry",
+          "evidence": null,
+          "gap": null
+        },
+        "goal_dihedral_scan": {
+          "step_id": "step_e0a4aa393ee24a5caf5f8c2c07afcf0b",
+          "port": "sampling",
+          "evidence": null,
+          "gap": null
+        },
+        "goal_point_energies": {
+          "step_id": "step_e0a4aa393ee24a5caf5f8c2c07afcf0b",
+          "port": "energy",
+          "evidence": null,
+          "gap": null
+        },
+        "goal_point_structures": {
+          "step_id": "step_e0a4aa393ee24a5caf5f8c2c07afcf0b",
+          "port": "optimized_geometry",
+          "evidence": null,
+          "gap": null
+        },
+        "goal_member_table": {
+          "step_id": "step_e0a4aa393ee24a5caf5f8c2c07afcf0b",
+          "port": "member_table",
+          "evidence": null,
+          "gap": null
+        },
+        "goal_energy_curve": {
+          "step_id": "step_e0a4aa393ee24a5caf5f8c2c07afcf0b",
+          "port": "energy_difference",
+          "evidence": null,
+          "gap": null
+        },
+        "goal_refinement_check": {
+          "step_id": "step_e0a4aa393ee24a5caf5f8c2c07afcf0b",
+          "port": "sampling_check",
+          "evidence": null,
+          "gap": null
+        },
+        "goal_random_seed": {
+          "step_id": "step_e0a4aa393ee24a5caf5f8c2c07afcf0b",
+          "port": "random_seed",
+          "evidence": null,
+          "gap": null
+        }
+      },
+      "proposal_action": "initial_plan",
+      "proposed_parameter_keys": [
+        "steps",
+        "goal_map"
+      ],
+      "proposed_goal_map": {
+        "goal_initial_geometry": {
+          "step_key": "prepare_butane",
+          "port": "prepared_geometry"
+        },
+        "goal_dihedral_scan": {
+          "step_key": "coarse_scan",
+          "port": "sampling"
+        },
+        "goal_point_energies": {
+          "step_key": "coarse_scan",
+          "port": "energy"
+        },
+        "goal_point_structures": {
+          "step_key": "coarse_scan",
+          "port": "optimized_geometry"
+        },
+        "goal_member_table": {
+          "step_key": "coarse_scan",
+          "port": "member_table"
+        },
+        "goal_energy_curve": {
+          "step_key": "coarse_scan",
+          "port": "energy_difference"
+        },
+        "goal_refinement_check": {
+          "step_key": "coarse_scan",
+          "port": "sampling_check"
+        },
+        "goal_random_seed": {
+          "step_key": "coarse_scan",
+          "port": "random_seed"
+        }
+      }
+    },
+    {
+      "model_record_id": "model_22c3b8a0267a421dbaca90ee5dc93c2f",
+      "plan_version": 2,
+      "materialized_goal_map": {
+        "goal_initial_geometry": {
+          "step_id": "step_a30ed635ff944f8b8664b1bd6788b41a",
+          "port": "prepared_geometry",
+          "evidence": null,
+          "gap": null
+        },
+        "goal_dihedral_scan": {
+          "step_id": null,
+          "port": "sampling",
+          "evidence": null,
+          "gap": "The current Plan does not yet provide this required goal's evidence."
+        },
+        "goal_point_energies": {
+          "step_id": null,
+          "port": "energy",
+          "evidence": null,
+          "gap": "The current Plan does not yet provide this required goal's evidence."
+        },
+        "goal_point_structures": {
+          "step_id": null,
+          "port": "optimized_geometry",
+          "evidence": null,
+          "gap": "The current Plan does not yet provide this required goal's evidence."
+        },
+        "goal_member_table": {
+          "step_id": null,
+          "port": "member_table",
+          "evidence": null,
+          "gap": "The current Plan does not yet provide this required goal's evidence."
+        },
+        "goal_energy_curve": {
+          "step_id": null,
+          "port": "energy_difference",
+          "evidence": null,
+          "gap": "The current Plan does not yet provide this required goal's evidence."
+        },
+        "goal_refinement_check": {
+          "step_id": null,
+          "port": "sampling_check",
+          "evidence": null,
+          "gap": "The current Plan does not yet provide this required goal's evidence."
+        },
+        "goal_random_seed": {
+          "step_id": null,
+          "port": "random_seed",
+          "evidence": null,
+          "gap": "The current Plan does not yet provide this required goal's evidence."
+        }
+      },
+      "proposal_action": "revise_plan",
+      "proposed_parameter_keys": [
+        "steps"
+      ],
+      "proposed_goal_map": null
+    }
+  ],
+  "goal_evidence_direct_bindings": {},
+  "final_result_summary": {
+    "id": "result_3695289b84f740e5af2d617b44f7a282",
+    "operation_status": "completed",
+    "checks": {},
+    "qualified_outputs": {},
+    "observations": {
+      "execution_completed": true,
+      "evidence_collection_complete": true,
+      "scientific_validation": "unverified"
+    },
+    "diagnostics": [],
+    "observation_records": [
+      {
+        "name": "sampling",
+        "validation_status": "unverified",
+        "checks": [
+          {
+            "name": "archived_source_binding",
+            "status": "passed",
+            "detail": "file identity/hash only; value, units and scientific interpretation are unverified",
+            "source": {},
+            "rule_version": "generic-observation-1"
+          }
+        ],
+        "source_count": 13,
+        "limitations": [
+          "Generated code parsed these values; no registered scientific checker qualified them.",
+          "Source locations and interpretation are task declarations; only archived file identity is checked.",
+          "Conditions describe admitted input, not independent output verification.",
+          "Constrained optimizations at fixed central C-C-C-C dihedral; electronic energies only, no ZPE/thermal/entropy corrections.",
+          "A discrete grid maximum is a scan point, not a verified transition state; no frequency analysis or reaction path validation was done.",
+          "Source conditions or calculation stages differ: input_blocks"
+        ]
+      },
+      {
+        "name": "energy",
+        "validation_status": "unverified",
+        "checks": [
+          {
+            "name": "archived_source_binding",
+            "status": "passed",
+            "detail": "file identity/hash only; value, units and scientific interpretation are unverified",
+            "source": {},
+            "rule_version": "generic-observation-1"
+          }
+        ],
+        "source_count": 13,
+        "limitations": [
+          "Generated code parsed these values; no registered scientific checker qualified them.",
+          "Source locations and interpretation are task declarations; only archived file identity is checked.",
+          "Conditions describe admitted input, not independent output verification.",
+          "Constrained optimizations at fixed central C-C-C-C dihedral; electronic energies only, no ZPE/thermal/entropy corrections.",
+          "A discrete grid maximum is a scan point, not a verified transition state; no frequency analysis or reaction path validation was done.",
+          "Source conditions or calculation stages differ: input_blocks"
+        ]
+      },
+      {
+        "name": "energy_difference",
+        "validation_status": "unverified",
+        "checks": [
+          {
+            "name": "archived_source_binding",
+            "status": "passed",
+            "detail": "file identity/hash only; value, units and scientific interpretation are unverified",
+            "source": {},
+            "rule_version": "generic-observation-1"
+          }
+        ],
+        "source_count": 13,
+        "limitations": [
+          "Generated code parsed these values; no registered scientific checker qualified them.",
+          "Source locations and interpretation are task declarations; only archived file identity is checked.",
+          "Conditions describe admitted input, not independent output verification.",
+          "Constrained optimizations at fixed central C-C-C-C dihedral; electronic energies only, no ZPE/thermal/entropy corrections.",
+          "A discrete grid maximum is a scan point, not a verified transition state; no frequency analysis or reaction path validation was done.",
+          "Reference is the lowest computed coarse-scan point, not a zero-point-corrected or global minimum.",
+          "Source conditions or calculation stages differ: input_blocks"
+        ]
+      },
+      {
+        "name": "member_table",
+        "validation_status": "unverified",
+        "checks": [
+          {
+            "name": "archived_source_binding",
+            "status": "passed",
+            "detail": "file identity/hash only; value, units and scientific interpretation are unverified",
+            "source": {},
+            "rule_version": "generic-observation-1"
+          }
+        ],
+        "source_count": 13,
+        "limitations": [
+          "Generated code parsed these values; no registered scientific checker qualified them.",
+          "Source locations and interpretation are task declarations; only archived file identity is checked.",
+          "Conditions describe admitted input, not independent output verification.",
+          "Constrained optimizations at fixed central C-C-C-C dihedral; electronic energies only, no ZPE/thermal/entropy corrections.",
+          "A discrete grid maximum is a scan point, not a verified transition state; no frequency analysis or reaction path validation was done.",
+          "operation_status is receipt metadata, not independent scientific validation.",
+          "Source conditions or calculation stages differ: input_blocks"
+        ]
+      },
+      {
+        "name": "optimized_geometry",
+        "validation_status": "unverified",
+        "checks": [
+          {
+            "name": "archived_source_binding",
+            "status": "passed",
+            "detail": "file identity/hash only; value, units and scientific interpretation are unverified",
+            "source": {},
+            "rule_version": "generic-observation-1"
+          }
+        ],
+        "source_count": 13,
+        "limitations": [
+          "Generated code parsed these values; no registered scientific checker qualified them.",
+          "Source locations and interpretation are task declarations; only archived file identity is checked.",
+          "Conditions describe admitted input, not independent output verification.",
+          "Only members with an available final geometry have a saved XYZ; missing/unconverged members are listed in member_table.failed_members.",
+          "Source conditions or calculation stages differ: input_blocks"
+        ]
+      },
+      {
+        "name": "sampling_check",
+        "validation_status": "unverified",
+        "checks": [
+          {
+            "name": "archived_source_binding",
+            "status": "passed",
+            "detail": "file identity/hash only; value, units and scientific interpretation are unverified",
+            "source": {},
+            "rule_version": "generic-observation-1"
+          }
+        ],
+        "source_count": 13,
+        "limitations": [
+          "Generated code parsed these values; no registered scientific checker qualified them.",
+          "Source locations and interpretation are task declarations; only archived file identity is checked.",
+          "Conditions describe admitted input, not independent output verification.",
+          "The criterion was applied only to complete triplets; the continue/stop decision and any refinement jobs are taken later in the main decision loop, not here.",
+          "Source conditions or calculation stages differ: input_blocks"
+        ]
+      },
+      {
+        "name": "random_seed",
+        "validation_status": "unverified",
+        "checks": [
+          {
+            "name": "archived_source_binding",
+            "status": "passed",
+            "detail": "file identity/hash only; value, units and scientific interpretation are unverified",
+            "source": {},
+            "rule_version": "generic-observation-1"
+          }
+        ],
+        "source_count": 1,
+        "limitations": [
+          "Generated code parsed these values; no registered scientific checker qualified them.",
+          "Source locations and interpretation are task declarations; only archived file identity is checked.",
+          "Conditions describe admitted input, not independent output verification.",
+          "Seed 1701 cannot be retroactively imposed on the registered initial conformer; this is recorded rather than fabricated as reproducible."
+        ]
+      }
+    ]
+  },
+  "scientific_output_coverage": {
+    "scan_members_as_reported_by_generated_code": {
+      "members": [
+        {
+          "target_angle_deg": -180.0,
+          "actual_dihedral_deg": -3.6838706276720307e-06,
+          "energy_hartree": -158.392470368263,
+          "optimization_converged": true,
+          "operation_status": "completed",
+          "request_key": "scan_dih_m180",
+          "input_file": "scan-180.inp",
+          "final_geometry_file": "member-180.xyz",
+          "atom_count": 14,
+          "status": "completed"
+        },
+        {
+          "target_angle_deg": -120.0,
+          "actual_dihedral_deg": -60.00000455842881,
+          "energy_hartree": -158.387146187943,
+          "optimization_converged": true,
+          "operation_status": "completed",
+          "request_key": "scan_dih_m120",
+          "input_file": "scan-120.inp",
+          "final_geometry_file": "member-120.xyz",
+          "atom_count": 14,
+          "status": "completed"
+        },
+        {
+          "target_angle_deg": -60.0,
+          "actual_dihedral_deg": -120.00000571030775,
+          "energy_hartree": -158.391526560891,
+          "optimization_converged": true,
+          "operation_status": "completed",
+          "request_key": "scan_dih_m060",
+          "input_file": "scan-060.inp",
+          "final_geometry_file": "member-060.xyz",
+          "atom_count": 14,
+          "status": "completed"
+        },
+        {
+          "target_angle_deg": 0.0,
+          "actual_dihedral_deg": 179.99999585742523,
+          "energy_hartree": -158.38352862617,
+          "optimization_converged": true,
+          "operation_status": "completed",
+          "request_key": "scan_dih_p000",
+          "input_file": "scan+000.inp",
+          "final_geometry_file": "member+000.xyz",
+          "atom_count": 14,
+          "status": "completed"
+        },
+        {
+          "target_angle_deg": 60.0,
+          "actual_dihedral_deg": 120.00000437281965,
+          "energy_hartree": -158.39152670213,
+          "optimization_converged": true,
+          "operation_status": "completed",
+          "request_key": "scan_dih_p060",
+          "input_file": "scan+060.inp",
+          "final_geometry_file": "member+060.xyz",
+          "atom_count": 14,
+          "status": "completed"
+        },
+        {
+          "target_angle_deg": 120.0,
+          "actual_dihedral_deg": 59.99999684864347,
+          "energy_hartree": -158.358972460497,
+          "optimization_converged": true,
+          "operation_status": "completed",
+          "request_key": "scan_dih_p120",
+          "input_file": "scan+120.inp",
+          "final_geometry_file": "member+120.xyz",
+          "atom_count": 14,
+          "status": "completed"
+        }
+      ],
+      "failed": [
+        {
+          "target_angle_deg": 180.0,
+          "request_key": "scan_dih_p180",
+          "stage": "not_attempted",
+          "error": "frozen script time budget exhausted before launching this point"
+        }
+      ]
+    },
+    "sampling_check_as_reported": {
+      "criterion": "Pre-declared refinement criterion (stated before the coarse scan): fit a parabola through every triplet of three consecutive coarse grid points (60 deg spacing) whose middle point is a local extremum of the electronic energy. Add a refinement point (at most 2, separated by at least 15 deg, inside -180..180) only if for such a triplet (1) the parabola vertex lies more than 12 deg from the nearest computed grid point, (2) the parabola predicts more than 0.5 kJ/mol lowering relative to the middle computed point, and (3) the predicted vertex lies inside the scanned interval. Otherwise do not add points. The continue/stop decision itself is taken in the main decision loop after these coarse observations are returned.",
+      "evaluation": [
+        {
+          "triplet_angles_deg": [
+            -180.0,
+            -120.0,
+            -60.0
+          ],
+          "middle_is_local_min": false,
+          "middle_is_local_max": true,
+          "vertex_offset_from_middle_deg": 2.9176223137194826,
+          "predicted_lowering_kj_mol": -0.030124036024511008,
+          "criterion_met": false,
+          "candidate_angle_deg": -117.08237768628052
+        },
+        {
+          "triplet_angles_deg": [
+            -120.0,
+            -60.0,
+            0.0
+          ],
+          "middle_is_local_min": true,
+          "middle_is_local_max": false,
+          "vertex_offset_from_middle_deg": -8.767503288138805,
+          "predicted_lowering_kj_mol": 0.34697054999759697,
+          "criterion_met": false,
+          "candidate_angle_deg": -68.76750328813881
+        },
+        {
+          "triplet_angles_deg": [
+            -60.0,
+            0.0,
+            60.0
+          ],
+          "middle_is_local_min": false,
+          "middle_is_local_max": true,
+          "vertex_offset_from_middle_deg": -0.0002648891422410774,
+          "predicted_lowering_kj_mol": -4.0927900409571123e-10,
+          "criterion_met": false,
+          "candidate_angle_deg": -0.0002648891422410774
+        },
+        {
+          "triplet_angles_deg": [
+            0.0,
+            60.0,
+            120.0
+          ],
+          "middle_is_local_min": true,
+          "middle_is_local_max": false,
+          "vertex_offset_from_middle_deg": -18.16628528076072,
+          "predicted_lowering_kj_mol": 4.880085219792865,
+          "criterion_met": true,
+          "candidate_angle_deg": 41.83371471923928
+        }
+      ],
+      "pre_screen_candidate_angles_deg": [
+        40.0
+      ],
+      "decision_status": "deferred_to_main_decision_loop"
+    },
+    "random_seed_as_reported": {
+      "declared_seed": 1701,
+      "random_numbers_used_in_scan": false,
+      "initial_geometry_generation": {
+        "generator": "opi.Structure.from_smiles",
+        "smiles": "CCCC",
+        "random_seed_exposed": null
+      },
+      "note": "Dihedral scan, input construction, parsing and analysis are deterministic and invoke no random number generator. The registered initial conformer was generated from SMILES during structure preparation and exposes no seed; the archived geometry is reused unchanged."
+    },
+    "relative_energy_curve_artifact_present": false,
+    "task_files": [
+      {
+        "name": "butane_initial.xyz",
+        "bytes": 1335
+      },
+      {
+        "name": "member+000.xyz",
+        "bytes": 1103
+      },
+      {
+        "name": "member+060.xyz",
+        "bytes": 1103
+      },
+      {
+        "name": "member+120.xyz",
+        "bytes": 1103
+      },
+      {
+        "name": "member-060.xyz",
+        "bytes": 1103
+      },
+      {
+        "name": "member-120.xyz",
+        "bytes": 1103
+      },
+      {
+        "name": "member-180.xyz",
+        "bytes": 1103
+      },
+      {
+        "name": "observations.json",
+        "bytes": 28969
+      },
+      {
+        "name": "scan+000.inp",
+        "bytes": 184
+      },
+      {
+        "name": "scan+060.inp",
+        "bytes": 185
+      },
+      {
+        "name": "scan+120.inp",
+        "bytes": 186
+      },
+      {
+        "name": "scan+180.inp",
+        "bytes": 186
+      },
+      {
+        "name": "scan-060.inp",
+        "bytes": 186
+      },
+      {
+        "name": "scan-120.inp",
+        "bytes": 187
+      },
+      {
+        "name": "scan-180.inp",
+        "bytes": 187
+      },
+      {
+        "name": "scan_results.json",
+        "bytes": 2566
+      },
+      {
+        "name": "stderr.txt",
+        "bytes": 0
+      },
+      {
+        "name": "stdout.out",
+        "bytes": 1481
+      }
+    ],
+    "independent_reference_calculations": 0,
+    "independent_geometry_recalculation": false,
+    "scientific_qualification": "not_established"
+  },
+  "execution_calls": [
+    {
+      "request_key": "scan_dih_m180",
+      "state": "completed",
+      "created_at": "2026-10-20T15:48:09.217915Z",
+      "finished_at": "2026-10-20T15:50:00.141679Z",
+      "actual_start_status": "confirmed",
+      "launch_phase": "executed",
+      "exit_code": 0,
+      "normal_termination_marker_count": 1,
+      "optimization_converged_marker_count": 1,
+      "optimization_not_converged_marker_count": 0,
+      "collection_error": null,
+      "returned_file_count": 15,
+      "source_input_sha256": "724d05b8af0ef03b29bf21c56a1d7dc2fb3ad730e48730a5ee2c8fafcbf144aa",
+      "executed_input_sha256": "6e48f150f47507afa73638cbcb6c1ea27460b9567e403882b36a79e05a7eeddc",
+      "materialization": [
+        {
+          "field": "cores",
+          "value": 4,
+          "source": "frozen_resources"
+        }
+      ],
+      "resources": {
+        "cores": 4,
+        "memory_mb": 1024,
+        "maxcore_mb": 192,
+        "timeout_seconds": 900.0
+      },
+      "scientific_validation": "unverified",
+      "wall_seconds": 103.95300000000861,
+      "resource_usage_complete": false
+    },
+    {
+      "request_key": "scan_dih_m120",
+      "state": "completed",
+      "created_at": "2026-10-20T15:50:06.840623Z",
+      "finished_at": "2026-10-20T15:51:27.011766Z",
+      "actual_start_status": "confirmed",
+      "launch_phase": "executed",
+      "exit_code": 0,
+      "normal_termination_marker_count": 1,
+      "optimization_converged_marker_count": 1,
+      "optimization_not_converged_marker_count": 0,
+      "collection_error": null,
+      "returned_file_count": 15,
+      "source_input_sha256": "7572b8631c64c4e65e4a227ae78b232bc2d20ebe9bd81b12aead4e9815731f90",
+      "executed_input_sha256": "8a95aa65d10b69a32eea3ecaa757cd868935d6f7858794e2ffea8694212501d6",
+      "materialization": [
+        {
+          "field": "cores",
+          "value": 4,
+          "source": "frozen_resources"
+        }
+      ],
+      "resources": {
+        "cores": 4,
+        "memory_mb": 1024,
+        "maxcore_mb": 192,
+        "timeout_seconds": 900.0
+      },
+      "scientific_validation": "unverified",
+      "wall_seconds": 188.375,
+      "resource_usage_complete": false
+    },
+    {
+      "request_key": "scan_dih_m060",
+      "state": "completed",
+      "created_at": "2026-10-20T15:51:33.415140Z",
+      "finished_at": "2026-10-20T15:52:51.062953Z",
+      "actual_start_status": "confirmed",
+      "launch_phase": "executed",
+      "exit_code": 0,
+      "normal_termination_marker_count": 1,
+      "optimization_converged_marker_count": 1,
+      "optimization_not_converged_marker_count": 0,
+      "collection_error": null,
+      "returned_file_count": 15,
+      "source_input_sha256": "82eef64ac72e3080d303dd3893bf739174534ca9181064fe500a0fafcfb17241",
+      "executed_input_sha256": "53e2d9c0f7200a394fb16b95a5311f9a37321ddc9caed07c85b8c6308ae27685",
+      "materialization": [
+        {
+          "field": "cores",
+          "value": 4,
+          "source": "frozen_resources"
+        }
+      ],
+      "resources": {
+        "cores": 4,
+        "memory_mb": 1024,
+        "maxcore_mb": 192,
+        "timeout_seconds": 900.0
+      },
+      "scientific_validation": "unverified",
+      "wall_seconds": 268.0780000000086,
+      "resource_usage_complete": false
+    },
+    {
+      "request_key": "scan_dih_p000",
+      "state": "completed",
+      "created_at": "2026-10-20T15:52:58.374778Z",
+      "finished_at": "2026-10-20T15:54:41.135700Z",
+      "actual_start_status": "confirmed",
+      "launch_phase": "executed",
+      "exit_code": 0,
+      "normal_termination_marker_count": 1,
+      "optimization_converged_marker_count": 1,
+      "optimization_not_converged_marker_count": 0,
+      "collection_error": null,
+      "returned_file_count": 15,
+      "source_input_sha256": "ced3e8de39abcba38bc997200a86cb6a14397a8f0ce4485a97b15ca0193cb3e5",
+      "executed_input_sha256": "2c3f8013ba823b355be84833c67b8f4e26f2e43d8e20d8175d3073c6d19f3b37",
+      "materialization": [
+        {
+          "field": "cores",
+          "value": 4,
+          "source": "frozen_resources"
+        }
+      ],
+      "resources": {
+        "cores": 4,
+        "memory_mb": 1024,
+        "maxcore_mb": 192,
+        "timeout_seconds": 900.0
+      },
+      "scientific_validation": "unverified",
+      "wall_seconds": 375.92200000000594,
+      "resource_usage_complete": false
+    },
+    {
+      "request_key": "scan_dih_p060",
+      "state": "completed",
+      "created_at": "2026-10-20T15:54:48.629469Z",
+      "finished_at": "2026-10-20T15:58:16.372092Z",
+      "actual_start_status": "confirmed",
+      "launch_phase": "executed",
+      "exit_code": 0,
+      "normal_termination_marker_count": 1,
+      "optimization_converged_marker_count": 1,
+      "optimization_not_converged_marker_count": 0,
+      "collection_error": null,
+      "returned_file_count": 15,
+      "source_input_sha256": "064d1cb63f2995c46a38b993e12478cb01a64861fea8d3dd2444bf70a0c0cd9b",
+      "executed_input_sha256": "c9738b069121e168edb716838cfc132c361a6d2944c985f2330b51dc806161d1",
+      "materialization": [
+        {
+          "field": "cores",
+          "value": 4,
+          "source": "frozen_resources"
+        }
+      ],
+      "resources": {
+        "cores": 4,
+        "memory_mb": 1024,
+        "maxcore_mb": 192,
+        "timeout_seconds": 900.0
+      },
+      "scientific_validation": "unverified",
+      "wall_seconds": 589.1560000000027,
+      "resource_usage_complete": false
+    },
+    {
+      "request_key": "scan_dih_p120",
+      "state": "completed",
+      "created_at": "2026-10-20T15:58:24.708242Z",
+      "finished_at": "2026-10-20T16:07:16.135527Z",
+      "actual_start_status": "confirmed",
+      "launch_phase": "executed",
+      "exit_code": 0,
+      "normal_termination_marker_count": 1,
+      "optimization_converged_marker_count": 1,
+      "optimization_not_converged_marker_count": 0,
+      "collection_error": null,
+      "returned_file_count": 15,
+      "source_input_sha256": "bccf827bc2c9b22520b67f1b1bfda6ecece2506dae86e66f8feac8707908f893",
+      "executed_input_sha256": "4e19ec0b127f6de19a831325c89ff8be618d990ddcb095b50c34c68b79ebca84",
+      "materialization": [
+        {
+          "field": "cores",
+          "value": 4,
+          "source": "frozen_resources"
+        }
+      ],
+      "resources": {
+        "cores": 4,
+        "memory_mb": 1024,
+        "maxcore_mb": 192,
+        "timeout_seconds": 900.0
+      },
+      "scientific_validation": "unverified",
+      "wall_seconds": 1125.843000000008,
+      "resource_usage_complete": false
+    }
+  ],
+  "model_records": [
+    {
+      "id": "model_b47314cd96cd47fd88cfb1f60e0239f7",
+      "created_at": "2026-10-20T15:39:32.496927+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 5871,
+      "output_tokens": 7406,
+      "total_tokens": 13277,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_b47314cd96cd47fd88cfb1f60e0239f7.request.json",
+        "sha256": "2d2b7cd94f0e1ea618168eaa91bf94612db54382be2ca188737ff5088547807c",
+        "bytes": 24321
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_b47314cd96cd47fd88cfb1f60e0239f7.response.json",
+        "sha256": "081e4a26d706d5d85b43b614f093cf573ce752ce57f1ae822b954d8bfb68ff84",
+        "bytes": 14400
+      }
+    },
+    {
+      "id": "model_099e3515d70d40fa81ea48f47370df6d",
+      "created_at": "2026-10-20T15:40:02.733032+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 8396,
+      "output_tokens": 6850,
+      "total_tokens": 15246,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_099e3515d70d40fa81ea48f47370df6d.request.json",
+        "sha256": "77f4a831104138336fb5bade8c3fb3d87065f14dc4f1b251ae74fee5367ab59c",
+        "bytes": 34280
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_099e3515d70d40fa81ea48f47370df6d.response.json",
+        "sha256": "f50dbd0adf08cc2a3f01890dbfa72d660ad9592a9586801567800c8619c767df",
+        "bytes": 14054
+      }
+    },
+    {
+      "id": "model_fb7551e4fb464a2fb4d1d8e7beb53eb5",
+      "created_at": "2026-10-20T15:40:32.168126+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 15837,
+      "output_tokens": 3742,
+      "total_tokens": 19579,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_fb7551e4fb464a2fb4d1d8e7beb53eb5.request.json",
+        "sha256": "f6728635f2abc769a62586f584a37863fbf14f00154eff344f41024780d31b09",
+        "bytes": 66197
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_fb7551e4fb464a2fb4d1d8e7beb53eb5.response.json",
+        "sha256": "c50aadde791545c9fa70dc50c16992cc5f18ebf498c7e3d4fbabb0ebbd54bff0",
+        "bytes": 4166
+      }
+    },
+    {
+      "id": "model_d61194fc0a344292845b1ae8cf9972b4",
+      "created_at": "2026-10-20T15:40:52.641793+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 15214,
+      "output_tokens": 16257,
+      "total_tokens": 31471,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_d61194fc0a344292845b1ae8cf9972b4.request.json",
+        "sha256": "e9453b6cebb8f4c413b604a6734123c3082755bdfbfc85cfa8098a910c44a407",
+        "bytes": 63365
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_d61194fc0a344292845b1ae8cf9972b4.response.json",
+        "sha256": "d4495ce70534f3057782a2393a2b39a9d3806f08fb4c961651a4bac9186e859c",
+        "bytes": 29589
+      }
+    },
+    {
+      "id": "model_0914a6a9f0be4e7a943b7e44fe0274c1",
+      "created_at": "2026-10-20T15:42:02.708433+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 17505,
+      "output_tokens": 322,
+      "total_tokens": 17827,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_0914a6a9f0be4e7a943b7e44fe0274c1.request.json",
+        "sha256": "a1fe9de401b0f2766cfdd995eb837ba916e19926046c84ee76e453458f8ac702",
+        "bytes": 64879
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_0914a6a9f0be4e7a943b7e44fe0274c1.response.json",
+        "sha256": "d77386a6c8f2832ed792fc040dda7deae287c67eb3d0ca53a48f3167fae0afcd",
+        "bytes": 1509
+      }
+    },
+    {
+      "id": "model_55bd176896764681bd14db0f8722dd08",
+      "created_at": "2026-10-20T15:42:10.277040+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 18533,
+      "output_tokens": 355,
+      "total_tokens": 18888,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_55bd176896764681bd14db0f8722dd08.request.json",
+        "sha256": "1d68e6723bde4891286d804e237e868ae725199da4e64fdd50f716b728e8ea5a",
+        "bytes": 68167
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_55bd176896764681bd14db0f8722dd08.response.json",
+        "sha256": "40987bc45280e848fa0fa16f2a9f766b819f2a942c3d948bb2308065af4e2ceb",
+        "bytes": 2390
+      }
+    },
+    {
+      "id": "model_e8f68312b4a3413b877c56b6c67f52ce",
+      "created_at": "2026-10-20T15:42:29.521118+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 18720,
+      "output_tokens": 851,
+      "total_tokens": 19571,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_e8f68312b4a3413b877c56b6c67f52ce.request.json",
+        "sha256": "c514a53567fe2ecb45b647a70e4f89dd4acd83d3c6a2374c9283e8c16b268777",
+        "bytes": 68153
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_e8f68312b4a3413b877c56b6c67f52ce.response.json",
+        "sha256": "15dfefe79ca52a0d36a8b422781d30d2fc6417680ea43805ce05e583f4f566fe",
+        "bytes": 1442
+      }
+    },
+    {
+      "id": "model_30c4085b5a964a169ace1d0a80db7977",
+      "created_at": "2026-10-20T15:42:37.820981+00:00",
+      "status": "known",
+      "error_category": "truncated",
+      "finish_reason": "length",
+      "input_tokens": 19406,
+      "output_tokens": 32768,
+      "total_tokens": 52174,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_30c4085b5a964a169ace1d0a80db7977.request.json",
+        "sha256": "0271ef9e1146c9231e254b5728120de71977a6f0e3f69572349c68059182d942",
+        "bytes": 70726
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_30c4085b5a964a169ace1d0a80db7977.response.json",
+        "sha256": "57d76ba296cb806740dc34269a9148b48b04a0fc7d6a1538aa8e12e56a4c6da1",
+        "bytes": 10636
+      }
+    },
+    {
+      "id": "model_4dedf5bfd18b4f38b27bc14af89b7d04",
+      "created_at": "2026-10-20T15:44:55.112350+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 18074,
+      "output_tokens": 1597,
+      "total_tokens": 19671,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_4dedf5bfd18b4f38b27bc14af89b7d04.request.json",
+        "sha256": "88189fb8afe4388a7c579cf5bb5e1bf5bfda418fee8875e224d580d2c5f743bd",
+        "bytes": 64596
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_4dedf5bfd18b4f38b27bc14af89b7d04.response.json",
+        "sha256": "45dcbb4d357439fe9c80711662fcac40eced65823117f244267d3c1f0785c648",
+        "bytes": 1543
+      }
+    },
+    {
+      "id": "model_e0ce98ef03664a7fba52aae194310d6e",
+      "created_at": "2026-10-20T15:45:08.752287+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 18469,
+      "output_tokens": 4345,
+      "total_tokens": 22814,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_e0ce98ef03664a7fba52aae194310d6e.request.json",
+        "sha256": "1321f3cfcf7bcde27d12bb3670cdea31d6a778b686130338d60b99aa93009f24",
+        "bytes": 65819
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_e0ce98ef03664a7fba52aae194310d6e.response.json",
+        "sha256": "9e4fe338b4d049dc2cf832bc51e03892314c3b4b15092a9a8fd653dde530afa1",
+        "bytes": 1650
+      }
+    },
+    {
+      "id": "model_773f6901e4934f5f909dd1409b296f43",
+      "created_at": "2026-10-20T15:45:33.656272+00:00",
+      "status": "known",
+      "error_category": "empty_content",
+      "finish_reason": "stop",
+      "input_tokens": 18805,
+      "output_tokens": 926,
+      "total_tokens": 19731,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_773f6901e4934f5f909dd1409b296f43.request.json",
+        "sha256": "06673dcab1a5af556bfbeb05fbbbe99fade980c1d134bc315630a4237a6b3471",
+        "bytes": 66719
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_773f6901e4934f5f909dd1409b296f43.response.json",
+        "sha256": "e08e3c3cbef853ecd178f5f6f3a207750ca272a2ad900f034f1f1229611be521",
+        "bytes": 818
+      }
+    },
+    {
+      "id": "model_0f93e522cd094b5db3326c73a5ed432f",
+      "created_at": "2026-10-20T15:45:42.560960+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 18820,
+      "output_tokens": 5791,
+      "total_tokens": 24611,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_0f93e522cd094b5db3326c73a5ed432f.request.json",
+        "sha256": "99f398fb197aa36aae6588b8e006ef6dd5b6b3af8298881d33081dfdb4cca645",
+        "bytes": 66807
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_0f93e522cd094b5db3326c73a5ed432f.response.json",
+        "sha256": "2a2faa57e718316ca8eab543b62780b70e7f98e82d8bff2ba65c65775a411d1b",
+        "bytes": 2081
+      }
+    },
+    {
+      "id": "model_5f14b755a0ea4c069a193045a9289562",
+      "created_at": "2026-10-20T15:46:14.009763+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 18693,
+      "output_tokens": 258,
+      "total_tokens": 18951,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_5f14b755a0ea4c069a193045a9289562.request.json",
+        "sha256": "189f15d06e1d6f1cc2a81b6229cf23e348419ff2bc3439a238060ec81a8666e9",
+        "bytes": 66339
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_5f14b755a0ea4c069a193045a9289562.response.json",
+        "sha256": "9c08d13403a61954615510387f3afd550ac0c238f8a496e64b9d7e3c26880f7e",
+        "bytes": 1365
+      }
+    },
+    {
+      "id": "model_22c3b8a0267a421dbaca90ee5dc93c2f",
+      "created_at": "2026-10-20T15:46:20.069443+00:00",
+      "status": "known",
+      "error_category": null,
+      "finish_reason": "stop",
+      "input_tokens": 19003,
+      "output_tokens": 25681,
+      "total_tokens": 44684,
+      "request": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_22c3b8a0267a421dbaca90ee5dc93c2f.request.json",
+        "sha256": "d86026f0f782ed4597143e0fe1966802b5e767dc8e66fbbcd82699f3207fe892",
+        "bytes": 67286
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_22c3b8a0267a421dbaca90ee5dc93c2f.response.json",
+        "sha256": "3abcae848e2eaccae0f489e6e22ff3512d9cf4f53d90c332cc7d4a996f421ffa",
+        "bytes": 37120
+      }
+    }
+  ],
+  "source_mechanisms": [
+    {
+      "path": "src/orca_agent/agent.py",
+      "start_line": 279,
+      "end_line": 295,
+      "text": "            prepared = build_context(store.load_request(run), run, plan, results=selected,\n                                     feedback=data, relevant_tools=[] if has_pending_messages else relevant_tools,\n                                     control_generation=basis[\"control_generation\"],\n                                     user_messages=control[\"messages\"],\n                                     action_parameters=action_parameters(semantic_tools, request=request,\n                                         text_input=run.science_baseline_policy == \"first_science_plan\",\n                                         code_authorized=run.permission.code_execution\n                                             and \"python.execute\" in semantic_tools,\n                                         messages=[message for message in control[\"messages\"]\n                                             if message[\"id\"] not in run.processed_messages],\n                                         workflow_simplified=simplified)\n                                     if has_pending_messages else None,\n                                     delivery_snapshot=snapshot,\n                                     model_profile=model_profile)\n            if run.batch_category and not batch:\n                raise StoreError(\"acceptance model calls require shared batch accounting\")\n            response = send_model(store, run, prepared, transport, basis=basis,"
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "start_line": 925,
+      "end_line": 940,
+      "text": "            if _has_credential(message):\n                message = \"Operation failed; credential-bearing diagnostic withheld\"\n            unfinished = any(a.finished_at is None for a in run.attempts)\n            run.state = (active_terminal(run).terminal_state if active_terminal(run) else \"unknown\" if unfinished else\n                         \"budget_exhausted\" if isinstance(exc, BudgetExceeded) else \"failed\")\n            run.diagnostics.append({\"category\": type(exc).__name__,\n                                    \"message\": message,\n                                    \"environment_occupied\": isinstance(exc, EnvironmentBusy)})\n        runner._goals(store, run, store.load_plan(run), results)\n        if run.state == \"unknown\":\n            run.usage.resource_usage_complete = False\n        store.save_run(run)\n        return publish_terminal_report(store, run, fault=fault)"
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "start_line": 3680,
+      "end_line": 3687,
+      "text": "            return _terminal_context(request, run, delivery_snapshot, terminal_purpose, feedback or {},\n                user_messages, generation, now, model_profile)\n        # Projection remains usable for read-only inspection. If no candidate\n        # can preserve the margin, the unchanged send guard rejects the best\n        # fitting candidate before reserving or transmitting any HTTP.\n        return budget_rejected_prepared\n    raise ContextLimitError(\"required model context exceeds the configured global input bound, Run input limit, \"\n                            \"or remaining token reservation\")"
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "start_line": 599,
+      "end_line": 608,
+      "text": "        for identifier, binding in prior.goal_map.items():\n            if identifier in proposal.goal_map or identifier not in requested or binding.port != requested[identifier].port:\n                continue\n            if binding.step_id in replaced or (binding.evidence\n                    and binding.evidence.producer_step_id in replaced):\n                continue  # A replacement needs an explicit new Goal route.\n            if binding.gap is not None:\n                proposal.goal_map[identifier] = GapGoalTarget(gap=binding.gap, port=binding.port)\n            elif binding.step_id in settled:\n                proposal.goal_map[identifier] = FutureGoalTarget(step_key=binding.step_id, port=binding.port)"
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "start_line": 676,
+      "end_line": 681,
+      "text": "    missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]\n    if simplified_workflow(run):\n        for goal in missing:\n            proposal.goal_map[goal.id] = GapGoalTarget(port=goal.port,\n                gap=\"The current Plan does not yet provide this required goal's evidence.\")\n        missing = []"
+    },
+    {
+      "path": "src/orca_agent/goals.py",
+      "start_line": 9,
+      "end_line": 18,
+      "text": "    \"\"\"Resolve one declared binding and assess its present purpose, without writes.\"\"\"\n    selected = None\n    gaps = []\n    try:\n        if binding.port != goal.port:\n            gaps.append(\"goal_physical_quantity_binding_mismatch\")\n        elif binding.gap:\n            gaps.append(binding.gap)\n        elif binding.evidence:\n            reference = binding.evidence"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/artifacts/artifact_706176e0a39e4771a4033c98b013f407/files/dihedral_scan.py",
+      "start_line": 14,
+      "end_line": 17,
+      "text": "ANGLES = [-180.0, -120.0, -60.0, 0.0, 60.0, 120.0, 180.0]\nHARTREE_TO_KJ = 2625.4996394799\nTIME_BUDGET_S = 950.0\nSTART = time.monotonic()"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/artifacts/artifact_706176e0a39e4771a4033c98b013f407/files/dihedral_scan.py",
+      "start_line": 183,
+      "end_line": 199,
+      "text": "for angle in ANGLES:\n    label = f'{int(angle):+04d}'\n    key = 'scan_dih_' + label.replace('-', 'm').replace('+', 'p')\n    inp_name = f'scan{label}.inp'\n    Path(inp_name).write_text(build_input(CONS, angle), encoding='utf-8')\n    if time.monotonic() - START > TIME_BUDGET_S:\n        failed.append({'target_angle_deg': angle, 'request_key': key, 'stage': 'not_attempted',\n                       'error': 'frozen script time budget exhausted before launching this point'})\n        Path('scan_results.json').write_text(json.dumps({'members': members, 'failed': failed}, indent=2), encoding='utf-8')\n        continue\n    try:\n        rec = run_orca(inp_name, dependencies=[GEOM], request_key=key, purpose='new_candidate')\n    except Exception as exc:\n        failed.append({'target_angle_deg': angle, 'request_key': key, 'stage': 'run_orca',\n                       'error': type(exc).__name__ + ': ' + str(exc)})\n        Path('scan_results.json').write_text(json.dumps({'members': members, 'failed': failed}, indent=2), encoding='utf-8')\n        continue"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/artifacts/artifact_706176e0a39e4771a4033c98b013f407/files/dihedral_scan.py",
+      "start_line": 234,
+      "end_line": 250,
+      "text": "    ok = energy is not None and converged and actual is not None\n    members.append({\n        'target_angle_deg': angle,\n        'actual_dihedral_deg': actual,\n        'energy_hartree': energy,\n        'optimization_converged': bool(converged),\n        'operation_status': rec.get('operation_status'),\n        'request_key': key,\n        'input_file': inp_name,\n        'final_geometry_file': member_xyz_name,\n        'atom_count': natoms,\n        'status': 'completed' if ok else 'incomplete',\n    })\n    if not ok:\n        failed.append({'target_angle_deg': angle, 'request_key': key, 'stage': 'postprocess',\n                       'operation_status': rec.get('operation_status'),\n                       'error': 'energy, convergence flag or final geometry missing/unparsable'})"
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/artifacts/artifact_706176e0a39e4771a4033c98b013f407/files/dihedral_scan.py",
+      "start_line": 375,
+      "end_line": 382,
+      "text": "     'value': {'criterion': CRITERION, 'evaluation': evaluation,\n               'pre_screen_candidate_angles_deg': refine,\n               'decision_status': 'deferred_to_main_decision_loop'},\n     'unit': None,\n     'sources': all_sources + [local_source],\n     'formula': 'three-point parabola through (x-h,y1),(x,y2),(x+h,y3): b=(y3-y1)/2, a=(y1+y3)/2-y2, vertex offset = -b/(2a)*h, predicted lowering = b^2/(4a)*2625.4996394799',\n     'artifacts': ['scan_results.json'],\n     'limitations': ['The criterion was applied only to complete triplets; the continue/stop decision and any refinement jobs are taken later in the main decision loop, not here.']},"
+    }
+  ],
+  "scope_limits": [
+    "Saved records and source text only; no reconstruction of model context, test, product function invocation, network/model/ORCA call, Docker inspection, retry, or new Run.",
+    "No final numerical validity claim: six operating completions and retained raw evidence are separate from requested seven-point/refinement/curve delivery.",
+    "Resource usage remains incomplete; aggregate child-container samples must not be double-counted with parent accounting. Supplier charges and total measured cost were not checked."
+  ],
+  "actions": {
+    "product_modified": false,
+    "freeze_modified": false,
+    "run_modified": false,
+    "tests_run": 0,
+    "context_replays": 0,
+    "new_model_calls": 0,
+    "new_orca_calls": 0
+  },
+  "evidence_index": [
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/run.json",
+      "sha256": "e72a150a459f48e64821693e07b1950f9dc1020e14ea2d78fc06272338f2c833",
+      "bytes": 1686893
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T3/outcome.json",
+      "sha256": "69f851dd5c445ccbdeb18d78bf48793878249f72d05f832db88e049b7337b1e6",
+      "bytes": 2192
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T3/report.json",
+      "sha256": "0a2c9bde3b0d45c40b72e1aa61fb0d5e4ad40eccd287ce539e8126b1c9294c0c",
+      "bytes": 2236215
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T3/report.txt",
+      "sha256": "7fd20d6351834944044dab4a4c173971a8bfca9236a15ea130492bc9c67e0614",
+      "bytes": 1202482
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T3/post-verify.json",
+      "sha256": "210aa3f1558e9870c54fe970780138e431655d9ac9d17f8e913aa28abcafc34f",
+      "bytes": 1160
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T3/budget-check.json",
+      "sha256": "2ac6c420c26e5b6998e45669412e6d2120be2167444889e992dd376091d3db9c",
+      "bytes": 26
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T3/knowledge-audit.json",
+      "sha256": "af7a016070abae6defca333348f9acf6cebff29c6abf0e116d28326b7fc105aa",
+      "bytes": 290
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/results/result_3695289b84f740e5af2d617b44f7a282.json",
+      "sha256": "47b635d9cde434ff0bf955a144589e2c4884c00705ea5529d195376672cee8ff",
+      "bytes": 445517
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/execution.json",
+      "sha256": "e73117727a84d5ec6049a44b097fbe09f573c1d3f972da6882acae46a5c333f6",
+      "bytes": 190020
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/task/scan_results.json",
+      "sha256": "82a459954eecf62026babc3799c91a330a44dec2c93d01680dd062f020bde3bf",
+      "bytes": 2566
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/task/observations.json",
+      "sha256": "0f3bb1a9235d2b26a6080a3f6d3e0bbbf566fd523a3faccc69c15e9c7bd2927e",
+      "bytes": 28969
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/task/stdout.out",
+      "sha256": "b41dfce10f6b7b914f3685eec32fea5c6111f4e4a9aae4d13080564cd9335119",
+      "bytes": 1481
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/task/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/artifacts/artifact_706176e0a39e4771a4033c98b013f407/artifact.json",
+      "sha256": "e0b1c835b8494fdfad259054e145bb6f158f70007868066fd7f637005b63049b",
+      "bytes": 508
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/artifacts/artifact_706176e0a39e4771a4033c98b013f407/files/dihedral_scan.py",
+      "sha256": "27364029dcc0291d119873719af0e9dd9971b716efff4c80e751d32d5847ba7b",
+      "bytes": 16366
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/decisions/model_d61194fc0a344292845b1ae8cf9972b4.json",
+      "sha256": "94a78decfc8a99aca69c26cc440f5227381c33d475d26399f8aad43b340327c9",
+      "bytes": 41101
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_d61194fc0a344292845b1ae8cf9972b4.response.json",
+      "sha256": "d4495ce70534f3057782a2393a2b39a9d3806f08fb4c961651a4bac9186e859c",
+      "bytes": 29589
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_d61194fc0a344292845b1ae8cf9972b4.request.json",
+      "sha256": "e9453b6cebb8f4c413b604a6734123c3082755bdfbfc85cfa8098a910c44a407",
+      "bytes": 63365
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/decisions/model_22c3b8a0267a421dbaca90ee5dc93c2f.json",
+      "sha256": "71b95e9dc2facfc27385d4dcabdc3e2493c5ccc9c7c2122ca64223852b4a01e3",
+      "bytes": 58631
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_22c3b8a0267a421dbaca90ee5dc93c2f.response.json",
+      "sha256": "3abcae848e2eaccae0f489e6e22ff3512d9cf4f53d90c332cc7d4a996f421ffa",
+      "bytes": 37120
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_22c3b8a0267a421dbaca90ee5dc93c2f.request.json",
+      "sha256": "d86026f0f782ed4597143e0fe1966802b5e767dc8e66fbbcd82699f3207fe892",
+      "bytes": 67286
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m180/task/stdout.out",
+      "sha256": "eec744fa3c79dd9c595c5fbd4ca1e6630bbb254a237b6ce19dfe03eb020554ff",
+      "bytes": 664135
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m180/task/job.xyz",
+      "sha256": "1954a08b045c1b53dc5d0016bcad19e26f6c3132aa131e9d591f38e178e47968",
+      "bytes": 1103
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m180/task/job.inp",
+      "sha256": "6e48f150f47507afa73638cbcb6c1ea27460b9567e403882b36a79e05a7eeddc",
+      "bytes": 191
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m180/task/source-input.inp",
+      "sha256": "724d05b8af0ef03b29bf21c56a1d7dc2fb3ad730e48730a5ee2c8fafcbf144aa",
+      "bytes": 200
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_m180/prepared.json",
+      "sha256": "949e4e0b3a7e07288b5b674012a1715996d0127b357012406ad2c49e477af9b8",
+      "bytes": 4671
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_m180/execution.json",
+      "sha256": "05e1bbd42eb7f9aada9bc89bbcfe4ddb68710629454e9d88f420b4cf888afcc2",
+      "bytes": 186710
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m120/task/stdout.out",
+      "sha256": "ed361aa28ecae777a2be4379f20c6c645d613aa5fe9d2e9e013c14c3034bb817",
+      "bytes": 466839
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m120/task/job.xyz",
+      "sha256": "0c4006c9c6da2d472bbb4d0bc415941ec34491e1974e1077ee291a1955cb1b7b",
+      "bytes": 1103
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m120/task/job.inp",
+      "sha256": "8a95aa65d10b69a32eea3ecaa757cd868935d6f7858794e2ffea8694212501d6",
+      "bytes": 191
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m120/task/source-input.inp",
+      "sha256": "7572b8631c64c4e65e4a227ae78b232bc2d20ebe9bd81b12aead4e9815731f90",
+      "bytes": 200
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_m120/prepared.json",
+      "sha256": "cb17138738337fa82478d29c170dd41e2f3a795979fa8ab7776828545c46285f",
+      "bytes": 4671
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_m120/execution.json",
+      "sha256": "5b0258da3da8f960977339ec23407c6b72922156b1d0a8557eb525fd9b4143b1",
+      "bytes": 190342
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m060/task/stdout.out",
+      "sha256": "23c1bf99bd5b757f7cdb783b521cf379bec4dd4cca93d7b5f918b152c7fdc593",
+      "bytes": 437880
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m060/task/job.xyz",
+      "sha256": "5f4eb87b610633029f6ef771e672088a97afd1d7afbe7c4db70eb9bd30716d17",
+      "bytes": 1103
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m060/task/job.inp",
+      "sha256": "53e2d9c0f7200a394fb16b95a5311f9a37321ddc9caed07c85b8c6308ae27685",
+      "bytes": 190
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_m060/task/source-input.inp",
+      "sha256": "82eef64ac72e3080d303dd3893bf739174534ca9181064fe500a0fafcfb17241",
+      "bytes": 199
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_m060/prepared.json",
+      "sha256": "262e3f2dd9714cd0f09a5ff4669deae2d5e0f8cbcab2adf0b8ba9c1a98c581b6",
+      "bytes": 4670
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_m060/execution.json",
+      "sha256": "9bcf75546b09cf517ba15823ccc44495a9d23baffac0d0c31f4fc18c22b36052",
+      "bytes": 190352
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p000/task/stdout.out",
+      "sha256": "91382c106c8d93c7d2629516c8ca33bd6468159dd143b192e784d0f12c0f8bd4",
+      "bytes": 577148
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p000/task/job.xyz",
+      "sha256": "8547749b66f84a49193b866cdba7378e3ad99d410db7e0704ac1bb1d6f83ccd3",
+      "bytes": 1103
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p000/task/job.inp",
+      "sha256": "2c3f8013ba823b355be84833c67b8f4e26f2e43d8e20d8175d3073c6d19f3b37",
+      "bytes": 188
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p000/task/source-input.inp",
+      "sha256": "ced3e8de39abcba38bc997200a86cb6a14397a8f0ce4485a97b15ca0193cb3e5",
+      "bytes": 197
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_p000/prepared.json",
+      "sha256": "bd622eecb1a036535ef7b2f81815de16a1a8a47639b6f7b0663c801caf7f7a40",
+      "bytes": 4668
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_p000/execution.json",
+      "sha256": "f20c5a491ea079d897305464333266de588c1bc03d2715b7adab86102455e850",
+      "bytes": 190356
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p060/task/stdout.out",
+      "sha256": "310a29ae99c2bb6f89deba86f73feb6eb4c573b714f2ccb3f01a1c60a46af5ed",
+      "bytes": 1166489
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p060/task/job.xyz",
+      "sha256": "6cefcce463d9b3117ed12c121ed82ff3e67f21b0e2b4c3fdc155de969ef63b46",
+      "bytes": 1103
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p060/task/job.inp",
+      "sha256": "c9738b069121e168edb716838cfc132c361a6d2944c985f2330b51dc806161d1",
+      "bytes": 189
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p060/task/source-input.inp",
+      "sha256": "064d1cb63f2995c46a38b993e12478cb01a64861fea8d3dd2444bf70a0c0cd9b",
+      "bytes": 198
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_p060/prepared.json",
+      "sha256": "4a2044fcc41a10da8b114f2181256747f21e844379c291ee3f0a53cf1c18f692",
+      "bytes": 4669
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_p060/execution.json",
+      "sha256": "e2b0833ce07fd1925ed49a8e070320b4861a670529546bcce76360476dc67c6b",
+      "bytes": 190359
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p120/task/stdout.out",
+      "sha256": "3d19fe57142250aa01598efa80705a2d22a6498012e459330d0ccb1c51738c1c",
+      "bytes": 3460366
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p120/task/job.xyz",
+      "sha256": "4381de169f11ab6f971c6cf3419489ad2bcb3c5971a82e1f3355b3dfb353727f",
+      "bytes": 1103
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p120/task/job.inp",
+      "sha256": "4e19ec0b127f6de19a831325c89ff8be618d990ddcb095b50c34c68b79ebca84",
+      "bytes": 190
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/native/scan_dih_p120/task/source-input.inp",
+      "sha256": "bccf827bc2c9b22520b67f1b1bfda6ecece2506dae86e66f8feac8707908f893",
+      "bytes": 199
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_p120/prepared.json",
+      "sha256": "7d4fe3aa0cc2f1a1b3ce2f01152dfe83dc55d5001ea34f82c6cc7082a81e27de",
+      "bytes": 4670
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/steps/step_123fcd8c950449a99d319ca6c3374647/attempt-002/internal/scan_dih_p120/execution.json",
+      "sha256": "0a389d8a41354be4c24060793720b582673b3ea227add190d2cd6d2a69b53e6b",
+      "bytes": 190362
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_b47314cd96cd47fd88cfb1f60e0239f7.request.json",
+      "sha256": "2d2b7cd94f0e1ea618168eaa91bf94612db54382be2ca188737ff5088547807c",
+      "bytes": 24321
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_b47314cd96cd47fd88cfb1f60e0239f7.response.json",
+      "sha256": "081e4a26d706d5d85b43b614f093cf573ce752ce57f1ae822b954d8bfb68ff84",
+      "bytes": 14400
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_099e3515d70d40fa81ea48f47370df6d.request.json",
+      "sha256": "77f4a831104138336fb5bade8c3fb3d87065f14dc4f1b251ae74fee5367ab59c",
+      "bytes": 34280
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_099e3515d70d40fa81ea48f47370df6d.response.json",
+      "sha256": "f50dbd0adf08cc2a3f01890dbfa72d660ad9592a9586801567800c8619c767df",
+      "bytes": 14054
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_fb7551e4fb464a2fb4d1d8e7beb53eb5.request.json",
+      "sha256": "f6728635f2abc769a62586f584a37863fbf14f00154eff344f41024780d31b09",
+      "bytes": 66197
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_fb7551e4fb464a2fb4d1d8e7beb53eb5.response.json",
+      "sha256": "c50aadde791545c9fa70dc50c16992cc5f18ebf498c7e3d4fbabb0ebbd54bff0",
+      "bytes": 4166
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_0914a6a9f0be4e7a943b7e44fe0274c1.request.json",
+      "sha256": "a1fe9de401b0f2766cfdd995eb837ba916e19926046c84ee76e453458f8ac702",
+      "bytes": 64879
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_0914a6a9f0be4e7a943b7e44fe0274c1.response.json",
+      "sha256": "d77386a6c8f2832ed792fc040dda7deae287c67eb3d0ca53a48f3167fae0afcd",
+      "bytes": 1509
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_55bd176896764681bd14db0f8722dd08.request.json",
+      "sha256": "1d68e6723bde4891286d804e237e868ae725199da4e64fdd50f716b728e8ea5a",
+      "bytes": 68167
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_55bd176896764681bd14db0f8722dd08.response.json",
+      "sha256": "40987bc45280e848fa0fa16f2a9f766b819f2a942c3d948bb2308065af4e2ceb",
+      "bytes": 2390
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_e8f68312b4a3413b877c56b6c67f52ce.request.json",
+      "sha256": "c514a53567fe2ecb45b647a70e4f89dd4acd83d3c6a2374c9283e8c16b268777",
+      "bytes": 68153
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_e8f68312b4a3413b877c56b6c67f52ce.response.json",
+      "sha256": "15dfefe79ca52a0d36a8b422781d30d2fc6417680ea43805ce05e583f4f566fe",
+      "bytes": 1442
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_30c4085b5a964a169ace1d0a80db7977.request.json",
+      "sha256": "0271ef9e1146c9231e254b5728120de71977a6f0e3f69572349c68059182d942",
+      "bytes": 70726
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_30c4085b5a964a169ace1d0a80db7977.response.json",
+      "sha256": "57d76ba296cb806740dc34269a9148b48b04a0fc7d6a1538aa8e12e56a4c6da1",
+      "bytes": 10636
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_4dedf5bfd18b4f38b27bc14af89b7d04.request.json",
+      "sha256": "88189fb8afe4388a7c579cf5bb5e1bf5bfda418fee8875e224d580d2c5f743bd",
+      "bytes": 64596
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_4dedf5bfd18b4f38b27bc14af89b7d04.response.json",
+      "sha256": "45dcbb4d357439fe9c80711662fcac40eced65823117f244267d3c1f0785c648",
+      "bytes": 1543
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_e0ce98ef03664a7fba52aae194310d6e.request.json",
+      "sha256": "1321f3cfcf7bcde27d12bb3670cdea31d6a778b686130338d60b99aa93009f24",
+      "bytes": 65819
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_e0ce98ef03664a7fba52aae194310d6e.response.json",
+      "sha256": "9e4fe338b4d049dc2cf832bc51e03892314c3b4b15092a9a8fd653dde530afa1",
+      "bytes": 1650
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_773f6901e4934f5f909dd1409b296f43.request.json",
+      "sha256": "06673dcab1a5af556bfbeb05fbbbe99fade980c1d134bc315630a4237a6b3471",
+      "bytes": 66719
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_773f6901e4934f5f909dd1409b296f43.response.json",
+      "sha256": "e08e3c3cbef853ecd178f5f6f3a207750ca272a2ad900f034f1f1229611be521",
+      "bytes": 818
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_0f93e522cd094b5db3326c73a5ed432f.request.json",
+      "sha256": "99f398fb197aa36aae6588b8e006ef6dd5b6b3af8298881d33081dfdb4cca645",
+      "bytes": 66807
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_0f93e522cd094b5db3326c73a5ed432f.response.json",
+      "sha256": "2a2faa57e718316ca8eab543b62780b70e7f98e82d8bff2ba65c65775a411d1b",
+      "bytes": 2081
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_5f14b755a0ea4c069a193045a9289562.request.json",
+      "sha256": "189f15d06e1d6f1cc2a81b6229cf23e348419ff2bc3439a238060ec81a8666e9",
+      "bytes": 66339
+    },
+    {
+      "path": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data/runs/run_46a2c5ba355a47249334fa194b1d33f9/model/model_5f14b755a0ea4c069a193045a9289562.response.json",
+      "sha256": "9c08d13403a61954615510387f3afd550ac0c238f8a496e64b9d7e3c26880f7e",
+      "bytes": 1365
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/review/t3-intake-review.json",
+      "sha256": "ce074536afd5a5cfb4e7b4caed80d39ada9edaf8a8c9f951a4e948eda2e99c4c",
+      "bytes": 55662
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/review/t3-execution-progress.json",
+      "sha256": "68bdf71cf7e62716a17788d43f79d44f51a60a425f99e083df1c29642746dfbc",
+      "bytes": 80302
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/freeze/product-freeze-event.json",
+      "sha256": "43fc21e3f41f9ea267dbf7cf933bfb85536a0ad92d1c189ad085a69997738727",
+      "bytes": 494
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "sha256": "39977d8ab35f44635e66c6c3ec24e5489a5bc7e9a9628b92d8a7530f6358521b",
+      "bytes": 60718
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "sha256": "c9121a6d7bb2181b910294f3cfc7d86f61d0ea9a913b3a5f376617b953f71abc",
+      "bytes": 231326
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "7d22cc073edd3734789b435203c58a4ae50bfe8d5ad4d60dd8e6f82fe0552a15",
+      "bytes": 51438
+    },
+    {
+      "path": "src/orca_agent/goals.py",
+      "sha256": "0c705d9755018afc56f11177f5263c64ba7c57d945c8e5b01ebd7047108ca6cb",
+      "bytes": 14230
+    }
+  ]
+}
