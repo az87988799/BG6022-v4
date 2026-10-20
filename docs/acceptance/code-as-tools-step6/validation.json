@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-20T05:10:44.204187+00:00",
+  "status": "step6_implemented_waiting_for_user_acceptance",
+  "product_commit": "5e6e9e38c7e24a10180d474bf95068692b7f9cca",
+  "product_manifest_file_sha256": "95f8156de0cfdf67afd56e7b143c65282ce59592be05cab225a85908b6f1bb2b",
+  "evaluation_manifest_file_sha256": "819bfbdec67e30a6584ea925fe964123d50432e297d87c8ebdef9ff0e48244ab",
+  "holdout_selection_file_sha256": "42640b96bdccc349ebc535ad01582d5a7dc2c67f32e38bf482acefbde3cbcabe",
+  "verification": {
+    "status": "matched",
+    "code_commit": "5e6e9e38c7e24a10180d474bf95068692b7f9cca",
+    "manifest_sha256": "a6edf19518a4878c33e04b1b3f9c3292b2b0e9548295fd1d686d395658f3a7ab",
+    "runtime_metadata_verified": true,
+    "scientific_execution_performed": false,
+    "runtime_reobserved": true,
+    "evaluation_sha256": "819bfbdec67e30a6584ea925fe964123d50432e297d87c8ebdef9ff0e48244ab",
+    "task_slots": 60,
+    "limits": {
+      "rows": 60,
+      "model_calls": 600,
+      "model_tokens": 30000000,
+      "orca_starts": 390,
+      "internal_work_units": 858000,
+      "wall_seconds": 321600.0
+    },
+    "model_calls": 0,
+    "orca_starts": 0
+  },
+  "offline_validation": [
+    {
+      "command": ".venv\\Scripts\\python.exe -m pytest -q tests/unit/test_code_tools_freeze.py tests/unit/test_code_tools_batch.py tests/unit/test_code_tools_acceptance.py tests/unit/test_run_configuration.py tests/unit/test_store.py",
+      "exit_code": 0,
+      "passed": 217,
+      "skipped": 2,
+      "failed": 0,
+      "elapsed_seconds": 44.38,
+      "skips": [
+        {
+          "test": "tests/unit/test_code_tools_batch.py:486",
+          "reason": "OS does not permit creating the real symlink fixture"
+        },
+        {
+          "test": "tests/unit/test_store.py:346",
+          "reason": "creating test symlinks requires Windows developer mode/privilege"
+        }
+      ],
+      "coverage": "new freeze, dependency, budget, workspace and initial Run gates; required Store/config regression",
+      "full_suite": false
+    },
+    {
+      "command": ".venv\\Scripts\\python.exe -m ruff check scripts/code_tools_acceptance.py tests/helpers/code_tools_acceptance.py tests/helpers/code_tools_batch.py tests/helpers/code_tools_freeze.py tests/unit/test_code_tools_acceptance.py tests/unit/test_code_tools_batch.py tests/unit/test_code_tools_freeze.py",
+      "exit_code": 0,
+      "status": "all_checks_passed"
+    }
+  ],
+  "batch_budget_ceilings_not_actual_usage": {
+    "total": {
+      "rows": 60,
+      "model_calls": 600,
+      "model_tokens": 30000000,
+      "orca_starts": 390,
+      "internal_work_units": 858000,
+      "wall_seconds": 321600.0
+    },
+    "categories": {
+      "formal": {
+        "slots": 21,
+        "model_calls": 504,
+        "model_tokens": 25200000,
+        "orca_starts": 252,
+        "internal_work_units": 210000,
+        "wall_seconds": 151200.0
+      },
+      "reference": {
+        "slots": 21,
+        "model_calls": 0,
+        "model_tokens": 0,
+        "orca_starts": 120,
+        "internal_work_units": 630000,
+        "wall_seconds": 144000.0
+      },
+      "control": {
+        "slots": 18,
+        "model_calls": 96,
+        "model_tokens": 4800000,
+        "orca_starts": 18,
+        "internal_work_units": 18000,
+        "wall_seconds": 26400.0
+      }
+    },
+    "retry_policy": "included in the same fixed slot, no refund or replacement success slots"
+  },
+  "initialized_batch": {
+    "identity": {
+      "batch_id": "code-tools-formal-5e6e9e3-v1",
+      "environment_root": "C:\\Users\\阿妆\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\orca-agent\\environment",
+      "freeze_sha256": "819bfbdec67e30a6584ea925fe964123d50432e297d87c8ebdef9ff0e48244ab",
+      "policy_sha256": "3d354851a1550fd0e575dd392effd866d2ceab9064dde814175a319a795b0521",
+      "root": "E:\\BG6022-V4\\data\\code-tools-formal-batch",
+      "version": 1
+    },
+    "reserved_slots": 0,
+    "totals": {
+      "reserved": {
+        "model_calls": 0,
+        "model_tokens": 0,
+        "orca_starts": 0,
+        "internal_work_units": 0,
+        "wall_seconds": 0
+      },
+      "occupied": {
+        "model_calls": 0,
+        "model_tokens": 0,
+        "orca_starts": 0,
+        "internal_work_units": 0,
+        "wall_seconds": 0
+      },
+      "known_usage": {
+        "model_calls": 0,
+        "model_tokens": 0,
+        "orca_starts": 0,
+        "internal_work_units": 0,
+        "wall_seconds": 0
+      },
+      "unknown_slots": {
+        "model_calls": 0,
+        "model_tokens": 0,
+        "orca_starts": 0,
+        "internal_work_units": 0,
+        "wall_seconds": 0
+      }
+    },
+    "overrun_metrics": [],
+    "ledger_sha256": "40bf0fd017b0f77866e44516ab6cb80d18598d1d866b5bde78c883e7da6c97a0"
+  },
+  "actual_execution_this_step": {
+    "project_model_calls": 0,
+    "project_model_tokens": 0,
+    "orca_starts": 0,
+    "formal_runs": 0,
+    "reference_runs": 0,
+    "containers_started": 0,
+    "runtime_metadata_reads": true,
+    "developer_assistant_tokens": null,
+    "developer_assistant_cost": null,
+    "unknown_reason": "Development assistant usage and costs are not available to this batch ledger."
+  },
+  "not_verified": [
+    "Step 7 task success, independent numerical references and all 21 real repetitions",
+    "New live model quality or token/cost improvement",
+    "Real ORCA/MPI execution or full OS isolation matrix in this step",
+    "Real Windows symlink adversarial cases requiring missing OS permission",
+    "Full repository regression suite",
+    "Per-Attempt disk hard quota and complete resource cost measurement",
+    "Complete live zero-model reference orchestration chain"
+  ]
+}
