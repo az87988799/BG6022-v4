@@ -62,7 +62,7 @@ def test_test_authored_quote_correction_preserves_all_four_general_collection_go
     request = store.load_request(updated)
     assert [goal.port for goal in request.goals] == ["sampling", "member_table", "sampling_check", "energy_difference"]
     assert request.normalization_status == "normalized" and not request.unresolved
-    assert request.systems[0].identity["contract"] == "general-identity-2"
+    assert request.systems[0].identity["contract"] == "general-identity-3"
     for goal, declared in zip(request.goals, proposed["goals"], strict=True):
         assert goal.quantity == declared["quantity"]
         assert goal.minimum_check_version == goal.evidence_contract_version == "generic-observation-1"

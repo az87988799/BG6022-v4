@@ -141,7 +141,7 @@ def test_real_managed_opi_preparation_same_live007_worker_input(tmp_path, monkey
     prepare = Step(id="prepare", logical_id="prepare", tool="structure.prepare", system_id="system_target",
         parameters={"system_id": "system_target"}, depends_on=[resolve.id],
         inputs={"identity": EvidenceRef(producer_step_id=resolve.id, port="resolved_identity",
-                                       rule_version="structure-identity-2")})
+                                       rule_version="structure-identity-3")})
     plan = Plan(request_id=request.id, request_version=request.version, steps=[resolve, prepare],
         goal_map={goal.id: OutputBinding(port=goal.port, gap="Initial preparation only.") for goal in request.goals})
     run = store.commit_revision(run, plan, decision_id="offline_probe_plan", basis=current_basis(store, run))
@@ -162,13 +162,13 @@ def test_real_managed_opi_preparation_same_live007_worker_input(tmp_path, monkey
     assert usage["job_commit_limit_bytes"] == 1024 * 1024 * 1024
     directory = store.path(f"runs/{run.id}/calls/{result.call_id}")
     assert json.loads((directory / "worker-input.json").read_bytes()) == {
-        "canonical_name": "ethanol", "charge": 0, "identity_rule": "structure-identity-2",
+        "canonical_name": "ethanol", "charge": 0, "identity_rule": "structure-identity-3",
         "multiplicity": 1, "smiles": "CCO"}
     raw = (directory / "prepared.xyz").read_bytes()
     output = result.qualified_outputs["prepared_geometry"]
     artifact = store.load_artifact(output.artifact_id)
     assert store.artifact_path(artifact.id).read_bytes() == raw and raw.endswith(b"\n\n")
     assert artifact.sha256 == hashlib.sha256(raw).hexdigest()
-    assert output.checks[0].rule_version == "structure-prepare-2"
+    assert output.checks[0].rule_version == "structure-prepare-3"
     assert run.usage.orca_starts_actual == run.usage.orca_starts_reserved == run.usage.model_calls == 0
     assert not run.attempts and all(value == "insufficient_evidence" for value in run.goal_status.values())

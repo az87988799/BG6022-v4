@@ -54,7 +54,7 @@ def input_plan(store, run):
     prepare = Step(id="prepare", logical_id="prepare", tool="structure.prepare", system_id=system,
         parameters={"system_id": system}, depends_on=["resolve"],
         inputs={"identity": EvidenceRef(producer_step_id="resolve", port="resolved_identity",
-                                       rule_version="structure-identity-2")})
+                                       rule_version="structure-identity-3")})
     goals = {goal.id: OutputBinding(port=goal.port, **(
         {"step_id": "prepare" if goal.port == "prepared_geometry" else "resolve"}
         if goal.port in {"prepared_geometry", "resolved_identity"} else {"gap": "Scientific observation pending."}))
@@ -98,7 +98,7 @@ def test_real_replies_preserve_goals_after_explicit_default_adoption_if_missing(
         assert goal.original_text == declared["text_basis"]
         if goal.port == "prepared_geometry":
             assert goal.quantity == declared["quantity"]
-            assert goal.minimum_check_version == "structure-prepare-2"
+            assert goal.minimum_check_version == "structure-prepare-3"
             assert goal.evidence_contract_version == "legacy-1"
             assert goal.verification == declared["verification"]
             assert "geometry_relation" not in goal.conditions
@@ -140,10 +140,10 @@ def completed_input_chain(tmp_path, monkeypatch):
     return store, run, request, goal, result, identity
 
 
-def test_registered_input_goal_uses_actual_bound_v2_checks_without_scientific_promotion(tmp_path, monkeypatch):
+def test_registered_input_goal_uses_actual_bound_v3_checks_without_scientific_promotion(tmp_path, monkeypatch):
     store, run, request, goal, result, identity = completed_input_chain(tmp_path, monkeypatch)
     assert goal_evidence_assessment(store, run, request, goal, result)["status"] == "passed"
-    identity_goal = goal.model_copy(update={"port": "resolved_identity", "minimum_check_version": "structure-identity-2"})
+    identity_goal = goal.model_copy(update={"port": "resolved_identity", "minimum_check_version": "structure-identity-3"})
     assert goal_evidence_assessment(store, run, request, identity_goal, identity)["status"] == "passed"
     for scientific in request.goals:
         if scientific.port in {"optimized_geometry", "vibrational_frequencies"}:

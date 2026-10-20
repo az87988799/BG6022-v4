@@ -77,7 +77,7 @@ def test_general_named_intake_preserves_original_goal_without_a_molecule_allowli
     store, run = normalized(tmp_path, name=name)
     request = store.load_request(run)
     assert request.systems[0].identity["requested_names"] == [name]
-    assert request.systems[0].identity["contract"] == "general-identity-2"
+    assert request.systems[0].identity["contract"] == "general-identity-3"
     goal = request.goals[0]
     assert goal.original_text == request.original_text
     assert goal.quantity == "polarizability" and goal.verification == "reported_with_limitations"
@@ -187,6 +187,9 @@ def test_unknown_stereochemistry_and_radicals_are_facts_not_spin_inference():
 
 
 def test_general_resolve_uses_frozen_rule_and_cannot_relabel_v1(tmp_path, monkeypatch):
+    # Emulate the old normalization default; the resulting frozen v2 Request
+    # must retain its checks under the current implementation.
+    monkeypatch.setattr("orca_agent.semantic.CURRENT_IDENTITY_CONTRACT", "general-identity-2")
     store, run = normalized(tmp_path, automatic=False)
     monkeypatch.setattr(structure, "_paced_query", lambda *args, **kwargs: (200, pubchem("CCO", "C2H6O"), True))
     call = tool_call(store, run, "structure.resolve", {"system_id": "system_target"})
@@ -209,6 +212,7 @@ def test_general_prepare_dispatch_consumes_exact_v2_input_and_preserves_initial_
     from orca_agent.input_bindings import prepared_geometry
     from orca_agent.tools.dispatch import execute_call
 
+    monkeypatch.setattr("orca_agent.semantic.CURRENT_IDENTITY_CONTRACT", "general-identity-2")
     store, run = normalized(tmp_path)
     reference = source(store, run)
     run = commit_selections(store, run, selections(store, run, reference), decision_id="select",
@@ -299,6 +303,7 @@ def test_name_cross_reference_cannot_confirm_approximate_or_ambiguous_identity(m
 
 @pytest.mark.parametrize("valid_mapping", [True, False])
 def test_general_alias_uses_independent_named_entity_and_same_pubchem_cid(tmp_path, monkeypatch, valid_mapping):
+    monkeypatch.setattr("orca_agent.semantic.CURRENT_IDENTITY_CONTRACT", "general-identity-2")
     store, run, parameters = intake(tmp_path, name="乙醇", automatic=False)
     parameters["identities"][0]["query_name"] = "ethanol"
     run = commit_candidate(store, run, parameters, decision_id="normalize", basis=current_basis(store, run))
@@ -341,6 +346,7 @@ def test_general_alias_uses_independent_named_entity_and_same_pubchem_cid(tmp_pa
 ])
 def test_explicit_name_formula_keeps_original_and_requires_independent_name_cid(
         tmp_path, monkeypatch, original, name, query, smiles, formula):
+    monkeypatch.setattr("orca_agent.semantic.CURRENT_IDENTITY_CONTRACT", "general-identity-2")
     store, run, parameters = intake(tmp_path, name=original, automatic=False)
     parameters["identities"][0]["query_name"] = query
     run = commit_candidate(store, run, parameters, decision_id="normalize", basis=current_basis(store, run))
@@ -383,6 +389,7 @@ def test_conflicting_formula_cannot_be_discarded_to_make_a_name_match(tmp_path, 
 
 
 def test_matching_formula_without_independent_name_evidence_is_not_qualified(tmp_path, monkeypatch):
+    monkeypatch.setattr("orca_agent.semantic.CURRENT_IDENTITY_CONTRACT", "general-identity-2")
     store, run, parameters = intake(tmp_path, name="未知名称CH2O", automatic=False)
     parameters["identities"][0]["query_name"] = "formaldehyde"
     run = commit_candidate(store, run, parameters, decision_id="normalize", basis=current_basis(store, run))

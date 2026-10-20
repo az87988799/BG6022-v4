@@ -7,6 +7,8 @@ def input_check_version(tool, request, system_id):
     system = next((system for system in request.systems if system.id == system_id), None)
     if system and system.identity.get("contract") == "general-identity-2":
         return tool.check_contract.get("general_check_version", tool.check_version)
+    if system and system.identity.get("contract") == "general-identity-3":
+        return tool.check_contract.get("name_query_check_version", tool.check_version)
     return tool.check_version
 
 
@@ -14,6 +16,8 @@ def required_input_rule(tool, request, system_id, port):
     system = next((system for system in request.systems if system.id == system_id), None)
     if system and system.identity.get("contract") == "general-identity-2":
         return tool.check_contract.get("general_input_checks", {}).get(port, tool.required_input_checks.get(port))
+    if system and system.identity.get("contract") == "general-identity-3":
+        return tool.check_contract.get("name_query_input_checks", {}).get(port, tool.required_input_checks.get(port))
     return tool.required_input_checks.get(port)
 
 

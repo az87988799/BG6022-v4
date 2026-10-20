@@ -618,7 +618,7 @@ def test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_hist
     request, run = objects()
     prepared = context.build_context(request, run)
     wire = decoded(prepared)
-    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v74"
+    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v75"
     assert {"agent-json-v22", "agent-json-v34", "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41", "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47"} <= DECISION_CONTRACT_PROMPT_VERSIONS
     assert "TASK_CODE_RULES" not in wire and "native_input_contract" not in wire["AUTHORITY"]
     assert run.permission.code_execution is False
@@ -686,7 +686,8 @@ def test_mixed_identity_rules_are_visible_per_system_without_upgrading_legacy_co
     from orca_agent.input_bindings import input_check_version, required_input_rule
     from orca_agent.tools.registry import get_tool
     systems = [SystemInput(id="old", geometry_source="prepare", identity={"contract": "named-identity-1"}),
-               SystemInput(id="new", geometry_source="prepare", identity={"contract": "general-identity-2"})]
+               SystemInput(id="previous", geometry_source="prepare", identity={"contract": "general-identity-2"}),
+               SystemInput(id="new", geometry_source="prepare", identity={"contract": "general-identity-3"})]
     request, _, _, wire = selection_context(tmp_path, systems=systems)
     rules = wire["AUTHORITY"]["current_input_rules_by_system"]
     tool = get_tool("structure.prepare")
@@ -695,7 +696,8 @@ def test_mixed_identity_rules_are_visible_per_system_without_upgrading_legacy_co
             "check_version": input_check_version(tool, request, system.id),
             "required_input_checks": {"resolved_identity": required_input_rule(tool, request, system.id, "resolved_identity")}}
     assert rules["old"][tool.name]["check_version"] == tool.check_version
-    assert rules["new"][tool.name]["check_version"] == "structure-prepare-2"
+    assert rules["previous"][tool.name]["check_version"] == "structure-prepare-2"
+    assert rules["new"][tool.name]["check_version"] == "structure-prepare-3"
 
 
 @pytest.mark.parametrize("code_authorized", [False, True])
@@ -719,7 +721,7 @@ def test_current_generated_intake_uses_single_source_scope_and_v3_schema(tmp_pat
     if code_authorized:
         assert visible["generated_task_intent"] == contract["normalize_request"]["generated_task_intent"]
         assert "confidently known English lookup alias" in visible["generated_task_intent"]
-        assert "independent confirmation" in visible["generated_task_intent"]
+        assert "without independently authenticating" in visible["generated_task_intent"]
         assert "do not guess an unknown alias" in visible["generated_task_intent"]
         assert prepared.input_token_bound <= run.budget.input_tokens <= 64000
         assert "science_scope" not in visible

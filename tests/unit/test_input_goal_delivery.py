@@ -8,8 +8,8 @@ from orca_agent.goals import goal_evidence_assessment
 from orca_agent.report import build_report, render_report
 
 
-@pytest.mark.parametrize("port,rule", [("prepared_geometry", "structure-prepare-2"),
-                                      ("resolved_identity", "structure-identity-2")])
+@pytest.mark.parametrize("port,rule", [("prepared_geometry", "structure-prepare-3"),
+                                      ("resolved_identity", "structure-identity-3")])
 def test_actual_input_chain_is_delivered_as_checked_input_only(tmp_path, monkeypatch, port, rule):
     store, run, request, goal, prepared, identity = completed_input_chain(tmp_path, monkeypatch)
     result = prepared if port == "prepared_geometry" else identity

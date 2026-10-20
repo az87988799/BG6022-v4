@@ -49,7 +49,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v74"
+PROMPT_VERSION = "agent-json-v75"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -2766,7 +2766,8 @@ def build_context(
     if native_context and run.configuration.execution.native_input_policy is not None:
         from orca_agent.orca.native_profile import profile_contract
         authority["native_input_contract"] = profile_contract(run.configuration.execution.native_input_policy)
-    if not semantic_intake and any(system.identity.get("contract") == "general-identity-2" for system in request.systems):
+    if not semantic_intake and any(system.identity.get("contract") in {"general-identity-2", "general-identity-3"}
+                                  for system in request.systems):
         from orca_agent.input_bindings import input_check_version, required_input_rule
         input_tools = [get_tool(entry["name"]) for entry in catalog if "write_input_artifact" in entry["effects"]]
         if input_tools:

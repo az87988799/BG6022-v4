@@ -238,6 +238,7 @@ def test_unconfirmed_identity_stays_failed_and_cannot_create_geometry_binding(tm
     from tests.unit.test_general_identity_selection import intake, pubchem, wikidata
     from tests.unit.test_structure_tools import tool_call
 
+    monkeypatch.setattr("orca_agent.semantic.CURRENT_IDENTITY_CONTRACT", "general-identity-2")
     store, run, candidate = intake(tmp_path, name="乙醇", automatic=False)
     candidate["identities"][0]["query_name"] = "ethanol"
     run = commit_candidate(store, run, candidate, decision_id="normalize", basis=current_basis(store, run))

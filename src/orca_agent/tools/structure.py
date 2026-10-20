@@ -30,6 +30,11 @@ IDENTITY_RULE = "structure-identity-1"
 PREPARATION_RULE = "structure-prepare-1"
 GENERAL_IDENTITY_RULE = "structure-identity-2"
 GENERAL_PREPARATION_RULE = "structure-prepare-2"
+NAME_QUERY_IDENTITY_RULE = "structure-identity-3"
+NAME_QUERY_PREPARATION_RULE = "structure-prepare-3"
+CURRENT_IDENTITY_CONTRACT = "general-identity-3"
+GENERAL_IDENTITY_CONTRACTS = ("general-identity-2", CURRENT_IDENTITY_CONTRACT)
+GENERAL_IDENTITY_RULES = (GENERAL_IDENTITY_RULE, NAME_QUERY_IDENTITY_RULE)
 RECEIPT_SCHEMA = "structure-call-1"
 OPI_VERSION = "2.0.0"
 RDKIT_VERSION = "2025.9.6"
@@ -154,7 +159,7 @@ def _requirement(store, run, system_id):
     system = next((item for item in request.systems if item.id == system_id), None)
     identity = getattr(system, "identity", {}) if system else {}
     names = identity.get("canonical_names", [])
-    if identity.get("contract") == "general-identity-2":
+    if identity.get("contract") in GENERAL_IDENTITY_CONTRACTS:
         evidence = identity.get("text_evidence", {})
         message = next((entry for entry in request.messages
                         if entry.get("id") == evidence.get("message_id")), None)
@@ -214,8 +219,11 @@ def validate_call_inputs(store, run, parameters, tool, consumption=None):
         document, _ = _bound_identity(store, run, consumption or {}, canonical)
         if general:
             _validate_preparation_state(document, params)
+    from orca_agent.input_bindings import input_check_version
+    from orca_agent.tools.registry import get_tool
     return {"canonical_name": canonical, "system_id": system.id, "text_evidence": evidence,
-            "general_identity": system.identity.get("contract") == "general-identity-2",
+            "general_identity": system.identity.get("contract") in GENERAL_IDENTITY_CONTRACTS,
+            "check_version": input_check_version(get_tool(tool), request, system.id),
             "requested_identity": system.identity}
 
 
@@ -229,7 +237,8 @@ def _bound_identity(store, run, consumption, canonical):
         raise ValueError("identity Result is outside frozen permissions")
     result = store.load_result(source_run, result_id)
     from orca_agent.input_bindings import validate_input_result
-    validated = validate_input_result(store, run, store.load_request(run), result, "resolved_identity")
+    request = store.load_request(run)
+    validated = validate_input_result(store, run, request, result, "resolved_identity")
     rule = validated["rule_version"]
     output = result.qualified_outputs.get("resolved_identity")
     if (result.operation_status != "completed" or output is None
@@ -247,7 +256,7 @@ def _bound_identity(store, run, consumption, canonical):
     if (document.get("schema") != rule or document.get("canonical_name") != canonical
             or not general and document.get("charge") != 0):
         raise ValueError("identity snapshot conflicts with current requested identity")
-    graph = _general_graph(document.get("smiles")) if rule == GENERAL_IDENTITY_RULE else None
+    graph = _general_graph(document.get("smiles")) if rule in GENERAL_IDENTITY_RULES else None
     if graph:
         if graph["unspecified_stereochemistry"]:
             raise ValueError("initial geometry cannot silently choose unspecified stereochemistry")
@@ -257,6 +266,15 @@ def _bound_identity(store, run, consumption, canonical):
             raise ValueError("identity snapshot differs from its complete graph or formal charge")
     if rule == GENERAL_IDENTITY_RULE and document.get("alias_verified") is not True:
         raise ValueError("lookup alias lacks independently retrieved PubChem name evidence")
+    if rule == NAME_QUERY_IDENTITY_RULE:
+        requested = next(system.identity for system in request.systems if system.id == validated["system_id"])
+        original = requested.get("requested_names", [])
+        if (len(original) != 1 or document.get("original_name") != original[0]
+                or document.get("query_name") != canonical
+                or document.get("query_name_source") != requested.get("query_name_source")
+                or document.get("name_mapping_independently_verified") is not False):
+            raise ValueError("name-query provenance differs from the frozen requested identity")
+        _name_evidence_target(original[0], document)
     if document.get("elements") != (graph["elements"] if graph else _validate_smiles(document.get("smiles"), canonical)):
         raise ValueError("identity atom mapping differs from its complete graph")
     return document, artifact
@@ -537,6 +555,7 @@ def _failure(run, call, reason, artifacts=(), *, status="failed", **facts):
 def _name_evidence_target(original_name, document):
     """Separate an explicit trailing formula, without treating it as a name match."""
     from collections import Counter
+
     from rdkit import Chem
 
     formula = r"(?:[A-Z][a-z]?(?:[1-9][0-9]*)?)+"
@@ -567,7 +586,7 @@ def resolve(store, run, call):
         return recovered
     canonical = requirement["canonical_name"]
     url = PUBCHEM_ROOT + quote(canonical, safe="") + "/property/" + ",".join(PROPERTIES) + "/JSON"
-    rule = GENERAL_IDENTITY_RULE if requirement["general_identity"] else IDENTITY_RULE
+    rule = requirement["check_version"]
     artifacts = []
     deadline = min(time.monotonic() + IDENTITY_TIMEOUT_SECONDS,
                    time.monotonic() + max(0, (run.deadline - utc_now()).total_seconds()))
@@ -582,14 +601,24 @@ def resolve(store, run, call):
                       raw_artifact_id=raw_artifact.id, fetched_at=utc_now().isoformat() if status else None)
         if status != 200 or not complete:
             return _finish(store, run, call, _failure(run, call, "pubchem_http_or_response_bound", artifacts, **source))
-        document = {**validate_pubchem_response(raw, canonical, general=requirement["general_identity"]), "query": source}
+        document = {**validate_pubchem_response(raw, canonical, general=requirement["general_identity"]),
+                    "schema": rule, "query": source}
         if requirement["general_identity"]:
             original_name = requirement["requested_identity"]["requested_names"][0]
             requested_name, name_evidence = _name_evidence_target(original_name, document)
             if name_evidence is not None:
                 document["name_evidence"] = source["name_evidence"] = name_evidence
-            document["alias_verified"] = canonical == requested_name
-            if not document["alias_verified"]:
+            if rule == NAME_QUERY_IDENTITY_RULE:
+                document.update(original_name=original_name, query_name=canonical,
+                    query_name_source=requirement["requested_identity"]["query_name_source"],
+                    name_mapping_independently_verified=False)
+                document["limitations"].append(
+                    "The queried PubChem candidate and its graph/formula/charge were checked; "
+                    "the original name or inferred translation was not independently matched "
+                    "against synonyms or a cross-reference.")
+            else:
+                document["alias_verified"] = canonical == requested_name
+            if rule == GENERAL_IDENTITY_RULE and not document["alias_verified"]:
                 alias_url = ("https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/"
                              + str(document["cid"]) + "/synonyms/JSON")
                 alias_status, alias_raw, alias_complete = _paced_query(store, alias_url, run=run, deadline=deadline)
@@ -642,7 +671,7 @@ def resolve(store, run, call):
                         document["limitations"].append("The inferred lookup alias was not confirmed against the original user name.")
         artifact = _artifact(store, run, call, "identity.json", "resolved_identity", _json_bytes(document))
         artifacts.append(artifact.id)
-        if requirement["general_identity"] and document["alias_verified"] is not True:
+        if rule == GENERAL_IDENTITY_RULE and document["alias_verified"] is not True:
             failure = _failure(run, call, "original_name_evidence_unverified", artifacts, **source)
             failure["identity"] = document
             return _finish(store, run, call, failure)
@@ -862,7 +891,7 @@ def prepare(store, run, call):
                                              graph=document.get("graph"),
                                              smiles=document["smiles"] if general_admission_enabled(store, run) else None)
         source.update(**geometry, sha256=artifact.sha256)
-        rule = GENERAL_PREPARATION_RULE if requirement["general_identity"] else PREPARATION_RULE
+        rule = requirement["check_version"]
         check = {"name": "initial_geometry_identity", "status": "passed", "rule_version": rule,
                  "detail": "Finite angstrom coordinates preserve supported identity and explicit hydrogen atom mapping; not optimized.",
                  "source": source}
@@ -883,7 +912,7 @@ def _worker(path):
     if not data.get("general_admission") and (params.charge != 0 or params.multiplicity != 1):
         raise ValueError("worker requires neutral singlet")
     versions = _versions()
-    graph = _general_graph(data["smiles"]) if data.get("identity_rule") == GENERAL_IDENTITY_RULE else None
+    graph = _general_graph(data["smiles"]) if data.get("identity_rule") in GENERAL_IDENTITY_RULES else None
     elements = graph["elements"] if graph else _validate_smiles(data["smiles"], data["canonical_name"])
     if graph:
         if graph["unspecified_stereochemistry"]:

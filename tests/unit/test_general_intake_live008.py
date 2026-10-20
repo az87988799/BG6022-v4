@@ -85,7 +85,7 @@ def test_test_authored_incremental_correction_cannot_reintroduce_old_errors(tmp_
     request = store.load_request(run)
     assert len(request.goals) == 4  # No requested input, science or explanation Goal dropped.
     assert request.goals[0].conditions == {}
-    assert request.goals[0].minimum_check_version == "structure-prepare-2"
+    assert request.goals[0].minimum_check_version == "structure-prepare-3"
     assert [goal.quantity for goal in request.goals[1:3]] == ["优化结构", "振动频率"]
     assert all(goal.conditions["geometry_relation"] == "optimized" for goal in request.goals[1:3])
     assert all(goal.verification == "reported_with_limitations" for goal in request.goals[1:3])

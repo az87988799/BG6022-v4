@@ -37,6 +37,7 @@ from orca_agent.tools.registry import (
     get_tool,
     validate_parameters,
 )
+from orca_agent.tools.structure import CURRENT_IDENTITY_CONTRACT, GENERAL_IDENTITY_CONTRACTS
 
 VERSION = "request-semantics-3"
 LEGACY_VERSION = "request-semantics-1"
@@ -201,7 +202,8 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
         "normalize replaces raw_request/missing:goal_definition; amend keeps goals; replace_goals needs explicit replacement+all old IDs. "
         "NewGoal system_refs; existingGoal goal_bindings[Goal.id]. Registration/no-execution is not a Goal. "
         "science_scope describes legacy qualified checks, not general execution or permission/defaults. "
-        "New target identities: exact name/text_basis/message_id; key binds system_refs. query_name stays inferred until source-checked. "
+        "New target identities: exact name/text_basis/message_id; key binds system_refs. "
+        "A translated query_name stays inferred; v3 checks the returned candidate, not the translation. "
         "General quantity quotes user; verification=reported_with_limitations unless user requires qualified evidence. "
         "automatic_selection[field]={text_basis,message_id}: explicit authorization only, not unknown. "
         "Retrieve sources -> select_conditions before geometry preparation/execution; identity queries may precede selection when the frozen profile permits. Never infer spin from parity. "
@@ -292,9 +294,10 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
             "Then knowledge.search -> select_conditions before structure.prepare/execution; identity queries may precede selection when the frozen profile permits. These are available actions, not missing user answers. "
             "When Request.conditions.explain_results=true, final delivery already explains actual conditions and verification; "
             "do not create another knowledge_answer Goal for that delivery requirement. knowledge_answer is for independent knowledge questions. "
-            "identities[].name is exact user text; key binds system_refs; query_name is an inferred lookup alias until source-checked. "
+            "identities[].name is exact user text; key binds system_refs; a translated query_name remains an inferred lookup alias. "
             "For a non-English name, use a confidently known English lookup alias in query_name; preserve name verbatim. "
-            "The alias remains inferred and requires independent confirmation by existing identity sources; do not guess an unknown alias. "
+            "New name queries check one PubChem candidate and its graph/formula/charge, without independently authenticating "
+            "the original name or translation; do not guess an unknown alias. "
             "No identity, port, method, basis or spin is filled in by the program on correction.")
     return contract
 
@@ -390,7 +393,7 @@ def bind_general_text_identity(request, run, pending, candidate):
         if any(ord(char) < 32 for char in query):
             raise StoreError("identity lookup name contains control characters")
         updated.systems.append(SystemInput(id=identifier, label=item.name, geometry_source="prepare",
-            identity={"contract": "general-identity-2", "requested_names": [item.name],
+            identity={"contract": CURRENT_IDENTITY_CONTRACT, "requested_names": [item.name],
                 "canonical_names": [], "query_name": query,
                 "query_name_source": "explicit" if query == item.name else "inferred_translation_or_alias",
                 "ambiguities": item.ambiguities,
@@ -451,7 +454,7 @@ def _uses_general_goal(candidate, item, request):
             and (item.port not in READ_TOOLS or item.quantity is not None and item.query is None)
             and item.port != "knowledge_answer"
             and (item.port not in RULES or item.quantity is not None
-                 or any(system.identity.get("contract") == "general-identity-2"
+                 or any(system.identity.get("contract") in GENERAL_IDENTITY_CONTRACTS
                         for system in request.systems if system.id in item.system_refs)))
 
 

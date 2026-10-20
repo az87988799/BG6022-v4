@@ -251,7 +251,9 @@ for _name, _schema, _port, _version, _effect, _counter, _check in (
 ):
     TOOLS[_name] = _register(
         _schema, name=_name,
-        description=("Resolve one frozen molecular name using bounded official PubChem evidence; preserve identity ambiguities."
+        description=("Resolve the frozen query name using bounded PubChem candidate/graph evidence; "
+                     "v3 uses one property request without independently authenticating inferred translations. "
+                     "Historical v2 retains its independent-name checks; preserve identity ambiguities."
                      if _effect == "query_external_identity" else
                      "Prepare one initial XYZ with locked OPI from identity input; not optimized geometry."),
         input_roles=["requested_identity"] if _effect == "query_external_identity" else ["identity"],
@@ -265,6 +267,12 @@ for _name, _schema, _port, _version, _effect, _counter, _check in (
                                                   else "structure-prepare-2"),
                         "general_input_checks": ({"resolved_identity": "structure-identity-2"}
                                                  if _effect == "prepare_geometry" else {}),
+                        "name_query_check_version": ("structure-identity-3" if _effect == "query_external_identity"
+                                                     else "structure-prepare-3"),
+                        "name_query_input_checks": ({"resolved_identity": "structure-identity-3"}
+                                                    if _effect == "prepare_geometry" else {}),
+                        **({"name_query_max_http_requests": 1}
+                           if _effect == "query_external_identity" else {}),
                         **({"input_ports": {"identity": "resolved_identity"}}
                            if _effect == "prepare_geometry" else {}),
                         "max_seconds": PREPARE_TIMEOUT_SECONDS if _effect == "prepare_geometry" else 120,

@@ -195,7 +195,7 @@ def test_preparation_dispatch_consumes_identity_from_prior_selection_revision(tm
     step = Step(id="prepare", logical_id="prepare", tool="structure.prepare", system_id="system_target",
         parameters={"system_id": "system_target", "charge": 0, "multiplicity": 1},
         inputs={"identity": EvidenceRef(run_id=run.id, result_id=identity.id,
-            port="resolved_identity", rule_version="structure-identity-2")})
+            port="resolved_identity", rule_version="structure-identity-3")})
     plan = Plan(request_id=request.id, request_version=request.version, steps=[step],
         goal_map={request.goals[0].id: OutputBinding(port="polarizability", gap="Prepare initial coordinates first.")})
     run = store.commit_revision(run, plan, decision_id="prepare_plan", basis=current_basis(store, run))
