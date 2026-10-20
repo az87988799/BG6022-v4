@@ -8,8 +8,6 @@ from orca_agent.proposals import (
     call_tool_parameters_schema,
     proposed_plan_schema,
 )
-from orca_agent.semantic import VERSION as SEMANTIC_VERSION
-from orca_agent.semantic import SemanticCandidate
 
 
 def native_schema(value, *, complete=True):
@@ -36,7 +34,7 @@ def native_schema(value, *, complete=True):
 
 
 def readable_context(template, envelope, *, semantic_intake, tools, confirmed_parameters=None,
-                     selection_schema=None, compact=False, correction_instruction=""):
+                     selection_schema=None, normalization_schema=None, compact=False, correction_instruction=""):
     """A small decision surface, sourced from the same types as activation.
 
     Keep authority literal for the existing pre-send guards. Compression may
@@ -63,8 +61,9 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
     schemas = {}
     for action in actions:
         if action == "normalize_request":
-            schema = SemanticCandidate.model_json_schema()
-            schema["properties"]["schema_version"] = {"const": SEMANTIC_VERSION}
+            if normalization_schema is None:
+                raise ValueError("normalization requires the current semantic contract schema")
+            schema = deepcopy(normalization_schema)
             if request["normalization_status"] == "pending":
                 schema["properties"]["kind"] = {"enum": ["normalize", "clarify"]}
                 for key in ("replaces", "goal_bindings", "resolves"):
@@ -72,7 +71,10 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
         elif action in {"initial_plan", "revise_plan"}:
             # Both actions propose the same model type. Runtime Plan fields and
             # frozen display markers are not a substitute for ProposedStep.
-            schema = proposed_plan_schema(code_repair=complete_contract)
+            schema = proposed_plan_schema(code_repair=bool(
+                authority.get("failed_python_attempts") or authority.get("failed_native_attempts")) and any(
+                tool.check_contract.get("generic_observations")
+                and set(tool.effects) & {"execute_python", "execute_orca"} for tool in tools.values()))
             if not (authority.get("related_results") or authority.get("other_result_ids")
                     or authority["permission"].get("result_ids")
                     or template["DATA"].get("results")):
@@ -109,9 +111,58 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
             wire[key] = template[key]
     if semantic_intake:
         contract = template["ACTION_PARAMETERS"]["normalize_request"]
-        wire["INTENT_RULES"] = {key: value for key, value in contract.items() if key != "instruction"}
+        wire["INTENT_RULES"] = {key: value for key, value in contract.items()
+                                if key not in {"instruction", "schema"}}
         wire["INTENT_RULES"]["instruction"] = contract["instruction"]
-        if request["normalization_status"] == "pending":
+        if compact and request["normalization_status"] == "pending" and "source_fragments" in contract:
+            # This decision defines intent, not a later Tool/Plan sequence.
+            # Keep the complete source-reference and scientific contracts;
+            # omit only later actions (also absent from this pending schema).
+            instruction = contract["instruction"]
+            for later_stage in (
+                " Version/manual/source questions: knowledge.search before knowledge.answer.",
+                "; amend keeps goals; replace_goals needs explicit replacement+all old IDs",
+                "; existingGoal goal_bindings[Goal.id]",
+                " Select authorized method/basis before scientific execution; sources are optional, "
+                "reasoning is required. Geometry preparation may precede selection.",
+                " resolves=answered field:<field>/system:<goal_id>;",
+            ):
+                instruction = instruction.replace(later_stage, "")
+            wire["INTENT_RULES"]["instruction"] = instruction
+            replacements = {
+                "source_reference_rules": (
+                    ("Goals, explicit conditions and automatic_selection authorization may supply source_refs instead of "
+                     "recopying text_basis/message_id. References name authenticated user fragments; the program retains "
+                     "the exact source and any intervening text.",
+                     "source_refs on Goals/explicit conditions/automatic_selection cite authenticated fragments instead "
+                     "of text_basis/message_id; exact source/intervening text retained."),
+                    ("Keep quantity as the user's physical quantity phrase. A reference does not prove an arbitrary "
+                     "field value. Exact text_basis remains accepted.",
+                     "quantity quotes user's physical quantity; citations don't verify values. Exact text_basis also valid."),
+                    ("Environment values use gas_phase, CPCM(solvent), or SMD(solvent); retain the user's model and solvent.",
+                     "environment=gas_phase/CPCM(solvent)/SMD(solvent); retain user model+solvent."),
+                    ("value_basis may identify an exact literal value phrase inside the source. The program records the "
+                     "raw phrase and separately checks the canonical model/solvent mapping; a citation alone is insufficient.",
+                     "Optional value_basis quotes an exact source literal; program records it raw and independently "
+                     "checks canonical model/solvent."),
+                    ("The program supplies an omitted unambiguous geometry_relation; conflicting relations remain errors.",
+                     "Program fills only omitted unambiguous geometry_relation; conflicts fail."),
+                    ("analysis_goal_ref is only a legacy sampling specification reference, not a general Goal dependency.",
+                     "analysis_goal_ref only inherits legacy sampling, not general dependencies."),
+                ),
+                "input_acquisition": (
+                    ("geometry_source=prepare: structure.resolve obtains SMILES; structure.prepare via OPI supplies XYZ.",
+                     "geometry_source=prepare supplies initial XYZ later."),
+                    (" Keep system_refs. Permission still gates execution.", ""),
+                ),
+            }
+            for field, pairs in replacements.items():
+                if field in contract:
+                    value = contract[field]
+                    for original, shorter in pairs:
+                        value = value.replace(original, shorter)
+                    wire["INTENT_RULES"][field] = value
+        if request["normalization_status"] == "pending" and "source_fragments" not in contract:
             wire["INTENT_RULES"]["instruction"] = (
                 "Interpret current user text: emit schema_version, message_ids, kind=normalize, text_basis, "
                 "goals and conditions. Quote verbatim contiguous user text. Use the complete relevant clause/sentence "

@@ -41,11 +41,13 @@ class Config(BaseModel):
     text: TextProfile = Field(default_factory=TextProfile)
     execution: ExecutionConfiguration = Field(default_factory=ExecutionConfiguration)
     mechanical_progression: bool = Field(default=True, strict=True)
+    workflow_policy: Literal["simplified-1"] | None = "simplified-1"
 
     def run_configuration(self) -> RunConfiguration:
         return RunConfiguration(resources=self.resources, model=self.model,
                                 model_profile=self.model_profile, execution=self.execution,
-                                mechanical_progression=self.mechanical_progression)
+                                mechanical_progression=self.mechanical_progression,
+                                workflow_policy=self.workflow_policy)
 
 
 def load_config(path: Path | None = None) -> Config:

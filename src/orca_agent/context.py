@@ -22,6 +22,7 @@ from orca_agent.decision_purpose import (
     classify_decision_purpose,
     relevant_result_ids,
     retained_read_result_ids,
+    settled_failed_native_attempts,
     settled_failed_python_attempts,
     terminal_actions,
 )
@@ -49,7 +50,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v76"
+PROMPT_VERSION = "agent-json-v77"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -189,6 +190,48 @@ _TERMINAL_OUTCOME_PROMPT = (
 def _managed_native(run):
     policy = run.configuration.execution.native_input_policy if run.configuration else None
     return policy is not None and policy.profile == "managed-native-1"
+
+
+def _simplified_workflow(run):
+    return bool(run.configuration and run.configuration.workflow_policy == "simplified-1")
+
+
+def _simplified_code_rules(rules):
+    """Remove manual metadata roundtrips, retaining execution/science contracts."""
+    replacements = {
+        "Small Python edits may use workspace.write with base:old CodeRef, ":
+            "Small Python/native edits may use workspace.write with a pinned concrete base CodeRef "
+            "(matching python/orca language and role), ",
+        "Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. ":
+            "Plan writers and consumers together. code/input accepts {producer_key,port:'written_artifact'}; "
+            "manifest entries accept {producer_key,port} or {producer_key,file_key}, plus target_path/purpose. "
+            "The program adds dependencies and binds actual Artifact identity/hash before execution. ",
+        "Unmet Goals use goal_map[Goal.id]={gap,port:Goal.port}. Execute writers, then revise_plan from file receipts. ":
+            "Bind chosen Goal producers; the program preserves unbound required Goals as unresolved gaps. ",
+        "No placeholders/future producer values in parameters.code/input/inputs. ":
+            "No invented Artifact IDs, latest-file lookup or ambiguous producer outputs. ",
+        "CodeRef.language must match bytes, never converts: python.execute.code needs Python. ":
+            "Concrete artifact_id may omit hash/language; the program derives metadata, never converts bytes. "
+            "Explicit mismatches fail; python.execute.code must contain Python. ",
+        "Extra Python attempts cost code_retries. ":
+            "Independent planned Python tasks use analysis budget; same-logical failure retries also use code_retries. "
+            "Save completed members incrementally and split long sequential work into bounded planned tasks. "
+            "SDK waits still count toward the frozen script deadline. ",
+        "After workspace.write completes, prefer a repair Step with key:new_key, ":
+            "Prefer a repair Step with key:new_key, ",
+        "repair_of:failed frozen_step.id, code:new CodeRef, inputs:optional replacement InputManifest. ":
+            "repair_of:failed frozen_step.id, code:new Python reference or input:new native reference, "
+            "inputs:optional replacement InputManifest. Producer references are accepted. ",
+        "Do not add the replacement writer as a dependency. ":
+            "Producer-reference dependencies are added by the program. ",
+        "using its frozen numeric bounds; missing controls are rejected, never filled in. ":
+            "using its frozen numeric bounds. The program materializes omitted approved electronic state, "
+            "pal/maxcore/NoAutoStart and omitted scf/optimization/TD iteration controls into the executed input, archiving both versions. "
+            "Explicit conflicts are rejected; scientific fields such as TD NRoots remain explicit. ",
+    }
+    for old, new in replacements.items():
+        rules = rules.replace(old, new)
+    return rules
 
 
 def _native_code_guidance(run):
@@ -661,7 +704,38 @@ def _value_prefix(value, limit):
     return value, None
 
 
-def _evidence_observation(value, budget):
+def _traceback_preview(lines, budget, *, task_frame_indices=()):
+    """Display returned traceback facts, never read a file or infer an exception."""
+    if not lines or not all(isinstance(row, dict) and isinstance(row.get("text"), str)
+                            and type(row.get("line")) is int for row in lines):
+        return None
+    if not any("Traceback (most recent call last):" in row["text"] for row in lines):
+        return None
+    limit = max(4096, budget)
+    if len(_json(lines).encode("utf-8")) <= limit:
+        return lines
+    # Exception tail and the originating/innermost frames take priority over
+    # repeated runtime wrappers. Locations remain the original line numbers.
+    frames = [i for i, row in enumerate(lines) if re.match(r'\s*File ["\']', row["text"])]
+    priority = list(range(max(0, len(lines) - 4), len(lines)))
+    task_frames = list(task_frame_indices) or [
+        i for i in frames if re.search(r"[/\\]sealed[/\\]", lines[i]["text"])]
+    for i in [*task_frames, *frames[-2:], *frames[:1]]:
+        priority.extend(range(i, min(i + 3, len(lines))))
+    priority.extend([0, *reversed(range(len(lines)))])
+    chosen = {}
+    for index in dict.fromkeys(priority):
+        row = lines[index]
+        if len(_json(row).encode("utf-8")) > limit // 2:
+            text, metadata = _value_prefix(row["text"], limit // 4)
+            row = {**row, "text": text, "text_projection": metadata}
+        candidate = {**chosen, index: row}
+        if len(_json([candidate[i] for i in sorted(candidate)]).encode("utf-8")) <= limit:
+            chosen = candidate
+    return [chosen[i] for i in sorted(chosen)]
+
+
+def _evidence_observation(value, budget, *, task_frame_indices=()):
     """Keep source, location and actual values even when descriptive metadata is large."""
     fields = ("artifact_id", "sha256", "view", "path", "geometry_indices", "units", "conditions",
               "stage", "scientific_status", "status", "type", "total", "offset", "next_offset",
@@ -675,6 +749,19 @@ def _evidence_observation(value, budget):
             projected["value_projection"]["meaning"] = "partial preview, not original value; empty preview does not mean empty source"
     for key in ("entries", "matches", "lines", "artifacts"):
         if not isinstance(value.get(key), list):
+            continue
+        diagnostic = (_traceback_preview(value[key], budget, task_frame_indices=task_frame_indices)
+                      if key == "lines" else None)
+        if diagnostic is not None:
+            projected[key] = diagnostic
+            if len(diagnostic) < len(value[key]):
+                shown = {row["line"] for row in diagnostic}
+                omitted = [row["line"] for row in value[key] if row["line"] not in shown]
+                projected["context_page"] = {
+                    "shown": len(diagnostic), "omitted_from_result": len(omitted),
+                    "selection": "traceback frames and exception tail",
+                    "next_line": omitted[0],
+                    "meaning": "noncontiguous context preview; original line numbers and Tool coverage retained"}
             continue
         visible = []
         window = max(4096, budget) if key == "artifacts" else max(512, budget)
@@ -807,7 +894,11 @@ def _observations(value, budget):
         elif isinstance(observation, dict) and (
                 "artifact_id" in observation and "view" in observation
                 or "run_id" in observation and "inventory_sha256" in observation and "artifacts" in observation):
-            structured[name] = _evidence_observation(observation, budget)
+            task_frames = [i for i, row in enumerate(value[name].get("lines", []))
+                           if isinstance(row, dict) and isinstance(row.get("text"), str)
+                           and re.match(r'\s*File ["\']', row["text"])
+                           and re.search(r"[/\\]sealed[/\\]", row["text"])]
+            structured[name] = _evidence_observation(observation, budget, task_frame_indices=task_frames)
         else:
             structured[name] = observation
     if structured != safe:
@@ -922,7 +1013,8 @@ def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
         # Preserve each output's provenance/status/limits. Oversized values use
         # explicit previews into immutable evidence, never implied completeness.
         "unqualified_observation_records": _observation_records(result, observation_bytes),
-        "untrusted_diagnostics": _bounded_data(result.diagnostics, observation_bytes),
+        "untrusted_diagnostics": _bounded_data(result.diagnostics, max(4096, observation_bytes)
+            if result.operation_status != "completed" else observation_bytes),
         "artifact_ids": result.artifact_ids[:3], "artifact_count": len(result.artifact_ids),
         "source": _source_summary(result.source),
     }
@@ -1476,7 +1568,7 @@ def _task_progress(run, preview_bytes):
     return progress
 
 
-def _failed_python_history(run):
+def _failed_attempt_history(run, *, native=False):
     """Expose the exact frozen contract needed for a code-only repair.
 
     This does not read files, reinterpret diagnostics, choose a retry or restore
@@ -1485,7 +1577,7 @@ def _failed_python_history(run):
     return [{"attempt_id": attempt.id, "state": attempt.state, "started": attempt.started,
              "result_id": attempt.result_id, "input_fingerprint": attempt.input_fingerprint,
              "frozen_step": attempt.frozen_step.model_dump(mode="json")}
-            for attempt in settled_failed_python_attempts(run)]
+            for attempt in (settled_failed_native_attempts(run) if native else settled_failed_python_attempts(run))]
 
 
 def _call_execution(run, result):
@@ -1555,7 +1647,8 @@ def _reuse_read_windows(run, originals, projected):
                 continue
             key = _hash({"tool": call.tool, "name": name, "artifact_id": artifact, "sha256": digest,
                          "view": observation["view"], "path": observation.get("path"),
-                         "returned": coverage["returned"], "lines": observation["lines"]})
+                         "returned": coverage["returned"], "lines": observation["lines"],
+                         "shown": shown["lines"], "context_page": shown.get("context_page")})
             if key in seen:
                 shown.pop("lines")
                 shown["lines_ref"] = {"result_id": seen[key], "observation": name, "field": "lines"}
@@ -2306,6 +2399,12 @@ def _output_instruction(*, intake=False):
 def _correction_instruction(feedback):
     """Explain trusted validation codes without reflecting rejected values."""
     error = feedback.get("validation_error", {})
+    if isinstance(error, dict) and error.get("smaller_action") is True:
+        return (" Empty length response retained; this is the single smaller-action recovery, charged to the "
+                "existing correction budget. Return one concise action: a ready Step/read or a Plan with at most "
+                "one Step. Omitted Goals stay unresolved, not completed. Do not restate the entire workflow or "
+                "generate all task code at once. Normalization must still preserve every user requirement. "
+                "No change to model profile, output cap, permissions or cumulative budgets.")
     requirements = error.get("requirement", []) if isinstance(error, dict) else []
     if isinstance(requirements, dict):
         if "missing_geometry" in requirements.get("inapplicable_notice_choices", []):
@@ -2803,7 +2902,11 @@ def build_context(
             "effective_used": effective_code_use, "persisted_used": run.usage.code_retries,
             "derivation": "max(persisted code_retries, prior Python attempts minus one)",
             "meaning": "every additional Python attempt, including a new analysis, consumes this allowance"}
-        failed_python = _failed_python_history(run)
+        if _simplified_workflow(run):
+            authority["code_attempt_allowance"].update({
+                "derivation": "max(persisted code_retries, retries of the same logical Python task)",
+                "meaning": "independent planned Python tasks use analysis budget; failure retries also use this allowance"})
+        failed_python = _failed_attempt_history(run)
         if failed_python:
             safe_history = _safe(failed_python)
             if safe_history != failed_python:
@@ -2812,6 +2915,16 @@ def build_context(
     if native_context and run.configuration.execution.native_input_policy is not None:
         from orca_agent.orca.native_profile import profile_contract
         authority["native_input_contract"] = profile_contract(run.configuration.execution.native_input_policy)
+    if native_context and (native_failures := _failed_attempt_history(run, native=True)):
+        by_result = {result.id: result for result in results}
+        for failure in settled_failed_native_attempts(run):
+            result = by_result.get(failure.result_id)
+            if result is None:
+                raise ContextLimitError("settled native failure Result must remain in model context")
+            if (result.run_id, result.step_id, result.attempt_id, result.operation_status) != (
+                    run.id, failure.step_id, failure.id, failure.state):
+                raise ValueError("native failure Result does not match its bound Attempt")
+        authority["failed_native_attempts"] = native_failures
     if not semantic_intake and any(system.identity.get("contract") in {"general-identity-2", "general-identity-3"}
                                   for system in request.systems):
         from orca_agent.input_bindings import input_check_version, required_input_rule
@@ -2863,7 +2976,8 @@ def build_context(
                                     "current_goal_use", "goal_facts", "delivery_snapshot", "rejected_proposal"}}
     rejected_view = (_rejected_proposal_view(feedback or {}, run, basis, limit=16384)
                      if run.permission.code_execution else None)
-    correction_instruction = _REJECTED_PROPOSAL_GUIDANCE if rejected_view is not None else ""
+    correction_instruction = (_REJECTED_PROPOSAL_GUIDANCE if rejected_view is not None else "")
+    correction_instruction += _correction_instruction(feedback or {})
     system_prompt += correction_instruction
     goal_facts = _safe((feedback or {}).get("goal_facts", [])) if not semantic_intake and not delivery_snapshot else []
     goal_use = _current_goal_use((feedback or {}).get("current_goal_use", [])) if not delivery_snapshot else []
@@ -2980,6 +3094,8 @@ def build_context(
                     "Bind every consumer input:Step.inputs[role]/geometry={producer_key,port}, "
                     "using producer output_ports; order alone is no binding.")
     native_guidance = _native_code_guidance(run)
+    if _simplified_workflow(run):
+        native_guidance = _simplified_code_rules(native_guidance)
     template = {
         "PROPOSAL_SCHEMA": proposal_schema,
         "ACTION_PARAMETERS": examples,
@@ -3011,7 +3127,7 @@ def build_context(
                 "input files can cite those archived task copies without new ORCA calls; unknown conditions remain "
                 "unknown and explicit scientific evidence requirements still apply. Cross-system comparisons "
                 "retain each source's conditions and the formula; bind each calculation to its requested system.")
-        if authority.get("failed_python_attempts"):
+        if authority.get("failed_python_attempts") or authority.get("failed_native_attempts"):
             template["TASK_CODE_RULES"] += " " + _CODE_REPAIR_GUIDANCE
         if run.permission.scientific_execution and "orca.run" in run.permission.allowed_tools:
             template["TASK_CODE_RULES"] += " " + native_guidance
@@ -3027,6 +3143,19 @@ def build_context(
                 "Extra Python attempts cost code_retries. ", "").replace(
                 "Scientific Goals need a completed SDK native receipt with verified original provenance; pure file tasks need no ORCA.",
                 "File tasks need no ORCA.")
+    if native_context and not code_context and _simplified_workflow(run):
+        template["TASK_CODE_RULES"] = _simplified_code_rules(
+            "orca.run.input needs an ORCA program; parameters.inputs binds task-relative dependencies. "
+            "Plan writers and consumers together: input={producer_key,port:'written_artifact'}, or a concrete artifact_id. "
+            "The program resolves actual identity/hash; do not invent IDs or choose latest files. "
+            "Approved electronic state and omitted frozen execution controls are program-materialized; "
+            "explicit conflicts and invalid native syntax fail. Follow AUTHORITY.native_input_contract. "
+            "Each Attempt preserves original/final input and raw evidence; execution is not scientific qualification. "
+            + (_CODE_REPAIR_GUIDANCE if authority.get("failed_native_attempts") else ""))
+    if authority.get("failed_native_attempts"):
+        template["TASK_CODE_RULES"] += (
+            " AUTHORITY.failed_native_attempts supplies the pinned prior native input and failure; "
+            "use repair_of:frozen_step.id and input:replacement. History is not permission or ready work.")
     if "select_conditions" in examples:
         template["CONDITION_SELECTION_RULES"] = (
             "Only authorized automatic_selection fields may be chosen. First retrieve relevant knowledge.search sources; "
@@ -3038,8 +3167,22 @@ def build_context(
             template["CONDITION_SELECTION_RULES"] = template["CONDITION_SELECTION_RULES"].replace(
                 "Choose before identity/geometry preparation or execution;",
                 "Identity lookup may precede selection. Choose before geometry preparation or execution;")
+        if _simplified_workflow(run):
+            template["CONDITION_SELECTION_RULES"] = (
+                "Choose only authorized automatic_selection fields, with value and reason. "
+                "Documentation retrieval is optional; without it the choice records model_reason, not literature support. "
+                "Honor any user-required documentation or minimum evidence. "
+                "If citing a completed current-Run source, result_id suffices; document hash is program-bound, "
+                "and omitted quote refers to its returned excerpt. Explicit wrong hash/quote fails. "
+                "Choose method/basis before scientific execution; geometry preparation may precede selection. "
+                "Explicit values, unknowns and user minimum evidence stay fixed; selection is not scientific validation.")
+    if _simplified_workflow(run) and "TASK_CODE_RULES" in template:
+        template["TASK_CODE_RULES"] = _simplified_code_rules(template["TASK_CODE_RULES"])
     if not final_only and not semantic_intake and set(examples) & {"initial_plan", "revise_plan"}:
         template["PLAN_RULES"] = _PLAN_RULES
+        if _simplified_workflow(run):
+            template["PLAN_RULES"] = template["PLAN_RULES"].replace(
+                "map required Goal.port/gap", "bind chosen Goal producers; omitted required Goals remain unresolved")
         if request.systems and any("execute_orca" in tool["effects"] for tool in catalog):
             template["PLAN_RULES"] += " system_id=Request.systems.id."
         if any("qualified_energy" in tool.get("input_roles", []) for tool in catalog):
@@ -3059,8 +3202,12 @@ def build_context(
     budget_rejected_prepared = None
     native_fallback = None
     retained_reads = retained_read_result_ids(run)
-    retained_failures = {row["result_id"] for row in authority.get("failed_python_attempts", [])}
-    views = ([(16384, False), (16384, True)] if retained_reads else []) + [(1024, False), (1024, True), (256, True)]
+    retained_failures = {row["result_id"] for key in ("failed_python_attempts", "failed_native_attempts")
+                         for row in authority.get(key, [])}
+    views = ([(16384, False), (16384, True)] if retained_reads else [])
+    if retained_reads and _simplified_workflow(run):
+        views.append((4096, True))
+    views += [(1024, False), (1024, True), (256, True)]
     for observation_bytes, compact in views:
         if (compact and observation_bytes == 256 and run.usage.orca_starts_reserved >= run.budget.orca_starts
                 and "native_input_contract" in authority):
@@ -3206,7 +3353,10 @@ def build_context(
             template["DATA"]["read_window_rules"] = (
                 "Previously requested reads only. coverage describes Tool return; context_page describes visible preview. "
                 "consumed_read omits prior body/checks/query parameters; immutable Result/Call retains them. "
-                "Different windows remain separate; no automatic file reads.")
+                "Different windows remain separate; no automatic file reads. "
+                "Do not repeat the same window to obtain hidden lines: use context_page.next_line on the same Artifact. "
+                "A successful workspace.write preserves your authored bytes; rereading your entire script is not "
+                "a prerequisite to execution. Read specific missing external formats or failure locations.")
             if reused_windows:
                 template["DATA"]["read_window_rules"] += (
                     " lines_ref/artifacts_ref points to the named field of DATA.results[result_id].unqualified_observations[observation]; "
@@ -3248,6 +3398,7 @@ def build_context(
                     native_template["AUTHORITY"]["plan"].pop("immutable_frozen_details_sha256", None)
             native, native_prompt = readable_context(native_template, envelope,
                 semantic_intake=semantic_intake,
+                normalization_schema=action_parameters["normalize_request"]["schema"] if semantic_intake else None,
                 correction_instruction=correction_instruction,
                 selection_schema=selection_action_parameters(request) if "select_conditions" in examples else None,
                 confirmed_parameters=known,
@@ -3257,6 +3408,7 @@ def build_context(
             # rather than replacing source facts with a digest to fit.
             native_fallback, native_fallback_prompt = readable_context(native_template, envelope,
                 semantic_intake=semantic_intake, confirmed_parameters=known,
+                normalization_schema=action_parameters["normalize_request"]["schema"] if semantic_intake else None,
                 correction_instruction=correction_instruction,
                 selection_schema=selection_action_parameters(request) if "select_conditions" in examples else None,
                 tools={entry["name"]: get_tool(entry["name"]) for entry in catalog}, compact=True)
@@ -3322,6 +3474,7 @@ def build_context(
             # settled facts and frozen Steps even after tighter views existed.
             native_fallback, native_fallback_prompt = readable_context(template, envelope,
                 semantic_intake=semantic_intake, confirmed_parameters=known,
+                normalization_schema=action_parameters["normalize_request"]["schema"] if semantic_intake else None,
                 correction_instruction=correction_instruction,
                 selection_schema=selection_action_parameters(request) if "select_conditions" in examples else None,
                 tools={entry["name"]: get_tool(entry["name"]) for entry in catalog}, compact=True)

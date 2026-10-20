@@ -4,6 +4,7 @@ Quotes authenticate provenance ranges, not arbitrary natural-language truth.
 These local schemas never grant permission or certify scientific success.
 """
 
+import hashlib
 import re
 import unicodedata
 from copy import deepcopy
@@ -21,6 +22,7 @@ from orca_agent.condition_selection import (
 from orca_agent.condition_selection import (
     selection_action_parameters as selection_action_parameters,
 )
+from orca_agent.condition_selection import simplified_workflow
 from orca_agent.minimum_evidence import LEGACY_NAMES, REQUIREMENTS
 from orca_agent.minimum_evidence import RULE_VERSION as MINIMUM_EVIDENCE_VERSION
 from orca_agent.model_usage import current_basis
@@ -112,12 +114,15 @@ class FieldEvidence(Record):
     system_ref: Identifier | None = None
     default_rule: str | None = None
     message_id: Identifier | None = None
+    source_refs: list[Identifier] = Field(default_factory=list, max_length=16)
+    value_basis: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 class SemanticGoal(Record):
     key: Identifier
     port: str
-    text_basis: str = Field(min_length=1, max_length=1000)
+    text_basis: str = Field(default="", max_length=1000)
+    source_refs: list[Identifier] = Field(default_factory=list, max_length=16)
     system_refs: list[Identifier] = Field(default_factory=list, max_length=5)
     system_refs_note: str | None = Field(default=None, max_length=1000)
     required: bool = Field(default=True, strict=True)
@@ -142,8 +147,9 @@ class SemanticIdentity(Record):
 
 
 class SelectionAuthorization(Record):
-    text_basis: str = Field(min_length=1, max_length=1000)
-    message_id: Identifier
+    text_basis: str = Field(default="", max_length=1000)
+    message_id: Identifier | None = None
+    source_refs: list[Identifier] = Field(default_factory=list, max_length=16)
 
 
 class SemanticCandidate(Record):
@@ -180,8 +186,22 @@ def _goal_binding_contract(request, *, defines_goals=False):
     return identifiers, schema
 
 
-def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_authorized=False):
-    schema = _schema(SemanticCandidate.model_json_schema())
+def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_authorized=False,
+                      messages=None, workflow_simplified=False):
+    raw_schema = SemanticCandidate.model_json_schema()
+    if not workflow_simplified:
+        for name in ("FieldEvidence", "SemanticGoal", "SelectionAuthorization"):
+            definition = raw_schema["$defs"][name]
+            definition["properties"].pop("source_refs")
+            if name != "FieldEvidence":
+                definition["properties"]["text_basis"]["minLength"] = 1
+                definition["required"] = list(dict.fromkeys([*definition.get("required", []), "text_basis"]))
+            if name == "SelectionAuthorization":
+                definition["properties"]["message_id"] = {"type": "string", "pattern": r"^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$"}
+                definition["required"].append("message_id")
+            if name == "FieldEvidence":
+                definition["properties"].pop("value_basis")
+    schema = _schema(raw_schema)
     schema["properties"]["schema_version"] = {"const": VERSION, "type": "string"}
     binding_ids, binding_schema = _goal_binding_contract(request)
     _, new_goal_binding_schema = _goal_binding_contract(request, defines_goals=True)
@@ -304,7 +324,106 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
             "New name queries check one PubChem candidate and its graph/formula/charge, without independently authenticating "
             "the original name or translation; do not guess an unknown alias. "
             "No identity, port or unauthorized method/basis/spin is filled in by the program.")
+    if workflow_simplified:
+        current = contract["normalize_request"]
+        current["source_fragments"] = source_fragments(messages or [])
+        current["source_reference_rules"] = (
+            "Goals, explicit conditions and automatic_selection authorization may supply source_refs instead of "
+            "recopying text_basis/message_id. References name authenticated user fragments; the program retains "
+            "the exact source and any intervening text. Keep quantity as the user's physical quantity phrase. "
+            "A reference does not prove an arbitrary field value. Exact text_basis remains accepted. "
+            "Environment values use gas_phase, CPCM(solvent), or SMD(solvent); retain the user's model and solvent. "
+            "value_basis may identify an exact literal value phrase inside the source. The program records the "
+            "raw phrase and separately checks the canonical model/solvent mapping; a citation alone is insufficient. "
+            "The program supplies an omitted unambiguous geometry_relation; conflicting relations remain errors. "
+            "analysis_goal_ref is only a legacy sampling specification reference, not a general Goal dependency.")
+        current["instruction"] = current["instruction"].replace(
+            "Retrieve sources -> select_conditions before geometry preparation/execution; identity queries may precede selection when the frozen profile permits.",
+            "Select authorized method/basis before scientific execution; sources are optional, reasoning is required. Geometry preparation may precede selection.")
+        if "generated_task_intent" in current:
+            current["generated_task_intent"] = current["generated_task_intent"].replace(
+                "Then knowledge.search -> select_conditions before structure.prepare/execution; identity queries may precede selection when the frozen profile permits.",
+                "Then select_conditions before scientific execution; retrieved sources are optional and geometry preparation may precede selection.")
     return contract
+
+
+def source_fragments(messages):
+    """Program-owned exact ranges; no model-supplied text or offsets are trusted."""
+    rows = []
+    for message in messages:
+        if not isinstance(message.get("id"), str):
+            continue
+        for match in re.finditer(r"[^。！？!?\n]+[。！？!?]?", message["text"]):
+            start, end = match.span()
+            key = f"{message['id']}:{start}:{end}"
+            rows.append({"id": "source_" + hashlib.sha256(key.encode()).hexdigest()[:16],
+                         "message_id": message["id"], "start": start, "end": end, "text": match.group()})
+    return rows
+
+
+def _simplified_request(request):
+    return request.condition_evidence.get("workflow_policy", {}).get("version") == "simplified-1"
+
+
+def _apply_source_references(candidate, messages, *, enabled):
+    available = {entry["id"]: entry for entry in source_fragments(messages)}
+    records, corrections = [], []
+    items = [(["goals", index], item) for index, item in enumerate(candidate.goals or [])]
+    items += [(["conditions", name], item) for name, item in candidate.conditions.items()]
+    items += [(["system_conditions", system, name], item)
+              for system, fields in candidate.system_conditions.items() for name, item in fields.items()]
+    items += [(["goals", index, "conditions", name], item)
+              for index, goal in enumerate(candidate.goals or []) for name, item in goal.conditions.items()]
+    items += [(["automatic_selection", name], item) for name, item in candidate.automatic_selection.items()]
+    for path, item in items:
+        if not item.source_refs:
+            continue
+        refs = [available.get(key) for key in item.source_refs]
+        if (not enabled or any(ref is None for ref in refs)
+                or len({ref["message_id"] for ref in refs if ref}) != 1):
+            corrections.append({"path": ["parameters", *path, "source_refs"],
+                                "reason": "source_reference_outside_current_user_message"})
+            continue
+        message_id = refs[0]["message_id"]
+        message = next(message for message in messages if message["id"] == message_id)
+        start, end = min(ref["start"] for ref in refs), max(ref["end"] for ref in refs)
+        text = message["text"][start:end]
+        if (item.message_id is not None and item.message_id != message_id
+                or item.text_basis and item.text_basis != text):
+            corrections.append({"path": ["parameters", *path], "reason": "source_reference_conflicts_with_supplied_text"})
+            continue
+        # The retained source can be longer than the model-authored text bound;
+        # it is bounded by the authenticated message, not generated audit prose.
+        item.text_basis, item.message_id = text, message_id
+        records.append({"path": path, "source_refs": list(item.source_refs),
+                        "message_id": message_id, "start": start, "end": end})
+    return records, corrections
+
+
+def _apply_general_program_fields(candidate, request, messages):
+    """Mechanical additions do not change explicit physical choices."""
+    rows = []
+    for index, item in enumerate(candidate.goals or []):
+        frozen_sampling = any(goal.evidence_contract_version != "generic-observation-1"
+                              and goal.port in {"sampling", "sampling_check"}
+                              and goal.conditions.get("sampling") for goal in request.goals)
+        if (item.analysis_goal_ref is not None and item.quantity is not None
+                and item.query is None and item.port not in INPUT_TOOLS and not frozen_sampling):
+            rows.append({"path": ["goals", index, "analysis_goal_ref"],
+                         "proposed_value": item.analysis_goal_ref,
+                         "action": "retained_as_nonexecuting_remark"})
+            item.analysis_goal_ref = None
+        if not _uses_general_goal(candidate, item, request):
+            continue
+        matches = _quote_occurrences(item.text_basis, messages, item.message_id)
+        if not matches or len({entry[0]["id"] for entry in matches}) != 1:
+            continue
+        relation = _general_goal_geometry_relation(request, matches[0][0], item)
+        if relation is not None and item.geometry_relation is None:
+            item.geometry_relation = relation
+            rows.append({"path": ["goals", index, "geometry_relation"],
+                         "value": relation, "source": "program_grounded_user_constraint"})
+    return rows
 
 
 def _quote(text, messages):
@@ -523,7 +642,7 @@ def _apply_authorized_defaults(candidate, request, messages):
     return rows
 
 
-def _validate_general_intake(candidate, request, messages, run):
+def _validate_general_intake(candidate, request, messages, run, *, extra_corrections=()):
     """Reject a mistaken proposal; never manufacture its missing goal or choice."""
     if (candidate.schema_version != VERSION or candidate.kind not in {"normalize", "replace_goals"}
             or not run.permission.code_execution or "python.execute" not in run.permission.allowed_tools):
@@ -539,7 +658,7 @@ def _validate_general_intake(candidate, request, messages, run):
                     field = candidate.conditions.get(name)
                     if field is None or field.source in {"unknown", "inferred"}:
                         delegated[name] = {"text_basis": text, "message_id": message["id"]}
-    corrections = _field_evidence_corrections(candidate, request, messages)
+    corrections = [*extra_corrections, *_field_evidence_corrections(candidate, request, messages)]
     for name, evidence in delegated.items():
         if name not in candidate.automatic_selection or name in candidate.conditions:
             corrections.append({"path": ["automatic_selection", name], "reason": "delegated_choice_is_not_unknown",
@@ -554,8 +673,11 @@ def _validate_general_intake(candidate, request, messages, run):
                                             ["goals", index, "text_basis"])
             if quote_error:
                 corrections.append(quote_error)
-                continue  # Other Goals/fields still supply independent corrections.
-            message, _, _ = _locate(item.text_basis, messages, item.message_id)
+                if not simplified_workflow(run):
+                    continue  # Historical validation order remains unchanged.
+            matches = [message for message in messages if message.get("id") == item.message_id]
+            message = (_locate(item.text_basis, messages, item.message_id)[0] if not quote_error
+                       else matches[0] if len(matches) == 1 else None)
             if (not item.system_refs or len(item.system_refs) != len(set(item.system_refs))
                     or set(item.system_refs) - systems
                     or item.port in INPUT_TOOLS and len(item.system_refs) != 1):
@@ -570,10 +692,10 @@ def _validate_general_intake(candidate, request, messages, run):
                     input_rules = {item.port, input_check_version(
                         get_tool(INPUT_TOOLS[item.port]), request, item.system_refs[0])}
                 if (canonical not in REQUIREMENTS and requirement not in input_rules
-                        and (not requirement.strip() or requirement not in message["text"])):
+                        and (not requirement.strip() or message is not None and requirement not in message["text"])):
                     corrections.append({"path": ["goals", index, "minimum_evidence", requirement_index],
                         "reason": "minimum_evidence_requires_exact_user_wording", "invalid_value": requirement,
-                        "user_text": message["text"], "registered_requirements": sorted(REQUIREMENTS)})
+                        "user_text": message["text"] if message else "", "registered_requirements": sorted(REQUIREMENTS)})
         if item.port in INPUT_TOOLS:
             # Report this independent input error alongside science/selection
             # errors, rather than hiding it until the next correction round.
@@ -588,6 +710,13 @@ def _validate_general_intake(candidate, request, messages, run):
         if not general:
             continue
         has_general = True
+        if quote_error:
+            # A bad source cannot justify source-dependent geometry or scientific
+            # claims, but target/quantity/schema diagnostics above remain useful.
+            if item.quantity is None or item.quantity not in item.text_basis:
+                corrections.append({"path": ["goals", index, "quantity"],
+                                    "reason": "general_quantity_requires_exact_user_phrase"})
+            continue
         message, _, _ = _locate(item.text_basis, messages, item.message_id)
         if item.quantity is None or item.quantity not in item.text_basis:
             corrections.append({"path": ["goals", index, "quantity"],
@@ -662,8 +791,10 @@ def _validate_general_intake(candidate, request, messages, run):
                 "Remove or correct this notice that declares a general molecule unsupported solely from the legacy qualified-checker scope. Preserve genuine execution limits, user unknowns and minimum evidence; do not claim scientific qualification.",
         }
         for correction in corrections:
-            correction["path"] = ["parameters", *correction["path"]]
-            correction["instruction"] = instructions[correction["reason"]]
+            if correction["path"][0] != "parameters":
+                correction["path"] = ["parameters", *correction["path"]]
+            correction["instruction"] = instructions.get(correction["reason"],
+                "Use the supplied source fragments from one current user message; do not change user conditions.")
         raise ProposalError("Apply all listed corrections together, retaining already valid fields. "
                             "Preserve the user's quantities and minimum evidence; no values were filled in.",
                             path=["parameters"], corrections=corrections)
@@ -917,12 +1048,53 @@ def _resolution_matches(gap, candidate):
     return gap in {"ambiguous_system", "ambiguous_pronoun"} and len(candidate.goal_bindings) == 1
 
 
+def _environment_mapping(value, text):
+    """Map model + solvent components, not a whitelist of complete user phrases."""
+    from orca_agent.orca.native_managed import canonical_managed_condition
+
+    proposed = "CPCM(water)" if value == "water_solvent" else value
+    canonical = canonical_managed_condition("environment", proposed)
+    match = re.fullmatch(r"(cpcm|smd)\((.+)\)", canonical or "")
+    if not match:
+        return None
+    model, solvent = match.groups()
+    model_pattern = (r"(?<![a-z0-9])c[-\s]?pcm(?![a-z0-9])" if model == "cpcm"
+                     else r"(?<![a-z0-9])smd(?![a-z0-9])")
+    model_match = re.search(model_pattern, text, re.I)
+    # Solvent identifiers remain open. Water's elemental/formula spelling is a
+    # component translation, not a list of allowed C-PCM sentence templates.
+    solvent_pattern = (r"水|\b(?:water|h2o|aqueous)\b" if solvent == "water"
+                       else r"(?<![\w])" + re.escape(solvent) + r"(?![\w])")
+    solvent_match = re.search(solvent_pattern, text, re.I)
+    if not model_match or not solvent_match:
+        return None
+    if re.search(r"或者|或是|还是|\bor\b|[?？]", text, re.I):
+        raise StoreError("environment model or solvent remains ambiguous in the user source")
+    return (f"{model.upper()}({solvent})", solvent_match.group(),
+            {"model": model, "solvent": solvent, "source": "program_checked_component_mapping",
+             "raw_phrase": text, "proposed_value": value})
+
+
 def _field(name, item, request, messages, *, system=None):
     if name not in CONDITIONS:
         path = name if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]{0,63}", str(name)) else "[field]"
         raise StoreError(f"semantic condition {path} is outside the field whitelist; allowed keys: "
                          + ", ".join(get_args(ConditionName)))
     value = item.value
+    if item.value_basis is not None:
+        if (not _simplified_request(request) or name != "environment" or item.source != "explicit"
+                or item.value_basis not in item.text_basis):
+            raise StoreError("literal environment value_basis requires authenticated explicit user wording")
+    environment_mapping = None
+    if name == "environment" and item.source == "explicit" and _simplified_request(request):
+        message, start, end = _locate(item.text_basis, messages, item.message_id)
+        context = "；".join(clause for clause, _ in _field_propositions(
+            request, message, start, end, system=system))
+        environment_mapping = _environment_mapping(value, context)
+        if environment_mapping:
+            if item.value_basis is not None and environment_mapping[1].casefold() not in item.value_basis.casefold():
+                raise StoreError("environment value_basis contradicts the proposed solvent mapping")
+            value = environment_mapping[0]
     if name in {"charge", "multiplicity"} and value is not None:
         if type(value) is not int or (name == "multiplicity" and value < 1):
             raise StoreError("charge/multiplicity need exact integer values")
@@ -932,6 +1104,8 @@ def _field(name, item, request, messages, *, system=None):
     elif value is not None and (not isinstance(value, str) or not 0 < len(value) <= 100):
         raise StoreError("condition needs a bounded string value")
     evidence = item.model_dump(mode="json")
+    if environment_mapping:
+        evidence.update(value=value, normalization=environment_mapping[2])
     labels = {"method": r"方法|\bmethod\b", "basis": r"基组|\bbasis\b",
               "charge": r"电荷|\bcharge\b", "multiplicity": r"多重度|\bmultiplicity\b",
               "electronic_state": r"电子态|\breference\b", "environment": r"环境|\benvironment\b"}
@@ -958,12 +1132,16 @@ def _field(name, item, request, messages, *, system=None):
         if name == "charge" and type(value) is int and value > 0:
             tokens.add(f"+{value}")
         tokens.update(LEXICAL_ALIASES.get((name, value), ()))
+        if environment_mapping:
+            tokens.add(environment_mapping[1])
         def present(token, text=item.text_basis):
             if re.fullmatch(r"[a-z0-9_.+\-/]+", token):
                 return re.search(r"(?<![a-z0-9_.+\-])" + re.escape(token)
                                  + r"(?![a-z0-9_.+\-])", text.casefold()) is not None
             return token in text.casefold()
         if value is None or not any(present(token) for token in tokens):
+            if name == "environment" and _simplified_request(request):
+                raise StoreError("environment must retain a literal user value; supply value_basis for a proposed canonical mapping")
             raise StoreError("explicit condition lacks a supported lexical value basis")
         # A clipped quote must not discard the negation/uncertainty around the
         # value in its authenticated message. Ambiguous clauses stay unresolved.
@@ -1764,6 +1942,9 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
             or any(goal.quantity is not None or goal.verification is not None for goal in candidate.goals or [])):
         raise StoreError("general identities, quantities and selection authorization require current semantics")
     request = store.load_request(run)
+    if simplified_workflow(run):
+        request = request.model_copy(deep=True)
+        request.condition_evidence["workflow_policy"] = {"version": "simplified-1", "source": "run_configuration"}
     binding_ids, _ = _goal_binding_contract(request, defines_goals=candidate.goals is not None)
     invalid_binding_ids = set(candidate.goal_bindings) - set(binding_ids)
     if invalid_binding_ids:
@@ -1774,6 +1955,7 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
     pending = pending_messages(store, run)
     if set(candidate.message_ids) != {m["id"] for m in pending} or len(candidate.message_ids) != len(pending):
         raise StoreError("semantic candidate must consume the exact pending message set")
+    source_records, source_errors = _apply_source_references(candidate, pending, enabled=simplified_workflow(run))
     _quote(candidate.text_basis, pending)
     if any(m.get("request_version", request.version) != request.version for m in pending):
         raise StoreError("answer refers to an older Request; clarify against the current version")
@@ -1813,7 +1995,12 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
     from orca_agent.natural import bind_text_identity
     request = bind_text_identity(request, run, pending, candidate)
     program_defaults = _apply_authorized_defaults(candidate, request, pending)
-    _validate_general_intake(candidate, request, pending, run)
+    program_fields = (_apply_general_program_fields(candidate, request, pending)
+                      if simplified_workflow(run) else [])
+    _validate_general_intake(candidate, request, pending, run, extra_corrections=source_errors)
+    if source_errors:
+        raise ProposalError("Source references require the frozen simplified workflow and valid user fragments.",
+                            path=["parameters"], corrections=source_errors)
     values = request.model_dump(mode="json")
     grounding = request.messages + pending if initial else pending
     for scope, fields in [(None, candidate.conditions), *candidate.system_conditions.items()]:
@@ -1950,6 +2137,8 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
                  "candidate": candidate.model_dump(mode="json"),
                  "proposed_candidate": proposed_candidate,
                  "program_applied_defaults": program_defaults,
+                  **({"program_source_references": source_records, "program_fields": program_fields}
+                     if simplified_workflow(run) else {}),
                  "remarks": [{"path": ["goals", index, "system_refs_note"], "text": item.system_refs_note}
                              for index, item in enumerate(candidate.goals or []) if item.system_refs_note],
                  "replaced_goal_ids": [g.id for g in request.goals] if candidate.goals else [],

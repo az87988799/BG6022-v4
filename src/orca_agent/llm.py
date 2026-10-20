@@ -158,15 +158,17 @@ class ModelReply:
         return self.usage is not None
 
 
-def proposal_recovery_kind(reply: Mapping[str, Any]) -> str:
+def proposal_recovery_kind(reply: Mapping[str, Any], *, workflow_simplified: bool = False) -> str:
     """Classify recovery without changing the frozen transport failure facts.
 
-    No local configuration adjustment is authorized by a truncated reply. With
-    no retained final text there is no candidate to correct under that same
-    profile/output limit; a restart must not convert that failure into a retry.
+    The new frozen workflow permits one smaller action after an empty length
+    response. The caller charges its existing correction allowance and rebuilds
+    the count from durable receipts. Historical Runs keep their fatal policy.
     """
     category = reply.get("error_category")
     if category == "truncated" and not (reply.get("raw_content") or "").strip():
+        if workflow_simplified and reply.get("finish_reason") == "length":
+            return "smaller_action"
         return "fatal"
     if category in {"authentication", "permission", "token_bound_exceeded", "credential_in_response",
                     "response_missing", "redirect_rejected", "response_encoding_rejected"}:

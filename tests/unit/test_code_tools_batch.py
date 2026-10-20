@@ -207,7 +207,9 @@ def test_real_store_create_run_shell_binds_before_any_execution(prepared):
 
 
 @pytest.mark.parametrize("text", ["Independent user request.", "Optimize the water molecule."])
-def test_pure_text_initialization_is_bindable_without_model_or_environment_launch(tmp_path, monkeypatch, text):
+@pytest.mark.parametrize("workflow_policy", [None, "simplified-1"])
+def test_pure_text_initialization_is_bindable_without_model_or_environment_launch(
+        tmp_path, monkeypatch, text, workflow_policy):
     from orca_agent import doctor
     from orca_agent.natural import initialize_text
 
@@ -215,7 +217,7 @@ def test_pure_text_initialization_is_bindable_without_model_or_environment_launc
         raise AssertionError("initialization must not launch or probe a scientific environment")
 
     monkeypatch.setattr(doctor, "capture_environment", forbidden)
-    config = Config()
+    config = Config(workflow_policy=workflow_policy)
     config.text.enabled = True
     config.text.permission.model_execution = True
     config.text.permission.scientific_execution = True
@@ -234,6 +236,44 @@ def test_pure_text_initialization_is_bindable_without_model_or_environment_launc
     assert store.read_control(run.id)["messages"][0]["text"] == texts["T1"]
     assert batch.bind_run(root, key, run.id)["run_id"] == run.id
     assert store.load_run(run.id) == run
+
+
+@pytest.mark.parametrize("change", ["missing", "version", "source", "extra", "other", "legacy"])
+def test_initial_program_marker_is_exact_and_requires_its_frozen_workflow(tmp_path, change):
+    from orca_agent.natural import initialize_text
+
+    config = Config(workflow_policy=None if change == "legacy" else "simplified-1")
+    config.text.enabled = True
+    config.text.permission.model_execution = True
+    value, config, texts = policy(configuration=config)
+    root, environment = tmp_path / "batch", tmp_path / "environment"
+    batch.create_batch(root, freeze_sha256="a" * 64, policy=value, environment_root=environment)
+    key, manifest = workspace((root, environment, value, config, texts))
+    prepared_config = Config.model_validate_json(
+        (Path(manifest["data_root"]).parent / "config.json").read_bytes())
+    store = Store(manifest["data_root"], environment_root=environment,
+                  configuration=prepared_config.run_configuration())
+    run = initialize_text(store, prepared_config, texts["T1"])
+    path = store.path(f"runs/{run.id}/request-revisions/1.json")
+    request = json.loads(path.read_bytes())
+    marker = {"version": "simplified-1", "source": "run_configuration"}
+    if change == "version":
+        marker["version"] = "other-policy"
+    elif change == "source":
+        marker["source"] = "model_proposal"
+    elif change == "extra":
+        marker["injected"] = "prior scientific solution"
+    evidence = {} if change == "missing" else {"workflow_policy": marker}
+    if change == "other":
+        evidence["request.method"] = {"value": "HF", "source": "explicit"}
+    request["condition_evidence"] = evidence
+    path.write_text(json.dumps(request), encoding="utf-8")
+    original = path.read_bytes()
+    with pytest.raises(ValueError, match="fresh Run Request"):
+        batch.bind_run(root, key, run.id)
+    assert path.read_bytes() == original
+    assert batch.snapshot(root)["rows"][key]["run_id"] is None
+    assert not run.model_records and not run.attempts
 
 
 @pytest.mark.parametrize("case", ["missing", "different_id", "second_run"])

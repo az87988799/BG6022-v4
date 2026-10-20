@@ -1,0 +1,37 @@
+...F..............FF......................................FF............ [ 48%]
+........................................................................ [ 96%]
+.....                                                                    [100%]
+================================== FAILURES ===================================
+_______ test_all_native_submission_contracts_and_correction_are_literal _______
+tests\unit\test_native_immediate_schema.py:144: in test_all_native_submission_contracts_and_correction_are_literal
+    concrete = next(branch for branch in repair["properties"][field]["anyOf"]
+E   StopIteration
+_ test_real_plan_rejections_keep_original_schema_errors_and_add_actionable_feedback[1] _
+tests\unit\test_plan_artifact_corrections.py:68: in test_real_plan_rejections_keep_original_schema_errors_and_add_actionable_feedback
+    assert not any(part in {"CodeRef", "ArtifactCodeSelection", "InputManifestEntry",
+E   assert not True
+E    +  where True = any(<generator object test_real_plan_rejections_keep_original_schema_errors_and_add_actionable_feedback.<locals>.<genexpr> at 0x000001B3BA91C660>)
+_ test_real_plan_rejections_keep_original_schema_errors_and_add_actionable_feedback[2] _
+tests\unit\test_plan_artifact_corrections.py:68: in test_real_plan_rejections_keep_original_schema_errors_and_add_actionable_feedback
+    assert not any(part in {"CodeRef", "ArtifactCodeSelection", "InputManifestEntry",
+E   assert not True
+E    +  where True = any(<generator object test_real_plan_rejections_keep_original_schema_errors_and_add_actionable_feedback.<locals>.<genexpr> at 0x000001B3BA904BA0>)
+_ test_missing_goal_correction_is_neutral_and_can_keep_a_future_route_or_gap[future] _
+tests\unit\test_plan_goal_binding_contract.py:186: in test_missing_goal_correction_is_neutral_and_can_keep_a_future_route_or_gap
+    store.save_run(run)
+src\orca_agent\store.py:584: in save_run
+    raise StoreError(f"fixed run field cannot be changed: {field}")
+E   orca_agent.store.StoreError: fixed run field cannot be changed: configuration
+_ test_missing_goal_correction_is_neutral_and_can_keep_a_future_route_or_gap[gap] _
+tests\unit\test_plan_goal_binding_contract.py:186: in test_missing_goal_correction_is_neutral_and_can_keep_a_future_route_or_gap
+    store.save_run(run)
+src\orca_agent\store.py:584: in save_run
+    raise StoreError(f"fixed run field cannot be changed: {field}")
+E   orca_agent.store.StoreError: fixed run field cannot be changed: configuration
+=========================== short test summary info ===========================
+FAILED tests/unit/test_native_immediate_schema.py::test_all_native_submission_contracts_and_correction_are_literal
+FAILED tests/unit/test_plan_artifact_corrections.py::test_real_plan_rejections_keep_original_schema_errors_and_add_actionable_feedback[1]
+FAILED tests/unit/test_plan_artifact_corrections.py::test_real_plan_rejections_keep_original_schema_errors_and_add_actionable_feedback[2]
+FAILED tests/unit/test_plan_goal_binding_contract.py::test_missing_goal_correction_is_neutral_and_can_keep_a_future_route_or_gap[future]
+FAILED tests/unit/test_plan_goal_binding_contract.py::test_missing_goal_correction_is_neutral_and_can_keep_a_future_route_or_gap[gap]
+5 failed, 144 passed in 42.02s

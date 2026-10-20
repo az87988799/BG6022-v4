@@ -10,7 +10,7 @@ from orca_agent.model_usage import current_basis
 from orca_agent.models import Goal, PermissionSnapshot, Request, SystemInput
 from orca_agent.natural import initialize_agent
 from orca_agent.planning import validate_revision
-from orca_agent.proposals import ProposalError, materialize_plan
+from orca_agent.proposals import materialize_plan
 from orca_agent.semantic import commit_candidate
 from orca_agent.semantic_notices import notice_choices, required_notice_kinds
 from orca_agent.store import Store
@@ -91,19 +91,26 @@ def test_other_registered_geometry_cannot_hide_unbound_target_input_gap(tmp_path
     assert updated.usage.model_calls == updated.usage.orca_starts_actual == 0
 
 
-def test_unbound_target_missing_notice_rejects_without_rewriting_candidate(tmp_path):
+def test_unbound_target_missing_notice_is_generated_without_rewriting_candidate(tmp_path):
     store, run, goals = mixed_intake(tmp_path, "ethanol")
     parameters = candidate(store, run, kind="normalize", goals=goals,
                            notices=[notice_choices()["unsupported_system"]])
     original = copy.deepcopy(parameters)
-    persisted = store.path(f"runs/{run.id}/run.json").read_bytes()
+    original_request = store.path(f"runs/{run.id}/request-revisions/1.json")
+    persisted = original_request.read_bytes()
 
-    with pytest.raises(ProposalError) as caught:
-        commit_candidate(store, run, parameters,
-            decision_id="independent_missing_notice", basis=current_basis(store, run))
+    updated = commit_candidate(store, run, parameters,
+        decision_id="independent_missing_notice", basis=current_basis(store, run))
 
-    assert caught.value.detail["missing_notice_choices"] == ["missing_geometry"]
-    assert store.path(f"runs/{run.id}/run.json").read_bytes() == persisted
+    semantics = updated.decisions[-1]["semantics"]
+    notice = next(item for item in semantics["notice_contract"]["generated"]
+                  if item["kind"] == "missing_geometry")
+    assert notice == {"kind": "missing_geometry", "text": notice_choices()["missing_geometry"],
+                      "goal_ids": ["goal_other_energy"], "source": "program"}
+    assert notice["text"] in semantics["notices"]
+    assert required_notice_kinds(store.load_request(updated))["missing_geometry"] == ["goal_other_energy"]
+    assert not updated.calls and not updated.attempts
+    assert original_request.read_bytes() == persisted
     assert parameters == original
 
 

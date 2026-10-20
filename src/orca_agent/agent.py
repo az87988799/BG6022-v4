@@ -157,12 +157,15 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
     records = [r for r in run.model_records if r.get("logical_id", "").startswith(logical_id + "_")]
     max_requests = 1 + run.budget.corrections_per_proposal + run.budget.transport_retries
 
-    recovery_kind = proposal_recovery_kind
+    simplified = bool(run.configuration and run.configuration.workflow_policy == "simplified-1")
+
+    def recovery_kind(reply):
+        return proposal_recovery_kind(reply, workflow_simplified=simplified)
 
     def rejected_state():
         """Reconstruct independent limits from this logical request's durable receipts."""
         by_id = {item["id"]: item for item in records}
-        counts = {"transport": 0, "correction": 0, "fatal": 0}
+        counts = {"transport": 0, "correction": 0, "smaller_action": 0, "fatal": 0}
         previous = None
         candidate = None
         for decision in run.decisions:
@@ -171,7 +174,8 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             prior_record = by_id[decision["id"]]
             prior_reply, receipt_hash = read_model_reply(store, run, prior_record)
             reply = asdict(prior_reply)
-            counts[recovery_kind(reply)] += 1
+            kind = decision.get("parameters", {}).get("recovery_kind") or recovery_kind(reply)
+            counts[kind if kind in counts else "fatal"] += 1
             previous = decision.get("parameters", {})
             candidate = None
             if (recovery_kind(reply) == "correction" and isinstance(reply.get("proposal"), dict)
@@ -181,16 +185,19 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                 candidate = {"model_id": prior_record["id"], "logical_request_id": logical_id,
                     "request_hash": prior_record["request_hash"], "response_record_sha256": receipt_hash,
                     "basis": dict(basis), "proposal": reply["proposal"]}
-        if (counts["fatal"] or counts["transport"] > run.budget.transport_retries
-                or counts["correction"] > run.budget.corrections_per_proposal):
+        if (counts["fatal"] or counts["smaller_action"] > 1
+                or counts["transport"] > run.budget.transport_retries
+                or counts["correction"] + counts["smaller_action"] > run.budget.corrections_per_proposal):
             raise StoreError("bounded proposal correction or transport retry exhausted")
-        return previous, candidate
+        return previous, candidate, bool(counts["smaller_action"])
 
     while len(records) <= max_requests:
-        previous_rejection, rejected_candidate = rejected_state()
+        previous_rejection, rejected_candidate, smaller_action = rejected_state()
         if previous_rejection:
             rejection = {"category": previous_rejection.get("error_category", "rejected"),
                          "requirement": previous_rejection.get("requirement", "prior proposal rejected")}
+            if smaller_action:
+                rejection["smaller_action"] = True
         handled = {d["id"] for d in run.decisions}
         pending = [r for r in records if r["id"] not in handled]
         record = pending[0] if pending else None
@@ -276,7 +283,10 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                                      action_parameters=action_parameters(semantic_tools, request=request,
                                          text_input=run.science_baseline_policy == "first_science_plan",
                                          code_authorized=run.permission.code_execution
-                                             and "python.execute" in semantic_tools)
+                                             and "python.execute" in semantic_tools,
+                                         messages=[message for message in control["messages"]
+                                             if message["id"] not in run.processed_messages],
+                                         workflow_simplified=simplified)
                                      if has_pending_messages else None,
                                      delivery_snapshot=snapshot,
                                      model_profile=model_profile)
@@ -315,6 +325,13 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                     proposal_values = {**intent.model_dump(), **sent["AUTHORITY"]["basis"],
                                        "related_results": sent["AUTHORITY"]["related_results"]}
             proposal = Proposal.model_validate(proposal_values)
+            if (rejection and rejection.get("smaller_action")
+                    and proposal.action in {"initial_plan", "revise_plan"}
+                    and len(proposal.parameters.get("steps", [])) > 1):
+                from orca_agent.proposals import ProposalError
+                raise ProposalError("After an empty length response, propose at most one Step. "
+                                    "Keep unchanged goals; the program retains their uncovered gaps.",
+                                    path=["parameters", "steps"])
             if record.get("prompt_version") in DECISION_CONTRACT_PROMPT_VERSIONS:
                 from orca_agent.model_usage import _request_body
                 from orca_agent.proposals import ProposalError

@@ -1,0 +1,62 @@
+{
+  "recorded_at": "2026-10-20T15:23:03.734421+00:00",
+  "scope": "Separate original and materialized direct-native input hashes when recovering an observation source.",
+  "workflow_policy": "simplified-1; historical None behavior retained",
+  "changes": [
+    "The frozen original CodeRef and original Artifact are verified against source_input_sha256, falling back to input_sha256 when no materialization occurred.",
+    "The final input_sha256 is independently verified through the settled original Result files[task/job.inp] reference, Artifact membership, Run/Attempt, raw_evidence role, task_path, and stored bytes.",
+    "Existing completed-state, admission-workload, source Result, request-version, scientific-condition and minimum-evidence checks remain.",
+    "The direct real probe now preapproves one sdk_orca=False Python consumer within analysis_executions=1, reads the existing stdout, and collects/assesses an unqualified observation. No extra ORCA or LLM invocation is added."
+  ],
+  "tests": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_simplified_direct_observation_source.py tests/unit/test_general_observation_admission.py tests/unit/test_simplified_native_materialization.py -q --junitxml=docs/acceptance/workflow-simplification-2/direct-source-followup-1.xml",
+    "passed": 54,
+    "failed": 0,
+    "seconds": 36.75,
+    "exit_code": 0,
+    "log": "direct-source-followup-1.log",
+    "junit": "direct-source-followup-1.xml",
+    "new_tests": 16,
+    "coverage": [
+      "Materialized and already-complete native input both support observation collection and sourced delivery without scientific qualification.",
+      "Reject original/executed byte tampering, each input hash mismatch, Result file-reference hash mismatch, missing job, missing/duplicate Result membership, foreign Run/Attempt, wrong Artifact role, and wrong task_path.",
+      "Historical sources do not newly require a job.inp archive and do not accept new materialized-input semantics."
+    ],
+    "evidence_kind": "Offline unit tests with explicitly synthetic completed outputs/receipts; staging and hash checks use real local files."
+  },
+  "static_checks": {
+    "ruff": {
+      "files": [
+        "src/orca_agent/task_observations.py",
+        "tests/unit/test_simplified_direct_observation_source.py",
+        "tests/live/test_simplified_workflow_orca.py"
+      ],
+      "result": "passed"
+    },
+    "diff_check": {
+      "files": [
+        "src/orca_agent/task_observations.py",
+        "tests/live/test_simplified_workflow_orca.py"
+      ],
+      "result": "passed"
+    },
+    "development_note": "Initial Ruff reported only live-test import formatting; fixed before the passing final Ruff. No failed pytest cases in this follow-up."
+  },
+  "hashes_captured_after_tests": {
+    "src/orca_agent/task_observations.py": "ab581cf3336d1f8a6d64685aeae578f3f721330d1719071d369bf2ad956e59ff",
+    "tests/unit/test_simplified_direct_observation_source.py": "3c8cd48a44a46681a62ccf34c9725b54f1ef1327b4711e95c7eea109b1bba71e",
+    "tests/live/test_simplified_workflow_orca.py": "45a51fb3cc668dce21d94c6c5940390b0f5b10783977ce35eb89a54aec3fd43b",
+    "tests/unit/test_general_observation_admission.py": "a312b10c294b6dbcb04a82f95124a904cdfc335c13a256e52086da76cd9edc8c",
+    "tests/unit/test_simplified_native_materialization.py": "2a0311415ea06e60378cca8ce40f0bf317d6948fcf075465c311eb6ea0c23562"
+  },
+  "evidence_hashes": {
+    "direct-source-followup-1.log": "4d68644ca572bd24b14c1ce095821fdd46224051ab5f8dd3636716addb1a9964",
+    "direct-source-followup-1.xml": "736d00a3f42fa98e6943638d5a6abc6fd2477f88705e2a1c40a222c0ea66d2fd"
+  },
+  "limits": [
+    "No real model, ORCA, container or Python task process was executed in this follow-up; the extended live direct consumer is pending the parent-controlled probe.",
+    "The extended direct probe checks archived source consumption and a normal-termination marker, not independent numerical scientific correctness.",
+    "The three real probes retain at most three ORCA reservations total, zero model calls, no guaranteed ORCA start before the timeout, and no real Run-total-deadline-expiry coverage.",
+    "Integration2 was interrupted by the parent for this discovered gap and is not counted as passing; final integration3 remains pending."
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "created_at": "2026-10-20T14:51:39.427479+00:00",
+  "scope": "offline schema, Plan materialization and MockTransport tests; no live LLM/ORCA/network",
+  "result": "149 passed in 34.38s; Ruff and git diff --check passed",
+  "stable_snapshot": true,
+  "source_hashes": {
+    "src/orca_agent/proposals.py": "7d22cc073edd3734789b435203c58a4ae50bfe8d5ad4d60dd8e6f82fe0552a15",
+    "tests/unit/test_native_immediate_schema.py": "552342e5d34eb0bcc8eb98446d145036b483f813e13944d37d9555528fb186f6",
+    "tests/unit/test_plan_artifact_corrections.py": "a72aa06c9724d97e7a52e695e8dc4bf0906bad03e99b267971dbf22489dc7fff",
+    "tests/unit/test_plan_goal_binding_contract.py": "ce408f82835d8f62ae6d81df182bbe75acb7c9e2401da5ab9217ca9f4dcbb951"
+  },
+  "changes": [
+    "ProposedCodeRepair schema oneOf matches exactly one non-null code/input replacement; object/null predicates add no new runtime constraint",
+    "Known reference union labels are removed only at input/code or manifest-entry positions; identical type/path/constraints errors are deduplicated",
+    "Affected input roles are extracted from the complete normalized validation set; displayed errors remain capped at eight and distributed across top-level parameters",
+    "Historical missing-Goal tests now freeze legacy policy at creation; current-policy automatic-gap behavior is tested separately without altering Request or marking goals satisfied",
+    "Literal schema and structural projection tests cover new reference alternatives while retaining field bounds/defaults and historical malformed-reference rejection"
+  ],
+  "verification": {
+    "six_file_regression": [
+      "E:\\BG6022-V4\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "tests/unit/test_native_immediate_schema.py",
+      "tests/unit/test_plan_artifact_corrections.py",
+      "tests/unit/test_plan_goal_binding_contract.py",
+      "tests/unit/test_proposals.py",
+      "tests/unit/test_simplified_plan_repairs.py",
+      "tests/unit/test_simplified_file_references.py",
+      "-q",
+      "--disable-warnings",
+      "--tb=short"
+    ],
+    "initial_local_result": "144 passed, 5 failed in 42.02s",
+    "initial_failures": [
+      "Two feedback cases exposed nested inherited union wrappers; corrected one-line suffix normalization",
+      "One literal-schema assertion incorrectly assumed repeated CodeRef definitions were always expanded instead of valid literal JSON Schema references",
+      "Two legacy fixtures attempted to mutate frozen configuration; corrected to freeze None at Run creation"
+    ],
+    "upstream_integration": "Prior integration retained 3003 passed, 19 failed, 3 skipped; this scope addresses its seven assigned failures only",
+    "fixture_hash_unchanged": {
+      "path": "tests\\fixtures\\code_plan_live006.json",
+      "sha256": "4cfe62dd668037c1e117affae15958e0e52d054419e2c71575b83744086b0009"
+    }
+  },
+  "evidence_hashes": {
+    "proposal-feedback-1.log": "31a6abed9d23678b905e85c7075f54956cf6f9e7349bcb92f1cd07b8a2b7ea5b",
+    "proposal-feedback-1.json": "46764394c7591978c6030f01af127b2a7b4b34b8bdbf2956e3800cbc49f70a1b",
+    "proposal-feedback-2.log": "1c633d6b4a5b74d63689245a45eb1609222b5089fccb8f9ed4112512103b8793",
+    "proposal-feedback-2.json": "a97822dcaa1915debaf6770406f818a36fac443d823346149fb4921080af1935"
+  },
+  "limitations": [
+    "Eight-error feedback is bounded; further failures may require another bounded correction",
+    "Union alternatives can still yield alternative-selector errors; guidance explicitly states alternatives are not cumulative",
+    "No real scientific execution or end-to-end model success claimed"
+  ]
+}

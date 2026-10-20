@@ -1,0 +1,15 @@
+F
+================================== FAILURES ===================================
+_ test_input_chain_grouped_condition_provenance_roundtrips_without_store_decoder[12000] _
+tests\unit\test_decision_purpose_capacity.py:596: in test_input_chain_grouped_condition_provenance_roundtrips_without_store_decoder
+    test_text_to_model_plan_to_prepared_input_uses_the_single_feedback_loop(tmp_path, monkeypatch)
+tests\unit\test_structure_input_chain.py:203: in test_text_to_model_plan_to_prepared_input_uses_the_single_feedback_loop
+    assert prepared_geometry(store, ended, store.load_request(ended), "water"), ended.diagnostics
+E   AssertionError: [{'category': 'ContextLimitError', 'message': 'required model context exceeds the configured global input bound, Run input limit, or remaining token reservation', 'environment_occupied': False}]
+E   assert None
+E    +  where None = prepared_geometry(<orca_agent.store.Store object at 0x000001ECF8F8B950>, Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan'), Request(id='request_9b6a9f635a054c49becc2e6a90c11a84', version=1, original_text='Calculate the initial geometry single...multiplicity': 1, 'electronic_state': 'RHF', 'environment': 'gas_phase'}, automatic_selection=[], selection_reasons={}), 'water')
+E    +    where Request(id='request_9b6a9f635a054c49becc2e6a90c11a84', version=1, original_text='Calculate the initial geometry single...multiplicity': 1, 'electronic_state': 'RHF', 'environment': 'gas_phase'}, automatic_selection=[], selection_reasons={}) = load_request(Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...minal_ids=[], agent_enabled=True, batch_category=None, input_bindings={}, science_baseline_policy='first_science_plan'))
+E    +      where load_request = <orca_agent.store.Store object at 0x000001ECF8F8B950>.load_request
+=========================== short test summary info ===========================
+FAILED tests/unit/test_decision_purpose_capacity.py::test_input_chain_grouped_condition_provenance_roundtrips_without_store_decoder[12000]
+1 failed in 2.21s

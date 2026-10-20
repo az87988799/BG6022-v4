@@ -1,0 +1,135 @@
+...................F......................................FFFFF......... [ 26%]
+...............................................F........................ [ 52%]
+........................................................................ [ 78%]
+...................................FFFF...................               [100%]
+================================== FAILURES ===================================
+_______ test_intake_uses_program_fragments_and_one_authoritative_schema _______
+tests\unit\test_context_failure_simplification.py:235: in test_intake_uses_program_fragments_and_one_authoritative_schema
+    prepared = context.build_context(request, run, delivery_snapshot=snapshot,
+src\orca_agent\context.py:3399: in build_context
+    native, native_prompt = readable_context(native_template, envelope,
+src\orca_agent\readable_context.py:64: in readable_context
+    schema = deepcopy(template["ACTION_PARAMETERS"]["normalize_request"]["schema"])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'schema'
+_ test_current_generated_intake_uses_single_source_scope_and_v3_schema[False] _
+tests\unit\test_code_context.py:715: in test_current_generated_intake_uses_single_source_scope_and_v3_schema
+    prepared = context.build_context(request, run, delivery_snapshot=snapshot,
+src\orca_agent\context.py:3399: in build_context
+    native, native_prompt = readable_context(native_template, envelope,
+src\orca_agent\readable_context.py:64: in readable_context
+    schema = deepcopy(template["ACTION_PARAMETERS"]["normalize_request"]["schema"])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'schema'
+_ test_current_generated_intake_uses_single_source_scope_and_v3_schema[True] __
+tests\unit\test_code_context.py:715: in test_current_generated_intake_uses_single_source_scope_and_v3_schema
+    prepared = context.build_context(request, run, delivery_snapshot=snapshot,
+src\orca_agent\context.py:3399: in build_context
+    native, native_prompt = readable_context(native_template, envelope,
+src\orca_agent\readable_context.py:64: in readable_context
+    schema = deepcopy(template["ACTION_PARAMETERS"]["normalize_request"]["schema"])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'schema'
+_ test_actual_decision_passes_code_permission_and_eligible_tool_to_intake[False-True] _
+tests\unit\test_code_context.py:771: in test_actual_decision_passes_code_permission_and_eligible_tool_to_intake
+    agent._decision(store, store.load_run(run.id), None, [], None, None, None)
+src\orca_agent\agent.py:279: in _decision
+    prepared = build_context(store.load_request(run), run, plan, results=selected,
+src\orca_agent\context.py:3399: in build_context
+    native, native_prompt = readable_context(native_template, envelope,
+src\orca_agent\readable_context.py:64: in readable_context
+    schema = deepcopy(template["ACTION_PARAMETERS"]["normalize_request"]["schema"])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'schema'
+_ test_actual_decision_passes_code_permission_and_eligible_tool_to_intake[True-False] _
+tests\unit\test_code_context.py:771: in test_actual_decision_passes_code_permission_and_eligible_tool_to_intake
+    agent._decision(store, store.load_run(run.id), None, [], None, None, None)
+src\orca_agent\agent.py:279: in _decision
+    prepared = build_context(store.load_request(run), run, plan, results=selected,
+src\orca_agent\context.py:3399: in build_context
+    native, native_prompt = readable_context(native_template, envelope,
+src\orca_agent\readable_context.py:64: in readable_context
+    schema = deepcopy(template["ACTION_PARAMETERS"]["normalize_request"]["schema"])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'schema'
+_ test_actual_decision_passes_code_permission_and_eligible_tool_to_intake[True-True] _
+tests\unit\test_code_context.py:771: in test_actual_decision_passes_code_permission_and_eligible_tool_to_intake
+    agent._decision(store, store.load_run(run.id), None, [], None, None, None)
+src\orca_agent\agent.py:279: in _decision
+    prepared = build_context(store.load_request(run), run, plan, results=selected,
+src\orca_agent\context.py:3399: in build_context
+    native, native_prompt = readable_context(native_template, envelope,
+src\orca_agent\readable_context.py:64: in readable_context
+    schema = deepcopy(template["ACTION_PARAMETERS"]["normalize_request"]["schema"])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'schema'
+_ test_native_revision_exposes_complete_plan_schema_and_rejects_live013_runtime_fields _
+tests\unit\test_context_ready_execution.py:94: in test_native_revision_exposes_complete_plan_schema_and_rejects_live013_runtime_fields
+    assert schema == normalized_schema(native_schema(ProposedPlan.model_json_schema()))
+E   AssertionError: assert {'additionalP...pe': 'object'} == {'additionalP...pe': 'object'}
+E     
+E     Omitting 3 identical items, use -vv to show
+E     Differing items:
+E     {'properties': {'goal_map': {'additionalProperties': {'anyOf': [{'type': 'object', 'additionalProperties': False, 'pro...: 'object'}, 'key': {'type': 'string'}, ...}, 'required': ['key'], 'type': 'object'}, 'minItems': 1, 'type': 'array'}}} != {'properties': {'steps': {'items': {'anyOf': [{'additionalProperties': False, 'properties': {...}, 'required': [...], ...ect'}, {'additionalProperties': False, 'properties': {...}, 'required': [...], 'type': 'object'}]}, 'type': 'object'}}}
+E     Use -v to get more diff
+_ test_missing_required_goal_has_one_correction_to_explicit_gap_without_completion _
+tests\unit\test_agent_diagnostics.py:206: in test_missing_required_goal_has_one_correction_to_explicit_gap_without_completion
+    updated, action, _ = agent._decision(store, run, None, {}, transport, None, None)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\agent.py:295: in _decision
+    response = send_model(store, run, prepared, transport, basis=basis,
+src\orca_agent\model_usage.py:517: in send_model
+    return transport.send(prepared, reserve=reserve, settle=settle)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\test_agent.py:44: in send
+    values = script(data) if callable(script) else copy.deepcopy(script)
+             ^^^^^^^^^^^^
+tests\unit\test_agent_diagnostics.py:201: in corrected
+    assert detail["missing_goals"] == [{"goal_id": "b", "port": "value_observation"}]
+           ^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: string indices must be integers, not 'str'
+____ test_missing_required_goal_repeated_omission_keeps_bounded_correction ____
+tests\unit\test_agent_diagnostics.py:220: in test_missing_required_goal_repeated_omission_keeps_bounded_correction
+    with pytest.raises(StoreError, match="bounded proposal correction"):
+E   Failed: DID NOT RAISE StoreError
+____ test_raw_text_creates_unknown_request_before_first_model_reservation _____
+tests\unit\test_semantic_control.py:47: in test_raw_text_creates_unknown_request_before_first_model_reservation
+    stopped = agent.execute(store, Config(), run.id, transport=transport)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\agent.py:841: in execute
+    run, action, value = _decision(store, run, plan, results,
+src\orca_agent\agent.py:279: in _decision
+    prepared = build_context(store.load_request(run), run, plan, results=selected,
+src\orca_agent\context.py:3399: in build_context
+    native, native_prompt = readable_context(native_template, envelope,
+src\orca_agent\readable_context.py:64: in readable_context
+    if normalization_schema is None:
+                      ^^^^^^^^^^^^^^^
+E   KeyError: 'schema'
+_____________ test_raw_text_to_request_to_plan_to_query_one_loop ______________
+tests\unit\test_semantic_control.py:68: in test_raw_text_to_request_to_plan_to_query_one_loop
+    completed = agent.execute(store, Config(), run.id, transport=transport)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\agent.py:841: in execute
+    run, action, value = _decision(store, run, plan, results,
+src\orca_agent\agent.py:279: in _decision
+    prepared = build_context(store.load_request(run), run, plan, results=selected,
+src\orca_agent\context.py:3399: in build_context
+    native, native_prompt = readable_context(native_template, envelope,
+src\orca_agent\readable_context.py:64: in readable_context
+    if normalization_schema is None:
+                      ^^^^^^^^^^^^^^^
+E   KeyError: 'schema'
+=========================== short test summary info ===========================
+FAILED tests/unit/test_context_failure_simplification.py::test_intake_uses_program_fragments_and_one_authoritative_schema
+FAILED tests/unit/test_code_context.py::test_current_generated_intake_uses_single_source_scope_and_v3_schema[False]
+FAILED tests/unit/test_code_context.py::test_current_generated_intake_uses_single_source_scope_and_v3_schema[True]
+FAILED tests/unit/test_code_context.py::test_actual_decision_passes_code_permission_and_eligible_tool_to_intake[False-True]
+FAILED tests/unit/test_code_context.py::test_actual_decision_passes_code_permission_and_eligible_tool_to_intake[True-False]
+FAILED tests/unit/test_code_context.py::test_actual_decision_passes_code_permission_and_eligible_tool_to_intake[True-True]
+FAILED tests/unit/test_context_ready_execution.py::test_native_revision_exposes_complete_plan_schema_and_rejects_live013_runtime_fields
+FAILED tests/unit/test_agent_diagnostics.py::test_missing_required_goal_has_one_correction_to_explicit_gap_without_completion
+FAILED tests/unit/test_agent_diagnostics.py::test_missing_required_goal_repeated_omission_keeps_bounded_correction
+FAILED tests/unit/test_semantic_control.py::test_raw_text_creates_unknown_request_before_first_model_reservation
+FAILED tests/unit/test_semantic_control.py::test_raw_text_to_request_to_plan_to_query_one_loop
+11 failed, 263 passed in 114.17s (0:01:54)

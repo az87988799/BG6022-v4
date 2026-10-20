@@ -15,6 +15,12 @@ ConditionName = Literal["method", "basis", "charge", "multiplicity", "electronic
                         "temperature_K", "standard_state"]
 SELECTION_VERSION = "condition-selection-1"
 GENERAL_SELECTION_VERSION = "condition-selection-2"
+SIMPLIFIED_SELECTION_VERSION = "condition-selection-3"
+
+
+def simplified_workflow(run):
+    """Only the persisted Run policy enables new rules; model text cannot opt in."""
+    return getattr(run.configuration, "workflow_policy", None) == "simplified-1"
 
 
 def general_admission_enabled(store, run):
@@ -24,6 +30,8 @@ def general_admission_enabled(store, run):
 
 
 def selection_version(store, run):
+    if simplified_workflow(run):
+        return SIMPLIFIED_SELECTION_VERSION
     return GENERAL_SELECTION_VERSION if general_admission_enabled(store, run) else SELECTION_VERSION
 
 
@@ -38,7 +46,9 @@ def selection_available(store, run):
         effects = get_tool(call.tool).effects
         if "write_input_artifact" not in effects:
             continue
-        if (not general or "query_external_identity" not in effects
+        reusable_input = ("query_external_identity" in effects
+                          or simplified_workflow(run) and "prepare_geometry" in effects)
+        if (not general or not reusable_input
                 or call.state not in {"completed", "failed", "cancelled"}):
             return False
     return True
@@ -70,6 +80,30 @@ class SelectionParameters(Record):
     choices: dict[ConditionName, ConditionChoice] = Field(min_length=1, max_length=8)
 
 
+class OptionalSelectionSource(Record):
+    result_id: Identifier
+    document_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    quote: str | None = Field(default=None, min_length=1, max_length=1800)
+
+
+class OptionalConditionChoice(Record):
+    value: Any
+    reason: str = Field(min_length=1, max_length=1200, pattern=r"\S")
+    sources: list[OptionalSelectionSource] = Field(default_factory=list, max_length=4)
+
+
+class OptionalSelectionParameters(Record):
+    request_version: int = Field(strict=True, ge=1)
+    choices: dict[ConditionName, OptionalConditionChoice] = Field(min_length=1, max_length=8)
+
+
+def _parameters(run, parameters):
+    schema = OptionalSelectionParameters if simplified_workflow(run) else SelectionParameters
+    if isinstance(parameters, (SelectionParameters, OptionalSelectionParameters)):
+        parameters = parameters.model_dump(mode="json")
+    return schema.model_validate(parameters)
+
+
 def selectable_conditions(request):
     """An authorization is not a value, and cannot overwrite explicit unknowns."""
     names = []
@@ -89,7 +123,8 @@ def selectable_conditions(request):
 
 def selection_action_parameters(request):
     from orca_agent.schema_projection import project_schema
-    schema = project_schema(SelectionParameters.model_json_schema())
+    simplified = request.condition_evidence.get("workflow_policy", {}).get("version") == "simplified-1"
+    schema = project_schema((OptionalSelectionParameters if simplified else SelectionParameters).model_json_schema())
     schema["properties"]["request_version"] = {"type": "integer", "const": request.version}
     schema["properties"]["choices"]["propertyNames"] = {"enum": selectable_conditions(request)}
     return schema
@@ -129,10 +164,14 @@ def _source(store, run, reference, *, path):
     if document.get("status") != "found" or not isinstance(excerpt, str):
         raise _selection_error([*path, "result_id"], "source_excerpt_not_available",
             "The selected Result must contain a found document_excerpt; retrieve suitable evidence before selecting.")
-    if document.get("document_sha256") != reference.document_sha256:
+    if not re.fullmatch(r"[a-f0-9]{64}", str(document.get("document_sha256", ""))):
+        raise _selection_error([*path, "result_id"], "source_document_hash_missing",
+            "Retrieved evidence must retain its original document hash; an omitted model field cannot invent provenance.")
+    if reference.document_sha256 is not None and document.get("document_sha256") != reference.document_sha256:
         raise _selection_error([*path, "document_sha256"], "source_document_hash_mismatch",
             "Copy document_sha256 exactly from this Result's document_excerpt; a different document or excerpt hash cannot substitute.")
-    if not reference.quote.strip() or reference.quote not in excerpt:
+    quote = excerpt if reference.quote is None else reference.quote
+    if not quote.strip() or quote not in excerpt:
         raise _selection_error([*path, "quote"], "source_quote_not_exact_excerpt",
             "Copy a nonblank contiguous exact substring of this Result's document_excerpt.excerpt, preserving punctuation and whitespace; do not paraphrase or add text.")
     excerpt_hash = hashlib.sha256(excerpt.encode("utf-8")).hexdigest()
@@ -148,14 +187,14 @@ def _source(store, run, reference, *, path):
             and DOCUMENT_METADATA.get(key, {}).get("kind") == "official_document"
             for key, value in DOCUMENTS.items() if isinstance(value, tuple)) else "unknown"
     return {"result_id": result.id, "result_fingerprint": fingerprint(result),
-            "document_sha256": reference.document_sha256, "excerpt_sha256": excerpt_hash,
-            "quote": reference.quote, "kind": kind,
+            "document_sha256": document.get("document_sha256"), "excerpt_sha256": excerpt_hash,
+            "quote": quote, "kind": kind,
             **{key: document.get(key) for key in ("document_id", "index_version", "document_version", "url", "title")}}
 
 
 def selected_request(store, run, prior, parameters):
     """Recompute the complete permitted revision; callers cannot broaden it."""
-    parameters = SelectionParameters.model_validate(parameters)
+    parameters = _parameters(run, parameters)
     if parameters.request_version != prior.version:
         raise StoreError("condition selection refers to a stale Request")
     if set(parameters.choices) - set(selectable_conditions(prior)):
@@ -170,7 +209,9 @@ def selected_request(store, run, prior, parameters):
                         if message.get("id") == authorization.get("message_id")), None)
         if (message is None or not authorization.get("text_basis")
                 or message["text"].count(authorization["text_basis"]) != 1):
-            raise StoreError("condition selection authorization lacks original user evidence")
+            if (not simplified_workflow(run) or message is None or not authorization.get("text_basis")
+                    or authorization["text_basis"] not in message["text"]):
+                raise StoreError("condition selection authorization lacks original user evidence")
         sources = []
         invalid_source = False
         for index, source in enumerate(choice.sources):
@@ -181,7 +222,8 @@ def selected_request(store, run, prior, parameters):
                 invalid_source = True
         if invalid_source:
             continue
-        if name in {"method", "basis"} and not any(source["kind"] == "official_document" for source in sources):
+        if (not simplified_workflow(run) and name in {"method", "basis"}
+                and not any(source["kind"] == "official_document" for source in sources)):
             corrections.extend(_selection_error(["choices", name, "sources"], "official_documentation_required",
                 "Method/basis selection requires retrieved official documentation; project guides alone are insufficient.").detail["corrections"])
             continue
@@ -190,8 +232,10 @@ def selected_request(store, run, prior, parameters):
             # Current Step 3 selection therefore cannot infer state from parity
             # or a generic method recommendation; use explicit/authorized defaults.
             raise StoreError("electronic state selection requires molecule-specific evidence; preserve the missing condition")
+        if simplified_workflow(run) and name not in {"method", "basis"} and not sources:
+            raise StoreError("only delegated method/basis choices allow model reasoning without retrieved sources")
         value = _value(name, choice.value)
-        if not general_admission_enabled(store, run) and name in {"method", "basis"} and not any(_mentions_identifier(value, source["quote"])
+        if not simplified_workflow(run) and not general_admission_enabled(store, run) and name in {"method", "basis"} and not any(_mentions_identifier(value, source["quote"])
                 for source in sources if source["kind"] == "official_document"):
             corrections.extend(_selection_error(["choices", name, "value"], "selected_value_absent_from_official_quote",
                 "This selected value must occur as a complete identifier in a quoted official source, not a prefix of another method/basis. Retrieve and quote an exact official passage containing the value; do not invent supporting text or substitute a project guide.").detail["corrections"])
@@ -204,7 +248,9 @@ def selected_request(store, run, prior, parameters):
         values["condition_evidence"]["request." + name] = {
             "value": value, "source": "auto_selected", "request_version": prior.version,
             "authorization": deepcopy(authorization), "reason": choice.reason,
-            "sources": sources, "schema": selection_version(store, run)}
+            "sources": sources, "schema": selection_version(store, run),
+            **({"basis_kind": "retrieved_evidence" if sources else "model_reason",
+                "scientific_validation": "not_established_by_selection"} if simplified_workflow(run) else {})}
     if corrections:
         raise ProposalError("Correct the identified selection fields using retrieved evidence; no condition was selected.",
                             path=["parameters", "choices"], corrections=corrections)
@@ -221,7 +267,7 @@ def validate_selection_revision(store, run, prior, proposed, record):
 
 
 def commit_selections(store, run, parameters, *, decision_id, basis, related_results=None, fault=None):
-    parameters = SelectionParameters.model_validate(parameters)
+    parameters = _parameters(run, parameters)
     prior = store.load_request(run)
     proposed = selected_request(store, run, prior, parameters)
     return store.commit_revision(run, None, request=proposed, decision_id=decision_id, basis=basis,

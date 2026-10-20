@@ -1,12 +1,14 @@
 """Translate symbolic model intentions into program-owned Plan identities."""
 
+import copy
 import math
 import re
 from typing import Annotated, Any, Literal
 
-from pydantic import Field, ValidationError, field_validator
+from pydantic import ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from orca_agent.models import (
+    ArtifactCodeSelection,
     CodeRef,
     EvidenceRef,
     Identifier,
@@ -15,6 +17,7 @@ from orca_agent.models import (
     OutputBinding,
     Plan,
     Port,
+    ProducerFileRef,
     Record,
     Step,
     new_id,
@@ -229,8 +232,22 @@ def _schema_error(exc, *, path, tool=None, errors_details=None):
         return part if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]{0,63}", str(part)) else "[field]"
 
     details = validation_error_details(exc) if errors_details is None else errors_details
-    errors = [{**error, "loc": [*path, *(location(part) for part in error["loc"])]}
-              for error in details[:8]]
+    references = {"CodeRef", "ArtifactCodeSelection", "ProducerFileRef",
+                  "InputManifestEntry", "ArtifactInputSelection", "ProducerInputEntry"}
+    errors = []
+    for error in details:
+        loc = []
+        for part in error["loc"]:
+            # Pydantic's union class labels are not keys in the submitted JSON.
+            branch = str(part).rstrip("]").rsplit(", ", 1)[-1]
+            reference_position = loc and (loc[-1] in {"code", "input"}
+                or len(loc) > 1 and loc[-2] == "entries" and isinstance(loc[-1], int))
+            if reference_position and branch in references:
+                continue
+            loc.append(location(part))
+        value = {**error, "loc": [*path, *loc]}
+        if value not in errors:
+            errors.append(value)
     detail = {"tool": tool} if tool else {}
     if tool:
         definition = get_tool(tool)
@@ -245,18 +262,28 @@ def _schema_error(exc, *, path, tool=None, errors_details=None):
                            if len(item["loc"]) > len(path) and item["loc"][len(path)] in fields})
         if affected:
             detail["corrections"] = [{"path": [*path, field],
-                "reason": "concrete_artifact_reference_required",
+                "reason": "explicit_file_reference_required",
                 "instruction": (
-                    "code/input and input_manifest (parameters.inputs.entries) require existing registered "
-                    "Artifact IDs and exact sha256 values. Future producer references, Step keys and "
-                    "placeholder hashes cannot supply these parameter values. If the files already exist, "
-                    "inspect their trusted Result/Artifact records for the exact IDs/hashes. If required "
-                    "Artifacts do not yet exist, first submit a partial Plan containing only executable "
-                    "preparation/writing Steps. Retain existing valid goal bindings; use unchanged-port "
-                    "gaps only for pending outputs. Execute the Steps, inspect their returned IDs/hashes, "
-                    "then revise_plan with concrete references. Do not guess hashes or remove or weaken Goals.")}
+                    "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known "
+                    "hash/language may be omitted, or use an explicit producer_step_id/producer_key "
+                    "with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries "
+                    "also require target_path and purpose. The program validates dependencies, permissions "
+                    "and qualifications and freezes actual hashes before execution. Choose one reference form; "
+                    "union alternatives are not cumulative. Historical policies "
+                    "still require concrete ID/hash references. Never guess hashes or weaken Goals.")}
                 for field in affected]
-    return ProposalError("Use the declared parameter schema at each listed path.", **detail, errors=errors)
+    # Keep the same eight-error display bound while showing each affected
+    # top-level parameter before repeating another parameter's union failures.
+    groups = {}
+    for error in errors:
+        relative = error["loc"][len(path):]
+        groups.setdefault(relative[0] if relative else None, []).append(error)
+    displayed = []
+    while len(displayed) < 8 and any(groups.values()):
+        for group in groups.values():
+            if group and len(displayed) < 8:
+                displayed.append(group.pop(0))
+    return ProposalError("Use the declared parameter schema at each listed path.", **detail, errors=displayed)
 
 
 class ProposedStep(Record):
@@ -273,11 +300,23 @@ class ProposedStep(Record):
 class ProposedCodeRepair(Record):
     """Reuse a failed contract with explicit code and optional input-copy repair."""
 
+    model_config = ConfigDict(json_schema_extra={"oneOf": [
+        {"required": ["code"], "properties": {"code": {"type": "object"}, "input": {"type": "null"}}},
+        {"required": ["input"], "properties": {"input": {"type": "object"}, "code": {"type": "null"}}},
+    ]})
+
     key: ShortRef
     repair_of: Identifier
-    code: CodeRef
+    code: CodeRef | ArtifactCodeSelection | ProducerFileRef | None = None
+    input: CodeRef | ArtifactCodeSelection | ProducerFileRef | None = None
     inputs: InputManifest | None = None
     sdk_orca: bool | None = Field(default=None, strict=True)
+
+    @model_validator(mode="after")
+    def one_replacement(self):
+        if (self.code is None) == (self.input is None):
+            raise ValueError("repair requires exactly one code or native input replacement")
+        return self
 
 
 class FutureGoalTarget(Record):
@@ -321,12 +360,26 @@ def _validate_plan_parameters(parameters):
                           and ("repair_of" in item or "code" in item)} if isinstance(submitted, list) else set()
         details = []
         for item in validation_error_details(exc):
-            loc = item["loc"]
+            loc = list(item["loc"])
+            loc = ["ProposedCodeRepair" if part == "function-after[one_replacement(), ProposedCodeRepair]"
+                   else "ProducerFileRef" if part == "function-after[exact_selector(), ProducerFileRef]"
+                   else part for part in loc]
             if len(loc) > 2 and loc[0] == "steps" and loc[2] in {"ProposedStep", "ProposedCodeRepair"}:
                 expected = "ProposedCodeRepair" if loc[1] in repair_indexes else "ProposedStep"
                 if loc[2] != expected:
                     continue
-            details.append(item)
+            if (len(loc) > 4 and loc[0] == "steps" and loc[2] == "ProposedCodeRepair"
+                    and loc[3] in {"code", "input"} and loc[4] in {
+                        "CodeRef", "ArtifactCodeSelection", "ProducerFileRef"}):
+                value = submitted[loc[1]].get(loc[3], {})
+                expected = ("ProducerFileRef" if isinstance(value, dict)
+                            and ("producer_key" in value or "producer_step_id" in value)
+                            else "CodeRef" if isinstance(value, dict) and "sha256" in value
+                            else "ArtifactCodeSelection")
+                if loc[4] != expected:
+                    continue
+                loc.pop(4)
+            details.append({**item, "loc": loc})
         error = _schema_error(exc, path=["parameters"], errors_details=details)
         # Union branch names are implementation details, not JSON paths. Keep
         # nested EvidenceRef failures at their real field path as well.
@@ -354,9 +407,10 @@ def _validate_plan_parameters(parameters):
             if any(len(item["loc"]) > 2 and item["loc"][2] in repair_indexes for item in step_errors):
                 error.detail["code_repair_fields"] = list(ProposedCodeRepair.model_fields)
                 error.detail["code_repair_instruction"] = (
-                    "Use {key:new_key,repair_of:failed_step_id,code:CodeRef,inputs?:InputManifest}. "
+                    "Use {key:new_key,repair_of:failed_step_id,code:CodeRef,inputs?:InputManifest}; "
+                    "simplified-1 native repairs use input instead of code. "
                     "Omitted inputs retain the frozen manifest; explicit inputs replace only authorized task copies. "
-                    "Code or input copies must change. The latest settled failed Python Attempt's other "
+                    "Code/native input or input copies must change. The latest settled failed Attempt's other "
                     "contract fields stay frozen. Verified settled dependencies "
                     "are carried automatically; declare any unsettled dependencies explicitly. "
                     "It still requires code permission and every existing repair gate.")
@@ -417,7 +471,13 @@ def _resolve_step_keys(keys, ids, history, *, path, indexed=False):
 def _code_repair_source(store, run, item, history, *, index):
     """Resolve only a trusted latest settled failure; this grants no execution."""
     path = ["parameters", "steps", index]
-    if not run.permission.code_execution:
+    from orca_agent.file_references import simplified_workflow
+
+    native = item.input is not None
+    if native and not simplified_workflow(run):
+        raise ProposalError("Native repair shorthand requires workflow_policy=simplified-1.",
+                            code="native_repair_policy", path=path)
+    if not (run.permission.scientific_execution if native else run.permission.code_execution):
         raise ProposalError("Task code repair requires code execution permission.",
                             code="code_repair_not_authorized", path=path)
     if item.key in history or any(attempt.step_id == item.key for attempt in run.attempts) or any(
@@ -428,23 +488,71 @@ def _code_repair_source(store, run, item, history, *, index):
     attempt = attempts[-1] if attempts else None
     latest = ([other for other in run.attempts if other.logical_id == attempt.logical_id][-1]
               if attempt else None)
-    if (attempt is None or latest is not attempt or attempt.execution_kind != "python"
+    kind = "orca" if native else "python"
+    if (attempt is None or latest is not attempt or attempt.execution_kind != kind
             or attempt.state not in {"failed", "timed_out"} or attempt.finished_at is None
             or attempt.result_id is None or attempt.result_id not in run.result_ids
             or attempt.frozen_step is None
             or (attempt.frozen_step.id, attempt.frozen_step.logical_id, attempt.frozen_step.tool)
                 != (attempt.step_id, attempt.logical_id, attempt.tool)
-            or "execute_python" not in get_tool(attempt.tool).effects):
+            or f"execute_{kind}" not in get_tool(attempt.tool).effects
+            or not get_tool(attempt.tool).check_contract.get("generic_observations")):
         raise ProposalError(
-            "repair_of must identify this Run's latest settled failed or timed-out Python Attempt's frozen "
+            "repair_of must identify this Run's latest settled failed or timed-out matching Attempt's frozen "
             "Step, with its recorded Result. Unknown, unfinished, successful or superseded references cannot repair.",
             code="invalid_code_repair_reference", path=[*path, "repair_of"])
     result = store.load_result(run.id, attempt.result_id)
     if ((result.id, result.run_id, result.step_id, result.attempt_id, result.operation_status)
             != (attempt.result_id, run.id, attempt.step_id, attempt.id, attempt.state)):
-        raise ProposalError("The repair Result must belong to this exact failed Python Attempt and Step.",
+        raise ProposalError("The repair Result must belong to this exact failed Attempt and Step.",
                             code="code_repair_result_mismatch", path=[*path, "repair_of"])
     return attempt.frozen_step
+
+
+def _parameter_file_refs(parameters):
+    """Declared code/manifest references only; never search arbitrary parameter text."""
+    for name in ("code", "input"):
+        if isinstance(parameters.get(name), dict):
+            yield parameters[name]
+    manifest = parameters.get("inputs")
+    if isinstance(manifest, dict):
+        yield from (entry for entry in manifest.get("entries", []) if isinstance(entry, dict))
+
+
+def _materialize_file_parameters(store, run, parameters, definition, ids, history, path):
+    """Fill known immutable metadata and translate explicit producer keys."""
+    from orca_agent.file_references import simplified_workflow
+
+    if not definition.check_contract.get("generic_observations"):
+        return []
+    dependencies = []
+    for reference in _parameter_file_refs(parameters):
+        producer_key = reference.get("producer_key", reference.get("producer_step_id"))
+        shorthand = producer_key is not None or "sha256" not in reference
+        if shorthand and not simplified_workflow(run):
+            raise ProposalError("File shorthand requires workflow_policy=simplified-1.", path=path)
+        if producer_key is not None:
+            identifier = _resolve_step_keys([producer_key], ids, history, path=path)[0]
+            reference.pop("producer_key", None)
+            reference["producer_step_id"] = identifier
+            dependencies.append(identifier)
+        elif simplified_workflow(run) and reference.get("artifact_id"):
+            identifier = reference["artifact_id"]
+            authorized = set(run.permission.artifact_ids) | store.verified_own_artifacts(run)
+            if identifier not in authorized:
+                raise ProposalError("Task input is outside the permission snapshot.", path=path)
+            artifact = store.load_artifact(identifier)
+            store.artifact_path(identifier)
+            if "sha256" in reference and reference["sha256"] != artifact.sha256:
+                raise ProposalError("Task input hash differs from pinned Artifact.", path=path)
+            reference["sha256"] = artifact.sha256
+        if reference is parameters.get("code") or reference is parameters.get("input"):
+            expected = "python" if "execute_python" in definition.effects else "orca"
+            if reference.get("language") is None and simplified_workflow(run):
+                reference["language"] = expected
+            if reference.get("language", expected) != expected:
+                raise ProposalError("Explicit file language conflicts with the consumer Tool.", path=path)
+    return dependencies
 
 
 def _complete_incremental_plan(store, run, proposal, prior, request, history):
@@ -526,13 +634,18 @@ def _complete_incremental_plan(store, run, proposal, prior, request, history):
             if item.repair_of in history:
                 for dependency in history[item.repair_of].depends_on:
                     carry(dependency)
+            references = {"code": item.code.model_dump(exclude_none=True) if item.code else None,
+                          "input": item.input.model_dump(exclude_none=True) if item.input else None,
+                          "inputs": item.inputs.model_dump() if item.inputs else None}
+            for reference in _parameter_file_refs(references):
+                carry(reference.get("producer_key") or reference.get("producer_step_id"))
             continue
         for dependency in item.depends_on:
             carry(dependency)
         if item.key in history:
             for dependency in history[item.key].depends_on:
                 carry(dependency)
-        for reference in [item.geometry, *item.inputs.values()]:
+        for reference in [item.geometry, *item.inputs.values(), *_parameter_file_refs(item.parameters)]:
             if isinstance(reference, dict):
                 carry(reference.get("producer_key") or reference.get("producer_step_id"))
     for target in proposal.goal_map.values():
@@ -543,18 +656,29 @@ def _complete_incremental_plan(store, run, proposal, prior, request, history):
 
 
 def materialize_plan(store, run, parameters):
-    proposal = _validate_plan_parameters(parameters)
+    from orca_agent.file_references import (
+        declared_attempt_step,
+        simplified_workflow,
+        validate_file_dependencies,
+    )
+
+    proposal = _validate_plan_parameters(copy.deepcopy(parameters))
     prior = store.load_plan(run)
     request = store.load_request(run)
     if run.input_bindings:
         from orca_agent.input_bindings import resolved_request
         request = resolved_request(store, run, request)
     existing = {s.id: s for s in prior.steps} if prior else {}
-    history = {a.frozen_step.id: a.frozen_step for a in run.attempts if a.frozen_step}
+    history = {a.frozen_step.id: declared_attempt_step(a) for a in run.attempts if a.frozen_step}
     history.update({c.frozen_step.id: c.frozen_step for c in run.calls if c.frozen_step})
     history.update(existing)
     settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
     missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]
+    if simplified_workflow(run):
+        for goal in missing:
+            proposal.goal_map[goal.id] = GapGoalTarget(port=goal.port,
+                gap="The current Plan does not yet provide this required goal's evidence.")
+        missing = []
     unknown = set(proposal.goal_map) - {goal.id for goal in request.goals}
     if missing:
         raise ProposalError(
@@ -592,17 +716,28 @@ def materialize_plan(store, run, parameters):
                 path=["parameters", "steps", index, "repair_of"])
             values = source.model_dump(mode="json")
             values["id"] = ids[item.key]
-            values["parameters"]["code"] = item.code.model_dump(mode="json")
+            field = "input" if item.input is not None else "code"
+            replacement = item.input if item.input is not None else item.code
+            values["parameters"][field] = replacement.model_dump(mode="json", exclude_none=True)
+            if "language" not in replacement.model_fields_set and simplified_workflow(run):
+                values["parameters"][field].pop("language", None)
             if item.inputs is not None:
                 values["parameters"]["inputs"] = item.inputs.model_dump(mode="json")
-            declared = item.sdk_orca if item.sdk_orca is not None else source.parameters.sdk_orca
-            if declared is None:
+            declared = item.sdk_orca if item.sdk_orca is not None else getattr(source.parameters, "sdk_orca", None)
+            if field == "code" and declared is None:
                 raise ProposalError(
                     "Declare sdk_orca=true for managed ORCA calls or false for analysis only "
                     "when repairing a legacy Python Step.",
                     code="missing_sdk_orca_declaration",
                     path=["parameters", "steps", index, "sdk_orca"])
-            values["parameters"]["sdk_orca"] = declared
+            if field == "code":
+                values["parameters"]["sdk_orca"] = declared
+            elif item.sdk_orca is not None:
+                raise ProposalError("sdk_orca applies only to Python repairs.",
+                                    path=["parameters", "steps", index, "sdk_orca"])
+            file_dependencies = _materialize_file_parameters(store, run, values["parameters"],
+                get_tool(source.tool), ids, history, ["parameters", "steps", index])
+            values["depends_on"] = list(dict.fromkeys([*values["depends_on"], *file_dependencies]))
             try:
                 steps.append(Step.model_validate(values))
             except ValidationError as exc:
@@ -683,6 +818,8 @@ def materialize_plan(store, run, parameters):
         if "system_id" in fields and item.system_id is not None:
             inherited["system_id"] = item.system_id
         item.parameters = {**inherited, **item.parameters}
+        file_dependencies = _materialize_file_parameters(store, run, item.parameters, definition,
+            ids, history, ["parameters", "steps", index, "parameters"])
         artifact = item.parameters.get("artifact_id")
         future_artifact = (isinstance(artifact, str) and artifact not in run.permission.artifact_ids
                            and (artifact in ids or artifact in ids.values()))
@@ -734,6 +871,7 @@ def materialize_plan(store, run, parameters):
             path=["parameters", "steps", index, "depends_on"], indexed=True)
         # A reference itself explicitly declares the dependency relationship.
         dependencies += [r.producer_step_id for r in inputs.values() if r.producer_step_id]
+        dependencies += file_dependencies
         if geometry and geometry.get("producer_step_id"):
             dependencies.append(geometry["producer_step_id"])
         steps.append(Step(id=ids[item.key], logical_id=logical[item.key], tool=item.tool,
@@ -770,6 +908,8 @@ def materialize_plan(store, run, parameters):
     previous += [{"plan_id": d["prior_plan_id"], "plan_version": d["prior_plan_version"]}
                  for d in run.decisions if d.get("prior_plan_version") is not None]
     last = max(previous, key=lambda d: d["plan_version"]) if previous else {}
-    return Plan(id=prior.id if prior else last.get("plan_id") or new_id("plan"),
+    plan = Plan(id=prior.id if prior else last.get("plan_id") or new_id("plan"),
                 version=prior.version + 1 if prior else last.get("plan_version", 0) + 1,
                 request_id=request.id, request_version=request.version, steps=steps, goal_map=goals)
+    validate_file_dependencies(plan, run)
+    return plan

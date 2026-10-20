@@ -316,7 +316,7 @@ def test_mixed_shape_errors_use_each_actual_step_and_do_not_consume_other_branch
     assert errors == [{"type": "missing", "loc": ["parameters", "steps", 0, "key"]},
         {"type": "extra_forbidden", "loc": ["parameters", "steps", 0, "id"]},
         {"type": "extra_forbidden", "loc": ["parameters", "steps", 1, "depends_on"]}]
-    assert caught.value.detail["code_repair_fields"] == ["key", "repair_of", "code", "inputs", "sdk_orca"]
+    assert caught.value.detail["code_repair_fields"] == ["key", "repair_of", "code", "input", "inputs", "sdk_orca"]
     assert values == before
 
 

@@ -19,7 +19,9 @@ from orca_agent.tools import structure
 
 
 def text_environment(tmp_path, **profile):
-    config = Config(data_root=tmp_path / "data", text=TextProfile(**{
+    # Existing tests exercise the historical intake/selection contract.
+    # New workflow tests opt in explicitly before creating their Run.
+    config = Config(data_root=tmp_path / "data", workflow_policy=None, text=TextProfile(**{
         "enabled": True, "permission": {"model_execution": True, "allowed_tools": []},
         "budget": agent_budget(identity_queries=1, structure_preparations=1), **profile}))
     return Store(config.data_root, environment_root=tmp_path / "environment"), config

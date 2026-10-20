@@ -135,24 +135,52 @@ def test_all_native_submission_contracts_and_correction_are_literal():
     assert set(step["properties"]) == set(schema["$defs"]["ProposedStep"]["properties"])
     assert step["required"] == ["key"] and step["additionalProperties"] is False
     assert step["properties"]["logical_key"]["default"] is None
-    assert set(repair["properties"]) == {"key", "repair_of", "code", "inputs", "sdk_orca"}
-    assert repair["required"] == ["key", "repair_of", "code"] and repair["additionalProperties"] is False
+    assert set(repair["properties"]) == {"key", "repair_of", "code", "input", "inputs", "sdk_orca"}
+    assert repair["required"] == ["key", "repair_of"] and repair["additionalProperties"] is False
+    assert repair["oneOf"] == schema["$defs"]["ProposedCodeRepair"]["oneOf"]
     assert repair["properties"]["sdk_orca"]["type"] == ["boolean", "null"]
     assert repair["properties"]["sdk_orca"]["default"] is None
-    assert repair["properties"]["code"]["properties"]["sha256"]["pattern"] == "^[a-f0-9]{64}$"
+    for field in ("code", "input"):
+        assert {"$ref": "#/$defs/CodeRef"} in repair["properties"][field]["anyOf"]
+        concrete = plan["$defs"]["CodeRef"]
+        assert concrete["properties"]["sha256"]["pattern"] == "^[a-f0-9]{64}$"
     assert isinstance(wire["TOOLS"], list)  # Table encoding must not hide protected child paths.
     python = wire["TOOLS"][0]
     assert python["name"] == "python.execute"
     assert set(python["parameters"]["properties"]) == {"code", "inputs", "observation_names", "conditions", "sdk_orca"}
     assert python["parameters"]["properties"]["sdk_orca"]["type"] == ["boolean", "null"]
     assert python["parameters"]["properties"]["sdk_orca"]["default"] is None
-    code = python["parameters"]["properties"]["code"]["properties"]
+    code = next(branch["properties"] for branch in python["parameters"]["properties"]["code"]["anyOf"]
+                if "sha256" in branch.get("properties", {}))
     assert code["sha256"]["pattern"] == "^[a-f0-9]{64}$"
     assert code["version"]["minimum"] == 1 and code["version"]["default"] == 1
     assert code["language"]["default"] == "python"
-    manifest = python["parameters"]["properties"]["inputs"]["properties"]["entries"]["items"]
+    manifest = next(branch for branch in
+        python["parameters"]["properties"]["inputs"]["properties"]["entries"]["items"]["anyOf"]
+        if "sha256" in branch.get("properties", {}))
     assert manifest["properties"]["target_path"]["minLength"] == 1
     assert manifest["properties"]["target_path"]["maxLength"] == 240
+
+
+@pytest.mark.parametrize("replacement", [
+    {}, {"code": None}, {"input": None}, {"code": None, "input": None},
+    {"code": {"artifact_id": "script"}, "input": {"artifact_id": "native"}},
+    {"code": {"artifact_id": "script"}}, {"input": {"artifact_id": "native"}},
+    {"code": {"artifact_id": "script"}, "input": None},
+    {"input": {"producer_step_id": "writer", "port": "written_artifact"}, "code": None},
+])
+def test_repair_schema_and_runtime_require_exactly_one_nonnull_replacement(replacement):
+    from tests.unit.test_plan_goal_binding_contract import matches
+
+    values = {"steps": [{"key": "repair", "repair_of": "failed", **replacement}]}
+    schema = _schema(ProposedPlan.model_json_schema())
+    valid = sum(replacement.get(name) is not None for name in ("code", "input")) == 1
+    assert matches(schema, values, schema) is valid
+    if valid:
+        ProposedPlan.model_validate(values)
+    else:
+        with pytest.raises(ValidationError):
+            ProposedPlan.model_validate(values)
 
 
 def test_actual_live016_aliases_and_incomplete_evidence_stay_invalid():

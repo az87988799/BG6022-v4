@@ -14,6 +14,7 @@ from typing import Annotated, Any, Literal
 from uuid import uuid4
 
 from pydantic import (
+    AliasChoices,
     BaseModel,
     BeforeValidator,
     ConfigDict,
@@ -88,6 +89,39 @@ class CodeRef(Record):
     version: Annotated[int, Field(strict=True, ge=1)] = 1
 
 
+class ArtifactCodeSelection(Record):
+    """Proposal shorthand; resolved to a hash-pinned CodeRef before persistence."""
+
+    artifact_id: Identifier
+    language: Literal["python", "orca"] | None = None
+    version: Annotated[int, Field(strict=True, ge=1)] = 1
+
+
+class ProducerFileRef(Record):
+    """Explicit dependency on one producer's output, never a latest-file search."""
+
+    model_config = ConfigDict(json_schema_extra={"oneOf": [
+        {"required": ["port"], "properties": {"port": {"type": "string"}, "file_key": {"type": "null"}}},
+        {"required": ["file_key"], "properties": {"file_key": {"type": "string"}, "port": {"type": "null"}}},
+    ]})
+
+    producer_step_id: Identifier = Field(
+        validation_alias=AliasChoices("producer_step_id", "producer_key"))
+    port: Literal["written_artifact", "prepared_geometry"] | None = None
+    file_key: Annotated[str, Field(strict=True, min_length=1, max_length=240)] | None = None
+    language: Literal["python", "orca"] | None = None
+
+    @model_validator(mode="after")
+    def exact_selector(self):
+        if (self.port is None) == (self.file_key is None):
+            raise ValueError("select exactly one producer output port or exact file_key")
+        return self
+
+    @model_serializer(mode="wrap")
+    def omit_unspecified(self, handler):
+        return {key: value for key, value in handler(self).items() if value is not None}
+
+
 class InputManifestEntry(Record):
     artifact_id: Identifier
     sha256: Digest
@@ -107,11 +141,30 @@ class InputManifestEntry(Record):
         return self
 
 
+class ArtifactInputSelection(Record):
+    artifact_id: Identifier
+    target_path: Annotated[str, Field(strict=True, min_length=1, max_length=240)]
+    purpose: ScientificLabel
+
+    @model_validator(mode="after")
+    def relative_target(self):
+        return InputManifestEntry.relative_target(self)
+
+
+class ProducerInputEntry(ProducerFileRef):
+    target_path: Annotated[str, Field(strict=True, min_length=1, max_length=240)]
+    purpose: ScientificLabel
+
+    @model_validator(mode="after")
+    def relative_target(self):
+        return InputManifestEntry.relative_target(self)
+
+
 class InputManifest(Record):
     """Versioned, hash-pinned input copies and their declared use within a Step."""
 
     version: Literal[1] = 1
-    entries: list[InputManifestEntry] = Field(default_factory=list)
+    entries: list[InputManifestEntry | ProducerInputEntry | ArtifactInputSelection] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def unique_targets(self):
@@ -123,13 +176,14 @@ class InputManifest(Record):
                 raise ValueError("manifest target cannot be both a file and a directory")
         artifacts = {}
         for entry in self.entries:
-            if artifacts.setdefault(entry.artifact_id, entry.sha256) != entry.sha256:
+            if (isinstance(entry, InputManifestEntry)
+                    and artifacts.setdefault(entry.artifact_id, entry.sha256) != entry.sha256):
                 raise ValueError("one manifest Artifact cannot have different hashes")
         return self
 
 
 class CodeExecutionParameters(Record):
-    code: CodeRef
+    code: CodeRef | ProducerFileRef | ArtifactCodeSelection
     inputs: InputManifest = Field(default_factory=InputManifest)
     observation_names: list[Port] = Field(default_factory=list)
     conditions: dict[str, Any] = Field(default_factory=dict)
@@ -147,10 +201,11 @@ class CodeExecutionParameters(Record):
 
     @model_validator(mode="after")
     def python_code(self):
-        if self.code.language != "python":
+        if self.code.language not in {None, "python"}:
             raise ValueError("Python execution requires a Python code Artifact")
-        if any(entry.artifact_id == self.code.artifact_id and entry.sha256 != self.code.sha256
-               for entry in self.inputs.entries):
+        if isinstance(self.code, CodeRef) and any(
+                isinstance(entry, InputManifestEntry) and entry.artifact_id == self.code.artifact_id
+                and entry.sha256 != self.code.sha256 for entry in self.inputs.entries):
             raise ValueError("code and input manifest disagree on the Artifact hash")
         if len(set(self.observation_names)) != len(self.observation_names):
             raise ValueError("observation names must be unique")
@@ -158,17 +213,18 @@ class CodeExecutionParameters(Record):
 
 
 class NativeOrcaParameters(Record):
-    input: CodeRef
+    input: CodeRef | ProducerFileRef | ArtifactCodeSelection
     inputs: InputManifest = Field(default_factory=InputManifest)
     observation_names: list[Port] = Field(default_factory=list)
     conditions: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def native_input(self):
-        if self.input.language != "orca":
+        if self.input.language not in {None, "orca"}:
             raise ValueError("native ORCA execution requires an ORCA input Artifact")
-        if any(entry.artifact_id == self.input.artifact_id and entry.sha256 != self.input.sha256
-               for entry in self.inputs.entries):
+        if isinstance(self.input, CodeRef) and any(
+                isinstance(entry, InputManifestEntry) and entry.artifact_id == self.input.artifact_id
+                and entry.sha256 != self.input.sha256 for entry in self.inputs.entries):
             raise ValueError("native input and manifest disagree on the Artifact hash")
         if len(set(self.observation_names)) != len(self.observation_names):
             raise ValueError("observation names must be unique")
@@ -689,6 +745,14 @@ class RunConfiguration(Record):
     execution: ExecutionConfiguration = Field(default_factory=ExecutionConfiguration)
     # Missing in historical snapshots means the original model feedback path.
     mechanical_progression: bool = Field(default=False, strict=True)
+    workflow_policy: Literal["simplified-1"] | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_workflow(self, handler):
+        value = handler(self)
+        if self.workflow_policy is None:
+            value.pop("workflow_policy", None)
+        return value
 
     @model_validator(mode="before")
     @classmethod

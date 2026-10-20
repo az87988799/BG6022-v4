@@ -1,0 +1,72 @@
+........................................................................ [ 38%]
+...............................................FFF...................... [ 76%]
+.............................................                            [100%]
+================================== FAILURES ===================================
+_______ test_old_malformed_step_feedback_matches_original_type_exactly ________
+
+    def test_old_malformed_step_feedback_matches_original_type_exactly():
+        class OriginalPlan(ProposedPlan):
+            steps: list[ProposedStep] = Field(min_length=1)
+    
+        values = {"steps": [{"id": "stored", "tool": 42}], "goal_map": {}}
+        with pytest.raises(ValidationError) as original:
+            OriginalPlan.model_validate(values)
+        expected = _schema_error(original.value, path=["parameters"]).detail
+        expected["step_fields"] = list(ProposedStep.model_fields)
+        expected["step_instruction"] = (
+            "Proposed Steps require key, not the stored Step.id field. "
+            "Retain an existing Step with {key:existing_step_id}; the program reuses its frozen contents. "
+            "Do not copy stored id/logical_id/immutable_frozen metadata into a proposal. "
+            "A new Step uses key/tool/parameters and its declared dependencies; "
+            "a repair uses logical_key for the prior logical_id, subject to the existing repair rules.")
+        with pytest.raises(ProposalError) as caught:
+            validate_action_parameters("revise_plan", values)
+>       assert caught.value.detail == expected
+E       AssertionError: assert {'requirement...epair rules.'} == {'requirement...epair rules.'}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {'errors': [{'type': 'missing', 'loc': ['parameters', 'steps', 0, 'key']}, {'type': 'string_type', 'loc': ['parameters...s', 0, '[field]', 'repair_of']}, {'type': 'extra_forbidden', 'loc': ['parameters', 'steps', 0, '[field]', 'id']}, ...]} != {'errors': [{'type': 'missing', 'loc': ['parameters', 'steps', 0, 'key']}, {'type': 'string_type', 'loc': ['parameters', 'steps', 0, 'tool']}, {'type': 'extra_forbidden', 'loc': ['parameters', 'steps', 0, 'id']}]}
+E         Use -v to get more diff
+
+tests\unit\test_declarative_code_repair.py:305: AssertionError
+_ test_mixed_shape_errors_use_each_actual_step_and_do_not_consume_other_branch_slots _
+
+    def test_mixed_shape_errors_use_each_actual_step_and_do_not_consume_other_branch_slots():
+        values = {"steps": [{"id": "old"}, {"key": "repair", "repair_of": "failed", "code": {
+            "artifact_id": "new", "sha256": "a" * 64}, "depends_on": []}], "goal_map": {}}
+        before = copy.deepcopy(values)
+        with pytest.raises(ProposalError) as caught:
+            validate_action_parameters("revise_plan", values)
+        errors = caught.value.detail["errors"]
+>       assert errors == [{"type": "missing", "loc": ["parameters", "steps", 0, "key"]},
+            {"type": "extra_forbidden", "loc": ["parameters", "steps", 0, "id"]},
+            {"type": "extra_forbidden", "loc": ["parameters", "steps", 1, "depends_on"]}]
+E       AssertionError: assert [{'type': 'mi...depends_on']}] == [{'type': 'mi...depends_on']}]
+E         
+E         At index 2 diff: {'type': 'missing', 'loc': ['parameters', 'steps', 0, '[field]', 'key']} != {'type': 'extra_forbidden', 'loc': ['parameters', 'steps', 1, 'depends_on']}
+E         Left contains 3 more items, first extra item: {'type': 'missing', 'loc': ['parameters', 'steps', 0, '[field]', 'repair_of']}
+E         Use -v to get more diff
+
+tests\unit\test_declarative_code_repair.py:316: AssertionError
+________ test_invalid_explicit_reference_reports_actual_code_path_only ________
+
+    def test_invalid_explicit_reference_reports_actual_code_path_only():
+        values = {"steps": [{"key": "repair", "repair_of": "failed", "code": {
+            "artifact_id": "new", "sha256": "invalid"}}], "goal_map": {}}
+        with pytest.raises(ProposalError) as caught:
+            validate_action_parameters("revise_plan", values)
+>       assert caught.value.detail["errors"] == [{"type": "string_pattern_mismatch",
+            "loc": ["parameters", "steps", 0, "code", "sha256"]}]
+E       AssertionError: assert [{'type': 'st...ield]', ...]}] == [{'type': 'st...', 'sha256']}]
+E         
+E         At index 0 diff: {'type': 'string_pattern_mismatch', 'loc': ['parameters', 'steps', 0, '[field]', 'code', 'CodeRef', 'sha256']} != {'type': 'string_pattern_mismatch', 'loc': ['parameters', 'steps', 0, 'code', 'sha256']}
+E         Left contains 4 more items, first extra item: {'type': 'extra_forbidden', 'loc': ['parameters', 'steps', 0, '[field]', 'code', 'ArtifactCodeSelection', ...]}
+E         Use -v to get more diff
+
+tests\unit\test_declarative_code_repair.py:328: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/unit/test_declarative_code_repair.py::test_old_malformed_step_feedback_matches_original_type_exactly
+FAILED tests/unit/test_declarative_code_repair.py::test_mixed_shape_errors_use_each_actual_step_and_do_not_consume_other_branch_slots
+FAILED tests/unit/test_declarative_code_repair.py::test_invalid_explicit_reference_reports_actual_code_path_only
+3 failed, 186 passed in 76.18s (0:01:16)

@@ -1,0 +1,771 @@
+{
+  "provenance": "Original schema reconstructed read-only from retained Request and current schema source; actual schema decoded from the saved synthetic model request, no Agent call.",
+  "request_record_path": "C:\\WINDOW~1\\pytest-of-阿妆\\pytest-1990\\test_input_chain_grouped_condi0\\data\\runs\\run_831a8a9346304af28a494cd0a98c8e9c\\model\\model_778c4d02ce254975a01d9cacec92ffb1.request.json",
+  "request_record_sha256": "980e9a0dce0f1c545b8621b84b27568fb87aa0519cec144a0fa9dc97903015be",
+  "actual": {
+    "$defs": {
+      "FieldEvidence": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "enum": [
+              "explicit",
+              "default",
+              "inherited",
+              "inferred",
+              "unknown",
+              "not_applicable"
+            ]
+          },
+          "default_rule": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "text_basis": {
+            "type": "string"
+          },
+          "source_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 16
+          },
+          "request_version": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "system_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {},
+          "value_basis": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+      "schema_version",
+      "message_ids",
+      "kind",
+      "text_basis"
+    ],
+    "properties": {
+      "conditions": {
+        "additionalProperties": {
+          "$ref": "#/$defs/FieldEvidence"
+        },
+        "type": "object",
+        "maxProperties": 8,
+        "propertyNames": {
+          "enum": [
+            "method",
+            "basis",
+            "charge",
+            "multiplicity",
+            "electronic_state",
+            "environment",
+            "temperature_K",
+            "standard_state"
+          ]
+        }
+      },
+      "text_basis": {
+        "type": "string"
+      },
+      "goals": {
+        "anyOf": [
+          {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "analysis_goal_ref": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "conditions": {
+                  "additionalProperties": {
+                    "$ref": "#/$defs/FieldEvidence"
+                  },
+                  "type": "object",
+                  "maxProperties": 8,
+                  "propertyNames": {
+                    "enum": [
+                      "method",
+                      "basis",
+                      "charge",
+                      "multiplicity",
+                      "electronic_state",
+                      "environment",
+                      "temperature_K",
+                      "standard_state"
+                    ]
+                  }
+                },
+                "message_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "text_basis": {
+                  "type": "string"
+                },
+                "geometry_relation": {
+                  "enum": [
+                    "fixed_initial",
+                    "optimized",
+                    null
+                  ]
+                },
+                "unresolved": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 8
+                },
+                "key": {
+                  "type": "string"
+                },
+                "source_refs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 16
+                },
+                "minimum_evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 8
+                },
+                "port": {
+                  "type": "string"
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "quantity": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "query": {
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "system_refs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 5
+                },
+                "system_refs_note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "verification": {
+                  "enum": [
+                    "qualified",
+                    "reported_with_limitations",
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "port"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 8
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "identities": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "ambiguities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 8
+            },
+            "message_id": {
+              "type": "string"
+            },
+            "text_basis": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "query_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "key",
+            "name",
+            "text_basis",
+            "message_id"
+          ],
+          "additionalProperties": false
+        },
+        "maxItems": 5
+      },
+      "unresolved": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 8
+      },
+      "automatic_selection": {
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "message_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "text_basis": {
+              "type": "string"
+            },
+            "source_refs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 16
+            }
+          },
+          "additionalProperties": false
+        },
+        "type": "object",
+        "maxProperties": 8,
+        "propertyNames": {
+          "enum": [
+            "method",
+            "basis",
+            "charge",
+            "multiplicity",
+            "electronic_state",
+            "environment",
+            "temperature_K",
+            "standard_state"
+          ]
+        }
+      },
+      "kind": {
+        "enum": [
+          "normalize",
+          "clarify"
+        ]
+      },
+      "message_ids": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1,
+        "maxItems": 24
+      },
+      "notices": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 5
+      },
+      "question_gaps": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "maxProperties": 5
+      },
+      "questions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 5
+      },
+      "schema_version": {
+        "const": "request-semantics-3"
+      },
+      "system_conditions": {
+        "type": "object",
+        "maxProperties": 5,
+        "patternProperties": {
+          "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$": {
+            "additionalProperties": {
+              "$ref": "#/$defs/FieldEvidence"
+            },
+            "type": "object",
+            "propertyNames": {
+              "enum": [
+                "method",
+                "basis",
+                "charge",
+                "multiplicity",
+                "electronic_state",
+                "environment",
+                "temperature_K",
+                "standard_state"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "original": {
+    "$defs": {
+      "FieldEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {},
+          "source": {
+            "enum": [
+              "explicit",
+              "default",
+              "inherited",
+              "inferred",
+              "unknown",
+              "not_applicable"
+            ]
+          },
+          "text_basis": {
+            "type": "string"
+          },
+          "request_version": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "system_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default_rule": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_refs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 16,
+            "type": "array"
+          },
+          "value_basis": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "type": "object"
+      },
+      "SelectionAuthorization": {
+        "additionalProperties": false,
+        "properties": {
+          "text_basis": {
+            "type": "string"
+          },
+          "message_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_refs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 16,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SemanticGoal": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "port": {
+            "type": "string"
+          },
+          "text_basis": {
+            "type": "string"
+          },
+          "source_refs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 16,
+            "type": "array"
+          },
+          "system_refs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "system_refs_note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "geometry_relation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "fixed_initial",
+                  "optimized"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minimum_evidence": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "type": "array"
+          },
+          "conditions": {
+            "additionalProperties": {
+              "$ref": "#/$defs/FieldEvidence"
+            },
+            "maxProperties": 8,
+            "propertyNames": {
+              "enum": [
+                "method",
+                "basis",
+                "charge",
+                "multiplicity",
+                "electronic_state",
+                "environment",
+                "temperature_K",
+                "standard_state"
+              ]
+            },
+            "type": "object"
+          },
+          "query": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "unresolved": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "type": "array"
+          },
+          "message_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "analysis_goal_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verification": {
+            "anyOf": [
+              {
+                "enum": [
+                  "qualified",
+                  "reported_with_limitations"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "port"
+        ],
+        "type": "object"
+      },
+      "SemanticIdentity": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "query_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "text_basis": {
+            "type": "string"
+          },
+          "message_id": {
+            "type": "string"
+          },
+          "ambiguities": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "text_basis",
+          "message_id"
+        ],
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "schema_version": {
+        "const": "request-semantics-3",
+        "type": "string"
+      },
+      "message_ids": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 24,
+        "minItems": 1,
+        "type": "array"
+      },
+      "kind": {
+        "enum": [
+          "normalize",
+          "clarify"
+        ]
+      },
+      "text_basis": {
+        "type": "string"
+      },
+      "conditions": {
+        "additionalProperties": {
+          "$ref": "#/$defs/FieldEvidence"
+        },
+        "maxProperties": 8,
+        "propertyNames": {
+          "enum": [
+            "method",
+            "basis",
+            "charge",
+            "multiplicity",
+            "electronic_state",
+            "environment",
+            "temperature_K",
+            "standard_state"
+          ]
+        },
+        "type": "object"
+      },
+      "system_conditions": {
+        "maxProperties": 5,
+        "patternProperties": {
+          "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$": {
+            "additionalProperties": {
+              "$ref": "#/$defs/FieldEvidence"
+            },
+            "propertyNames": {
+              "enum": [
+                "method",
+                "basis",
+                "charge",
+                "multiplicity",
+                "electronic_state",
+                "environment",
+                "temperature_K",
+                "standard_state"
+              ]
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "goals": {
+        "anyOf": [
+          {
+            "items": {
+              "$ref": "#/$defs/SemanticGoal"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "unresolved": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 8,
+        "type": "array"
+      },
+      "questions": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 5,
+        "type": "array"
+      },
+      "notices": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 5,
+        "type": "array"
+      },
+      "question_gaps": {
+        "additionalProperties": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "maxProperties": 5,
+        "type": "object"
+      },
+      "identities": {
+        "items": {
+          "$ref": "#/$defs/SemanticIdentity"
+        },
+        "maxItems": 5,
+        "type": "array"
+      },
+      "automatic_selection": {
+        "additionalProperties": {
+          "$ref": "#/$defs/SelectionAuthorization"
+        },
+        "maxProperties": 8,
+        "propertyNames": {
+          "enum": [
+            "method",
+            "basis",
+            "charge",
+            "multiplicity",
+            "electronic_state",
+            "environment",
+            "temperature_K",
+            "standard_state"
+          ]
+        },
+        "type": "object"
+      }
+    },
+    "required": [
+      "schema_version",
+      "message_ids",
+      "kind",
+      "text_basis"
+    ],
+    "type": "object"
+  }
+}

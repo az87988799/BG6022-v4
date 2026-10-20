@@ -50,7 +50,12 @@ def test_portable_reply_shapes_are_never_repaired_into_fake_json(case):
 
 
 def test_empty_truncation_is_one_durable_failure_across_two_resumes(tmp_path):
-    store, run, _ = make_run(tmp_path)
+    store, current, _ = make_run(tmp_path)
+    # This regression preserves the frozen pre-simplification fatal policy.
+    run = store.create_run(store.load_request(current), None, current.permission, current.budget,
+        configuration=current.configuration.model_copy(update={"workflow_policy": None}))
+    run.agent_enabled = True
+    store.save_run(run)
 
     class EmptyTruncated:
         sends = 0

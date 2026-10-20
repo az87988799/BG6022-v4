@@ -322,21 +322,35 @@ def prepare_native_input(workdir: str | Path, parameters: NativeOrcaParameters,
         text = code.decode("ascii")
     except UnicodeError as error:
         raise ValueError("native input must be ASCII") from error
+    source_code = code
+    materialization = []
+    if policy is not None and policy.profile == "managed-native-1":
+        from orca_agent.orca.native_managed import materialize_managed_input
+        text, materialization = materialize_managed_input(text, resources, policy, binding)
+        code = text.encode("ascii")
     launch = validate_native_input(text, dependencies, resources, policy=policy, binding=binding)
     directory = Path(workdir).absolute()
     _unlinked(directory)
     directory.mkdir(parents=True, exist_ok=True)
     targets = ["job.inp", "input-manifest.json", *dependencies]
+    if materialization:
+        targets.append("source-input.inp")
     if any((directory / name).exists() for name in targets):
         raise FileExistsError("an attempt's input or dependencies may not be overwritten")
     if any(path.name != "intent.json" for path in directory.iterdir()):
         raise ValueError("native ORCA staging requires a fresh attempt directory")
-    for name, data in {"job.inp": code, **dependencies}.items():
+    files = {"job.inp": code, **dependencies}
+    if materialization:
+        files["source-input.inp"] = source_code
+    for name, data in files.items():
         with (directory / name).open("xb") as stream:
             stream.write(data)
     manifest = {"tool": "orca.run", "input_file": "job.inp", "input_sha256": _digest(code),
                 "input_artifact": parameters.input.model_dump(mode="json"),
                 "input_manifest": parameters.inputs.model_dump(mode="json"), **launch}
+    if materialization:
+        manifest.update(source_input_sha256=_digest(source_code),
+                        materialization=materialization)
     with (directory / "input-manifest.json").open("x", encoding="utf-8") as stream:
         json.dump(manifest, stream, indent=2, allow_nan=False)
         stream.write("\n")

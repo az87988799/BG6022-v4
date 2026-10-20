@@ -75,6 +75,75 @@ def expand_schema(node):
     return result
 
 
+def validation_schema(schema):
+    """Independent canonical form for the intake schema's limited rewrites.
+
+    Resolve local references and annotations, then express finite unions and
+    nullable strings uniformly. Every other validation keyword stays literal.
+    This deliberately rejects unsupported reference scopes rather than guessing.
+    """
+    def encoded(value):
+        return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
+    def visit(node, references=()):
+        if not isinstance(node, dict):
+            return copy.deepcopy(node)
+        assert "$id" not in node and "$dynamicRef" not in node
+        value = {key: copy.deepcopy(child) for key, child in node.items()
+                 if key not in {"title", "description", "default", "examples", "$defs"}}
+        if "$ref" in value:
+            reference = value["$ref"]
+            assert set(value) == {"$ref"}
+            assert reference.startswith("#/$defs/") and reference not in references
+            target = schema
+            for part in reference[2:].split("/"):
+                target = target[part.replace("~1", "/").replace("~0", "~")]
+            return visit(target, (*references, reference))
+        for key, child in value.items():
+            if key in {"properties", "patternProperties", "dependentSchemas"}:
+                value[key] = {name: visit(rule, references) for name, rule in child.items()}
+            elif key in {"items", "additionalProperties", "propertyNames", "if", "then", "else", "not"}:
+                value[key] = visit(child, references)
+            elif key in {"anyOf", "oneOf", "allOf", "prefixItems"}:
+                value[key] = [visit(rule, references) for rule in child]
+        if "const" in value and "enum" not in value:
+            value["enum"] = [value.pop("const")]
+        # An enum of strings/null already restricts the value to these types;
+        # do not drop contradictory types or apply Python's bool/int equality.
+        kinds = value.get("type")
+        kinds = [kinds] if isinstance(kinds, str) else kinds
+        literals = value.get("enum")
+        if literals and kinds and all(
+                (type(item) is str and "string" in kinds) or (item is None and "null" in kinds)
+                for item in literals):
+            value.pop("type")
+        alternatives = value.get("anyOf")
+        if set(value) == {"anyOf"} and alternatives:
+            if all(set(branch) == {"enum"} or branch == {"type": ["null"]}
+                   for branch in alternatives):
+                value = {"enum": [item for branch in alternatives
+                                  for item in branch.get("enum", [None])]}
+            elif len(alternatives) == 2:
+                nulls = [branch for branch in alternatives if branch == {"type": ["null"]}]
+                others = [branch for branch in alternatives if branch != {"type": ["null"]}]
+                if (len(nulls) == len(others) == 1 and others[0].get("type") == ["string"]
+                        and set(others[0]) <= {"type", "pattern", "minLength", "maxLength"}):
+                    value = {**others[0], "type": ["null", "string"]}
+        if "type" in value:
+            kinds = value["type"]
+            value["type"] = sorted(set([kinds] if isinstance(kinds, str) else kinds))
+        if "enum" in value:
+            value["enum"] = [json.loads(item) for item in sorted({encoded(item) for item in value["enum"]})]
+        if "required" in value:
+            value["required"] = sorted(value["required"])
+        for key in ("anyOf", "oneOf", "allOf"):
+            if key in value:
+                value[key] = sorted(value[key], key=encoded)
+        return value
+
+    return visit(schema)
+
+
 def assert_native_schemas_equivalent(schemas, original_schemas):
     """Check source and displayed validation languages with independent values."""
     from tests.unit.test_plan_goal_binding_contract import EVIDENCE, matches
@@ -107,6 +176,9 @@ def assert_native_schemas_equivalent(schemas, original_schemas):
                          "goal_map": {"energy": {"gap": "No evidence.", "port": "energy"}}}],
     }
     for action, actual_schema in schemas.items():
+        if action == "normalize_request":
+            assert validation_schema(actual_schema) == validation_schema(original_schemas[action])
+            continue
         if action not in examples:
             # Immediate Tool schemas now remain literal, including annotations
             # and limits outside this small independent Plan-schema matcher.
@@ -143,6 +215,64 @@ def assert_native_schemas_equivalent(schemas, original_schemas):
         for value in [*valid, *invalid]:
             actual = without_defaults(actual_schema)
             assert matches(actual, value, actual) == matches(original_schema, value, original_schema)
+
+
+def test_intake_schema_equivalence_expands_refs_and_only_redundant_constraints():
+    original = {"type": "object", "properties": {
+        "literal": {"$ref": "#/$defs/nullable"},
+        "text": {"anyOf": [{"type": "string", "pattern": "^a", "minLength": 1, "maxLength": 4},
+                          {"type": "null"}], "default": None},
+        "enum": {"const": {"$ref": "#/$defs/raw", "default": ["literal"]}}},
+        "required": ["text", "literal"], "additionalProperties": False,
+        "$defs": {"nullable": {"anyOf": [{"type": "string", "enum": ["a", "b"]},
+                                       {"type": "null"}], "default": None}}}
+    equivalent = copy.deepcopy(original)
+    equivalent.pop("$defs")
+    equivalent["properties"]["literal"] = {"enum": ["b", None, "a"]}
+    equivalent["properties"]["text"] = {"type": ["null", "string"],
+                                         "pattern": "^a", "minLength": 1, "maxLength": 4}
+    equivalent["required"].reverse()
+    before = copy.deepcopy((original, equivalent))
+    assert_native_schemas_equivalent({"normalize_request": equivalent}, {"normalize_request": original})
+    assert (original, equivalent) == before
+    assert validation_schema(original)["properties"]["enum"] == {
+        "enum": [{"$ref": "#/$defs/raw", "default": ["literal"]}]}
+
+
+@pytest.mark.parametrize("change", [
+    "field", "required", "additional", "minimum", "maximum", "pattern", "enum", "type",
+    "source_refs_min", "source_refs_max", "property_names", "literal",
+])
+def test_intake_schema_equivalence_rejects_changed_validation_rules(change):
+    original = {"type": "object", "properties": {
+        "quantity": {"type": "string", "minLength": 1, "maxLength": 20, "pattern": "^energy"},
+        "source_refs": {"type": "array", "minItems": 1, "maxItems": 3,
+                        "items": {"enum": ["s0", "s1"]}},
+        "literal": {"const": {"default": 1}}},
+        "required": ["quantity"], "additionalProperties": False,
+        "propertyNames": {"pattern": "^[a-z_]+$"}}
+    altered = copy.deepcopy(original)
+    if change == "field":
+        altered["properties"].pop("source_refs")
+    elif change == "required":
+        altered["required"] = []
+    elif change == "additional":
+        altered["additionalProperties"] = True
+    elif change in {"minimum", "maximum", "pattern"}:
+        altered["properties"]["quantity"].pop({"minimum": "minLength", "maximum": "maxLength",
+                                              "pattern": "pattern"}[change])
+    elif change == "enum":
+        altered["properties"]["source_refs"]["items"]["enum"].append("unauthorized")
+    elif change == "type":
+        altered["properties"]["source_refs"]["items"]["type"] = "integer"
+    elif change.startswith("source_refs"):
+        altered["properties"]["source_refs"].pop("minItems" if change.endswith("min") else "maxItems")
+    elif change == "property_names":
+        altered.pop("propertyNames")
+    else:
+        altered["properties"]["literal"]["const"]["default"] = 2
+    with pytest.raises(AssertionError):
+        assert_native_schemas_equivalent({"normalize_request": altered}, {"normalize_request": original})
 
 
 def decoded(prepared):
@@ -227,7 +357,8 @@ def test_complete_explanation_selects_only_current_sources_after_large_read_auth
         result_id="failed_result", frozen_step=failed_step)
     ids = [row.result_id for row in [*reads, writer]] + ["failed_result", "irrelevant_feedback"] + [
         row.result_id for row in current]
-    run = NS(id="run", permission=NS(code_execution=True, allowed_tools=["python.execute"]),
+    run = NS(id="run", permission=NS(code_execution=True, scientific_execution=False,
+                                    allowed_tools=["python.execute"]),
         calls=[*reads, writer, *current], attempts=[failed], result_ids=ids,
         goal_evidence={request.goals[0].id: NS(run_id="run", result_id="main_result")})
     producer_ref = NS(run_id=None, result_id=None, producer_step_id="producer")
@@ -569,8 +700,8 @@ def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decod
     def capture_final_schemas(value, **kwargs):
         if ("ACTION_SCHEMAS" in value
                 and value.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.*")):
-            final_native_schemas.append({name: copy.deepcopy(schema if isinstance(schema, dict) and schema.get("type") == "object"
-                else encoded_sources[json.dumps(schema, sort_keys=True)])
+            final_native_schemas.append({name: copy.deepcopy(
+                encoded_sources.get(json.dumps(schema, sort_keys=True), schema))
                 for name, schema in value["ACTION_SCHEMAS"].items()})
             grouped_native_provenance.append(isinstance(value["AUTHORITY"]["request"].get("condition_evidence"), list))
         return share_strings(value, **kwargs)
@@ -600,6 +731,7 @@ def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decod
     sent = [prepared for prepared in requests if prepared.request_hash in sent_hashes]
     assert len(sent) == 4
     grouped = []
+    normalization_requests = 0
     for prepared in sent:
         assert prepared.input_token_bound <= input_tokens
         wire = decoded(prepared)  # Only documented wire; no Store in decoder.
@@ -619,11 +751,21 @@ def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decod
                 assert evidence.pop("text_basis_ref") == "AUTHORITY.user_originals[0].text"
                 evidence["text_basis"] = wire["AUTHORITY"]["user_originals"][0]["text"]
         assert goal_evidence == [goal.text_evidence for goal in current.goals]
-        record = next(item for item in run.model_records if item["request_hash"] == prepared.request_hash)
-        full = json.loads(store.path(f"runs/{run.id}/model/{record['id']}.delivery.json").read_bytes())
-        original_conditions = {fact["ref"]: fact["value"] for fact in full["facts"] if fact["kind"] == "conditions"}
-        assert {fact["ref"]: fact["value"] for fact in wire["DATA"]["delivery"]["facts"]
-                if fact["kind"] == "conditions"} == original_conditions
+        if wire["AUTHORITY"]["decision_purpose"]["kind"] == "normalization":
+            normalization_requests += 1
+            assert current.normalization_status == "pending"
+            assert current.condition_evidence == {"workflow_policy": {
+                "version": "simplified-1", "source": "run_configuration"}}
+            assert any(item["text"] == current.original_text for item in wire["AUTHORITY"]["user_originals"])
+            assert "normalize_request" in wire["ACTION_SCHEMAS"]
+            assert "delivery" not in wire["DATA"]
+        else:
+            record = next(item for item in run.model_records if item["request_hash"] == prepared.request_hash)
+            full = json.loads(store.path(f"runs/{run.id}/model/{record['id']}.delivery.json").read_bytes())
+            original_conditions = {fact["ref"]: fact["value"] for fact in full["facts"] if fact["kind"] == "conditions"}
+            assert {fact["ref"]: fact["value"] for fact in wire["DATA"]["delivery"]["facts"]
+                    if fact["kind"] == "conditions"} == original_conditions
+            grouped.append(prepared.input_token_bound)
         if wire["AUTHORITY"].get("response_contract") == "decision-intent-2":
             from orca_agent.proposals import DecisionIntent
 
@@ -648,8 +790,8 @@ def test_input_chain_grouped_condition_provenance_roundtrips_without_store_decod
             assert wire["PROPOSAL_SCHEMA"] == source_schema_by_hash[prepared.request_hash]
             assert wire["PROPOSAL_SCHEMA"]["additionalProperties"] is False
             assert wire["PROPOSAL_SCHEMA"]["minProperties"] == 8
-        grouped.append(prepared.input_token_bound)
-    assert grouped and run.usage.structure_preparations == 1
+    assert normalization_requests == 1 and len(grouped) == 3
+    assert run.usage.structure_preparations == 1
     assert run.usage.orca_starts_actual == run.usage.orca_starts_reserved == 0
     (tmp_path / "capacity.json").write_text(json.dumps({"kind": "offline_synthetic",
         "sent_input_bounds": [request.input_token_bound for request in sent], "grouped": grouped}), encoding="utf-8")

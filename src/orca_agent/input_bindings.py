@@ -33,11 +33,19 @@ def input_purpose(request, system_id):
             "conditions": effective_conditions(request, system_id=system_id)["conditions"]}
 
 
-def _identity_origin_request(store, run, request, call):
-    """Reuse identity only across authenticated condition choices, never user edits."""
-    from orca_agent.condition_selection import GENERAL_SELECTION_VERSION, general_admission_enabled
+def _identity_origin_request(store, run, request, call, *, port="resolved_identity"):
+    """Reuse inputs only across authenticated choices, never user edits."""
+    from orca_agent.applicability import effective_conditions
+    from orca_agent.condition_selection import (
+        GENERAL_SELECTION_VERSION,
+        SIMPLIFIED_SELECTION_VERSION,
+        general_admission_enabled,
+        simplified_workflow,
+    )
 
-    if not general_admission_enabled(store, run) or call.request_version >= request.version:
+    simplified = simplified_workflow(run)
+    if ((not general_admission_enabled(store, run) and not simplified)
+            or call.request_version >= request.version):
         raise ValueError("input_result_call_scope_or_version_mismatch")
     original = store.load_request_revision(run, call.request_version)
     for version in range(call.request_version + 1, request.version + 1):
@@ -48,17 +56,24 @@ def _identity_origin_request(store, run, request, call):
             raise ValueError("identity_reuse_requires_authenticated_condition_selection")
         for summary in summaries:
             record = store._read_json(f"runs/{run.id}/decisions/{summary['id']}.json")
-            if record.get("condition_selection", {}).get("schema") != GENERAL_SELECTION_VERSION:
+            expected = SIMPLIFIED_SELECTION_VERSION if simplified else GENERAL_SELECTION_VERSION
+            if record.get("condition_selection", {}).get("schema") != expected:
                 raise ValueError("identity_reuse_requires_authenticated_condition_selection")
         if (revision.systems != original.systems or revision.messages != original.messages
                 or revision.goals != original.goals or revision.original_text != original.original_text):
             raise ValueError("identity_reuse_cannot_change_identity_geometry_or_user_purpose")
+        if port == "prepared_geometry":
+            before = effective_conditions(original, system_id=call.parameters["system_id"])["conditions"]
+            after = effective_conditions(revision, system_id=call.parameters["system_id"])["conditions"]
+            if any(before.get(name) != after.get(name) for name in ("charge", "multiplicity")):
+                raise ValueError("prepared_geometry_reuse_cannot_change_electronic_preparation_state")
     if revision != request:
         raise ValueError("identity_reuse_requires_activated_request")
     return original
 
 
 def validate_input_result(store, run, request, result, port, *, require_bound=True):
+    from orca_agent.condition_selection import simplified_workflow
     from orca_agent.tools.registry import get_tool
 
     if result.run_id != run.id or (require_bound and result.id not in run.result_ids):
@@ -70,9 +85,12 @@ def validate_input_result(store, run, request, result, port, *, require_bound=Tr
     tool = get_tool(call.tool)
     original_request = request
     if call.request_version != request.version:
-        if port != "resolved_identity" or "query_external_identity" not in tool.effects:
+        reusable = (port == "resolved_identity" and "query_external_identity" in tool.effects
+                    or simplified_workflow(run) and port == "prepared_geometry"
+                    and "prepare_geometry" in tool.effects)
+        if not reusable:
             raise ValueError("input_result_call_scope_or_version_mismatch")
-        original_request = _identity_origin_request(store, run, request, call)
+        original_request = _identity_origin_request(store, run, request, call, port=port)
     if ("write_input_artifact" not in tool.effects or port not in tool.output_ports
             or call.step_id != result.step_id or not call.frozen_step
             or call.frozen_step.tool != call.tool or call.frozen_step.system_id != call.parameters.get("system_id")
@@ -124,19 +142,24 @@ def validate_input_result(store, run, request, result, port, *, require_bound=Tr
 
 
 def carry_selected_identity_inputs(store, run, request, bindings):
-    """Revalidate selected identity evidence without relabeling its Call/Result."""
+    """Revalidate selected inputs without relabeling any historical Call/Result."""
+    from orca_agent.condition_selection import simplified_workflow
+
     updated = {}
     for system_id, ports in bindings.items():
-        binding = ports.get("resolved_identity")
-        if binding:
+        allowed_ports = ("resolved_identity", "prepared_geometry") if simplified_workflow(run) else ("resolved_identity",)
+        for port in allowed_ports:
+            binding = ports.get(port)
+            if not binding:
+                continue
             result = store.load_result(run.id, binding["result_id"])
             prior = store.load_request_revision(run, request.version - 1)
-            if validate_input_result(store, run, prior, result, "resolved_identity") != binding:
+            if validate_input_result(store, run, prior, result, port) != binding:
                 raise ValueError("identity_input_binding_changed")
-            actual = validate_input_result(store, run, request, result, "resolved_identity")
+            actual = validate_input_result(store, run, request, result, port)
             if actual["system_id"] != system_id:
                 raise ValueError("identity_input_system_changed")
-            updated[system_id] = {"resolved_identity": actual}
+            updated.setdefault(system_id, {})[port] = actual
     return updated
 
 

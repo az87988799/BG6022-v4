@@ -355,6 +355,78 @@ def _conditions(keywords, blocks, charge, multiplicity, *, expected_method=None)
             "charge": charge, "multiplicity": multiplicity, "environment": _environment(keywords, blocks)}
 
 
+def materialize_managed_input(text, resources, policy, binding):
+    """Write omitted, already authorized controls into the bytes ORCA will read."""
+    if not binding or binding.get("workflow_policy") != "simplified-1":
+        return text, []
+    lines = _lines(text)
+    words = [word for line in lines if line.startswith("!") for word in line[1:].split()]
+    additions = []
+    if not any(word.casefold() in STATES for word in words):
+        state = binding.get("conditions", {}).get("electronic_state")
+        if not isinstance(state, str) or state.casefold() not in STATES:
+            raise ValueError("omitted wavefunction requires an approved explicit electronic state")
+        # Append to the keyword line; never reinterpret the first method/basis labels.
+        keyword_index = next((i for i, line in enumerate(lines) if line.startswith("!")), None)
+        if keyword_index is None:
+            raise ValueError("native input needs a scientific keyword line")
+        lines[keyword_index] += " " + state.upper()
+        additions.append({"field": "electronic_state", "value": state.upper(),
+                          "source": "approved_request"})
+    block_names = {match[1].casefold() for line in lines
+                   if (match := re.match(r"%([A-Za-z][A-Za-z0-9_]*)\b", line))}
+    controls = []
+    if "maxcore" not in block_names:
+        controls.append(f"%maxcore {resources.maxcore_mb}")
+        additions.append({"field": "maxcore_mb", "value": resources.maxcore_mb,
+                          "source": "frozen_resources"})
+    if "pal" not in block_names:
+        controls.append(f"%pal nprocs {resources.max_cores} end")
+        additions.append({"field": "cores", "value": resources.max_cores,
+                          "source": "frozen_resources"})
+    if "noautostart" not in {word.casefold() for word in words}:
+        keyword_index = next((i for i, line in enumerate(lines) if line.startswith("!")), None)
+        if keyword_index is None:
+            raise ValueError("native input needs a scientific keyword line")
+        lines[keyword_index] += " NoAutoStart"
+        additions.append({"field": "NoAutoStart", "value": True, "source": "execution_policy"})
+    if "scf" not in block_names:
+        controls.append(f"%scf MaxIter {policy.max_scf_iterations} AutoTRAH false end")
+        additions.append({"field": "scf_controls",
+                          "value": {"MaxIter": policy.max_scf_iterations, "AutoTRAH": False},
+                          "source": "frozen_execution_policy"})
+    def complete_block(name, defaults):
+        index = next((i for i, line in enumerate(lines)
+                      if re.match(r"%" + name + r"\b", line, re.I)), None)
+        if index is None:
+            return
+        end = index + 1
+        while end < len(lines) and not lines[end].startswith(("!", "%", "*", "$")):
+            end += 1
+        body = " ".join(lines[index:end])
+        missing = {key: value for key, value in defaults.items()
+                   if not re.search(r"\b" + key + r"\b", body, re.I)}
+        if missing:
+            addition = " ".join(f"{key} {value}" for key, value in missing.items())
+            lines[index] = re.sub(r"^(%" + name + r")\b", r"\1 " + addition,
+                                  lines[index], count=1, flags=re.I)
+            additions.append({"field": name + "_controls", "value": missing,
+                              "source": "frozen_execution_policy"})
+    complete_block("scf", {"MaxIter": policy.max_scf_iterations, "AutoTRAH": "false"})
+    if {word.casefold() for word in words} & OPTIMIZATIONS:
+        if "geom" not in block_names:
+            controls.append(f"%geom MaxIter {policy.max_geom_iterations} end")
+            additions.append({"field": "geom_controls", "value": {"MaxIter": policy.max_geom_iterations},
+                              "source": "frozen_execution_policy"})
+        else:
+            complete_block("geom", {"MaxIter": policy.max_geom_iterations})
+    for name in ("cis", "tddft"):
+        complete_block(name, {"MaxIter": policy.max_response_iterations})
+    if not additions:
+        return text, []
+    return "\n".join([*controls, *lines]) + "\n", additions
+
+
 def validate_managed_input(text, dependencies, resources, policy, binding):
     lines = _lines(text)
     keywords, blocks = [], {}
@@ -384,6 +456,11 @@ def validate_managed_input(text, dependencies, resources, policy, binding):
                 value, end = _block(tokens, 0, name)
                 if end != len(tokens):
                     raise ValueError("trailing input after a native control block")
+                if (name == "eprnmr" and geometry is None
+                        and value.get("nmr", "false").casefold() not in _FALSE
+                        and (binding or {}).get("workflow_policy") == "simplified-1"):
+                    raise ValueError("%eprnmr must follow the xyzfile coordinate declaration "
+                                     "when NMR is requested; move this block after the coordinates")
                 blocks[name] = value
         elif line.startswith("*"):
             match = re.fullmatch(r"\*\s*xyzfile\s+(-?\d+)\s+([1-9][0-9]*)\s+(.+)", line, re.I)
@@ -462,6 +539,10 @@ def validate_managed_input(text, dependencies, resources, policy, binding):
         raise ValueError("managed native input requires trusted current Request/Step condition binding")
     for name, value in actual.items():
         expected = canonical_managed_condition(name, binding["conditions"][name])
+        if name == "environment" and binding.get("workflow_policy") == "simplified-1":
+            alternatives = binding.get("allowed_condition_values", {}).get(name, [])
+            if alternatives and canonical_managed_condition(name, value) in alternatives:
+                continue
         if expected is None or expected != canonical_managed_condition(name, value):
             raise ValueError("admitted native input differs from current Request/Step condition: " + name)
     frequency_block = blocks.get("freq", {})

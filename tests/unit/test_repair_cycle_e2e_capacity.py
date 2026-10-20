@@ -166,9 +166,15 @@ def run_fixed_e2e(tmp_path, monkeypatch, system, path_shape, *, goal_names=None,
     def capture_final_schemas(value, **kwargs):
         if ("ACTION_SCHEMAS" in value
                 and value.get("SCHEMA_COLUMNS", "").startswith("ACTION_SCHEMAS.*")):
-            final_native_schemas.append({name: deepcopy(schema if isinstance(schema, dict) and schema.get("type") == "object"
-                else encoded_sources[json.dumps(schema, sort_keys=True)])
-                for name, schema in value["ACTION_SCHEMAS"].items()})
+            restored = {}
+            for name, schema in value["ACTION_SCHEMAS"].items():
+                # An object shell may still contain column-encoded children.
+                # Independently decode all levels and compare to the exact
+                # schema captured before encoding; literal schemas stay exact.
+                restored[name] = expand_schema(schema)
+                original = encoded_sources.get(json.dumps(schema, sort_keys=True), schema)
+                assert restored[name] == original
+            final_native_schemas.append(restored)
         return share_strings(value, **kwargs)
     monkeypatch.setattr(context, "_share_strings", capture_final_schemas)
     build_context = agent.build_context

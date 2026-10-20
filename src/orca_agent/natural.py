@@ -169,6 +169,8 @@ def initialize_agent(store, config, request, permission, budget=None, *, sources
     """Permission and purpose enter here from the user, never from model proposals."""
     pending = request.normalization_status == "pending"
     request = _missing_information(Request.model_validate(request.model_dump()))
+    if getattr(config, "workflow_policy", None) == "simplified-1":
+        request.condition_evidence["workflow_policy"] = {"version": "simplified-1", "source": "run_configuration"}
     if pending:
         request.normalization_status = "pending"
     permission = PermissionSnapshot.model_validate(permission.model_dump())

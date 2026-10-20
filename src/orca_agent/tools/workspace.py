@@ -20,6 +20,11 @@ class WriteParameters(Record):
         {"required": ["base", "edits"], "properties": {
             "content": {"type": "null"}, "role": {"const": "python"},
             "base": {"type": "object", "properties": {"language": {"const": "python"}}},
+            "edits": {"minItems": 1}}},
+        {"required": ["base", "edits"], "properties": {
+            "content": {"type": "null"}, "role": {"const": "orca"},
+            "base": {"type": "object", "required": ["language"],
+                     "properties": {"language": {"const": "orca"}}},
             "edits": {"minItems": 1}}}]}}
     name: str = Field(strict=True, min_length=1, max_length=120)
     content: str | None = Field(default=None, strict=True, max_length=65536)
@@ -32,8 +37,9 @@ class WriteParameters(Record):
         if self.content is not None:
             if self.base is not None or self.edits:
                 raise ValueError("content and base/edits are mutually exclusive")
-        elif self.base is None or not self.edits or self.role != "python" or self.base.language != "python":
-            raise ValueError("patch requires a Python base, role=python and explicit edits")
+        elif (self.base is None or not self.edits or self.role not in {"python", "orca"}
+              or self.base.language != self.role):
+            raise ValueError("patch requires a Python or ORCA base, matching role and explicit edits")
         return self
 
     @model_serializer(mode="wrap")
@@ -66,6 +72,9 @@ def _content(store, run, parameters):
     if parameters.content is not None:
         return parameters.content
     from orca_agent.store import StoreError
+    if (parameters.role == "orca"
+            and getattr(store.run_configuration(run), "workflow_policy", None) != "simplified-1"):
+        raise ValueError("ORCA input patches require workflow_policy=simplified-1")
     base = parameters.base
     authorized = set(run.permission.artifact_ids) | store.verified_own_artifacts(run)
     if base.artifact_id not in authorized:

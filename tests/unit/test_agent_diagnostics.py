@@ -190,8 +190,17 @@ def test_empty_catalog_without_plan_diagnostic_uses_initial_plan_not_revision(tm
     assert stopped.state == "failed" and not stopped.calls and not stopped.attempts
 
 
+def legacy_goal_run(tmp_path):
+    store, original, artifact = make_run(tmp_path, two_goals=True)
+    run = store.create_run(store.load_request(original), None, original.permission, original.budget,
+        configuration=original.configuration.model_copy(update={"workflow_policy": None}))
+    run.agent_enabled = True
+    store.save_run(run)
+    return store, run, artifact
+
+
 def test_missing_required_goal_has_one_correction_to_explicit_gap_without_completion(tmp_path):
-    store, run, artifact = make_run(tmp_path, two_goals=True)
+    store, run, artifact = legacy_goal_run(tmp_path)
     proposed = {"steps": [{"key": "read_a", "tool": "evidence.value", "parameters": {
         "artifact_id": artifact.id, "path": [{"kind": "key", "key": "a"}]}}],
         "goal_map": {"a": {"step_key": "read_a", "port": "value_observation"}}}
@@ -211,7 +220,7 @@ def test_missing_required_goal_has_one_correction_to_explicit_gap_without_comple
 
 
 def test_missing_required_goal_repeated_omission_keeps_bounded_correction(tmp_path):
-    store, run, artifact = make_run(tmp_path, two_goals=True)
+    store, run, artifact = legacy_goal_run(tmp_path)
     bad = {"action": "initial_plan", "parameters": {
         "steps": [{"key": "read_a", "tool": "evidence.value", "parameters": {
             "artifact_id": artifact.id, "path": [{"kind": "key", "key": "a"}]}}],

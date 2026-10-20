@@ -1,0 +1,25 @@
+.....................................................F.                  [100%]
+================================== FAILURES ===================================
+_ test_mixed_shape_errors_use_each_actual_step_and_do_not_consume_other_branch_slots _
+
+    def test_mixed_shape_errors_use_each_actual_step_and_do_not_consume_other_branch_slots():
+        values = {"steps": [{"id": "old"}, {"key": "repair", "repair_of": "failed", "code": {
+            "artifact_id": "new", "sha256": "a" * 64}, "depends_on": []}], "goal_map": {}}
+        before = copy.deepcopy(values)
+        with pytest.raises(ProposalError) as caught:
+            validate_action_parameters("revise_plan", values)
+        errors = caught.value.detail["errors"]
+        assert errors == [{"type": "missing", "loc": ["parameters", "steps", 0, "key"]},
+            {"type": "extra_forbidden", "loc": ["parameters", "steps", 0, "id"]},
+            {"type": "extra_forbidden", "loc": ["parameters", "steps", 1, "depends_on"]}]
+>       assert caught.value.detail["code_repair_fields"] == ["key", "repair_of", "code", "inputs", "sdk_orca"]
+E       AssertionError: assert ['key', 'repa...', 'sdk_orca'] == ['key', 'repa...', 'sdk_orca']
+E         
+E         At index 3 diff: 'input' != 'inputs'
+E         Left contains one more item: 'sdk_orca'
+E         Use -v to get more diff
+
+tests\unit\test_declarative_code_repair.py:319: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/unit/test_declarative_code_repair.py::test_mixed_shape_errors_use_each_actual_step_and_do_not_consume_other_branch_slots
+1 failed, 54 passed in 41.89s

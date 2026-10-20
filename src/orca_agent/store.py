@@ -859,6 +859,10 @@ class Store:
             actual = next((item for item in plan.steps if item.id == step.id), None)
             if actual is None or actual != step:
                 raise StoreError("step differs from its immutable plan revision")
+            from orca_agent.file_references import resolve_step_files
+            declared_step = step
+            file_sources = {}
+            step = resolve_step_files(self, run, step, plan=plan, sources=file_sources)
             permission = PermissionSnapshot.model_validate(
                 self._read_json(f"runs/{run.id}/permission.json")
             )
@@ -894,6 +898,13 @@ class Store:
                 code = getattr(params, "code", None) or getattr(params, "input", None)
                 consumption = {"code": code.model_dump(mode="json"),
                                "inputs": params.inputs.model_dump(mode="json")}
+                if file_sources:
+                    consumption["_declared_step"] = declared_step.model_dump(mode="json")
+                    consumption["_file_sources"] = file_sources
+                if (execution_kind == "python"
+                        and self.run_configuration(run).workflow_policy == "simplified-1"):
+                    consumption["_goal_ids"] = sorted(
+                        identifier for identifier, binding in plan.goal_map.items() if binding.step_id == step.id)
                 input_fingerprint = fingerprint({"tool": step.tool, "code_sha256": code.sha256,
                     "inputs": sorted((item.target_path.casefold(), item.sha256)
                                      for item in params.inputs.entries)})
@@ -951,8 +962,13 @@ class Store:
             # This is a Run-wide allowance for additional code attempts, not a
             # claim that independent analyses are retries of one scientific job.
             # A new logical ID and edited code must not reset the allowance.
-            code_retry = execution_kind == "python" and any(
-                prior.execution_kind == "python" for prior in run.attempts)
+            simplified = self.run_configuration(run).workflow_policy == "simplified-1"
+            if (simplified and execution_kind == "python"
+                    and run.usage.analysis_executions >= run.budget.analysis_executions):
+                raise BudgetExceeded("analysis execution budget exhausted")
+            code_retry = execution_kind == "python" and (
+                number > 1 if simplified else any(
+                    prior.execution_kind == "python" for prior in run.attempts))
             from orca_agent.planning import additional_code_attempts_used
             if code_retry and additional_code_attempts_used(run) >= run.budget.code_retries:
                 raise BudgetExceeded("code retry budget exhausted")
@@ -992,6 +1008,8 @@ class Store:
                 run.usage.orca_starts_reserved += 1
                 run.usage.extra_orca_starts_reserved = repeated + int(extra)
             run.usage.code_retries += int(code_retry)
+            if simplified and execution_kind == "python":
+                run.usage.analysis_executions += 1
             run.usage.logical_attempts[step.logical_id] = number
             run.usage.fingerprint_attempts[input_fingerprint] = same_input_number
             run.state = "running"
@@ -1018,7 +1036,9 @@ class Store:
                     or policy is None
                     or prepared.get("admission_version") != profile_contract(policy)["admission_version"]
                     or prepared.get("native_input_policy") != policy.model_dump(mode="json")
-                    or prepared.get("input_sha256") != attempt.frozen_step.parameters.input.sha256):
+                    or (prepared.get("source_input_sha256", prepared.get("input_sha256"))
+                        if self.run_configuration(run).workflow_policy == "simplified-1"
+                        else prepared.get("input_sha256")) != attempt.frozen_step.parameters.input.sha256):
                 raise StoreError("native workload requires its admitted, unstarted direct Attempt")
             self.check_execution_control(run)
             if self.read_signal(run.id) or utc_now() >= run.deadline:
@@ -1769,7 +1789,7 @@ class Store:
                 # These are current selections only; all Call/Result/Artifact
                 # histories survive. Reacquisition needs a new validated Plan.
                 updated.input_bindings = {}
-                if (selection_record or {}).get("schema") == "condition-selection-2":
+                if (selection_record or {}).get("schema") in {"condition-selection-2", "condition-selection-3"}:
                     from orca_agent.input_bindings import carry_selected_identity_inputs
                     updated.input_bindings = carry_selected_identity_inputs(
                         self, updated, next_request, run.input_bindings)

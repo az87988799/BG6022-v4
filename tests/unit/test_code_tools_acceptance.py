@@ -121,6 +121,36 @@ def test_current_rules_and_all_input_bindings():
     assert result["limits"]["rows"] == 60
 
 
+@pytest.mark.parametrize("change", ["absent", "explicit_workflow", "resource"])
+def test_historical_config_shape_never_ignores_explicit_runtime_changes(tmp_path, change):
+    directory = tmp_path / acceptance.DIRECTORY
+    original = PROJECT / acceptance.DIRECTORY
+    before = {name: acceptance.digest(original / name) for name in acceptance.REQUIRED}
+    for name in acceptance.REQUIRED:
+        target = directory / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((original / name).read_bytes())
+    event = acceptance.read_json(directory / "product-freeze-event.json")
+    event["batch_root"] = str(tmp_path / "data/historical-candidate")
+    write(directory / "product-freeze-event.json", event)
+    product = acceptance.read_json(directory / "product-freeze.json")
+    assert "workflow_policy" not in product["configuration"]
+    runtime = directory / "runtime.toml"
+    text = runtime.read_text(encoding="utf-8")
+    assert "workflow_policy" not in text
+    if change == "explicit_workflow":
+        runtime.write_text("workflow_policy = 'simplified-1'\n" + text, encoding="utf-8")
+    elif change == "resource":
+        assert "max_cores = 4" in text
+        runtime.write_text(text.replace("max_cores = 4", "max_cores = 2"), encoding="utf-8")
+    if change == "absent":
+        assert acceptance.check_rules(tmp_path)["task_slots"] == 60
+    else:
+        with pytest.raises(FreezeError, match="configuration"):
+            acceptance.check_rules(tmp_path)
+    assert {name: acceptance.digest(original / name) for name in acceptance.REQUIRED} == before
+
+
 def test_static_verification_does_not_claim_runtime_reobservation(monkeypatch):
     manifest = {"runtime": {"verified": True, "coverage": "old observation"}}
     evaluation = {"rules": {"task_slots": 60}}

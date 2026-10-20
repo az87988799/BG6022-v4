@@ -15,7 +15,7 @@ DECISION_CONTRACT_PROMPT_VERSIONS = frozenset({
     "agent-json-v22", "agent-json-v23", "agent-json-v24", "agent-json-v25", "agent-json-v26", "agent-json-v27",
     "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32", "agent-json-v33", "agent-json-v34",
     "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41",
-    "agent-json-v74", "agent-json-v75", "agent-json-v76",
+    "agent-json-v74", "agent-json-v75", "agent-json-v76", "agent-json-v77",
     "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47",
     "agent-json-v48", "agent-json-v49", "agent-json-v50", "agent-json-v51", "agent-json-v52", "agent-json-v53", "agent-json-v54", "agent-json-v55", "agent-json-v56", "agent-json-v57", "agent-json-v58", "agent-json-v59", "agent-json-v60", "agent-json-v61", "agent-json-v62", "agent-json-v63", "agent-json-v64", "agent-json-v65", "agent-json-v66", "agent-json-v67", "agent-json-v68", "agent-json-v69", "agent-json-v70", "agent-json-v71", "agent-json-v73"})
 
@@ -137,6 +137,18 @@ def settled_failed_python_attempts(run):
                 == (attempt.step_id, attempt.logical_id, attempt.tool)]
 
 
+def settled_failed_native_attempts(run):
+    """New workflow exposes pinned native failure history for explicit repairs."""
+    if not run.configuration or run.configuration.workflow_policy != "simplified-1":
+        return []
+    return [attempt for attempt in run.attempts
+            if attempt.execution_kind == "orca" and attempt.state in {"failed", "timed_out"}
+            and attempt.finished_at is not None and attempt.result_id in run.result_ids
+            and attempt.frozen_step is not None
+            and (attempt.frozen_step.id, attempt.frozen_step.logical_id, attempt.frozen_step.tool)
+                == (attempt.step_id, attempt.logical_id, attempt.tool)]
+
+
 def terminal_results_only(request, snapshot, *, pending_messages=False):
     """Only a settled complete explanation can omit authoring/read history."""
     if pending_messages or request.conditions.get("explain_results") is not True or not snapshot:
@@ -159,6 +171,8 @@ def relevant_result_ids(run, plan=None, *, snapshot=None, feedback_ids=(), termi
         selected.update(retained_read_result_ids(run))
         if run.permission.code_execution:
             selected.update(attempt.result_id for attempt in settled_failed_python_attempts(run))
+        if run.permission.scientific_execution:
+            selected.update(attempt.result_id for attempt in settled_failed_native_attempts(run))
         # Authoring handles stay available while planning, never by recency.
         selected.update(call.result_id for call in run.calls if call.result_id and call.state == "completed"
                         and (get_tool(call.tool).check_contract.get("code_authoring")

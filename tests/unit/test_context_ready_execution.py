@@ -15,7 +15,7 @@ from orca_agent.context import _recorded_step_execution, _result, _schema, build
 from orca_agent.decision_purpose import relevant_result_ids
 from orca_agent.delivery import collect_delivery_snapshot
 from orca_agent.models import EvidenceRef, Result
-from orca_agent.proposals import ProposedPlan
+from orca_agent.proposals import proposed_plan_schema
 from orca_agent.readable_context import native_schema
 from orca_agent.store import Store
 from scripts.measure_context_efficiency import normalized_schema
@@ -91,15 +91,15 @@ def test_native_revision_exposes_complete_plan_schema_and_rejects_live013_runtim
     monkeypatch.setattr(context, "prepare_request", capture)
     _, plan, _, _, wire = input_context(tmp_path, monkeypatch)
     schema = normalized_schema(wire["ACTION_SCHEMAS"]["revise_plan"])
-    assert schema == normalized_schema(native_schema(ProposedPlan.model_json_schema()))
+    # No failed managed attempt exists; repair alternatives have no current source.
+    assert schema == normalized_schema(native_schema(proposed_plan_schema(code_repair=False)))
     schema = _schema(schema)
     fixture = Path(__file__).parents[1] / "fixtures/code_contracts/live013-runtime-plan-fields.json"
     replies = json.loads(fixture.read_text(encoding="utf-8"))["replies"]
     assert len(replies) == 3
     for reply in replies:
         assert not matches(schema, reply["proposal"]["parameters"], schema)
-    step_rule = next(branch for branch in schema["properties"]["steps"]["items"]["anyOf"]
-                     if "tool" in branch["properties"])
+    step_rule = schema["properties"]["steps"]["items"]
     assert step_rule["required"] == ["key"]
     assert step_rule["additionalProperties"] is False
     assert not {"id", "logical_id", "immutable_frozen"} & step_rule["properties"].keys()

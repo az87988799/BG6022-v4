@@ -9,7 +9,16 @@ from __future__ import annotations
 import hashlib
 import re
 
-from orca_agent.models import EvidenceRef, Plan, Request, Run, Step
+from orca_agent.models import (
+    CodeRef,
+    EvidenceRef,
+    InputManifestEntry,
+    Plan,
+    ProducerFileRef,
+    Request,
+    Run,
+    Step,
+)
 from orca_agent.tools.registry import get_tool
 
 
@@ -23,6 +32,7 @@ class PlanningError(ValueError):
 
 def settled_step_snapshots(store, run):
     """Exact latest settled execution facts eligible for structural Plan carry."""
+    from orca_agent.file_references import declared_attempt_step
     latest = {item.step_id: item for item in [*run.calls, *run.attempts] if item.step_id}
     settled = {}
     for identifier, record in latest.items():
@@ -37,7 +47,7 @@ def settled_step_snapshots(store, run):
             source_id = result.attempt_id if hasattr(record, "finished_at") else result.call_id
             if ((result.run_id, result.id, result.step_id, source_id, result.operation_status)
                     == (run.id, record.result_id, identifier, record.id, record.state)):
-                settled[identifier] = step
+                settled[identifier] = declared_attempt_step(record) if hasattr(record, "finished_at") else step
         except (KeyError, ValueError, OSError, RuntimeError):
             continue
     return settled
@@ -141,9 +151,17 @@ def validate_code_inputs(store, permission, step, *, run=None, request=None, pla
     tool = get_tool(step.tool)
     if not tool.check_contract.get("generic_observations"):
         return
+    if run is not None:
+        from orca_agent.file_references import resolve_step_files
+        step = resolve_step_files(store, run, step, request=request, plan=plan,
+                                  allow_pending=allow_future_geometry)
     code = getattr(step.parameters, "code", None) or getattr(step.parameters, "input", None)
     authorized = set(permission.artifact_ids) | (store.verified_own_artifacts(run) if run else set())
     for reference in [code, *step.parameters.inputs.entries]:
+        if not isinstance(reference, (CodeRef, InputManifestEntry)):
+            _require(run is None or allow_future_geometry and isinstance(reference, ProducerFileRef),
+                     "execution requires resolved hash-pinned task files")
+            continue
         _require(reference.artifact_id in authorized,
                  "task input is outside the permission snapshot")
         store.artifact_path(reference.artifact_id)
@@ -160,12 +178,16 @@ def validate_tool_call_budget(plan: Plan, run: Run) -> None:
     """Count only unreserved Calls; all prior states retain their charged usage."""
     from collections import Counter
 
+    from orca_agent.file_references import simplified_workflow
     from orca_agent.tools.registry import call_usage_counter
 
     reserved = {call.step_id for call in run.calls if call.step_id}
     reserved.update(attempt.step_id for attempt in run.attempts)
     pending = Counter(call_usage_counter(get_tool(step.tool), run.budget)
                       for step in plan.steps if step.id not in reserved)
+    if simplified_workflow(run):
+        pending["analysis_executions"] += sum(
+            "execute_python" in get_tool(step.tool).effects for step in plan.steps if step.id not in reserved)
     for counter, count in pending.items():
         if counter is None:
             continue
@@ -198,8 +220,10 @@ def _step_permissions(step: Step, run: Run, *, authorized_artifacts=()) -> None:
     if "execute_python" in tool.effects:
         _require(permission.code_execution, "task code execution is not authorized")
     if tool.check_contract.get("generic_observations"):
+        from orca_agent.file_references import simplified_workflow
         code = getattr(step.parameters, "code", None) or getattr(step.parameters, "input", None)
-        _require(all(reference.artifact_id in set(permission.artifact_ids) | set(authorized_artifacts)
+        _require(all((isinstance(reference, ProducerFileRef) and simplified_workflow(run))
+                     or getattr(reference, "artifact_id", None) in set(permission.artifact_ids) | set(authorized_artifacts)
                      for reference in [code, *step.parameters.inputs.entries]),
                  "task input is outside the permission snapshot")
     if "query_external_identity" in tool.effects:
@@ -287,11 +311,12 @@ def _native_repair(prior: Step, proposed: Step, run: Run, logical_by_id):
                  and latest.finished_at is not None and latest.result_id is not None,
                  "native input repair requires a settled failed attempt with a Result")
     old, new = _shape(prior, logical_by_id), _shape(proposed, logical_by_id)
+    _repair_file_dependencies(prior, proposed, old, new, run, logical_by_id)
     old_input, new_input = old["parameters"].pop("input"), new["parameters"].pop("input")
     old_files, new_files = old["parameters"].pop("inputs"), new["parameters"].pop("inputs")
     _require(old == new, "native input repair may change input and explicit input copies only; "
              "system, conditions, observations and dependencies are fixed")
-    _require(old_input["sha256"] != new_input["sha256"] or old_files != new_files,
+    _require(_changed_file(old_input, new_input) or old_files != new_files,
              "unchanged native input and input copies are not a repair")
 
 
@@ -305,6 +330,7 @@ def _python_repair(prior: Step, proposed: Step, run: Run, logical_by_id):
                  and latest.finished_at is not None and latest.result_id is not None,
                  "Python repair requires a settled failed attempt with a Result")
     old, new = _shape(prior, logical_by_id), _shape(proposed, logical_by_id)
+    _repair_file_dependencies(prior, proposed, old, new, run, logical_by_id)
     old_code = old["parameters"].pop("code")
     new_code = new["parameters"].pop("code")
     old_inputs = old["parameters"].pop("inputs")
@@ -315,7 +341,7 @@ def _python_repair(prior: Step, proposed: Step, run: Run, logical_by_id):
         new["parameters"].pop("sdk_orca", None)
     _require(old == new, "Python repair may change code and explicit input copies only; "
              "conditions, observations and dependencies are fixed")
-    _require(old_code["sha256"] != new_code["sha256"] or old_inputs != new_inputs,
+    _require(_changed_file(old_code, new_code) or old_inputs != new_inputs,
              "unchanged code and input copies are not a Python repair")
 
 
@@ -325,8 +351,57 @@ def additional_code_attempts_used(run: Run) -> int:
     Historical usage counters remain facts; their old counting rule cannot
     grant new executions when persisted Attempt history proves more usage.
     """
+    from orca_agent.file_references import simplified_workflow
+    if simplified_workflow(run):
+        return max(run.usage.code_retries, sum(
+            attempt.execution_kind == "python" and attempt.number > 1 for attempt in run.attempts))
     return max(run.usage.code_retries,
                sum(attempt.execution_kind == "python" for attempt in run.attempts) - 1)
+
+
+def _repair_file_dependencies(prior, proposed, old, new, run, logical_by_id):
+    """Only explicitly replaced task-file producers may alter repair dependencies."""
+    from orca_agent.file_references import file_references, simplified_workflow
+
+    if not simplified_workflow(run):
+        return
+    protected = {ref.producer_step_id for step in (prior, proposed)
+                 for ref in [step.geometry, *step.inputs.values()] if ref and ref.producer_step_id}
+    file_producers = {ref.producer_step_id for step in (prior, proposed)
+                      for ref in file_references(step) if isinstance(ref, ProducerFileRef)} - protected
+    allowed = {logical_by_id.get(identifier, identifier) for identifier in file_producers}
+    for value in (old, new):
+        value["depends_on"] = [identifier for identifier in value["depends_on"] if identifier not in allowed]
+
+
+def _changed_file(prior, proposed):
+    if "sha256" in prior and "sha256" in proposed:
+        return prior["sha256"] != proposed["sha256"]
+    return prior != proposed
+
+
+def _failed_python_goal_lineage(prior_plan, next_plan, run):
+    """A new ID cannot erase an explicitly recorded failed Goal route."""
+    from orca_agent.file_references import simplified_workflow
+
+    if not simplified_workflow(run):
+        return
+    latest = {attempt.logical_id: attempt for attempt in run.attempts}
+    steps = {step.id: step for step in next_plan.steps}
+    for attempt in latest.values():
+        if attempt.execution_kind != "python" or attempt.state not in {"failed", "timed_out"}:
+            continue
+        goals = set(attempt.consumption.get("_goal_ids", []))
+        if prior_plan:
+            goals.update(identifier for identifier, binding in prior_plan.goal_map.items()
+                         if binding.step_id == attempt.step_id)
+        for identifier in goals:
+            binding = next_plan.goal_map.get(identifier)
+            replacement = steps.get(binding.step_id) if binding else None
+            if replacement is not None and "execute_python" in get_tool(replacement.tool).effects:
+                _require(replacement.logical_id == attempt.logical_id,
+                         "a failed Python Goal route requires the same logical Step; use repair_of, "
+                         "not a new logical ID to reset the retry allowance")
 
 
 def validate_goal_output_contract(request: Request, plan: Plan):
@@ -421,6 +496,11 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     flag cannot erase required goals or relax minimum evidence. Input/result hash
     checks and physical execution remain the Store/Tool consumption boundary.
     """
+    from orca_agent.file_references import (
+        declared_attempt_step,
+        simplified_workflow,
+        validate_file_dependencies,
+    )
     # Revalidate copied/mutated Pydantic objects rather than trusting model_copy.
     prior_request = Request.model_validate(prior_request.model_dump())
     next_request = Request.model_validate(next_request.model_dump())
@@ -440,6 +520,9 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
                  "active Plan may only be suspended by a trusted clarification")
         return
     next_plan.validate_request(next_request)
+    validate_file_dependencies(next_plan, run)
+    if not user_change:
+        _failed_python_goal_lineage(prior_plan, next_plan, run)
     if run.initial_science_steps is None:
         initial_systems = next_request.conditions.get("initial_system_ids")
         if initial_systems is not None:
@@ -468,7 +551,7 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
                      "resuming a suspended Plan must preserve historical identity and version")
         else:
             _require(next_plan.version == 1, "initial Plan requires version 1")
-    historical = [attempt.frozen_step for attempt in run.attempts if attempt.frozen_step]
+    historical = [declared_attempt_step(attempt) for attempt in run.attempts if attempt.frozen_step]
     historical.extend(call.frozen_step for call in run.calls if call.frozen_step)
     previous_steps = historical + (prior_plan.steps if prior_plan else [])
     previous_by_id = {step.id: step for step in previous_steps}
@@ -478,7 +561,7 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     reserved_ids = {attempt.step_id for attempt in run.attempts} | {
         call.step_id for call in run.calls if call.step_id}
     validate_tool_call_budget(next_plan, run)
-    pending_science, extra_science, pending_python = 0, 0, 0
+    pending_science, extra_science, pending_python, pending_python_retries = 0, 0, 0, 0
     for step in next_plan.steps:
         _step_permissions(step, run, authorized_artifacts=authorized_artifacts)
         if step.id in reserved_ids:
@@ -488,6 +571,7 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
         if "execute_python" in get_tool(step.tool).effects:
             if step.id not in reserved_ids:
                 pending_python += 1
+                pending_python_retries += bool(run.usage.logical_attempts.get(step.logical_id, 0))
                 _require(run.usage.logical_attempts.get(step.logical_id, 0) < run.budget.attempts_per_step,
                          "logical Step attempt budget exhausted")
                 old = previous_by_logical.get(step.logical_id)
@@ -533,7 +617,8 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     _require(extra_science <= run.budget.extra_orca_starts - run.usage.extra_orca_starts_reserved,
              "proposed Plan exceeds the remaining extra scientific startup budget")
     free_first_python = int(not any(a.execution_kind == "python" for a in run.attempts))
-    _require(max(0, pending_python - free_first_python) <= max(
+    code_additions = pending_python_retries if simplified_workflow(run) else max(0, pending_python - free_first_python)
+    _require(code_additions <= max(
         0, run.budget.code_retries - additional_code_attempts_used(run)),
              "proposed Plan exceeds the remaining additional code attempt budget")
     _goal_bindings(next_request, next_plan, run)
@@ -542,6 +627,8 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
         for goal in next_request.goals:
             if goal.required and goal.port in {"energy", "optimized_geometry", "dipole_moment"}:
                 binding = next_plan.goal_map.get(goal.id)
+                if simplified_workflow(run) and binding is not None and binding.gap is not None:
+                    continue
                 _require(binding is not None and binding.step_id is not None
                          and _science(next(s for s in next_plan.steps if s.id == binding.step_id)),
                          "first scientific Plan must cover the original required scientific goals")

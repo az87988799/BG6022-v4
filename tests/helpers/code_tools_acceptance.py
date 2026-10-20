@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import sys
+import tomllib
 from datetime import datetime
 from pathlib import Path
 
@@ -183,9 +184,17 @@ def check_rules(project, *, directory=DIRECTORY):
     texts = task_texts(project, directory=selected)
     policy = batch._policy(read_json(directory / "batch-policy.json"))
     config = load_config(directory / "runtime.toml")
-    if policy["configuration_sha256"] != batch.canonical_sha256(config.model_dump(mode="json")):
+    configuration = config.model_dump(mode="json")
+    if "workflow_policy" not in product["configuration"]:
+        # Historical configuration hashes predate this new-Run default. Only
+        # a genuinely absent runtime field can use that historical shape.
+        with (directory / "runtime.toml").open("rb") as stream:
+            if "workflow_policy" in tomllib.load(stream):
+                raise FreezeError("historical configuration cannot add an explicit workflow policy")
+        configuration.pop("workflow_policy", None)
+    if policy["configuration_sha256"] != batch.canonical_sha256(configuration):
         raise FreezeError("batch configuration does not match product configuration")
-    if product["configuration"] != config.model_dump(mode="json"):
+    if product["configuration"] != configuration:
         raise FreezeError("product and task configuration differ")
     slots = {batch.slot_id(s["task_id"], s["repeat"], s["category"]): s for s in policy["slots"]}
     if set(slots) != set(texts):

@@ -332,6 +332,9 @@ def _initial_request(request, config, original):
     raw.systems = systems
     raw.semantic_defaults = dict(config.text.defaults)
     raw.conditions = {"explain_results": True}
+    if config.workflow_policy == "simplified-1":
+        raw.condition_evidence = {"workflow_policy": {
+            "version": "simplified-1", "source": "run_configuration"}}
     if request != raw:
         raise ValueError("fresh Run Request includes prewritten goals, inputs or solution context")
 
@@ -373,7 +376,7 @@ def _fresh_run(row, run_id):
                 or request.original_text != original
                 or request.geometry_artifact_id is not None
                 or any(system.geometry_artifact_id is not None for system in request.systems)
-                or request.messages or request.condition_evidence):
+                or request.messages):
             raise ValueError("fresh Run Request differs from its original text or imports prior inputs")
         _initial_request(request, config, original)
         expected = {

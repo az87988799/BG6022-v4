@@ -178,7 +178,12 @@ def test_unknown_goal_and_step_have_paths_without_inventing_request_goals(tmp_pa
 
 
 @pytest.mark.parametrize("target_kind", ["future", "gap"])
-def test_missing_goal_correction_is_neutral_and_can_keep_a_future_route_or_gap(tmp_path, target_kind):
+def test_missing_goal_correction_is_neutral_and_can_keep_a_future_route_or_gap(tmp_path, target_kind, monkeypatch):
+    from orca_agent.config import Config
+
+    # This test retains the historical explicit-correction policy. New Runs
+    # separately test program-retained gaps without declaring Goal completion.
+    monkeypatch.setitem(make_run.__globals__, "Config", lambda **values: Config(workflow_policy=None, **values))
     store, run, artifact = make_run(tmp_path, two_goals=True)
     proposed = {"steps": [{"key": "read_a", "tool": "evidence.value", "parameters": {
         "artifact_id": artifact.id, "path": [{"kind": "key", "key": "a"}]}}],
@@ -210,6 +215,23 @@ def test_missing_goal_correction_is_neutral_and_can_keep_a_future_route_or_gap(t
     target = store.load_plan(updated).goal_map["b"]
     assert (target.step_id is not None) is (target_kind == "future")
     assert (target.gap is not None) is (target_kind == "gap")
+
+
+def test_new_policy_keeps_missing_goal_as_gap_without_rewriting_request(tmp_path):
+    store, run, artifact = make_run(tmp_path, two_goals=True)
+    assert run.configuration.workflow_policy == "simplified-1"
+    request = store.load_request(run).model_dump(mode="json")
+    original = run.model_dump(mode="json")
+    proposed = {"steps": [{"key": "read_a", "tool": "evidence.value", "parameters": {
+        "artifact_id": artifact.id, "path": [{"kind": "key", "key": "a"}]}}],
+        "goal_map": {"a": {"step_key": "read_a", "port": "value_observation"}}}
+    before = copy.deepcopy(proposed)
+    candidate = materialize_plan(store, run, proposed)
+    assert candidate.goal_map["a"].step_id is not None
+    assert candidate.goal_map["b"].port == "value_observation" and candidate.goal_map["b"].gap
+    assert store.load_request(run).model_dump(mode="json") == request
+    assert run.model_dump(mode="json") == original and proposed == before
+    assert all(value != "satisfied" for value in run.goal_status.values())
 
 
 def test_actual_v23_replies_stay_unmodified_and_fail_their_distinct_contracts(tmp_path):
@@ -266,7 +288,8 @@ def test_public_plan_structure_changes_only_two_expansion_layers_and_declares_sc
     expected["$defs"]["EvidenceRef"] = {"type": "object"}
     # Both Step forms and their CodeRef/InputManifest types become unreachable
     # because steps.items is opaque; no remaining Goal constraint is removed.
-    for name in ("ProposedStep", "ProposedCodeRepair", "CodeRef", "InputManifest", "InputManifestEntry"):
+    for name in ("ProposedStep", "ProposedCodeRepair", "CodeRef", "InputManifest", "InputManifestEntry",
+                 "ArtifactCodeSelection", "ProducerFileRef", "ArtifactInputSelection", "ProducerInputEntry"):
         expected["$defs"].pop(name)
     expected["description"] = (
         "Structural projection only: Step fields and EvidenceRef contents are validated separately.")

@@ -228,8 +228,10 @@ def test_actual_collected_observation_returns_to_same_loop_with_unverified_value
     assert observed["sources"] and observed["limitations"] and "qualified_outputs" not in feedback
 
 
-def selection_context(tmp_path, *, source=None, authorized=True, systems=(), native_only=False, general=False):
+def selection_context(tmp_path, *, source=None, authorized=True, systems=(), native_only=False, general=False,
+                      simplified=False):
     config = load_config(Path("config.code.example.toml"))
+    config.workflow_policy = "simplified-1" if simplified else None
     if not general:
         from orca_agent.models import NativeInputPolicy
         config.execution = config.execution.model_copy(update={"native_input_policy": NativeInputPolicy()})
@@ -248,6 +250,8 @@ def selection_context(tmp_path, *, source=None, authorized=True, systems=(), nat
         condition_evidence={"automatic_selection." + field: {
             "text_basis": "choose a suitable method and basis from documentation", "message_id": "user_1"}
             for field in ("method", "basis")} if authorized else {})
+    if simplified:
+        request.condition_evidence["workflow_policy"] = {"version": "simplified-1", "source": "run_configuration"}
     store = Store(tmp_path / "data", environment_root=tmp_path / "environment")
     permission = config.text.permission
     if native_only:
@@ -618,7 +622,7 @@ def test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_hist
     request, run = objects()
     prepared = context.build_context(request, run)
     wire = decoded(prepared)
-    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v76"
+    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v77"
     assert {"agent-json-v22", "agent-json-v34", "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41", "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47"} <= DECISION_CONTRACT_PROMPT_VERSIONS
     assert "TASK_CODE_RULES" not in wire and "native_input_contract" not in wire["AUTHORITY"]
     assert run.permission.code_execution is False
@@ -713,11 +717,12 @@ def test_current_generated_intake_uses_single_source_scope_and_v3_schema(tmp_pat
         user_messages=[{"id": "new_message", "text": "Preserve the original quantity and source requirements."}])
     wire = decoded(prepared)
     schema = normalized_schema(wire["ACTION_SCHEMAS"]["normalize_request"])
-    expected = normalized_schema(native_schema(semantic.SemanticCandidate.model_json_schema()))
-    assert schema["properties"]["schema_version"] == {"const": semantic.VERSION}
+    expected = normalized_schema(native_schema(contract["normalize_request"]["schema"]))
+    assert schema["properties"]["schema_version"]["const"] == semantic.VERSION
     for field in ("identities", "automatic_selection"):
         assert schema["properties"][field] == expected["properties"][field]
     visible = wire["INTENT_RULES"]
+    assert "schema" not in visible  # The same contract is already ACTION_SCHEMAS.normalize_request.
     if code_authorized:
         assert visible["generated_task_intent"] == contract["normalize_request"]["generated_task_intent"]
         assert "confidently known English lookup alias" in visible["generated_task_intent"]

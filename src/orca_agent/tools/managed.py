@@ -32,10 +32,23 @@ from orca_agent.tools.calculation import _save_json
 from orca_agent.tools.registry import get_tool
 
 
+def _plan_step_matches(store, run, step, *, request=None, plan=None, allow_pending=False):
+    from orca_agent.file_references import resolve_step_files
+
+    plan = plan if plan is not None else store.load_plan(run)
+    declared = next((item for item in plan.steps if item.id == step.id), None) if plan else None
+    if declared is None:
+        return False
+    if declared == step:
+        return True
+    return resolve_step_files(store, run, declared, request=request, plan=plan,
+                              allow_pending=allow_pending) == step
+
+
 def _control(store, run, step):
     from orca_agent.models import PermissionSnapshot
 
-    if store.load_run(run.id) != run or step not in store.load_plan(run).steps:
+    if store.load_run(run.id) != run or not _plan_step_matches(store, run, step):
         raise ValueError("Run or Plan changed before managed execution")
     snapshot = json.loads(store.path(f"runs/{run.id}/permission.json").read_text("utf-8"))
     if PermissionSnapshot.model_validate(snapshot) != run.permission:
@@ -100,7 +113,8 @@ def validate_sdk_orca_preconditions(store, run, step, *, request=None, plan=None
         raise ValueError("sdk_orca=true requires authorized managed ORCA execution")
     request = request if request is not None else store.load_request(run)
     plan = plan if plan is not None else store.load_plan(run)
-    if plan is None or step not in plan.steps:
+    if plan is None or not _plan_step_matches(
+            store, run, step, request=request, plan=plan, allow_pending=allow_future_geometry):
         raise ValueError("SDK preflight requires the current or candidate frozen Step")
     if len(request.systems) > 1 and step.system_id is None:
         raise ValueError("sdk_orca=true requires an explicit requested system")
@@ -128,7 +142,7 @@ def native_input_binding(store, run, step, *, request=None, plan=None):
         return canonical_native_condition(name, value, policy=policy)
     request = request if request is not None else store.load_request(run)
     plan = plan if plan is not None else store.load_plan(run)
-    if step not in plan.steps:
+    if not _plan_step_matches(store, run, step, request=request, plan=plan):
         raise ValueError("native input binding requires the current frozen Step")
     if len(request.systems) > 1 and step.system_id is None:
         raise ValueError("native execution requires an explicit requested system")
@@ -139,22 +153,53 @@ def native_input_binding(store, run, step, *, request=None, plan=None):
         raise ValueError("native conditions unresolved: " + ",".join(assessment["reasons"]))
     conditions = {name: canonical(name, value)
                   for name, value in assessment["conditions"].items()}
+    condition_sources = dict(assessment["sources"])
     if any(value is None for value in conditions.values()):
         raise ValueError("current Request condition is unsupported by the frozen native execution profile")
+    simplified = store.run_configuration(run).workflow_policy == "simplified-1"
+    related_goals = [goal for goal in request.goals if (
+        (plan.goal_map.get(goal.id) and plan.goal_map[goal.id].step_id == step.id)
+        or system_id in goal.system_ids or not goal.system_ids)]
+    mapped_goals = [goal for goal in related_goals if (
+        plan.goal_map.get(goal.id) and plan.goal_map[goal.id].step_id == step.id)]
+    selected_goals = mapped_goals or related_goals
+    environments = {conditions["environment"]}
+    if (simplified and request.conditions_source.get("environment") == "default"
+            and not (system and "environment" in system.conditions)):
+        scoped_environments = set()
+        for goal in selected_goals:
+            if "environment" in goal.conditions:
+                value = canonical("environment", goal.conditions["environment"])
+                if value is None:
+                    raise ValueError("Goal environment has no admitted execution mapping")
+                scoped_environments.add(value)
+        if scoped_environments:
+            environments = scoped_environments
+            condition_sources["environment"] = "goal:" + ",".join(
+                goal.id for goal in selected_goals if "environment" in goal.conditions)
+            if conditions["environment"] not in environments:
+                conditions["environment"] = sorted(environments)[0]
     for name, value in step.parameters.conditions.items():
+        if simplified and name == "environment":
+            selected = canonical(name, value)
+            if selected not in environments:
+                raise ValueError("Step environment is outside the requested conditions")
+            conditions[name] = selected
+            condition_sources[name] = "step:" + step.id
+            environments = {selected}
+            continue
         if name in CONDITION_FIELDS and canonical(name, value) != conditions[name]:
             raise ValueError("Step condition conflicts with current Request: " + name)
-    for goal in request.goals:
+    for goal in selected_goals if simplified else request.goals:
         target = plan.goal_map.get(goal.id)
         if (target and target.step_id == step.id) or system_id in goal.system_ids:
             for name, value in goal.conditions.items():
+                if simplified and name == "environment" and canonical(name, value) in environments:
+                    continue
                 if name in CONDITION_FIELDS and canonical(name, value) != conditions[name]:
                     raise ValueError("Goal condition conflicts with native execution: " + name)
     geometry_id, geometry, geometry_bytes = _initial_geometry(store, run, request, system_id)
     policy = store.run_configuration(run).execution.native_input_policy
-    related_goals = [goal for goal in request.goals if (
-        (plan.goal_map.get(goal.id) and plan.goal_map[goal.id].step_id == step.id)
-        or system_id in goal.system_ids or not goal.system_ids)]
     relations = [scope.get("geometry_relation") for scope in (
         request.conditions, system.conditions if system else {}, step.parameters.conditions,
         *(goal.conditions for goal in related_goals))]
@@ -167,10 +212,14 @@ def native_input_binding(store, run, step, *, request=None, plan=None):
         candidate_binding = {"allow_task_geometry": True,
             "initial_atom_symbols": [line.split()[0] for line in
                 geometry_bytes.decode("ascii").splitlines()[2:2 + count]]}
+    workflow = ({"workflow_policy": "simplified-1"}
+                if simplified else {})
+    if simplified and len(environments) > 1:
+        workflow["allowed_condition_values"] = {"environment": sorted(environments)}
     return {"request_id": request.id, "request_version": request.version,
             "step_id": step.id, "system_id": system_id, "conditions": conditions,
-            "condition_sources": assessment["sources"], "geometry_artifact_id": geometry_id,
-            "geometry_sha256": geometry.sha256, **candidate_binding}
+            "condition_sources": condition_sources, "geometry_artifact_id": geometry_id,
+            "geometry_sha256": geometry.sha256, **candidate_binding, **workflow}
 
 
 def launch_orca(store, run, step, config, prepared, workdir, root, *,
@@ -349,7 +398,9 @@ def _launch_container_orca(store, run, step, config, prepared, workdir, root, *,
             try:
                 container.collect(boundary, "orca", workdir,
                                   limits=_collection_limits(store, run),
-                                  checkpoint=checkpoint if parent_handle else None)
+                                  checkpoint=checkpoint if parent_handle and (
+                                      configuration.workflow_policy != "simplified-1"
+                                      or boundary["running"]) else None)
             except Exception as exc:
                 outcome.update(state="failed", reason=f"container_collection_error: {exc}")
                 outcome["collection_error"] = str(exc)
@@ -384,7 +435,9 @@ def _prepare_native_boundary(config, root, workdir):
 
 def _archive(store, run, attempt, folder, prefix, artifacts=None, *, checkpoint=None):
     artifacts = {} if artifacts is None else artifacts
-    seconds = min(store.archive_timeout(run), max(0, (run.deadline - utc_now()).total_seconds()))
+    seconds = store.archive_timeout(run)
+    if store.run_configuration(run).workflow_policy != "simplified-1":
+        seconds = min(seconds, max(0, (run.deadline - utc_now()).total_seconds()))
     deadline = time.monotonic() + seconds
 
     def archive_checkpoint():
@@ -739,14 +792,26 @@ class _Broker:
         _save_json(internal_root / "execution.json", outcome)
         files = {}
         collection_error = outcome.get("collection_error")
+        collection_checkpoint = checkpoint
+        if (configuration.workflow_policy == "simplified-1" and self.container_boundary
+                and not self.container_boundary["running"] and outcome["state"] != "unknown"):
+            # run_managed confirmed termination. Read-only evidence recovery has
+            # its own finite deadline, independent of the expired computation.
+            collection_deadline = time.monotonic() + self.store.archive_timeout(self.run)
+
+            def collection_checkpoint():
+                if time.monotonic() >= collection_deadline:
+                    raise TimeoutError("settled internal evidence collection deadline exhausted")
         try:
             if outcome["state"] != "unknown":
-                _archive(self.store, self.run, self.attempt, task, "", files, checkpoint=checkpoint)
+                _archive(self.store, self.run, self.attempt, task, "", files,
+                         checkpoint=collection_checkpoint)
                 for name in ("intent.json", "started.json", "actual-start.json", "prepared.json", "execution.json", "runtime-manifest.json"):
                     path = internal_root / name
                     if path.exists():
                         artifact = self.store.import_artifact(path, "execution_record", run_id=self.run.id,
-                                                              attempt_id=self.attempt.id, checkpoint=checkpoint)
+                                                              attempt_id=self.attempt.id,
+                                                              checkpoint=collection_checkpoint)
                         files["record/" + name] = {"artifact_id": artifact.id, "sha256": artifact.sha256}
         except Exception as exc:
             collection_error = str(exc)
@@ -898,11 +963,28 @@ def _settle_interrupted_calls(store, run, attempt, outcome):
 def execute(store, run, step, attempt, config, fault=None):
     """Execute generic Tools in the frozen boundary; no host execution fallback."""
     from orca_agent.backends.runtime_files import stage_python_runtime
+    from orca_agent.file_references import resolve_step_files
 
     root = store.path(attempt.directory)
     task = root / "task"
     task.mkdir()
     resources = store.run_configuration(run).resources
+    try:
+        file_sources = {}
+        resolved = resolve_step_files(store, run, step, sources=file_sources)
+        if resolved != attempt.frozen_step:
+            raise ValueError("execution files differ from the reserved immutable Attempt")
+        if file_sources != attempt.consumption.get("_file_sources", {}):
+            raise ValueError("execution file provenance changed after reservation")
+    except Exception as exc:
+        # File resolution is strictly read-only and precedes any boundary start.
+        # A stale source therefore has a known not-started outcome, not an
+        # unknown computation that strands the reserved environment lease.
+        outcome = {"state": "failed", "reason": f"prelaunch_rejected: {exc}",
+                   "not_started": True, "handle": None, "exit_code": None, "resource_usage": {}}
+        _save_json(root / "execution.json", outcome)
+        return collect_result(store, run, attempt.frozen_step, attempt, outcome), outcome
+    step = attempt.frozen_step
     if (store.run_configuration(run).execution.backend == "linux-container"
             and "execute_python" in get_tool(step.tool).effects):
         return _execute_container_python(store, run, step, attempt, config, root, task, fault)

@@ -82,13 +82,27 @@ def _direct_native_source(store, run, artifact):
     prepared = _strict_json(path.read_bytes())
     workload = parent.native_workload
     if (not isinstance(prepared, dict) or any(prepared.get(key) != value for key, value in workload.items())
-            or prepared.get("admission_version") not in {"native-orca-input-2", "native-orca-input-3"}
-            or prepared.get("input_sha256") != parent.frozen_step.parameters.input.sha256):
+            or prepared.get("admission_version") not in {"native-orca-input-2", "native-orca-input-3"}):
         raise ValueError("direct native admission differs from the frozen workload")
+    simplified = store.run_configuration(run).workflow_policy == "simplified-1"
+    source_hash = (prepared.get("source_input_sha256", prepared.get("input_sha256"))
+                   if simplified else prepared.get("input_sha256"))
+    if source_hash != parent.frozen_step.parameters.input.sha256:
+        raise ValueError("direct native admission differs from the frozen source input")
     code = store.load_artifact(parent.frozen_step.parameters.input.artifact_id)
     store.artifact_path(code.id)
-    if code.sha256 != prepared["input_sha256"]:
+    if code.sha256 != source_hash:
         raise ValueError("direct native source input changed")
+    if simplified:
+        executed_ref = result.source.get("files", {}).get("task/job.inp", {})
+        executed = store.load_artifact(executed_ref["artifact_id"])
+        if ((executed.run_id, executed.attempt_id, executed.role) != (run.id, parent.id, "raw_evidence")
+                or executed.source.get("task_path") != "task/job.inp"
+                or result.artifact_ids.count(executed.id) != 1
+                or executed.sha256 != executed_ref.get("sha256")
+                or executed.sha256 != prepared.get("input_sha256")):
+            raise ValueError("direct native executed input archive binding differs")
+        store.artifact_path(executed.id)
     actual = prepared.get("actual_conditions")
     if not isinstance(actual, dict) or actual.get("request_version") != parent.request_version:
         raise ValueError("direct native admission conditions are missing or changed")
@@ -474,6 +488,40 @@ def _same_archived_observations(rebuilt, recorded):
     return True
 
 
+def _comparison_environment_goals(run, request, goal, requested):
+    """Project explicit source Goals for a new, same-system derived observation.
+
+    The source Goals supply the bounded alternatives, not a task-authored formula
+    or a solvent name found in an output. Historical and single-environment
+    contracts do not acquire this interpretation.
+    """
+    from orca_agent.orca.native_profile import canonical_native_condition
+
+    marker = request.condition_evidence.get("workflow_policy", {})
+    if (getattr(run.configuration, "workflow_policy", None) != "simplified-1"
+            or marker.get("version") != "simplified-1"
+            or goal.evidence_contract_version != "generic-observation-1"
+            or goal.verification != "reported_with_limitations"
+            or "environment" in goal.conditions or len(requested) != 1
+            or request.conditions_source.get("environment") != "default"):
+        return {}
+    system = next((item for item in request.systems if item.id == requested[0]), None)
+    if system is None or "environment" in system.conditions:
+        return {}
+    alternatives = {}
+    for source_goal in request.goals:
+        evidence = source_goal.text_evidence.get("conditions", {}).get("environment", {})
+        if (source_goal.id == goal.id or source_goal.system_ids != requested
+                or source_goal.unresolved or evidence.get("source") != "explicit"):
+            continue
+        environment = canonical_native_condition(
+            "environment", source_goal.conditions.get("environment"), policy="managed-native-1")
+        if environment is None:
+            continue
+        alternatives.setdefault(environment, []).append(source_goal)
+    return alternatives if len(alternatives) > 1 else {}
+
+
 def _assess_general_sources(store, run, request, goal, step, attempt, observation):
     """Compare each admitted source with its requested scope, not with its peers."""
     from orca_agent.orca.native_profile import canonical_native_condition
@@ -498,7 +546,15 @@ def _assess_general_sources(store, run, request, goal, step, attempt, observatio
             if direct is None:
                 raise ValueError("direct native observation source lost its original provenance")
             selected.append(direct)
-        covered = set()
+        environment_goals = _comparison_environment_goals(run, request, goal, requested)
+        covered, covered_environments = set(), set()
+        # Different citations of one receipt do not establish two calculations.
+        multiple_sources = len(selected) > 1 and len({
+            source.artifact_id for source in observation.sources
+            if source.internal_request_key or source.actual_conditions.get("native_attempt_id")
+        }) > 1
+        if environment_goals and not multiple_sources:
+            reasons.append("comparison_requires_multiple_native_sources")
         for receipt in selected:
             actual = receipt.actual_conditions
             system_id = actual.get("system_id")
@@ -508,21 +564,37 @@ def _assess_general_sources(store, run, request, goal, step, attempt, observatio
                     or step.system_id is not None and system_id != step.system_id):
                 raise ValueError("native_input_purpose_binding_missing_or_changed")
             covered.add(system_id)
-            assessment = _native_current_conditions(request, goal, system_id, policy="managed-native-1")
-            reasons.extend(assessment["reasons"])
-            for name, expected in assessment["conditions"].items():
-                canonical = canonical_native_condition(name, expected, policy="managed-native-1")
-                if canonical is None or canonical != canonical_native_condition(
-                        name, actual.get(name), policy="managed-native-1"):
-                    reasons.append("native_source_condition_missing_or_mismatch:" + name)
-            relation, extra = _additional_conditions(request, goal, system_id, actual=actual)
-            reasons.extend(extra)
-            if relation is not None:
-                source_observation = observation.model_copy(update={"sources": [source for source in observation.sources
-                    if (source.internal_request_key == receipt.request_key if receipt.request_key is not None else
-                        source.actual_conditions.get("native_attempt_id") == receipt.parent_attempt_id)]})
-                _geometry_relation_evidence(store, run, request, step, attempt, source_observation,
-                                            [receipt], system_id, relation)
+            constraints = [goal]
+            if environment_goals:
+                environment = canonical_native_condition(
+                    "environment", actual.get("environment"), policy="managed-native-1")
+                if environment in environment_goals:
+                    covered_environments.add(environment)
+                    if multiple_sources:
+                        constraints = [goal.model_copy(update={
+                            "conditions": {**goal.conditions, "environment": environment}}),
+                            *environment_goals[environment]]
+                else:
+                    reasons.append("native_source_environment_outside_requested_comparison")
+            for constraint in constraints:
+                assessment = _native_current_conditions(request, constraint, system_id, policy="managed-native-1")
+                reasons.extend(assessment["reasons"])
+                for name, expected in assessment["conditions"].items():
+                    canonical = canonical_native_condition(name, expected, policy="managed-native-1")
+                    if canonical is None or canonical != canonical_native_condition(
+                            name, actual.get(name), policy="managed-native-1"):
+                        reasons.append("native_source_condition_missing_or_mismatch:" + name)
+                relation, extra = _additional_conditions(request, constraint, system_id, actual=actual)
+                reasons.extend(extra)
+                if relation is not None:
+                    source_observation = observation.model_copy(update={"sources": [
+                        source for source in observation.sources
+                        if (source.internal_request_key == receipt.request_key if receipt.request_key is not None else
+                            source.actual_conditions.get("native_attempt_id") == receipt.parent_attempt_id)]})
+                    _geometry_relation_evidence(store, run, request, step, attempt, source_observation,
+                                                [receipt], system_id, relation)
+        if environment_goals and covered_environments != set(environment_goals):
+            reasons.append("comparison_requested_environment_source_missing")
         if requested and covered != set(requested):
             reasons.append("generic_observation_requested_system_source_missing")
         if any(source.actual_conditions.get("origin") == "registered_task_input"

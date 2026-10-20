@@ -71,6 +71,13 @@ Only legacy HF neutral-singlet requests inherit the historical state/environment
         value = canonical_condition(name, value)
         if goal and name in goal.conditions:
             constraint = canonical_condition(name, goal.conditions[name])
+            workflow = request.condition_evidence.get("workflow_policy", {})
+            scoped_default = (workflow.get("version") == "simplified-1"
+                and name == "environment" and constraint is not None
+                and request.conditions_source.get(name) == "default"
+                and not (system and name in system.conditions))
+            if scoped_default:
+                value, origin = constraint, "goal:" + goal.id
             if value is None or constraint is None:
                 reasons.append("unknown_condition:" + name)
             elif constraint != value:

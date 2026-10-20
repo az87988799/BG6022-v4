@@ -59,18 +59,26 @@ def test_real_plan_rejections_keep_original_schema_errors_and_add_actionable_fee
         # The last proposal has the same malformed ID/hash fields but no next
         # live send; this comparison is explicitly an offline schema replay.
         baseline = json.loads(FIXTURE.read_bytes())["replies"][1]["historical_correction_in_next_send"]
-    assert {key: detail[key] for key in baseline} == baseline
+    assert {key: detail[key] for key in baseline if key != "errors"} == {
+        key: value for key, value in baseline.items() if key != "errors"}
+    # New reference alternatives add possible-selector diagnostics. Every
+    # historical concrete ID/hash failure must still survive at its real path.
+    assert all(error in detail["errors"] for error in baseline["errors"])
+    assert len(detail["errors"]) <= 8
+    assert not any(part in {"CodeRef", "ArtifactCodeSelection", "InputManifestEntry",
+                           "ArtifactInputSelection", "ProducerFileRef", "ProducerInputEntry", "[field]"}
+                   for error in detail["errors"] for part in error["loc"])
     fields = ["input"] if index == 0 else ["input", "inputs"]
     assert [item["path"] for item in detail["corrections"]] == [
         ["parameters", "steps", 3, "parameters", field] for field in fields]
     for item in detail["corrections"]:
-        assert item["reason"] == "concrete_artifact_reference_required"
+        assert item["reason"] == "explicit_file_reference_required"
         instruction = item["instruction"]
-        assert "If the files already exist" in instruction
-        assert "If required Artifacts do not yet exist" in instruction
-        assert "partial Plan" in instruction and "revise_plan" in instruction
-        assert "Retain existing valid goal bindings" in instruction
-        assert "unchanged-port gaps only for pending outputs" in instruction
+        assert "registered Artifact reference" in instruction
+        assert "producer_step_id/producer_key" in instruction and "exact file_key" in instruction
+        assert "simplified-1" in instruction and "Historical policies still require concrete ID/hash" in instruction
+        assert "union alternatives are not cumulative" in instruction
+        assert "Never guess hashes or weaken Goals" in instruction
         assert "B3LYP" not in instruction and "ethanol" not in instruction
     feedback = {"category": "ProposalError", "requirement": detail}
     prepared = build_context(store.load_request(run), run, relevant_tools=[], results=[],
@@ -137,3 +145,27 @@ def test_unrelated_schema_failure_does_not_receive_artifact_guidance():
     detail = _schema_error(caught.value, path=["parameters"], tool="orca.sp").detail
     assert "corrections" not in detail
     assert "not-an-integer" not in json.dumps(detail)
+
+
+def test_many_reference_errors_keep_each_affected_field_within_eight_error_bound():
+    values = {
+        "input": {"artifact_id": "invalid id", "sha256": "wrong", "language": "orca"},
+        "inputs": {"entries": [{"artifact_id": "invalid id", "sha256": "wrong",
+                               "target_path": f"file{index}.xyz", "purpose": "source"}
+                              for index in range(12)]},
+        "observation_names": ["invalid-name"],
+    }
+    with pytest.raises(ValidationError) as caught:
+        validate_parameters("orca.run", values)
+    detail = _schema_error(caught.value, path=["parameters"], tool="orca.run").detail
+    assert len(detail["errors"]) == 8
+    assert len({json.dumps(error, sort_keys=True) for error in detail["errors"]}) == 8
+    assert {error["loc"][1] for error in detail["errors"]} == {
+        "input", "inputs", "observation_names"}
+    assert {tuple(item["path"]) for item in detail["corrections"]} == {
+        ("parameters", "input"), ("parameters", "inputs")}
+    for field in ("artifact_id", "sha256"):
+        assert {"type": "string_pattern_mismatch", "loc": ["parameters", "input", field]} in detail["errors"]
+        assert {"type": "string_pattern_mismatch",
+                "loc": ["parameters", "inputs", "entries", 0, field]} in detail["errors"]
+    assert "invalid id" not in json.dumps(detail) and "wrong" not in json.dumps(detail)
