@@ -1,4 +1,4 @@
-"""Reproduce two historical v3 figures from saved evidence only.
+"""Reproduce two V3 figures from saved evidence only.
 
 No model, ORCA, network, or product-runtime invocation. Requires Matplotlib;
 an existing figures/.runtime is used when present, without installing anything.
@@ -102,7 +102,7 @@ def export(fig: plt.Figure, name: str) -> None:
     fig.savefig(OUT / f"{name}.pdf", metadata={
         "Creator": "make_v3_figures.py / Matplotlib",
         "Title": name,
-        "Subject": "Historical v3 saved evidence; no new scientific execution",
+        "Subject": "V3 evaluation evidence; no new scientific execution",
     })
     fig.savefig(OUT / f"{name}.png", dpi=220)
     plt.close(fig)
@@ -134,15 +134,15 @@ def scientific_matrix(data: dict) -> None:
     ax.tick_params(axis="both", length=0, pad=8)
     for spine in ax.spines.values():
         spine.set_visible(False)
-    fig.text(0.055, 0.965, "Historical v3: frozen scientific matrix", fontsize=12,
+    fig.text(0.055, 0.965, "V3 fixed scientific task matrix", fontsize=12,
              weight="bold", color=NAVY, va="top")
     fig.text(0.055, 0.895, "11 selected cells passed | 16 real ORCA attempts | 0 LLM calls",
              fontsize=10, va="top")
     fig.legend(handles=[Patch(facecolor=TEAL, label="Selected cell: PASS"),
-                        Patch(facecolor=GRAY, label="Not in frozen matrix")],
+                        Patch(facecolor=GRAY, label="Outside selected matrix")],
                loc="lower left", bbox_to_anchor=(0.045, 0.12), ncol=2,
                frameon=False, handlelength=1.2, columnspacing=1.8)
-    fig.text(0.055, 0.092, "Developer probes with fixed Request/Plan; cell labels show wall time.", fontsize=9)
+    fig.text(0.055, 0.092, "Fixed requests and plans; cell annotations report wall time.", fontsize=9)
     fig.text(0.055, 0.035, "ORCA 6.1.1 | 4 cores / 1024 MB / MaxCore 192 MB | 2026-09-24", fontsize=9, color=MUTED)
     export(fig, "v3-scientific-matrix")
 
@@ -187,14 +187,14 @@ def core_costs(data: dict) -> None:
         label = f"{value:.2f}" if value < 0.1 else f"{value:.1f}"
         right.text(value + 8, y, label, va="center", fontsize=9)
 
-    fig.text(0.055, 0.965, "Historical v3: Benchmark 1.2 core costs", fontsize=12,
+    fig.text(0.055, 0.965, "V3 fixed-scenario evaluation: computational costs", fontsize=12,
              weight="bold", color=NAVY, va="top")
-    fig.text(0.055, 0.905, "18/18 fixed-scenario scores | 16 compute items | 147,938 model tokens",
+    fig.text(0.055, 0.905, "18/18 fixed scenarios | 16 compute items | 147,938 model tokens",
              fontsize=10, va="top")
-    fig.text(0.055, 0.175, "* C003 and C004 are no-compute scenarios (0 ORCA attempts).", fontsize=9)
-    fig.text(0.055, 0.125, "23 ORCA attempts include one intentionally failed Opt and its bounded repair.", fontsize=9)
-    fig.text(0.055, 0.075, "Bars sum item times; full-run wall time is 667.55 s. T002 includes 2 name cases.", fontsize=9)
-    fig.text(0.055, 0.025, "Frozen prompts and scripted public confirmation | deepseek-flash | 2026-09-24", fontsize=9, color=MUTED)
+    fig.text(0.055, 0.175, "* Two no-compute scenarios: clarification and refusal (0 ORCA attempts).", fontsize=9)
+    fig.text(0.055, 0.125, "23 ORCA attempts include one preset optimization failure and bounded repair.", fontsize=9)
+    fig.text(0.055, 0.075, "Summed item times; total elapsed time: 667.55 s. T002 includes 2 name cases.", fontsize=9)
+    fig.text(0.055, 0.025, "Fixed prompts; scripted confirmations | DeepSeek Flash | 2026-09-24", fontsize=9, color=MUTED)
     export(fig, "v3-core-costs")
 
 

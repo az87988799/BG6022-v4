@@ -8,8 +8,18 @@ Run from any working directory: python path/to/make_figures.py
 from __future__ import annotations
 
 import json
+import os
+import sys
 from decimal import Decimal
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+OUT = ROOT / "figures"
+RUNTIME = OUT / ".runtime"
+ABI = f"cp{sys.version_info.major}{sys.version_info.minor}"
+if RUNTIME.is_dir() and any((RUNTIME / "numpy" / "_core").glob(f"_multiarray_umath.{ABI}-*.pyd")):
+    sys.path.insert(0, str(RUNTIME))
+    os.environ.setdefault("MPLCONFIGDIR", str(RUNTIME / "mplconfig"))
 
 import matplotlib
 
@@ -17,8 +27,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-ROOT = Path(__file__).resolve().parent
-OUT = ROOT / "figures"
 NAVY, TEAL, AMBER, INK = "#17324D", "#148C8C", "#D99B2B", "#26384A"
 
 
@@ -70,6 +78,10 @@ def style() -> None:
 
 
 def export(fig: plt.Figure, name: str) -> None:
+    fig.canvas.draw()
+    for text in fig.findobj(matplotlib.text.Text):
+        if text.get_text() and text.get_visible():
+            assert text.get_fontsize() >= 9, text.get_text()
     fig.savefig(OUT / f"{name}.pdf", metadata={"Creator": "make_figures.py / Matplotlib", "Title": name})
     fig.savefig(OUT / f"{name}.png", dpi=220)
     plt.close(fig)
@@ -107,7 +119,7 @@ def latest_tasks(data: dict) -> None:
     fig.legend(handles, legend_labels, loc="lower right", bbox_to_anchor=(0.97, 0.072),
                frameon=False, ncol=2, borderaxespad=0, handlelength=1.1,
                columnspacing=1.1, handletextpad=0.5)
-    fig.text(0.075, 0.965, "Latest frozen batch: complete task goals 0/7", fontsize=11, weight="bold", va="top")
+    fig.text(0.075, 0.965, "V4 final evaluation: complete task goals 0/7", fontsize=11, weight="bold", va="top")
     fig.text(0.075, 0.025, "Normal termination does not establish scientific qualification or goal completion.", fontsize=9)
     export(fig, "latest-tasks")
 
@@ -116,8 +128,8 @@ def bounded_conformers(data: dict, verified: dict) -> None:
     conformers = data["bounded_conformers"]
     rows = conformers["members"]
     energies = verified["relative_energies_recomputed_kj_mol"]
-    fig, ax = plt.subplots(figsize=(6.7, 3.8))
-    fig.subplots_adjust(left=0.13, right=0.97, top=0.86, bottom=0.29)
+    fig, ax = plt.subplots(figsize=(6.7, 4.0))
+    fig.subplots_adjust(left=0.13, right=0.97, top=0.86, bottom=0.34)
     bars = ax.bar([row["id"] for row in rows], energies, color=[TEAL, NAVY, NAVY, NAVY], width=0.62)
     ax.scatter([0], [0], s=25, color=TEAL, zorder=3)
     ax.set(ylabel=r"$\Delta E$ (kJ mol$^{-1}$)", ylim=(0, 6.3))
@@ -125,16 +137,17 @@ def bounded_conformers(data: dict, verified: dict) -> None:
     ax.grid(axis="y")
     for bar, value in zip(bars, energies):
         ax.text(bar.get_x() + bar.get_width() / 2, value + 0.13, f"{value:.3f}", ha="center", fontsize=10)
-    fig.text(0.13, 0.965, "Finite n-hexane sample: 4 of 12 saved candidates", fontsize=11, weight="bold", va="top")
-    fig.text(0.13, 0.15, "B3LYP/6-31G single points; reference is the lowest of these four.", fontsize=9.5)
-    fig.text(0.13, 0.095, "No ORCA optimization, frequencies, free energies or global-minimum claim.", fontsize=9)
-    fig.text(0.13, 0.035, "Final delivery included disclosed developer metadata assistance.", fontsize=9)
+    fig.text(0.13, 0.965, "V4 n-hexane: relative energies in a bounded sample", fontsize=11, weight="bold", va="top")
+    fig.text(0.13, 0.205, "B3LYP/6-31G single points; reference: lowest of 4/12 candidates.", fontsize=9)
+    fig.text(0.13, 0.15, "No optimization, frequencies, free energies or global-minimum claim.", fontsize=9)
+    fig.text(0.13, 0.095, "Force-field convergence and candidate distinctness not fully verified.", fontsize=9)
+    fig.text(0.13, 0.04, "Metadata-assisted reporting; not an autonomous benchmark success.", fontsize=9)
     export(fig, "bounded-conformers")
 
 
 def evaluation_history(data: dict) -> None:
     rows = data["evaluation_history"]["batches"]
-    labels = [f"{row['label']}\n{row['product_commit'][:7]}" for row in rows]
+    labels = [str(index) for index, _ in enumerate(rows, start=1)]
     tokens = [row["model_tokens"] / 1_000_000 for row in rows]
     starts = [row["orca_starts"] for row in rows]
     fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.95))
@@ -144,7 +157,7 @@ def evaluation_history(data: dict) -> None:
         (axes[1], starts, TEAL, "(b) ORCA starts", "Actual ORCA starts", 9.5),
     ]:
         bars = ax.bar(labels, values, width=0.63, color=color)
-        ax.set(ylabel=ylabel, ylim=(0, ymax))
+        ax.set(ylabel=ylabel, ylim=(0, ymax), xlabel="Evaluation iteration")
         ax.set_title(title, loc="left", pad=12)
         ax.grid(axis="y")
         if ax is axes[1]:
@@ -153,9 +166,9 @@ def evaluation_history(data: dict) -> None:
             display = f"{value:.3f}" if ax is axes[0] else str(value)
             ax.text(bar.get_x() + bar.get_width() / 2, value + ymax * 0.035, display,
                     ha="center", fontsize=9.5)
-    fig.text(0.085, 0.965, "Four frozen candidates: complete task goals 0/7 in every batch", fontsize=10.5, weight="bold", va="top")
-    fig.text(0.085, 0.075, "Different versions; these are not independent repeats of one candidate.", fontsize=9.5)
-    fig.text(0.085, 0.025, "Batch costs and starts do not measure a successful-task improvement trend.", fontsize=9)
+    fig.text(0.085, 0.965, "V4 successive evaluations: complete task goals 0/7 in each", fontsize=10.5, weight="bold", va="top")
+    fig.text(0.085, 0.075, "Different versions and repeated task exposure preclude causal comparisons.", fontsize=9)
+    fig.text(0.085, 0.025, "Resource use and ORCA starts do not establish improved task completion.", fontsize=9)
     export(fig, "evaluation-history")
 
 

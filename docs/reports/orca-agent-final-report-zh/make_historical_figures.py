@@ -1,4 +1,4 @@
-"""Reproduce historical scientific figures from audited frozen evidence.
+"""Reproduce V2 scientific figures from audited evidence.
 
 Requires Matplotlib. Run with a Python environment that already provides it;
 this script neither installs dependencies nor launches scientific calculations.
@@ -9,8 +9,18 @@ evaluation supplies the reference energy and is never drawn as an extra cycle.
 from __future__ import annotations
 
 import json
+import os
+import sys
 from decimal import Decimal
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+OUT = ROOT / "figures"
+RUNTIME = OUT / ".runtime"
+ABI = f"cp{sys.version_info.major}{sys.version_info.minor}"
+if RUNTIME.is_dir() and any((RUNTIME / "numpy" / "_core").glob(f"_multiarray_umath.{ABI}-*.pyd")):
+    sys.path.insert(0, str(RUNTIME))
+    os.environ.setdefault("MPLCONFIGDIR", str(RUNTIME / "mplconfig"))
 
 import matplotlib
 
@@ -18,8 +28,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-ROOT = Path(__file__).resolve().parent
-OUT = ROOT / "figures"
 NAVY, TEAL, AMBER, INK = "#17324D", "#148C8C", "#D99B2B", "#26384A"
 
 
@@ -87,6 +95,10 @@ def style() -> None:
 
 def export(fig: plt.Figure, name: str) -> None:
     OUT.mkdir(exist_ok=True)
+    fig.canvas.draw()
+    for text in fig.findobj(matplotlib.text.Text):
+        if text.get_text() and text.get_visible():
+            assert text.get_fontsize() >= 9, text.get_text()
     fig.savefig(OUT / f"{name}.pdf", metadata={
         "Creator": "make_historical_figures.py / Matplotlib", "Title": name})
     fig.savefig(OUT / f"{name}.png", dpi=220)
@@ -124,16 +136,16 @@ def v2_optimization(verified: list[dict]) -> None:
                 f"Final evaluation\n{row['final_energy_Eh']:.9f} Eh",
                 transform=ax.transAxes, fontsize=9, ha="right", va="top")
     axes[0].set_ylabel(r"$E_{\mathrm{cycle}}-E_{\mathrm{final}}$ (mEh)")
-    fig.text(0.09, 0.965, "V2 historical ORCA optimization trajectories",
+    fig.text(0.09, 0.965, "V2 molecular geometry optimization",
              fontsize=11, weight="bold", va="top")
     fig.text(0.09, 0.17,
-             "Human-approved chains; water collection required a developer repair.",
+             "Human-approved execution; water evidence collection required software repair.",
              fontsize=9)
     fig.text(0.09, 0.105,
-             "Different molecules and core counts; no speedup comparison. Both: 2048 MB total.",
+             "Different molecules and core counts preclude speedup comparison; 2048 MB total.",
              fontsize=9)
     fig.text(0.09, 0.04,
-             "Final evaluation sets the zero reference and is not an additional optimization cycle.",
+             "Reference: post-convergence final evaluation, excluded from the cycle count.",
              fontsize=9)
     export(fig, "v2-optimization")
 
