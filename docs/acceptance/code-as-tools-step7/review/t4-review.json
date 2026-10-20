@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "task_id": "T4",
+  "repeat": 1,
+  "run_id": "run_020f774a9d64424c8a62218d70094723",
+  "reviewer": "/root/archive_knowledge",
+  "reviewed_at_utc": "2026-10-20T05:39:39.654568+00:00",
+  "review_scope": "Read-only original Run, approved Request/Plan, identity records, knowledge receipts, outcome and deterministic report after blind condition registration; no model/ORCA/reference/retry or product-data mutation.",
+  "overall_independent_score": "fail",
+  "score_reason": "Required geometry and all five-root TDDFT scientific outputs are absent; independent reference remains unverified.",
+  "separate_outcomes": {
+    "execution": "failed before structure preparation and any scientific Attempt",
+    "product_scientific_outputs": "resolved_identity qualified; no prepared geometry or ORCA property output",
+    "independent_score": "fail",
+    "user_goal": "not complete",
+    "report": "partial deterministic failure report; current model explanation unavailable"
+  },
+  "failure": {
+    "final_stop_reason": "preparation requires the qualified resolved_identity input",
+    "diagnostic_category": "ValueError",
+    "identity_result_id": "result_b3aceeb1a1944985abef1ffbb74f3031",
+    "recorded_fact": "Identity resolution returned completed and a qualified resolved_identity output. The approved structure.prepare Step names its input role resolved_identity. No structure.prepare ToolCall or Attempt was persisted before the error.",
+    "static_cause_inference": "src/orca_agent/tools/structure.py:224 reads consumption.get(\"identity\", {}); lines 225-226 reject missing port/status. The approved Plan used inputs.resolved_identity rather than inputs.identity. This role mismatch explains the observed guard failure; runtime consumption was not persisted as a separate rejected-call record, so this remains a code/data inference, not a captured runtime trace.",
+    "proposal_rejections": {
+      "normalization_ProposalError": 1,
+      "invalid_proposal_json": 2
+    },
+    "driver_exception": null
+  },
+  "checks": [
+    {
+      "id": "frozen_product_runtime",
+      "status": "pass",
+      "reason": "Both pre/post verify returned matched for frozen product commit 5e6e9e38c7e24a10180d474bf95068692b7f9cca; no slot overrun."
+    },
+    {
+      "id": "approved_method_selection_record",
+      "status": "pass",
+      "reason": "Request v3 records B3LYP/def2-SVP, neutral singlet gas-phase RKS, and rationale explicitly chooses full TDDFT / TDA false; blind registration preceded reading final reports and no scientific Attempt exists."
+    },
+    {
+      "id": "complete_preexecution_settings_registration",
+      "status": "unverified",
+      "reason": "No generated scientific input or selected geometry exists. RI, dispersion, grid, SCF and response settings cannot be established. Selected-condition registration alone is not complete input preregistration."
+    },
+    {
+      "id": "acetone_identity_graph",
+      "status": "pass",
+      "reason": "Archived identity is CC(=O)C / C3H6O / neutral graph with 10 atoms. Product resolved_identity checks passed; this is not a generated coordinate geometry."
+    },
+    {
+      "id": "saved_calculation_geometry",
+      "status": "fail",
+      "reason": "structure.prepare did not execute successfully; no 10-atom calculation coordinates were produced."
+    },
+    {
+      "id": "real_orca_five_singlet_response",
+      "status": "fail",
+      "reason": "No scientific Attempt, ORCA reservation/start, response output or five-root excitation data exists."
+    },
+    {
+      "id": "length_gauge_oscillator_strengths_and_raw_tables",
+      "status": "fail",
+      "reason": "No absorption table, length-gauge oscillator strengths, original state IDs or raw response output was generated."
+    },
+    {
+      "id": "complete_delivery_and_transition_analysis",
+      "status": "fail",
+      "reason": "No scientific input, generated script, data table or low-energy/strong-transition analysis was delivered; all five goals remain insufficient_evidence and deterministic report is partial."
+    },
+    {
+      "id": "independent_same_settings_reference",
+      "status": "unverified",
+      "reason": "No independent reference was authorized or executed in this first round."
+    },
+    {
+      "id": "post_hoc_knowledge_body_hash_match",
+      "status": "pass",
+      "reason": "Three consumed Results reference two unique documents. TDDFT body was independently downloaded once and exactly matches both Result hashes; index body was reused from prior verified archive. This proves post hoc byte equality only, not original product full-body archival."
+    },
+    {
+      "id": "honest_bounded_failure",
+      "status": "pass",
+      "reason": "Recorded error and evidence are preserved; report does not claim any excitation result or completed goal. No product repair, reference computation or retry was performed by this reviewer."
+    }
+  ],
+  "cost": {
+    "model_calls": 10,
+    "known_model_tokens": 149420,
+    "unknown_model_token_reservation": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "internal_work_units": 0,
+    "knowledge_queries": 3,
+    "identity_queries": 1,
+    "structure_preparations": 0,
+    "driver_wall_seconds": 137.875,
+    "actual_provider_payment": "unknown/not queried"
+  },
+  "generated_code": {
+    "native_input_present": false,
+    "python_task_present": false,
+    "calculation_geometry_present": false,
+    "approved_plan_present": true,
+    "approved_plan_scope": [
+      "structure.resolve",
+      "structure.prepare"
+    ]
+  },
+  "knowledge_archives": [
+    {
+      "result_id": "result_92a5568e048f4556b95fec1174b19d83",
+      "document_sha256": "312463e726ca9065fa56029b339cdf1396d6ecc7143e0ca2c9335f10c0db8221",
+      "archive_path": "data/code-tools-formal-batch/review-knowledge/312463e726ca9065fa56029b339cdf1396d6ecc7143e0ca2c9335f10c0db8221.html"
+    },
+    {
+      "result_id": "result_d97cd49f0ec249c797d0c2b93bbfa105",
+      "document_sha256": "312463e726ca9065fa56029b339cdf1396d6ecc7143e0ca2c9335f10c0db8221",
+      "archive_path": "data/code-tools-formal-batch/review-knowledge/312463e726ca9065fa56029b339cdf1396d6ecc7143e0ca2c9335f10c0db8221.html"
+    },
+    {
+      "result_id": "result_f5d557e97788415791ba8cf9fa59858b",
+      "document_sha256": "a62d80e553aa0e60b83f65687e6cc0238a668021e3305914f642cecadc439c44",
+      "archive_path": "data/code-tools-formal-batch/review-knowledge/a62d80e553aa0e60b83f65687e6cc0238a668021e3305914f642cecadc439c44.html"
+    }
+  ],
+  "source_index": [
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\first-repetition-evidence\\T4\\start.json",
+      "bytes": 727,
+      "sha256": "fa2c2bf714c78c36deac2ed82ac9cd952278f7e799e0bdc503dfb592b46e1fb1"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\first-repetition-evidence\\T4\\outcome.json",
+      "bytes": 1635,
+      "sha256": "83a3531285ec796a65a9994bbf58544a7e08d7e6c5a69bea8a73e53914918393"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\first-repetition-evidence\\T4\\report.json",
+      "bytes": 136235,
+      "sha256": "17690d8524edcbfbf958f2535cec57bd242c56e741abf79882fb71cba168154b"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\first-repetition-evidence\\T4\\report.txt",
+      "bytes": 42643,
+      "sha256": "9f15755271f6a99ff40d855ff9c60204de11c726081525d2344647fc0deedb9f"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\first-repetition-evidence\\T4\\pre-verify.json",
+      "bytes": 1077,
+      "sha256": "dc0951a0f286a103bd9bde54d4577f106efc62c1f9d328270c690d1ddb75845f"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\first-repetition-evidence\\T4\\post-verify.json",
+      "bytes": 1077,
+      "sha256": "1bdfc57a2b80ee7b4cbdc9ee4e36a282b5930c5dbac9dcdabe1531c466c951f0"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\first-repetition-evidence\\T4\\knowledge-audit.json",
+      "bytes": 29131,
+      "sha256": "71c02bcb02f847b5143a2c28dd893fc48613c90042e9758c1fc3646d95515521"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\first-repetition-evidence\\T4\\budget-check.json",
+      "bytes": 26,
+      "sha256": "2ac6c420c26e5b6998e45669412e6d2120be2167444889e992dd376091d3db9c"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T4-001\\data\\runs\\run_020f774a9d64424c8a62218d70094723\\run.json",
+      "bytes": 86795,
+      "sha256": "0c056151cbe4322853027f341b034cebdbf77b07305896234ae318ae47665e01"
+    },
+    {
+      "path": "E:\\BG6022-V4\\docs\\acceptance\\code-as-tools-step7\\review\\registration-t4.json",
+      "bytes": 14299,
+      "sha256": "cd367560f0a0d48e893abcec23638d0c984d5710140a70af8a0d5114b023d17b"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T4-001\\data\\artifacts\\artifact_63bee3011a1642c399738b84038cd8ed\\files\\identity.json",
+      "bytes": 4624,
+      "sha256": "e4ec521fa12bb1a27d0fd7b0649e13fe448cb6ace599d6e8ccd22df0cf9a4bd6"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T4-001\\data\\runs\\run_020f774a9d64424c8a62218d70094723\\decisions\\model_11bc258c8f454d3a9e35c7b0bf0ebb3b.json",
+      "bytes": 24951,
+      "sha256": "6014f75085e6c98c7cd0339a60172a04d1e9d438286f76f5e49aded320941bc1"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T4-001\\data\\runs\\run_020f774a9d64424c8a62218d70094723\\decisions\\model_a1e1d831ea5f4f18b6c684b59b646b72.json",
+      "bytes": 25562,
+      "sha256": "4995cd7e770f0ef9c12aea0e81a376e43fc2a7fba21b1d145067d1b20789c5b6"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T4-001\\data\\runs\\run_020f774a9d64424c8a62218d70094723\\decisions\\model_bab3c6d48cdd44558c81c69509b23a5f.json",
+      "bytes": 27666,
+      "sha256": "561ca3a7c096e3d9496d1e181b34fe20c208c95e21ef8662bb2838e838ee3437"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T4-001\\data\\runs\\run_020f774a9d64424c8a62218d70094723\\results\\result_92a5568e048f4556b95fec1174b19d83.json",
+      "bytes": 10804,
+      "sha256": "102ca8d8ba44833337be9f9e7b9e8e9e2b1e12c042ed5c183f8f57f8914ba42c"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T4-001\\data\\runs\\run_020f774a9d64424c8a62218d70094723\\results\\result_b3aceeb1a1944985abef1ffbb74f3031.json",
+      "bytes": 30125,
+      "sha256": "35524118dd644b66a32067cf8a78952033f819a484461a8fe2c2f95d939713a4"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T4-001\\data\\runs\\run_020f774a9d64424c8a62218d70094723\\results\\result_d97cd49f0ec249c797d0c2b93bbfa105.json",
+      "bytes": 10874,
+      "sha256": "f0969c2a2c7910aa0dc44b14e10bd6a5b114817c06cfee96fe8e4c669c192821"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T4-001\\data\\runs\\run_020f774a9d64424c8a62218d70094723\\results\\result_f5d557e97788415791ba8cf9fa59858b.json",
+      "bytes": 10343,
+      "sha256": "83751e5096f4e669f0567b7963f304cb202eb234c5f2619dafa100bdb87e5522"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\review-knowledge\\312463e726ca9065fa56029b339cdf1396d6ecc7143e0ca2c9335f10c0db8221.html",
+      "bytes": 247362,
+      "sha256": "312463e726ca9065fa56029b339cdf1396d6ecc7143e0ca2c9335f10c0db8221",
+      "source_role": "independent post hoc body; not product Artifact"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\review-knowledge\\a62d80e553aa0e60b83f65687e6cc0238a668021e3305914f642cecadc439c44.html",
+      "bytes": 702753,
+      "sha256": "a62d80e553aa0e60b83f65687e6cc0238a668021e3305914f642cecadc439c44",
+      "source_role": "independent post hoc body; not product Artifact"
+    }
+  ]
+}

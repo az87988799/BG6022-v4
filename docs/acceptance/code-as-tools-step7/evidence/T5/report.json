@@ -1,0 +1,591 @@
+{
+  "schema_version": 1,
+  "run_id": "run_d1c21624d46d448b9d3388186ddedfe7",
+  "run_state": "failed",
+  "request_id": "request_cc300dfd837a454ea1dfd3447557c541",
+  "request_version": 1,
+  "plan_id": null,
+  "plan_version": null,
+  "recorded_delivery_status": "partial",
+  "report_delivery_status": "partial",
+  "user_goal_complete": false,
+  "request": {
+    "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "conditions": {
+      "method": null,
+      "basis": null,
+      "charge": null,
+      "multiplicity": null
+    },
+    "additional_conditions": {
+      "explain_results": true
+    },
+    "condition_sources": {},
+    "systems": [],
+    "unresolved": []
+  },
+  "goals": [
+    {
+      "goal_id": "raw_request",
+      "port": "unresolved",
+      "required": true,
+      "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "unresolved-1",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "missing:goal_definition",
+        "goal_has_no_evidence_binding"
+      ]
+    }
+  ],
+  "results": [],
+  "attempts": [],
+  "goal_facts": [
+    {
+      "goal_id": "raw_request",
+      "port": "unresolved",
+      "required": true,
+      "current_conditions": {
+        "request": {
+          "method": null,
+          "basis": null,
+          "charge": null,
+          "multiplicity": null,
+          "electronic_state": null,
+          "environment": null
+        }
+      },
+      "condition_sources": {
+        "request": {
+          "method": "request.unknown",
+          "basis": "request.unknown",
+          "charge": "request.unknown",
+          "multiplicity": "request.unknown",
+          "electronic_state": "unknown:unspecified_condition",
+          "environment": "unknown:unspecified_condition"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "unresolved-1",
+      "gaps": [
+        "missing:goal_definition",
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    }
+  ],
+  "permission": {
+    "version": 1,
+    "scientific_execution": true,
+    "allowed_tools": [
+      "structure.resolve",
+      "structure.prepare",
+      "workspace.write",
+      "python.execute",
+      "orca.run",
+      "evidence.list",
+      "evidence.discover",
+      "evidence.search",
+      "evidence.value",
+      "evidence.text",
+      "knowledge.search",
+      "knowledge.answer"
+    ],
+    "max_cores": 4,
+    "max_memory_mb": 1024,
+    "artifact_ids": [],
+    "source_ids": [],
+    "result_ids": [],
+    "model_execution": true,
+    "code_execution": true,
+    "artifact_writes": true,
+    "allowed_repairs": {},
+    "allow_additional_science": true,
+    "external_identity_queries": true,
+    "geometry_preparation": true
+  },
+  "budget": {
+    "limits": {
+      "logical_steps": 12,
+      "attempts_per_step": 3,
+      "orca_starts": 12,
+      "extra_orca_starts": 11,
+      "postprocess_starts": 0,
+      "run_seconds": 7200.0,
+      "model_calls": 24,
+      "plan_revisions": 12,
+      "model_tokens": 1200000,
+      "input_tokens": 64000,
+      "output_tokens": 32768,
+      "decision_rounds": 40,
+      "evidence_reads": 12,
+      "analysis_executions": 4,
+      "corrections_per_proposal": 2,
+      "transport_retries": 0,
+      "identity_queries": 2,
+      "structure_preparations": 1,
+      "knowledge_queries": 4,
+      "internal_work_units": 10000,
+      "code_retries": 2,
+      "artifact_count": 800,
+      "artifact_bytes": 268435456,
+      "artifact_total_bytes": 268435456
+    },
+    "usage": {
+      "internal_work_units": 0,
+      "internal_calls_by_purpose": {},
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 3,
+      "model_tokens_used": 34429,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 0,
+      "decision_rounds": 3,
+      "evidence_reads": 0,
+      "analysis_executions": 0,
+      "logical_steps": [],
+      "identity_queries": 0,
+      "structure_preparations": 0,
+      "knowledge_queries": 0
+    },
+    "deadline": "2026-10-20T07:39:10.711530+00:00",
+    "unresolved_scientific_attempt_ids": [],
+    "model_cost": {
+      "currency": "USD",
+      "known_cost": "0.0252957",
+      "unsettled_reservation": null,
+      "cost_basis": "frozen_peak_uncached_upper_bound_from_known_tokens",
+      "provider_billing_queried": false,
+      "provider_charged_amount": null,
+      "cost_records_complete": true,
+      "known_call_count": 3,
+      "unsettled_call_count": 0,
+      "records": [
+        {
+          "id": "model_0123df35f5354ca5977357b0658b88af",
+          "logical_id": "decision_300450ef7079ea3c22b470e9_1",
+          "request_hash": "dcbef1fe40d24f6d29c52c32f2079c3b73066519594b91792a7bb75656f25cfb",
+          "prompt_version": "agent-json-v73",
+          "status": "known",
+          "input_reserved": 18314,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0448158",
+          "input_tokens": 4656,
+          "output_tokens": 8594,
+          "total_tokens": 13250,
+          "cost_known_usd": "0.0117096",
+          "error_category": null,
+          "response_hash": "de92f2f96ec1582c5a8787210d81b49c724ebc85a0f7b03b4f069625507fe0cc",
+          "latency_seconds": 34.90700000000652
+        },
+        {
+          "id": "model_8c1c90d82bd44c39a2f61cdc383575d8",
+          "logical_id": "decision_300450ef7079ea3c22b470e9_2",
+          "request_hash": "c0fe21802767e8ca64ec3ba2c6027619a8a546167258e2464cf00ba7aeb47314",
+          "prompt_version": "agent-json-v73",
+          "status": "known",
+          "input_reserved": 27172,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0474732",
+          "input_tokens": 6872,
+          "output_tokens": 3350,
+          "total_tokens": 10222,
+          "cost_known_usd": "0.0060816",
+          "error_category": null,
+          "response_hash": "a6077b827cb468b284c4a161d257f1f7c3692f575315b211fd84a8347c252992",
+          "latency_seconds": 19.985000000000582
+        },
+        {
+          "id": "model_ba9d43d13b1f4c54bba8c990e99df6c1",
+          "logical_id": "decision_300450ef7079ea3c22b470e9_3",
+          "request_hash": "215a0034db832f45e5e427f8befe5988a381f07fcef54effe896bd7b5871821c",
+          "prompt_version": "agent-json-v73",
+          "status": "known",
+          "input_reserved": 24388,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.046638",
+          "input_tokens": 6271,
+          "output_tokens": 4686,
+          "total_tokens": 10957,
+          "cost_known_usd": "0.0075045",
+          "error_category": null,
+          "response_hash": "76379fb4eacf58cc64bd0d49f8ca9f862504d8cfd942ebbf92d9884c2e6b411c",
+          "latency_seconds": 28.343999999997322
+        }
+      ]
+    }
+  },
+  "diagnostics": [
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_0123df35f5354ca5977357b0658b88af",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_8c1c90d82bd44c39a2f61cdc383575d8",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_ba9d43d13b1f4c54bba8c990e99df6c1",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "StoreError",
+      "message": "bounded proposal correction or transport retry exhausted",
+      "environment_occupied": false
+    }
+  ],
+  "gaps": [],
+  "execution": {
+    "internal_calls": [],
+    "checkpoints": [],
+    "progress": {
+      "total": 0,
+      "completed": 0,
+      "failed": 0,
+      "running": 0
+    }
+  },
+  "stop_reason": {
+    "state": "failed",
+    "categories": [
+      "failed",
+      "proposal_rejected",
+      "StoreError"
+    ],
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "error_category": "ProposalError",
+        "model_id": "model_0123df35f5354ca5977357b0658b88af"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "ProposalError",
+        "model_id": "model_8c1c90d82bd44c39a2f61cdc383575d8"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "ProposalError",
+        "model_id": "model_ba9d43d13b1f4c54bba8c990e99df6c1"
+      },
+      {
+        "category": "StoreError",
+        "message": "bounded proposal correction or transport retry exhausted"
+      }
+    ],
+    "model_errors": []
+  },
+  "limitations": [
+    "Evidence reading, scientific output qualification, and user goal completion are distinct.",
+    "Electronic energy and its difference are not free energy or thermochemical corrections.",
+    "Finite sampling describes only the sampled discrete geometries.",
+    "An optimized geometry alone does not establish vibrational stability or a global minimum."
+  ],
+  "artifact_index": [],
+  "generated_scripts": [],
+  "delivery": {
+    "version": "terminal-delivery-1",
+    "snapshot_ref": "current",
+    "basis": {
+      "request_id": "request_cc300dfd837a454ea1dfd3447557c541",
+      "request_version": 1,
+      "plan_id": null,
+      "plan_version": null,
+      "permission_version": 1,
+      "control_generation": 1
+    },
+    "request_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "communication": {
+      "delivery_scope": "science",
+      "awaiting_reply": false,
+      "notices": [],
+      "questions": [],
+      "question_gaps": {}
+    },
+    "resources": {
+      "permission": {
+        "version": 1,
+        "scientific_execution": true,
+        "allowed_tools": [
+          "structure.resolve",
+          "structure.prepare",
+          "workspace.write",
+          "python.execute",
+          "orca.run",
+          "evidence.list",
+          "evidence.discover",
+          "evidence.search",
+          "evidence.value",
+          "evidence.text",
+          "knowledge.search",
+          "knowledge.answer"
+        ],
+        "max_cores": 4,
+        "max_memory_mb": 1024,
+        "artifact_ids": [],
+        "source_ids": [],
+        "result_ids": [],
+        "model_execution": true,
+        "code_execution": true,
+        "artifact_writes": true,
+        "allowed_repairs": {},
+        "allow_additional_science": true,
+        "external_identity_queries": true,
+        "geometry_preparation": true
+      },
+      "remaining": {
+        "orca_starts": 12,
+        "extra_orca_starts": 11,
+        "evidence_reads": 12,
+        "analysis_executions": 4,
+        "identity_queries": 2,
+        "structure_preparations": 1,
+        "knowledge_queries": 4,
+        "internal_work_units": 10000,
+        "code_retries": 2,
+        "postprocess_starts": 0
+      },
+      "limits": {
+        "orca_starts": 12,
+        "extra_orca_starts": 11,
+        "evidence_reads": 12,
+        "analysis_executions": 4,
+        "identity_queries": 2,
+        "structure_preparations": 1,
+        "knowledge_queries": 4,
+        "internal_work_units": 10000,
+        "code_retries": 2,
+        "postprocess_starts": 0
+      },
+      "usage": {
+        "orca_starts_reserved": 0,
+        "orca_starts_actual": 0,
+        "extra_orca_starts_reserved": 0,
+        "evidence_reads": 0,
+        "analysis_executions": 0,
+        "identity_queries": 0,
+        "structure_preparations": 0,
+        "knowledge_queries": 0,
+        "internal_work_units": 0,
+        "code_retries": 0,
+        "postprocess_starts": 0
+      },
+      "unsettled_attempt_ids": [],
+      "unsettled_call_ids": [],
+      "code_attempt_allowance": {
+        "recorded": 0,
+        "effective_used": 0,
+        "basis": "max(recorded, python_attempt_count - 1)",
+        "meaning": "every Python execution after the first, including distinct scripts"
+      },
+      "unsettled_internal_request_keys": [],
+      "execution_cost": {
+        "python_attempts": 0,
+        "cpu_seconds": 0.0,
+        "elapsed_seconds": 0.0,
+        "complete": true
+      },
+      "artifact_limits": {
+        "artifact_count": 800,
+        "artifact_bytes": 268435456,
+        "artifact_total_bytes": 268435456
+      },
+      "artifact_usage": {
+        "status": "not_in_snapshot",
+        "disk_hard_quota": false
+      }
+    },
+    "goals": [
+      {
+        "goal_id": "raw_request",
+        "port": "unresolved",
+        "required": true,
+        "current_conditions": {
+          "request": {
+            "method": null,
+            "basis": null,
+            "charge": null,
+            "multiplicity": null,
+            "electronic_state": null,
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "request": {
+            "method": "request.unknown",
+            "basis": "request.unknown",
+            "charge": "request.unknown",
+            "multiplicity": "request.unknown",
+            "electronic_state": "unknown:unspecified_condition",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "unresolved-1",
+        "gaps": [
+          "missing:goal_definition",
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g1",
+        "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "text_evidence": {},
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f1",
+          "f2"
+        ],
+        "required_blocker_refs": [
+          "b1"
+        ],
+        "explanation_refs": [
+          "e1"
+        ],
+        "next_action_refs": [
+          "n1"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "ref": "f1",
+        "goal_ref": "g1",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "missing:goal_definition",
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f2",
+        "goal_ref": "g1",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "request": {
+              "method": null,
+              "basis": null,
+              "charge": null,
+              "multiplicity": null,
+              "electronic_state": null,
+              "environment": null
+            }
+          },
+          "sources": {
+            "request": {
+              "method": "request.unknown",
+              "basis": "request.unknown",
+              "charge": "request.unknown",
+              "multiplicity": "request.unknown",
+              "electronic_state": "unknown:unspecified_condition",
+              "environment": "unknown:unspecified_condition"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      }
+    ],
+    "blockers": [
+      {
+        "ref": "b1",
+        "goal_refs": [
+          "g1"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "missing:goal_definition",
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      }
+    ],
+    "explanations": [
+      {
+        "ref": "e1",
+        "goal_ref": "g1",
+        "fact_refs": [
+          "f1",
+          "f2"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b1"
+        ],
+        "next_action_refs": [
+          "n1"
+        ]
+      }
+    ],
+    "next_actions": [
+      {
+        "ref": "n1",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g1"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      }
+    ],
+    "references": {},
+    "fingerprint": "c9241ea8e63604cdafbc8051d9c12bebe8dcf15901344946df80f048380d2ed5"
+  },
+  "model_explanation": {
+    "status": "unavailable",
+    "current_status": "unavailable",
+    "current": false,
+    "free_reason_role": "audit_only"
+  },
+  "report_artifact": {
+    "status": "rendered",
+    "current": true,
+    "version": "terminal-report-1",
+    "snapshot_fingerprint": "c9241ea8e63604cdafbc8051d9c12bebe8dcf15901344946df80f048380d2ed5",
+    "path": "runs/run_d1c21624d46d448b9d3388186ddedfe7/deliveries/report_b183edd8cb1624b04e9c4c16.md",
+    "sha256": "78d531d911eabdb2f7bfde14373a3f876a715495c5c0aa1ce9e03455c5ca6819",
+    "error": null
+  }
+}

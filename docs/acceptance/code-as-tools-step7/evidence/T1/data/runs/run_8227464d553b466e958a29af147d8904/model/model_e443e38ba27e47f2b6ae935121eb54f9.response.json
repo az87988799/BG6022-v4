@@ -1,0 +1,80 @@
+{
+  "request_hash": "44f10f81d8d9c85289035e37b3be4227148d263c292f2e74012ee3580419d8c4",
+  "proposal": {
+    "action": "revise_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "step_aff5978749744ecfbeb29621d4853986"
+        },
+        {
+          "key": "step_524cb6fcaf2e4fcd96efbcaefaba7e8d"
+        },
+        {
+          "key": "step_7979f445bcdf47cbac7ee171cf0faf7d"
+        },
+        {
+          "key": "orca_opt_freq_1",
+          "tool": "orca.run",
+          "system_id": "system_ethanol",
+          "depends_on": [
+            "step_aff5978749744ecfbeb29621d4853986",
+            "step_7979f445bcdf47cbac7ee171cf0faf7d"
+          ],
+          "parameters": {
+            "input": {
+              "artifact_id": "artifact_109bf371825141a8a90923a72a90efd4",
+              "sha256": "cd6ad2c925bd8d233a360b46fe79e18087bcb86759467acd26db1d71058e70b9",
+              "language": "orca"
+            },
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "artifact_id": "artifact_07c8456d9e0b453a946a2b297e3bafd8",
+                  "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                  "target_path": "ethanol.xyz",
+                  "purpose": "Initial prepared ethanol geometry for ORCA Opt/Freq"
+                }
+              ]
+            },
+            "observation_names": [
+              "optimized_geometry",
+              "vibrational_frequencies"
+            ]
+          }
+        }
+      ],
+      "goal_map": {
+        "goal_optimized_geometry": {
+          "port": "optimized_geometry",
+          "gap": "ORCA Opt/Freq step orca_opt_freq_1 must complete; a later analysis step will extract the converged 9-atom geometry from its files."
+        },
+        "goal_vibrational_frequencies": {
+          "port": "vibrational_frequencies",
+          "gap": "ORCA Opt/Freq step orca_opt_freq_1 must complete; a later analysis step will extract all 27 frequencies and mode numbers from its Hessian/output files."
+        }
+      }
+    },
+    "reason": "Plan revision adds one bounded orca.run step because input receipts now exist. The input artifact_109bf... (sha256 cd6a...) was verified to contain %maxcore 192, SCF MaxIter 256 AutoTRAH false, geom MaxIter 128, B3LYP def2-TZVP RKS Opt Freq NoAutoStart, and xyzfile 0 1 ethanol.xyz. The prepared geometry artifact_07c... (sha256 5341...) supplies ethanol.xyz. This uses real artifact IDs/hashes only; no future outputs are referenced. Goals remain gaps until the ORCA files are analyzed, preserving the staged producer/consumer sequence."
+  },
+  "raw_content": "{\"action\":\"revise_plan\",\"parameters\":{\"steps\":[{\"key\":\"step_aff5978749744ecfbeb29621d4853986\"},{\"key\":\"step_524cb6fcaf2e4fcd96efbcaefaba7e8d\"},{\"key\":\"step_7979f445bcdf47cbac7ee171cf0faf7d\"},{\"key\":\"orca_opt_freq_1\",\"tool\":\"orca.run\",\"system_id\":\"system_ethanol\",\"depends_on\":[\"step_aff5978749744ecfbeb29621d4853986\",\"step_7979f445bcdf47cbac7ee171cf0faf7d\"],\"parameters\":{\"input\":{\"artifact_id\":\"artifact_109bf371825141a8a90923a72a90efd4\",\"sha256\":\"cd6ad2c925bd8d233a360b46fe79e18087bcb86759467acd26db1d71058e70b9\",\"language\":\"orca\"},\"inputs\":{\"version\":1,\"entries\":[{\"artifact_id\":\"artifact_07c8456d9e0b453a946a2b297e3bafd8\",\"sha256\":\"5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257\",\"target_path\":\"ethanol.xyz\",\"purpose\":\"Initial prepared ethanol geometry for ORCA Opt/Freq\"}]},\"observation_names\":[\"optimized_geometry\",\"vibrational_frequencies\"]}}],\"goal_map\":{\"goal_optimized_geometry\":{\"port\":\"optimized_geometry\",\"gap\":\"ORCA Opt/Freq step orca_opt_freq_1 must complete; a later analysis step will extract the converged 9-atom geometry from its files.\"},\"goal_vibrational_frequencies\":{\"port\":\"vibrational_frequencies\",\"gap\":\"ORCA Opt/Freq step orca_opt_freq_1 must complete; a later analysis step will extract all 27 frequencies and mode numbers from its Hessian/output files.\"}}},\"reason\":\"Plan revision adds one bounded orca.run step because input receipts now exist. The input artifact_109bf... (sha256 cd6a...) was verified to contain %maxcore 192, SCF MaxIter 256 AutoTRAH false, geom MaxIter 128, B3LYP def2-TZVP RKS Opt Freq NoAutoStart, and xyzfile 0 1 ethanol.xyz. The prepared geometry artifact_07c... (sha256 5341...) supplies ethanol.xyz. This uses real artifact IDs/hashes only; no future outputs are referenced. Goals remain gaps until the ORCA files are analyzed, preserving the staged producer/consumer sequence.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 17201,
+    "completion_tokens": 4452,
+    "total_tokens": 21653,
+    "prompt_cache_hit_tokens": 6016,
+    "prompt_cache_miss_tokens": 11185
+  },
+  "response_hash": "075b0d726faaec9c210e9cc77adfa294f72dd4841f5ede133880dce72fed411e",
+  "response_bytes": 19198,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "b0ea0608-7c6c-4ce8-9123-f87622421165",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 22.562999999994645
+}

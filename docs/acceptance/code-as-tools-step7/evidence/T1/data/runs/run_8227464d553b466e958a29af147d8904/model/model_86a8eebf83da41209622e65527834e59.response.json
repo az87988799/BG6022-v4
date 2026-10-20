@@ -1,0 +1,81 @@
+{
+  "request_hash": "9f1f0e24abc3ac9ac8c977457e2e705370b9033fbbca78970015323ad07a8e63",
+  "proposal": {
+    "action": "revise_plan",
+    "parameters": {
+      "goal_map": {
+        "goal_optimized_geometry": {
+          "step_key": "orca_opt_freq_1",
+          "port": "optimized_geometry"
+        },
+        "goal_vibrational_frequencies": {
+          "step_key": "orca_opt_freq_1",
+          "port": "vibrational_frequencies"
+        }
+      },
+      "steps": [
+        {
+          "key": "step_aff5978749744ecfbeb29621d4853986"
+        },
+        {
+          "key": "step_524cb6fcaf2e4fcd96efbcaefaba7e8d"
+        },
+        {
+          "key": "step_7979f445bcdf47cbac7ee171cf0faf7d"
+        },
+        {
+          "key": "orca_opt_freq_1",
+          "depends_on": [
+            "step_aff5978749744ecfbeb29621d4853986",
+            "step_7979f445bcdf47cbac7ee171cf0faf7d"
+          ],
+          "system_id": "system_ethanol",
+          "tool": "orca.run",
+          "parameters": {
+            "input": {
+              "artifact_id": "artifact_109bf371825141a8a90923a72a90efd4",
+              "language": "orca",
+              "sha256": "cd6ad2c925bd8d233a360b46fe79e18087bcb86759467acd26db1d71058e70b9",
+              "version": 1
+            },
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "artifact_id": "artifact_07c8456d9e0b453a946a2b297e3bafd8",
+                  "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+                  "target_path": "ethanol.xyz",
+                  "purpose": "Prepared initial ethanol geometry (9 atoms, angstrom) consumed by ORCA Opt Freq"
+                }
+              ]
+            },
+            "observation_names": [
+              "optimized_geometry",
+              "vibrational_frequencies"
+            ]
+          }
+        }
+      ]
+    },
+    "reason": "Correcting the prior rejection: the first scientific Plan must assign producers for every required goal, not leave gaps. goal_optimized_geometry and goal_vibrational_frequencies are now bound to the new orca.run step orca_opt_freq_1 (ports optimized_geometry and vibrational_frequencies), while goal_initial_structure stays on the settled step_7979f445bcdf47cbac7ee171cf0faf7d. The new step uses only existing real receipts: managed ORCA input artifact_109bf... (sha256 cd6ad2...) containing %maxcore 192, %scf MaxIter 256 AutoTRAH false, %geom MaxIter 128, '! B3LYP def2-TZVP RKS Opt Freq NoAutoStart' and '* xyzfile 0 1 ethanol.xyz', plus prepared geometry artifact_07c8... (sha256 5341a...) as ethanol.xyz. No future outputs are referenced in parameters; B3LYP/def2-TZVP match the chosen Request method/basis under AUTHORITY.native_input_contract."
+  },
+  "raw_content": "{\"action\":\"revise_plan\",\"parameters\":{\"goal_map\":{\"goal_optimized_geometry\":{\"step_key\":\"orca_opt_freq_1\",\"port\":\"optimized_geometry\"},\"goal_vibrational_frequencies\":{\"step_key\":\"orca_opt_freq_1\",\"port\":\"vibrational_frequencies\"}},\"steps\":[{\"key\":\"step_aff5978749744ecfbeb29621d4853986\"},{\"key\":\"step_524cb6fcaf2e4fcd96efbcaefaba7e8d\"},{\"key\":\"step_7979f445bcdf47cbac7ee171cf0faf7d\"},{\"key\":\"orca_opt_freq_1\",\"depends_on\":[\"step_aff5978749744ecfbeb29621d4853986\",\"step_7979f445bcdf47cbac7ee171cf0faf7d\"],\"system_id\":\"system_ethanol\",\"tool\":\"orca.run\",\"parameters\":{\"input\":{\"artifact_id\":\"artifact_109bf371825141a8a90923a72a90efd4\",\"language\":\"orca\",\"sha256\":\"cd6ad2c925bd8d233a360b46fe79e18087bcb86759467acd26db1d71058e70b9\",\"version\":1},\"inputs\":{\"version\":1,\"entries\":[{\"artifact_id\":\"artifact_07c8456d9e0b453a946a2b297e3bafd8\",\"sha256\":\"5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257\",\"target_path\":\"ethanol.xyz\",\"purpose\":\"Prepared initial ethanol geometry (9 atoms, angstrom) consumed by ORCA Opt Freq\"}]},\"observation_names\":[\"optimized_geometry\",\"vibrational_frequencies\"]}}]},\"reason\":\"Correcting the prior rejection: the first scientific Plan must assign producers for every required goal, not leave gaps. goal_optimized_geometry and goal_vibrational_frequencies are now bound to the new orca.run step orca_opt_freq_1 (ports optimized_geometry and vibrational_frequencies), while goal_initial_structure stays on the settled step_7979f445bcdf47cbac7ee171cf0faf7d. The new step uses only existing real receipts: managed ORCA input artifact_109bf... (sha256 cd6ad2...) containing %maxcore 192, %scf MaxIter 256 AutoTRAH false, %geom MaxIter 128, '! B3LYP def2-TZVP RKS Opt Freq NoAutoStart' and '* xyzfile 0 1 ethanol.xyz', plus prepared geometry artifact_07c8... (sha256 5341a...) as ethanol.xyz. No future outputs are referenced in parameters; B3LYP/def2-TZVP match the chosen Request method/basis under AUTHORITY.native_input_contract.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 14717,
+    "completion_tokens": 1508,
+    "total_tokens": 16225,
+    "prompt_cache_hit_tokens": 256,
+    "prompt_cache_miss_tokens": 14461
+  },
+  "response_hash": "5d554927e48a384e083a809682b2021706278f48635ccaaed6c63e3d698a28b8",
+  "response_bytes": 6325,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "69cbc231-7501-42c9-a029-0887e6f46ae1",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 7.75
+}

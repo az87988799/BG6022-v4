@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "reviewer": "/root/step7_contract_review",
+  "task_id": "T1",
+  "repeat": 1,
+  "run_id": "run_8227464d553b466e958a29af147d8904",
+  "observed_at_utc": "2026-10-20T05:27:50.3560872Z",
+  "registered_at_utc": "2026-10-20T05:27:50.4167566Z",
+  "blind_review": {
+    "scientific_outputs_read": false,
+    "scope": "Approved Request, condition selection, approved Plan and generated native input only; no ORCA stdout, Hessian, energies, frequencies, final coordinates, outcome or report read."
+  },
+  "run_snapshot": {
+    "attempts": [],
+    "plan_version": 1,
+    "request_version": 3,
+    "internal_calls": [],
+    "state": "running",
+    "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T1-001\\data\\runs\\run_8227464d553b466e958a29af147d8904\\run.json",
+    "sha256": "ee15fdc2f1f3a74f498bc0e2688d98851447b96eda55529be00bbb9da15e2f57"
+  },
+  "timing": {
+    "independent_observation_before_first_scientific_attempt": true,
+    "earlier_status_run_sha256": "cf276513ae1785e3a4e426dd35aa3fd12350afc570cf6667b24ff98c4528fa30",
+    "earlier_status": "approved Request revision 3 and Plan revision 1; no Attempt/internal call",
+    "interpretation": "If any Attempt is present at this observation, independent preregistration before science is not established; immutable product selection/Plan ordering is separate evidence.",
+    "earlier_status_observation_utc": "2026-10-20T05:26:54.4363617Z"
+  },
+  "sources": [
+    {
+      "request_version": 3,
+      "activated_in_run": true,
+      "plan_version": null,
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T1-001\\data\\runs\\run_8227464d553b466e958a29af147d8904\\decisions\\model_9a9a67b9d4a4430484639507be36565f.json",
+      "sha256": "bc8a3e68cf84f3492818381a8254d3fdb85e92ea85a37b1228becdd673bde803",
+      "decision_id": "model_9a9a67b9d4a4430484639507be36565f"
+    },
+    {
+      "request_version": 3,
+      "activated_in_run": true,
+      "plan_version": 1,
+      "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T1-001\\data\\runs\\run_8227464d553b466e958a29af147d8904\\decisions\\model_322b3051975e49cf9e8d6f51b88078f5.json",
+      "sha256": "db7a5a96bd705179313b243b395ac3a9231251d3840e3f7b44883268c80d31a4",
+      "decision_id": "model_322b3051975e49cf9e8d6f51b88078f5"
+    }
+  ],
+  "selected_conditions": {
+    "charge": 0,
+    "multiplicity": 1,
+    "condition_selection": {
+      "schema": "condition-selection-2",
+      "parameters": {
+        "request_version": 2,
+        "choices": {
+          "method": {
+            "value": "B3LYP",
+            "reason": "Choose B3LYP, a widely used hybrid GGA functional, for geometry optimization and vibrational-frequency analysis of neutral singlet ethanol. This choice is based on official ORCA documentation for the functional; it does not by itself establish scientific validation.",
+            "sources": [
+              {
+                "result_id": "result_9614c0e2fd5c43e7b950fb3f5d59531c",
+                "document_sha256": "94424fff221bde28abf4a32b7f1649771dcfde5585360082816107d4a6032c0c",
+                "quote": "B3LYP [230] B3LYP 20 The popular B3LYP functional (20% HF exchange) as defined in the TurboMole program system (LDAOPT C_VWN5)"
+              }
+            ]
+          },
+          "basis": {
+            "value": "def2-TZVP",
+            "reason": "Choose def2-TZVP, a polarized valence triple-zeta orbital basis set suitable for C/H/O-containing organic molecules, for the requested optimization and frequency calculation. This is a documentation-supported basis selection, not a claim of scientific validation.",
+            "sources": [
+              {
+                "result_id": "result_734b453821014ee9898fbd2581d467b8",
+                "document_sha256": "48750fa1c9dc25992c9e339648e52ef0f63423a7ad196e33b78609eb7143c4b6",
+                "quote": "The easiest way to use orbital and auxiliary basis sets in ORCA is via the simple input keywords. All available orbital basis set keywords can be found in Section 2.7.2 and all auxiliary basis set options in Section 2.7.4. For example, the Karlsruhe def2-TZVP basis set can be invoked via the def2-TZVP keyword."
+              }
+            ]
+          }
+        }
+      }
+    },
+    "selection_reasons": {
+      "method": "Choose B3LYP, a widely used hybrid GGA functional, for geometry optimization and vibrational-frequency analysis of neutral singlet ethanol. This choice is based on official ORCA documentation for the functional; it does not by itself establish scientific validation.",
+      "basis": "Choose def2-TZVP, a polarized valence triple-zeta orbital basis set suitable for C/H/O-containing organic molecules, for the requested optimization and frequency calculation. This is a documentation-supported basis selection, not a claim of scientific validation."
+    },
+    "basis": "def2-TZVP",
+    "method": "B3LYP",
+    "sources": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "environment": "explicit",
+      "electronic_state": "default",
+      "method": "auto_selected",
+      "basis": "auto_selected"
+    },
+    "environment": "gas_phase",
+    "electronic_state": "RKS"
+  },
+  "declared_native_input": {
+    "content": "%maxcore 192\n%scf MaxIter 256 AutoTRAH false end\n%geom MaxIter 128 end\n! B3LYP def2-TZVP RKS Opt Freq NoAutoStart\n* xyzfile 0 1 ethanol.xyz\n",
+    "path": "E:\\BG6022-V4\\data\\code-tools-formal-batch\\workspaces\\formal-T1-001\\data\\artifacts\\artifact_109bf371825141a8a90923a72a90efd4\\files\\ethanol_opt_freq.inp",
+    "sha256": "cd6ad2c925bd8d233a360b46fe79e18087bcb86759467acd26db1d71058e70b9"
+  },
+  "declared_settings": {
+    "ri_dispersion": "not explicitly declared in approved input",
+    "calculation": "Opt Freq",
+    "frequency_mass_scaling_projection": "not explicitly declared in approved input",
+    "grid": "not explicitly declared in approved input",
+    "geom_maxiter": 128,
+    "frequency_type": "Freq keyword; actual executed type still to be verified",
+    "geometry": "ethanol.xyz to be prepared in this Run; prepared geometry was not read",
+    "maxcore_mb": 192,
+    "scf_maxiter": 256,
+    "autotrah": false,
+    "noautostart": true
+  },
+  "limitations": [
+    "Method applicability not independently approved by this registration.",
+    "Full retrieved HTTP bodies absent in frozen product output; recorded quotations/hashes are declarations until independently checked.",
+    "Later approved changes require separate registration; this file does not approve or alter the product.",
+    "No independent reference calculation in the authorized first round."
+  ]
+}
