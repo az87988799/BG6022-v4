@@ -1,0 +1,1571 @@
+{
+  "source": "a022 actual failed native Result and read/knowledge calls 7-13; irrelevant source metadata omitted, original hashes listed. No execution simulated.",
+  "run": {
+    "id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+    "request_id": "request_1d488303835b4add9976b2e0e35f1da7",
+    "request_version": 3,
+    "permission": {
+      "version": 1,
+      "scientific_execution": true,
+      "allowed_tools": [
+        "structure.resolve",
+        "structure.prepare",
+        "workspace.write",
+        "python.execute",
+        "orca.run",
+        "evidence.list",
+        "evidence.discover",
+        "evidence.search",
+        "evidence.value",
+        "evidence.text",
+        "knowledge.search",
+        "knowledge.answer"
+      ],
+      "max_cores": 4,
+      "max_memory_mb": 1024,
+      "artifact_ids": [],
+      "source_ids": [],
+      "result_ids": [],
+      "model_execution": true,
+      "code_execution": true,
+      "artifact_writes": true,
+      "allowed_repairs": {},
+      "allow_additional_science": true,
+      "external_identity_queries": true,
+      "geometry_preparation": true
+    },
+    "budget": {
+      "logical_steps": 32,
+      "attempts_per_step": 12,
+      "orca_starts": 12,
+      "extra_orca_starts": 11,
+      "postprocess_starts": 0,
+      "run_seconds": 7200.0,
+      "model_calls": 48,
+      "plan_revisions": 32,
+      "model_tokens": 1200000,
+      "input_tokens": 64000,
+      "output_tokens": 32768,
+      "decision_rounds": 80,
+      "evidence_reads": 24,
+      "analysis_executions": 12,
+      "file_writes": 32,
+      "corrections_per_proposal": 47,
+      "transport_retries": 0,
+      "identity_queries": 2,
+      "structure_preparations": 1,
+      "knowledge_queries": 4,
+      "internal_work_units": 10000,
+      "code_retries": 11,
+      "artifact_count": 800,
+      "artifact_bytes": 268435456,
+      "artifact_total_bytes": 268435456
+    },
+    "configuration": {
+      "workflow_policy": "simplified-1"
+    },
+    "attempts": [
+      {
+        "id": "attempt_1caf184ee2c940cc9a6aae1d8544d019",
+        "step_id": "step_ed2840faf9cb46cf9933f62b9530ed63",
+        "logical_id": "logical_36ca04078c94471cabbb7dcde2ec5cd3",
+        "number": 1,
+        "tool": "orca.run",
+        "state": "failed",
+        "execution_kind": "orca",
+        "geometry_artifact_id": null,
+        "input_fingerprint": "97eb702d24317a75c9f8e8734b5fb284d2053019e36776f0a5fe378fce6eb6f4",
+        "directory": "runs/run_d1311f0cfa454c2cb5e05f77a16ff9a7/steps/step_ed2840faf9cb46cf9933f62b9530ed63/attempt-001",
+        "created_at": "2026-10-20T22:42:23.278050Z",
+        "finished_at": "2026-10-20T22:42:35.920630Z",
+        "execution_handle": {
+          "backend": "linux-container",
+          "version": 1,
+          "launch_id": "086c872450e54d15b6956ad5053dea1d",
+          "container_name": "orca-attempt-086c872450e54d15b6956ad5053dea1d",
+          "volume_name": "orca-evidence-086c872450e54d15b6956ad5053dea1d",
+          "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+          "attempt_id": "attempt_1caf184ee2c940cc9a6aae1d8544d019",
+          "image_id": "sha256:5ae21d2b67503cb41e6f74dd62a51368afb5afbfbcebfec574ff460534c1b712",
+          "manifest_sha256": "1eeb87e47e070f61975cf2d2a02b746286e3a7cf1cd3c17064c49f1f0b6b9e12",
+          "execution": {
+            "backend": "linux-container",
+            "image_id": "sha256:5ae21d2b67503cb41e6f74dd62a51368afb5afbfbcebfec574ff460534c1b712",
+            "manifest_sha256": "1eeb87e47e070f61975cf2d2a02b746286e3a7cf1cd3c17064c49f1f0b6b9e12",
+            "docker_context": "desktop-linux",
+            "docker_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+            "native_input_policy": {
+              "profile": "managed-native-1",
+              "max_atoms": 1024,
+              "max_geom_iterations": 128,
+              "max_scf_iterations": 256,
+              "max_response_iterations": 128,
+              "allow_task_geometry": true,
+              "property_block_order": "coordinates-first-1"
+            },
+            "_docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+          },
+          "engine_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "daemon_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+          "heartbeat_ttl_seconds": 15,
+          "timeout_seconds": 900.0,
+          "container_id": "67889495987ac3a2ca7ef07e6c314d114aa26ccbdaf9e03b36256046c60649b6",
+          "isolation_verified": true,
+          "isolation_policy": "linux-container-v1",
+          "kind": "orca",
+          "workload_identity": {
+            "pid": 67,
+            "uid": 10002,
+            "state": "S (sleeping)",
+            "start_ticks": "6765420",
+            "name": "python3.11",
+            "cap_eff": "0000000000000000",
+            "cap_prm": "0000000000000000",
+            "cap_inh": "0000000000000000",
+            "cap_amb": "0000000000000000",
+            "no_new_privs": "1",
+            "seccomp": "2"
+          },
+          "orca_scope": null,
+          "launch_phase": "executed",
+          "parent_container_id": null,
+          "actual_start_evidence": {
+            "method": "proc_exe_inode_and_pid_start_ticks",
+            "executable": "/opt/orca/orca",
+            "device": 87,
+            "inode": 54273,
+            "pid": 67,
+            "start_ticks": "6765420"
+          },
+          "launch_receipt_sha256": "288b8a7364f13dd08fec5645cc4d8d0f72c7ed954508e1d0748003c32f277593"
+        },
+        "started": true,
+        "result_id": "result_c8e13aa62bbb4fe49a04f8f0e25fac91",
+        "elapsed_seconds": 2.6559999999881256,
+        "cpu_seconds": 1.225004,
+        "request_version": 3,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 1,
+        "frozen_step": {
+          "id": "step_ed2840faf9cb46cf9933f62b9530ed63",
+          "logical_id": "logical_36ca04078c94471cabbb7dcde2ec5cd3",
+          "tool": "orca.run",
+          "parameters": {
+            "input": {
+              "artifact_id": "artifact_e4529af804784f968fb85e889a07388a",
+              "sha256": "a3b8d6d289ddb2abede53a8ef99ad6cb2065bcbed6a564ac14f3242b0d2bc974",
+              "language": "orca",
+              "version": 1
+            },
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "artifact_id": "artifact_87ea0f076e3b4d98958a027ebe368b03",
+                  "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+                  "target_path": "hcn.xyz",
+                  "purpose": "initial geometry for xyzfile"
+                }
+              ]
+            },
+            "observation_names": [],
+            "conditions": {}
+          },
+          "geometry": null,
+          "depends_on": [
+            "step_b82e8fa8d4db40ec86d21466d60e8773",
+            "step_549656e36d344494ba8a9d7edae2ef6c"
+          ],
+          "inputs": {},
+          "system_id": "system_sys1"
+        },
+        "consumption": {
+          "code": {
+            "artifact_id": "artifact_e4529af804784f968fb85e889a07388a",
+            "sha256": "a3b8d6d289ddb2abede53a8ef99ad6cb2065bcbed6a564ac14f3242b0d2bc974",
+            "language": "orca",
+            "version": 1
+          },
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "artifact_id": "artifact_87ea0f076e3b4d98958a027ebe368b03",
+                "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+                "target_path": "hcn.xyz",
+                "purpose": "initial geometry for xyzfile"
+              }
+            ]
+          },
+          "_declared_step": {
+            "id": "step_ed2840faf9cb46cf9933f62b9530ed63",
+            "logical_id": "logical_36ca04078c94471cabbb7dcde2ec5cd3",
+            "tool": "orca.run",
+            "parameters": {
+              "input": {
+                "producer_step_id": "step_b82e8fa8d4db40ec86d21466d60e8773",
+                "port": "written_artifact",
+                "language": "orca"
+              },
+              "inputs": {
+                "version": 1,
+                "entries": [
+                  {
+                    "producer_step_id": "step_549656e36d344494ba8a9d7edae2ef6c",
+                    "port": "prepared_geometry",
+                    "target_path": "hcn.xyz",
+                    "purpose": "initial geometry for xyzfile"
+                  }
+                ]
+              },
+              "observation_names": [],
+              "conditions": {}
+            },
+            "geometry": null,
+            "depends_on": [
+              "step_b82e8fa8d4db40ec86d21466d60e8773",
+              "step_549656e36d344494ba8a9d7edae2ef6c"
+            ],
+            "inputs": {},
+            "system_id": "system_sys1"
+          },
+          "_file_sources": {
+            "input": {
+              "declaration": {
+                "producer_step_id": "step_b82e8fa8d4db40ec86d21466d60e8773",
+                "port": "written_artifact",
+                "language": "orca"
+              },
+              "artifact_id": "artifact_e4529af804784f968fb85e889a07388a",
+              "sha256": "a3b8d6d289ddb2abede53a8ef99ad6cb2065bcbed6a564ac14f3242b0d2bc974",
+              "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+              "result_id": "result_b466cab3b5ac42afaae2d919844dc290",
+              "result_fingerprint": "a24eeedc963a8c2ef5fbdce8d74aa3971aa6f2dbbaac4aee1cd012a8ae0ae52a"
+            },
+            "inputs/0": {
+              "declaration": {
+                "producer_step_id": "step_549656e36d344494ba8a9d7edae2ef6c",
+                "port": "prepared_geometry",
+                "target_path": "hcn.xyz",
+                "purpose": "initial geometry for xyzfile"
+              },
+              "artifact_id": "artifact_87ea0f076e3b4d98958a027ebe368b03",
+              "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+              "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+              "result_id": "result_05594e44e7014b1e9222d42019bacc61",
+              "result_fingerprint": "fe340bbe68fa0a4433894696770106e4a8f74157241fba23d0a5d0c4238bdbf3"
+            }
+          }
+        },
+        "native_workload": {
+          "admission_version": "native-orca-input-3",
+          "native_input_policy": {
+            "profile": "managed-native-1",
+            "max_atoms": 1024,
+            "max_geom_iterations": 128,
+            "max_scf_iterations": 256,
+            "max_response_iterations": 128,
+            "allow_task_geometry": true,
+            "property_block_order": "coordinates-first-1"
+          },
+          "input_sha256": "472483af6ac7afe066ad6a7104bf1d024607bb1795796d903e5922ab51423dfe",
+          "input_binding": {
+            "request_id": "request_1d488303835b4add9976b2e0e35f1da7",
+            "request_version": 3,
+            "step_id": "step_ed2840faf9cb46cf9933f62b9530ed63",
+            "system_id": "system_sys1",
+            "conditions": {
+              "method": "pbe0",
+              "basis": "def2-tzvp",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "rks",
+              "environment": "gas_phase"
+            },
+            "condition_sources": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "request.conditions"
+            },
+            "geometry_artifact_id": "artifact_87ea0f076e3b4d98958a027ebe368b03",
+            "geometry_sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+            "workflow_policy": "simplified-1"
+          },
+          "execution_impact": {
+            "orca_starts": 1,
+            "postprocess_starts": 0,
+            "external_programs": false,
+            "internal_work_units": 1,
+            "work_unit_contract": "declared-managed-workload-1",
+            "work_unit_meaning": "conservative declared task slots, not measured SCF/evaluation counts",
+            "optimization_evaluation_slots": 1,
+            "scan_points": 1,
+            "derivative_slots": 0,
+            "response_roots": 0,
+            "scf_maxiter": 256,
+            "geom_maxiter": 0,
+            "response_maxiter": 0
+          }
+        }
+      }
+    ],
+    "calls": [
+      {
+        "id": "call_83330840f2434ef1b50abbe1f73e9c8c",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_d899edaa29c949fbbc45ba9f467d5b10",
+          "start_line": 1,
+          "lines": 200
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_194a42d2cf864b939c71f3a405bbfe1e",
+        "request_version": 3,
+        "plan_version": 1,
+        "control_generation": 1,
+        "created_at": "2026-10-20T22:42:45.559052Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_28a6b747dc4844b7a239757a79468a63"
+        }
+      },
+      {
+        "id": "call_3be8be9566d24b8b8136e8d99f9db524",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+          "start_line": 1,
+          "lines": 40
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_f6067308f4cf4c5680051711cffbd0c8",
+        "request_version": 3,
+        "plan_version": 1,
+        "control_generation": 1,
+        "created_at": "2026-10-20T22:42:54.459912Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_121c6be64163426eb297dd20f5bf0b0b"
+        }
+      },
+      {
+        "id": "call_1c05e70eae7b469cac29c772f4c410fe",
+        "tool": "evidence.search",
+        "parameters": {
+          "artifact_id": "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+          "query": "ERROR",
+          "start_line": 1,
+          "max_lines": 200,
+          "max_hits": 20,
+          "case_sensitive": false
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_0cbca0c2a4c64534b94e6e3942f31740",
+        "request_version": 3,
+        "plan_version": 1,
+        "control_generation": 1,
+        "created_at": "2026-10-20T22:43:31.778850Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_7bdf88dbdbd6407289e6911833a8263d"
+        }
+      },
+      {
+        "id": "call_fb37ab26c42441cba8f2095aa64a34df",
+        "tool": "evidence.text",
+        "parameters": {
+          "artifact_id": "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+          "start_line": 160,
+          "lines": 60
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_118def3c4e6c4ac89f85824094c8a8c1",
+        "request_version": 3,
+        "plan_version": 1,
+        "control_generation": 1,
+        "created_at": "2026-10-20T22:43:40.376509Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_a496624da09b4ffbb8e1248d580e6cbd"
+        }
+      },
+      {
+        "id": "call_8baef75a99c742c8827e86ad75f154b8",
+        "tool": "knowledge.search",
+        "parameters": {
+          "document": "orca_properties",
+          "query": "NMR shielding GIAO"
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_8bb100a9b4444419ba0c3c4118b667f4",
+        "request_version": 3,
+        "plan_version": 1,
+        "control_generation": 1,
+        "created_at": "2026-10-20T22:43:57.112547Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_4e63a33982fc4964b776aa1bb7e3d393"
+        }
+      },
+      {
+        "id": "call_61a79a812afc49228b4a0d98d6940b64",
+        "tool": "knowledge.search",
+        "parameters": {
+          "document": "orca_properties",
+          "query": "GIAO NMR shielding %eprnmr Nuclei print"
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_28c8ec42e1f94cad8d3a7ba15b8521db",
+        "request_version": 3,
+        "plan_version": 1,
+        "control_generation": 1,
+        "created_at": "2026-10-20T22:44:10.891533Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_4688abdbf09949199c216c5e1f638178"
+        }
+      },
+      {
+        "id": "call_f3d916ae96a3485b94a7b6978e27136c",
+        "tool": "knowledge.search",
+        "parameters": {
+          "document": "orca_input",
+          "query": "NMR shielding GIAO %eprnmr input syntax"
+        },
+        "step_id": null,
+        "state": "completed",
+        "result_id": "result_21ae8b2256834345b60b1c1b835ae351",
+        "request_version": 3,
+        "plan_version": 1,
+        "control_generation": 1,
+        "created_at": "2026-10-20T22:44:26.859627Z",
+        "frozen_step": null,
+        "consumption": {
+          "_decision_id": "model_9101ccd7b9a54a7087e4152b5b986012"
+        }
+      }
+    ],
+    "result_ids": [
+      "result_c8e13aa62bbb4fe49a04f8f0e25fac91",
+      "result_194a42d2cf864b939c71f3a405bbfe1e",
+      "result_f6067308f4cf4c5680051711cffbd0c8",
+      "result_0cbca0c2a4c64534b94e6e3942f31740",
+      "result_118def3c4e6c4ac89f85824094c8a8c1",
+      "result_8bb100a9b4444419ba0c3c4118b667f4",
+      "result_28c8ec42e1f94cad8d3a7ba15b8521db",
+      "result_21ae8b2256834345b60b1c1b835ae351"
+    ],
+    "processed_feedback": [
+      "result_c8e13aa62bbb4fe49a04f8f0e25fac91",
+      "result_194a42d2cf864b939c71f3a405bbfe1e",
+      "result_f6067308f4cf4c5680051711cffbd0c8",
+      "result_0cbca0c2a4c64534b94e6e3942f31740",
+      "result_118def3c4e6c4ac89f85824094c8a8c1",
+      "result_8bb100a9b4444419ba0c3c4118b667f4",
+      "result_28c8ec42e1f94cad8d3a7ba15b8521db"
+    ]
+  },
+  "results": [
+    {
+      "id": "result_c8e13aa62bbb4fe49a04f8f0e25fac91",
+      "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+      "step_id": "step_ed2840faf9cb46cf9933f62b9530ed63",
+      "attempt_id": "attempt_1caf184ee2c940cc9a6aae1d8544d019",
+      "call_id": null,
+      "supersedes_result_id": null,
+      "operation_status": "failed",
+      "checks": {},
+      "qualified_outputs": {},
+      "observations": {
+        "execution_completed": false,
+        "evidence_collection_complete": true,
+        "scientific_validation": "unverified"
+      },
+      "observation_records": [],
+      "diagnostics": [
+        {
+          "category": "failed",
+          "detail": "nonzero_exit_code"
+        }
+      ],
+      "artifact_ids": [
+        "artifact_c7228729e73e451d86869b168c70677f",
+        "artifact_2b68bc57a7504880bdae2cba76287296",
+        "artifact_d2c0f8fc6f1c4c039935fd1c7cac5e6f",
+        "artifact_f048fc53898f4a1d84ff6581ba1947e6",
+        "artifact_d899edaa29c949fbbc45ba9f467d5b10",
+        "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+        "artifact_a9178af64836443099eedacf414f04de",
+        "artifact_47a64c80cc2a463f8d7b7b030764888c",
+        "artifact_ae0292326daf4239be3703b90c320016",
+        "artifact_d0c5d3cd18cc4298b9ee02a8311e93ce",
+        "artifact_53c319f723754603983de8d052e3dc1c",
+        "artifact_4a8ee2a26cfb4e388e380fdebca49395",
+        "artifact_21885f5826a24669bb8b1d22e8df26ec",
+        "artifact_b64f43d2dd664a6397d01cd1ab01873d",
+        "artifact_04e054f1163a418c9bbbdbe406d830e6"
+      ],
+      "source": {
+        "files": {
+          "task/hcn.xyz": {
+            "artifact_id": "artifact_c7228729e73e451d86869b168c70677f",
+            "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7"
+          },
+          "task/input-manifest.json": {
+            "artifact_id": "artifact_2b68bc57a7504880bdae2cba76287296",
+            "sha256": "2af454138b697910708f82998b147c4af314aef9ee73e3e9dd32c6ba50220900"
+          },
+          "task/job.inp": {
+            "artifact_id": "artifact_d2c0f8fc6f1c4c039935fd1c7cac5e6f",
+            "sha256": "472483af6ac7afe066ad6a7104bf1d024607bb1795796d903e5922ab51423dfe"
+          },
+          "task/source-input.inp": {
+            "artifact_id": "artifact_f048fc53898f4a1d84ff6581ba1947e6",
+            "sha256": "a3b8d6d289ddb2abede53a8ef99ad6cb2065bcbed6a564ac14f3242b0d2bc974"
+          },
+          "task/stderr.txt": {
+            "artifact_id": "artifact_d899edaa29c949fbbc45ba9f467d5b10",
+            "sha256": "6e1437133d58b7d9f774733e0fe489cd70bed3b993aac5638087d6fe9bca9f14"
+          },
+          "task/stdout.out": {
+            "artifact_id": "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+            "sha256": "d80962476da260dd483d48d2bf72760947d9cc5b652b608ec1c39813a8184eec"
+          },
+          "actual-start.json": {
+            "artifact_id": "artifact_a9178af64836443099eedacf414f04de",
+            "sha256": "d1500bcb6d9a9029572ed715055f0e11b081a998354fc53c5c1d94c6c35b7642"
+          },
+          "boundary.json": {
+            "artifact_id": "artifact_47a64c80cc2a463f8d7b7b030764888c",
+            "sha256": "00c8a8b0cc5a825b2d9953d91bd957bcd07bd7168b49d522b2894af5f1e2eb3c"
+          },
+          "execution.json": {
+            "artifact_id": "artifact_ae0292326daf4239be3703b90c320016",
+            "sha256": "890e16c1dd623e60807cd4a7f42774ab570764eca7baa11380bf2805696fcf30"
+          },
+          "intent.json": {
+            "artifact_id": "artifact_d0c5d3cd18cc4298b9ee02a8311e93ce",
+            "sha256": "446d15975311ab603e97abfc6b72e825d75b31c4afb210331825a230b5651eeb"
+          },
+          "orca-collector-5108884c2e804ee392a574c562421d9b.intent.json": {
+            "artifact_id": "artifact_53c319f723754603983de8d052e3dc1c",
+            "sha256": "d26868af8ed64337f029aacb972f11bc03452c2cdc1e1213aed80901c9692cb1"
+          },
+          "orca-collector-5108884c2e804ee392a574c562421d9b.started.json": {
+            "artifact_id": "artifact_4a8ee2a26cfb4e388e380fdebca49395",
+            "sha256": "8a603bbe02218c30d30fc69234c2f6e32bc12edd1e3bea6eedb56367009d58a9"
+          },
+          "orca-launch-transport.json": {
+            "artifact_id": "artifact_21885f5826a24669bb8b1d22e8df26ec",
+            "sha256": "288b8a7364f13dd08fec5645cc4d8d0f72c7ed954508e1d0748003c32f277593"
+          },
+          "prepared.json": {
+            "artifact_id": "artifact_b64f43d2dd664a6397d01cd1ab01873d",
+            "sha256": "5166b573ed5102c86bd16862625ca9780a3569fbdf40b6efe8d720d39a245e16"
+          },
+          "started.json": {
+            "artifact_id": "artifact_04e054f1163a418c9bbbdbe406d830e6",
+            "sha256": "9503b2b6bca7af0db30dd0664bcee66b26ca2b7cb365e554fba54de5a0d70372"
+          }
+        }
+      },
+      "created_at": "2026-10-20T22:42:35.696786Z"
+    },
+    {
+      "id": "result_194a42d2cf864b939c71f3a405bbfe1e",
+      "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+      "step_id": null,
+      "attempt_id": null,
+      "call_id": "call_83330840f2434ef1b50abbe1f73e9c8c",
+      "supersedes_result_id": null,
+      "operation_status": "completed",
+      "checks": {
+        "text_window": [
+          {
+            "name": "bounded_evidence_read",
+            "status": "passed",
+            "detail": "operation only; content and observed values remain scientifically unverified",
+            "source": {
+              "artifact_id": "artifact_d899edaa29c949fbbc45ba9f467d5b10",
+              "sha256": "6e1437133d58b7d9f774733e0fe489cd70bed3b993aac5638087d6fe9bca9f14",
+              "view": {
+                "type": "raw_text",
+                "version": "1"
+              },
+              "path": [],
+              "coverage": {
+                "version": "evidence-coverage-1",
+                "requested": {
+                  "kind": "lines",
+                  "start": 1,
+                  "stop": 201
+                },
+                "returned": {
+                  "kind": "lines",
+                  "start": 1,
+                  "stop": 3
+                },
+                "complete": true,
+                "truncated": false,
+                "reason": null,
+                "next_cursor": null
+              }
+            },
+            "rule_version": "evidence-read-1"
+          }
+        ]
+      },
+      "qualified_outputs": {},
+      "observations": {
+        "text_window": {
+          "artifact_id": "artifact_d899edaa29c949fbbc45ba9f467d5b10",
+          "sha256": "6e1437133d58b7d9f774733e0fe489cd70bed3b993aac5638087d6fe9bca9f14",
+          "role": "raw_evidence",
+          "file": "artifacts/artifact_d899edaa29c949fbbc45ba9f467d5b10/files/stderr.txt",
+          "source": {
+            "task_path": "task/stderr.txt"
+          },
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "geometry_indices": [],
+          "stage": "unknown",
+          "units": null,
+          "conditions": "unknown",
+          "scientific_status": "unverified",
+          "validation": "unverified observation; not a scientific qualification",
+          "lines": [
+            {
+              "line": 1,
+              "text": "[file orca_main/main_input_keywordline.cpp, line 13872]: "
+            },
+            {
+              "line": 2,
+              "text": ""
+            }
+          ],
+          "returned_bytes": 59,
+          "status": "observed",
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 3
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        }
+      },
+      "observation_records": [],
+      "diagnostics": [],
+      "artifact_ids": [
+        "artifact_d899edaa29c949fbbc45ba9f467d5b10"
+      ],
+      "source": {
+        "task_path": "task/stderr.txt",
+        "tool": "evidence.text",
+        "consumption": {
+          "_decision_id": "model_28a6b747dc4844b7a239757a79468a63"
+        },
+        "request_version": 3,
+        "plan_version": 1
+      },
+      "created_at": "2026-10-20T22:42:45.617227Z"
+    },
+    {
+      "id": "result_f6067308f4cf4c5680051711cffbd0c8",
+      "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+      "step_id": null,
+      "attempt_id": null,
+      "call_id": "call_3be8be9566d24b8b8136e8d99f9db524",
+      "supersedes_result_id": null,
+      "operation_status": "completed",
+      "checks": {
+        "text_window": [
+          {
+            "name": "bounded_evidence_read",
+            "status": "passed",
+            "detail": "operation only; content and observed values remain scientifically unverified",
+            "source": {
+              "artifact_id": "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+              "sha256": "d80962476da260dd483d48d2bf72760947d9cc5b652b608ec1c39813a8184eec",
+              "view": {
+                "type": "raw_text",
+                "version": "1"
+              },
+              "path": [],
+              "coverage": {
+                "version": "evidence-coverage-1",
+                "requested": {
+                  "kind": "lines",
+                  "start": 1,
+                  "stop": 41
+                },
+                "returned": {
+                  "kind": "lines",
+                  "start": 1,
+                  "stop": 41
+                },
+                "complete": true,
+                "truncated": false,
+                "reason": null,
+                "next_cursor": null
+              }
+            },
+            "rule_version": "evidence-read-1"
+          }
+        ]
+      },
+      "qualified_outputs": {},
+      "observations": {
+        "text_window": {
+          "artifact_id": "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+          "sha256": "d80962476da260dd483d48d2bf72760947d9cc5b652b608ec1c39813a8184eec",
+          "role": "raw_evidence",
+          "file": "artifacts/artifact_d6a2709df0bc452abe2d8e77298fc6a1/files/stdout.out",
+          "source": {
+            "task_path": "task/stdout.out"
+          },
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "geometry_indices": [],
+          "stage": "unknown",
+          "units": null,
+          "conditions": "unknown",
+          "scientific_status": "unverified",
+          "validation": "unverified observation; not a scientific qualification",
+          "lines": [
+            {
+              "line": 1,
+              "text": ""
+            },
+            {
+              "line": 2,
+              "text": "                                 *****************"
+            },
+            {
+              "line": 3,
+              "text": "                                 * O   R   C   A *"
+            },
+            {
+              "line": 4,
+              "text": "                                 *****************"
+            },
+            {
+              "line": 5,
+              "text": ""
+            },
+            {
+              "line": 6,
+              "text": "                                            #,                                       "
+            },
+            {
+              "line": 7,
+              "text": "                                            ###                                      "
+            },
+            {
+              "line": 8,
+              "text": "                                            ####                                     "
+            },
+            {
+              "line": 9,
+              "text": "                                            #####                                    "
+            },
+            {
+              "line": 10,
+              "text": "                                            ######                                   "
+            },
+            {
+              "line": 11,
+              "text": "                                           ########,                                 "
+            },
+            {
+              "line": 12,
+              "text": "                                     ,,################,,,,,                         "
+            },
+            {
+              "line": 13,
+              "text": "                               ,,#################################,,                 "
+            },
+            {
+              "line": 14,
+              "text": "                          ,,##########################################,,             "
+            },
+            {
+              "line": 15,
+              "text": "                       ,#########################################, ''#####,          "
+            },
+            {
+              "line": 16,
+              "text": "                    ,#############################################,,   '####,        "
+            },
+            {
+              "line": 17,
+              "text": "                  ,##################################################,,,,####,       "
+            },
+            {
+              "line": 18,
+              "text": "                ,###########''''           ''''###############################       "
+            },
+            {
+              "line": 19,
+              "text": "              ,#####''   ,,,,##########,,,,          '''####'''          '####       "
+            },
+            {
+              "line": 20,
+              "text": "            ,##' ,,,,###########################,,,                        '##       "
+            },
+            {
+              "line": 21,
+              "text": "           ' ,,###''''                  '''############,,,                           "
+            },
+            {
+              "line": 22,
+              "text": "         ,,##''                                '''############,,,,        ,,,,,,###''"
+            },
+            {
+              "line": 23,
+              "text": "      ,#''                                            '''#######################'''  "
+            },
+            {
+              "line": 24,
+              "text": "     '                                                          ''''####''''         "
+            },
+            {
+              "line": 25,
+              "text": "             ,#######,   #######,   ,#######,      ##                                "
+            },
+            {
+              "line": 26,
+              "text": "            ,#'     '#,  ##    ##  ,#'     '#,    #''#        ,####,    ,#,          "
+            },
+            {
+              "line": 27,
+              "text": "            ##       ##  ##   ,#'  ##            #'  '#       #'       ,# #          "
+            },
+            {
+              "line": 28,
+              "text": "            ##       ##  #######   ##           ,######,      #####,      #          "
+            },
+            {
+              "line": 29,
+              "text": "            '#,     ,#'  ##    ##  '#,     ,#' ,#      #,     #,   #      #          "
+            },
+            {
+              "line": 30,
+              "text": "             '#######'   ##     ##  '#######'  #'      '#     '####' #    #          "
+            },
+            {
+              "line": 31,
+              "text": ""
+            },
+            {
+              "line": 32,
+              "text": ""
+            },
+            {
+              "line": 33,
+              "text": ""
+            },
+            {
+              "line": 34,
+              "text": "                #########################################################"
+            },
+            {
+              "line": 35,
+              "text": "                #                        -***-                          #"
+            },
+            {
+              "line": 36,
+              "text": "                #          Department of theory and spectroscopy        #"
+            },
+            {
+              "line": 37,
+              "text": "                #                                                       #"
+            },
+            {
+              "line": 38,
+              "text": "                #                      Frank Neese                      #"
+            },
+            {
+              "line": 39,
+              "text": "                #                                                       #"
+            },
+            {
+              "line": 40,
+              "text": "                #     Directorship, Architecture, Infrastructure        #"
+            }
+          ],
+          "returned_bytes": 2826,
+          "status": "observed",
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 41
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 41
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        }
+      },
+      "observation_records": [],
+      "diagnostics": [],
+      "artifact_ids": [
+        "artifact_d6a2709df0bc452abe2d8e77298fc6a1"
+      ],
+      "source": {
+        "task_path": "task/stdout.out",
+        "tool": "evidence.text",
+        "consumption": {
+          "_decision_id": "model_121c6be64163426eb297dd20f5bf0b0b"
+        },
+        "request_version": 3,
+        "plan_version": 1
+      },
+      "created_at": "2026-10-20T22:42:54.518563Z"
+    },
+    {
+      "id": "result_0cbca0c2a4c64534b94e6e3942f31740",
+      "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+      "step_id": null,
+      "attempt_id": null,
+      "call_id": "call_1c05e70eae7b469cac29c772f4c410fe",
+      "supersedes_result_id": null,
+      "operation_status": "completed",
+      "checks": {
+        "search_hits": [
+          {
+            "name": "bounded_evidence_read",
+            "status": "passed",
+            "detail": "operation only; content and observed values remain scientifically unverified",
+            "source": {
+              "artifact_id": "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+              "sha256": "d80962476da260dd483d48d2bf72760947d9cc5b652b608ec1c39813a8184eec",
+              "view": {
+                "type": "raw_text",
+                "version": "1"
+              },
+              "path": [],
+              "coverage": {
+                "version": "evidence-coverage-1",
+                "requested": {
+                  "kind": "lines",
+                  "start": 1,
+                  "stop": 201,
+                  "query": "ERROR",
+                  "case_sensitive": false
+                },
+                "returned": {
+                  "kind": "lines",
+                  "start": 1,
+                  "stop": 188
+                },
+                "complete": true,
+                "truncated": false,
+                "reason": null,
+                "next_cursor": null
+              }
+            },
+            "rule_version": "evidence-read-1"
+          }
+        ]
+      },
+      "qualified_outputs": {},
+      "observations": {
+        "search_hits": {
+          "artifact_id": "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+          "sha256": "d80962476da260dd483d48d2bf72760947d9cc5b652b608ec1c39813a8184eec",
+          "role": "raw_evidence",
+          "file": "artifacts/artifact_d6a2709df0bc452abe2d8e77298fc6a1/files/stdout.out",
+          "source": {
+            "task_path": "task/stdout.out"
+          },
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "geometry_indices": [],
+          "stage": "unknown",
+          "units": null,
+          "conditions": "unknown",
+          "scientific_status": "unverified",
+          "validation": "unverified observation; not a scientific qualification",
+          "status": "observed",
+          "matches": [
+            {
+              "line": 182,
+              "text": "                                 INPUT ERROR"
+            }
+          ],
+          "query": "ERROR",
+          "start_line": 1,
+          "scanned_lines": 187,
+          "next_line": null,
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201,
+              "query": "ERROR",
+              "case_sensitive": false
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 188
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        }
+      },
+      "observation_records": [],
+      "diagnostics": [],
+      "artifact_ids": [
+        "artifact_d6a2709df0bc452abe2d8e77298fc6a1"
+      ],
+      "source": {
+        "task_path": "task/stdout.out",
+        "tool": "evidence.search",
+        "consumption": {
+          "_decision_id": "model_7bdf88dbdbd6407289e6911833a8263d"
+        },
+        "request_version": 3,
+        "plan_version": 1
+      },
+      "created_at": "2026-10-20T22:43:31.834599Z"
+    },
+    {
+      "id": "result_118def3c4e6c4ac89f85824094c8a8c1",
+      "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+      "step_id": null,
+      "attempt_id": null,
+      "call_id": "call_fb37ab26c42441cba8f2095aa64a34df",
+      "supersedes_result_id": null,
+      "operation_status": "completed",
+      "checks": {
+        "text_window": [
+          {
+            "name": "bounded_evidence_read",
+            "status": "passed",
+            "detail": "operation only; content and observed values remain scientifically unverified",
+            "source": {
+              "artifact_id": "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+              "sha256": "d80962476da260dd483d48d2bf72760947d9cc5b652b608ec1c39813a8184eec",
+              "view": {
+                "type": "raw_text",
+                "version": "1"
+              },
+              "path": [],
+              "coverage": {
+                "version": "evidence-coverage-1",
+                "requested": {
+                  "kind": "lines",
+                  "start": 160,
+                  "stop": 220
+                },
+                "returned": {
+                  "kind": "lines",
+                  "start": 160,
+                  "stop": 188
+                },
+                "complete": true,
+                "truncated": false,
+                "reason": null,
+                "next_cursor": null
+              }
+            },
+            "rule_version": "evidence-read-1"
+          }
+        ]
+      },
+      "qualified_outputs": {},
+      "observations": {
+        "text_window": {
+          "artifact_id": "artifact_d6a2709df0bc452abe2d8e77298fc6a1",
+          "sha256": "d80962476da260dd483d48d2bf72760947d9cc5b652b608ec1c39813a8184eec",
+          "role": "raw_evidence",
+          "file": "artifacts/artifact_d6a2709df0bc452abe2d8e77298fc6a1/files/stdout.out",
+          "source": {
+            "task_path": "task/stdout.out"
+          },
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "geometry_indices": [],
+          "stage": "unknown",
+          "units": null,
+          "conditions": "unknown",
+          "scientific_status": "unverified",
+          "validation": "unverified observation; not a scientific qualification",
+          "lines": [
+            {
+              "line": 160,
+              "text": " Your ORCA version has been built with support for libXC version: 7.0.0"
+            },
+            {
+              "line": 161,
+              "text": " For citations please refer to: https://libxc.gitlab.io"
+            },
+            {
+              "line": 162,
+              "text": ""
+            },
+            {
+              "line": 163,
+              "text": " This ORCA versions uses:"
+            },
+            {
+              "line": 164,
+              "text": "   CBLAS   interface :  Fast vector & matrix operations"
+            },
+            {
+              "line": 165,
+              "text": "   LAPACKE interface :  Fast linear algebra routines"
+            },
+            {
+              "line": 166,
+              "text": "   SCALAPACK package :  Parallel linear algebra routines"
+            },
+            {
+              "line": 167,
+              "text": "   Shared memory     :  Shared parallel matrices"
+            },
+            {
+              "line": 168,
+              "text": "   BLAS/LAPACK       :  OpenBLAS 0.3.29  USE64BITINT DYNAMIC_ARCH NO_AFFINITY SkylakeX SINGLE_THREADED"
+            },
+            {
+              "line": 169,
+              "text": "        Core in use  :  SkylakeX"
+            },
+            {
+              "line": 170,
+              "text": "   Copyright (c) 2011-2014, The OpenBLAS Project"
+            },
+            {
+              "line": 171,
+              "text": ""
+            },
+            {
+              "line": 172,
+              "text": ""
+            },
+            {
+              "line": 173,
+              "text": "  ***********************************"
+            },
+            {
+              "line": 174,
+              "text": "  * Starting time: Tue Oct 20 22:42:30 2026"
+            },
+            {
+              "line": 175,
+              "text": "  * Host name:     67889495987a"
+            },
+            {
+              "line": 176,
+              "text": "  * Process ID:    67"
+            },
+            {
+              "line": 177,
+              "text": "  * Working dir.:  /work/native"
+            },
+            {
+              "line": 178,
+              "text": "  ***********************************"
+            },
+            {
+              "line": 179,
+              "text": ""
+            },
+            {
+              "line": 180,
+              "text": ""
+            },
+            {
+              "line": 181,
+              "text": "            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            },
+            {
+              "line": 182,
+              "text": "                                 INPUT ERROR"
+            },
+            {
+              "line": 183,
+              "text": "            UNRECOGNIZED OR DUPLICATED KEYWORD(S) IN SIMPLE INPUT LINE"
+            },
+            {
+              "line": 184,
+              "text": "                         GIAO "
+            },
+            {
+              "line": 185,
+              "text": "            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            },
+            {
+              "line": 186,
+              "text": "[file orca_main/main_input_keywordline.cpp, line 13872]: "
+            },
+            {
+              "line": 187,
+              "text": ""
+            }
+          ],
+          "returned_bytes": 1109,
+          "status": "observed",
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 160,
+              "stop": 220
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 160,
+              "stop": 188
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        }
+      },
+      "observation_records": [],
+      "diagnostics": [],
+      "artifact_ids": [
+        "artifact_d6a2709df0bc452abe2d8e77298fc6a1"
+      ],
+      "source": {
+        "task_path": "task/stdout.out",
+        "tool": "evidence.text",
+        "consumption": {
+          "_decision_id": "model_a496624da09b4ffbb8e1248d580e6cbd"
+        },
+        "request_version": 3,
+        "plan_version": 1
+      },
+      "created_at": "2026-10-20T22:43:40.434142Z"
+    },
+    {
+      "id": "result_8bb100a9b4444419ba0c3c4118b667f4",
+      "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+      "step_id": null,
+      "attempt_id": null,
+      "call_id": "call_8baef75a99c742c8827e86ad75f154b8",
+      "supersedes_result_id": null,
+      "operation_status": "completed",
+      "checks": {
+        "document_excerpt": [
+          {
+            "name": "non_scientific_delivery",
+            "status": "unverified",
+            "detail": "operation only; content and observed values remain scientifically unverified",
+            "source": {
+              "coverage": {
+                "complete": false,
+                "scope": "bounded matched document paragraphs and table rows",
+                "paragraph_indices": [],
+                "paragraph_count": 2919,
+                "table_row_labels": {}
+              }
+            },
+            "rule_version": "knowledge-answer-1"
+          }
+        ]
+      },
+      "qualified_outputs": {},
+      "observations": {
+        "document_excerpt": {
+          "status": "missing",
+          "title": "ORCA 6.1 Property File",
+          "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/utilitiesvisualization/property_file_list.html",
+          "document_id": "orca_properties",
+          "index_version": "knowledge-index-3",
+          "index_sha256": "6129ac36cadd12aeb1eb7183370088b445e6c9af654db993f17b961668fd502e",
+          "document_version": "6.1",
+          "kind": "official_document",
+          "rendering_version": "html-readable-2",
+          "published_at": null,
+          "accessed_at": "2026-10-20T22:44:00.011545+00:00",
+          "query": "NMR shielding GIAO",
+          "document_sha256": "2e172441cc3d123292b9ed32fc2305a8442404c9699a1875a7623c146ea6f8b6",
+          "excerpt": "",
+          "excerpt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "coverage": {
+            "complete": false,
+            "scope": "bounded matched document paragraphs and table rows",
+            "paragraph_indices": [],
+            "paragraph_count": 2919,
+            "table_row_labels": {}
+          },
+          "scientific_qualification": false,
+          "retrieval": "versioned official-document index; one HTTPS GET",
+          "artifact_ids": [
+            "artifact_c44673b2a7274675a7f3bd78fa8593ba"
+          ],
+          "document_artifact_id": "artifact_c44673b2a7274675a7f3bd78fa8593ba",
+          "document_archive_complete": true,
+          "document_bytes": 758607
+        }
+      },
+      "observation_records": [],
+      "diagnostics": [],
+      "artifact_ids": [
+        "artifact_c44673b2a7274675a7f3bd78fa8593ba"
+      ],
+      "source": {
+        "tool": "knowledge.search"
+      },
+      "created_at": "2026-10-20T22:44:00.495629Z"
+    },
+    {
+      "id": "result_28c8ec42e1f94cad8d3a7ba15b8521db",
+      "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+      "step_id": null,
+      "attempt_id": null,
+      "call_id": "call_61a79a812afc49228b4a0d98d6940b64",
+      "supersedes_result_id": null,
+      "operation_status": "completed",
+      "checks": {
+        "document_excerpt": [
+          {
+            "name": "non_scientific_delivery",
+            "status": "passed",
+            "detail": "operation only; content and observed values remain scientifically unverified",
+            "source": {
+              "coverage": {
+                "complete": false,
+                "scope": "bounded matched document paragraphs and table rows",
+                "paragraph_indices": [
+                  31,
+                  37,
+                  2804
+                ],
+                "paragraph_count": 2919,
+                "table_row_labels": {
+                  "31": "EFG_Tensor",
+                  "37": "NUC",
+                  "2804": "EPRNMR"
+                }
+              }
+            },
+            "rule_version": "knowledge-answer-1"
+          }
+        ]
+      },
+      "qualified_outputs": {},
+      "observations": {
+        "document_excerpt": {
+          "status": "found",
+          "title": "ORCA 6.1 Property File",
+          "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/utilitiesvisualization/property_file_list.html",
+          "document_id": "orca_properties",
+          "index_version": "knowledge-index-3",
+          "index_sha256": "6129ac36cadd12aeb1eb7183370088b445e6c9af654db993f17b961668fd502e",
+          "document_version": "6.1",
+          "kind": "official_document",
+          "rendering_version": "html-readable-2",
+          "published_at": null,
+          "accessed_at": "2026-10-20T22:44:13.413740+00:00",
+          "query": "GIAO NMR shielding %eprnmr Nuclei print",
+          "document_sha256": "2e172441cc3d123292b9ed32fc2305a8442404c9699a1875a7623c146ea6f8b6",
+          "excerpt": "EFG_Tensor Y numOfNucs I N N Number of active nuclei\n\nNUC I N Y Index of the nuclei\n\nEPRNMR D Y N",
+          "excerpt_sha256": "94ae85e1c1259027439e391edb87dad0c69c3498bd296a0ea0bff1d30f45a420",
+          "coverage": {
+            "complete": false,
+            "scope": "bounded matched document paragraphs and table rows",
+            "paragraph_indices": [
+              31,
+              37,
+              2804
+            ],
+            "paragraph_count": 2919,
+            "table_row_labels": {
+              "31": "EFG_Tensor",
+              "37": "NUC",
+              "2804": "EPRNMR"
+            }
+          },
+          "scientific_qualification": false,
+          "retrieval": "versioned official-document index; one HTTPS GET",
+          "artifact_ids": [
+            "artifact_6298f9595ae04403b5436d550b166de7"
+          ],
+          "document_artifact_id": "artifact_6298f9595ae04403b5436d550b166de7",
+          "document_archive_complete": true,
+          "document_bytes": 758607
+        }
+      },
+      "observation_records": [],
+      "diagnostics": [],
+      "artifact_ids": [
+        "artifact_6298f9595ae04403b5436d550b166de7"
+      ],
+      "source": {
+        "tool": "knowledge.search"
+      },
+      "created_at": "2026-10-20T22:44:13.809350Z"
+    },
+    {
+      "id": "result_21ae8b2256834345b60b1c1b835ae351",
+      "run_id": "run_d1311f0cfa454c2cb5e05f77a16ff9a7",
+      "step_id": null,
+      "attempt_id": null,
+      "call_id": "call_f3d916ae96a3485b94a7b6978e27136c",
+      "supersedes_result_id": null,
+      "operation_status": "completed",
+      "checks": {
+        "document_excerpt": [
+          {
+            "name": "non_scientific_delivery",
+            "status": "passed",
+            "detail": "operation only; content and observed values remain scientifically unverified",
+            "source": {
+              "coverage": {
+                "complete": false,
+                "scope": "bounded matched document paragraphs and table rows",
+                "paragraph_indices": [
+                  28,
+                  61,
+                  82
+                ],
+                "paragraph_count": 159,
+                "table_row_labels": {
+                  "82": "eprnmr"
+                }
+              }
+            },
+            "rule_version": "knowledge-answer-1"
+          }
+        ]
+      },
+      "qualified_outputs": {},
+      "observations": {
+        "document_excerpt": {
+          "status": "found",
+          "title": "ORCA 6.1 Input Structure",
+          "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/input.html",
+          "document_id": "orca_input",
+          "index_version": "knowledge-index-3",
+          "index_sha256": "6129ac36cadd12aeb1eb7183370088b445e6c9af654db993f17b961668fd502e",
+          "document_version": "6.1",
+          "kind": "official_document",
+          "rendering_version": "html-readable-2",
+          "published_at": null,
+          "accessed_at": "2026-10-20T22:44:28.584651+00:00",
+          "query": "NMR shielding GIAO %eprnmr input syntax",
+          "document_sha256": "027978bc4b2680c518edad517fc0bd8538bd0fb0b0117441a8aafb98ab2e5438",
+          "excerpt": "Some input block keywords either open a nested sub-block, which must be closed with an additional end, or have a specific syntax, different from the simple variable assignment described above. For example:\n\n# ----------------------------------------------------- ! LSD DEF2-SVP TightSCF KeepInts # ----------------------------------------------------- %eprnmr gtensor 1 end * int 0 2 B 0 0 0 0 0 0 O 1 0 0 1.2049 0 0 * # ************************************************* # ****** This starts the input for the next job * # ************************************************* $new_job # -------------------------------------------------- ! BP86 DEF2-SVP SmallPrint ReadInts NoKeepInts # -------------------------------------------------- %eprnmr gtensor 1 end * int 0 2 B 0 0 0 0 0 0 O 1 0 0 1.2049 0 0 *\n\neprnmr EPR and NMR properties (Section 5.21.11; g-tensor: Table 5.13, HFC: Table 5.14, ZFS: Table 5.16, Mössbauer: Table 5.18)",
+          "excerpt_sha256": "bbc5528f1f2113b6ef3b7dd07be638a68a73cc488c85412cb948c95d53e73bd4",
+          "coverage": {
+            "complete": false,
+            "scope": "bounded matched document paragraphs and table rows",
+            "paragraph_indices": [
+              28,
+              61,
+              82
+            ],
+            "paragraph_count": 159,
+            "table_row_labels": {
+              "82": "eprnmr"
+            }
+          },
+          "scientific_qualification": false,
+          "retrieval": "versioned official-document index; one HTTPS GET",
+          "artifact_ids": [
+            "artifact_87408cb285d84ebeb4f16491fa2292be"
+          ],
+          "document_artifact_id": "artifact_87408cb285d84ebeb4f16491fa2292be",
+          "document_archive_complete": true,
+          "document_bytes": 122707
+        }
+      },
+      "observation_records": [],
+      "diagnostics": [],
+      "artifact_ids": [
+        "artifact_87408cb285d84ebeb4f16491fa2292be"
+      ],
+      "source": {
+        "tool": "knowledge.search"
+      },
+      "created_at": "2026-10-20T22:44:29.185912Z"
+    }
+  ],
+  "originals": [
+    {
+      "path": "data/live-repair/attempts/a022/data/runs/run_d1311f0cfa454c2cb5e05f77a16ff9a7/results/result_c8e13aa62bbb4fe49a04f8f0e25fac91.json",
+      "sha256": "6baa6a78558bd044cbe65e3836ba6647ef91b0b71b2aa0938681097ad54d56b0"
+    },
+    {
+      "path": "data/live-repair/attempts/a022/data/runs/run_d1311f0cfa454c2cb5e05f77a16ff9a7/results/result_194a42d2cf864b939c71f3a405bbfe1e.json",
+      "sha256": "f225f6445e6f22a7941ed279cb3ba4b40b277f32bc5b72bf3f9e67e2123facfe"
+    },
+    {
+      "path": "data/live-repair/attempts/a022/data/runs/run_d1311f0cfa454c2cb5e05f77a16ff9a7/results/result_f6067308f4cf4c5680051711cffbd0c8.json",
+      "sha256": "1ba1c2d299aba5de09f1ab90b51af331a7a950b519428191e5a5c429c121cbbd"
+    },
+    {
+      "path": "data/live-repair/attempts/a022/data/runs/run_d1311f0cfa454c2cb5e05f77a16ff9a7/results/result_0cbca0c2a4c64534b94e6e3942f31740.json",
+      "sha256": "259882e867c7b5f73981d989f99be360b48afa1bbab8e1777badc503411964dd"
+    },
+    {
+      "path": "data/live-repair/attempts/a022/data/runs/run_d1311f0cfa454c2cb5e05f77a16ff9a7/results/result_118def3c4e6c4ac89f85824094c8a8c1.json",
+      "sha256": "a903790c5cb53a7069e1dc8a1749e8735e553453ed0cebe4dd0468111ca69ee5"
+    },
+    {
+      "path": "data/live-repair/attempts/a022/data/runs/run_d1311f0cfa454c2cb5e05f77a16ff9a7/results/result_8bb100a9b4444419ba0c3c4118b667f4.json",
+      "sha256": "f9710ae8997abc66206ba80adfdb31e924c93adf17542eefc3071d9921e9b8cb"
+    },
+    {
+      "path": "data/live-repair/attempts/a022/data/runs/run_d1311f0cfa454c2cb5e05f77a16ff9a7/results/result_28c8ec42e1f94cad8d3a7ba15b8521db.json",
+      "sha256": "bc50cfd3736f2f3fffb8938319014315b5acb9f7d0351052cb13a43e31e93d17"
+    },
+    {
+      "path": "data/live-repair/attempts/a022/data/runs/run_d1311f0cfa454c2cb5e05f77a16ff9a7/results/result_21ae8b2256834345b60b1c1b835ae351.json",
+      "sha256": "683ccd884c339089e39f9bad3298b9a4b28bf2f074f25f1ba9a73021195819fa"
+    }
+  ],
+  "expected_read_id": "result_118def3c4e6c4ac89f85824094c8a8c1"
+}

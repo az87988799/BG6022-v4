@@ -509,10 +509,32 @@ def _collect_sdk_errors(store, run, attempt, root, files, diagnostics):
             "unscanned_response_files": max(0, len(paths) - 32)})
 
 
-def _collect_internal_failures(store, run, attempt, diagnostics):
-    """Project settled child failures from registered evidence, never task assertions."""
+def _failure_log_tail(store, run, attempt, artifact, filename, sha256):
+    """One verified archival tail path for direct and SDK execution failures."""
     from orca_agent.llm import _has_credential
 
+    reference = {"filename": filename, "artifact_id": artifact.id, "sha256": sha256}
+    try:
+        if (artifact.run_id != run.id or artifact.attempt_id != attempt.id
+                or artifact.sha256 != sha256 or artifact.source.get("task_path") != filename):
+            raise ValueError("failure log does not match its owned archived source")
+        path = store.artifact_path(artifact.id)
+        with path.open("rb") as stream:
+            offset = max(0, artifact.size - 2048)
+            stream.seek(offset)
+            raw = stream.read(2048)
+        text = raw.decode("utf-8", errors="replace")
+        if _has_credential(text):
+            text = "[redacted credential-bearing execution error]"
+        reference.update({"text": text, "byte_start": offset,
+                          "truncated": offset > 0, "total_bytes": artifact.size})
+    except (ValueError, OSError) as exc:
+        reference["read_error"] = type(exc).__name__
+    return reference
+
+
+def _collect_internal_failures(store, run, attempt, diagnostics):
+    """Project settled child failures from registered evidence, never task assertions."""
     failed = [receipt for receipt in run.internal_calls
               if receipt.parent_attempt_id == attempt.id
               and receipt.state in {"failed", "timed_out", "cancelled"}]
@@ -527,25 +549,8 @@ def _collect_internal_failures(store, run, attempt, diagnostics):
             if artifact.run_id != run.id or artifact.attempt_id != attempt.id:
                 diagnostic["evidence_error"] = "internal log is not owned by this Attempt"
                 continue
-            reference = {"filename": name, "artifact_id": artifact.id, "sha256": artifact.sha256}
-            try:
-                # The archive remains authoritative. Only its verified bounded
-                # tail enters feedback, alongside the directly readable identity.
-                path = store.artifact_path(artifact.id)
-                with path.open("rb") as stream:
-                    offset = max(0, artifact.size - 2048)
-                    stream.seek(offset)
-                    raw = stream.read(2048)
-                text = raw.decode("utf-8", errors="replace")
-                if _has_credential(text):
-                    text = "[redacted credential-bearing internal error]"
-                reference.update({"text": text, "byte_start": offset,
-                                  "truncated": offset > 0, "total_bytes": artifact.size})
-            except (ValueError, OSError) as exc:
-                # Keep the verified identity discoverable without claiming its
-                # damaged/missing content was read successfully.
-                reference["read_error"] = type(exc).__name__
-            diagnostic["evidence"].append(reference)
+            diagnostic["evidence"].append(_failure_log_tail(
+                store, run, attempt, artifact, name, artifact.sha256))
             if len(diagnostic["evidence"]) == 2:
                 break
         diagnostics.append(diagnostic)
@@ -553,6 +558,21 @@ def _collect_internal_failures(store, run, attempt, diagnostics):
         diagnostics.append({"category": "internal_orca_failures_bounded",
                             "shown": 4, "total": len(failed),
                             "omitted": len(failed) - 4})
+
+
+def _collect_execution_failure(store, run, attempt, files, outcome, diagnostics):
+    """New settled failure Results carry their own bounded stdout/stderr facts."""
+    if outcome["state"] not in {"failed", "timed_out", "cancelled"}:
+        return
+    evidence = []
+    for name in ("task/stdout.out", "task/stderr.txt"):
+        binding = files.get(name)
+        if isinstance(binding, dict) and binding.get("artifact_id") and binding.get("sha256"):
+            artifact = store.load_artifact(binding["artifact_id"])
+            evidence.append(_failure_log_tail(store, run, attempt, artifact, name, binding["sha256"]))
+    if evidence:
+        diagnostics.append({"category": "execution_failed", "attempt_id": attempt.id,
+            "operation_status": outcome["state"], "evidence_source": "owned_archived_log_tail", "evidence": evidence})
 
 
 def collect_result(store, run, step, attempt, outcome):
@@ -603,6 +623,7 @@ def collect_result(store, run, step, attempt, outcome):
                         files[key] = {
                             "artifact_id": artifact_id, "sha256": artifact.sha256}
             _collect_internal_failures(store, run, attempt, diagnostics)
+            _collect_execution_failure(store, run, attempt, files, outcome, diagnostics)
         except Exception as exc:
             diagnostics.append({"category": "collection_error", "detail": str(exc)})
     else:

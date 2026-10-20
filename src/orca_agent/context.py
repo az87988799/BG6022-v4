@@ -66,7 +66,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v87"
+PROMPT_VERSION = "agent-json-v88"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -1075,8 +1075,9 @@ def _diagnostic_records(diagnostics, budget):
             sdk_groups.setdefault(key, []).append((original, row))
     if not sdk_groups and len(_json(safe).encode("utf-8")) <= budget:
         return safe
+    failure_categories = {"internal_orca_failed", "execution_failed"}
     log_count = sum(len(row.get("evidence", [])) for row in safe
-                    if isinstance(row, dict) and row.get("category") == "internal_orca_failed")
+                    if isinstance(row, dict) and row.get("category") in failure_categories)
     # Real ORCA input errors include banners and source locations after the
     # useful error text. A 128-byte suffix loses the error even though it keeps
     # some output. Match the collector's bounded four calls/two logs, reserving
@@ -1088,7 +1089,7 @@ def _diagnostic_records(diagnostics, budget):
     for original, row in zip(diagnostics, safe, strict=True):
         if isinstance(row, dict) and row.get("category") == "managed_sdk_request_rejected":
             continue
-        if not isinstance(row, dict) or row.get("category") != "internal_orca_failed":
+        if not isinstance(row, dict) or row.get("category") not in failure_categories:
             other.append(row)
             continue
         if internal_count >= 4:
@@ -1828,6 +1829,81 @@ def _call_execution(run, result):
             or call.frozen_step.parameters.model_dump(mode="json") != call.parameters):
         return {}
     return {"tool": call.tool, "effects": list(get_tool(call.tool).effects)}
+
+
+def _failure_read_diagnostics(run, results):
+    """Pin checked, already-returned log windows to their unresolved failure.
+
+    No file read or new evidence: ordinary query history can still be compacted.
+    Only the latest window per exact stdout/stderr binding is retained, for at
+    most four current logical failures, matching the bounded failure collector.
+    """
+    if not _simplified_workflow(run):
+        return {}
+    by_id = {result.id: result for result in results}
+    superseded = _superseded_failures(run, results)
+    failures = sorted([*settled_failed_python_attempts(run), *settled_failed_native_attempts(run)],
+                      key=lambda item: item.finished_at, reverse=True)
+    selected, logical = {}, set()
+    for attempt in failures:
+        identity = (attempt.logical_id, attempt.execution_kind)
+        if attempt.id in superseded or identity in logical:
+            continue
+        result = by_id.get(attempt.result_id)
+        if (result is None or (result.run_id, result.attempt_id, result.step_id, result.operation_status)
+                != (run.id, attempt.id, attempt.step_id, attempt.state)):
+            continue
+        logical.add(identity)
+        if len(logical) > 4:
+            break
+        # New collector records already carry the verified archival tail.
+        if any(row.get("category") == "execution_failed" and row.get("evidence")
+               for row in result.diagnostics if isinstance(row, dict)):
+            continue
+        logs = result.source.get("files", {})
+        evidence = []
+        for filename in ("task/stdout.out", "task/stderr.txt"):
+            binding = logs.get(filename) if isinstance(logs, dict) else None
+            if (not isinstance(binding, dict) or binding.get("artifact_id") not in result.artifact_ids
+                    or not isinstance(binding.get("sha256"), str)
+                    or not re.fullmatch(r"[a-f0-9]{64}", binding["sha256"])):
+                continue
+            for query in reversed(results):
+                if (query.operation_status != "completed"
+                        or _call_execution(run, query).get("effects") != ["read_registered_artifact"]
+                        or query.source.get("task_path") != filename):
+                    continue
+                call = next(item for item in run.calls if item.id == query.call_id)
+                for name, window in query.observations.items():
+                    if (not isinstance(window, dict)
+                            or (window.get("artifact_id"), window.get("sha256"))
+                                != (binding["artifact_id"], binding["sha256"])
+                            or window["artifact_id"] not in query.artifact_ids
+                            or call.parameters.get("artifact_id") != window["artifact_id"]
+                            or window.get("view") != {"type": "raw_text", "version": "1"}
+                            or not isinstance(window.get("coverage", {}).get("returned"), dict)
+                            or not isinstance(window.get("lines"), list) or not window["lines"]
+                            or not all(isinstance(row, dict) and isinstance(row.get("text"), str)
+                                       and type(row.get("line")) is int for row in window["lines"])
+                            or not any(check.status == "passed" and all(
+                                check.source.get(field) == window.get(field)
+                                for field in ("artifact_id", "sha256", "view", "path", "coverage"))
+                                for check in query.checks.get(name, []))):
+                        continue
+                    raw = "\n".join(row["text"] for row in window["lines"]).encode("utf-8")
+                    tail = raw[-2048:].decode("utf-8", errors="ignore")
+                    evidence.append({"filename": filename, **binding, "text": tail,
+                        "read_result_id": query.id, "read_record_sha256": fingerprint(query),
+                        "returned_coverage": window["coverage"], "returned_text_sha256": hashlib.sha256(raw).hexdigest(),
+                        "truncated": len(raw) > 2048,
+                        "meaning": "Tail of a previously checked read window; not the whole file or a new read."})
+                    break
+                if evidence and evidence[-1]["filename"] == filename:
+                    break
+        if evidence:
+            selected[result.id] = {"category": "execution_failed", "attempt_id": attempt.id,
+                "operation_status": attempt.state, "evidence_source": "checked_read_window", "evidence": evidence}
+    return selected
 
 
 def _reuse_read_windows(run, originals, projected):
@@ -3655,6 +3731,7 @@ def build_context(
     budget_rejected_prepared = None
     native_fallback = None
     retained_reads = retained_read_result_ids(run)
+    failure_reads = _failure_read_diagnostics(run, results)
     retained_failures = {row["result_id"] for key in ("failed_python_attempts", "failed_native_attempts")
                          for row in authority.get(key, [])}
     views = ([(16384, False), (16384, True)] if retained_reads else [])
@@ -3767,6 +3844,10 @@ def build_context(
         projected_results = [_result(result, observation_bytes if result.id in retained_reads
             and _call_execution(run, result).get("effects") == ["read_registered_artifact"]
             else min(1024, observation_bytes)) for result in visible_results]
+        for original, projected in zip(visible_results, projected_results, strict=True):
+            if original.id in failure_reads:
+                projected["untrusted_diagnostics"] = _diagnostic_records(
+                    [*original.diagnostics, failure_reads[original.id]], max(4096, observation_bytes))
         result_references = []
         if compact and observation_bytes == 256 and not delivery_snapshot and not semantic_intake:
             projected_results, result_references = _decision_result_references(

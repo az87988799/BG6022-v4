@@ -313,6 +313,8 @@ Plan 是当前可执行 Step 的有向无环图，绑定 Request 版本，并记
 
 依 [0070](decisions/0070-nonexecutable-code-guidance.md)，代码编写提示只给字段关系，不提供可执行空脚本。新 Run 可显式冻结非空 Python 入口检查；辅助数据模块不受此门槛影响，存在语句不代表任务或科学通过，旧 Run 保留原策略。
 
+按 [0071](decisions/0071-preserve-current-execution-failure.md)，当前未修复失败的有界日志诊断不会被普通查询预览窗口挤掉；只投影已核验的历史读取或执行时保存的同源摘要，已修复失败不再占据当前诊断窗口。上下文上限、原件、历史结果与科学资格保持。
+
 核性质输入的纯语法顺序可按 [0066](decisions/0066-coordinate-first-nuclear-block-formatting.md) 在新冻结原生策略中自动整理：仅移动现有完整核性质块至唯一坐标声明后，原科学内容、原始输入、差异审计和所有执行/科学检查保留。
 
 开发任务可按 [0067](decisions/0067-workflow-budget-within-existing-total-limits.md) 在既有总 tokens、实际计算、时间和 campaign 上限内明确选择足够的有限工作流额度，父候选须完整继承其配置；不改变旧 Run、清零累计用量或重复启动相同失败输入。
