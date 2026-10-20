@@ -66,7 +66,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v88"
+PROMPT_VERSION = "agent-json-v89"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -1143,6 +1143,59 @@ def _diagnostic_records(diagnostics, budget):
     return projected
 
 
+def _document_excerpt_view(document):
+    """Keep returned evidence ahead of duplicate receipts and navigation."""
+    if not isinstance(document, dict):
+        return None
+    fields = ("status", "title", "url", "document_id", "document_version", "rendering_version",
+              "excerpt_version", "query", "excerpt", "excerpt_sha256", "document_sha256", "coverage",
+              "document_artifact_id", "document_archive_complete", "document_bytes", "scientific_qualification")
+    projected = _safe({key: document[key] for key in fields if key in document})
+    from orca_agent.tools.knowledge import (
+        DOCUMENTS,
+        MANUAL_REFERENCE,
+        MAX_MANUAL_REFERENCE_LENGTH,
+        _document_window,
+    )
+    references = document.get("manual_references", [])
+    if len(_json(document).encode()) <= 12000 and isinstance(references, list) and len(references) <= 8:
+        # Small existing receipts need no metadata projection; retain their
+        # exact fields and the original approved-locator redaction behavior.
+        projected = _safe(document)
+        if document.get("url") in {entry[1] for entry in DOCUMENTS.values()}:
+            projected["url"] = document["url"]
+            source = document.get("source")
+            if isinstance(source, dict) and source.get("url") == document["url"]:
+                projected["source"]["url"] = document["url"]
+        return projected
+    if document.get("url") in {entry[1] for entry in DOCUMENTS.values()}:
+        projected["url"] = document["url"]
+    if isinstance(references, list):
+        allowed = [value for value in references if isinstance(value, str)
+                   and len(value) <= MAX_MANUAL_REFERENCE_LENGTH and re.fullmatch(MANUAL_REFERENCE, value)]
+        terms = set(re.findall(r"[a-z][a-z0-9_-]{2,}", str(document.get("query", "")).lower()))
+        ranked = sorted(enumerate(allowed), key=lambda pair: (
+            -len(terms & set(re.findall(r"[a-z][a-z0-9_-]{2,}", pair[1].lower()))), pair[0]))
+        retained = [reference for _, reference in ranked[:8]]
+        if retained:
+            projected["manual_references"] = retained
+        if len(references) > len(retained):
+            projected["manual_references_projection"] = {
+                "total": len(references), "omitted": len(references) - len(retained),
+                "source": "immutable Result document_excerpt.manual_references"}
+    # The previous special case already allowed 12 KiB. Do not enlarge that
+    # allowance or drop a newly returned excerpt merely because metadata grew.
+    if len(_json(projected).encode()) > 12000 and isinstance(projected.get("excerpt"), str):
+        original = projected["excerpt"]
+        terms = set(re.findall(r"[a-z][a-z0-9_-]{2,}", str(document.get("query", "")).lower()))
+        projected["excerpt"], window = _document_window(original, terms)
+        projected["excerpt_projection"] = {
+            "complete": False, "meaning": "Query-matched window within the immutable returned excerpt; original coverage is unchanged",
+            "original_bytes": len(original.encode()), "returned_bytes": len(projected["excerpt"].encode()),
+            "original_sha256": document.get("excerpt_sha256"), **window}
+    return projected if len(_json(projected).encode()) <= 12000 else None
+
+
 def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
     from orca_agent.artifact_index import result_file_index
 
@@ -1217,18 +1270,9 @@ def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
             summary["diagnostic_artifacts"] = diagnostic_artifacts
     # Retrieval already produced a bounded excerpt. Hash-only feedback cannot
     # answer a document question and used to trigger identical network queries.
-    document = result.observations.get("document_excerpt")
-    if isinstance(document, dict) and len(_json(document).encode("utf-8")) <= 12000:
-        summary["unqualified_observations"] = {"document_excerpt": _safe(document)}
-        from orca_agent.tools.knowledge import DOCUMENTS
-        if document.get("url") in {entry[1] for entry in DOCUMENTS.values()}:
-            projected_document = summary["unqualified_observations"]["document_excerpt"]
-            projected_document["url"] = document["url"]
-            source = document.get("source")
-            # Preserve the same approved locator in the archival receipt.
-            # Other nested URLs and paths still pass through normal redaction.
-            if isinstance(source, dict) and source.get("url") == document["url"]:
-                projected_document["source"]["url"] = document["url"]
+    document = _document_excerpt_view(result.observations.get("document_excerpt"))
+    if document is not None:
+        summary["unqualified_observations"] = {"document_excerpt": document}
     written = result.observations.get("written_artifact")
     if (isinstance(written, dict) and result.source.get("tool") == "workspace.write"
             and written.get("artifact_id") in result.artifact_ids):

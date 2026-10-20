@@ -58,7 +58,7 @@ def test_official_index_records_actual_bytes_excerpt_and_version(monkeypatch, do
     assert len(requests) == 1 and str(requests[0].url) == knowledge.DOCUMENTS[document][1]
     assert result["status"] == "found" and result["kind"] == "official_document"
     assert result["document_version"] == ("2025.09.6" if document == "rdkit" else "6.1")
-    assert result["rendering_version"] == ("text-1" if document == "rdkit" else "html-readable-2")
+    assert result["rendering_version"] == ("text-1" if document == "rdkit" else "html-readable-3")
     assert result["document_sha256"] == hashlib.sha256(raw).hexdigest()
     assert result["excerpt"] == paragraph and result["excerpt_sha256"] == hashlib.sha256(paragraph.encode()).hexdigest()
     assert result["scientific_qualification"] is False and result["coverage"]["complete"] is False
@@ -200,6 +200,7 @@ def archived_run(tmp_path, **budget):
 @pytest.mark.parametrize("query,status", [("frequency", "found"), ("unrelated", "missing")])
 def test_real_dispatch_archives_exact_decompressed_body_and_counts_quota(tmp_path, monkeypatch, query, status):
     import gzip
+
     from orca_agent.tools.dispatch import execute_call
     raw = b"<article><p>Frequency explanation \xff is not transcoded in the archive.</p></article>"
     requests = mock_server(monkeypatch, lambda request: httpx.Response(

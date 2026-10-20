@@ -3,12 +3,14 @@
 import hashlib
 import json
 import re
+from bisect import bisect_right
+from collections import Counter
 from html.parser import HTMLParser
 from typing import Annotated, Literal
 from urllib.parse import urldefrag, urljoin
 
 import httpx
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from orca_agent.models import Identifier, Record, utc_now
 
@@ -78,6 +80,16 @@ class SearchParameters(Record):
         pattern=MANUAL_REFERENCE, max_length=MAX_MANUAL_REFERENCE_LENGTH,
         description="Under managed-native-1, orca:index.html or orca:contents/...html reads the frozen official ORCA 6.1 manual.")]
     query: str = Field(min_length=1, max_length=120)
+    paragraph: int | None = Field(default=None, ge=0, le=1048576,
+        description="Optional zero-based paragraph from prior coverage; reads a continuous bounded window.")
+    start_character: int | None = Field(default=None, ge=0, le=1048576,
+        description="Optional zero-based character offset within paragraph; requires paragraph. Omit for query-centered selection.")
+
+    @model_validator(mode="after")
+    def window_scope(self):
+        if self.start_character is not None and self.paragraph is None:
+            raise ValueError("start_character requires a paragraph from document coverage")
+        return self
 
 
 class AnswerParameters(Record):
@@ -99,15 +111,32 @@ class _Text(HTMLParser):
         self.row_label = None
         self.row_cell_count = 0
         self.row_label_start = None
+        self.literal_depth = 0
+        self.literal_indices = set()
+        self.pre_buffer = False
+        self.code_paragraphs = set()
 
     def flush(self):
-        value = re.sub(r"\s+", " ", "".join(self.buffer)).strip()
+        pieces, plain = [], []
+        for index, value in enumerate(self.buffer):
+            if index in self.literal_indices:
+                pieces.extend((re.sub(r"\s+", " ", "".join(plain)), value))
+                plain = []
+            else:
+                plain.append(value)
+        pieces.append(re.sub(r"\s+", " ", "".join(plain)))
+        value = "".join(pieces)
+        value = value.strip("\r\n") if self.pre_buffer else value.strip()
         if value:
+            if self.literal_indices:
+                self.code_paragraphs.add(len(self.parts))
             if self.row_label:
                 self.row_labels[len(self.parts)] = self.row_label
             self.parts.append(value)
         self.buffer = []
         self.row_label = None
+        self.literal_indices = set()
+        self.pre_buffer = False
 
     def handle_starttag(self, tag, attrs):
         if tag == "article":
@@ -131,7 +160,12 @@ class _Text(HTMLParser):
                     if not self.row_cell_count and tag == "td":
                         self.row_label_start = len(self.buffer)
                     self.row_cell_count += 1
-                self.buffer.append(" ")
+                if tag == "br" and self.literal_depth:
+                    self.literal_indices.add(len(self.buffer))
+                self.buffer.append("\n" if tag == "br" and self.literal_depth else " ")
+            if tag in {"pre", "code"}:
+                self.literal_depth += 1
+                self.pre_buffer |= tag == "pre"
 
     def handle_endtag(self, tag):
         if self.in_article and not self.skip:
@@ -149,6 +183,8 @@ class _Text(HTMLParser):
                     self.row_label = re.sub(r"\s+", " ", "".join(self.buffer[self.row_label_start:])).strip()
                     self.row_label_start = None
                 self.buffer.append(" ")
+            if tag in {"pre", "code"}:
+                self.literal_depth = max(0, self.literal_depth - 1)
         if tag == "article":
             self.in_article = False
         if tag in {"script", "style", "nav"} and self.skip:
@@ -156,38 +192,108 @@ class _Text(HTMLParser):
 
     def handle_data(self, data):
         if self.in_article and not self.skip:
+            if self.literal_depth:
+                self.literal_indices.add(len(self.buffer))
             self.buffer.append(data)
 
 
-def matched_excerpt(parts, query, *, row_labels=None):
+def _document_window(text, terms, start_character=None):
+    """A continuous source window; no joined fragments or reconstructed code."""
+    lines = text.splitlines(keepends=True) or [text]
+    offsets = [0]
+    for line in lines:
+        offsets.append(offsets[-1] + len(line))
+    def end_at(begin):
+        limit = min(len(text), begin + 1800)
+        boundary = offsets[bisect_right(offsets, limit) - 1]
+        return boundary if boundary > begin else limit
+
+    if start_character is not None:
+        if not 0 <= start_character < len(text):
+            raise ValueError("document start_character is outside the selected paragraph")
+        begin = start_character
+    elif len(text) <= 1800:
+        begin = 0
+    else:
+        hits = [(match.start(), match.end(), match.group().lower())
+                for match in re.finditer(r"[a-z0-9_-]+", text, re.I) if match.group().lower() in terms]
+        candidates = set(offsets[:-1])
+        for start, stop, _ in hits:
+            line = bisect_right(offsets, start) - 1
+            if offsets[line + 1] - offsets[line] > 1800:
+                candidates.update((max(offsets[line], start - 200), max(offsets[line], stop - 1800)))
+        best, begin, left, right, window = (-1, -1), 0, 0, 0, Counter()
+        for candidate in sorted(candidates):
+            end = end_at(candidate)
+            while right < len(hits) and hits[right][1] <= end:
+                window[hits[right][2]] += 1
+                right += 1
+            while left < right and hits[left][0] < candidate:
+                window[hits[left][2]] -= 1
+                if not window[hits[left][2]]:
+                    del window[hits[left][2]]
+                left += 1
+            score = (len(window), sum(window.values()))
+            if score > best:
+                best, begin = score, candidate
+    end = end_at(begin)
+    excerpt = text[begin:end]
+    return excerpt, {"start_character": begin, "end_character": end, "paragraph_characters": len(text),
+        "start_line": text.count("\n", 0, begin) + 1,
+        "end_line": text.count("\n", 0, max(begin, end - 1)) + 1,
+        "truncated_before": begin > 0, "truncated_after": end < len(text),
+        "partial_line": begin not in offsets or end not in offsets}
+
+
+def matched_excerpt(parts, query, *, row_labels=None, paragraph=None, start_character=None, windows=None):
     """Prefer exact table identifiers, then matched phrases; retain source order."""
     terms = list(dict.fromkeys(re.findall(r"[A-Za-z][A-Za-z0-9_-]{2,}", query.lower())))
     identifiers = set(re.findall(r"[a-z][a-z0-9_/-]*", query.lower()))
-    if not terms and not row_labels:
+    if paragraph is not None and not 0 <= paragraph < len(parts):
+        raise ValueError("document paragraph is outside the retrieved document")
+    if paragraph is None and not terms and not row_labels:
         return "", []
     phrase = " ".join(terms)
     ranked = []
-    for index, paragraph in enumerate(parts):
-        normalized = " ".join(re.findall(r"[a-z0-9_-]+", paragraph.lower()))
+    for index, part in enumerate(parts):
+        normalized = " ".join(re.findall(r"[a-z0-9_-]+", part.lower()))
         hits = sum(bool(re.search(r"\b" + re.escape(term) + r"\b", normalized)) for term in terms)
         label_tokens = re.findall(r"[a-z][a-z0-9_/-]*", (row_labels or {}).get(index, "").lower())
         label_hit = len(label_tokens) == 1 and label_tokens[0] in identifiers
         score = hits + 10 * bool(terms and hits == len(terms)) + 40 * bool(phrase and phrase in normalized)
         if hits or label_hit:
             ranked.append((label_hit, score, index))
-    chosen = sorted(index for _, _, index in sorted(ranked, key=lambda item: (-item[0], -item[1], item[2]))[:3])
-    return "\n\n".join(parts[index][:1800] for index in chosen)[:5400], chosen
+    chosen = ([paragraph] if paragraph is not None else
+              sorted(index for _, _, index in sorted(ranked, key=lambda item: (-item[0], -item[1], item[2]))[:3]))
+    excerpts, remaining = [], 5400
+    for index in chosen:
+        excerpt, coverage = _document_window(parts[index], set(terms), start_character)
+        allowed = remaining - (2 if excerpts else 0)
+        if len(excerpt) > allowed:
+            excerpt = excerpt[:allowed]
+            coverage.update(end_character=coverage["start_character"] + len(excerpt),
+                            truncated_after=True, partial_line=True)
+            coverage["end_line"] = parts[index].count("\n", 0, max(coverage["start_character"], coverage["end_character"] - 1)) + 1
+        excerpts.append(excerpt)
+        remaining = allowed - len(excerpt)
+        if windows is not None:
+            windows.append({"paragraph": index, **coverage})
+    return "\n\n".join(excerpts), chosen
 
 
 class _ManualLinks(HTMLParser):
     """Return only bounded follow-up references inside the frozen manual."""
 
-    def __init__(self, url):
+    def __init__(self, url, query=""):
         super().__init__()
         self.url, self.links = url, []
+        self.terms = set(re.findall(r"[a-z][a-z0-9_-]{2,}", query.lower()))
+
+    def score(self, reference):
+        return len(self.terms & set(re.findall(r"[a-z][a-z0-9_-]{2,}", reference.lower())))
 
     def handle_starttag(self, tag, attrs):
-        if tag != "a" or len(self.links) >= 128:
+        if tag != "a":
             return
         href = dict(attrs).get("href", "")
         target = urldefrag(urljoin(self.url, href))[0]
@@ -195,7 +301,12 @@ class _ManualLinks(HTMLParser):
             reference = "orca:" + target[len(MANUAL_ROOT):]
             if (len(reference) <= MAX_MANUAL_REFERENCE_LENGTH
                     and re.fullmatch(MANUAL_REFERENCE, reference) and reference not in self.links):
-                self.links.append(reference)
+                if len(self.links) < 128:
+                    self.links.append(reference)
+                else:
+                    lowest = min(range(len(self.links)), key=lambda index: self.score(self.links[index]))
+                    if self.score(reference) > self.score(self.links[lowest]):
+                        self.links[lowest] = reference
 
 
 def _retrieve(store, run, call):
@@ -232,21 +343,29 @@ def _retrieve(store, run, call):
         row_labels = parser.row_labels
     else:
         parts = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
-    excerpt, indices = matched_excerpt(parts, call.parameters["query"], row_labels=row_labels)
+    windows = []
+    excerpt, indices = matched_excerpt(parts, call.parameters["query"], row_labels=row_labels,
+        paragraph=call.parameters.get("paragraph"), start_character=call.parameters.get("start_character"), windows=windows)
     result = {"status": "found" if excerpt else "missing", "title": title, "url": url,
             "document_id": identifier, "index_version": INDEX_VERSION, "index_sha256": INDEX_SHA256,
             "document_version": metadata["document_version"], "kind": metadata["kind"],
-            "rendering_version": "html-readable-2" if metadata["format"] == "html" else "text-1",
+            "rendering_version": "html-readable-3" if metadata["format"] == "html" else "text-1",
+            "excerpt_version": "query-window-1",
             "published_at": None, "accessed_at": utc_now().isoformat(), "query": call.parameters["query"],
             "document_sha256": hashlib.sha256(raw).hexdigest(), "excerpt": excerpt,
             "excerpt_sha256": hashlib.sha256(excerpt.encode("utf-8")).hexdigest(),
             "coverage": {"complete": False, "scope": "bounded matched document paragraphs and table rows",
                          "paragraph_indices": indices, "paragraph_count": len(parts),
+                         "view": "HTML text with pre/code line breaks; ordinary prose whitespace normalized"
+                            if metadata["format"] == "html" else "decoded text paragraphs",
+                         "windows": windows,
+                         "continuation": "Use the same document with paragraph and zero-based start_character from windows; "
+                            "each query archives its actual document hash. Windows are partial, not complete executable blocks.",
                          "table_row_labels": {str(index): row_labels[index] for index in indices if index in row_labels}},
             "scientific_qualification": False,
             "retrieval": "versioned packaged guide; no network" if identifier in GUIDES else "versioned official-document index; one HTTPS GET"}
     if identifier.startswith("orca:"):
-        links = _ManualLinks(url)
+        links = _ManualLinks(url, call.parameters["query"])
         links.feed(text)
         result["manual_references"] = links.links
         if url.rsplit("/", 1)[-1] == "index.html":
