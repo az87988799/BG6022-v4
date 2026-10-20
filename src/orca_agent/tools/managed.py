@@ -119,7 +119,8 @@ def validate_sdk_orca_preconditions(store, run, step, *, request=None, plan=None
     if len(request.systems) > 1 and step.system_id is None:
         raise ValueError("sdk_orca=true requires an explicit requested system")
     try:
-        binding = native_input_binding(store, run, step, request=request, plan=plan)
+        binding = native_input_binding(store, run, step, request=request, plan=plan,
+                                       allow_pending=allow_future_geometry)
         if binding is None:  # Historical profiles still require the declared initial anchor.
             system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
             _initial_geometry(store, run, request, system_id)
@@ -130,7 +131,7 @@ def validate_sdk_orca_preconditions(store, run, step, *, request=None, plan=None
     return binding
 
 
-def native_input_binding(store, run, step, *, request=None, plan=None):
+def native_input_binding(store, run, step, *, request=None, plan=None, allow_pending=False):
     """Consume current trusted geometry/conditions, never task-authored claims."""
     from orca_agent.applicability import CONDITION_FIELDS, step_condition_goals
     from orca_agent.orca.native_profile import canonical_native_condition
@@ -143,7 +144,8 @@ def native_input_binding(store, run, step, *, request=None, plan=None):
         return canonical_native_condition(name, value, policy=policy)
     request = request if request is not None else store.load_request(run)
     plan = plan if plan is not None else store.load_plan(run)
-    if not _plan_step_matches(store, run, step, request=request, plan=plan):
+    if not _plan_step_matches(store, run, step, request=request, plan=plan,
+                              allow_pending=allow_pending):
         raise ValueError("native input binding requires the current frozen Step")
     if len(request.systems) > 1 and step.system_id is None:
         raise ValueError("native execution requires an explicit requested system")

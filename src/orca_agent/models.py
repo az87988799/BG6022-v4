@@ -718,9 +718,12 @@ class NativeInputPolicy(Record):
     max_scf_iterations: Annotated[int, Field(strict=True, ge=1)] = 256
     max_response_iterations: Annotated[int, Field(strict=True, ge=1)] = 128
     allow_task_geometry: Annotated[bool, Field(strict=True)] = False
+    property_block_order: Literal["coordinates-first-1"] | None = None
 
     @model_validator(mode="after")
     def preserve_historical_limits(self):
+        if self.property_block_order is not None and self.profile != "managed-native-1":
+            raise ValueError("property_block_order requires managed-native-1")
         if self.profile == "bounded-analytic-1":
             for field, maximum in (("max_atoms", 32), ("max_geom_iterations", 128),
                                    ("max_scf_iterations", 256), ("max_response_iterations", 128)):
@@ -733,6 +736,8 @@ class NativeInputPolicy(Record):
         value = handler(self)
         if not self.allow_task_geometry:
             value.pop("allow_task_geometry", None)
+        if self.property_block_order is None:
+            value.pop("property_block_order", None)
         return value
 
 

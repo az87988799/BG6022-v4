@@ -311,6 +311,10 @@ Plan 是当前可执行 Step 的有向无环图，绑定 Request 版本，并记
 
 新请求可按 [0065](decisions/0065-bounded-format-and-prelaunch-correction.md) 显式采用有界、保留原文及 hash 的纯格式规范化；历史请求不升级。完全相同的失败输入仍禁止启动，明确预约前拒绝可返回有限纠正循环，不能据此恢复未知执行或绕过任何执行/科学检查。
 
+核性质输入的纯语法顺序可按 [0066](decisions/0066-coordinate-first-nuclear-block-formatting.md) 在新冻结原生策略中自动整理：仅移动现有完整核性质块至唯一坐标声明后，原科学内容、原始输入、差异审计和所有执行/科学检查保留。
+
+开发任务可按 [0067](decisions/0067-workflow-budget-within-existing-total-limits.md) 在既有总 tokens、实际计算、时间和 campaign 上限内明确选择足够的有限工作流额度，父候选须完整继承其配置；不改变旧 Run、清零累计用量或重复启动相同失败输入。
+
 ## 7. ORCA、OPI 与执行后端
 
 ### 7.1 主适配选择

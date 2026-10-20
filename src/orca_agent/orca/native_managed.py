@@ -89,6 +89,9 @@ def canonical_managed_condition(name, value):
 
 
 def profile_contract(policy):
+    order = ("Frozen policy moves a complete nuclear-property %eprnmr block after xyzfile; "
+             "all scientific fields remain unchanged. " if policy.property_block_order == "coordinates-first-1"
+             else "Blocks stay in declared order; ")
     return {"profile": policy.profile, "admission_version": ADMISSION_VERSION,
         "limits": policy.model_dump(mode="json", exclude={"profile"}),
         "methods": "Open explicit ORCA method label; scientific validity is checked by ORCA, not an enum.",
@@ -112,7 +115,7 @@ def profile_contract(policy):
             "Unknown control blocks, file paths, external programs, restarts and unaccounted nesting are refused.",
         "geometry": "* xyzfile <charge> <multiplicity> <basename.xyz>; pin the XYZ dependency. "
             "Place coordinates before nuclear-property %eprnmr blocks, including Nuclei selector 0. "
-            "Blocks stay in declared order; ORCA validates property syntax.",
+            + order + "ORCA validates property syntax.",
         "task_geometry": {"enabled": policy.allow_task_geometry,
             "scope": "Must preserve initial atom count and ordered elements when task geometry is authorized."},
         "request_binding": "Explicit method/basis/state/charge/multiplicity/environment compared with Request; "
@@ -217,6 +220,83 @@ def _block(tokens, position, name):
         if position < len(tokens) and tokens[position] == ";":
             position += 1
     raise ValueError(f"unterminated %{name} block")
+
+
+def _read_block(lines, index):
+    """Read one complete admitted top-level block using the shared grammar."""
+    match = re.fullmatch(r"%([A-Za-z][A-Za-z0-9_]*)\s*(.*)", lines[index])
+    if not match:
+        raise ValueError("invalid or duplicate native block")
+    name, body = match[1].casefold(), match[2]
+    if name == "maxcore":
+        return name, _integer(body, "%maxcore"), index
+    while index + 1 < len(lines) and not lines[index + 1].startswith(("!", "%", "*", "$")):
+        index += 1
+        body += " " + lines[index]
+    tokens = _TOKEN.findall(body)
+    value, end = _block(tokens, 0, name)
+    if end != len(tokens):
+        raise ValueError("trailing input after a native control block")
+    return name, value, index
+
+
+def _nuclear_properties(value):
+    return "nuclei" in value or value.get("nmr", "false").casefold() not in _FALSE
+
+
+def _coordinates_first(text):
+    """Move one whole parsed block; do not interpret or rewrite its science."""
+    lines = _lines(text)
+    raw_lines = text.splitlines(keepends=True)
+    spans, offset = [], 0
+    for raw in raw_lines:
+        if raw.split("#", 1)[0].strip():
+            spans.append((offset, offset + len(raw)))
+        offset += len(raw)
+    blocks, geometry, nuclear = set(), None, None
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if line.startswith("%"):
+            start = index
+            name, value, index = _read_block(lines, index)
+            if name in blocks:
+                raise ValueError("invalid or duplicate native block")
+            blocks.add(name)
+            if name == "eprnmr" and _nuclear_properties(value):
+                nuclear = (spans[start][0], spans[index][1])
+        elif line.startswith("*"):
+            if geometry is not None or not re.fullmatch(
+                    r"\*\s*xyzfile\s+(-?\d+)\s+([1-9][0-9]*)\s+(.+)", line, re.I):
+                raise ValueError("managed geometry requires one pinned xyzfile and explicit charge/multiplicity")
+            geometry = spans[index]
+        elif not line.startswith("!"):
+            raise ValueError("unmanaged directive or multi-job control")
+        index += 1
+    if nuclear is None or geometry is None or nuclear[0] > geometry[0]:
+        return text, []
+    start, end = nuclear
+    block = text[start:end]
+    prefix = text[:start] + text[end:geometry[1]]
+    separator = "" if prefix.endswith(("\n", "\r")) else "\n"
+    moved = prefix + separator + block + text[geometry[1]:]
+    return moved, [{"field": "property_block_order", "rule": "coordinates-first-1",
+        "source": "frozen_execution_policy", "block": "eprnmr",
+        "original_byte_span": [start, end], "after_original_byte": geometry[1],
+        "block_sha256": _digest(block.encode("ascii")), "separator_added": bool(separator),
+        "before_sha256": _digest(text.encode("ascii")), "after_sha256": _digest(moved.encode("ascii"))}]
+
+
+def _apply_control_lines(text, original, updated, controls):
+    """Preserve untouched raw lines under the explicitly frozen order policy."""
+    rows, index = [], 0
+    for raw in text.splitlines(keepends=True):
+        if raw.split("#", 1)[0].strip():
+            if original[index] != updated[index]:
+                raw = raw.replace(original[index], updated[index], 1)
+            index += 1
+        rows.append(raw)
+    return ("\n".join(controls) + "\n" if controls else "") + "".join(rows)
 
 
 def _geometry_controls(block, atom_count):
@@ -365,9 +445,13 @@ def _conditions(keywords, blocks, charge, multiplicity, *, expected_method=None)
 
 def materialize_managed_input(text, resources, policy, binding):
     """Write omitted, already authorized controls into the bytes ORCA will read."""
+    order_records = []
+    if policy.property_block_order == "coordinates-first-1":
+        text, order_records = _coordinates_first(text)
     if not binding or binding.get("workflow_policy") != "simplified-1":
-        return text, []
+        return text, order_records
     lines = _lines(text)
+    original_lines = list(lines)
     words = [word for line in lines if line.startswith("!") for word in line[1:].split()]
     additions = []
     if not any(word.casefold() in STATES for word in words):
@@ -431,7 +515,9 @@ def materialize_managed_input(text, resources, policy, binding):
     for name in ("cis", "tddft"):
         complete_block(name, {"MaxIter": policy.max_response_iterations})
     if not additions:
-        return text, []
+        return text, order_records
+    if policy.property_block_order == "coordinates-first-1":
+        return _apply_control_lines(text, original_lines, lines, controls), [*order_records, *additions]
     return "\n".join([*controls, *lines]) + "\n", additions
 
 
@@ -448,29 +534,15 @@ def validate_managed_input(text, dependencies, resources, policy, binding):
                 raise ValueError("simple scientific keywords cannot contain paths/directives/commands")
             keywords.extend(words)
         elif line.startswith("%"):
-            match = re.fullmatch(r"%([A-Za-z][A-Za-z0-9_]*)\s*(.*)", line)
-            if not match or match[1].casefold() in blocks:
+            name, value, index = _read_block(lines, index)
+            if name in blocks:
                 raise ValueError("invalid or duplicate native block")
-            name, body = match[1].casefold(), match[2]
-            if name == "maxcore":
-                blocks[name] = _integer(body, "%maxcore")
-            else:
-                # Consume complete top-level block; nested end tokens are parsed
-                # by _block, rather than mistaken for its closing delimiter.
-                while index + 1 < len(lines) and not lines[index + 1].startswith(("!", "%", "*", "$")):
-                    index += 1
-                    body += " " + lines[index]
-                tokens = _TOKEN.findall(body)
-                value, end = _block(tokens, 0, name)
-                if end != len(tokens):
-                    raise ValueError("trailing input after a native control block")
-                if (name == "eprnmr" and geometry is None
-                        and ("nuclei" in value or value.get("nmr", "false").casefold() not in _FALSE)
-                        and (binding or {}).get("workflow_policy") == "simplified-1"):
-                    raise ValueError("%eprnmr must follow the xyzfile coordinate declaration "
-                                     "when NMR or Nuclei requests nuclear properties; "
-                                     "move this block after the coordinates")
-                blocks[name] = value
+            if (name == "eprnmr" and geometry is None and _nuclear_properties(value)
+                    and (binding or {}).get("workflow_policy") == "simplified-1"):
+                raise ValueError("%eprnmr must follow the xyzfile coordinate declaration "
+                                 "when NMR or Nuclei requests nuclear properties; "
+                                 "move this block after the coordinates")
+            blocks[name] = value
         elif line.startswith("*"):
             match = re.fullmatch(r"\*\s*xyzfile\s+(-?\d+)\s+([1-9][0-9]*)\s+(.+)", line, re.I)
             if not match or geometry is not None:
