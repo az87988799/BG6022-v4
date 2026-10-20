@@ -234,7 +234,13 @@ def _geometry_controls(block, atom_count):
             raise ValueError("invalid geometry constraint record")
         count = {"b": 2, "a": 3, "d": 4, "c": 1, "x": 1, "y": 1, "z": 1}.get(row[0].casefold())
         if count is None or len(row) not in {count + 2, count + 3}:
-            raise ValueError("unsupported geometry constraint shape")
+            expected = (f"{row[0].upper()} requires exactly {count} zero-based atom indices, "
+                        "an optional numeric value, then C" if count is not None else
+                        "supported constraint types are B, A, D, C, X, Y, Z")
+            record = " ".join(row)[:240]
+            raise ValueError(f"unsupported geometry constraint shape: {expected}; "
+                             "B is a two-atom bond, A a three-atom angle, D a four-atom dihedral; "
+                             f"received {{ {record} }}")
         _indices(row[1:1 + count], atom_count, wildcard=True)
         if len(row) == count + 3:
             _number(row[-2], "constraint value")

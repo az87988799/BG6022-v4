@@ -21,6 +21,7 @@ from orca_agent.models import (
     ProducerFileRef,
     Record,
     Step,
+    fingerprint,
     new_id,
 )
 from orca_agent.tools.registry import get_tool, validate_parameters
@@ -666,11 +667,13 @@ def _materialize_file_parameters(store, run, parameters, definition, ids, histor
             identifier = reference["artifact_id"]
             authorized = set(run.permission.artifact_ids) | store.verified_own_artifacts(run)
             if identifier not in authorized:
-                raise ProposalError("Task input is outside the permission snapshot.", path=path)
+                raise ProposalError("Task input is outside the permission snapshot.",
+                                    path=[*reference_path, "artifact_id"])
             artifact = store.load_artifact(identifier)
             store.artifact_path(identifier)
             if "sha256" in reference and reference["sha256"] != artifact.sha256:
-                raise ProposalError("Task input hash differs from pinned Artifact.", path=path)
+                raise ProposalError("Task input hash differs from pinned Artifact.",
+                                    path=[*reference_path, "sha256"])
             reference["sha256"] = artifact.sha256
         if reference is parameters.get("code") or reference is parameters.get("input"):
             expected = "python" if "execute_python" in definition.effects else "orca"
@@ -794,7 +797,75 @@ def _complete_incremental_plan(store, run, proposal, prior, request, history):
     return settled
 
 
-def _goal_output_route_feedback(goal, run, steps, ids, target_step=None):
+def settled_immediate_goal_binding(run, request, goal, selection):
+    """Project an already assessed current Goal; never discover a new Result."""
+    from orca_agent.file_references import simplified_workflow
+    from orca_agent.tools.registry import declared_outputs
+
+    result = selection.get("result")
+    if (not simplified_workflow(run) or result is None or selection.get("gaps")
+            or (selection.get("assessment") or {}).get("status") != "passed"
+            or result.run_id != run.id or result.id not in run.result_ids
+            or result.operation_status != "completed" or not result.call_id):
+        return None
+    calls = [call for call in run.calls if call.id == result.call_id]
+    if len(calls) != 1:
+        return None
+    call = calls[0]
+    if (call.state != "completed" or call.result_id != result.id or not call.frozen_step
+            or call.step_id != result.step_id or call.frozen_step.id != result.step_id
+            or call.tool != call.frozen_step.tool or goal.port not in declared_outputs(call.frozen_step)):
+        return None
+    if call.request_version != request.version:
+        # A selected input may retain its original preparation across an
+        # authenticated method choice. current_goal_evidence already checked
+        # its original Call, current binding and unchanged physical purpose.
+        selected = [binding for system_id, ports in run.input_bindings.items()
+                    if system_id in goal.system_ids for port, binding in ports.items()
+                    if port == goal.port and binding.get("result_id") == result.id
+                    and binding.get("request_version") == request.version
+                    and binding.get("source_request_version") == call.request_version]
+        if len(selected) != 1:
+            return None
+    existing = selection.get("binding")
+    reference = existing.evidence if existing else None
+    if reference and reference.run_id == run.id and reference.result_id == result.id:
+        reference = reference.model_dump(mode="json", exclude_none=True)
+    else:
+        reference = {"run_id": run.id, "result_id": result.id, "port": goal.port,
+                     "rule_version": goal.minimum_check_version}
+    return {"port": goal.port, "evidence": reference}
+
+
+def _current_immediate_goal_bindings(store, run, request, prior):
+    from orca_agent.goals import current_goal_evidence
+
+    bindings = {}
+    for goal in request.goals:
+        selection = current_goal_evidence(store, run, request, goal, prior)
+        binding = settled_immediate_goal_binding(run, request, goal, selection)
+        if binding:
+            bindings[goal.id] = binding
+    return bindings
+
+
+def _canonicalize_settled_goal(proposal, goal, binding, request, audits):
+    original = proposal.goal_map.get(goal.id)
+    if original and original.model_dump(exclude_none=True) == binding:
+        return
+    value = original.model_dump(mode="json", exclude_none=True) if original else None
+    if audits is not None:
+        audits.append({"rule": "settled-immediate-goal-binding-1", "goal_id": goal.id,
+            "request_id": request.id, "request_version": request.version,
+            "original_binding_sha256": fingerprint(value),
+            "original_route": ({key: value[key] for key in ("step_key", "port") if key in value}
+                               | {"kind": "gap" if "gap" in value else "future" if "step_key" in value else "evidence"})
+                              if value else {"kind": "omitted"},
+            "binding": copy.deepcopy(binding)})
+    proposal.goal_map[goal.id] = EvidenceGoalTarget.model_validate(binding)
+
+
+def _goal_output_route_feedback(goal, run, steps, ids, target_step=None, settled_binding=None):
     """Describe real producer routes without equating an output label to a quantity."""
     from orca_agent.tools.registry import declared_outputs
 
@@ -804,7 +875,10 @@ def _goal_output_route_feedback(goal, run, steps, ids, target_step=None):
     route = {"existing_producers": producers,
         "validation": "Routing advice only; existing permission, budget, file and scientific checks still apply.",
         "instruction": "Keep the original Goal quantity, port, conditions and minimum evidence. "
-                       "Bind only a Step that actually declares this port; changing a target label does not create an output."}
+                       "Use the current verified evidence binding or a Step that actually declares this port; "
+                       "changing a target label does not create an output."}
+    if settled_binding:
+        route["settled_evidence_binding"] = settled_binding
     if (goal.evidence_contract_version == "generic-observation-1"
             and goal.verification == "reported_with_limitations"
             and goal.minimum_check_version == "generic-observation-1"):
@@ -827,8 +901,9 @@ def _goal_output_route_feedback(goal, run, steps, ids, target_step=None):
     return {"expected": goal.port, "valid_route": route}
 
 
-def materialize_plan(store, run, parameters):
+def materialize_plan(store, run, parameters, *, binding_canonicalizations=None):
     from orca_agent.file_references import (
+        FileReferenceError,
         declared_attempt_step,
         simplified_workflow,
         validate_file_dependencies,
@@ -837,6 +912,7 @@ def materialize_plan(store, run, parameters):
     proposal = _validate_plan_parameters(copy.deepcopy(parameters))
     prior = store.load_plan(run)
     request = store.load_request(run)
+    settled_bindings = _current_immediate_goal_bindings(store, run, request, prior)
     if run.input_bindings:
         from orca_agent.input_bindings import resolved_request
         request = resolved_request(store, run, request)
@@ -845,6 +921,11 @@ def materialize_plan(store, run, parameters):
     history.update({c.frozen_step.id: c.frozen_step for c in run.calls if c.frozen_step})
     history.update(existing)
     settled = _complete_incremental_plan(store, run, proposal, prior, request, history)
+    for goal in request.goals:
+        target = proposal.goal_map.get(goal.id)
+        if goal.id in settled_bindings and (target is None or isinstance(target, GapGoalTarget)):
+            _canonicalize_settled_goal(proposal, goal, settled_bindings[goal.id], request,
+                                      binding_canonicalizations)
     missing = [goal for goal in request.goals if goal.required and goal.id not in proposal.goal_map]
     if simplified_workflow(run):
         for goal in missing:
@@ -1071,11 +1152,19 @@ def materialize_plan(store, run, parameters):
         value = target.model_dump(exclude_none=True)
         requested_goal = requested_goals[goal_id]
         target_step = next((step for step in steps if step.id == ids.get(value.get("step_key"))), None)
+        if target_step and goal_id in settled_bindings:
+            from orca_agent.tools.registry import declared_outputs
+
+            if value.get("port") != requested_goal.port or requested_goal.port not in declared_outputs(target_step):
+                _canonicalize_settled_goal(proposal, requested_goal, settled_bindings[goal_id], request,
+                                          binding_canonicalizations)
+                value = proposal.goal_map[goal_id].model_dump(exclude_none=True)
         if goal_id in requested_goals and value.get("port") != requested_goals[goal_id].port:
             raise ProposalError("Preserve the requested Goal port and select a producer that really declares it. "
                 "The Goal label and a Tool's existing output cannot be made equivalent by renaming either one; use the explicit routes below.",
                 code="goal_output_route_mismatch", path=["parameters", "goal_map", goal_id, "port"],
-                **_goal_output_route_feedback(requested_goal, run, steps, ids, target_step))
+                **_goal_output_route_feedback(requested_goal, run, steps, ids, target_step,
+                                             settled_bindings.get(goal_id)))
         evidence = value.get("evidence", {})
         if evidence.get("producer_step_id") in ids:
             value["evidence"] = {**evidence, "producer_step_id": ids[evidence["producer_step_id"]]}
@@ -1099,7 +1188,8 @@ def materialize_plan(store, run, parameters):
                 raise ProposalError("The selected producer does not declare the unchanged Goal port. "
                     "Keep its real outputs and the original Goal; use a declared producer or an explicit observation adapter.",
                     code="goal_output_route_mismatch", path=["parameters", "goal_map", goal_id, "port"],
-                    **_goal_output_route_feedback(requested_goal, run, steps, ids, target_step))
+                    **_goal_output_route_feedback(requested_goal, run, steps, ids, target_step,
+                                                 settled_bindings.get(goal_id)))
         try:
             goals[goal_id] = OutputBinding.model_validate(value)
         except ValidationError as exc:
@@ -1114,5 +1204,8 @@ def materialize_plan(store, run, parameters):
                     request_id=request.id, request_version=request.version, steps=steps, goal_map=goals)
     except ValidationError as exc:
         raise _schema_error(exc, path=["parameters"]) from None
-    validate_file_dependencies(plan, run)
+    try:
+        validate_file_dependencies(plan, run)
+    except FileReferenceError as exc:
+        raise ProposalError(**exc.detail) from None
     return plan

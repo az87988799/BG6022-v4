@@ -107,7 +107,14 @@ def _producer(plan, step, reference):
     definition = get_tool(producer.tool)
     if reference.port == "written_artifact":
         if not _file_writer(producer):
-            raise ValueError("written_artifact requires a file-writing producer")
+            from orca_agent.tools.registry import declared_outputs
+
+            raise FileReferenceError(
+                "written_artifact requires a file-writing producer. A managed execution file uses its exact "
+                "archived file_key; do not change an unrelated writer or guess a file's existence.",
+                code="file_producer_port_mismatch", producer_step_id=producer.id,
+                producer_tool=producer.tool, declared_outputs=declared_outputs(producer),
+                file_key_source="producer Result.source.files")
     elif reference.port == "prepared_geometry":
         if ("prepare_geometry" not in definition.effects
                 or "prepared_geometry" not in definition.output_ports):
@@ -118,9 +125,15 @@ def _producer(plan, step, reference):
         # A writer declares one immutable file. Its exact name and its output
         # port identify the same file; keep the caller's original declaration.
         if not _safe_file_key(reference.file_key) or reference.file_key != producer.parameters.name:
+            from orca_agent.llm import _has_credential
+
+            names = {key: value for key, value in {
+                "requested_file_key": reference.file_key, "expected_file_key": producer.parameters.name}.items()
+                if _safe_file_key(value) and not _has_credential(value)}
             raise FileReferenceError(
                 "Writer file_key must exactly match its declared name; use that name or the written_artifact port.",
-                code="writer_file_key_mismatch", producer_step_id=producer.id)
+                code="writer_file_key_mismatch", producer_step_id=producer.id, producer_tool=producer.tool,
+                **names)
     elif (not definition.check_contract.get("generic_observations")
           or not set(definition.effects) & {"execute_python", "execute_orca"}):
         raise ValueError("file_key requires an explicit managed execution producer")
@@ -129,15 +142,22 @@ def _producer(plan, step, reference):
 
 def validate_file_dependencies(plan, run):
     """Pure declaration checks also apply before any producer has executed."""
-    for step in plan.steps:
-        for reference in file_references(step):
+    for step_index, step in enumerate(plan.steps):
+        for reference_index, reference in enumerate(file_references(step)):
             if isinstance(reference, (ArtifactCodeSelection, ArtifactInputSelection, ProducerFileRef)):
                 if not simplified_workflow(run):
                     raise ValueError("file selection shorthand requires workflow_policy=simplified-1")
             if isinstance(reference, (ArtifactCodeSelection, ArtifactInputSelection)):
                 raise ValueError("concrete Artifact shorthand must be materialized to a hash before saving a Plan")
             if isinstance(reference, ProducerFileRef):
-                producer = _producer(plan, step, reference)
+                try:
+                    producer = _producer(plan, step, reference)
+                except FileReferenceError as exc:
+                    field = "code" if hasattr(step.parameters, "code") else "input"
+                    path = ([field] if reference_index == 0 else ["inputs", "entries", reference_index - 1])
+                    detail = {key: value for key, value in exc.detail.items() if key != "requirement"}
+                    raise FileReferenceError(str(exc), **{**detail,
+                        "path": ["parameters", "steps", step_index, "parameters", *path]}) from None
                 expected = ("python" if hasattr(step.parameters, "code") else "orca")
                 is_code = reference is file_references(step)[0]
                 if is_code:

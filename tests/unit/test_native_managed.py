@@ -65,6 +65,24 @@ def test_constrained_multidimensional_relaxed_scan_has_explicit_work_product():
     assert result["execution_impact"]["optimization_evaluation_slots"] == 48
 
 
+def test_wrong_constraint_arity_identifies_record_and_supported_dihedral_shape():
+    # Actual a015 failure shape; admission must explain it without rewriting it.
+    bad = source("Opt", "%geom MaxIter 3 Constraints { B 2 1 3 4 60 C } end end")
+    with pytest.raises(ValueError, match="unsupported geometry constraint shape") as caught:
+        admit(bad)
+    detail = str(caught.value)
+    assert "B requires exactly 2 zero-based atom indices" in detail
+    assert "D a four-atom dihedral" in detail
+    assert "received { B 2 1 3 4 60 C }" in detail
+
+    # A separately authored valid shape stays literal and gains no scientific qualification.
+    xyz = b"4\nconstraint syntax fixture\nC 0 0 0\nC 1 0 0\nC 1 1 0\nC 1 1 1\n"
+    good = source("Opt", "%geom MaxIter 3 Constraints { D 0 1 2 3 60 C } end end")
+    actual = admit(good, data=xyz)["actual_conditions"]
+    assert actual["input_blocks"]["geom"]["constraints"] == ["{", "D", "0", "1", "2", "3", "60", "C", "}"]
+    assert actual["scientific_validation"] == "unverified"
+
+
 def test_tddft_response_is_separately_finite_with_open_scientific_scalars():
     result = admit(source(blocks="%tddft NRoots 7 MaxIter 50 TDA true DoSOC true end"))
     assert result["execution_impact"]["response_roots"] == 7

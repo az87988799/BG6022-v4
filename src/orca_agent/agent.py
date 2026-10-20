@@ -347,8 +347,13 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                 run, plan, snapshot=snapshot, feedback_ids=feedback,
                 terminal_only=terminal_results_only(request, snapshot, pending_messages=has_pending_messages))]
             current_use = []
+            settled_bindings = {}
+            from orca_agent.proposals import settled_immediate_goal_binding
             for goal in request.goals:
                 selection = current_goal_evidence(store, run, request, goal, plan, results)
+                binding = settled_immediate_goal_binding(run, request, goal, selection)
+                if binding:
+                    settled_bindings[goal.id] = binding
                 source = selection["result"]
                 if source is not None:
                     assessment = dict(selection["assessment"])
@@ -358,6 +363,8 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                     current_use.append({"goal_id": goal.id, "result_id": source.id, **assessment})
             if current_use:
                 data["current_goal_use"] = current_use
+            if settled_bindings:
+                data["settled_goal_bindings"] = settled_bindings
             relevant_tools = []
             for name in run.permission.allowed_tools:
                 effects = set(get_tool(name).effects)
@@ -491,14 +498,19 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
                 if (proposal.action == "initial_plan") != (plan is None):
                     raise StoreError("plan action does not match the current Plan")
                 saved = store.path(f"runs/{run.id}/decisions/{ticket}.json")
+                binding_canonicalizations = []
                 if saved.exists():
                     from orca_agent.models import Plan
-                    candidate = Plan.model_validate(json.loads(saved.read_text(encoding="utf-8"))["plan"])
+                    decision_record = json.loads(saved.read_text(encoding="utf-8"))
+                    candidate = Plan.model_validate(decision_record["plan"])
+                    binding_canonicalizations = decision_record.get("binding_canonicalizations", [])
                 else:
-                    candidate = materialize_plan(store, run, proposal.parameters)
+                    candidate = materialize_plan(store, run, proposal.parameters,
+                                                 binding_canonicalizations=binding_canonicalizations)
                 _repair_evidence(store, run, candidate)
                 run = store.commit_revision(run, candidate, decision_id=ticket, basis=basis,
-                                            related_results=proposal.related_results, fault=fault)
+                                            related_results=proposal.related_results, fault=fault,
+                                            binding_canonicalizations=binding_canonicalizations)
                 return run, "plan", None
             if proposal.action == "call_tool":
                 values = proposal.parameters
@@ -575,10 +587,11 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
             category = reply.get("error_category") or type(exc).__name__
             from pydantic import ValidationError
 
+            from orca_agent.file_references import FileReferenceError
             from orca_agent.planning import PlanningError
             from orca_agent.proposals import ProposalError, validation_error_details
             detail = (_proposal_json_error(reply) if category == "invalid_proposal_json" else
-                      exc.detail if isinstance(exc, ProposalError) or (
+                      exc.detail if isinstance(exc, (ProposalError, FileReferenceError)) or (
                           isinstance(exc, PlanningError) and exc.detail is not None) else
                       validation_error_details(exc)
                       if isinstance(exc, ValidationError) else

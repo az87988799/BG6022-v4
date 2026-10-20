@@ -1649,7 +1649,8 @@ class Store:
                         user_message_ids: list[str] | None = None,
                         related_results: list[str] | None = None, fault=None,
                         semantic_record: dict | None = None,
-                        selection_record: dict | None = None) -> Run:
+                        selection_record: dict | None = None,
+                        binding_canonicalizations: list[dict] | None = None) -> Run:
         """Validate, save immutable candidates, then atomically activate one revision."""
         from orca_agent.planning import validate_revision
 
@@ -1674,6 +1675,23 @@ class Store:
             if user_message_ids and not set(user_message_ids).issubset(m["id"] for m in messages):
                 raise StoreError("Request revision lacks trusted user messages")
             next_request = request or prior_request
+            if binding_canonicalizations:
+                from orca_agent.proposals import _current_immediate_goal_bindings
+
+                if plan is None or next_request != prior_request:
+                    raise StoreError("settled Goal binding audit requires the unchanged current Request")
+                available = _current_immediate_goal_bindings(self, run, prior_request, prior_plan)
+                seen = set()
+                for item in binding_canonicalizations:
+                    identifier = item.get("goal_id")
+                    actual = plan.goal_map.get(identifier)
+                    if (identifier in seen or item.get("rule") != "settled-immediate-goal-binding-1"
+                            or item.get("request_id") != prior_request.id
+                            or item.get("request_version") != prior_request.version
+                            or identifier not in available or item.get("binding") != available[identifier]
+                            or actual is None or actual.model_dump(mode="json", exclude_none=True) != available[identifier]):
+                        raise StoreError("settled Goal binding audit differs from current verified evidence")
+                    seen.add(identifier)
             if selection_record is not None:
                 if user_message_ids or semantic_record is not None or plan is not None:
                     raise StoreError("condition selection cannot grant user authority or replace a Plan")
@@ -1739,6 +1757,8 @@ class Store:
                 record["semantics"] = semantic_record
             if selection_record is not None:
                 record["condition_selection"] = selection_record
+            if binding_canonicalizations:
+                record["binding_canonicalizations"] = binding_canonicalizations
             self._write_json(f"runs/{run.id}/decisions/{decision_id}.json", record, immutable=True)
             if fault:
                 fault("after_revision_saved")

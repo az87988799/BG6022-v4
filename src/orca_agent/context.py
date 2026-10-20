@@ -66,7 +66,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v83"
+PROMPT_VERSION = "agent-json-v84"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -1065,7 +1065,12 @@ def _check_summary(checks) -> dict[str, Any]:
 def _diagnostic_records(diagnostics, budget):
     """Keep each failed internal call and its log addresses under projection."""
     safe = _safe(diagnostics)
-    if len(_json(safe).encode("utf-8")) <= budget:
+    sdk_groups = {}
+    for original, row in zip(diagnostics, safe, strict=True):
+        if isinstance(row, dict) and row.get("category") == "managed_sdk_request_rejected":
+            key = _hash({"category": row["category"], "detail": row.get("detail")})
+            sdk_groups.setdefault(key, []).append((original, row))
+    if not sdk_groups and len(_json(safe).encode("utf-8")) <= budget:
         return safe
     log_count = sum(len(row.get("evidence", [])) for row in safe
                     if isinstance(row, dict) and row.get("category") == "internal_orca_failed")
@@ -1078,6 +1083,8 @@ def _diagnostic_records(diagnostics, budget):
     other = []
     internal_count = 0
     for original, row in zip(diagnostics, safe, strict=True):
+        if isinstance(row, dict) and row.get("category") == "managed_sdk_request_rejected":
+            continue
         if not isinstance(row, dict) or row.get("category") != "internal_orca_failed":
             other.append(row)
             continue
@@ -1100,6 +1107,26 @@ def _diagnostic_records(diagnostics, budget):
         row["projection"] = {"complete": False, "record_sha256": _hash(original),
                              "meaning": "Diagnostic excerpt; original log Artifact remains queryable."}
         projected.append(row)
+    # Admission failures can accompany a completed outer Python process and no
+    # native Call at all. Preserve the program's actual rejection, not just a
+    # hash, while sharing identical diagnostics and bounding source addresses.
+    source_slots = 4
+    for index, group in enumerate(sdk_groups.values()):
+        if index >= 4:
+            other.extend(row for _, row in group)
+            continue
+        detail, projection = _value_prefix(group[0][1].get("detail"), 512)
+        sources = [{key: row[key] for key in (
+            "response_name", "artifact_id", "sha256", "raw_response_sha256") if key in row}
+            for _, row in group[:source_slots]]
+        source_slots -= len(sources)
+        item = {"category": "managed_sdk_request_rejected", "detail": detail, "count": len(group),
+                "responses": sources, "omitted_response_count": len(group) - len(sources),
+                "records_sha256": _hash([original for original, _ in group]),
+                "source": "immutable Result.diagnostics"}
+        if projection:
+            item["detail_projection"] = projection
+        projected.append(item)
     if other:
         # Ordinary diagnostics share one remainder. A minimum per record lets
         # arbitrarily many small records evade the requested observation bound.
@@ -2110,6 +2137,24 @@ def _immediate_tool_names(catalog, run):
             or tool.get("check_contract", {}).get("immediate")]
 
 
+def _code_authoring_example(run, catalog, action):
+    if (not _simplified_workflow(run) or not run.permission.code_execution
+            or not run.permission.artifact_writes or run.usage.analysis_executions >= run.budget.analysis_executions):
+        return None
+    writer = next((tool for tool in catalog if tool.get("check_contract", {}).get("code_authoring")), None)
+    consumer = next((tool for tool in catalog if "execute_python" in tool["effects"]
+                     and tool.get("check_contract", {}).get("generic_observations")), None)
+    if not writer or not consumer:
+        return None
+    return {"action": action, "reason": "Author code and bind its immutable file; replace the placeholder with authorized analysis.",
+        "parameters": {"steps": [
+            {"key": "write_code", "tool": writer["name"], "parameters": {
+                "name": "task.py", "role": "python", "content": "# Replace with authorized analysis code.\n"}},
+            {"key": "analyze", "tool": consumer["name"], "parameters": {
+                "code": {"producer_key": "write_code", "port": "written_artifact"},
+                "sdk_orca": False, "observation_names": []}}], "goal_map": {}}}
+
+
 def _action_examples(request, run, plan, catalog, final_only, control):
     """JSON parameter objects, never JSON encoded inside action-name strings."""
     if final_only:
@@ -2183,6 +2228,10 @@ def _action_examples(request, run, plan, catalog, final_only, control):
         # freeze an answer before those reads. Keep direct query/answer choices.
         examples.pop("initial_plan", None)
         references = {}
+    for action in ("initial_plan", "revise_plan"):
+        if action in examples and (authoring := _code_authoring_example(run, catalog, action)):
+            examples[action] = {}  # The complete envelope replaces the old placeholder Plan.
+            references["code_authoring_example"] = authoring
     return examples, references
 
 
@@ -3334,7 +3383,8 @@ def build_context(
                 break
     data_feedback = {key: value for key, value in (feedback or {}).items()
                      if key not in {"validation_error", "pending_step_ids", "allowed_repairs", "new_result_ids",
-                                    "current_goal_use", "goal_facts", "delivery_snapshot", "rejected_proposal"}}
+                                    "current_goal_use", "goal_facts", "delivery_snapshot", "rejected_proposal",
+                                    "settled_goal_bindings"}}
     rejected_view = (_rejected_proposal_view(feedback or {}, run, basis, limit=16384)
                      if run.permission.code_execution else None)
     correction_instruction = (_REJECTED_PROPOSAL_GUIDANCE if rejected_view is not None else "")
@@ -3553,7 +3603,24 @@ def build_context(
         template["PLAN_RULES"] = _PLAN_RULES
         if _simplified_workflow(run):
             template["PLAN_RULES"] = template["PLAN_RULES"].replace(
-                "map required Goal.port/gap", "bind chosen Goal producers; omitted required Goals remain unresolved")
+                "map required Goal.port/gap", "bind pending Goal producers; verified settled Goal evidence is retained")
+            if "code_authoring_example" in references:
+                template["PLAN_RULES"] = (
+                    "Unique keys; unchanged Goal ports. Completed definitions retained; frozen edits/unknown refs rejected. "
+                    "Bind pending outputs or use verified settled evidence. Example emits no observations or scientific result.")
+                template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
+                    "Plan writers and consumers together. code/input accepts {producer_key,port:'written_artifact'}; "
+                    "manifest entries accept {producer_key,port} or {producer_key,file_key}, plus target_path/purpose. "
+                    "The program adds dependencies and binds actual Artifact identity/hash before execution. ",
+                    "Use PLAN_REFERENCES.code_authoring_example. Manifest entries additionally require target_path/purpose. "
+                    "Producer dependencies and real file identity/hash are program-bound. ")
+            settled_bindings = (feedback or {}).get("settled_goal_bindings", {})
+            if settled_bindings:
+                references["settled_goal_evidence"] = deepcopy(settled_bindings)
+                references["settled_evidence_rule"] = (
+                    "These exact current Goal bindings are verified. Omit them to retain their evidence; "
+                    "do not rebuild inputs or assign them to a writer. Wrong repeated output routes are "
+                    "canonicalized to this evidence with an audit. New work remains explicitly planned.")
         if request.systems and any("execute_orca" in tool["effects"] for tool in catalog):
             template["PLAN_RULES"] += " system_id=Request.systems.id."
         if any("qualified_energy" in tool.get("input_roles", []) for tool in catalog):
