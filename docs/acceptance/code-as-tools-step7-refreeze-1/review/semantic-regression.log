@@ -1,0 +1,199 @@
+........................................................................ [ 14%]
+.......F................................................................ [ 29%]
+........................................................................ [ 43%]
+........................................................................ [ 58%]
+........................................................................ [ 72%]
+........................................................................ [ 87%]
+................................................................         [100%]
+================================== FAILURES ===================================
+__ test_shared_coordinates_across_environments_keep_one_initial_xyz_binding ___
+
+tmp_path = WindowsPath('C:/WINDOWS＼TEMP/pytest-of-阿妆/pytest-1870/test_shared_coordinates_across0')
+
+    def test_shared_coordinates_across_environments_keep_one_initial_xyz_binding(tmp_path):
+        text = ("请为乙醇生成一份结构，保持完全相同的原子顺序和坐标，分别计算两个环境中的单点电子能。"
+                "不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash。")
+        store, config, run = environment(tmp_path, text)
+        parameters = proposal(store, config, run, text=text, relation="fixed_initial", quantity="单点电子能")
+>       run = commit(store, run, parameters)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_general_intake_obligations.py:292: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\unit\test_general_intake_correction.py:47: in commit
+    return commit_candidate(store, run, parameters, decision_id="candidate", basis=current_basis(store, run))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\orca_agent\semantic.py:1717: in commit_candidate
+    value, source, evidence = _field(name, field, request, grounding, system=system)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'environment'
+item = FieldEvidence(value='gas_phase', source='default', text_basis='', request_version=None, system_ref=None, default_rule='local-hf-1', message_id=None)
+request = Request(id='request_5e58285ef3ef447e82ead86468a71a7d', version=1, original_text='请为乙醇生成一份结构，保持完全相同的原子顺序和坐标，分别计算两个环境中的单...multiplicity': 1, 'electronic_state': 'RKS', 'environment': 'gas_phase'}, automatic_selection=[], selection_reasons={})
+messages = [{'id': 'message_504e22c138634e01b2d57025742e4cd0', 'text': '请为乙醇生成一份结构，保持完全相同的原子顺序和坐标，分别计算两个环境中的单点电子能。不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash。', 'source': 'user', 'created_at': '2026-10-20T06:27:20.181342+00:00', ...}]
+system = None
+
+    def _field(name, item, request, messages, *, system=None):
+        if name not in CONDITIONS:
+            path = name if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]{0,63}", str(name)) else "[field]"
+            raise StoreError(f"semantic condition {path} is outside the field whitelist; allowed keys: "
+                             + ", ".join(get_args(ConditionName)))
+        value = item.value
+        if name in {"charge", "multiplicity"} and value is not None:
+            if type(value) is not int or (name == "multiplicity" and value < 1):
+                raise StoreError("charge/multiplicity need exact integer values")
+        elif name == "temperature_K" and value is not None:
+            if type(value) not in (int, float) or value <= 0:
+                raise StoreError("temperature requires a positive numeric value")
+        elif value is not None and (not isinstance(value, str) or not 0 < len(value) <= 100):
+            raise StoreError("condition needs a bounded string value")
+        evidence = item.model_dump(mode="json")
+        labels = {"method": r"方法|\bmethod\b", "basis": r"基组|\bbasis\b",
+                  "charge": r"电荷|\bcharge\b", "multiplicity": r"多重度|\bmultiplicity\b",
+                  "electronic_state": r"电子态|\breference\b", "environment": r"环境|\benvironment\b"}
+        if item.source in {"explicit", "default", "inherited"}:
+            source_message = _locate(item.text_basis, messages, item.message_id)[0] if item.source == "explicit" else None
+            after_source = source_message is None
+            for message in messages:
+                if message is source_message:
+                    after_source = True
+                    continue
+                if not after_source or name not in labels:
+                    continue
+                for clause, _ in _field_propositions(request, message, 0, len(message["text"]), system=system):
+                    if re.search(labels[name], clause, re.I) and re.search(
+                            r"未知|不确定|不知道|尚未确定|\b(?:unknown|uncertain|undecided)\b", clause, re.I):
+                        raise StoreError("later explicit unknown condition cannot be overwritten by an older value")
+        if item.source == "explicit":
+            message, start, end = _locate(item.text_basis, messages, item.message_id)
+            if item.system_ref is not None and (system is None or item.system_ref != system.id):
+                raise StoreError("explicit condition system_ref must match its target scope")
+            # Check literal or a small documented lexical normalization, never use
+            # a trustworthy message ID as proof of every proposed field value.
+            tokens = {str(value).casefold()}
+            if name == "charge" and type(value) is int and value > 0:
+                tokens.add(f"+{value}")
+            tokens.update(LEXICAL_ALIASES.get((name, value), ()))
+            def present(token, text=item.text_basis):
+                if re.fullmatch(r"[a-z0-9_.+\-/]+", token):
+                    return re.search(r"(?<![a-z0-9_.+\-])" + re.escape(token)
+                                     + r"(?![a-z0-9_.+\-])", text.casefold()) is not None
+                return token in text.casefold()
+            if value is None or not any(present(token) for token in tokens):
+                raise StoreError("explicit condition lacks a supported lexical value basis")
+            # A clipped quote must not discard the negation/uncertainty around the
+            # value in its authenticated message. Ambiguous clauses stay unresolved.
+            clauses = _field_propositions(request, message, start, end, system=system)
+            pertinent = []
+            for clause, scope in clauses:
+                # Contrasting independent execution instructions cannot negate an
+                # earlier method assertion ("Use RHF but do not execute").
+                for part in re.split(r"\bbut\b|但是|但", clause, flags=re.I):
+                    if not any(present(token, part) for token in tokens):
+                        continue
+                    if system is None and len(request.systems) > 1 and scope and scope != {
+                            entry.id for entry in request.systems}:
+                        raise StoreError("system-scoped condition cannot become a global condition")
+                    pertinent.append(part)
+                    # These phrases negate geometric constraints, not the method,
+                    # charge or reference state. Keep any surrounding negation.
+                    condition_clause = re.sub(r"无约束|\bwithout\s+(?:geometric\s+)?constraints?\b",
+                                              " ", part, flags=re.I)
+                    if re.search(
+                            r"不|非|未|无|禁止|拒绝|避免|排除|可能|也许|推断|推测|假设|待确认|尚待|或者|[?？]|"
+                            r"\b(?:not|no|never|without|unknown|maybe|perhaps|uncertain|if|either|or)\b|n't\b",
+                            condition_clause, re.I):
+                        raise StoreError("explicit condition has a negated or uncertain value basis")
+            if not pertinent:
+                raise StoreError("explicit condition lacks a value in its target system proposition")
+            # Other affirmative values of the same field in this same scope are a
+            # conflict, even if a clipped positive quote selected only one of them.
+            labels = {"charge": r"(?:净?电荷(?:数)?|\bcharge\b)",
+                      "multiplicity": r"(?:自旋多重度|多重度|\bmultiplicity\b)"}
+            if name in labels:
+                for clause, scope in _field_propositions(request, message, 0, len(message["text"]), system=system):
+                    numbers = re.findall(labels[name] + r"\s*(?:(?:为|是|等于|设为|取|is|=|:|：)\s*)?([+-]?\d+)",
+                                         clause, re.I)
+                    if any(int(number) != value for number in numbers):
+                        raise StoreError("explicit condition has conflicting values in the same proposition")
+            if name in {"method", "electronic_state"}:
+                for clause, scope in _field_propositions(request, message, 0, len(message["text"]), system=system):
+                    methods = re.findall(r"(?<![a-z0-9_])(?:RHF|UHF|HF|B3LYP|PBE0?|MP2|DFT)(?![a-z0-9_])",
+                                         clause, re.I)
+                    if name == "electronic_state":
+                        methods = [method for method in methods if method.upper() in {"RHF", "UHF"}]
+                    expected = str(canonical_condition(name, value)).upper()
+                    for method in methods:
+                        normalized = "HF" if name == "method" and method.upper() == "RHF" else method.upper()
+                        if normalized != expected and not re.search(
+                                r"不|非|未|无|\b(?:not|no|never|without)\b|n't\b", clause, re.I):
+                            raise StoreError("explicit condition has conflicting values in the same system scope")
+            evidence.update(message_id=message.get("id"), start=start, end=end,
+                            system_ref=system.id if system else None)
+            if name in {"charge", "multiplicity"}:
+                label = (r"(?:净?电荷(?:数)?|(?<![a-z])charge(?![a-z]))" if name == "charge" else
+                         r"(?:自旋多重度|多重度|(?<![a-z])multiplicity(?![a-z]))")
+                literal = (r"\+?" + str(value)) if value >= 0 else re.escape(str(value))
+                association = label + r"\s*(?:(?:为|是|等于|设为|取|is|=|:|：)\s*)?" + literal + r"(?![\d.])"
+                named_alias = any(present(token) for token in LEXICAL_ALIASES.get((name, value), ()))
+                if not named_alias and not re.search(association, item.text_basis, re.I):
+                    raise StoreError("explicit numeric condition lacks its own field/value association")
+        elif item.source == "inherited":
+            if item.request_version != request.version:
+                raise StoreError("inherited conditions require the exact current Request version")
+            def recorded(scope):
+                if scope is not None and name in scope.conditions:
+                    return canonical_condition(name, scope.conditions[name]), scope.conditions_source.get(name)
+                return (canonical_condition(name, request.conditions.get(name, getattr(request, name, None))),
+                        request.conditions_source.get(name))
+    
+            expected = canonical_condition(name, value)
+            prior, provenance = recorded(system)
+            if expected is None or prior is None or prior != expected or provenance not in {
+                    "explicit", "default", "inherited"}:
+                raise StoreError("inherited target scope must retain the same confirmed value "
+                                 "from its unique recorded source")
+            if item.system_ref:
+                source = next((s for s in request.systems if s.id == item.system_ref), None)
+                if source is None:
+                    raise StoreError("inherited system reference is not registered")
+                prior, provenance = recorded(source)
+                if prior is None or prior != expected or provenance not in {"explicit", "default", "inherited"}:
+                    raise StoreError("inherited value differs from its unique recorded source")
+        elif item.source == "default":
+            expected = canonical_condition(name, value)
+            authorized = canonical_condition(name, request.semantic_defaults.get(name))
+            if (item.default_rule != "local-hf-1" or name not in request.semantic_defaults
+                    or expected is None or authorized is None or authorized != expected):
+                raise StoreError("default rule/value was not authorized in user configuration")
+            prior = (system.conditions.get(name) if system and name in system.conditions else
+                     request.conditions.get(name, getattr(request, name, None)))
+            provenance = (system.conditions_source.get(name) if system and name in system.conditions else
+                          request.conditions_source.get(name))
+            if provenance in {"unknown", "inferred", "explicit", "inherited", "not_applicable"} or (
+                    prior is not None and canonical_condition(name, prior) != expected):
+                raise StoreError("declared or unconfirmed conditions cannot be replaced by a default")
+            # A fresh text Request has no recorded provenance yet. Defaults still
+            # cannot erase a field mentioned in the trusted input, including a
+            # rejected/unknown value. The candidate must preserve that declaration.
+            mentions = {
+                "method": r"方法|\b(?:method|R?HF|UHF|B3LYP|PBE0?|MP2|DFT|Hartree[- ]Fock)\b",
+                "basis": r"基组|\bbasis\b|STO[- ]?3G|\b(?:cc-p|def2|6-31)",
+                "charge": r"电荷|中性|\b(?:charge|neutral|charged|cation|anion)\b",
+                "multiplicity": r"多重度|单重|双重|三重|\b(?:multiplicity|singlet|doublet|triplet)\b",
+                "electronic_state": r"电子态|闭壳层|开壳层|\b(?:reference|RHF|UHF)\b",
+                "environment": r"环境|溶剂|气相|水溶液|\b(?:environment|solvent|aqueous|vacuum|gas)\b|"
+                               r"\bin\s+(?:water|methanol|ethanol|solution)\b",
+                "temperature_K": r"温度|\btemperature\b",
+                "standard_state": r"标准态|\bstandard\s+state\b",
+            }
+            if any(re.search(mentions[name], clause, re.I) for message in messages
+                   for clause, _ in _field_propositions(request, message, 0, len(message["text"]), system=system)):
+>               raise StoreError("a condition declared in user text cannot be labeled or overwritten as a default")
+E               orca_agent.store.StoreError: a condition declared in user text cannot be labeled or overwritten as a default
+
+src\orca_agent\semantic.py:997: StoreError
+=========================== short test summary info ===========================
+FAILED tests/unit/test_general_intake_obligations.py::test_shared_coordinates_across_environments_keep_one_initial_xyz_binding
+1 failed, 495 passed in 163.21s (0:02:43)

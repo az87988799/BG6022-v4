@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-20T06:19:58.434417+00:00",
+  "scope": "Investigate only test_semantic_control continue/resume regression; no real model/ORCA, product edits or commit.",
+  "conclusion": "Pre-existing outdated test assumption, not a new normalization or Tool-archive regression.",
+  "failure": {
+    "test": "test_continue_consumes_message_without_a_model_and_keeps_budget",
+    "source_log": "docs/acceptance/code-as-tools-step7-refreeze-1/review/semantic-regression.log",
+    "diagnostic": "AssertionError: loop attempted an unscripted model transmission",
+    "path": [
+      "agent.execute: continue message sets force_redecision=True",
+      "agent._decision",
+      "model_usage.send_model",
+      "test_agent.ScriptedTransport.send: empty scripts assertion"
+    ],
+    "before_any_tool_call": true
+  },
+  "cause": {
+    "distinction": "deterministic_message consumes an exact continue command without a model; continuing the agent loop then requires a fresh decision before an old ready Step. The old test incorrectly expected both phases to use zero model calls.",
+    "introduced_by_commit": "98b31322db656f647e58e8a9daac7f7b31cbeff1",
+    "historical_source": "src/orca_agent/agent.py lines 676-677, identified with git blame and git show",
+    "baseline_head": "f77499c0beca5002738a7ce7aa4c8babf4ff69db",
+    "agent_source_modified_in_this_repair": false
+  },
+  "baseline_probe": {
+    "method": "Loaded HEAD:src/orca_agent/semantic.py with git show and executed it into the semantic module only in a separate Python test process; no source file was overwritten. Original test and agent.py were unchanged at this probe.",
+    "result": "Same unscripted model transmission before any Tool call",
+    "passed": 0,
+    "failed": 1,
+    "seconds": 1.28,
+    "limitation": "This is a controlled semantic-module baseline probe, not a separate full historical checkout or full historical suite."
+  },
+  "changes": {
+    "production_files": [],
+    "test_file": "tests/unit/test_semantic_control.py",
+    "tests": [
+      "Existing continue-message test now calls deterministic_message directly and asserts processed message, unchanged usage/limits/deadline/Plan, no model records and no Tool calls.",
+      "New continuation test supplies one scripted call_tool decision, verifies message consumption before that decision and no predecision evidence read, then checks one charged model call/75 synthetic tokens, unchanged limits/deadline/Plan revision and one evidence read with no ORCA Attempt."
+    ]
+  },
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_semantic_control.py -q -k \"continue_consumes or negated_continue\"",
+      "stage": "original failure reproduction",
+      "passed": 1,
+      "failed": 1,
+      "deselected": 18,
+      "seconds": 6.29
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_semantic_control.py tests/unit/test_natural.py -q",
+      "stage": "initial test correction",
+      "passed": 131,
+      "failed": 1,
+      "seconds": 41.68,
+      "failure": "The newly added assertion expected a plan.id in compressed context, but it is omitted. Replaced with the actual immutable Store Plan comparison plus advertised goal_map step_id; no production change."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_semantic_control.py -q",
+      "stage": "final",
+      "passed": 21,
+      "failed": 0,
+      "seconds": 13.52
+    }
+  ],
+  "reviewed_file_hashes": {
+    "src/orca_agent/agent.py": "440020d4044b90d9670ed135bcfe7bc4549e7da9c0ef11a18323c72f082b1676",
+    "src/orca_agent/semantic.py": "7d5daf1a1c4d6f1cbc4eb341811a5c0674cc8765769529ad848b8d4eb1d691ab",
+    "tests/unit/test_semantic_control.py": "f889860c6c62f26289e1074e5acdfa12ea46459cfae0962de3e8a896bd92df1c",
+    "tests/unit/test_natural.py": "164b5a96f982d665586efc80a94f02b52d2a56e7b0820b9bdaa0c842632acbba",
+    "tests/unit/test_agent.py": "423000890be4c9209891ebe354a8acef8fccae3b7c023f58e5f839c392a6330d",
+    "docs/acceptance/code-as-tools-step7-refreeze-1/review/semantic-regression.log": "5f72f408cc4d6c0c6320006cd42e33b60b267ce747d275bdf9f330676c0d749a"
+  },
+  "limits": [
+    "Synthetic ScriptedTransport receipts are offline protocol evidence, not real provider usage.",
+    "The broader parent regression still determines readiness to freeze.",
+    "Only the affected test file was rerun after its final context assertion correction; other 111 tests in test_natural.py had already passed in the preceding combined run."
+  ]
+}

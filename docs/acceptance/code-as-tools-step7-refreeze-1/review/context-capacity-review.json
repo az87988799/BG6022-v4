@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-20T06:28:23.935127+00:00",
+  "reviewer": "knowledge_evidence subagent",
+  "scope": "Investigate four legacy 12K sampling context failures and two retained array-final replay failures without dropping facts, raising production budgets or changing production code.",
+  "baseline": {
+    "commit": "f77499c0beca5002738a7ce7aa4c8babf4ff69db",
+    "method": "git archive HEAD src exported as ordinary files into a separate temporary directory; a fresh Python process imported that entire HEAD source snapshot before pytest. Current test fixture files and installed fixed dependencies were used.",
+    "verified_import_origin": "C:/WINDOW~1/orca-context-head-src-ka71yizv/src/orca_agent/context.py",
+    "command_filter": "actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback or retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence",
+    "result": {
+      "failed": 6,
+      "passed": 24,
+      "deselected": 71,
+      "seconds": 5.24
+    },
+    "log": "context-head-baseline.log",
+    "conclusion": "All six failures also occur with complete HEAD product source; not newly caused by this repair candidate."
+  },
+  "sampling": {
+    "legacy_conditions": {
+      "run_input_tokens": 12000,
+      "run_output_tokens": 2000,
+      "configuration_model_input_tokens": 24000
+    },
+    "known_failure": "Four final/pending_analysis cases across disabled/thinking_low raise ContextLimitError. The disabled/final diagnostic probe reached 12427 tokens at the tightest existing projection, above the explicit 12000 Run limit.",
+    "disposition": "Original tests and their 12K assertions are unchanged; these remain known baseline capacity failures. No production context optimization, scientific-fact removal, xfail marker or budget increase was introduced.",
+    "frozen_configuration_probe": {
+      "source": "sampling-runtime-budget-probe.py",
+      "results": "sampling-runtime-budget-probe.json",
+      "method": "Intercept only context construction in the existing synthetic fixture to capture its full Request/Run/Plan/Result/feedback objects. First reproduce the legacy small-budget error. Copy the Run, replace only configuration and BudgetLimits with the already selected frozen runtime.toml values, then build context and validate every named scientific/evidence fact.",
+      "cases": [
+        {
+          "phase": "final",
+          "model_profile": "disabled",
+          "historical_run_input_tokens": 12000,
+          "historical_run_output_tokens": 2000,
+          "historical_model_input_tokens": 24000,
+          "historical_limit": {
+            "status": "known_capacity_failure",
+            "diagnostic": "required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+          },
+          "frozen_run_input_tokens": 64000,
+          "frozen_model_input_tokens": 64000,
+          "frozen_output_tokens": 32768,
+          "input_token_bound": 26090,
+          "reserved_tokens": 58858,
+          "fact_sha256_before_and_after": "d2029e649183f0f995b5dd70d58fc724eb310870e4186e388538225b823280eb",
+          "fact_and_source_objects_unchanged": true,
+          "result_count": 6,
+          "checks": "Result IDs, energies/units/nine checks, source provenance, all five sampling members, feedback, goal conditions and pending analysis bindings retained.",
+          "status": "passed"
+        },
+        {
+          "phase": "pending_analysis",
+          "model_profile": "disabled",
+          "historical_run_input_tokens": 12000,
+          "historical_run_output_tokens": 2000,
+          "historical_model_input_tokens": 24000,
+          "historical_limit": {
+            "status": "known_capacity_failure",
+            "diagnostic": "required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+          },
+          "frozen_run_input_tokens": 64000,
+          "frozen_model_input_tokens": 64000,
+          "frozen_output_tokens": 32768,
+          "input_token_bound": 27731,
+          "reserved_tokens": 60499,
+          "fact_sha256_before_and_after": "cdb1e33f4a85f95c7db5655017f72e451769a6114869d89528a32ac63399d507",
+          "fact_and_source_objects_unchanged": true,
+          "result_count": 5,
+          "checks": "Result IDs, energies/units/nine checks, source provenance, all five sampling members, feedback, goal conditions and pending analysis bindings retained.",
+          "status": "passed"
+        },
+        {
+          "phase": "final",
+          "model_profile": "thinking_low",
+          "historical_run_input_tokens": 12000,
+          "historical_run_output_tokens": 2000,
+          "historical_model_input_tokens": 24000,
+          "historical_limit": {
+            "status": "known_capacity_failure",
+            "diagnostic": "required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+          },
+          "frozen_run_input_tokens": 64000,
+          "frozen_model_input_tokens": 64000,
+          "frozen_output_tokens": 32768,
+          "input_token_bound": 26090,
+          "reserved_tokens": 58858,
+          "fact_sha256_before_and_after": "d4851e1895eca77c37db7e8137238744c11d95bca9f67e19d45f81f49cfa8455",
+          "fact_and_source_objects_unchanged": true,
+          "result_count": 6,
+          "checks": "Result IDs, energies/units/nine checks, source provenance, all five sampling members, feedback, goal conditions and pending analysis bindings retained.",
+          "status": "passed"
+        },
+        {
+          "phase": "pending_analysis",
+          "model_profile": "thinking_low",
+          "historical_run_input_tokens": 12000,
+          "historical_run_output_tokens": 2000,
+          "historical_model_input_tokens": 24000,
+          "historical_limit": {
+            "status": "known_capacity_failure",
+            "diagnostic": "required model context exceeds the configured global input bound, Run input limit, or remaining token reservation"
+          },
+          "frozen_run_input_tokens": 64000,
+          "frozen_model_input_tokens": 64000,
+          "frozen_output_tokens": 32768,
+          "input_token_bound": 27732,
+          "reserved_tokens": 60500,
+          "fact_sha256_before_and_after": "02b0f90b3b47bc821e8e6c6d05c5aba333ae05778d4b8b3c0fb9893c40273399",
+          "fact_and_source_objects_unchanged": true,
+          "result_count": 5,
+          "checks": "Result IDs, energies/units/nine checks, source provenance, all five sampling members, feedback, goal conditions and pending analysis bindings retained.",
+          "status": "passed"
+        }
+      ],
+      "fact_checks": [
+        "all Result IDs/counts",
+        "each energy and Eh unit",
+        "nine scientific checks including names/rules when represented explicitly",
+        "source-record hash",
+        "all five members and their energies in every analysis",
+        "analysis reason",
+        "control rejection feedback",
+        "goal conditions",
+        "pending-analysis Step input bindings"
+      ],
+      "limitations": [
+        "Only offline context construction; no real model, HTTP, ORCA, reference or scientific score.",
+        "disabled is a comparator; thinking_low is the real-run selected profile.",
+        "Legacy 12K fixture failures remain visible, and broader production success is not inferred.",
+        "Initial probe assertions assumed compact checked_count and top-level source digests; corrected to validate the equally explicit names/rules and nested full source-digest forms produced by the larger budget. No source facts were weakened."
+      ]
+    }
+  },
+  "array_final": {
+    "cause": "The replay copied persisted final Run.processed_feedback, including the very Result marked related/new in the archived model request. Existing consumed-read display logic then treated all three reads as consumed and elided the oldest body. This reconstructed the wrong time point.",
+    "test_only_fix": "Set replay Run.processed_feedback to the selected original result_ids minus archived AUTHORITY.related_results before build_context. The new Result stays new; all three original observation bodies remain available.",
+    "file": "tests/unit/test_context_fact_contract.py",
+    "historical_evidence": "The test retains existing before/after hashes for every archived JSON and immutable input object; original live records were not rewritten.",
+    "validation": {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_context_fact_contract.py -q --tb=short",
+      "passed": 49,
+      "failed": 0,
+      "seconds": 5.22
+    }
+  },
+  "production_files_modified_for_this_subtask": [],
+  "scientific_budget_changed": false,
+  "real_model_calls": 0,
+  "real_orca_starts": 0,
+  "status": "replay_test_corrected; historical_12k_capacity_failures_disclosed; same_facts_fit_frozen_64k_configuration",
+  "file_hashes": {
+    "tests/unit/test_context_fact_contract.py": "033639a29f2525451f38551e1b8959ec822bc5b809700f57347c6fe376335f8d",
+    "tests/unit/test_context.py": "e74d62d4bf659fd52604866478c876e01b3382feebe397778420309b3ac8b87e",
+    "src/orca_agent/context.py": "c7fd85b70d10940d4c23a60360a1ab4fdf4abcf66fd50bab5eb9371b4d975812",
+    "docs/acceptance/code-as-tools-step7-refreeze-1/freeze/runtime.toml": "f49338fd3971e43082f87b13efaf5d0f13c3d57ac41d465e6ddcb1ddc147833e",
+    "docs/acceptance/code-as-tools-step7-refreeze-1/review/context-head-baseline.log": "d1a84b08cde26a0c5c5920e0dddafea8bf5f0bc953dcca4369ea27f1d38ec4a0",
+    "docs/acceptance/code-as-tools-step7-refreeze-1/review/sampling-runtime-budget-probe.py": "efeadca267e8863c656312e12c244f9725aa5103d961a02636b7c564897e05a7",
+    "docs/acceptance/code-as-tools-step7-refreeze-1/review/sampling-runtime-budget-probe.json": "f348b58dd08b1404c66cd0e73835fbfa28b629ac8289213e8209352b95eb9d40"
+  }
+}

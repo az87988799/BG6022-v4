@@ -1,0 +1,175 @@
+{
+  "schema_version": 3,
+  "scope": "Complete 27-file offline semantic regression followed by a fixture-only correction and focused rerun. No live model/ORCA switches enabled.",
+  "status": "passed_after_fixture_only_corrections",
+  "sources": [
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "e793cf2295adab573531f070d7f8ffbf7af151f06d7a1e6e5598d2e00b688044"
+    },
+    {
+      "path": "src/orca_agent/readable_context.py",
+      "sha256": "65db5bb7448f2fc156b6ff47fae8a183cdd990bed0f9282010ab26aec36c9f23"
+    }
+  ],
+  "sources_match_immutable_replay_v2": true,
+  "full_regression": {
+    "started_at_utc": "2026-10-20T06:26:40.327134+00:00",
+    "finished_log_modified_at_utc": "2026-10-20T06:29:24.428526+00:00",
+    "pytest_seconds": 163.21,
+    "command": [
+      "E:\\BG6022-V4\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/unit/test_general_collection_intake_live001.py",
+      "tests/unit/test_general_input_goals_live004.py",
+      "tests/unit/test_general_intake_correction.py",
+      "tests/unit/test_general_intake_live003.py",
+      "tests/unit/test_general_intake_live008.py",
+      "tests/unit/test_general_intake_obligations.py",
+      "tests/unit/test_goal_evidence_rule_feedback.py",
+      "tests/unit/test_goal_purpose.py",
+      "tests/unit/test_plan_goal_binding_contract.py",
+      "tests/unit/test_semantic_binding_schema.py",
+      "tests/unit/test_semantic_contract.py",
+      "tests/unit/test_semantic_control.py",
+      "tests/unit/test_semantic_edgecases.py",
+      "tests/unit/test_semantic_energy_coverage.py",
+      "tests/unit/test_semantic_geometry_acquisition.py",
+      "tests/unit/test_semantic_goal_binding_production.py",
+      "tests/unit/test_semantic_grounding_production.py",
+      "tests/unit/test_semantic_lexicon.py",
+      "tests/unit/test_semantic_named_identity.py",
+      "tests/unit/test_semantic_notice_contract.py",
+      "tests/unit/test_semantic_placeholder.py",
+      "tests/unit/test_semantic_protocol_replay.py",
+      "tests/unit/test_semantic_read_only_flow.py",
+      "tests/unit/test_semantic_registration_policy.py",
+      "tests/unit/test_semantic_scope_edges.py",
+      "tests/unit/test_semantic_scope_notices.py",
+      "tests/unit/test_semantic_unsupported_notice.py"
+    ],
+    "files": [
+      "tests/unit/test_general_collection_intake_live001.py",
+      "tests/unit/test_general_input_goals_live004.py",
+      "tests/unit/test_general_intake_correction.py",
+      "tests/unit/test_general_intake_live003.py",
+      "tests/unit/test_general_intake_live008.py",
+      "tests/unit/test_general_intake_obligations.py",
+      "tests/unit/test_goal_evidence_rule_feedback.py",
+      "tests/unit/test_goal_purpose.py",
+      "tests/unit/test_plan_goal_binding_contract.py",
+      "tests/unit/test_semantic_binding_schema.py",
+      "tests/unit/test_semantic_contract.py",
+      "tests/unit/test_semantic_control.py",
+      "tests/unit/test_semantic_edgecases.py",
+      "tests/unit/test_semantic_energy_coverage.py",
+      "tests/unit/test_semantic_geometry_acquisition.py",
+      "tests/unit/test_semantic_goal_binding_production.py",
+      "tests/unit/test_semantic_grounding_production.py",
+      "tests/unit/test_semantic_lexicon.py",
+      "tests/unit/test_semantic_named_identity.py",
+      "tests/unit/test_semantic_notice_contract.py",
+      "tests/unit/test_semantic_placeholder.py",
+      "tests/unit/test_semantic_protocol_replay.py",
+      "tests/unit/test_semantic_read_only_flow.py",
+      "tests/unit/test_semantic_registration_policy.py",
+      "tests/unit/test_semantic_scope_edges.py",
+      "tests/unit/test_semantic_scope_notices.py",
+      "tests/unit/test_semantic_unsupported_notice.py"
+    ],
+    "returncode": 1,
+    "passed": 495,
+    "failed": 1,
+    "failure": "tests/unit/test_general_intake_obligations.py::test_shared_coordinates_across_environments_keep_one_initial_xyz_binding",
+    "failure_cause": "New fixture supplied environment=gas_phase/source=default while the user text explicitly requests two unnamed environments. Existing default-preservation guard correctly rejected it.",
+    "fixture_correction": "Declare the two unnamed environments as source=unknown; additionally assert unconfirmed:environment. No production code changed after this full run.",
+    "log": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-1/review/semantic-regression.log",
+      "sha256": "325cebec3c2c5854957c8dc92be47bc75f37e80db923fccbe01eca3246332927",
+      "bytes": 15359,
+      "encoding": "Windows subprocess encoding (decoded as gb18030 for diagnostic recovery)"
+    },
+    "recording_note": "Initial wrapper attempted UTF-8 decoding of the raw Windows pytest log and failed after pytest had completed. This record is reconstructed from the unchanged raw log; test results are not changed."
+  },
+  "prior_diagnostic": {
+    "path": "docs/acceptance/code-as-tools-step7-refreeze-1/review/semantic-regression-development-1.json",
+    "status": "failed",
+    "failed": 14,
+    "passed": 466
+  },
+  "prior_whole_repository_diagnostic": "Stopped by root with mixed source versions; incomplete and not counted as passed.",
+  "sources_unchanged": true,
+  "assertions": {
+    "complete_27_files_executed": true,
+    "full_run_not_claimed_clean": true,
+    "production_not_relaxed_for_fixture": true,
+    "historical_normalization_review_not_modified": true
+  },
+  "followup_development": {
+    "started_at_utc": "2026-10-20T06:30:49.821963+00:00",
+    "finished_at_utc": "2026-10-20T06:31:19.435395+00:00",
+    "elapsed_seconds": 29.625,
+    "command": [
+      "E:\\BG6022-V4\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/unit/test_general_intake_obligations.py",
+      "tests/unit/test_semantic_energy_coverage.py"
+    ],
+    "files": [
+      "tests/unit/test_general_intake_obligations.py",
+      "tests/unit/test_semantic_energy_coverage.py"
+    ],
+    "returncode": 1,
+    "summary_lines": [
+      "                                  for char in question) for question in candidate.questions + candidate.notices)",
+      "        if new_gaps and not visible_question:",
+      ">           raise ProposalError(\"New unresolved conditions, including detected unsupported scope, require a visible question \"",
+      "                                \"or unsupported-scope notice in parameters.notices. Preserve explicit user choices; \"",
+      "                                \"do not ask to reconfirm them.\",",
+      "                                path=[\"parameters\", \"questions\"], new_unresolved=sorted(new_gaps))",
+      "E           orca_agent.proposals.ProposalError: New unresolved conditions, including detected unsupported scope, require a visible question or unsupported-scope notice in parameters.notices. Preserve explicit user choices; do not ask to reconfirm them.",
+      "",
+      "src\\orca_agent\\semantic.py:1816: ProposalError",
+      "=========================== short test summary info ===========================",
+      "FAILED tests/unit/test_general_intake_obligations.py::test_shared_coordinates_across_environments_keep_one_initial_xyz_binding",
+      "1 failed, 89 passed in 28.68s"
+    ],
+    "log": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-1/review/semantic-regression-followup-development-1.log",
+      "sha256": "ed6fdfc04695d46ea1030a794b9474e4e92c5f809ce744411ce7dd4c89d74590",
+      "bytes": 17405
+    },
+    "fixture_correction": "The newly explicit unknown environments also require a visible clarification question. Added the question in the test proposal; production unchanged."
+  },
+  "followup": {
+    "started_at_utc": "2026-10-20T06:31:55.847883+00:00",
+    "finished_at_utc": "2026-10-20T06:31:58.271843+00:00",
+    "elapsed_seconds": 2.422000000005937,
+    "command": [
+      "E:\\BG6022-V4\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/unit/test_general_intake_obligations.py::test_shared_coordinates_across_environments_keep_one_initial_xyz_binding"
+    ],
+    "returncode": 0,
+    "summary_lines": [
+      ".                                                                        [100%]",
+      "1 passed in 1.51s"
+    ],
+    "log": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-1/review/semantic-regression-followup.log",
+      "sha256": "1cf539d688258341872fc8ccd0495bc94c581e4df2ec5d37122b42d687f5c985",
+      "bytes": 100
+    }
+  },
+  "validation_summary": "Full 27 files: 495 passed, 1 new fixture failed. Related 2-file rerun: 89 passed, same fixture failed its newly visible-unknown requirement. Final failing-case-only rerun: passed after adding its visible clarification question. Production source unchanged throughout; no full-clean rerun claimed.",
+  "corrected_fixture": {
+    "path": "tests/unit/test_general_intake_obligations.py",
+    "sha256": "48fc2e3d100936738b79f4c16bfdc175eac29b22432bf5953c3a91784842df4f"
+  }
+}

@@ -1,0 +1,2282 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-20T06:11:56.275248+00:00",
+  "scope": "Offline replay of immutable historical normalization proposals only. No model/ORCA/tool computation; does not establish live success.",
+  "candidate_sources": [
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "7d5daf1a1c4d6f1cbc4eb341811a5c0674cc8765769529ad848b8d4eb1d691ab"
+    },
+    {
+      "path": "src/orca_agent/readable_context.py",
+      "sha256": "e21f94bc45f6b94fb70a5ff49e5679cfda9db242bf70406035ad7a2489c3569e"
+    }
+  ],
+  "replays": [
+    {
+      "task": "T2",
+      "historical_model_id": "model_1643ae876e594b9f9837b45be1dcb454",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/T2/data/runs/run_857e21448e7e44ec824cd1905fe9177d/model/model_1643ae876e594b9f9837b45be1dcb454.response.json",
+      "source_sha256": "b10402cd66a5bf6fbf46346fe09922b9c61456822e8db8d4b1e81dee5bebe076",
+      "historical_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          }
+        ]
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "accepted",
+      "current_goals": [
+        {
+          "quantity": "候选结构",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "实际保存至少8份候选结构",
+            "交付所有实际产生的候选"
+          ],
+          "unresolved": []
+        },
+        {
+          "quantity": "重原子对齐RMSD",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。"
+          ],
+          "unresolved": []
+        },
+        {
+          "quantity": "真实ORCA单点能量比较",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": "fixed_initial",
+          "minimum_evidence": [
+            "至少4个不同的构象",
+            "同一方法、基组和统一计算类型",
+            "完成真实ORCA单点能量比较",
+            "绝对能量和相对最低项的kJ/mol排名",
+            "不能把未做ORCA的候选写成已有ORCA能量"
+          ],
+          "unresolved": []
+        },
+        {
+          "quantity": "最低候选结构",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "最低候选结构"
+          ],
+          "unresolved": []
+        },
+        {
+          "quantity": "搜索范围、几何来源以及力场处理是否收敛",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "说明搜索范围、几何来源以及力场处理是否收敛",
+            "选中及排除原因",
+            "不能把有限搜索最低项称为全局最低或自由能最低"
+          ],
+          "unresolved": []
+        },
+        {
+          "quantity": "种子 1701",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "统一采用种子 1701 并在报告中记录",
+            "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性"
+          ],
+          "unresolved": []
+        }
+      ],
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "T2",
+      "historical_model_id": "model_2fb34dc015284f0fbd4c9f726aa69ddf",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/T2/data/runs/run_857e21448e7e44ec824cd1905fe9177d/model/model_2fb34dc015284f0fbd4c9f726aa69ddf.response.json",
+      "source_sha256": "e715a320f3108d7bb17c1dbd0d7d947e1c7cb05facba6b2cc62e33401eac7fcf",
+      "historical_requirement": {
+        "requirement": "General minimum evidence must use registered requirements or exact user wording. Keep requested delivery contents in quantities, Goals and result data; do not invent extra scientific guarantees or remove explicit user minimum evidence.",
+        "path": [
+          "parameters",
+          "goals",
+          1,
+          "minimum_evidence",
+          0
+        ],
+        "invalid_value": "重原子对齐RMSD考虑碳链正反向等价映射",
+        "registered_requirements": [
+          "all_initial_members@1",
+          "converged_scf@1",
+          "purpose_preserved@1"
+        ],
+        "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。"
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "重原子对齐RMSD考虑碳链正反向等价映射",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "重复阈值0.15Å",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "至少4个不同的构象参加比较",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "交付最低候选结构",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "说明几何来源",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "minimum_evidence",
+              2
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "说明力场处理是否收敛",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "minimum_evidence",
+              3
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "说明选中及排除原因",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "T2",
+      "historical_model_id": "model_437b3f7e8939456ba5a8850b0636f8a9",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/T2/data/runs/run_857e21448e7e44ec824cd1905fe9177d/model/model_437b3f7e8939456ba5a8850b0636f8a9.response.json",
+      "source_sha256": "8f31efb482fea90edfd03dc95dce39f5f7638fa3c027324356b1383b86b43761",
+      "historical_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "electronic_state"
+            ],
+            "reason": "authorized_default_requires_explicit_adoption",
+            "authorized_default": {
+              "source": "default",
+              "default_rule": "local-hf-1",
+              "value": "RKS"
+            },
+            "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "verification"
+            ],
+            "reason": "no_user_demand_for_specialized_qualification",
+            "instruction": "Use reported_with_limitations here when the user has not required qualified evidence. Keep all actual user minimum-evidence requirements; do not invent stronger requirements or waive existing ones."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          }
+        ]
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "electronic_state"
+            ],
+            "reason": "authorized_default_requires_explicit_adoption",
+            "authorized_default": {
+              "source": "default",
+              "default_rule": "local-hf-1",
+              "value": "RKS"
+            },
+            "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "重原子对齐RMSD考虑碳链正反向等价映射",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "重复阈值0.15Å",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "至少4个不同的构象参加比较",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "verification"
+            ],
+            "reason": "no_user_demand_for_specialized_qualification",
+            "instruction": "Use reported_with_limitations here when the user has not required qualified evidence. Keep all actual user minimum-evidence requirements; do not invent stronger requirements or waive existing ones."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "交付最低候选结构",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "说明几何来源",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "minimum_evidence",
+              2
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "说明力场处理是否收敛",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "minimum_evidence",
+              3
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "说明选中及排除原因",
+            "user_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "T3",
+      "historical_model_id": "model_0084a9d27c464572995ed60f34679d8f",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/T3/data/runs/run_993e9cfefdeb4816a098d88cc68074c9/model/model_0084a9d27c464572995ed60f34679d8f.response.json",
+      "source_sha256": "df557be377d711cf6c129873c832abb53cabfd43093f443a1f4f8e35d2100a43",
+      "historical_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          }
+        ]
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "accepted",
+      "current_goals": [
+        {
+          "quantity": "正丁烷",
+          "evidence_contract_version": "legacy-1",
+          "verification": "qualified",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "初始结构",
+          "evidence_contract_version": "legacy-1",
+          "verification": "qualified",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "中心C-C-C-C二面角",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": "optimized",
+          "minimum_evidence": [
+            "converged_scf@1",
+            "purpose_preserved@1",
+            "先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化"
+          ],
+          "unresolved": []
+        },
+        {
+          "quantity": "是否需要局部加密",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "所有点的结构、数据、曲线、初始结构、原始证据和失败清单",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "种子 1701",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        }
+      ],
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "T3",
+      "historical_model_id": "model_49aa1d91c87747d1b395612398d4cd62",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/T3/data/runs/run_993e9cfefdeb4816a098d88cc68074c9/model/model_49aa1d91c87747d1b395612398d4cd62.response.json",
+      "source_sha256": "0a60a6c7c6e58de981b2036a72c94d94c8db93c34d02f1bd624bfe862e87de6f",
+      "historical_requirement": {
+        "requirement": "General minimum evidence must use registered requirements or exact user wording. Keep requested delivery contents in quantities, Goals and result data; do not invent extra scientific guarantees or remove explicit user minimum evidence.",
+        "path": [
+          "parameters",
+          "goals",
+          0,
+          "minimum_evidence",
+          0
+        ],
+        "invalid_value": "七个指定角度 -180、-120、-60、0、60、120、180 度均处理",
+        "registered_requirements": [
+          "all_initial_members@1",
+          "converged_scf@1",
+          "purpose_preserved@1"
+        ],
+        "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。"
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "七个指定角度 -180、-120、-60、0、60、120、180 度均处理",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "每个点记录实际角度、优化是否收敛和电子能量",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              2
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "相对能量曲线基于报告数据生成",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              3
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "未收敛点列入失败清单，不能作为成功点",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              4
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "离散扫描峰值不得宣称为已验证过渡态",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "粗扫前说明局部加密判据",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "粗扫后依据判据和曲线记录继续或停止决定",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "minimum_evidence",
+              2
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "若加密最多新增2个未计算角度；不加密则解释理由",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "未收敛点列入失败清单，不能作为成功点",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "离散扫描峰值不得宣称为已验证过渡态",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "若使用随机数，记录种子1701；若库或模型不支持固定种子，明确记为不可固定，不伪造确定性",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "T3",
+      "historical_model_id": "model_d4e4ad9c3a104110a4495a6c107f7e80",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/T3/data/runs/run_993e9cfefdeb4816a098d88cc68074c9/model/model_d4e4ad9c3a104110a4495a6c107f7e80.response.json",
+      "source_sha256": "5ba5d2597ebc6fc64eaa05fa72e1630a23cd883b3a33bb070f4916b5c38e5ee8",
+      "historical_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "electronic_state"
+            ],
+            "reason": "authorized_default_requires_explicit_adoption",
+            "authorized_default": {
+              "source": "default",
+              "default_rule": "local-hf-1",
+              "value": "RKS"
+            },
+            "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          }
+        ]
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "electronic_state"
+            ],
+            "reason": "authorized_default_requires_explicit_adoption",
+            "authorized_default": {
+              "source": "default",
+              "default_rule": "local-hf-1",
+              "value": "RKS"
+            },
+            "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "七个指定角度 -180、-120、-60、0、60、120、180 度均处理",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "每个点记录实际角度、优化是否收敛和电子能量",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              2
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "相对能量曲线基于报告数据生成",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              3
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "未收敛点列入失败清单，不能作为成功点",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              4
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "离散扫描峰值不得宣称为已验证过渡态",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "粗扫前说明局部加密判据",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "粗扫后依据判据和曲线记录继续或停止决定",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "minimum_evidence",
+              2
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "若加密最多新增2个未计算角度；不加密则解释理由",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "若使用随机数，记录种子1701；若库或模型不支持固定种子，明确记为不可固定，不伪造确定性",
+            "user_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "T5",
+      "historical_model_id": "model_0123df35f5354ca5977357b0658b88af",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/T5/data/runs/run_d1c21624d46d448b9d3388186ddedfe7/model/model_0123df35f5354ca5977357b0658b88af.response.json",
+      "source_sha256": "bccbdff34e539b36c9eeb35a199e017edecdf87313d6f9c59c16244255d1ebac",
+      "historical_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "electronic_state"
+            ],
+            "reason": "authorized_default_requires_explicit_adoption",
+            "authorized_default": {
+              "source": "default",
+              "default_rule": "local-hf-1",
+              "value": "RKS"
+            },
+            "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "geometry_relation"
+            ],
+            "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+            "instruction": "Omit this geometry_relation or set it to null when the user text does not unambiguously select one. Preserve a genuine ambiguity for clarification instead of choosing a relation from the port name."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "geometry_relation"
+            ],
+            "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+            "instruction": "Omit this geometry_relation or set it to null when the user text does not unambiguously select one. Preserve a genuine ambiguity for clarification instead of choosing a relation from the port name."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          }
+        ]
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "electronic_state"
+            ],
+            "reason": "authorized_default_requires_explicit_adoption",
+            "authorized_default": {
+              "source": "default",
+              "default_rule": "local-hf-1",
+              "value": "RKS"
+            },
+            "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "structure-prepare-1",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "identical_atom_order_and_coordinates",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "energy-compare-1",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "evidence-read-1",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "system_refs"
+            ],
+            "reason": "goal_requires_exact_registered_targets",
+            "available_system_ids": [
+              "system_ethanol"
+            ],
+            "instruction": "Bind this molecular Goal to its exact available system IDs (one target for input acquisition), including report/seed/delivery Goals. Do not drop a Goal or invent a target to fix the binding."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "T5",
+      "historical_model_id": "model_8c1c90d82bd44c39a2f61cdc383575d8",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/T5/data/runs/run_d1c21624d46d448b9d3388186ddedfe7/model/model_8c1c90d82bd44c39a2f61cdc383575d8.response.json",
+      "source_sha256": "2274163192e7327dd4cdab66851021071176c0639bcc86fbcc16b63b0f890aa0",
+      "historical_requirement": {
+        "requirement": "Input quantity must retain an exact user phrase.",
+        "path": [
+          "parameters",
+          "goals",
+          0,
+          "quantity"
+        ]
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "structure-prepare-1",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "identical_atom_order_and_coordinates",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "energy-compare-1",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "evidence-read-1",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "system_refs"
+            ],
+            "reason": "goal_requires_exact_registered_targets",
+            "available_system_ids": [
+              "system_ethanol"
+            ],
+            "instruction": "Bind this molecular Goal to its exact available system IDs (one target for input acquisition), including report/seed/delivery Goals. Do not drop a Goal or invent a target to fix the binding."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "T5",
+      "historical_model_id": "model_ba9d43d13b1f4c54bba8c990e99df6c1",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/T5/data/runs/run_d1c21624d46d448b9d3388186ddedfe7/model/model_ba9d43d13b1f4c54bba8c990e99df6c1.response.json",
+      "source_sha256": "07c45dadf11e0cca4b8035b9f840d1d33fe3aaf057683c259e04238de37f30ba",
+      "historical_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "geometry_relation"
+            ],
+            "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+            "instruction": "Omit this geometry_relation or set it to null when the user text does not unambiguously select one. Preserve a genuine ambiguity for clarification instead of choosing a relation from the port name."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "geometry_relation"
+            ],
+            "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+            "instruction": "Omit this geometry_relation or set it to null when the user text does not unambiguously select one. Preserve a genuine ambiguity for clarification instead of choosing a relation from the port name."
+          }
+        ]
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "structure-prepare-1",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              0,
+              "minimum_evidence",
+              1
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "identical_atom_order_and_coordinates",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "energy-compare-1",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "minimum_evidence",
+              0
+            ],
+            "reason": "minimum_evidence_requires_exact_user_wording",
+            "invalid_value": "evidence-read-1",
+            "user_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "registered_requirements": [
+              "all_initial_members@1",
+              "converged_scf@1",
+              "purpose_preserved@1"
+            ],
+            "instruction": "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "H1",
+      "historical_model_id": "model_3f6a2ac596da4453b2ce41adc23105cc",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/H1/data/runs/run_3e18506098284903992d281ddefcb3ff/model/model_3f6a2ac596da4453b2ce41adc23105cc.response.json",
+      "source_sha256": "bac47b24705189fe5e6576cd123641b9b1a935cf364c44929eae82548791dfd2",
+      "historical_requirement": {
+        "requirement": "New unresolved conditions, including detected unsupported scope, require a visible question or unsupported-scope notice in parameters.notices. Preserve explicit user choices; do not ask to reconfirm them.",
+        "path": [
+          "parameters",
+          "questions"
+        ],
+        "new_unresolved": [
+          "unsupported_minimum_evidence:也不要仅交付抗磁或顺磁分量来代替总屏蔽",
+          "unsupported_minimum_evidence:全部3个原子核的GIAO核磁屏蔽",
+          "unsupported_minimum_evidence:各向同性值与该核总张量迹的一致性",
+          "unsupported_minimum_evidence:未收敛或缺少的核应明确标为未完成，不补造数值"
+        ]
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "electronic_state"
+            ],
+            "reason": "authorized_default_requires_explicit_adoption",
+            "authorized_default": {
+              "source": "default",
+              "default_rule": "local-hf-1",
+              "value": "RKS"
+            },
+            "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "H1",
+      "historical_model_id": "model_46480c1a52da4800b7d221742424050b",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/H1/data/runs/run_3e18506098284903992d281ddefcb3ff/model/model_46480c1a52da4800b7d221742424050b.response.json",
+      "source_sha256": "98a9a0f778da5c0074f54eb4a8a44df6406a77084b21b8f3784b5a90197048ac",
+      "historical_requirement": "general molecular goals require exact registered target bindings",
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              6,
+              "system_refs"
+            ],
+            "reason": "goal_requires_exact_registered_targets",
+            "available_system_ids": [
+              "system_hcn"
+            ],
+            "instruction": "Bind this molecular Goal to its exact available system IDs (one target for input acquisition), including report/seed/delivery Goals. Do not drop a Goal or invent a target to fix the binding."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "H1",
+      "historical_model_id": "model_f953d550bd9e469a930d9836d09abd96",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/H1/data/runs/run_3e18506098284903992d281ddefcb3ff/model/model_f953d550bd9e469a930d9836d09abd96.response.json",
+      "source_sha256": "4e820a0c257faa8d596af38ed76efa14451a33ca2e9790ce2446e976ec3f0f1a",
+      "historical_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "electronic_state"
+            ],
+            "reason": "authorized_default_requires_explicit_adoption",
+            "authorized_default": {
+              "source": "default",
+              "default_rule": "local-hf-1",
+              "value": "RKS"
+            },
+            "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              1,
+              "geometry_relation"
+            ],
+            "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+            "instruction": "Omit this geometry_relation or set it to null when the user text does not unambiguously select one. Preserve a genuine ambiguity for clarification instead of choosing a relation from the port name."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          }
+        ]
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "conditions",
+              "electronic_state"
+            ],
+            "reason": "authorized_default_requires_explicit_adoption",
+            "authorized_default": {
+              "source": "default",
+              "default_rule": "local-hf-1",
+              "value": "RKS"
+            },
+            "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "quantity"
+            ],
+            "reason": "general_quantity_requires_exact_user_phrase",
+            "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              6,
+              "system_refs"
+            ],
+            "reason": "goal_requires_exact_registered_targets",
+            "available_system_ids": [
+              "system_hcn"
+            ],
+            "instruction": "Bind this molecular Goal to its exact available system IDs (one target for input acquisition), including report/seed/delivery Goals. Do not drop a Goal or invent a target to fix the binding."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "H2",
+      "historical_model_id": "model_28f7417846c245708f0f325eacc43a5c",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/H2/data/runs/run_e76f0594b8cd49ca8799a23702221452/model/model_28f7417846c245708f0f325eacc43a5c.response.json",
+      "source_sha256": "61dd055fd339c967d9ccc96ba25b0a464172baa329e7462a6ed048d9a0b4f8ce",
+      "historical_requirement": null,
+      "historical_outcome": "accepted",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              6,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              7,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "fixed_initial",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "H2",
+      "historical_model_id": "model_f79ed29595a94d1f8776c6c265a0037b",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/H2/data/runs/run_e76f0594b8cd49ca8799a23702221452/model/model_f79ed29595a94d1f8776c6c265a0037b.response.json",
+      "source_sha256": "ccb20094c7a4c67275234e22024ba44055b2fbc091b9199da57cf5d95f4e1c52",
+      "historical_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              2,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              3,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              4,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              5,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              6,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              7,
+              "geometry_relation"
+            ],
+            "reason": "preserve_explicit_geometry_relation",
+            "required_relation": "optimized",
+            "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+          }
+        ]
+      },
+      "historical_outcome": "rejected",
+      "rebind": "message_id/message_ids only; semantic values unchanged",
+      "current_outcome": "rejected",
+      "error_type": "ProposalError",
+      "current_requirement": {
+        "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+        "path": [
+          "parameters"
+        ],
+        "corrections": [
+          {
+            "path": [
+              "parameters",
+              "goals",
+              6,
+              "system_refs"
+            ],
+            "reason": "goal_requires_exact_registered_targets",
+            "available_system_ids": [
+              "system_ch2o"
+            ],
+            "instruction": "Bind this molecular Goal to its exact available system IDs (one target for input acquisition), including report/seed/delivery Goals. Do not drop a Goal or invent a target to fix the binding."
+          },
+          {
+            "path": [
+              "parameters",
+              "goals",
+              7,
+              "system_refs"
+            ],
+            "reason": "goal_requires_exact_registered_targets",
+            "available_system_ids": [
+              "system_ch2o"
+            ],
+            "instruction": "Bind this molecular Goal to its exact available system IDs (one target for input acquisition), including report/seed/delivery Goals. Do not drop a Goal or invent a target to fix the binding."
+          }
+        ]
+      },
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    }
+  ],
+  "synthetic_derivatives": [
+    {
+      "task": "H1",
+      "kind": "synthetic_test_derivative",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/H1/data/runs/run_3e18506098284903992d281ddefcb3ff/model/model_3f6a2ac596da4453b2ce41adc23105cc.response.json",
+      "source_sha256": "bac47b24705189fe5e6576cd123641b9b1a935cf364c44929eae82548791dfd2",
+      "changes": [
+        "explicitly adopt omitted configured electronic_state default; preserve all quantities and minimum evidence"
+      ],
+      "current_outcome": "accepted",
+      "current_goals": [
+        {
+          "quantity": "氰化氢HCN",
+          "evidence_contract_version": "legacy-1",
+          "verification": "qualified",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "合理结构",
+          "evidence_contract_version": "legacy-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "全部3个原子核的GIAO核磁屏蔽",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": "fixed_initial",
+          "minimum_evidence": [
+            "全部3个原子核的GIAO核磁屏蔽",
+            "各向同性值与该核总张量迹的一致性",
+            "也不要仅交付抗磁或顺磁分量来代替总屏蔽",
+            "未收敛或缺少的核应明确标为未完成，不补造数值"
+          ],
+          "unresolved": []
+        },
+        {
+          "quantity": "选择与成本依据",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "初始及计算几何、实际输入、原始逐核输出、脚本和表格",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "种子 1701",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        }
+      ],
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    },
+    {
+      "task": "H2",
+      "kind": "synthetic_test_derivative",
+      "source": "docs/acceptance/code-as-tools-step7/evidence/H2/data/runs/run_e76f0594b8cd49ca8799a23702221452/model/model_28f7417846c245708f0f325eacc43a5c.response.json",
+      "source_sha256": "61dd055fd339c967d9ccc96ba25b0a464172baa329e7462a6ed048d9a0b4f8ce",
+      "changes": [
+        "goals[2].geometry_relation optimized -> fixed_initial",
+        "goals[3].geometry_relation optimized -> fixed_initial",
+        "goals[4].geometry_relation optimized -> fixed_initial",
+        "goals[5].geometry_relation optimized -> fixed_initial",
+        "goals[6].geometry_relation optimized -> fixed_initial",
+        "goals[7].geometry_relation optimized -> fixed_initial"
+      ],
+      "current_outcome": "accepted",
+      "current_goals": [
+        {
+          "quantity": "合理结构",
+          "evidence_contract_version": "legacy-1",
+          "verification": "qualified",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "旋转副本",
+          "evidence_contract_version": "legacy-1",
+          "verification": "qualified",
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "完整3×3笛卡尔极化率张量与各向同性极化率",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": "fixed_initial",
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "完整3×3笛卡尔极化率张量与各向同性极化率",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": "fixed_initial",
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "旋转关系",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": "fixed_initial",
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": "fixed_initial",
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "保留原始输入输出、生成与分析脚本、数据表及验证限制",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": "fixed_initial",
+          "minimum_evidence": [],
+          "unresolved": []
+        },
+        {
+          "quantity": "统一采用种子 1701 并在报告中记录",
+          "evidence_contract_version": "generic-observation-1",
+          "verification": "reported_with_limitations",
+          "geometry_relation": "fixed_initial",
+          "minimum_evidence": [],
+          "unresolved": []
+        }
+      ],
+      "no_runtime_execution": true,
+      "proposal_and_original_unchanged": true
+    }
+  ],
+  "total_historical_replays": 14,
+  "total_synthetic_derivatives": 2,
+  "actual_model_calls": 0,
+  "actual_orca_starts": 0,
+  "limitations": [
+    "Historical incorrect proposals remain rejected; no promise that a future model follows corrections.",
+    "Bounded lexical checks authenticate selected relations and quantities, not arbitrary natural-language semantics.",
+    "No new scientific evidence or qualification was produced."
+  ],
+  "targeted_validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest -q tests/unit/test_general_intake_obligations.py tests/unit/test_semantic_energy_coverage.py",
+      "status": "passed",
+      "passed": 75,
+      "seconds": 26.32,
+      "scope": "Final semantic.py including general energy coverage; no model/ORCA."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest -q tests/unit/test_general_intake_obligations.py tests/unit/test_semantic_read_only_flow.py",
+      "status": "passed",
+      "passed": 25,
+      "seconds": 19.57,
+      "scope": "Before final energy-coverage addition; geometry, aggregation, query distinction."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest -q tests/unit/test_general_intake_correction.py tests/unit/test_general_input_goals_live004.py tests/unit/test_semantic_geometry_acquisition.py tests/unit/test_semantic_read_only_flow.py",
+      "status": "passed",
+      "passed": 49,
+      "seconds": 39.26,
+      "scope": "Initial repair regression before later scoped-context and energy-coverage additions."
+    }
+  ],
+  "development_test_corrections": [
+    "Two intermediate invocations had nine failures solely because the newly added test constructed Request without its required nonempty Goal list. The test fixture was corrected; production code was unchanged for these fixture fixes."
+  ],
+  "assertions": {
+    "historical_proposals_unchanged": true,
+    "candidate_sources_current": true,
+    "false_optimized_h2_rejected": true,
+    "h2_fixed_synthetic_derivative_accepted": true,
+    "h1_exact_minima_synthetic_derivative_preserved": true
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "reviewer": "/root/archive_knowledge",
+  "reviewed_at_utc": "2026-10-20T06:23:44.782288+00:00",
+  "scope": "First-round T4 input-role and H2 independent-name-evidence failures; archive knowledge bodies already fetched by the authorized operation. Offline changes and validation only.",
+  "status": "source_stable_targeted_regression_passed",
+  "authorization": "User authorized fixing first-round blockers, refreezing and repeating the same seven tasks. This reviewer did not start any real model, ORCA or reference calculation.",
+  "root_causes": [
+    {
+      "task": "T4",
+      "fact": "Approved Plan used Step.inputs.resolved_identity; Tool definition declares input role identity -> resolved_identity. The executor could not consume the incorrectly keyed evidence.",
+      "fix": "Plan approval checks exact declared roles and output ports from Tool.check_contract.input_ports; no executor alias or scientific-check bypass."
+    },
+    {
+      "task": "H2",
+      "fact": "The retained requested name was the concatenation of a Chinese name and CH2O. Exact PubChem synonym and Wikidata searches for the full concatenation did not establish a name match, yet the old resolver published a qualified graph with alias_verified=false.",
+      "fix": "For explicitly delimited trailing molecular formula or formula adjacent to a Chinese name, preserve the original and verify formula element counts against the full graph before querying the separate name. Still require independent exact name/same-CID evidence. An unresolved name returns failed with original receipts and no qualified output."
+    },
+    {
+      "task": "knowledge_archive",
+      "fact": "First-round successful knowledge Results kept a full-body digest and excerpt but no original full-body Artifact. Post hoc matching downloads were separate review evidence.",
+      "fix": "Archive the already-fetched content-decoded body as knowledge_document within existing Artifact quotas, with Call, URL, version and byte-hash provenance. No new GET, conversion or science. Quota failure returns structured failure and cannot be cited for answer or condition selection."
+    },
+    {
+      "task": "knowledge_archive_context",
+      "fact": "The archival receipt added document_excerpt.source.url. Generic path redaction matched the package URI substring e://, while existing context logic restored only the top-level approved URL. Exact excerpt, hashes, and archive fields remained present; the 12 KB bounded-receipt threshold did not cause this regression.",
+      "fix": "Preserve the nested source URL only when equal to the document URL already allowed by the existing frozen DOCUMENTS directory. Other nested paths and unknown package URLs remain redacted. Keep the original full-receipt equality regression assertion."
+    }
+  ],
+  "safety_boundaries": [
+    "No molecule-specific allowlist, solver code, scientific port or scientific guarantee added.",
+    "No alias evidence from formula agreement alone; mismatching formula, unmatched name or ambiguous CID is rejected.",
+    "No historical Run, raw evidence, freeze manifest, initial geometry or prior budget is rewritten.",
+    "Unknown future input roles remain rejected rather than silently renamed.",
+    "Archived document content remains untrusted data and scientifically unqualified."
+  ],
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_general_identity_selection.py tests/unit/test_readable_planning.py tests/unit/test_versioned_knowledge.py -q",
+      "result": {
+        "passed": 89,
+        "failed": 1,
+        "seconds": 27.43
+      },
+      "failure_explanation": "New negative fixture included CH4 and activated the existing methane fast intake path before the resolver under test; fixture changed to conflicting CH2O2 so the intended formula-validation boundary is tested."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_general_identity_selection.py tests/unit/test_readable_planning.py tests/unit/test_versioned_knowledge.py tests/unit/test_structure_input_chain.py tests/unit/test_structure_tools.py tests/unit/test_planning.py tests/unit/test_knowledge_completion.py tests/unit/test_web_properties_knowledge.py -q",
+      "result": {
+        "passed": 213,
+        "failed": 0,
+        "seconds": 71.95
+      },
+      "scope": "Synthetic bounded HTTP; actual Store/Plan/Tool dispatch and artifact reservation/import; no live network, model or ORCA."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_general_identity_selection.py::test_name_formula_rule_accepts_one_character_chinese_name_without_a_name_allowlist tests/unit/test_versioned_knowledge.py::test_archive_quota_failure_retains_raw_call_file_but_never_claims_complete_document -q",
+      "result": {
+        "passed": 4,
+        "failed": 0,
+        "seconds": 2.71
+      },
+      "scope": "Final single-character Chinese-name case plus three repeated quota-rejection cases including answer/selection consumer rejection; not four additional unique tests."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_code_context.py::test_prior_source_receipts_remain_available_after_multiple_searches tests/unit/test_code_context.py::test_document_archive_projection_does_not_restore_unapproved_source_paths -q",
+      "result": {
+        "passed": 4,
+        "failed": 0,
+        "seconds": 2.57
+      },
+      "scope": "Full retained receipt equality after two actual packaged-guide Tool calls; three negative cases preserve redaction for unmatched nested package URL, local path, and unknown matching top/nested package URLs. No live network, model or ORCA."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_goal_evidence_rule_feedback.py tests/unit/test_plan_goal_binding_contract.py tests/unit/test_readable_planning.py -q",
+      "result": {
+        "passed": 57,
+        "failed": 0,
+        "seconds": 8.13
+      },
+      "scope": "Offline historical rule rejection, strict qualification/Goal binding contracts, public schema projection, and new declared input-role validation. Test fixture repairs only; production source unchanged."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_context.py::test_actual_proposal_schema_and_bounded_default_context tests/unit/test_context.py::test_native_envelope_and_step_examples_have_no_action_wrapper_or_input_alias tests/unit/test_context.py::test_action_enum_comes_from_current_native_examples_and_reason_template tests/unit/test_context_goal_copy_targets.py::test_planning_prompt_uses_request_ids_when_status_contains_retired_goal -q",
+      "result": {
+        "passed": 8,
+        "failed": 0,
+        "seconds": 1.21
+      },
+      "scope": "Six corrected stale assertions plus two previously passing action states; no network, model or ORCA."
+    }
+  ],
+  "limitations": [
+    "Whole-suite regression and refreeze are coordinated by the parent; this record is not the later real-run result.",
+    "Existing identity APIs may still return missing/ambiguous external evidence; such cases must remain bounded failures.",
+    "No new scientific reference computation or claim of benchmark novelty."
+  ],
+  "files": [
+    {
+      "path": "src/orca_agent/planning.py",
+      "sha256": "e054f2caf4f9684778c8fddecd9855ac5aac437659d246929af04ebf6340d0e8"
+    },
+    {
+      "path": "src/orca_agent/tools/structure.py",
+      "sha256": "15ac9300220d1578e6c982b5846860cc557cb915d3038901990d182b0ca74d85"
+    },
+    {
+      "path": "src/orca_agent/tools/knowledge.py",
+      "sha256": "610586ecfedb22e6d832266615f39ef971a9fe429b2c036a14aca9b2b51367bf"
+    },
+    {
+      "path": "src/orca_agent/tools/registry.py",
+      "sha256": "9677238d83041b7361f923ccea94a90603ae84fc7c44119a365a23c8d48cbb0a"
+    },
+    {
+      "path": "src/orca_agent/tools/dispatch.py",
+      "sha256": "377ae63de1479384efff7b10626a33d274407f1fc8c05a47e08a26f8fc744eca"
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "sha256": "c7fd85b70d10940d4c23a60360a1ab4fdf4abcf66fd50bab5eb9371b4d975812"
+    },
+    {
+      "path": "src/orca_agent/context_efficiency.py",
+      "sha256": "ad29cf3b130a7e8f160dbfce3255da7a8f76c59bdaea1d5f46db5536c5b5e659"
+    },
+    {
+      "path": "tests/unit/test_general_identity_selection.py",
+      "sha256": "0ac895658b5630e5d49fdbb92c0bbdd9e8eb80e64150367ebb1a022c0f72cb59"
+    },
+    {
+      "path": "tests/unit/test_readable_planning.py",
+      "sha256": "e01fd6d2c46ca6c4edb5c9e167c3ac6fe6e2ca4991b017becfe737765542cd0c"
+    },
+    {
+      "path": "tests/unit/test_versioned_knowledge.py",
+      "sha256": "8e53260f7b4efd9a2197ab2ef073fb3e7c54166e7761da824d3b5a6817d9df2d"
+    },
+    {
+      "path": "tests/unit/test_code_context.py",
+      "sha256": "d6188da7aba3598a0a8118fe8a4fb3d9d8b26831b02256b76634a3eab597588f"
+    },
+    {
+      "path": "tests/unit/test_goal_evidence_rule_feedback.py",
+      "sha256": "eee8b842182ba2741cb8174efd791553b53cf626d0a62cd2224f1b61f48a51ee"
+    },
+    {
+      "path": "tests/unit/test_plan_goal_binding_contract.py",
+      "sha256": "5d491badf3bc4dbde66186655aae8968ad7c72530ce9b0221dd51d7aeecdad62"
+    },
+    {
+      "path": "tests/unit/test_context.py",
+      "sha256": "e74d62d4bf659fd52604866478c876e01b3382feebe397778420309b3ac8b87e"
+    },
+    {
+      "path": "tests/unit/test_context_goal_copy_targets.py",
+      "sha256": "d5907402a3837d01359bcd277f3df2b51f41499ca72ee58927cb2cccef067db5"
+    }
+  ],
+  "baseline_test_fixture_repairs": [
+    {
+      "failures": 11,
+      "test": "tests/unit/test_goal_evidence_rule_feedback.py",
+      "cause": "The unmodified historical fixture stored Request/Plan/Run but no Result bodies; its SimpleNamespace omitted load_result required by existing settled_step_snapshots. Current proposals.py and models.py plus both failing test files were byte-equivalent to HEAD after CRLF normalization before repair, and the settled_step_snapshots AST was identical to HEAD.",
+      "repair": "Add a load_result test adapter that validates requested Run/result IDs then raises FileNotFoundError. No successful or scientific Result is invented; the existing full-Step proposal remains subject to original rule/qualification rejection assertions."
+    },
+    {
+      "failures": 1,
+      "test": "tests/unit/test_plan_goal_binding_contract.py",
+      "cause": "Exact expected schema omitted pruning the existing unreachable InputManifest and InputManifestEntry definitions after making Steps opaque.",
+      "repair": "List both existing unreachable types in the expected projection; preserve full-dictionary equality and exact Goal constraint assertions. No production schema change."
+    },
+    {
+      "failures": 6,
+      "tests": [
+        "tests/unit/test_context.py: initial schema/envelope/action enum tests",
+        "tests/unit/test_context_goal_copy_targets.py::test_planning_prompt_uses_request_ids_when_status_contains_retired_goal"
+      ],
+      "cause": "Stale v59 prompt version, obsolete response-envelope-last wire order, treating canonical JSON object key order as action enum order, and old Goal-binding prompt strings. These six reproduced before test repair; two other action states passed.",
+      "baseline_checks": {
+        "HEAD_prompt_version_is_v73": true,
+        "context_json_AST_unchanged_from_HEAD": true,
+        "HEAD_has_current_settled_binding_prompt": true
+      },
+      "repair": "Tests now assert existing v73, stable-contract-before-state layout, exact action membership independently of canonical map order while preserving enum ordering assertions, and current incremental Plan wording. Existing schema/Goal ID/immutability assertions retained; no production source changed."
+    }
+  ]
+}

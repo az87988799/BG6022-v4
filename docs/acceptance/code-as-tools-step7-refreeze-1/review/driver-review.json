@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-20T06:11:54.636892+00:00",
+  "reviewer": "knowledge_evidence subagent",
+  "stage": "Read-only development review before new formal execution. New product/evaluation manifest generation and unified offline regression belong to the parent task.",
+  "status": "review_complete_no_remaining_identified_blocker",
+  "reviewed_files": {
+    "docs/acceptance/code-as-tools-step7-refreeze-1/freeze/run_first_repetition.py": {
+      "sha256": "d605705d01349a1a9a3f7b3e2a328970cf464624f5029bdbfce6b629acc0c7a8",
+      "bytes": 12168,
+      "ast_syntax": "valid"
+    },
+    "docs/acceptance/code-as-tools-step7-refreeze-1/collect_first_repetition.py": {
+      "sha256": "194e8bd8c5230cef0a69b34effcbbd200e03c2869910d0a07c1baf8bd19db4aa",
+      "bytes": 12404,
+      "ast_syntax": "valid"
+    }
+  },
+  "preserved_prior_review": {
+    "path": "docs/acceptance/code-as-tools-step7-refreeze-1/review/native-and-freeze-review.json",
+    "sha256": "75b1d8e2b43d00ec6460453197657b87c0cefbaeb7b7bea82f72808df6c10357",
+    "unchanged": true
+  },
+  "resolved_findings": [
+    {
+      "finding": "Collector enumerated seven tasks but previously did not reject additional reserved repeat/reference/control rows while reporting zero reference/control runs.",
+      "resolution": "Collector now reads snapshot(BATCH), which validates the fixed anchor, policy and all immutable receipts, requires the exact set of seven formal-<task>-001 rows, and checks scope.references == 0 and scope.controls == 0.",
+      "status": "resolved by code review"
+    },
+    {
+      "finding": "Failure-time freeze verification could raise before stopped.json was saved.",
+      "resolution": "Driver now saves stopped.json with child return code before best-effort verification, catches verification RuntimeError and exits with child failure; subsequent tasks are not started. Other exceptional verification failures still leave the previously written stop record.",
+      "status": "resolved by code review"
+    }
+  ],
+  "scope_and_execution": {
+    "tasks": [
+      "T1",
+      "T2",
+      "T3",
+      "T4",
+      "T5",
+      "H1",
+      "H2"
+    ],
+    "category": "formal",
+    "repeat": 1,
+    "references": 0,
+    "controls": 0,
+    "algorithm_review": "No task-specific solving, scientific parser, generated Plan/input/code, reference calculation or result substitution is in the driver or collector. Driver initializes from frozen original text and invokes the existing product entrypoint. Knowledge audit reads existing Results/Artifacts and hashes existing body/excerpt bytes; it performs no HTTP retrieval.",
+    "only_run_path": "verify -> prepare immutable slot -> untouched Run shell -> bind_run -> execute. prepare_workspace requires a fresh reserved slot and refuses reused workspace/Run/settlement; bind_run checks an untouched unique Run. Evidence directories use exclusive creation. No automatic retries, new IDs for a failed slot, or resume loop is added.",
+    "failure_policy": "A product failed state can be recorded and the next authorized task attempted. Exceptions, unresolved/unknown execution, knowledge integrity issues or a slot overrun cause child failure and parent stop. Interrupted children leave reservations occupied; no refund or replacement is performed.",
+    "accounting": "All five metrics are settled as known or explicitly unknown. Model token uncertainty is retained. Unresolved Attempt/internal execution causes ORCA/work metrics to remain unknown and preserves the full reservation. Actual ORCA and workload values come from Run usage; no output-derived cost guess. Wall time covers the product execute call, not acceptance verification/export overhead."
+  },
+  "path_binding": {
+    "driver_project": "Path(__file__).parents[4] resolves to E:/BG6022-V4 for the current freeze location.",
+    "driver_freeze": "Event and product manifest are read from the new script parent freeze directory; all acceptance CLI invocations pass its --directory.",
+    "collector_project": "Path(__file__).parents[3] resolves to E:/BG6022-V4; explicit sys.path project insertion permits tests.helpers import in normal script execution.",
+    "collector_batch": "E:/BG6022-V4/data/code-tools-refreeze-1-batch is fixed and must equal the new freeze event batch_root.",
+    "collector_destination": "New refreeze-1 evidence directory; existing publication is refused.",
+    "shared_environment": "Driver derives LOCALAPPDATA from the saved existing environment root, verifies production default root equality in run_one, and retains the same global environment lease. It does not create a separate compute environment.",
+    "helper_import_origin_checked": "E:\\BG6022-V4\\tests\\helpers\\code_tools_batch.py",
+    "new_event_present_at_review": false
+  },
+  "publication_checks": [
+    "All seven slot/workspace/Run/prepare/settlement and pre/post verification records are checked before destination publication; each workspace must contain exactly its bound Run and current state/usage must match outcome.",
+    "Fixed roots are checked for symlink/reparse paths before file reads. All input files are streamed through SHA256 and known-key plus high-confidence credential scans; missing known key refuses export.",
+    "Payloads are limited to 512 KiB each and total publication including index/checksum to 20 MiB; larger originals remain locally hash-indexed. Required report.txt and other small driver receipts must fit or export stops.",
+    "Published payloads are indexed, source identity is rechecked before staging, staged hashes/size are verified, and exclusive destination rename publishes only a complete package. The collector starts no model, ORCA, container or task code."
+  ],
+  "validation": {
+    "ast_syntax_files": 2,
+    "helper_import_resolution": "passed",
+    "prior_review_hash": "unchanged",
+    "git_diff_check": "passed with only existing CRLF conversion warnings",
+    "driver_import_or_main_executed": false,
+    "collector_import_or_main_executed": false,
+    "export_performed": false,
+    "real_model_calls": 0,
+    "real_orca_starts": 0
+  },
+  "t1_review_preparation": {
+    "source_files": [
+      "freeze/public-tasks.json",
+      "freeze/scoring.md"
+    ],
+    "prepared_checks": [
+      "Capture approved Request/Plan, automatic-selection reasons, knowledge provenance and proposed ORCA input/geometry before first science if observable.",
+      "Record method, basis, charge, multiplicity, electronic state, gas environment, geometry origin/hash, RI/dispersion/grid/SCF, optimization/frequency type, mass/scaling/projection settings and timestamps.",
+      "Only actual prelaunch captures are preregistration; absent selections remain unverified, and postlaunch captures are explicitly labeled.",
+      "Final audit requires ethanol C2H6O/9 atoms, optimization convergence and consistent frequency geometry, all 27 indexed modes including zero/negative/translation/rotation terms, and separate minimum/goal/operation/scientific status. Independent reference is outside this authorized single round and remains unverified."
+    ],
+    "science_outputs_inspected": false
+  },
+  "limitations": [
+    "Static review and syntax/import-resolution checks do not establish real runtime execution or isolation success.",
+    "The actual new freeze event/manifest, full unified offline tests and execution evidence are not inferred from this review.",
+    "The batch ledger protects this managed path; it does not detect arbitrary administrator computations outside the batch.",
+    "Credential scanning has bounded high-confidence patterns and one known provider key; it is not a claim to detect every possible secret.",
+    "Files can still change during development; the final freeze must bind their final bytes."
+  ]
+}

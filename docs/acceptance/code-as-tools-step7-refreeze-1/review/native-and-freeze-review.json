@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-20T06:06:57.344841+00:00",
+  "reviewer": "knowledge_evidence subagent",
+  "stage": "Development repair review before new product/evaluation freeze and before any new real model or ORCA execution. This is not a scientific preregistration or acceptance result.",
+  "status": "review_complete_no_remaining_identified_blocker",
+  "scope": {
+    "implemented": [
+      "T1 direct native admission version consistency",
+      "offline production-chain regression",
+      "existing immutable-budget diagnostic assertion correction",
+      "0052 precise profile/version boundary clarification"
+    ],
+    "read_only_review": [
+      "new candidate directory, commit and batch-root selection",
+      "prior task bytes and old batch budget evidence",
+      "container rebuild requirement"
+    ],
+    "not_performed": [
+      "real model calls",
+      "real ORCA starts",
+      "image build or container start",
+      "product/evaluation manifest creation",
+      "git commit or push"
+    ]
+  },
+  "native_repair": {
+    "cause": "Preparation emits native-orca-input-3 for managed-native-1 while Store.reserve_native_workload previously hardcoded native-orca-input-2, rejecting before OS launch.",
+    "change": "Store.reserve_native_workload now compares prepared admission_version against profile_contract(policy)[admission_version], using policy from immutable Run configuration.",
+    "exact_mapping": {
+      "bounded-analytic-1": "native-orca-input-2",
+      "managed-native-1": "native-orca-input-3"
+    },
+    "boundaries": [
+      "Foreign v1/v2/v3 values are refused when not equal to the Run policy version.",
+      "Reopening Store with the opposite default policy does not change or rewrite the Run snapshot.",
+      "Existing policy=None v1 preparation path is unchanged and obtains no new workload admission.",
+      "Existing started/finished, wrong tool, missing policy and input hash guards are unchanged.",
+      "Reservation remains atomic/idempotent; direct test settles not_started with actual ORCA count zero."
+    ],
+    "same_chain_review": "Preparation and public tool contract already dispatch through the policy. SDK execution persists the prepared admission version. Observation readers intentionally continue recognizing archived v2/v3 receipts with frozen workload/provenance binding; no historical result is requalified or rewritten.",
+    "test_boundary": "New direct execution regression performs real managed.execute preparation, workload reservation, evidence archive/result collection and runner settlement. Only managed.launch_orca is replaced with an explicit not_started failure, so no OS process or fabricated scientific result is used."
+  },
+  "test_results": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_native_analytic.py -q -k \"direct_reservation or direct_workload or direct_native_preparation\"",
+      "phase": "before production fix",
+      "passed": 3,
+      "failed": 3,
+      "deselected": 60,
+      "seconds": 8.82,
+      "note": "All three managed-native cases exposed the mismatch; one demonstrated foreign v2 was accepted under the new policy."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_native_analytic.py tests/unit/test_native_managed.py tests/unit/test_native_orca.py tests/unit/test_native_prepared_xyz.py tests/unit/test_managed_execution.py tests/unit/test_managed_shared_orca_budget.py tests/unit/test_general_observation_admission.py -q",
+      "phase": "after native fix, before baseline test assertion correction",
+      "passed": 270,
+      "failed": 1,
+      "seconds": 59.3,
+      "failure": "test_managed_control_revalidates_immutable_admission_snapshots[budget-orca_starts-1000] expected immutable budget changed; actual budget snapshot mismatch."
+    },
+    {
+      "phase": "baseline confirmation without filesystem source replacement",
+      "method": "Read HEAD:src/orca_agent/store.py through git show; replace only Store.reserve_native_workload in the test process with the HEAD AST function; rerun the failing budget test.",
+      "passed": 0,
+      "failed": 1,
+      "seconds": 9.46,
+      "note": "Identical failure confirms the new native reservation change is not causal. managed._control calls validate_budget_snapshot, whose original immutable budget mismatch still refuses execution. Corrected only test diagnostic text."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_native_analytic.py -q -k \"direct_reservation or direct_workload or direct_native_preparation\"",
+      "phase": "after native fix",
+      "passed": 6,
+      "failed": 0,
+      "deselected": 60,
+      "seconds": 12.42
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_managed_execution.py -q",
+      "phase": "after baseline assertion correction",
+      "passed": 13,
+      "failed": 0,
+      "seconds": 9.12
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_code_tools_acceptance.py -q -k \"new_batch_rejects or reexposed_tasks\"",
+      "phase": "after parent repaired batch-path review finding",
+      "passed": 6,
+      "failed": 0,
+      "deselected": 18,
+      "seconds": 2.51
+    }
+  ],
+  "image_review": {
+    "recommendation": "No image rebuild required by the reviewed host-side changes; regenerate product/evaluation manifests for the new committed candidate. Runtime metadata must be inspected again at freezing and execution.",
+    "basis": "prepare_context copies task_sdk.py plus container_runtime helper.py, python_task.py, sandbox.c; Store/native admission and acceptance helpers are host-side. All four packaged source hashes match the previously frozen runtime manifest.",
+    "image_id": "sha256:9f94e9441855d81fcfdf694b9330808cfeee12637ef1093532f56ad129000df3",
+    "manifest_sha256": "cfad02c520be38c57130d9e25fc6420874f6248dfa6c762cc4621e4336f0cba4",
+    "files": [
+      {
+        "path": "src/orca_agent/task_sdk.py",
+        "current_sha256": "d72f98316409d86369916b9875d16363d32f63cba7a59e5548b4b8fe469cbc66",
+        "frozen_sha256": "d72f98316409d86369916b9875d16363d32f63cba7a59e5548b4b8fe469cbc66",
+        "match": true
+      },
+      {
+        "path": "src/orca_agent/backends/container_runtime/sandbox.c",
+        "current_sha256": "4865041d288487795e8ec9a26200b2af9a3a7051eb2ecf2caf6e3809038bbcbd",
+        "frozen_sha256": "4865041d288487795e8ec9a26200b2af9a3a7051eb2ecf2caf6e3809038bbcbd",
+        "match": true
+      },
+      {
+        "path": "src/orca_agent/backends/container_runtime/helper.py",
+        "current_sha256": "8401090ff2c7a96135938a34260eb9d2bb3b5ae0d00c4c92b713866c83940dde",
+        "frozen_sha256": "8401090ff2c7a96135938a34260eb9d2bb3b5ae0d00c4c92b713866c83940dde",
+        "match": true
+      },
+      {
+        "path": "src/orca_agent/backends/container_runtime/python_task.py",
+        "current_sha256": "42e6bbc88aa0f84d658ea8c9c4baadfc9acd8b403457ba5a647ca0dfe30a3f95",
+        "frozen_sha256": "42e6bbc88aa0f84d658ea8c9c4baadfc9acd8b403457ba5a647ca0dfe30a3f95",
+        "match": true
+      }
+    ],
+    "limitation": "This review compares local sources to saved runtime evidence only; it does not reobserve Docker image labels, daemon, cgroups or executable binaries. Rebuild if packaged sources, locks or runtime dependencies subsequently change."
+  },
+  "freeze_review": {
+    "resolved_finding": {
+      "problem": "The CLI resolved a requested batch path before calling _root, hiding original symlink/junction components, and did not revalidate event batch_root in check_rules.",
+      "fix_reviewed": "candidate_batch_root validates unresolved project/data and project/value through _root before containment, rejects data itself/outside targets, and is called by both CLI and check_rules.",
+      "status": "resolved; six focused acceptance tests passed"
+    },
+    "task_source_comparisons": [
+      {
+        "new": "docs\\acceptance\\code-as-tools-step7-refreeze-1\\freeze\\public-tasks.json",
+        "old": "docs\\acceptance\\code-as-tools-step6\\public-tasks.json",
+        "byte_equal": true,
+        "sha256": "a9d734d178776ac5ce92c69fbeb7fe56a6ad680dc97d574c1d6bf90496885499"
+      },
+      {
+        "new": "docs\\acceptance\\code-as-tools-step7-refreeze-1\\freeze\\scoring.md",
+        "old": "docs\\acceptance\\code-as-tools-step6\\scoring.md",
+        "byte_equal": true,
+        "sha256": "7a080249fbc79415eb008a63b6a7cb35ddaa4e250caf4c1b49b076fea2b1ae4a"
+      },
+      {
+        "new": "docs\\acceptance\\code-as-tools-step7-refreeze-1\\freeze\\controls.json",
+        "old": "docs\\acceptance\\code-as-tools-step6\\controls.json",
+        "byte_equal": true,
+        "sha256": "fe73cf5753499ca7e28afe8ff36535535b015d63eca0ce0ea757b497c954ea8c"
+      },
+      {
+        "new": "docs\\acceptance\\code-as-tools-step7-refreeze-1\\freeze\\prior-holdout-selection.json",
+        "old": "docs\\acceptance\\code-as-tools-step6\\holdout-selection.json",
+        "byte_equal": true,
+        "sha256": "42640b96bdccc349ebc535ad01582d5a7dc2c67f32e38bf482acefbde3cbcabe"
+      }
+    ],
+    "holdout_label": "user_requested_regression with previously_exposed_not_a_fresh_holdout is required when prior selection is present; same tasks/repetitions and prior digest are checked. No new holdout novelty is claimed.",
+    "source_limit": "The helper checks local prior-selection consistency, not an independent trust root. This review separately compared bytes against the actual old frozen file.",
+    "old_product_digest_match": true,
+    "old_snapshot_matches_current": true,
+    "old_identity": {
+      "batch_id": "code-tools-formal-5e6e9e3-v1",
+      "environment_root": "C:\\Users\\阿妆\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\orca-agent\\environment",
+      "freeze_sha256": "819bfbdec67e30a6584ea925fe964123d50432e297d87c8ebdef9ff0e48244ab",
+      "policy_sha256": "3d354851a1550fd0e575dd392effd866d2ceab9064dde814175a319a795b0521",
+      "root": "E:\\BG6022-V4\\data\\code-tools-formal-batch",
+      "version": 1
+    },
+    "old_totals": {
+      "reserved": {
+        "model_calls": 168,
+        "model_tokens": 8400000,
+        "orca_starts": 84,
+        "internal_work_units": 70000,
+        "wall_seconds": 50400.0
+      },
+      "occupied": {
+        "model_calls": 168,
+        "model_tokens": 8400000,
+        "orca_starts": 84,
+        "internal_work_units": 70000,
+        "wall_seconds": 50400.0
+      },
+      "known_usage": {
+        "model_calls": 42,
+        "model_tokens": 604825,
+        "orca_starts": 0,
+        "internal_work_units": 0,
+        "wall_seconds": 850.9980000000214
+      },
+      "unknown_slots": {
+        "model_calls": 0,
+        "model_tokens": 0,
+        "orca_starts": 0,
+        "internal_work_units": 0,
+        "wall_seconds": 0
+      }
+    },
+    "new_batch_id": "code-tools-refreeze-1",
+    "old_batch_id": "code-tools-formal-5e6e9e3-v1",
+    "slot_definitions_unchanged": true,
+    "limit_definitions_unchanged": true,
+    "budget_assessment": "The user-authorized new candidate receives a separate batch reservation. Old Run consumption and old batch reservations remain intact; shared environment identity/lease stays the same. Existing batch anchor rejects moving or resetting the same batch identity.",
+    "remaining_checks": [
+      "Parent will compare the old batch snapshot again before new execution and at delivery.",
+      "New manifest generation and full verification still required after product commit.",
+      "No statement here establishes scientific success or full Step 7 acceptance."
+    ]
+  },
+  "reviewed_file_hashes": {
+    "src/orca_agent/store.py": "8be464510b9bf72313fec9f271e45651a961e77e0201cfe296289b33e61ea256",
+    "src/orca_agent/orca/native.py": "5cfb5ac9beef68d360d6cd89607516dc9d8c1c07ebb03f5218cbed668243eeb8",
+    "src/orca_agent/orca/native_profile.py": "7bb7617551f7267f93f9b4596d3a9d206f59004eb02354ba733c6d28c1795cae",
+    "src/orca_agent/orca/native_managed.py": "9be7a119482a5cf930931d7b0ae04a8956f3abdcd76f21d403d2dc6b744903f6",
+    "src/orca_agent/tools/managed.py": "a9b64fd192b1686123e176121f415bad1f0303e4d8c74ead9a3bcacf97f5b597",
+    "src/orca_agent/task_observations.py": "ee0f868b7919670b5b624345a16ce756309acecbdec03955ebd8559a5e8cea40",
+    "tests/unit/test_native_analytic.py": "a23a480f6d605eb6c4037de6d6a1940fd74bab968b3e893a12d1476ef8ebd11c",
+    "tests/unit/test_managed_execution.py": "68e2e211d559a7ae5dc6f62dc54adf332519c0ff67eb6c3eb6b28a73df8975ee",
+    "scripts/code_tools_acceptance.py": "9ebf9a8999f019e684f3c21888c5062d5e517d746f864dbd981fab1e80527524",
+    "tests/helpers/code_tools_acceptance.py": "c3bbf86dcddb9163eb4e5ab5371051e25a73273c96111f32bf4da98bdea4557c",
+    "tests/unit/test_code_tools_acceptance.py": "878928021d2b3d7c8f01151370d8bd1f232fe02387e00869cfd6e4288fd3e692",
+    "tests/helpers/code_tools_batch.py": "932e8a0aa2f4b5a598f465fe18401ddcc780f1af27e5046a6645175addd066a0",
+    "tests/helpers/code_tools_freeze.py": "b9db5201d45dab076227c6d76000399dbb1fb1607951b3604065d6e354cec0b7",
+    "scripts/container_runtime/prepare_context.py": "effd9a2c1aa260a560be2180fd676c1e11a91624ee2aaa7d6554974b4e15d7df",
+    "src/orca_agent/backends/container.py": "85bf94a092b9222c3709e8175a4c0d73d1bf39419c2910f329f0d934acef44e9",
+    "docs/decisions/0052-first-round-contract-repair-and-refreeze.md": "c9f76dfe276ba4ed06965b8bf3f6b68cb3321cbd5e1d370abc46c018cb5d2f21",
+    "docs/acceptance/code-as-tools-step7-refreeze-1/freeze/prior-batch.json": "e465004cd36a7b8e7360aa9a22931d783414fd749a9cc8d4938ee2dee135fc44",
+    "docs/acceptance/code-as-tools-step7-refreeze-1/freeze/batch-policy.json": "4436a5b1d2c99a533f70db469cadf72bcfd5d60961a3e10bd175037ebb2847c3",
+    "docs/acceptance/code-as-tools-step6/product-freeze.json": "95f8156de0cfdf67afd56e7b143c65282ce59592be05cab225a85908b6f1bb2b"
+  },
+  "limitations": [
+    "Recorded hashes describe the files at this review time; concurrent development can change them before final freeze.",
+    "The seven-file suite was not repeated after correcting only the unrelated diagnostic assertion; the entire affected 13-test file was rerun and passed.",
+    "No scientific reference or real isolation test was performed."
+  ]
+}
