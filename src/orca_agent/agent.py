@@ -23,7 +23,13 @@ from orca_agent.proposals import (
     materialize_plan,
     valid_call_tool_parameters,
 )
-from orca_agent.store import BudgetExceeded, ControlChanged, EnvironmentBusy, StoreError
+from orca_agent.store import (
+    BudgetExceeded,
+    ControlChanged,
+    EnvironmentBusy,
+    StoreError,
+    UnchangedFailedInput,
+)
 from orca_agent.tools.dispatch import _source_hashes, execute_call
 from orca_agent.tools.registry import get_tool, require_execution_available
 
@@ -35,37 +41,12 @@ def _ready(plan, results):
 
 def _missing_container_hint(raw, position):
     """Diagnose a strict EOF-only closure; never return a repaired proposal."""
-    from orca_agent.llm import _has_credential, _strict_json
+    from orca_agent.llm import _closed_json_object
 
-    if position != len(raw) or raw.rstrip()[-1:] in {"", "{", "[", ",", ":"}:
+    result = _closed_json_object(raw, position)
+    if result is None:
         return {}
-    stack, in_string, escaped = [], False, False
-    for character in raw:
-        if in_string:
-            if escaped:
-                escaped = False
-            elif character == "\\":
-                escaped = True
-            elif character == '"':
-                in_string = False
-        elif character == '"':
-            in_string = True
-        elif character in "{[":
-            stack.append("}" if character == "{" else "]")
-            if len(stack) > 24:
-                return {}
-        elif character in "}]":
-            if not stack or stack.pop() != character:
-                return {}
-    if in_string or not stack:
-        return {}
-    suffix = "".join(reversed(stack))
-    try:
-        completed = _strict_json(raw + suffix)
-    except (ValueError, UnicodeError, RecursionError):
-        return {}
-    if not isinstance(completed, dict) or _has_credential(json.dumps(completed, ensure_ascii=False)):
-        return {}
+    suffix, completed = result
 
     def keys(value):
         return [key if len(key) <= 64 else key[:61] + "..." for key in list(value)[:16]]
@@ -120,7 +101,7 @@ def _record_admission_error(store, run, step, decision_id, exc, before):
             and row.get("basis") == basis and row.get("step_id") == step.id
             and row.get("requirement") == detail]
     if len(same) >= 1 + run.budget.corrections_per_proposal:
-        raise StoreError("bounded prelaunch reference correction exhausted") from exc
+        raise StoreError("bounded prelaunch admission correction exhausted") from exc
     if decision_id and decision_id not in run.applied_decisions:
         run.applied_decisions.append(decision_id)
     run.diagnostics.append({"category": "step_admission_rejected", "basis": basis,
@@ -1011,7 +992,7 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     from orca_agent.file_references import FileReferenceError
                     try:
                         result, outcome = _science(store, config, run, step, results, batch, fault)
-                    except FileReferenceError as exc:
+                    except (FileReferenceError, UnchangedFailedInput) as exc:
                         _record_admission_error(store, run, step, decision_id, exc, before)
                         force_redecision = True
                         continue

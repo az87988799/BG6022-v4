@@ -53,6 +53,27 @@ class StoreError(ValueError):
     """A stored fact or requested operation violates a boundary."""
 
 
+class UnchangedFailedInput(StoreError):
+    """Reject this submission before reservation; retain the prior failure."""
+
+    def __init__(self, run: Run, step: Step, input_fingerprint: str, prior: Attempt):
+        super().__init__("unchanged failed input cannot be retried automatically")
+        self.detail = {"code": "unchanged_failed_input", "phase": "pre_reservation",
+            "execution_scope": "current_submission", "execution_started": False,
+            "attempt_reserved": False, "run_id": run.id, "step_id": step.id,
+            "logical_id": step.logical_id, "tool": step.tool,
+            "step_fingerprint": fingerprint(step), "input_fingerprint": input_fingerprint,
+            "prior_attempt_id": prior.id, "prior_result_id": prior.result_id,
+            "prior_step_id": prior.step_id, "prior_state": prior.state, "prior_started": prior.started,
+            "instruction": "Inspect the recorded failure and correct its code/input or declared dependencies "
+                "before submitting a validated Plan revision. Reusing unchanged failed input, including under "
+                "a new Step or Artifact ID, does not authorize another attempt."}
+        parameters = prior.frozen_step.parameters if prior.frozen_step else None
+        reference = getattr(parameters, "input", None) or getattr(parameters, "code", None)
+        if reference is not None:
+            self.detail["failed_input_ref"] = {"artifact_id": reference.artifact_id, "sha256": reference.sha256}
+
+
 class BudgetExceeded(StoreError):
     """The explicitly authorized cumulative budget prevents a new launch."""
 
@@ -975,8 +996,9 @@ class Store:
             for prior in run.attempts:
                 if prior.state in ("intent", "running", "unknown"):
                     raise EnvironmentBusy("previous attempt still needs reconciliation")
+            for prior in run.attempts:
                 if prior.input_fingerprint == input_fingerprint and prior.state in ("failed", "timed_out"):
-                    raise StoreError("unchanged failed input cannot be retried automatically")
+                    raise UnchangedFailedInput(run, step, input_fingerprint, prior)
             if self.environment_lease() is not None:
                 raise EnvironmentBusy("environment quota is occupied, including unknown old attempts")
             attempt = Attempt(

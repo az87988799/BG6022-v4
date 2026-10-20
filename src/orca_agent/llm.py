@@ -65,6 +65,7 @@ _PROFILE_PARAMETERS: dict[ModelProfile, dict[str, Any]] = {
     "disabled": {"thinking": {"type": "disabled"}},
     "thinking_low": {"thinking": {"type": "enabled"}, "reasoning_effort": "low"},
 }
+JSON_NORMALIZATION_PROMPT_VERSIONS = frozenset({"agent-json-v85"})
 
 
 def model_profile_parameters(profile: ModelProfile) -> dict[str, Any]:
@@ -152,6 +153,7 @@ class ModelReply:
     http_status: int | None = None
     retry_after_seconds: float | None = None
     elapsed_seconds: float = 0
+    format_normalization: dict[str, Any] | None = None
 
     @property
     def usage_known(self) -> bool:
@@ -336,6 +338,87 @@ def _strict_json(raw: str | bytes) -> Any:
     return result
 
 
+def _closed_json_object(raw: str, position: int, *, max_closures: int = 24):
+    """Return only a uniquely determined EOF container suffix and strict object."""
+    if position != len(raw) or raw.rstrip()[-1:] in {"", "{", "[", ",", ":"}:
+        return None
+    stack, in_string, escaped = [], False, False
+    for character in raw:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+        elif character == '"':
+            in_string = True
+        elif character in "{[":
+            stack.append("}" if character == "{" else "]")
+            if len(stack) > 24:
+                return None
+        elif character in "}]":
+            if not stack or stack.pop() != character:
+                return None
+    if in_string or not stack or len(stack) > max_closures:
+        return None
+    suffix = "".join(reversed(stack))
+    try:
+        completed = _strict_json(raw + suffix)
+    except (ValueError, UnicodeError, RecursionError):
+        return None
+    if not isinstance(completed, dict) or _has_credential(_canonical(completed)):
+        return None
+    return suffix, completed
+
+
+def _normalize_selection_reason(proposal):
+    """Move audit prose only; never infer or modify a decision parameter."""
+    parameters = proposal.get("parameters") if isinstance(proposal, dict) else None
+    if (set(proposal) != {"action", "parameters"} or proposal.get("action") != "select_conditions"
+            or not isinstance(parameters, dict)
+            or set(parameters) != {"request_version", "choices", "reason"}
+            or not isinstance(parameters["reason"], str)):
+        return proposal, []
+    return {"action": proposal["action"],
+            "parameters": {key: value for key, value in parameters.items() if key != "reason"},
+            "reason": parameters["reason"]}, [{"from": "parameters.reason", "to": "reason"}]
+
+
+def _proposal_content(content, *, prompt_version, max_bytes, allow_normalization=True):
+    """Shared send/recovery parse; preserve all substantive values and audit formatting."""
+    suffix = ""
+    normalize = allow_normalization and prompt_version in JSON_NORMALIZATION_PROMPT_VERSIONS
+    try:
+        proposal = _strict_json(content)
+    except json.JSONDecodeError as exc:
+        completed = _closed_json_object(content, exc.pos, max_closures=4) if normalize else None
+        if completed is None:
+            raise
+        suffix, proposal = completed
+        if len((content + suffix).encode("utf-8")) > max_bytes:
+            raise ValueError("proposal_too_large") from None
+    if not isinstance(proposal, dict):
+        raise ValueError("proposal_not_object")
+    before_normalization = _canonical(proposal)
+    proposal, moves = _normalize_selection_reason(proposal) if normalize else (proposal, [])
+    serialized = _canonical(proposal)
+    serialized.encode("utf-8")
+    if _has_credential(serialized):
+        raise ValueError("credential_in_response")
+    normalization = None
+    if suffix or moves:
+        normalization = {
+            "rule": "eof-containers-and-selection-reason-1", "prompt_version": prompt_version,
+            "appended_suffix": suffix, "field_moves": moves,
+            "raw_content_sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+            "closed_object_sha256": hashlib.sha256(before_normalization.encode("utf-8")).hexdigest(),
+            "normalized_proposal_sha256": hashlib.sha256(serialized.encode("utf-8")).hexdigest(),
+            "validation": "format_only; all decision, permission and scientific checks remain required",
+        }
+    return proposal, normalization
+
+
 def _usage(value: Any, request: PreparedRequest) -> ModelUsage | None:
     if not isinstance(value, dict):
         return None
@@ -404,19 +487,15 @@ def _parse_response(request: PreparedRequest, raw: bytes, status: int, request_i
     if facts["raw_content"] is None and _has_credential(content):
         return ModelReply(**facts, error_category="credential_in_response")
     try:
-        proposal = _strict_json(content)
-    except (ValueError, UnicodeError, RecursionError):
-        return ModelReply(**facts, error_category="invalid_proposal_json")
-    if not isinstance(proposal, dict):
-        return ModelReply(**facts, error_category="proposal_not_object")
-    serialized = _canonical(proposal)
-    try:
-        serialized.encode("utf-8")
-    except UnicodeError:
-        return ModelReply(**facts, error_category="invalid_proposal_json")
-    if _has_credential(serialized):
-        return ModelReply(**{**facts, "raw_content": None}, error_category="credential_in_response")
-    return ModelReply(**facts, proposal=proposal)
+        proposal, normalization = _proposal_content(content,
+            prompt_version=request.prompt_version, max_bytes=request.limits.proposal_bytes,
+            allow_normalization=facts["raw_content"] is not None)
+    except (ValueError, UnicodeError, RecursionError) as exc:
+        code = str(exc) if str(exc) in {"credential_in_response", "proposal_too_large", "proposal_not_object"} \
+            else "invalid_proposal_json"
+        return ModelReply(**{**facts, **({"raw_content": None} if code == "credential_in_response" else {})},
+                          error_category=code)
+    return ModelReply(**facts, proposal=proposal, format_normalization=normalization)
 
 
 def _exception_reply(request: PreparedRequest, exc: Exception) -> ModelReply:
@@ -586,7 +665,7 @@ class DeepSeekTransport:
         # a small nested proposal may expand substantially when persisted.
         if len((json.dumps(asdict(reply), ensure_ascii=False, indent=2, allow_nan=False)
                 + "\n").encode("utf-8")) > request.limits.response_bytes:
-            reply = replace(reply, proposal=None, raw_content=None,
+            reply = replace(reply, proposal=None, raw_content=None, format_normalization=None,
                             error_category=reply.error_category or "proposal_too_large")
         settle(ticket, reply)
         return reply

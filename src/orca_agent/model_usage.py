@@ -19,6 +19,7 @@ from orca_agent.llm import (
     _canonical,
     _has_credential,
     _metadata,
+    _proposal_content,
     _recordable_raw_content,
     _strict_json,
     model_profile_parameters,
@@ -235,9 +236,11 @@ def _validate_reply(data, record):
     if not isinstance(data, dict):
         raise StoreError("invalid model response record shape")
     if set(data) == _LEGACY_REPLY_FIELDS:
-        # This is the one historical complete shape, not a generic defaults
-        # migration. Never alter the original receipt or its settled hash.
-        data = {**data, "raw_content": None}
+        # Recognize only complete historical shapes, not generic missing-field
+        # defaults. Never alter the original receipt or its settled hash.
+        data = {**data, "raw_content": None, "format_normalization": None}
+    elif set(data) == _LEGACY_REPLY_FIELDS | {"raw_content"}:
+        data = {**data, "format_normalization": None}
     elif set(data) != {field.name for field in fields(ModelReply)}:
         raise StoreError("invalid model response record shape")
     if data["request_hash"] != record["request_hash"]:
@@ -277,13 +280,20 @@ def _validate_reply(data, record):
     if proposal is None and data["error_category"] is None:
         raise StoreError("model receipt has neither a proposal nor an error")
     raw_content = data["raw_content"]
+    normalization = data["format_normalization"]
+    if normalization is not None and (not isinstance(normalization, dict)
+            or raw_content is None or proposal is None or data["finish_reason"] != "stop"):
+        raise StoreError("invalid model format normalization receipt")
     if raw_content is not None:
         if not isinstance(raw_content, str) or _recordable_raw_content(raw_content, limits) != raw_content:
             raise StoreError("invalid model raw content receipt")
         if proposal is not None:
             try:
-                parsed = _strict_json(raw_content)
-                consistent = isinstance(parsed, dict) and _canonical(parsed) == _canonical(proposal)
+                parsed, expected_normalization = _proposal_content(raw_content,
+                    prompt_version=record.get("prompt_version"), max_bytes=limits.proposal_bytes,
+                    allow_normalization=normalization is not None)
+                consistent = (_canonical(parsed) == _canonical(proposal)
+                              and expected_normalization == normalization)
             except (ValueError, UnicodeError, RecursionError):
                 consistent = False
             if not consistent:

@@ -282,6 +282,25 @@ def test_complete_receipt_bound_discards_expanded_proposal_but_preserves_usage(s
     assert len(json.dumps(asdict(reply), ensure_ascii=False, indent=2).encode()) < MAX_RESPONSE_BYTES
 
 
+def test_oversized_normalized_receipt_clears_dependent_audit_and_settles_known_usage(monkeypatch):
+    from orca_agent.model_usage import _validate_reply
+
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-secret-credential")
+    content = '{"a":' * 20 + '[' + ','.join(['0'] * 3200) + ']' + '}' * 19
+    client = FakeClient(completion(content))
+    request = prepare_request([{"role": "user", "content": "Return JSON."}], prompt_version="agent-json-v85")
+    settled = []
+    reply = DeepSeekTransport(client_factory=lambda **kwargs: client).send(request,
+        reserve=lambda prepared: "test-reservation", settle=lambda ticket, result: settled.append(result))
+    assert reply.error_category == "proposal_too_large"
+    assert reply.raw_content is reply.proposal is reply.format_normalization is None
+    assert reply.usage.total_tokens == 22 and settled == [reply]
+    record = {"request_hash": request.request_hash, "prompt_version": request.prompt_version,
+              "input_reserved": request.input_token_bound, "output_reserved": request.output_token_bound,
+              "transport_limits": request.limits.model_dump(mode="json")}
+    assert _validate_reply(asdict(reply), record) == reply
+
+
 def test_escaped_surrogate_is_failed_but_its_safe_original_text_and_usage_survive(send):
     content = '{"text":"\\ud800"}'
     reply, _ = send(completion(content))

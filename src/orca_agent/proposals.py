@@ -435,8 +435,9 @@ def _validate_plan_parameters(parameters):
                 "Proposed Steps require key, not the stored Step.id field. "
                 "Retain an existing Step with {key:existing_step_id}; the program reuses its frozen contents. "
                 "Do not copy stored id/logical_id/immutable_frozen metadata into a proposal. "
-                "A new Step uses key/tool/parameters and its declared dependencies; "
-                "a repair uses logical_key for the prior logical_id, subject to the existing repair rules.")
+                "A full new-Step record uses key/tool/parameters and its declared dependencies; "
+                "only that full form uses logical_key to retain a prior logical_id. "
+                "The repair_of shorthand inherits logical_id and must omit logical_key/tool/parameters.")
             if any(len(item["loc"]) > 2 and item["loc"][2] in repair_indexes for item in step_errors):
                 error.detail["code_repair_fields"] = list(ProposedCodeRepair.model_fields)
                 error.detail["code_repair_instruction"] = (
@@ -446,7 +447,7 @@ def _validate_plan_parameters(parameters):
                     "Code/native input or input copies must change. The latest settled failed Attempt's other "
                     "contract fields stay frozen. Verified settled dependencies "
                     "are carried automatically; declare any unsettled dependencies explicitly. "
-                    "It still requires code permission and every existing repair gate.")
+                    "Python/native repairs require their respective execution permission and every existing repair gate.")
         target_errors = [item for item in errors if item["loc"][1:2] == ["goal_map"]]
         if target_errors:
             error.detail.update(
