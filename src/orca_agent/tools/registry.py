@@ -94,7 +94,17 @@ class _Registration:
 
 
 def _register(parameters: type[Record], **metadata: Any) -> _Registration:
-    return _Registration(Tool(parameter_schema=parameters.model_json_schema(), **metadata), parameters)
+    schema = parameters.model_json_schema()
+    collector = metadata.get("check_contract", {}).get("named_observation_collector")
+    if collector is not None and "observation_names" in schema.get("properties", {}):
+        schema["properties"]["observation_names"]["description"] = (
+            "Names of sourced values explicitly written to the task observation manifest; "
+            "each bound Goal requires a matching manifest record."
+            if collector == "task_manifest" else
+            "Retained for historical readability only. This collector archives raw files and does not "
+            "produce named values. Bind value Goals to an explicit task-manifest observation adapter; "
+            "raw observations/artifacts collections are not value records.")
+    return _Registration(Tool(parameter_schema=schema, **metadata), parameters)
 
 
 TOOLS: dict[str, _Registration] = {
@@ -116,6 +126,7 @@ TOOLS: dict[str, _Registration] = {
         effects=["read_registered_artifact", "execute_python", "write_artifact"],
         check_version="generic-observation-1",
         check_contract={"execution_available": True, "generic_observations": True,
+                        "named_observation_collector": "task_manifest",
                         "sdk_orca_declaration": {
                             "parameter": "sdk_orca", "required_for_new_code_proposals": True,
                             "true": "Initial prepared/registered geometry and ORCA permission required before execution; Plan approval may use a direct pending same-system prepare_geometry dependency.",
@@ -136,6 +147,7 @@ TOOLS: dict[str, _Registration] = {
         effects=["read_registered_artifact", "execute_orca", "write_artifact"],
         check_version="generic-observation-1",
         check_contract={"execution_available": True, "generic_observations": True,
+                        "named_observation_collector": "none",
                         "context_dependencies": ["workspace.write", "knowledge.search", "evidence.list", "evidence.text", "evidence.search"],
                         **_LOCAL_ORCA_EXECUTION,
                         "collector": "orca_agent.tools.managed.collect_result"},
@@ -330,13 +342,29 @@ def call_usage_counter(tool: Tool, budget=None) -> str | None:
         else "evidence_reads")
 
 
-def declared_outputs(step) -> list[str]:
+def declared_outputs(step, *, historical: bool = False) -> list[str]:
     """Declarations are data ports, never a grant of scientific qualification."""
     tool = get_tool(step.tool)
     ports = tool.output_ports + tool.observation_outputs
-    if tool.check_contract.get("generic_observations"):
+    if (tool.check_contract.get("named_observation_collector") == "task_manifest"
+            or historical and tool.check_contract.get("generic_observations")):
         ports += step.parameters.observation_names
     return list(dict.fromkeys(ports))
+
+
+def supports_goal_output(step, goal) -> bool:
+    """Actual value collection capability, separate from raw dependency ports."""
+    tool = get_tool(step.tool)
+    if goal.port not in declared_outputs(step):
+        return False
+    if (goal.evidence_contract_version == "generic-observation-1"
+            and goal.verification == "reported_with_limitations"):
+        collector = tool.check_contract.get("named_observation_collector")
+        if collector == "none":
+            return False
+        if collector == "task_manifest":
+            return goal.port in step.parameters.observation_names
+    return True
 
 
 def require_execution_available(name: str) -> None:

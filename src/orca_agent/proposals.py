@@ -812,7 +812,7 @@ def _complete_incremental_plan(store, run, proposal, prior, request, history):
 def settled_immediate_goal_binding(run, request, goal, selection):
     """Project an already assessed current Goal; never discover a new Result."""
     from orca_agent.file_references import simplified_workflow
-    from orca_agent.tools.registry import declared_outputs
+    from orca_agent.tools.registry import supports_goal_output
 
     result = selection.get("result")
     if (not simplified_workflow(run) or result is None or selection.get("gaps")
@@ -826,7 +826,7 @@ def settled_immediate_goal_binding(run, request, goal, selection):
     call = calls[0]
     if (call.state != "completed" or call.result_id != result.id or not call.frozen_step
             or call.step_id != result.step_id or call.frozen_step.id != result.step_id
-            or call.tool != call.frozen_step.tool or goal.port not in declared_outputs(call.frozen_step)):
+            or call.tool != call.frozen_step.tool or not supports_goal_output(call.frozen_step, goal)):
         return None
     if call.request_version != request.version:
         # A selected input may retain its original preparation across an
@@ -879,11 +879,11 @@ def _canonicalize_settled_goal(proposal, goal, binding, request, audits):
 
 def _goal_output_route_feedback(goal, run, steps, ids, target_step=None, settled_binding=None):
     """Describe real producer routes without equating an output label to a quantity."""
-    from orca_agent.tools.registry import declared_outputs
+    from orca_agent.tools.registry import declared_outputs, supports_goal_output
 
     keys = {identifier: key for key, identifier in ids.items()}
     producers = [{"step_key": keys[step.id], "tool": step.tool, "port": goal.port}
-                 for step in steps if goal.port in declared_outputs(step)]
+                 for step in steps if supports_goal_output(step, goal)]
     route = {"existing_producers": producers,
         "validation": "Routing advice only; existing permission, budget, file and scientific checks still apply.",
         "instruction": "Keep the original Goal quantity, port, conditions and minimum evidence. "
@@ -894,13 +894,13 @@ def _goal_output_route_feedback(goal, run, steps, ids, target_step=None, settled
     if (goal.evidence_contract_version == "generic-observation-1"
             and goal.verification == "reported_with_limitations"
             and goal.minimum_check_version == "generic-observation-1"):
-        adapters = [step for step in steps if get_tool(step.tool).check_contract.get("generic_observations")
-                    and "execute_python" in get_tool(step.tool).effects]
+        adapters = [step for step in steps
+                    if get_tool(step.tool).check_contract.get("named_observation_collector") == "task_manifest"]
         route["observation_adapters"] = [{"step_key": keys[step.id], "tool": step.tool,
             "required_observation_name": goal.port} for step in adapters]
         route["available_observation_tools"] = [name for name in run.permission.allowed_tools
-            if get_tool(name).check_contract.get("generic_observations")
-            and "execute_python" in get_tool(name).effects] if run.permission.code_execution else []
+            if get_tool(name).check_contract.get("named_observation_collector") == "task_manifest"
+            ] if run.permission.code_execution else []
         route["observation_instruction"] = (
             "An explicitly executed observation adapter may read the real producer's pinned files/result, "
             "include the unchanged Goal port in observation_names, and emit a sourced observation record "
@@ -909,7 +909,8 @@ def _goal_output_route_feedback(goal, run, steps, ids, target_step=None, settled
             "Do not relabel the original producer or the Goal to make them match.")
     if target_step:
         route["selected_producer"] = {"step_key": keys[target_step.id], "tool": target_step.tool,
-                                      "declared_outputs": declared_outputs(target_step)}
+            "declared_outputs": declared_outputs(target_step),
+            "named_observation_collector": get_tool(target_step.tool).check_contract.get("named_observation_collector")}
     return {"expected": goal.port, "valid_route": route}
 
 
@@ -1165,9 +1166,9 @@ def materialize_plan(store, run, parameters, *, binding_canonicalizations=None):
         requested_goal = requested_goals[goal_id]
         target_step = next((step for step in steps if step.id == ids.get(value.get("step_key"))), None)
         if target_step and goal_id in settled_bindings:
-            from orca_agent.tools.registry import declared_outputs
+            from orca_agent.tools.registry import supports_goal_output
 
-            if value.get("port") != requested_goal.port or requested_goal.port not in declared_outputs(target_step):
+            if value.get("port") != requested_goal.port or not supports_goal_output(target_step, requested_goal):
                 _canonicalize_settled_goal(proposal, requested_goal, settled_bindings[goal_id], request,
                                           binding_canonicalizations)
                 value = proposal.goal_map[goal_id].model_dump(exclude_none=True)
@@ -1193,11 +1194,11 @@ def materialize_plan(store, run, parameters, *, binding_canonicalizations=None):
                     code="unknown_goal_step", path=["parameters", "goal_map", goal_id, "step_key"])
             value = {**value, "step_id": ids[value["step_key"]]}
             value.pop("step_key")
-            from orca_agent.tools.registry import declared_outputs
+            from orca_agent.tools.registry import supports_goal_output
 
             target_step = next(step for step in steps if step.id == value["step_id"])
-            if value["port"] not in declared_outputs(target_step):
-                raise ProposalError("The selected producer does not declare the unchanged Goal port. "
+            if not supports_goal_output(target_step, requested_goal):
+                raise ProposalError("The selected producer cannot collect the unchanged Goal's value. "
                     "Keep its real outputs and the original Goal; use a declared producer or an explicit observation adapter.",
                     code="goal_output_route_mismatch", path=["parameters", "goal_map", goal_id, "port"],
                     **_goal_output_route_feedback(requested_goal, run, steps, ids, target_step,

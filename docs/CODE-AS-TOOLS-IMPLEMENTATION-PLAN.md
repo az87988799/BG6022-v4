@@ -62,6 +62,8 @@ a022 已读原生错误被后续查询窗口挤掉的问题按 [0071](decisions/
 
 Python 运行器文件按 [0077](decisions/0077-isolated-python-runtime-files.md) 在新快照中显式隔离，合法输入与运行日志不再争用文件名；新镜像与实际容器验证单独记录。官方资料阅读采用 [0076](decisions/0076-query-centered-document-excerpts.md) 的保格式命中窗口及正文优先投影，新知识查询额度采用 [0067](decisions/0067-workflow-budget-within-existing-total-limits.md) 的有界值；旧 Run、原始字节、科学要求和累计消耗保留。
 
+a026 完成真实计算后暴露的观察路线承诺与全局环境机械前提按 [0079](decisions/0079-native-observation-routes-and-scoped-comparisons.md) 修正：新通用值路线依据 Tool 的实际命名值收集能力，多环境派生量按各明确源 Goal 核对真实原件。旧 Plan 可读、原失败及费用保留；不以修正后回放冒称旧候选成功。
+
 2026-10-20 用户明确优先简化并跑通流程，取消一般名称查询的原名同义词/Wikidata 精确匹配步骤；新流程按 [0054](decisions/0054-simplify-name-resolution.md) 接受唯一且结构信息自洽的查询候选，保留原名、查询名及推断来源。其他协议阻碍另行按真实失败记录审查，实际交付与测试结果以对应报告为准。
 
 打通以下本机流程：

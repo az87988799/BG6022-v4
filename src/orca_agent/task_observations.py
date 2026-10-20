@@ -678,15 +678,22 @@ def _comparison_environment_goals(run, request, goal, requested):
     from orca_agent.orca.native_profile import canonical_native_condition
 
     marker = request.condition_evidence.get("workflow_policy", {})
+    # A comparison need not invent a global environment. Absence is distinct
+    # from an unresolved, selected, or inherited declaration; the source Goals
+    # still provide every environment, with their normal provenance checks.
+    environment_absent = ("environment" not in request.conditions_source
+                          and "environment" not in _declared_scientific_conditions(request, goal))
     if (getattr(run.configuration, "workflow_policy", None) != "simplified-1"
             or marker.get("version") != "simplified-1"
             or goal.evidence_contract_version != "generic-observation-1"
             or goal.verification != "reported_with_limitations"
             or "environment" in goal.conditions or len(requested) != 1
-            or request.conditions_source.get("environment") != "default"):
+            or not (request.conditions_source.get("environment") == "default" or environment_absent)):
         return {}
     system = next((item for item in request.systems if item.id == requested[0]), None)
-    if system is None or "environment" in system.conditions:
+    if (system is None or "environment" in system.conditions
+            or "environment" in system.conditions_source
+            or f"{system.id}.environment" in request.condition_evidence):
         return {}
     alternatives = {}
     for source_goal in request.goals:
@@ -880,10 +887,11 @@ def assess(store, run, request, goal, result):
             raise ValueError("generic_observation_requires_current_run_provenance")
         attempt = next((a for a in run.attempts if a.id == result.attempt_id), None)
         if (attempt is None or attempt.state != "completed" or attempt.result_id != result.id
-                or attempt.request_version != request.version or attempt.frozen_step is None
-                or not getattr(attempt.frozen_step.parameters, "code", None)):
+                or attempt.request_version != request.version or attempt.frozen_step is None):
             raise ValueError("generic_observation_attempt_purpose_mismatch")
         step = attempt.frozen_step
+        if not getattr(step.parameters, "code", None):
+            raise ValueError("generic_observation_requires_task_manifest")
         general = _general_admission(store, run)
         system_ids = goal.system_ids or [s.id for s in request.systems]
         system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)

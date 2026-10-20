@@ -20,6 +20,7 @@ from pydantic import (
     ConfigDict,
     Field,
     JsonValue,
+    ValidationInfo,
     model_serializer,
     model_validator,
 )
@@ -498,8 +499,13 @@ class Plan(Record):
     goal_map: dict[str, OutputBinding]
 
     @model_validator(mode="after")
-    def valid_graph(self) -> Plan:
+    def valid_graph(self, info: ValidationInfo) -> Plan:
         from orca_agent.tools.registry import declared_outputs, get_tool
+        historical = bool((info.context or {}).get("historical_output_declarations"))
+
+        def outputs(step):
+            return declared_outputs(step, historical=historical)
+
         steps = {step.id: step for step in self.steps}
         if len(steps) != len(self.steps):
             raise ContractValidationError("step identities must be unique", path=("steps",))
@@ -525,10 +531,10 @@ class Plan(Record):
                     if reference.producer_step_id not in step.depends_on:
                         raise ContractValidationError("future evidence producer must be an explicit dependency",
                                                       path=(*path, "inputs", role, "producer_step_id"))
-                    if reference.port not in declared_outputs(steps[reference.producer_step_id]):
+                    if reference.port not in outputs(steps[reference.producer_step_id]):
                         raise ContractValidationError("producer does not declare the required port",
                             path=(*path, "inputs", role, "port"),
-                            allowed_ports=declared_outputs(steps[reference.producer_step_id]),
+                            allowed_ports=outputs(steps[reference.producer_step_id]),
                             input_roles=get_tool(step.tool).input_roles)
         visited: set[str] = set()
         active: set[str] = set()
@@ -549,9 +555,9 @@ class Plan(Record):
         for goal_id, binding in self.goal_map.items():
             if binding.step_id is not None and binding.step_id not in steps:
                 raise ContractValidationError("goal binding references an unknown step", path=("goal_map", goal_id))
-            if binding.step_id and binding.port not in declared_outputs(steps[binding.step_id]):
+            if binding.step_id and binding.port not in outputs(steps[binding.step_id]):
                 raise ContractValidationError("step does not produce the goal's port",
-                    path=("goal_map", goal_id, "port"), allowed_ports=declared_outputs(steps[binding.step_id]))
+                    path=("goal_map", goal_id, "port"), allowed_ports=outputs(steps[binding.step_id]))
         return self
 
     def validate_request(self, request: Request) -> None:

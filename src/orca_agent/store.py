@@ -253,6 +253,8 @@ class Store:
         if plan is not None:
             plan = Plan.model_validate(plan.model_dump())
             plan.validate_request(request)
+            from orca_agent.planning import validate_goal_output_contract
+            validate_goal_output_contract(request, plan, current_routes=True)
         geometry_ids = list(dict.fromkeys(filter(None, [request.geometry_artifact_id,
                        *(item.geometry_artifact_id for item in request.systems)])))
         for artifact_id in geometry_ids:
@@ -573,7 +575,8 @@ class Store:
 
     def load_plan_revision(self, run: Run | str, version: int) -> Plan:
         run = self.load_run(run) if isinstance(run, str) else run
-        plan = Plan.model_validate(self._revision_payload(run, "plan", version))
+        plan = Plan.model_validate(self._revision_payload(run, "plan", version),
+                                   context={"historical_output_declarations": True})
         known_ids = {item.get("plan_id") for item in run.decisions}
         known_ids.update(item.get("prior_plan_id") for item in run.decisions)
         known_ids.add(run.plan_id)

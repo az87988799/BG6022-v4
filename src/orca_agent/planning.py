@@ -449,8 +449,10 @@ def _failed_python_goal_lineage(prior_plan, next_plan, run):
                          "not a new logical ID to reset the retry allowance")
 
 
-def validate_goal_output_contract(request: Request, plan: Plan):
+def validate_goal_output_contract(request: Request, plan: Plan, *, current_routes: bool = False):
     """Initial and revised Plans have the same scientific evidence boundary."""
+    from orca_agent.tools.registry import declared_outputs, supports_goal_output
+
     steps = {step.id: step for step in plan.steps}
     for goal in request.goals:
         binding = plan.goal_map.get(goal.id)
@@ -462,12 +464,23 @@ def validate_goal_output_contract(request: Request, plan: Plan):
                      and goal.verification == "reported_with_limitations"
                      and goal.minimum_check_version == "generic-observation-1",
                      "generic observations cannot replace required scientific qualification")
+        if current_routes and not supports_goal_output(steps[binding.step_id], goal):
+            message = "The selected producer cannot collect the unchanged Goal's value."
+            raise PlanningError(message, detail={
+                "requirement": message, "code": "goal_output_route_mismatch", "goal_id": goal.id,
+                "path": ["parameters", "goal_map", goal.id, "port"], "expected": goal.port,
+                "producer_tool": tool.name, "declared_outputs": declared_outputs(steps[binding.step_id]),
+                "named_observation_collector": tool.check_contract.get("named_observation_collector"),
+                "instruction": "Keep the original Goal and its conditions. Use a producer that collects this "
+                    "value, or an explicit task-manifest adapter that reads pinned real source files, declares "
+                    "the unchanged Goal port in observation_names and emits its sourced observation. Raw file "
+                    "collections do not create named values. Unprovided Goals may remain explicit gaps."})
 
 
 def _goal_bindings(request: Request, plan: Plan, run: Run):
     from orca_agent.input_bindings import input_check_version, required_input_rule
 
-    validate_goal_output_contract(request, plan)
+    validate_goal_output_contract(request, plan, current_routes=True)
     steps = {step.id: step for step in plan.steps}
     for goal in request.goals:
         binding = plan.goal_map.get(goal.id)
@@ -549,7 +562,8 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     # Revalidate copied/mutated Pydantic objects rather than trusting model_copy.
     prior_request = Request.model_validate(prior_request.model_dump())
     next_request = Request.model_validate(next_request.model_dump())
-    prior_plan = Plan.model_validate(prior_plan.model_dump()) if prior_plan else None
+    prior_plan = Plan.model_validate(prior_plan.model_dump(),
+        context={"historical_output_declarations": True}) if prior_plan else None
     next_plan = Plan.model_validate(next_plan.model_dump()) if next_plan else None
     _require((prior_request.id, prior_request.version) == (run.request_id, run.request_version),
              "revision is based on a stale Request")
