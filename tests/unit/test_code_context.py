@@ -56,7 +56,10 @@ def test_settled_failed_python_retains_repair_schema_and_frozen_code_identity(tm
     else:
         tool, = [tool for tool in wire["TOOL_CATALOG"] if tool["name"] == "python.execute"]
         schema = wire["PARAMETER_SCHEMAS"][tool["parameter_schema"]]
-    assert set(schema["properties"]) == {"code", "inputs", "observation_names", "conditions"}
+    assert set(schema["properties"]) == {"code", "inputs", "observation_names", "conditions", "sdk_orca"}
+    if "TOOLS" in wire:
+        assert schema["properties"]["sdk_orca"] == {"type": "boolean"}
+        assert "sdk_orca" in schema["required"]
     assert wire["AUTHORITY"]["plan"]["steps"][0]["parameters"]["code"] == attempt.frozen_step.parameters.code.model_dump()
     assert (request, run, plan, result) == before
 
@@ -270,7 +273,7 @@ def test_authorized_selection_exposes_sources_code_tools_and_exact_frozen_native
     assert {"python.execute", "orca.run", "workspace.write", "knowledge.search",
             "structure.resolve", "structure.prepare", "evidence.text", "evidence.search"} <= tools.keys()
     assert set(tools["python.execute"]["parameters"]["properties"]) == {
-        "code", "inputs", "observation_names", "conditions"}
+        "code", "inputs", "observation_names", "conditions", "sdk_orca"}
     assert set(tools["workspace.write"]["parameters"]["properties"]) == {"name", "content", "role", "base", "edits"}
     assert wire["AUTHORITY"]["native_input_contract"] == profile_contract(run.configuration.execution.native_input_policy)
     assert wire["AUTHORITY"]["native_input_contract"]["scientific_validation"] == "unverified"
@@ -615,7 +618,7 @@ def test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_hist
     request, run = objects()
     prepared = context.build_context(request, run)
     wire = decoded(prepared)
-    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v73"
+    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v74"
     assert {"agent-json-v22", "agent-json-v34", "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41", "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47"} <= DECISION_CONTRACT_PROMPT_VERSIONS
     assert "TASK_CODE_RULES" not in wire and "native_input_contract" not in wire["AUTHORITY"]
     assert run.permission.code_execution is False

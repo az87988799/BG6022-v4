@@ -1,0 +1,123 @@
+{
+  "tool": "orca.run",
+  "input_file": "job.inp",
+  "input_sha256": "d4811bac04c4ea3f82647ffa316e640d5e66f9b29409bfc3a4160c97ae5954fc",
+  "input_artifact": {
+    "artifact_id": "artifact_972fc7b0efff4296b9af51e3dc97b495",
+    "sha256": "d4811bac04c4ea3f82647ffa316e640d5e66f9b29409bfc3a4160c97ae5954fc",
+    "language": "orca",
+    "version": 1
+  },
+  "input_manifest": {
+    "version": 1,
+    "entries": [
+      {
+        "artifact_id": "artifact_e1ec9137c5444dc29cd030b091e4e1f2",
+        "sha256": "f0d60ba598ef51f8d52834c237c88b5f1cd8e7a5f8884af9096fad18bee29385",
+        "target_path": "initial.xyz",
+        "purpose": "current_geometry"
+      }
+    ]
+  },
+  "admission_version": "native-orca-input-3",
+  "native_input_policy": {
+    "profile": "managed-native-1",
+    "max_atoms": 1024,
+    "max_geom_iterations": 128,
+    "max_scf_iterations": 256,
+    "max_response_iterations": 128,
+    "allow_task_geometry": true
+  },
+  "input_binding": {
+    "request_id": "request_50bb199d1ce949148c0b9de162c7e239",
+    "request_version": 1,
+    "step_id": "calculation",
+    "system_id": null,
+    "conditions": {
+      "method": "pbe0",
+      "basis": "def2-tzvp",
+      "charge": 0,
+      "multiplicity": 1,
+      "electronic_state": "rks",
+      "environment": "gas_phase"
+    },
+    "condition_sources": {
+      "method": "request.explicit",
+      "basis": "request.explicit",
+      "charge": "request.explicit",
+      "multiplicity": "request.explicit",
+      "electronic_state": "request.conditions",
+      "environment": "request.conditions"
+    },
+    "geometry_artifact_id": "artifact_e1ec9137c5444dc29cd030b091e4e1f2",
+    "geometry_sha256": "f0d60ba598ef51f8d52834c237c88b5f1cd8e7a5f8884af9096fad18bee29385"
+  },
+  "actual_conditions_origin": "admitted_native_input",
+  "resources": {
+    "cores": 4,
+    "memory_mb": 1024,
+    "maxcore_mb": 192,
+    "timeout_seconds": 900.0
+  },
+  "dependencies": {
+    "initial.xyz": {
+      "sha256": "f0d60ba598ef51f8d52834c237c88b5f1cd8e7a5f8884af9096fad18bee29385",
+      "bytes": 61
+    }
+  },
+  "actual_conditions": {
+    "method": "PBE0",
+    "basis": "def2-TZVP",
+    "electronic_state": "RKS",
+    "charge": 0,
+    "multiplicity": 1,
+    "environment": "gas_phase",
+    "input_keywords": [
+      "PBE0",
+      "def2-TZVP",
+      "RKS",
+      "NMR",
+      "TightSCF",
+      "NoAutoStart"
+    ],
+    "input_blocks": {
+      "maxcore": 192,
+      "pal": {
+        "nprocs": "4"
+      },
+      "scf": {
+        "maxiter": "128",
+        "autotrah": "false"
+      },
+      "elprop": {
+        "nuclei": "all"
+      }
+    },
+    "atom_count": 3,
+    "run_type": "single_point",
+    "origin": "admitted_native_input",
+    "geometry_sha256": "f0d60ba598ef51f8d52834c237c88b5f1cd8e7a5f8884af9096fad18bee29385",
+    "input_geometry_sha256": "f0d60ba598ef51f8d52834c237c88b5f1cd8e7a5f8884af9096fad18bee29385",
+    "input_geometry_relation": "exact_initial",
+    "initial_geometry_sha256": "f0d60ba598ef51f8d52834c237c88b5f1cd8e7a5f8884af9096fad18bee29385",
+    "request_version": 1,
+    "system_id": null,
+    "scientific_validation": "unverified",
+    "condition_verification": "explicit input selectors only; all modifiers retained, output not independently verified"
+  },
+  "execution_impact": {
+    "orca_starts": 1,
+    "postprocess_starts": 0,
+    "external_programs": false,
+    "internal_work_units": 1,
+    "work_unit_contract": "declared-managed-workload-1",
+    "work_unit_meaning": "conservative declared task slots, not measured SCF/evaluation counts",
+    "optimization_evaluation_slots": 1,
+    "scan_points": 1,
+    "derivative_slots": 0,
+    "response_roots": 0,
+    "scf_maxiter": 128,
+    "geom_maxiter": 0,
+    "response_maxiter": 0
+  }
+}

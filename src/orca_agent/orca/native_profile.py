@@ -29,14 +29,20 @@ BASES.update({"6-31g(d)": "6-31G*", "6-31g(d,p)": "6-31G**"})
 ELEMENTS = dict(zip(("H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
                      "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar"), range(1, 19), strict=True))
 CONDITION_FIELDS = ("method", "basis", "charge", "multiplicity", "electronic_state", "environment")
+INITIAL_GEOMETRY_REQUIREMENT = (
+    "Managed ORCA requires the current qualified prepared geometry or an authorized registered "
+    "initial geometry for the requested system. Complete identity resolution/preparation before "
+    "proposing a Python Step with sdk_orca=true. Task-generated candidates may derive from that "
+    "anchor under task_geometry, but cannot establish or replace the initial identity/geometry binding.")
 
 
 def profile_contract(policy: NativeInputPolicy) -> dict:
     """Public guidance from the admission definitions, with the frozen limits."""
     if policy.profile == "managed-native-1":
         from orca_agent.orca.native_managed import profile_contract as managed_contract
-        return managed_contract(policy)
+        return {**managed_contract(policy), "initial_geometry_requirement": INITIAL_GEOMETRY_REQUIREMENT}
     return {"profile": policy.profile, "admission_version": ADMISSION_VERSION,
+            "initial_geometry_requirement": INITIAL_GEOMETRY_REQUIREMENT,
             "limits": policy.model_dump(mode="json", exclude={"profile"}),
             "methods": sorted(METHODS.values()), "basis_spellings": sorted(BASES),
             "wavefunction": {"HF": "RHF", "DFT": "RKS", "multiplicity": 1,

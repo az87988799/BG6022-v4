@@ -495,6 +495,10 @@ def _repair_evidence(store, run, plan):
         if "execute_python" in get_tool(step.tool).effects:
             _python_repair_evidence(store, run, attempt, result)
             continue
+        definition = get_tool(step.tool)
+        if "execute_orca" in definition.effects and definition.check_contract.get("generic_observations"):
+            _native_repair_evidence(store, run, attempt, result)
+            continue
         current_request = store.load_request(run)
         if (attempt.request_version is not None and attempt.request_version < run.request_version
                 and current_request.messages and all(m.get("source") == "user"
@@ -528,6 +532,68 @@ def _repair_evidence(store, run, plan):
                     "failed" if c.name == "scf_converged" else "passed") for c in checks)):
             raise StoreError("SCF repair lacks checked input, source or explicit SCF failure evidence")
         _source_hashes(store, run.id, result)
+
+
+def _quiescent_unconfirmed_native_failure(attempt, execution):
+    """A missed executable sample is not an unknown still-running workload."""
+    handle = execution.get("handle")
+    usage = execution.get("resource_usage")
+    identity = handle.get("workload_identity") if isinstance(handle, dict) else None
+    ticks = identity.get("start_ticks") if isinstance(identity, dict) else None
+    return (
+        attempt.state == "failed" and not attempt.started
+        and execution.get("state") == "failed"
+        and execution.get("reason") == "orca_actual_start_unconfirmed"
+        and execution.get("actual_start_status") == "unconfirmed"
+        and execution.get("not_started") is False
+        and type(execution.get("exit_code")) is int and execution["exit_code"] != 0
+        and isinstance(handle, dict) and handle == attempt.execution_handle
+        and handle.get("backend") == "linux-container" and handle.get("kind") == "orca"
+        and handle.get("launch_phase") == "gated_launcher"
+        and bool(handle.get("container_id")) and bool(handle.get("launch_id"))
+        and not handle.get("actual_start_evidence")
+        and isinstance(identity, dict) and type(identity.get("pid")) is int
+        and identity["pid"] > 0
+        and isinstance(ticks, str) and 0 < len(ticks) <= 20
+        and ticks.isascii() and ticks.isdecimal() and int(ticks) > 0
+        and isinstance(usage, dict) and type(usage.get("active_processes")) is int
+        and usage["active_processes"] == 0
+        and not execution.get("collection_reconciliation")
+    )
+
+
+def _native_repair_evidence(store, run, attempt, result):
+    """Permit an explicit input repair only from a bound, settled failure."""
+    frozen = attempt.frozen_step
+    code = getattr(frozen.parameters, "input", None) if frozen else None
+    execution = result.source.get("execution", {})
+    if (attempt.execution_kind != "orca" or attempt.state not in {"failed", "timed_out"}
+            or attempt.finished_at is None or attempt.result_id not in run.result_ids
+            or (result.id, result.run_id, result.attempt_id, result.step_id, result.operation_status)
+                != (attempt.result_id, run.id, attempt.id, attempt.step_id, attempt.state)
+            or frozen is None or (frozen.id, frozen.logical_id, frozen.tool)
+                != (attempt.step_id, attempt.logical_id, attempt.tool)
+            or not isinstance(execution, dict) or execution.get("state") != attempt.state
+            or execution.get("reconciliation") or execution.get("control_action")
+            or not (attempt.started or execution.get("not_started") is True
+                    or _quiescent_unconfirmed_native_failure(attempt, execution))
+            or result.observations.get("evidence_collection_complete") is not True
+            or any(call.parent_attempt_id == attempt.id and (
+                call.state in {"reserved", "running", "unknown"} or call.finished_at is None)
+                   for call in run.internal_calls)
+            or code is None or result.source.get("code_sha256") != code.sha256
+            or attempt.consumption.get("code") != code.model_dump(mode="json")):
+        raise StoreError("native input repair requires settled failure and complete bound evidence")
+    _source_hashes(store, run.id, result)
+    store.artifact_path(code.artifact_id)
+    if store.load_artifact(code.artifact_id).sha256 != code.sha256:
+        raise StoreError("native input repair source hash differs from the frozen attempt")
+    receipt = result.source.get("files", {}).get("execution.json", {})
+    if not receipt.get("artifact_id") or receipt["artifact_id"] not in result.artifact_ids:
+        raise StoreError("native input repair requires its archived execution receipt")
+    path = store.artifact_path(receipt["artifact_id"])
+    if path.stat().st_size > 1024 * 1024 or json.loads(path.read_text(encoding="utf-8")) != execution:
+        raise StoreError("native input repair execution receipt differs from its Result")
 
 
 def _python_repair_evidence(store, run, attempt, result):
@@ -800,8 +866,11 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                                     model_profile=config.model_profile)
                 if set(get_tool(step.tool).effects) & {"execute_orca", "execute_python"}:
                     result, outcome = _science(store, config, run, step, results, batch, fault)
-                    if not outcome.get("not_started"):
-                        results[step.id] = result
+                    # A known prelaunch failure is a settled Result, even when
+                    # no process started. Rebuild exactly as resume/send-time
+                    # validation do; only a control-paused not_started Attempt
+                    # remains eligible after explicit control reconciliation.
+                    results = runner._step_results(store, run)
                     if outcome["state"] in ("unknown", "cancelled"):
                         run.state = ("waiting_user" if outcome.get("control_action") == "message"
                                      else "paused" if store.read_signal(run.id) == "pause" else outcome["state"])

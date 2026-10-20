@@ -46,10 +46,49 @@ def _control(store, run, step):
         raise ValueError("execution control/deadline prevents launch")
 
 
-def native_input_binding(store, run, step):
+def _initial_geometry(store, run, request, system_id):
+    """Read the trusted initial anchor; task-authored copies cannot establish it."""
+    from orca_agent.input_bindings import prepared_geometry
+
+    system = next((item for item in request.systems if item.id == system_id), None)
+    if system and system.geometry_source == "prepare":
+        geometry_id = prepared_geometry(store, run, request, system_id)
+    else:
+        geometry_id = system.geometry_artifact_id if system else request.geometry_artifact_id
+        if geometry_id is not None and geometry_id not in run.permission.artifact_ids:
+            raise ValueError("registered native geometry is outside the frozen permission")
+    if geometry_id is None:
+        raise ValueError(
+            "native execution requires current prepared or registered geometry: "
+            "complete identity resolution and geometry preparation, or bind an authorized "
+            "registered initial geometry, before proposing/executing sdk_orca=true. "
+            "Keep dependent goals as gaps until that binding exists; task-generated XYZ "
+            "files cannot replace this initial identity/geometry anchor.")
+    geometry = store.load_artifact(geometry_id)
+    geometry_bytes = read_pinned_input(store.artifact_path(geometry_id), geometry.sha256, limit=65536)
+    return geometry_id, geometry, geometry_bytes
+
+
+def validate_sdk_orca_preconditions(store, run, step, *, request=None, plan=None):
+    """Read-only preflight before any Python reservation or boundary startup."""
+    if not run.permission.scientific_execution or "orca.run" not in run.permission.allowed_tools:
+        raise ValueError("sdk_orca=true requires authorized managed ORCA execution")
+    request = request if request is not None else store.load_request(run)
+    plan = plan if plan is not None else store.load_plan(run)
+    if plan is None or step not in plan.steps:
+        raise ValueError("SDK preflight requires the current or candidate frozen Step")
+    if len(request.systems) > 1 and step.system_id is None:
+        raise ValueError("sdk_orca=true requires an explicit requested system")
+    binding = native_input_binding(store, run, step, request=request, plan=plan)
+    if binding is None:  # Historical input profile still requires an initial anchor when declared.
+        system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
+        _initial_geometry(store, run, request, system_id)
+    return binding
+
+
+def native_input_binding(store, run, step, *, request=None, plan=None):
     """Consume current trusted geometry/conditions, never task-authored claims."""
     from orca_agent.applicability import CONDITION_FIELDS, effective_conditions
-    from orca_agent.input_bindings import prepared_geometry
     from orca_agent.orca.native_profile import canonical_native_condition
 
     policy = store.run_configuration(run).execution.native_input_policy
@@ -57,7 +96,8 @@ def native_input_binding(store, run, step):
         return None
     def canonical(name, value):
         return canonical_native_condition(name, value, policy=policy)
-    request, plan = store.load_request(run), store.load_plan(run)
+    request = request if request is not None else store.load_request(run)
+    plan = plan if plan is not None else store.load_plan(run)
     if step not in plan.steps:
         raise ValueError("native input binding requires the current frozen Step")
     if len(request.systems) > 1 and step.system_id is None:
@@ -80,16 +120,7 @@ def native_input_binding(store, run, step):
             for name, value in goal.conditions.items():
                 if name in CONDITION_FIELDS and canonical(name, value) != conditions[name]:
                     raise ValueError("Goal condition conflicts with native execution: " + name)
-    if system and system.geometry_source == "prepare":
-        geometry_id = prepared_geometry(store, run, request, system_id)
-    else:
-        geometry_id = system.geometry_artifact_id if system else request.geometry_artifact_id
-        if geometry_id not in run.permission.artifact_ids:
-            raise ValueError("registered native geometry is outside the frozen permission")
-    if geometry_id is None:
-        raise ValueError("native execution requires current prepared or registered geometry")
-    geometry = store.load_artifact(geometry_id)
-    geometry_bytes = read_pinned_input(store.artifact_path(geometry_id), geometry.sha256, limit=65536)
+    geometry_id, geometry, geometry_bytes = _initial_geometry(store, run, request, system_id)
     policy = store.run_configuration(run).execution.native_input_policy
     related_goals = [goal for goal in request.goals if (
         (plan.goal_map.get(goal.id) and plan.goal_map[goal.id].step_id == step.id)
@@ -584,6 +615,9 @@ class _Broker:
             raise ValueError("invalid bounded SDK request")
         if value["version"] == 2 and value.get("kind") == "checkpoint":
             return self._checkpoint(value)
+        if getattr(self.step.parameters, "sdk_orca", None) is False:
+            raise ValueError("sdk_orca=false declares analysis only; revise the Plan with "
+                             "sdk_orca=true and a current initial geometry before requesting ORCA")
         old_keys = {"version", "request_key", "input", "dependencies"}
         new_keys = old_keys | {"kind", "purpose", "retry_of"}
         if (not ((value["version"] == 1 and set(value) == old_keys)
@@ -771,7 +805,8 @@ def _execute_container_python(store, run, step, attempt, config, root, task, fau
         requests.mkdir()
         responses.mkdir()
         native = None
-        if run.permission.scientific_execution and "orca.run" in run.permission.allowed_tools:
+        if (run.permission.scientific_execution and "orca.run" in run.permission.allowed_tools
+                and getattr(step.parameters, "sdk_orca", None) is not False):
             workdir = root / "native" / "task"
             workdir.mkdir(parents=True)
             native = {"workdir": workdir}
@@ -875,6 +910,7 @@ def execute(store, run, step, attempt, config, fault=None):
             sealed = _prepare_python_inputs(store, run, step, root, task)
             native_boundary = None
             if (run.permission.scientific_execution and "orca.run" in run.permission.allowed_tools
+                    and getattr(step.parameters, "sdk_orca", None) is not False
                     and config.orca_path is not None):
                 native_boundary = _prepare_native_boundary(config, root / "native", root / "native" / "task")
                 stack.callback(native_boundary["session"].close)

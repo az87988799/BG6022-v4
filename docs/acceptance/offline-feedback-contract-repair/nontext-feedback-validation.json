@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-20T09:09:54.935043+00:00",
+  "scope": "Safe non-text evidence diagnostics through the existing Tool dispatcher and model context",
+  "head_at_capture": "c7da0c12ef2938aa3214df8bfe80f06941d5ad02",
+  "source_and_test_hashes": [
+    {
+      "path": "src/orca_agent/tools/evidence.py",
+      "bytes": 28414,
+      "sha256": "3d4fb8f97d52aeda41f0b04b7614079e1b9dff9c2d7eb1381397bc91b6a14bda"
+    },
+    {
+      "path": "src/orca_agent/tools/dispatch.py",
+      "bytes": 22929,
+      "sha256": "4f1b46497f8a3f906e7961d7f259a124916826f6dfd6da76fa028e264fb5263d"
+    },
+    {
+      "path": "tests/unit/test_nontext_dispatch_feedback.py",
+      "bytes": 4263,
+      "sha256": "e3dd03fe4a76d4856541899796a2a2e1060f04af650f98227c7c650976c2eb7c"
+    }
+  ],
+  "changes": [
+    "NonTextEvidenceError provides only two predefined classifications and fixed remediation strings; source bytes and arbitrary exception messages are excluded.",
+    "execute_call persists failed operation status with the controlled reason and remediation; unrelated errors retain generic redacted diagnostics.",
+    "Eight tests cover both text/search dispatchers, invalid UTF-8 and control-byte payloads, immutable source hashes, call budget accounting, actual model context visibility, and spoofed ordinary ValueError payloads."
+  ],
+  "validation": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_nontext_dispatch_feedback.py tests/unit/test_refreeze_evidence_projection.py tests/unit/test_evidence.py tests/unit/test_evidence_extended.py -q --tb=short",
+      "result": "98 passed, 1 failed in 22.86s",
+      "classification": "Development integration diagnostic during concurrent parent context.py edits; not the final unified source snapshot.",
+      "owned_test_result": "All 8 tests in test_nontext_dispatch_feedback.py passed; evidence.py/evidence_extended.py passed.",
+      "failure": "test_scientific_slashes_survive_actual_model_request[pressure/temperature and energy/configuration Chinese prose]",
+      "failure_cause": "Parent was updating the path regex after independent review found adjacent-Chinese POSIX paths were not redacted. The intermediate regex also redacted multi-slash scientific prose.",
+      "resolution": "Parent reported the corrected stable context.py passes all 21 projection tests; this is parent-reported evidence, not an independently rerun result. Parent owns the final unified offline regression."
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m ruff check src/orca_agent/tools/evidence.py src/orca_agent/tools/dispatch.py tests/unit/test_nontext_dispatch_feedback.py",
+      "result": "All checks passed!"
+    }
+  ],
+  "independent_review": {
+    "files": [
+      "src/orca_agent/context.py",
+      "src/orca_agent/readable_context.py",
+      "src/orca_agent/tools/evidence.py",
+      "src/orca_agent/tools/knowledge.py"
+    ],
+    "findings": [
+      {
+        "issue": "New non-text errors lost specific diagnosis at execute_call",
+        "status": "Fixed in this bounded addition; 8 production-path offline tests passed."
+      },
+      {
+        "issue": "Unicode path boundary preserved real /tmp/private.out attached to Chinese prose",
+        "status": "Reported to parent; parent repaired and reports 21 projection tests passed."
+      }
+    ],
+    "other_review_conclusion": "No additional blocking issue found in the reviewed changes: call budget mapping comes from the shared helper; new readable Python schema requires explicit boolean while persisted legacy schema remains unchanged; navigation coverage changes do not fetch linked pages or grant scientific qualification."
+  },
+  "execution_limits": {
+    "real_llm_calls": 0,
+    "real_orca_starts": 0,
+    "external_network_calls": 0,
+    "git_commits": 0
+  },
+  "provenance_note": "Hashes were captured after the listed command; the parent changed context.py concurrently. This report does not certify the full repository as one immutable test snapshot."
+}

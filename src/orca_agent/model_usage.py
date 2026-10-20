@@ -64,6 +64,19 @@ TERMINAL_INPUT_ENVELOPE = 10000
 TERMINAL_SECONDS = 60
 
 
+def terminal_delivery_due(request, run):
+    """Preserve the last call/round for an explicitly required explanation.
+
+    Context construction and its locked send-time check call this after the
+    current decision round is charged. This selects a purpose only: zero
+    remaining calls still fails the ordinary reservation, and unmet goals stay
+    unmet. Token/time capacity remains subject to the existing exact preflight.
+    """
+    return request.conditions.get("explain_results") is True and (
+        run.budget.model_calls - run.usage.model_calls <= 1
+        or run.budget.decision_rounds - run.usage.decision_rounds <= 0)
+
+
 def final_explanation_budget(request, run, *, final_only=False, purpose=None,
                              prepared=None, now=None):
     """Account for required final prose within the existing frozen Run limits.

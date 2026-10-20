@@ -304,8 +304,7 @@ def _quote(text, messages):
         raise StoreError("semantic evidence must quote a supplied user message")
 
 
-def _locate(text, messages, message_id=None):
-    """Authenticate one exact occurrence; offsets are derived, never model authority."""
+def _quote_occurrences(text, messages, message_id=None):
     matches = []
     seen = set()
     for message in messages:
@@ -315,11 +314,59 @@ def _locate(text, messages, message_id=None):
         seen.add(key)
         for match in re.finditer(re.escape(text), message["text"]) if text.strip() else []:
             matches.append((message, match.start(), match.end()))
+    return matches
+
+
+def _quote_correction(text, messages, message_id, path):
+    matches = _quote_occurrences(text, messages, message_id)
+    if len(matches) == 1:
+        return None
+    return {
+        "path": path,
+        "reason": "semantic_quote_not_found" if not matches else "semantic_quote_not_unique",
+        "matching_occurrence_count": len(matches),
+        "occurrences": [{"message_id": message.get("id"), "start": start, "end": end,
+                         "context": message["text"][max(0, start - 48):min(len(message["text"]), end + 48)]}
+                        for message, start, end in matches[:8]],
+    }
+
+
+def _locate(text, messages, message_id=None):
+    """Authenticate one exact occurrence; offsets are derived, never model authority."""
+    matches = _quote_occurrences(text, messages, message_id)
     if not matches:
         raise StoreError("semantic evidence must quote a supplied user message and its exact message ID")
     if len(matches) != 1:
         raise StoreError("semantic evidence quote is repeated; supply a unique fuller quote or message ID")
     return matches[0]
+
+
+def _has_visible_notice(candidate):
+    return any(any(not char.isspace() and not unicodedata.category(char).startswith("C")
+                   for char in text) for text in candidate.questions + candidate.notices)
+
+
+def _field_evidence_corrections(candidate, request, messages):
+    """Preflight field evidence before Goal construction; never repair its quote."""
+    systems = {system.id: system for system in request.systems}
+    fields = [(["conditions", name], field, None) for name, field in candidate.conditions.items()]
+    fields.extend((["system_conditions", system, name], field, systems.get(system))
+                  for system, scoped in candidate.system_conditions.items() for name, field in scoped.items())
+    fields.extend((["goals", index, "conditions", name], field,
+                   systems.get(goal.system_refs[0]) if len(goal.system_refs) == 1 else None)
+                  for index, goal in enumerate(candidate.goals or []) for name, field in goal.conditions.items())
+    corrections = []
+    for path, field, system in fields:
+        if field.source == "explicit" and (correction := _quote_correction(
+                field.text_basis, messages, field.message_id, [*path, "text_basis"])):
+            corrections.append(correction)
+            continue
+        try:
+            _field(path[-1], field, request, messages, system=system)
+        except StoreError as exc:
+            corrections.append({"path": path, "reason": "condition_evidence_invalid",
+                                "diagnostic": str(exc)[:300]})
+    return corrections
 
 
 def bind_general_text_identity(request, run, pending, candidate):
@@ -465,6 +512,8 @@ def _validate_general_intake(candidate, request, messages, run):
                     if field is None or field.source in {"unknown", "inferred"}:
                         delegated[name] = {"text_basis": text, "message_id": message["id"]}
     corrections = _omitted_default_corrections(candidate, request, messages)
+    corrections.extend(_field_evidence_corrections(candidate, request, messages))
+    input_minimum_gaps = set()
     for name, evidence in delegated.items():
         if name not in candidate.automatic_selection or name in candidate.conditions:
             corrections.append({"path": ["automatic_selection", name], "reason": "delegated_choice_is_not_unknown",
@@ -475,6 +524,11 @@ def _validate_general_intake(candidate, request, messages, run):
     for index, item in enumerate(candidate.goals or []):
         general = _uses_general_goal(candidate, item, request)
         if general or item.port in INPUT_TOOLS:
+            quote_error = _quote_correction(item.text_basis, messages, item.message_id,
+                                            ["goals", index, "text_basis"])
+            if quote_error:
+                corrections.append(quote_error)
+                continue  # Other Goals/fields still supply independent corrections.
             message, _, _ = _locate(item.text_basis, messages, item.message_id)
             if (not item.system_refs or len(item.system_refs) != len(set(item.system_refs))
                     or set(item.system_refs) - systems
@@ -494,6 +548,8 @@ def _validate_general_intake(candidate, request, messages, run):
                     corrections.append({"path": ["goals", index, "minimum_evidence", requirement_index],
                         "reason": "minimum_evidence_requires_exact_user_wording", "invalid_value": requirement,
                         "user_text": message["text"], "registered_requirements": sorted(REQUIREMENTS)})
+                elif item.port in INPUT_TOOLS and canonical not in REQUIREMENTS and requirement not in input_rules:
+                    input_minimum_gaps.add("unsupported_minimum_evidence:" + requirement)
         if item.port in INPUT_TOOLS:
             # Report this independent input error alongside science/selection
             # errors, rather than hiding it until the next correction round.
@@ -556,8 +612,20 @@ def _validate_general_intake(candidate, request, messages, run):
         for notice_index, notice in enumerate(candidate.notices):
             if notice.casefold().startswith(legacy_prefix):
                 corrections.append({"path": ["notices", notice_index], "reason": "legacy_qualified_scope_is_not_a_general_molecule_whitelist"})
+    prior_gaps = set(request.unresolved) | {gap for goal in request.goals for gap in goal.unresolved}
+    if input_minimum_gaps - prior_gaps and not _has_visible_notice(candidate):
+        corrections.append({"path": ["notices"], "reason": "new_minimum_evidence_requires_notice",
+                            "new_unresolved": sorted(input_minimum_gaps - prior_gaps)})
     if corrections:
         instructions = {
+            "semantic_quote_not_found":
+                "Copy a contiguous exact quote from the supplied user message and use its exact message_id. Do not copy redaction/omission markers or invent wording; preserve the requested value and conditions.",
+            "semantic_quote_not_unique":
+                "Use a unique fuller contiguous user quote at this field. If occurrences share a message_id, repeating that ID cannot disambiguate them. The listed contexts and offsets are diagnostic evidence, not new schema fields or authority; do not change the scientific value.",
+            "condition_evidence_invalid":
+                "Correct this field's source evidence using the diagnostic. An explicit value needs its exact user wording or a supported lexical alias, defaults require explicit adoption, and genuine conflicts/unknowns remain gaps. Preserve the user's physical condition; do not invent values or silently replace it with a default.",
+            "new_minimum_evidence_requires_notice":
+                "These exact input minimum-evidence requirements have no registered evaluator. Preserve every requirement and add a visible question or unsupported-scope notice in parameters.notices; do not claim a check exists, remove a minimum, or ask to reconfirm explicit user choices. Input preparation and scientific qualification are distinct.",
             "goal_requires_exact_registered_targets":
                 "Bind this molecular Goal to its exact available system IDs (one target for input acquisition), including report/seed/delivery Goals. Do not drop a Goal or invent a target to fix the binding.",
             "minimum_evidence_requires_exact_user_wording":
@@ -694,7 +762,7 @@ def _mentions(text, *, targets=False):
                        if alias.isascii() else re.escape(alias))
             for match in re.finditer(pattern, text, re.I):
                 before, after = text[:match.start()], text[match.end():]
-                solvent = (re.match(r"\s*(?:溶剂|溶液|作为溶剂|为溶剂|as\s+(?:(?:the|a)\s+)?solvent)", after, re.I)
+                solvent = (re.match(r"\s*(?:溶剂|溶液|环境|作为溶剂|为溶剂|environment\b|as\s+(?:(?:the|a)\s+)?solvent)", after, re.I)
                            or re.search(r"(?:溶剂(?:为|是)|solvent\s*(?:is|=|:)?|\bin)\s*$", before, re.I))
                 if not targets or not solvent:
                     found.append((match.start(), match.end(), identity, match.group()))
@@ -1019,8 +1087,19 @@ _DERIVED_GEOMETRY = re.compile(
     + r"|" + _GEOMETRY_NOUN + r".{0,40}(?:旋转|平移|变换|变形|rotate|rotation|translate|transform)",
     re.I)
 _GEOMETRY_CONSTRAINT = re.compile(
-    r"单点|固定|初始|原子顺序|内部几何|优化|坐标|XYZ|hash|哈希|"
-    r"\b(?:single[- ]point|fixed|initial|atom\s+order|internal\s+geometry|optimi[sz]\w*|coordinates?)\b",
+    r"单点|原子顺序|内部几何|优化|坐标|XYZ|"
+    r"(?:固定|初始|hash|哈希)[^，,。.;；\n]{0,16}" + _GEOMETRY_NOUN
+    + r"|" + _GEOMETRY_NOUN + r"[^，,。.;；\n]{0,16}(?:固定|hash|哈希)"
+    + r"|\b(?:single[- ]point|atom\s+order|internal\s+geometry|optimi[sz]\w*|coordinates?)\b"
+    + r"|\b(?:fixed|initial|hash)\s+(?:\w+\s+){0,2}" + _GEOMETRY_NOUN,
+    re.I)
+_OUTCOME_CAVEAT = re.compile(
+    r"(?:不要|不得|不能|不应|切勿)\s*(?:把|将)?\s*(?:程序|计算|任务|作业)?\s*"
+    r"(?:正常结束|正常终止|成功退出|退出码|程序成功)"
+    r".{0,40}?(?:当成|视为|等同|证明|确认|意味着).{0,40}?(?:收敛|极小值|科学通过)|"
+    r"\b(?:do\s+not|don't|never|must\s+not)\s+(?:(?:treat|regard|interpret|consider|use)\s+)?"
+    r"(?:(?:a|the)\s+)?(?:normal\s+termination|successful\s+exit|exit\s+code)"
+    r".{0,48}?\b(?:as|prove|confirm|imply)\b.{0,48}?\b(?:converg\w*|minimum|validated)\b",
     re.I)
 _INITIAL_XYZ = re.compile(
     r"(?:初始|已注册|注册的|已提供|提供的|已准备|准备的)\s*(?:XYZ|坐标)|"
@@ -1155,6 +1234,10 @@ def _text_geometry_relation(request, messages, system_ids):
             request, message, 0, len(message["text"]), system=scope)
             for part in re.split(r"\bbut\b|但是|但", clause, flags=re.I)]
         for clause in clauses:
+            # An inference warning about a result does not withdraw a requested
+            # operation. Retain the original warning as evidence/requirements.
+            source_clause = clause
+            clause = _OUTCOME_CAVEAT.sub(" ", clause)
             # A request to acquire starting coordinates is an input dependency,
             # not a request for their electronic energy. Preserve an initial-
             # geometry hint if energy directly qualifies that same noun phrase.
@@ -1169,7 +1252,7 @@ def _text_geometry_relation(request, messages, system_ids):
             forbidden_label = (r"(?:不得|不要|不能|不许)\s*(?:称为|称作|声称|视为).{0,12}优化|"
                                r"\b(?:do\s+not|don't|never|must\s+not)\s+(?:call|describe|claim|label)"
                                r".{0,32}\boptimi[sz]ed\b")
-            if re.search(forbidden_label, clause, re.I):
+            if re.search(forbidden_label, source_clause, re.I):
                 denied.add("optimized")
                 clause = re.sub(forbidden_label, " ", clause, flags=re.I)
                 relation_text = re.sub(forbidden_label, " ", relation_text, flags=re.I)
@@ -1177,7 +1260,9 @@ def _text_geometry_relation(request, messages, system_ids):
                 r"(?:不(?:要|得|能|许|必|需|须)?|禁止|无需|无须|别)\s*(?:分别|单独|重新|再)?\s*优化"
                 r"|\b(?:do\s+not|don't|never|must\s+not|without)\s+(?:(?:separately|independently)\s+)?"
                 r"optimi[sz](?:e|ing|ation)\b")
-            if re.search(forbidden_operation, clause, re.I):
+            # Independent prohibitions are authenticated against the original
+            # clause even if a warning fragment overlaps their wording.
+            if re.search(forbidden_operation, source_clause, re.I):
                 denied.add("optimized")
                 clause = re.sub(forbidden_operation, " ", clause, flags=re.I)
                 relation_text = re.sub(forbidden_operation, " ", relation_text, flags=re.I)
@@ -1810,8 +1895,7 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
     prior_gaps = set(request.unresolved) | set(question_gaps) | {gap for goal in request.goals for gap in goal.unresolved}
     current_gaps = set(updated.unresolved) | {gap for goal in updated.goals for gap in goal.unresolved}
     new_gaps = current_gaps - prior_gaps
-    visible_question = any(any(not char.isspace() and not unicodedata.category(char).startswith("C")
-                              for char in question) for question in candidate.questions + candidate.notices)
+    visible_question = _has_visible_notice(candidate)
     if new_gaps and not visible_question:
         raise ProposalError("New unresolved conditions, including detected unsupported scope, require a visible question "
                             "or unsupported-scope notice in parameters.notices. Preserve explicit user choices; "

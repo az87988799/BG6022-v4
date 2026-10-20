@@ -109,11 +109,48 @@ def test_existing_candidate_scopes_goal_conditions_and_global_unknown_are_respec
     assert _omitted_default_corrections(candidate, request, messages) == []
 
 
-@pytest.mark.parametrize("port", ["knowledge_answer", "value_observation", "prepared_geometry", "unresolved", "artifacts", "observations"])
-def test_non_scientific_goal_does_not_require_adoption(port):
+@pytest.mark.parametrize(("schema_version", "port"), [
+    ("request-semantics-3", "knowledge_answer"),
+    ("request-semantics-3", "value_observation"),
+    ("request-semantics-3", "prepared_geometry"),
+    ("request-semantics-3", "unresolved"),
+    # These unregistered historical labels are not current read-only ports.
+    ("request-semantics-2", "artifacts"),
+    ("request-semantics-2", "observations"),
+])
+def test_non_scientific_goal_does_not_require_adoption(schema_version, port):
+    text = "Read the existing report for water and methane."
+    request, candidate, messages = scoped(text)
+    candidate.schema_version = schema_version
+    for goal in candidate.goals:
+        goal.port = port
+        goal.quantity = None
+        goal.geometry_relation = None
+        if port == "value_observation":
+            goal.query = {"artifact_id": "existing_report"}
+    before = copy.deepcopy((request, candidate))
+    assert _omitted_default_corrections(candidate, request, messages) == []
+    assert (request, candidate) == before
+
+
+@pytest.mark.parametrize("port", ["value_observation", "unresolved", "artifacts", "observations"])
+def test_general_scientific_quantity_still_requires_explicit_adoption_despite_port_label(port):
+    # Keep the former fixture as a negative case: changing the label cannot
+    # turn an Optimize quantity into a read-only or non-scientific request.
     request, candidate, messages = scoped()
     for goal in candidate.goals:
         goal.port = port
+    before = copy.deepcopy((request, candidate))
+    rows = _omitted_default_corrections(candidate, request, messages)
+    assert [row["path"] for row in rows] == [
+        ["system_conditions", "water", "charge"],
+        ["system_conditions", "methane", "charge"],
+    ]
+    assert all(row["reason"] == "authorized_default_requires_explicit_adoption" for row in rows)
+    assert (request, candidate) == before
+    adopted = FieldEvidence(source="default", default_rule="local-hf-1", value=0)
+    assert _field("charge", adopted, request, messages)[:2] == (0, "default")
+    candidate.conditions["charge"] = adopted
     assert _omitted_default_corrections(candidate, request, messages) == []
 
 

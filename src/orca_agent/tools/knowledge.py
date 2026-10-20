@@ -245,6 +245,13 @@ def _retrieve(store, run, call):
         links = _ManualLinks(url)
         links.feed(text)
         result["manual_references"] = links.links
+        if url.rsplit("/", 1)[-1] == "index.html":
+            result["coverage"]["document_scope"] = "navigation"
+            result["coverage"]["limitation"] = (
+                "Index headings and links locate documentation; they do not establish "
+                "input syntax or output format. Explicitly retrieve the relevant manual "
+                "section before relying on its syntax. Linked pages were not fetched."
+            )
     return result, bytes(raw), metadata["format"]
 
 

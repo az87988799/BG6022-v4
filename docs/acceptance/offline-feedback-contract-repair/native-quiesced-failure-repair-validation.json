@@ -1,0 +1,72 @@
+{
+  "scope": "Narrow quiescent linux-container native input failure repair; no real execution by this reviewer",
+  "created_at": "2026-10-20T09:20:05.361599+00:00",
+  "execution_classes": {
+    "offline": true,
+    "real_model": false,
+    "real_orca": false,
+    "network": false
+  },
+  "production_stable": true,
+  "files": [
+    {
+      "path": "src/orca_agent/agent.py",
+      "sha256": "42ceadaa0472db62d2d99a91069daadd26a3aa97dfba30d66c6f83b11ab770ba"
+    },
+    {
+      "path": "tests/unit/test_native_quiesced_failure_repair.py",
+      "sha256": "fbd8d9af4afe402256a33f0638c4778310a926b91b5f4a04376bb85184c53ea4"
+    },
+    {
+      "path": "tests/unit/test_refreeze_runtime_repair.py",
+      "sha256": "757fbd86009c7e1a9377fb3e62cf490dcd17c2c1a7f714c85776a5162b1f1ebf"
+    },
+    {
+      "path": "docs/decisions/0053-offline-feedback-contract-repair.md",
+      "sha256": "8643410e8f31ba065efe42dd1596e215f85d186768dcb0c52a01d85a59e0d77d"
+    }
+  ],
+  "final_test": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_native_quiesced_failure_repair.py tests/unit/test_refreeze_runtime_repair.py -q --tb=short",
+    "result": "50 passed in 36.10s",
+    "exit_code": 0,
+    "new_cases": 27,
+    "existing_runtime_cases": 23
+  },
+  "static_checks": {
+    "ruff": "passed",
+    "git_diff_check": "passed; existing Git LF/CRLF advisory only"
+  },
+  "development_diagnostic": {
+    "result": "46 passed, 1 failed in 37.42s",
+    "cause": "The synthetic wrong-backend receipt used runner settlement that classified the non-container handle as started; that fixture exercised the existing started-failure allowance rather than the new unconfirmed-start guard. Replaced with a direct negative guard test, without weakening production. Also matched start_ticks to the actual backend numeric-string representation and added invalid-type/value cases.",
+    "included_in_final_result": false
+  },
+  "verified_boundaries": [
+    "settled failed Attempt and Result exact identities",
+    "exact archived execution receipt and source hashes",
+    "unconfirmed start with nonzero strict integer exit code",
+    "same linux-container/orca/gated_launcher handle and valid process identity",
+    "strict integer active_processes equals zero",
+    "unknown, controls, reconciliation, active process, missing evidence, handle mismatch, bool/zero exit and invalid identity rejected",
+    "unchanged failed input still rejected",
+    "new input retains same logical identity and consumes original two-start budget cumulatively",
+    "historical started=false and actual=0 remain unchanged",
+    "no qualified scientific outputs inferred"
+  ],
+  "read_only_actual_receipt_replay": {
+    "run_id": "run_25a629be3e6548838fabb352e8db3909",
+    "scope": "New pure predicate only; no Run loading through mutable Store, no revision or execution",
+    "new_quiescent_guard": true,
+    "handle_matches_attempt": true,
+    "started": false,
+    "reserved": 1,
+    "actual": 0,
+    "run_sha256": "b87d52c4a758703d5c3bfde6804d327df8985541e3c381a4ce448954ce46235d",
+    "receipt_sha256": "50d068c8f39d79f84ffcc22f3d3eee4fe63c0088ae024da751572652f97c8edd"
+  },
+  "limitations": [
+    "Real ORCA follow-up is owned and recorded by the parent task; this record does not claim that execution succeeded.",
+    "The original 12K context capacity failures and token/time terminal policy remain outside this narrow repair."
+  ]
+}

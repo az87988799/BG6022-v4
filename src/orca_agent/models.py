@@ -133,6 +133,17 @@ class CodeExecutionParameters(Record):
     inputs: InputManifest = Field(default_factory=InputManifest)
     observation_names: list[Port] = Field(default_factory=list)
     conditions: dict[str, Any] = Field(default_factory=dict)
+    sdk_orca: Annotated[bool, Field(strict=True)] | None = Field(default=None,
+        description="Explicit true permits requesting ORCA through the managed SDK after initial "
+        "geometry preflight; false is analysis only. Null/missing is historical compatibility, "
+        "not accepted for newly proposed code Steps.")
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_shape(self, handler):
+        value = handler(self)
+        if self.sdk_orca is None:
+            value.pop("sdk_orca", None)
+        return value
 
     @model_validator(mode="after")
     def python_code(self):

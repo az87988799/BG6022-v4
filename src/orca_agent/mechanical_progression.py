@@ -4,7 +4,7 @@ No model proposal, inferred binding or scientific feedback is synthesized.
 The normal execution boundary still authorizes and reserves the selected Step.
 """
 
-from orca_agent.model_usage import current_basis, validate_delivery_margin
+from orca_agent.model_usage import current_basis, terminal_delivery_due, validate_delivery_margin
 from orca_agent.models import fingerprint
 from orca_agent.store import BudgetExceeded
 from orca_agent.tools.registry import get_tool
@@ -71,6 +71,8 @@ def select_mechanical_step(store, run, plan, results, ready, *, goals_changed=Fa
             raise BudgetExceeded("decision round budget exhausted")
         draft = run.model_copy(deep=True)
         draft.usage.decision_rounds += 1
+        if terminal_delivery_due(store.load_request(run), draft):
+            return None
         try:
             validate_delivery_margin(store.load_request(run), draft, purpose="planning")
         except BudgetExceeded:

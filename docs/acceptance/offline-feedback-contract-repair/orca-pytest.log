@@ -1,0 +1,25 @@
+F...                                                                     [100%]
+================================== FAILURES ===================================
+_____________ test_native_nmr_bad_input_then_same_logical_repair ______________
+
+tmp_path = WindowsPath('E:/BG6022-V4/data/offline-feedback-contract-repair-validation/test_native_nmr_bad_input_then0')
+
+    def test_native_nmr_bad_input_then_same_logical_repair(tmp_path):
+        xyz = "3\nregistered HCN fixture\nH 0 0 -1.06\nC 0 0 0\nN 0 0 1.16\n"
+        good = "! PBE0 def2-TZVP RKS NMR TightSCF NoAutoStart\n" + LIMITS + "* xyzfile 0 1 initial.xyz\n"
+        bad = good.replace("* xyzfile", "%elprop Nuclei=all end\n* xyzfile")
+        config, store, run, step, geometry, codes = setup(
+            tmp_path, xyz, [bad, good], native=True, method="PBE0", basis="def2-TZVP", state="RKS", starts=2)
+        failed, failure = _science(store, config, run, step, {}, None, None)
+        save_evidence(tmp_path, run, failed, failure)
+>       assert failure["state"] == "failed" and run.usage.orca_starts_actual == 1
+E       AssertionError: assert ('failed' == 'failed'
+E         
+E           failed and 0 == 1)
+E        +  where 0 = BudgetUsage(internal_work_units=1, internal_calls_by_purpose={}, code_retries=0, orca_starts_reserved=1, orca_starts_a...nalysis_executions=0, logical_steps=['calculation'], identity_queries=0, structure_preparations=0, knowledge_queries=0).orca_starts_actual
+E        +    where BudgetUsage(internal_work_units=1, internal_calls_by_purpose={}, code_retries=0, orca_starts_reserved=1, orca_starts_a...nalysis_executions=0, logical_steps=['calculation'], identity_queries=0, structure_preparations=0, knowledge_queries=0) = Run(configuration=RunConfiguration(version=2, resources=ResourceLimits(max_cores=4, total_memory_mb=1024, maxcore_mb=1...eopened_terminal_ids=[], agent_enabled=False, batch_category=None, input_bindings={}, science_baseline_policy='legacy').usage
+
+tests\live\test_refreeze_orca_repair.py:117: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/live/test_refreeze_orca_repair.py::test_native_nmr_bad_input_then_same_logical_repair
+1 failed, 3 passed in 118.45s (0:01:58)

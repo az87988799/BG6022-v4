@@ -261,9 +261,14 @@ def test_actual_live037_remains_rejected_and_explicit_reference_preserves_manife
     run.attempts = [attempt]
     run.result_ids = [attempt.result_id]
     values = proposal(attempt, fixture["revised_code"], retained=dependencies)
+    with pytest.raises(ProposalError, match="when repairing a legacy Python Step"):
+        materialize_plan(facade, run, values)
+    values["steps"][-1]["sdk_orca"] = True  # New declaration; the archived fixture stays unchanged.
     candidate = materialize_plan(facade, run, values)
     corrected = candidate.steps[-1]
-    assert noncode(corrected) == noncode(frozen)
+    expected = noncode(frozen)
+    expected["parameters"]["sdk_orca"] = True
+    assert noncode(corrected) == expected
     assert corrected.parameters.inputs.entries[0].target_path == "ethanol_opt_freq.py"
     assert corrected.parameters.code.artifact_id != corrected.parameters.inputs.entries[0].artifact_id
     _python_repair(frozen, corrected, run, {})
@@ -311,7 +316,7 @@ def test_mixed_shape_errors_use_each_actual_step_and_do_not_consume_other_branch
     assert errors == [{"type": "missing", "loc": ["parameters", "steps", 0, "key"]},
         {"type": "extra_forbidden", "loc": ["parameters", "steps", 0, "id"]},
         {"type": "extra_forbidden", "loc": ["parameters", "steps", 1, "depends_on"]}]
-    assert caught.value.detail["code_repair_fields"] == ["key", "repair_of", "code", "inputs"]
+    assert caught.value.detail["code_repair_fields"] == ["key", "repair_of", "code", "inputs", "sdk_orca"]
     assert values == before
 
 

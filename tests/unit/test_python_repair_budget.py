@@ -36,7 +36,7 @@ def case(tmp_path, monkeypatch, *, allowance=1, initial_steps=1):
         minimum_check_version="generic-observation-1", evidence_contract_version="generic-observation-1",
         verification="reported_with_limitations")])
     steps = [Step(id=f"script_{n}", logical_id=f"analysis_{n}", tool="python.execute",
-                  parameters={"code": codes[n]}) for n in range(initial_steps)]
+                  parameters={"code": codes[n], "sdk_orca": False}) for n in range(initial_steps)]
     plan = Plan(request_id=request.id, steps=steps,
                 goal_map={"report": OutputBinding(step_id=steps[-1].id, port="artifacts")})
     run = store.create_run(request, plan, PermissionSnapshot(code_execution=True,

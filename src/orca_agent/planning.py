@@ -135,7 +135,7 @@ def _concrete_reference(reference: EvidenceRef, run: Run) -> None:
                  "concrete Artifact is outside the permission snapshot")
 
 
-def validate_code_inputs(store, permission, step, *, run=None):
+def validate_code_inputs(store, permission, step, *, run=None, request=None, plan=None):
     """Verify pinned task files at consumption; a declaration cannot expand access."""
     tool = get_tool(step.tool)
     if not tool.check_contract.get("generic_observations"):
@@ -148,6 +148,29 @@ def validate_code_inputs(store, permission, step, *, run=None):
         store.artifact_path(reference.artifact_id)
         artifact = store.load_artifact(reference.artifact_id)
         _require(artifact.sha256 == reference.sha256, "task input hash differs from pinned Artifact")
+    if (run is not None and getattr(step.parameters, "sdk_orca", None) is True
+            and not any(attempt.step_id == step.id for attempt in run.attempts)):
+        from orca_agent.tools.managed import validate_sdk_orca_preconditions
+        validate_sdk_orca_preconditions(store, run, step, request=request, plan=plan)
+
+
+def validate_tool_call_budget(plan: Plan, run: Run) -> None:
+    """Count only unreserved Calls; all prior states retain their charged usage."""
+    from collections import Counter
+
+    from orca_agent.tools.registry import call_usage_counter
+
+    reserved = {call.step_id for call in run.calls if call.step_id}
+    reserved.update(attempt.step_id for attempt in run.attempts)
+    pending = Counter(call_usage_counter(get_tool(step.tool))
+                      for step in plan.steps if step.id not in reserved)
+    for counter, count in pending.items():
+        if counter is None:
+            continue
+        remaining = getattr(run.budget, counter) - getattr(run.usage, counter)
+        _require(count <= remaining,
+                 f"proposed Plan exceeds remaining {counter} budget: "
+                 f"{count} unreserved Tool calls require {count} units; {remaining} remain")
 
 
 def _step_permissions(step: Step, run: Run, *, authorized_artifacts=()) -> None:
@@ -229,6 +252,11 @@ def _shape(step: Step, logical_by_id: dict[str, str], *, omit_scf=False):
 def _repair(prior: Step, proposed: Step, run: Run, logical_by_id, user_change):
     _require(prior.logical_id == proposed.logical_id, "repair must retain its logical Step identity")
     _require(prior.tool == proposed.tool, "repair cannot replace the scientific tool")
+    tool = get_tool(prior.tool)
+    if tool.check_contract.get("generic_observations") and "execute_orca" in tool.effects:
+        if prior != proposed:
+            _native_repair(prior, proposed, run, logical_by_id)
+        return
     old, new = _shape(prior, logical_by_id), _shape(proposed, logical_by_id)
     old_parameters, new_parameters = old.pop("parameters"), new.pop("parameters")
     if not user_change:
@@ -248,6 +276,23 @@ def _repair(prior: Step, proposed: Step, run: Run, logical_by_id, user_change):
         _require(old != new or bool(changed), "renaming unchanged scientific input is not a repair")
 
 
+def _native_repair(prior: Step, proposed: Step, run: Run, logical_by_id):
+    """Native input repairs preserve the requested scientific intent and budget identity."""
+    attempts = [attempt for attempt in run.attempts if attempt.logical_id == prior.logical_id]
+    if attempts:
+        latest = attempts[-1]
+        _require(latest.execution_kind == "orca" and latest.state in {"failed", "timed_out"}
+                 and latest.finished_at is not None and latest.result_id is not None,
+                 "native input repair requires a settled failed attempt with a Result")
+    old, new = _shape(prior, logical_by_id), _shape(proposed, logical_by_id)
+    old_input, new_input = old["parameters"].pop("input"), new["parameters"].pop("input")
+    old_files, new_files = old["parameters"].pop("inputs"), new["parameters"].pop("inputs")
+    _require(old == new, "native input repair may change input and explicit input copies only; "
+             "system, conditions, observations and dependencies are fixed")
+    _require(old_input["sha256"] != new_input["sha256"] or old_files != new_files,
+             "unchanged native input and input copies are not a repair")
+
+
 def _python_repair(prior: Step, proposed: Step, run: Run, logical_by_id):
     """Explicit code/input-copy repair retains the scientific purpose and graph."""
     _require(prior.tool == proposed.tool, "Python repair cannot replace its Tool")
@@ -262,6 +307,10 @@ def _python_repair(prior: Step, proposed: Step, run: Run, logical_by_id):
     new_code = new["parameters"].pop("code")
     old_inputs = old["parameters"].pop("inputs")
     new_inputs = new["parameters"].pop("inputs")
+    # Old frozen Steps had no declaration. Making the same broad legacy
+    # permission explicit is permitted, but an explicit mode cannot be changed.
+    if "sdk_orca" not in old["parameters"]:
+        new["parameters"].pop("sdk_orca", None)
     _require(old == new, "Python repair may change code and explicit input copies only; "
              "conditions, observations and dependencies are fixed")
     _require(old_code["sha256"] != new_code["sha256"] or old_inputs != new_inputs,
@@ -426,6 +475,7 @@ def validate_revision(prior_request: Request, prior_plan: Plan | None,
     logical_by_id = {step.id: step.logical_id for step in [*previous_steps, *next_plan.steps]}
     reserved_ids = {attempt.step_id for attempt in run.attempts} | {
         call.step_id for call in run.calls if call.step_id}
+    validate_tool_call_budget(next_plan, run)
     pending_science, extra_science, pending_python = 0, 0, 0
     for step in next_plan.steps:
         _step_permissions(step, run, authorized_artifacts=authorized_artifacts)

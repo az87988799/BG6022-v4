@@ -340,12 +340,16 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
                         source={**data.get("source", {}), "tool": tool_name, "consumption": consumption,
                                 "request_version": run.request_version, "plan_version": run.plan_version})
     except (KeyError, TypeError, ValueError, OSError, RuntimeError) as exc:
+        from orca_agent.tools.evidence import NonTextEvidenceError
+
         control_error = exc if isinstance(exc, ControlChanged) else None
         diagnostic = {"category": type(exc).__name__,
                       "message": "Tool rejected inputs or unavailable evidence"}
-        if (definition.effects == ["read_registered_artifact"]
-                and "32 KiB evidence window" in str(exc)):
-            diagnostic["reason"] = "evidence_response_byte_limit"
+        if definition.effects == ["read_registered_artifact"]:
+            if isinstance(exc, NonTextEvidenceError):
+                diagnostic.update(reason=exc.reason, message=NonTextEvidenceError.MESSAGES[exc.reason])
+            elif "32 KiB evidence window" in str(exc):
+                diagnostic["reason"] = "evidence_response_byte_limit"
         result = Result(run_id=run.id, step_id=call.step_id, call_id=call.id,
                         operation_status="cancelled" if control_error else "failed",
                         diagnostics=[diagnostic],

@@ -142,18 +142,29 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
     else:
         wire["TOOLS"] = [{key: value for key, value in tool.items() if key in {
             "name", "description", "effects", "input_roles", "output_ports",
-            "observation_outputs", "check_version", "required_input_checks"}} | {
+            "observation_outputs", "check_version", "required_input_checks", "call_budget"}} | {
                 "parameters": (native_schema(tools[tool["name"]].parameter_schema, complete=complete_contract)
                     if not tool.get("parameter_schema", "").startswith("deferred")
                     else "Existing validated parameters only; schema deferred for unrelated capability"),
                 "input_ports": tool.get("check_contract", {}).get("input_ports", {})}
             for tool in template["TOOL_CATALOG"]]
         for tool in wire["TOOLS"]:
+            declaration = tools[tool["name"]].check_contract.get("sdk_orca_declaration")
+            if declaration and isinstance(tool["parameters"], dict):
+                tool["sdk_orca_declaration"] = declaration
+                if declaration.get("required_for_new_code_proposals"):
+                    # Historical stored Steps may omit this field; new model
+                    # proposals must select one explicit execution mode.
+                    schema = tool["parameters"]
+                    schema["properties"][declaration["parameter"]] = {"type": "boolean"}
+                    required = schema.setdefault("required", [])
+                    if declaration["parameter"] not in required:
+                        required.append(declaration["parameter"])
             if tool["name"] in immediate_names:
                 tool["immediate"] = True
             if isinstance(tool["parameters"], str):
                 for key in list(tool):
-                    if key not in {"name", "effects", "output_ports", "observation_outputs", "parameters"}:
+                    if key not in {"name", "effects", "output_ports", "observation_outputs", "parameters", "call_budget"}:
                         tool.pop(key)
                 tool["parameters"] = "deferred; existing validated parameters only"
             elif confirmed_parameters and tool["effects"] != ["read_registered_artifact"]:

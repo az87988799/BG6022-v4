@@ -267,6 +267,7 @@ class ProposedCodeRepair(Record):
     repair_of: Identifier
     code: CodeRef
     inputs: InputManifest | None = None
+    sdk_orca: bool | None = Field(default=None, strict=True)
 
 
 class FutureGoalTarget(Record):
@@ -445,15 +446,21 @@ def _complete_incremental_plan(store, run, proposal, prior, request, history):
     replaced = {item.repair_of for item in proposal.steps if isinstance(item, ProposedCodeRepair)}
     latest_attempts = {item.logical_id: item for item in run.attempts}
     for item in proposal.steps:
-        if (not isinstance(item, ProposedStep) or item.tool != "python.execute"
-                or item.key in history):
+        if not isinstance(item, ProposedStep) or item.tool is None or item.key in history:
+            continue
+        try:
+            definition = get_tool(item.tool)
+        except ValueError:
+            continue  # Materialization below reports the grounded Tool-field diagnostic.
+        if (not definition.check_contract.get("generic_observations")
+                or not set(definition.effects) & {"execute_python", "execute_orca"}):
             continue
         source = latest_attempts.get(item.logical_key)
         frozen = settled.get(source.step_id) if source else None
-        if (source and frozen and source.execution_kind == "python"
+        if (source and frozen
                 and source.state in {"failed", "timed_out"} and source.finished_at is not None
                 and (frozen.id, frozen.logical_id, frozen.tool)
-                == (source.step_id, source.logical_id, "python.execute")):
+                == (source.step_id, source.logical_id, item.tool)):
             # The full repair form has the same existing validation boundary:
             # validate_revision still permits changing only the code reference.
             replaced.add(source.step_id)
@@ -578,6 +585,14 @@ def materialize_plan(store, run, parameters):
             values["parameters"]["code"] = item.code.model_dump(mode="json")
             if item.inputs is not None:
                 values["parameters"]["inputs"] = item.inputs.model_dump(mode="json")
+            declared = item.sdk_orca if item.sdk_orca is not None else source.parameters.sdk_orca
+            if declared is None:
+                raise ProposalError(
+                    "Declare sdk_orca=true for managed ORCA calls or false for analysis only "
+                    "when repairing a legacy Python Step.",
+                    code="missing_sdk_orca_declaration",
+                    path=["parameters", "steps", index, "sdk_orca"])
+            values["parameters"]["sdk_orca"] = declared
             try:
                 steps.append(Step.model_validate(values))
             except ValidationError as exc:
@@ -622,6 +637,14 @@ def materialize_plan(store, run, parameters):
                         "a repair cannot replace its Tool.", code="invalid_code_repair_source_tool",
                         path=["parameters", "steps", index, "logical_key"])
                 item.parameters["inputs"] = source.parameters.inputs.model_dump(mode="json")
+        if (definition.check_contract.get("sdk_orca_declaration")
+                and type(item.parameters.get("sdk_orca")) is not bool):
+            raise ProposalError(
+                "Declare parameters.sdk_orca=true for managed ORCA calls or false for analysis only. "
+                "ORCA requires a current prepared/registered initial geometry before this code Step; "
+                "stage identity/geometry preparation first and keep dependent goals as gaps.",
+                code="missing_sdk_orca_declaration",
+                path=["parameters", "steps", index, "parameters", "sdk_orca"])
         # The model chooses the operation and references. Repeating already
         # confirmed Request conditions is not a second scientific decision.
         # Only declared fields are inherited; explicit proposal values remain

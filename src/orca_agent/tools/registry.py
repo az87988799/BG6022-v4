@@ -116,6 +116,11 @@ TOOLS: dict[str, _Registration] = {
         effects=["read_registered_artifact", "execute_python", "write_artifact"],
         check_version="generic-observation-1",
         check_contract={"execution_available": True, "generic_observations": True,
+                        "sdk_orca_declaration": {
+                            "parameter": "sdk_orca", "required_for_new_code_proposals": True,
+                            "true": "Initial prepared/registered geometry and ORCA permission required before execution.",
+                            "false": "Analysis only; SDK ORCA requests are rejected.",
+                            "legacy": "Missing historical value retains the original execution checks."},
                         "sdk_protocol": 2, "sdk_max_exchanges_per_attempt": MAX_EXCHANGES,
                         "stable_receipt_reuse": True, "durable_task_checkpoints": True,
                         "context_dependencies": ["workspace.write", "knowledge.search", "evidence.list", "evidence.text", "evidence.search"],
@@ -303,6 +308,15 @@ def _definition(name: str) -> _Registration:
 
 def get_tool(name: str) -> Tool:
     return _definition(name).tool.model_copy(deep=True)
+
+
+def call_usage_counter(tool: Tool) -> str | None:
+    """The single ToolCall accounting rule; managed Attempts use their own budgets."""
+    if set(tool.effects) & {"execute_python", "execute_orca"}:
+        return None
+    return tool.usage_counter or (
+        "analysis_executions" if "write_analysis" in tool.effects or tool.output_ports
+        else "evidence_reads")
 
 
 def declared_outputs(step) -> list[str]:

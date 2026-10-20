@@ -168,7 +168,7 @@ def test_query_initial_plan_needs_no_scientific_authorization_or_budget():
                 goal_map={"read": OutputBinding(step_id="read", port="text_window")})
     run = Run(request_id=request.id, request_version=1,
               permission=PermissionSnapshot(allowed_tools=["evidence.text"], artifact_ids=["artifact1"]),
-              budget=BudgetLimits(orca_starts=0, extra_orca_starts=0))
+              budget=BudgetLimits(orca_starts=0, extra_orca_starts=0, evidence_reads=1))
     validate_revision(request, None, request, plan, run)
     assert not run.attempts and run.usage.orca_starts_reserved == 0
 

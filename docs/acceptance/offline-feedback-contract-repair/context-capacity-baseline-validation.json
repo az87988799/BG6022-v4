@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-20T09:07:04.187621+00:00",
+  "verification_method": "Read-only verification and hash-reference reuse of the already committed isolated-source baseline, as explicitly permitted. No fresh pytest invocation was needed.",
+  "current_head": "c7da0c12ef2938aa3214df8bfe80f06941d5ad02",
+  "baseline_product_commit": "f77499c0beca5002738a7ce7aa4c8babf4ff69db",
+  "baseline_method": "git archive HEAD src exported as ordinary files into a separate temporary directory; a fresh Python process imported that entire HEAD source snapshot before pytest. Current test fixture files and installed fixed dependencies were used.",
+  "baseline_verified_import_origin": "C:/WINDOW~1/orca-context-head-src-ka71yizv/src/orca_agent/context.py",
+  "baseline_original_filter": "actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback or retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evidence",
+  "baseline_original_result": {
+    "failed": 6,
+    "passed": 24,
+    "deselected": 71,
+    "seconds": 5.24
+  },
+  "relevant_cases": [
+    {
+      "nodeid": "tests/unit/test_context.py::test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback[disabled-final]",
+      "baseline_status": "failed",
+      "failure_type": "orca_agent.context.ContextLimitError"
+    },
+    {
+      "nodeid": "tests/unit/test_context.py::test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback[disabled-pending_analysis]",
+      "baseline_status": "failed",
+      "failure_type": "orca_agent.context.ContextLimitError"
+    },
+    {
+      "nodeid": "tests/unit/test_context.py::test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback[thinking_low-final]",
+      "baseline_status": "failed",
+      "failure_type": "orca_agent.context.ContextLimitError"
+    },
+    {
+      "nodeid": "tests/unit/test_context.py::test_actual_joint_sampling_ids_four_sp_and_two_analysis_results_fit_without_dropping_feedback[thinking_low-pending_analysis]",
+      "baseline_status": "failed",
+      "failure_type": "orca_agent.context.ContextLimitError"
+    }
+  ],
+  "relevant_result": {
+    "failed": 4,
+    "passed": 0,
+    "meaning": "These four remain known failing capacity assertions; baseline proof is not a passing test result."
+  },
+  "capacity": {
+    "run_input_tokens": 12000,
+    "run_output_tokens": 2000,
+    "configuration_model_input_tokens": 24000
+  },
+  "historical_diagnostic": "Four final/pending_analysis cases across disabled/thinking_low raise ContextLimitError. The disabled/final diagnostic probe reached 12427 tokens at the tightest existing projection, above the explicit 12000 Run limit.",
+  "source_evidence": [
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-1/review/context-capacity-review.json",
+      "sha256": "03e1df3cecffcdd78c819a88ed081b7454673831d56e0668a1c0db04163c78df"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-1/review/context-head-baseline.log",
+      "sha256": "d1a84b08cde26a0c5c5920e0dddafea8bf5f0bc953dcca4369ea27f1d38ec4a0",
+      "bytes": 5532
+    }
+  ],
+  "verbatim_baseline_log_copy": {
+    "path": "docs/acceptance/offline-feedback-contract-repair/context-capacity-baseline.log",
+    "sha256": "d1a84b08cde26a0c5c5920e0dddafea8bf5f0bc953dcca4369ea27f1d38ec4a0",
+    "bytes": 5532,
+    "identical_to_historical_log": true
+  },
+  "test_function_equivalence": {
+    "method": "ast.dump(FunctionDef, include_attributes=False), including parameterization decorators and full body",
+    "all_equal": true,
+    "revisions": [
+      {
+        "revision": "f77499c0beca5002738a7ce7aa4c8babf4ff69db",
+        "function_ast_sha256": "3260dfb1cab7025cd454bdc28ba64791ea5c2caaae3ab6c9999f36ec96f10713",
+        "test_file_sha256": "b18c0896cd75e79e0049714b74cd8f249d0606f851f0887e5d1a1bc5f2fbcce2",
+        "function_line": 765
+      },
+      {
+        "revision": "46209c0bdba3876031566831170bb64e8585dc97",
+        "function_ast_sha256": "3260dfb1cab7025cd454bdc28ba64791ea5c2caaae3ab6c9999f36ec96f10713",
+        "test_file_sha256": "1f60fc2a29c0b323b282f359a81c7eb401e7c6b83b8ae5923e93cd86f7eec58b",
+        "function_line": 769
+      },
+      {
+        "revision": "c7da0c12ef2938aa3214df8bfe80f06941d5ad02",
+        "function_ast_sha256": "3260dfb1cab7025cd454bdc28ba64791ea5c2caaae3ab6c9999f36ec96f10713",
+        "test_file_sha256": "1f60fc2a29c0b323b282f359a81c7eb401e7c6b83b8ae5923e93cd86f7eec58b",
+        "function_line": 769
+      },
+      {
+        "revision": "working_tree",
+        "function_ast_sha256": "3260dfb1cab7025cd454bdc28ba64791ea5c2caaae3ab6c9999f36ec96f10713",
+        "test_file_sha256": "5fe1a065337bc9505e774082f57e97ad70d70cb05ab1adde032f529a4be35c05",
+        "function_line": 769
+      }
+    ]
+  },
+  "conclusion": "The four requested final/pending_analysis failures in disabled/thinking_low existed before this repair. Their test bodies and parameterization are unchanged. No new regression is established by these same four failures, but they remain unresolved capacity limitations.",
+  "limitations": [
+    "The historical baseline ran complete product src from f77499c0 in an isolated temporary directory with then-current tests and installed dependencies; it is not a fresh current-HEAD rerun.",
+    "The historical log also contains two unrelated old array-final replay failures; those are outside these four-case findings.",
+    "No context limits, scientific facts, expected assertions, xfail markers, product source or tests were changed for this verification.",
+    "No real LLM, ORCA, network or scientific process was started. This record does not claim a green complete suite."
+  ]
+}

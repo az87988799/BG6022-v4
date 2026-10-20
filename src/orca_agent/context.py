@@ -27,7 +27,7 @@ from orca_agent.decision_purpose import (
 )
 from orca_agent.llm import PreparedRequest, _has_credential, prepare_request
 from orca_agent.model_output_policy import select_output_tokens
-from orca_agent.model_usage import final_explanation_budget
+from orca_agent.model_usage import final_explanation_budget, terminal_delivery_due
 from orca_agent.models import (
     ModelLimits,
     Plan,
@@ -47,9 +47,9 @@ from orca_agent.proposals import (
 )
 from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
-from orca_agent.tools.registry import get_tool
+from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v73"
+PROMPT_VERSION = "agent-json-v74"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -96,12 +96,18 @@ _PLAN_RULES = (
 
 _CODE_GUIDANCE = (
     "Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. "
+    "New python.execute Steps explicitly declare sdk_orca:true for internal ORCA, false for analysis only. "
+    "true requires the current authorized registered/prepared initial geometry before Plan approval; "
+    "task-created XYZ cannot replace that initial identity anchor. "
     "Unmet Goals use goal_map[Goal.id]={gap,port:Goal.port}. Execute writers, then revise_plan from file receipts. "
     "No placeholders/future producer values in parameters.code/input/inputs. "
     "CodeRef.language must match bytes, never converts: python.execute.code needs Python. "
     "parameters.inputs=manifest; "
     "Step.inputs[role]={producer_key,port} binds evidence ports, not manifest. "
-    "Reads:evidence.text/search. No shell/subprocess/network/host paths. "
+    "Reads:evidence.text/search. Inspect real text/JSON output and its headers/rows before authoring a parser; "
+    "binary data and documentation index hits do not establish an output format or input syntax. "
+    "Use returned manual references for an explicit section query, never assume a linked page was read. "
+    "No shell/subprocess/network/host paths. "
     "Write observations.json={version:1,observations:[{name:Goal.port,value:finite JSON,unit:string|null,"
     "sources:[{internal_request_key:SDK request_key,filename:files key,location:string|null}],"
     "formula:string|null,artifacts:[task-relative filename],limitations:[]}]} "
@@ -234,7 +240,12 @@ def _terminal_prompt(prompt, actions):
 
 _PATH = re.compile(
     r"(?i)(?:[a-z]:[\\/]|\\\\)[^\s\"<>|]*|(?:file://)[^\s\"<>]*"
-    r"|(?<![A-Za-z0-9:])/(?:[^/\s\"<>]+/)*[^/\s\"<>]+"
+    # Preserve Unicode prose/unit separators (平移/转动项, α/β, kJ/mol).
+    # Multi-component paths and filenames remain private beside Chinese prose.
+    r"|(?<![A-Za-z0-9_:])/(?:[^/\s\"<>，。；、！？]+/)+(?:[A-Za-z0-9_.~-]+"
+    r"|[^/\s\"<>，。；、！？]+\.[A-Za-z0-9]{1,16})(?=$|[\s，。；、！？])"
+    r"|(?<![A-Za-z0-9_:])/[^/\s\"<>，。；、！？]+\.[A-Za-z0-9]{1,16}(?=$|[\s，。；、！？])"
+    r"|(?<![\w:])/(?:[^/\s\"<>]+/)*[^/\s\"<>]+"
 )
 _PRIVATE_KEYS = {
     "directory", "archive_path", "archive_location", "filename", "implementation",
@@ -1609,7 +1620,8 @@ def _tools(run: Run, relevant_tools: Sequence[str]) -> tuple[list[dict], dict]:
                 and not run.permission.artifact_writes):
             continue
         allowed.add(name)
-        if tool.usage_counter and getattr(run.usage, tool.usage_counter) >= getattr(run.budget, tool.usage_counter):
+        counter = call_usage_counter(tool)
+        if counter and getattr(run.usage, counter) >= getattr(run.budget, counter):
             continue
         if ("execute_orca" in tool.effects
                 and run.usage.orca_starts_reserved >= run.budget.orca_starts):
@@ -1621,6 +1633,12 @@ def _tools(run: Run, relevant_tools: Sequence[str]) -> tuple[list[dict], dict]:
             "required_input_checks": tool.required_input_checks,
             "check_contract": tool.check_contract,
         }
+        if counter:
+            entry["call_budget"] = {
+                "counter": counter, "units_per_call": 1,
+                "remaining": max(0, getattr(run.budget, counter) - getattr(run.usage, counter)),
+                "charged_at": "admitted call reservation; failed calls are not refunded",
+            }
         if name in selected:
             schema = _schema(tool.parameter_schema)
             # Keep required argument names visible. Replacing the entire list
@@ -1755,6 +1773,8 @@ def current_decision_purpose(request, run, plan=None, *, pending_messages=False,
         return classify_decision_purpose(("normalize_request",), pending_messages=True)
     if "clarify" in terminal_actions(request, run):
         return classify_decision_purpose(("clarify", "stop"), clarification=True)
+    if terminal_delivery_due(request, run):
+        return classify_decision_purpose(terminal_actions(request, run))
     final_only = (request.conditions.get("explain_results") is True
         and all(run.goal_status.get(goal.id) == "satisfied" for goal in request.goals if goal.required))
     catalog, _ = _tools(run, ())
@@ -2538,6 +2558,8 @@ def build_context(
                              and "clarify" in terminal_actions(request, run))
     if genuine_clarification:
         effective_actions = ("clarify", "stop")
+    elif delivery_snapshot and not pending_ids and not semantic_intake and terminal_delivery_due(request, run):
+        effective_actions = terminal_actions(request, run)
     if delivery_snapshot and not pending_ids and set(effective_actions) <= {"stop", "clarify"}:
         effective_actions = terminal_actions(request, run)
     purpose = classify_decision_purpose(effective_actions, pending_messages=bool(pending_ids),

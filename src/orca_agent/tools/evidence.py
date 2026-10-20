@@ -94,6 +94,36 @@ def _finish(value):
     return value
 
 
+class NonTextEvidenceError(ValueError):
+    """Only fixed classifications cross the Tool feedback boundary; never source bytes."""
+
+    MESSAGES = {
+        "evidence_source_not_utf8": (
+            "source is not UTF-8 text; select an existing text/JSON Artifact with "
+            "evidence.list, or explicitly plan a supported conversion; no conversion performed"
+        ),
+        "evidence_source_binary_controls": (
+            "source contains binary control bytes; select an existing text/JSON Artifact "
+            "with evidence.list; binary data cannot establish a text table format"
+        ),
+    }
+
+    def __init__(self, reason: Literal["evidence_source_not_utf8", "evidence_source_binary_controls"]):
+        self.reason = reason
+        super().__init__(self.MESSAGES[reason])
+
+
+def _text_line(raw):
+    """Text evidence never substitutes replacement characters for binary bytes."""
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        raise NonTextEvidenceError("evidence_source_not_utf8") from None
+    if any(ord(char) < 32 and char not in "\t\r\n\f" for char in text) or "\x7f" in text:
+        raise NonTextEvidenceError("evidence_source_binary_controls")
+    return text.rstrip("\r\n")
+
+
 @contextmanager
 def _source(store, artifact_id, *, maximum=MAX_SOURCE_BYTES):
     started = time.monotonic()
@@ -368,7 +398,7 @@ def search_text(store, artifact_id, query, start_line=1, max_lines=200, max_hits
                     raise ValueError("line exceeds the 32 KiB evidence window")
                 if number < start_line:
                     continue
-                text = raw.decode("utf-8", errors="replace").rstrip("\r\n")
+                text = _text_line(raw)
                 if needle in (text if case_sensitive else text.casefold()):
                     match = {"line": number, "text": text}
                     candidate = {**response, "matches": [*response["matches"], match],
@@ -416,8 +446,7 @@ def inspect_artifact(store, artifact_id, start_line=1, lines=40):
                 if len(raw) > MAX_RETURN_BYTES:
                     raise ValueError("line exceeds the 32 KiB evidence window")
                 if number >= start_line:
-                    item = {"line": number,
-                            "text": raw.decode("utf-8", errors="replace").rstrip("\r\n")}
+                    item = {"line": number, "text": _text_line(raw)}
                     candidate = {**response, "lines": [*output, item],
                                  "returned_bytes": used + len(raw), "status": "partial",
                                  "coverage": _coverage(response, requested,

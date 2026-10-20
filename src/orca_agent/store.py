@@ -40,6 +40,7 @@ from orca_agent.models import (
     utc_now,
 )
 from orca_agent.tools.registry import (
+    call_usage_counter,
     get_tool,
     require_execution_available,
     validate_geometry,
@@ -273,6 +274,10 @@ class Store:
         )
         if plan:
             run.usage.logical_steps = [s.logical_id for s in plan.steps]
+            from orca_agent.planning import validate_tool_call_budget
+            validate_tool_call_budget(plan, run)
+            for step in plan.steps:
+                validate_code_inputs(self, permission, step, run=run, request=request, plan=plan)
         self._write_json(
             f"runs/{run.id}/request-revisions/{request.version}.json", request, immutable=True
         )
@@ -1530,9 +1535,9 @@ class Store:
                 import importlib
                 module, name = definition.preflight.rsplit(".", 1)
                 getattr(importlib.import_module(module), name)(self, run, params, tool, consumption)
-            counter = definition.usage_counter or (
-                "analysis_executions" if "write_analysis" in definition.effects
-                or definition.output_ports else "evidence_reads")
+            counter = call_usage_counter(definition)
+            if counter is None:
+                raise StoreError("managed execution requires an Attempt, not ToolCall accounting")
             if getattr(run.usage, counter) >= getattr(run.budget, counter):
                 raise BudgetExceeded(f"{counter} budget exhausted")
             if validate_only:
@@ -1683,7 +1688,8 @@ class Store:
             from orca_agent.applicability import validate_direct_geometry
             from orca_agent.planning import validate_code_inputs
             for step in plan.steps if plan else []:
-                validate_code_inputs(self, run.permission, step, run=run)
+                validate_code_inputs(self, run.permission, step, run=run,
+                                     request=next_request, plan=plan)
                 if ("execute_orca" in get_tool(step.tool).effects and step.geometry
                         and step.geometry.artifact_id):
                     try:
