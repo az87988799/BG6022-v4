@@ -1893,16 +1893,47 @@ def _energy_source_condition_quantities(request, goal, obligation):
     return quantities
 
 
-def _literal_energy_matches(request, goal, obligation, quantities):
-    literal, quantity = obligation["literal_quantity"], goal.quantity or ""
+def _canonical_goal_energy_quantities(request, goal):
+    """Recover scoped source quantities when the program made a display label.
+
+    The excerpt is not another scientific declaration. Reuse source parsing and
+    the same effective-condition proof, including shared nouns in condition lists.
+    None preserves the existing strict path for model-authored literal quantities.
+    """
+    evidence = goal.text_evidence
+    audit = evidence.get("quantity_canonicalization", {})
+    if (audit.get("rule") != "source-quantity-label-1"
+            or audit.get("source") != "authenticated_goal_text_basis"
+            or audit.get("complete_source_field") != "original_text"
+            or audit.get("value") != goal.quantity
+            or evidence.get("text_basis") != goal.original_text
+            or _source_quantity_label(goal.original_text) != goal.quantity
+            or "proposed_value" not in audit
+            or audit["proposed_value"] is not None and (
+                not isinstance(audit["proposed_value"], str)
+                or audit["proposed_value"] in goal.original_text)):
+        return None
+    quantities = []
+    for source in _energy_source_requirements(goal.original_text, _energy_target_names(request)):
+        source.update({name: evidence[name] for name in ("message_id", "start", "end")})
+        scoped = _energy_source_condition_quantities(request, goal, source)
+        if scoped is not None:
+            quantities.extend(scoped)
+    return list(dict.fromkeys(quantities))
+
+
+def _literal_energy_matches(request, goal, obligation, quantities, supplied_quantities=None):
+    literal = obligation["literal_quantity"]
+    supplied_quantities = [goal.quantity or ""] if supplied_quantities is None else supplied_quantities
     names = _energy_target_names(request)
     for unqualified in quantities:
         normalized = {re.sub(r"\s+", " ", value).strip().casefold() for value in (literal, unqualified)}
         if any(re.sub(r"\s+", " ", phrase).strip().casefold() in normalized
-               for phrase in _energy_quantity_phrases(quantity)):
+               for quantity in supplied_quantities for phrase in _energy_quantity_phrases(quantity)):
             continue
         requested = _energy_quantity_kinds(unqualified, target_names=names)
-        supplied = _energy_quantity_kinds(quantity, target_names=names)
+        supplied = set().union(*(_energy_quantity_kinds(quantity, target_names=names)
+                                 for quantity in supplied_quantities))
         if not requested or not requested <= supplied:
             return False
     return True
@@ -2031,15 +2062,18 @@ def _require_energy_coverage(candidate, request, messages, goals):
             quantities = _energy_source_condition_quantities(request, goal, obligation)
             if quantities is None:
                 return False
+            supplied_quantities = _canonical_goal_energy_quantities(request, goal)
             literal = obligation.get("literal_quantity")
             if literal is not None:
                 # Unknown qualifiers cannot be assumed equivalent to raw energy
                 # or disappear from source obligations. Preserve their complete
                 # authenticated noun phrase, including transforms and scope.
-                matches = _literal_energy_matches(request, goal, obligation, quantities)
+                matches = _literal_energy_matches(request, goal, obligation, quantities, supplied_quantities)
             else:
                 requested = set(obligation["energy_kinds"])
-                supplied = _energy_quantity_kinds(quantity, target_names=_energy_target_names(request))
+                candidates = [quantity] if supplied_quantities is None else supplied_quantities
+                supplied = set().union(*(_energy_quantity_kinds(value, target_names=_energy_target_names(request))
+                                         for value in candidates))
                 matches = bool(requested) and requested <= supplied
             return (matches
                     and evidence.get("message_id") == obligation["message_id"]

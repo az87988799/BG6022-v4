@@ -42,6 +42,8 @@ a019 的持续占位输出后，按 [0068](decisions/0068-explicit-pro-model-dev
 
 a021 已认证目标的显示标签反复逐字拒绝按 [0069](decisions/0069-source-grounded-quantity-labels.md) 消除：简化流程直接从原文规范化缺省或非逐字名称，原标签留审计；完整科学义务、来源、最低证据、条件及历史事实保持。
 
+a023 的并列环境能量目标按 [0072](decisions/0072-scoped-energy-source-coverage.md) 复用认证原文及逐目标条件进行覆盖，程序显示名称不再决定物理量类型；不合并气相/溶剂义务或放宽科学检查。
+
 a019 的可执行空脚本示例按 [0070](decisions/0070-nonexecutable-code-guidance.md) 改为字段说明。新 Run 可冻结非空 Python 入口检查，实际代码仍由模型编写；来源、权限、预算和科学证据校验保持，旧 Run 不升级。
 
 a022 已读原生错误被后续查询窗口挤掉的问题按 [0071](decisions/0071-preserve-current-execution-failure.md) 修复：当前未修复失败保留有界、同源核验的日志证据，新失败在执行链内保存摘要；不扩大上下文或隐式重读旧文件，不修改历史结果。
