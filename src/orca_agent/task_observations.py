@@ -7,9 +7,10 @@ from types import SimpleNamespace
 
 from pydantic import Field
 
-from orca_agent.models import Check, Observation, ObservationSource, Record
+from orca_agent.models import Check, Observation, ObservationSource, Record, fingerprint
 
 _ADMISSION_VERSION = "bounded-observation-admission-3"
+_SOURCE_ADMISSION_VERSION = "bounded-observation-admission-4"
 _MANIFEST_BYTES = 8 * 1024 * 1024
 _RECORD_BYTES = 256 * 1024
 _RECORDS_BYTES = 1024 * 1024
@@ -25,7 +26,7 @@ class _Declared(Record):
     name: str
     value: object
     unit: str | None = Field(default=None, max_length=128)
-    sources: list[_Source] = Field(min_length=1, max_length=16)
+    sources: list[_Source]
     formula: str | None = Field(default=None, max_length=4000)
     artifacts: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list, max_length=16)
@@ -186,8 +187,10 @@ def _task_artifact(store, run, attempt, files, name, *, role):
     return artifact
 
 
-def _record(store, run, step, attempt, files, item, *, simplified=False, normalizations=None):
+def _record(store, run, step, attempt, files, item, *, simplified=False, normalizations=None,
+            flexible_sources=False, record_index=None):
     sources, native_conditions = [], []
+    metadata = {}
     general = _general_admission(store, run)
     if not simplified and len(item.artifacts) > 64:
         raise ValueError("legacy observation artifacts exceed 64 items")
@@ -267,6 +270,34 @@ def _record(store, run, step, attempt, files, item, *, simplified=False, normali
         sources.append(ObservationSource(artifact_id=artifact.id, sha256=artifact.sha256,
             location=declaration.location, attempt_id=artifact.attempt_id if registered_input is not None else parent.id,
             internal_request_key=request_key, actual_conditions=admitted))
+    if flexible_sources and not item.sources:
+        # The declaration itself is the evidence for a task-authored statement.
+        # It is not evidence of a native calculation or of the statement's truth.
+        manifest = _task_artifact(store, run, attempt, files, "observations.json", role="manifest source")
+        code = step.parameters.code
+        store.artifact_path(code.artifact_id)
+        if store.load_artifact(code.artifact_id).sha256 != code.sha256:
+            raise ValueError("self-reported observation code hash differs")
+        if (record_index is None or attempt.frozen_step is None
+                or fingerprint(step) != fingerprint(attempt.frozen_step)):
+            raise ValueError("self-reported observation requires its frozen producer Step and record index")
+        metadata = {"self_reported": True, "origin": "self_reported_manifest_value", "declared_sources": [],
+            "manifest": {"artifact_id": manifest.id, "sha256": manifest.sha256,
+                "path": [{"kind": "key", "key": "observations"}, {"kind": "index", "index": record_index}]},
+            "producer": {"run_id": run.id, "attempt_id": attempt.id,
+                "input_fingerprint": attempt.input_fingerprint, "frozen_step_fingerprint": fingerprint(step),
+                "code_artifact_id": code.artifact_id, "code_sha256": code.sha256},
+            "observation_delivery_policy": "reported-observation-2",
+            "configuration_fingerprint": fingerprint(store.run_configuration(run)),
+            "admission_version": _SOURCE_ADMISSION_VERSION}
+        sources.append(ObservationSource(artifact_id=manifest.id, sha256=manifest.sha256,
+            location=f"observations[{record_index}].value", attempt_id=attempt.id,
+            actual_conditions={"origin": "self_reported_manifest_value"}))
+        if normalizations is not None:
+            normalizations.append({"basis": "self_reported_manifest_value", "declared_sources": [],
+                                   "metadata": metadata})
+    if flexible_sources and len({source.artifact_id for source in sources}) > run.budget.artifact_count:
+        raise ValueError("observation sources exceed the frozen Run artifact_count allowance")
     artifacts = [artifact.id for artifact in declared_artifacts.values()]
     # Different candidate geometries are expected in a comparison. Preserve
     # every actual input binding; the summary contains only shared conditions.
@@ -295,32 +326,39 @@ def _record(store, run, step, attempt, files, item, *, simplified=False, normali
         limitations.append(detail)
     if any(source.actual_conditions.get("origin") == "registered_task_input" for source in sources):
         limitations.append("Registered input identity/hash is checked; its calculation conditions and scientific contents remain unknown.")
+    if metadata:
+        limitations.append("Self-reported manifest value: only the declaration, producer code and archive identity are bound; no external or native calculation evidence is asserted.")
     return Observation(name=item.name, value=item.value, unit=item.unit, actual_conditions=conditions,
         sources=sources, code_sha256=step.parameters.code.sha256, formula=item.formula,
         artifact_ids=list(dict.fromkeys(artifacts)), checks=checks,
-        validation_status="failed" if conflicts and not general else "unverified", limitations=limitations)
+        validation_status="failed" if conflicts and not general else "unverified", limitations=limitations,
+        metadata=metadata)
 
 
 def collect(store, run, step, attempt, files, *, diagnostics=None):
     entry = files.get("task/observations.json")
     if entry is None:
         return []
-    simplified = store.run_configuration(run).workflow_policy == "simplified-1"
+    configuration = store.run_configuration(run)
+    simplified = configuration.workflow_policy == "simplified-1"
+    flexible_sources = configuration.observation_delivery_policy == "reported-observation-2"
+    bounded = simplified or flexible_sources
+    admission_version = _SOURCE_ADMISSION_VERSION if flexible_sources else _ADMISSION_VERSION
     path = store.artifact_path(entry["artifact_id"])
     manifest_ref = {"artifact_id": entry["artifact_id"], "sha256": entry.get("sha256")}
-    limit = min(_MANIFEST_BYTES, run.budget.artifact_bytes, run.budget.artifact_total_bytes) if simplified else 65536
-    if simplified:
+    limit = min(_MANIFEST_BYTES, run.budget.artifact_bytes, run.budget.artifact_total_bytes) if bounded else 65536
+    if bounded:
         artifact = store.load_artifact(entry["artifact_id"])
         if ((artifact.run_id, artifact.attempt_id) != (run.id, attempt.id)
                 or artifact.sha256 != entry.get("sha256")):
             raise ValueError("observation manifest archive binding differs from its original Attempt or hash")
     if path.stat().st_size > limit:
-        if simplified and diagnostics is not None:
+        if bounded and diagnostics is not None:
             diagnostics.append({"category": "observation_manifest_rejected",
-                "rule_version": _ADMISSION_VERSION, "manifest": manifest_ref,
+                "rule_version": admission_version, "manifest": manifest_ref,
                 "detail": "observation manifest exceeds the frozen bounded read allowance",
                 "manifest_bytes": path.stat().st_size, "manifest_bytes_limit": limit})
-        raise ValueError(f"observations.json exceeds bounded read allowance ({limit} bytes)" if simplified
+        raise ValueError(f"observations.json exceeds bounded read allowance ({limit} bytes)" if bounded
                          else "observations.json exceeds 64 KiB")
     from orca_agent.llm import _strict_json
 
@@ -342,12 +380,14 @@ def collect(store, run, step, attempt, files, *, diagnostics=None):
     for index, declaration in enumerate(manifest.observations):
         item_bytes = None
         try:
-            if simplified:
+            if bounded:
                 item_bytes = len(json.dumps(declaration, ensure_ascii=False, allow_nan=False,
                                             separators=(",", ":")).encode("utf-8"))
                 if item_bytes > _RECORD_BYTES:
                     raise ValueError("observation declaration exceeds the per-record byte allowance; use a bounded summary with archived sources")
             item = _Declared.model_validate(declaration)
+            if not flexible_sources and not 1 <= len(item.sources) <= 16:
+                raise ValueError("legacy observation sources require at least 1 and at most 16 items")
             if (item.name not in step.parameters.observation_names or item.name in names
                     or item.name in duplicates):
                 raise ValueError("observation name is duplicate or outside the frozen Step")
@@ -355,8 +395,8 @@ def collect(store, run, step, attempt, files, *, diagnostics=None):
             json.dumps(item.value, allow_nan=False)
             normalizations = []
             record = _record(store, run, step, attempt, files, item, simplified=simplified,
-                             normalizations=normalizations)
-            if simplified:
+                             normalizations=normalizations, flexible_sources=flexible_sources, record_index=index)
+            if bounded:
                 item_bytes = len(record.model_dump_json().encode("utf-8"))
                 if item_bytes > _RECORD_BYTES:
                     raise ValueError("bound observation exceeds the per-record byte allowance; use a bounded summary with archived sources")
@@ -367,7 +407,7 @@ def collect(store, run, step, attempt, files, *, diagnostics=None):
             records.append(record)
             if normalizations and diagnostics is not None:
                 diagnostics.append({"category": "observation_sources_normalized", "index": index,
-                    "name": item.name, "rule_version": _ADMISSION_VERSION,
+                    "name": item.name, "rule_version": admission_version,
                     "manifest": {**manifest_ref, "path": [
                         {"kind": "key", "key": "observations"}, {"kind": "index", "index": index}]},
                     "normalizations": normalizations,
@@ -378,14 +418,14 @@ def collect(store, run, step, attempt, files, *, diagnostics=None):
                 raise
             diagnostic = {"category": "observation_manifest_rejected", "index": index,
                 "name": declaration.get("name") if isinstance(declaration, dict) else None, "detail": str(exc)}
-            if simplified:
-                diagnostic.update(rule_version=_ADMISSION_VERSION, manifest={**manifest_ref,
+            if bounded:
+                diagnostic.update(rule_version=admission_version, manifest={**manifest_ref,
                     "path": [{"kind": "key", "key": "observations"}, {"kind": "index", "index": index}]},
                     record_bytes=item_bytes, record_bytes_limit=_RECORD_BYTES,
                     remaining_record_bytes=_RECORDS_BYTES - accepted_bytes)
             diagnostics.append(diagnostic)
-    if simplified and diagnostics is not None:
-        diagnostics.append({"category": "observation_admission", "rule_version": _ADMISSION_VERSION,
+    if bounded and diagnostics is not None:
+        diagnostics.append({"category": "observation_admission", "rule_version": admission_version,
             "manifest": manifest_ref, "manifest_bytes": len(payload), "manifest_bytes_limit": limit,
             "record_bytes_limit": _RECORD_BYTES, "total_record_bytes_limit": _RECORDS_BYTES,
             "record_count_limit": 32, "accepted_indices": accepted_indices,
@@ -618,7 +658,7 @@ def _comparison_environment_goals(run, request, goal, requested):
 
 def _reported_delivery(run, goal):
     return (run.configuration is not None
-            and run.configuration.observation_delivery_policy == "reported-observation-1"
+            and run.configuration.observation_delivery_policy in {"reported-observation-1", "reported-observation-2"}
             and goal.evidence_contract_version == "generic-observation-1"
             and goal.verification == "reported_with_limitations")
 

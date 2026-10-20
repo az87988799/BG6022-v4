@@ -52,7 +52,7 @@ def test_delivery_policy_is_explicit_frozen_and_absent_from_old_serialization(mo
             chosen.observation_delivery_policy = None
 
 
-@pytest.mark.parametrize("bad", [True, 1, "true", "reported-observation-2", {}])
+@pytest.mark.parametrize("bad", [True, 1, "true", "reported-observation-unknown", {}])
 def test_delivery_policy_is_not_a_truthy_feature_flag(bad):
     with pytest.raises(ValidationError):
         Config(observation_delivery_policy=bad)

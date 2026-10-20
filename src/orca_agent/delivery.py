@@ -110,6 +110,7 @@ def _source_integrity(store, result, *, observation=None, code=None, port=None):
 def collect_goal_selections(store, run, request, plan=None, results=None):
     """The sole current-purpose selector, with separate read-time integrity facts."""
     selections = {}
+    whole_integrity = {}
     for goal in request.goals:
         selection = current_goal_evidence(store, run, request, goal, plan, results)
         if selection.get("result"):
@@ -120,8 +121,17 @@ def collect_goal_selections(store, run, request, plan=None, results=None):
                 observed = matches[0] if len(matches) == 1 else None
                 attempt = next((item for item in run.attempts if item.id == result.attempt_id), None)
                 code = getattr(attempt.frozen_step.parameters, "code", None) if attempt and attempt.frozen_step else None
-            selection["source_integrity"] = _source_integrity(store, result, observation=observed, code=code,
-                                                              port=goal.port)
+            if (_continuation_policy(run) and observed is None and goal.port not in result.qualified_outputs
+                    and result.id in whole_integrity):
+                selection["source_integrity"] = deepcopy(whole_integrity[result.id])
+            else:
+                selection["source_integrity"] = _source_integrity(store, result, observation=observed, code=code,
+                                                                  port=goal.port)
+                if _continuation_policy(run) and observed is None and goal.port not in result.qualified_outputs:
+                    whole_integrity[result.id] = selection["source_integrity"]
+            if _continuation_policy(run):
+                selection["continuation_evidence"] = _continuation_evidence(
+                    store, run, request, plan, goal, result, observed)
         selections[goal.id] = selection
     return selections
 
@@ -364,7 +374,244 @@ def _existing_evidence_repair(request, run, goal, selection, resources):
             "validation": "Planning suggestion only; source hashes, Request binding and minimum evidence must still pass the existing Tool checks."}
 
 
-def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_generation=None):
+def _continuation_policy(run):
+    return bool(run.configuration
+                and run.configuration.observation_delivery_policy == "reported-observation-2")
+
+
+def _current_records(run, request, plan):
+    from orca_agent.decision_purpose import current_step_execution_records
+
+    if not plan or (plan.id, plan.version, plan.request_id, plan.request_version) != (
+            run.plan_id, run.plan_version, request.id, request.version):
+        return {}
+    records = {}
+    for step, record in current_step_execution_records(run, plan):
+        if record.request_version == request.version:
+            records[step.id] = record
+    return records
+
+
+def _continuation_evidence(store, run, request, plan, goal, result, observed):
+    """Authenticate current producer diagnostics; task declarations grant no rights."""
+    record = _current_records(run, request, plan).get(result.step_id)
+    if (not record or record.result_id != result.id or result.run_id != run.id
+            or result.id not in run.result_ids or record.state != result.operation_status
+            or getattr(record, "finished_at", None) is None
+            or result.attempt_id != record.id):
+        return None
+    names = getattr(record.frozen_step.parameters, "observation_names", [])
+    if goal.port not in names:
+        return None
+    code = getattr(record.frozen_step.parameters, "code", None) or getattr(record.frozen_step.parameters, "input", None)
+    try:
+        artifact = store.load_artifact(code.artifact_id)
+        store.artifact_path(artifact.id)
+        if artifact.sha256 != code.sha256:
+            return None
+    except (AttributeError, KeyError, ValueError, OSError, RuntimeError):
+        return None
+    keys = {source.internal_request_key for source in observed.sources
+            if source.internal_request_key} if observed else set()
+    calls, diagnostics = [], []
+    for call in run.internal_calls:
+        if (call.parent_attempt_id != record.id or call.finished_at is None
+                or call.state not in {"completed", "failed", "cancelled", "timed_out"}
+                or call.actual_conditions.get("request_version") != request.version
+                or goal.system_ids and call.actual_conditions.get("system_id") not in goal.system_ids
+                or keys and call.request_key not in keys):
+            continue
+        # A completed explicit retry replaces the failed source for continuation;
+        # never demand another calculation because an old receipt is retained.
+        if any(other.retry_of == call.request_key and other.state == "completed"
+               and other.finished_at is not None for other in run.internal_calls):
+            continue
+        files = {}
+        for name, ref in (call.response or {}).get("files", {}).items():
+            if name not in {"stdout.out", "stderr.txt"} or not isinstance(ref, dict):
+                continue
+            try:
+                artifact = store.load_artifact(ref["artifact_id"])
+                store.artifact_path(artifact.id)
+                if (artifact.id not in call.artifact_ids or artifact.sha256 != ref.get("sha256")
+                        or (artifact.run_id, artifact.attempt_id) != (run.id, record.id)):
+                    return None
+                files[name] = {"artifact_id": artifact.id, "sha256": artifact.sha256}
+            except (KeyError, ValueError, OSError, RuntimeError):
+                return None
+        if not files:
+            continue
+        calls.append({"request_key": call.request_key, "state": call.state,
+            "work_units": call.work_units, "files": files})
+        for entry in result.diagnostics:
+            if entry.get("request_key") != call.request_key:
+                continue
+            for evidence in entry.get("evidence", []):
+                if any(evidence.get("artifact_id") == ref["artifact_id"]
+                       and evidence.get("sha256") == ref["sha256"] for ref in files.values()):
+                    diagnostics.append({key: deepcopy(evidence[key]) for key in
+                        ("filename", "artifact_id", "sha256", "byte_start", "total_bytes") if key in evidence}
+                        | {"text": evidence.get("text", "")[:512]})
+    admission = [entry for entry in result.diagnostics if entry.get("category") == "observation_admission"
+                 or entry.get("category") == "observation_manifest_rejected" and entry.get("name") == goal.port]
+    return {"attempt_id": record.id, "step_id": record.step_id, "logical_id": record.logical_id,
+        "state": record.state, "execution_kind": record.execution_kind,
+        "internal_calls": calls, "diagnostics": diagnostics or _value(result.diagnostics, limit=2048),
+        "observation_admission": _value(admission, limit=2048) if admission else []}
+
+
+def _unsettled(resources):
+    return any(resources.get(name) for name in ("unsettled_attempt_ids", "unsettled_call_ids",
+                                               "unsettled_internal_request_keys"))
+
+
+def _work_budget(run, steps, resources):
+    """Check necessary declared effects only; admission still checks exact inputs."""
+    from collections import Counter
+
+    from orca_agent.tools.registry import call_usage_counter, get_tool, require_execution_available
+
+    required = Counter()
+    permission = run.permission
+    for step in steps:
+        try:
+            tool = get_tool(step.tool)
+            require_execution_available(step.tool)
+        except ValueError:
+            return False
+        effects = set(tool.effects)
+        if step.tool not in permission.allowed_tools:
+            return False
+        for effect, granted in (("execute_orca", permission.scientific_execution),
+                ("execute_python", permission.code_execution), ("prepare_geometry", permission.geometry_preparation),
+                ("query_external_identity", permission.external_identity_queries)):
+            if effect in effects and not granted:
+                return False
+        if effects & {"write_artifact", "write_analysis", "write_input_artifact", "import_artifact"} and not permission.artifact_writes:
+            return False
+        if "execute_python" in effects:
+            required["analysis_executions"] += 1
+            if run.usage.logical_attempts.get(step.logical_id, 0):
+                required["code_retries"] += 1
+        counter = call_usage_counter(tool, run.budget)
+        if counter:
+            required[counter] += 1
+        sdk = getattr(step.parameters, "sdk_orca", False)
+        if sdk and "orca.run" not in permission.allowed_tools:
+            return False
+        if "execute_orca" in effects or sdk:
+            if not permission.scientific_execution:
+                return False
+            required["orca_starts"] += 1
+            extra = (bool(run.usage.orca_starts_reserved or run.internal_calls
+                          or any(item.execution_kind == "orca" for item in run.attempts)) if sdk else
+                     bool(run.internal_calls or run.usage.logical_attempts.get(step.logical_id, 0)
+                          or run.initial_science_steps is not None and step.logical_id not in run.initial_science_steps))
+            if extra:
+                if not permission.allow_additional_science:
+                    return False
+                required["extra_orca_starts"] += 1
+            if sdk:
+                required["internal_work_units"] += 1
+        if run.usage.logical_attempts.get(step.logical_id, 0) >= run.budget.attempts_per_step:
+            return False
+    if required["extra_orca_starts"]:
+        from orca_agent.store import _extra_orca_reservations_used
+        try:
+            if run.budget.extra_orca_starts - _extra_orca_reservations_used(run) < required["extra_orca_starts"]:
+                return False
+        except ValueError:
+            return False
+    return all(resources["remaining"].get(name, 0) >= count for name, count in required.items())
+
+
+def _approved_goal_work(request, run, plan, goal, resources):
+    if not plan or (plan.id, plan.version, plan.request_id, plan.request_version) != (
+            run.plan_id, run.plan_version, request.id, request.version):
+        return None
+    binding = plan.goal_map.get(goal.id)
+    if not binding or not binding.step_id or binding.port != goal.port:
+        return None
+    steps = {step.id: step for step in plan.steps}
+    records = _current_records(run, request, plan)
+    needed, visited = [], set()
+
+    def visit(identifier):
+        if identifier in visited:
+            return True
+        visited.add(identifier)
+        step = steps.get(identifier)
+        if not step:
+            return False
+        record = records.get(identifier)
+        if record:
+            return (record.state == "completed" and bool(record.result_id)
+                    and record.result_id in run.result_ids)
+        if not all(visit(dependency) for dependency in step.depends_on):
+            return False
+        needed.append(step)
+        return True
+
+    if not visit(binding.step_id) or not needed or not _work_budget(run, needed, resources):
+        return None
+    return {"kind": "execute_approved_steps", "step_ids": [step.id for step in needed],
+            "goal_step_id": binding.step_id,
+            "validation": "Continue the approved dependency order through the existing admission checks; no Plan revision or new scientific target is implied."}
+
+
+def _goal_continuation(request, run, plan, goal, selection, resources):
+    if (not goal.required or request.unresolved or goal.unresolved or _unsettled(resources)):
+        return None
+    pending = _approved_goal_work(request, run, plan, goal, resources)
+    if pending:
+        return pending
+    evidence = selection.get("continuation_evidence")
+    if not evidence or selection.get("source_integrity", {}).get("status") != "verified":
+        return None
+    from orca_agent.models import Step
+
+    # New code and its explicit execution use the existing bounded Plan surface.
+    logical = set(run.usage.logical_steps) | {step.logical_id for step in plan.steps}
+    failed_outer = evidence["state"] in {"failed", "timed_out", "cancelled"}
+    if (run.usage.plan_revisions >= run.budget.plan_revisions
+            or len(logical) + (1 if failed_outer else 2) > run.budget.logical_steps):
+        return None
+    failed = [call for call in evidence["internal_calls"] if call["state"] in {"failed", "timed_out", "cancelled"}]
+    completed = [call for call in evidence["internal_calls"] if call["state"] == "completed"]
+    missing_source = {"requested_observation_missing", "requested_observation_lacks_completed_native_source",
+        "scientific_system_observation_lacks_native_evidence", "scientific_geometry_observation_lacks_native_evidence",
+        "generic_observation_differs_from_archived_manifest"}
+    reasons = set((selection.get("assessment") or {}).get("reasons", []))
+    analysis = bool(not failed and not failed_outer and completed and reasons.intersection(missing_source))
+    if not failed and not failed_outer and not analysis:
+        return None
+    original = next(step for step in plan.steps if step.id == evidence["step_id"])
+    native = evidence["execution_kind"] == "orca"
+    sdk = bool(failed or failed_outer and not completed and getattr(original.parameters, "sdk_orca", False))
+    writer = Step(id="continuation_writer", logical_id="continuation_writer", tool="workspace.write",
+                  parameters={"name": "repair.inp" if native else "repair.py",
+                              "role": "orca" if native else "python", "content": ""})
+    followup = original.model_copy(deep=True)
+    followup.logical_id = original.logical_id if failed_outer else "continuation_analysis"
+    if not native:
+        followup.parameters = followup.parameters.model_copy(update={"sdk_orca": sdk})
+    if not _work_budget(run, [writer, followup], resources):
+        return None
+    if failed and (not run.permission.allow_additional_science
+                or resources["remaining"]["extra_orca_starts"] < len(failed)
+                or resources["remaining"]["orca_starts"] < len(failed)
+                or resources["remaining"].get("internal_work_units", 0) < sum(call["work_units"] for call in failed)):
+        return None
+    return {"kind": "repair_existing_evidence" if analysis else "repair_failed_execution",
+        "source_attempt_id": evidence["attempt_id"], "source_step_id": evidence["step_id"],
+        "outer_operation_status": evidence["state"], "internal_calls": completed if analysis else failed,
+        "diagnostics": evidence["diagnostics"], "observation_admission": evidence["observation_admission"],
+        "route": "repair_of_failed_outer" if failed_outer else "new_followup_step",
+        "new_orca_starts_required": 0 if analysis else max(len(failed), int(sdk)) + int(native),
+        "validation": "Explicit revised code/Plan and existing execution, retry, source and scientific checks remain mandatory."}
+
+
+def delivery_snapshot(request, run, selections, *, plan=None, results=None, allowed_actions=(), control_generation=None):
     """Pure versioned facts/relations for Context, contract validation and report.
 
     Selections must come from collect_goal_selections. Short refs are scoped to
@@ -440,7 +687,18 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
                 refs.append(fact(goal_ref, "members", members, source_ref))
         if row["answer"] is not None:
             refs.append(fact(goal_ref, "answer", row["answer"], source_ref))
-        repair = _existing_evidence_repair(request, run, goal, selection, resources) if not row["goal_complete"] else None
+        continuation = (_goal_continuation(request, run, plan, goal, selection, resources)
+            if _continuation_policy(run) and not row["goal_complete"]
+            and communication["delivery_scope"] != "registration_only" and not communication["awaiting_reply"] else None)
+        repair = (_existing_evidence_repair(request, run, goal, selection, resources)
+                  if not _continuation_policy(run) and not row["goal_complete"] else None)
+        if continuation:
+            work_ref = "work_" + _digest(continuation)[:16]
+            snapshot["references"].setdefault(work_ref, deepcopy(continuation))
+            summary = {"kind": continuation["kind"], "work_ref": work_ref}
+            if "step_ids" in continuation:
+                summary["step_ids"] = continuation["step_ids"]
+            refs.append(fact(goal_ref, "current_plan_work", summary, source_ref))
         if repair:
             refs.append(fact(goal_ref, "existing_evidence_repair", repair, source_ref))
         blockers = []
@@ -480,6 +738,11 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
                 "Registration is complete; this does not complete the unmet scientific goal.", "stop_after_registration")
         elif communication["awaiting_reply"] and communication["questions"]:
             relation, text, action = "current_goal_unmet", "Current goal remains unmet; the stated questions require user input.", "clarify"
+        elif continuation:
+            relation, text, action = ("current_goal_unmet",
+                "Current required goal has concrete authorized work within its remaining execution budget; continue unless the program confirms only final delivery remains.",
+                "continue_approved_plan" if continuation["kind"] == "execute_approved_steps"
+                else continuation["kind"])
         elif repair:
             relation, text, action = ("current_goal_unmet",
                 "Current source binding remains incomplete; archived native evidence can be reused in an explicit analysis Step without another calculation.",
@@ -489,10 +752,20 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
         if allowed_actions and action == "clarify" and "clarify" not in allowed_actions:
             action = "stop_with_partial_results"
         action_ref, explanation_ref = "n" + str(index), "e" + str(index)
+        continue_text = None
+        if continuation:
+            if continuation["kind"] == "execute_approved_steps":
+                continue_text = "Continue the listed approved Steps in dependency order through normal admission; preserve the current Goal and scientific conditions."
+            elif continuation["kind"] == "repair_existing_evidence":
+                continue_text = "Revise the Plan with a new writer and analysis-only follow-up Step using pinned completed raw evidence; repair the observation manifest and Goal binding without starting ORCA."
+            elif continuation["route"] == "new_followup_step":
+                continue_text = "Use the exact archived failure diagnostic to revise the input/code in a new writer and follow-up Python Step. Preserve the successful outer Step; do not use repair_of on it. For each failed SDK call use a new request key with purpose='failure_retry' and retry_of equal to the listed original key. Keep all physical targets and checks."
+            else:
+                continue_text = "Revise the code using the archived failure, retain the failed outer Step's logical identity through repair_of, and use normal bounded retry admission without weakening the Goal or scientific checks."
         snapshot["next_actions"].append({"ref": action_ref, "kind": action, "goal_refs": [goal_ref],
-            "requires": [], "text": ("Revise the Plan if no analysis Step is ready. Use pinned task-file copies and completed native source candidates to repair the observation manifest; preserve values and conditions, update Goal bindings, and do not start ORCA."
+            "requires": [], "text": (continue_text or "Revise the Plan if no analysis Step is ready. Use pinned task-file copies and completed native source candidates to repair the observation manifest; preserve values and conditions, update Goal bindings, and do not start ORCA."
                 if repair and action == "repair_existing_evidence" else "Ask only the recorded unresolved questions."
-                if action == "clarify" else "Deliver current facts without starting additional work.")})
+                if action == "clarify" else continue_text or "Deliver current facts without starting additional work.")})
         snapshot["explanations"].append({"ref": explanation_ref, "goal_ref": goal_ref,
             "fact_refs": refs, "relation": relation, "text": text,
             "blocker_refs": blockers, "next_action_refs": [action_ref]})
@@ -506,4 +779,4 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
 
 def collect_delivery_snapshot(store, run, request, plan=None, results=None, *, allowed_actions=(), control_generation=None):
     return delivery_snapshot(request, run, collect_goal_selections(store, run, request, plan, results),
-                             allowed_actions=allowed_actions, control_generation=control_generation)
+                             plan=plan, results=results, allowed_actions=allowed_actions, control_generation=control_generation)

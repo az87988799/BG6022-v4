@@ -788,7 +788,7 @@ class RunConfiguration(Record):
     # Missing in historical snapshots means the original model feedback path.
     mechanical_progression: bool = Field(default=False, strict=True)
     workflow_policy: Literal["simplified-1"] | None = None
-    observation_delivery_policy: Literal["reported-observation-1"] | None = None
+    observation_delivery_policy: Literal["reported-observation-1", "reported-observation-2"] | None = None
 
     @model_serializer(mode="wrap")
     def preserve_historical_workflow(self, handler):
@@ -1042,6 +1042,7 @@ class Observation(Record):
     checks: list[Check] = Field(default_factory=list)
     validation_status: Literal["unverified", "partially_checked", "failed"] = "unverified"
     limitations: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     @model_serializer(mode="wrap")
     def preserve_historical_shape(self, handler):
@@ -1050,6 +1051,8 @@ class Observation(Record):
             value.pop("formula", None)
         if not self.artifact_ids:
             value.pop("artifact_ids", None)
+        if not self.metadata:
+            value.pop("metadata", None)
         return value
 
     @model_validator(mode="after")

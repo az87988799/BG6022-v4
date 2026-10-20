@@ -5,7 +5,7 @@ from copy import deepcopy
 import pytest
 
 from orca_agent.delivery import delivery_snapshot
-from orca_agent.models import BudgetLimits, Goal, PermissionSnapshot, Request, Result, Run
+from orca_agent.models import BudgetLimits, Goal, Observation, ObservationSource, PermissionSnapshot, Request, Result, Run
 from orca_agent.proposals import ProposalError
 from orca_agent.terminal import validate_terminal_explanation
 from tests.unit.test_terminal_contract import valid_parameters
@@ -20,7 +20,8 @@ def reported_snapshot(*, reported=True):
     run = Run(id="run_report", request_id=request.id, request_version=1, plan_id="plan_report", plan_version=1,
         permission=PermissionSnapshot(), budget=BudgetLimits(), goal_status={goal.id: "satisfied"})
     result = Result(id="result_report", run_id=run.id, step_id="step_report", operation_status="completed",
-        observations={"task_observations": [{"name": goal.port, "value": {"count": 8}}]})
+        observation_records=[Observation(name=goal.port, value={"count": 8},
+            sources=[ObservationSource(artifact_id="artifact_manifest", sha256="a" * 64)])])
     assessment = {"status": "passed", "reasons": [], "minimum_evidence": [{
         "requested": "至少8个候选", "status": "unverified", "reason": "no_registered_evaluator",
         "blocking": False, "source": "explicit"}]}
@@ -35,6 +36,7 @@ def test_reported_delivery_carries_mandatory_unverified_limits_and_distinct_rela
     snapshot = reported_snapshot()
     goal, = snapshot["goals"]
     assert goal["goal_complete"] and goal["scientific_qualification"] is False
+    assert goal["answer"]["scientific_qualification"] is False
     limits, = [fact for fact in snapshot["facts"] if fact["kind"] == "verification_limits"]
     assert limits["ref"] in goal["required_fact_refs"]
     assert limits["value"]["scientific_qualification"] is False

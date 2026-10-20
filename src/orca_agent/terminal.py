@@ -95,6 +95,54 @@ def read_delivery_snapshot(store, run, record):
     return snapshot
 
 
+def _authenticated_terminal_cost(store, run, record):
+    """Only the hash-bound program request can attest final-only selection."""
+    from types import SimpleNamespace
+
+    from orca_agent.model_usage import _request_body
+
+    body = _request_body(store, run, record)
+    authority = json.loads(body["messages"][-1]["content"])["AUTHORITY"]
+    purpose = authority.get("decision_purpose", {})
+    actions = purpose.get("allowed_actions", [])
+    costs = [record.get("input_reserved"), record.get("output_reserved")]
+    if (purpose.get("kind") != "terminal" or "stop" not in actions
+            or not set(actions) <= {"stop", "clarify"}
+            or not all(type(cost) is int and cost >= 0 for cost in costs)):
+        return None
+    return SimpleNamespace(reserved_tokens=sum(costs),
+        timeout_seconds=run.configuration.model.timeout_seconds)
+
+
+def validate_continuation_before_stop(request, run, snapshot, *, terminal_cost=None):
+    """Use the transmitted work facts; only real delivery capacity can waive them.
+
+    Volatile model settlement and time stay outside the snapshot fingerprint.
+    This is a proposal rejection, never a new execution or an automatic retry.
+    """
+    if (not run.configuration
+            or run.configuration.observation_delivery_policy != "reported-observation-2"):
+        return
+    work = [fact for fact in snapshot["facts"] if fact["kind"] == "current_plan_work"]
+    if not work:
+        return
+    from orca_agent.decision_purpose import DecisionPurpose
+    from orca_agent.model_usage import final_explanation_budget
+
+    margin = final_explanation_budget(request, run, purpose=DecisionPurpose("planning", ()))
+    if not margin["can_send_before_final"]:
+        return
+    if terminal_cost is not None and not final_explanation_budget(request, run,
+            purpose=DecisionPurpose("planning", ()), prepared=terminal_cost)["can_send_before_final"]:
+        return
+    _reject("terminal_current_work_remaining", ["action"],
+        goal_refs=list(dict.fromkeys(fact["goal_ref"] for fact in work)),
+        required_fact_refs=[fact["ref"] for fact in work],
+        next_action_refs=[action["ref"] for action in snapshot["next_actions"]
+            if action["kind"] in {"continue_approved_plan", "repair_failed_execution", "repair_existing_evidence"}],
+        guidance="Continue the current approved work or propose the evidence-bound repair shown in the delivery snapshot. Stop cannot replace that work while its permission and necessary budgets remain. No execution is automatic.")
+
+
 def accept_terminal(store, run, record, proposal, basis, *, fault=None):
     """One atomic Run update accepts a stop and its applied terminal state."""
     from orca_agent.delivery import collect_delivery_snapshot
@@ -116,6 +164,9 @@ def accept_terminal(store, run, record, proposal, basis, *, fault=None):
         if current["fingerprint"] != snapshot["fingerprint"]:
             _reject("terminal_snapshot_stale", ["parameters", "delivery", "snapshot_ref"])
         explanation = validate_terminal_explanation(proposal.parameters, snapshot)
+        validate_continuation_before_stop(request, run, current,
+            terminal_cost=_authenticated_terminal_cost(store, run, record)
+            if run.configuration and run.configuration.observation_delivery_policy == "reported-observation-2" else None)
         if fault:
             fault("after_terminal_validated")
         if current_basis(store, run) != basis or store.read_signal(run.id):

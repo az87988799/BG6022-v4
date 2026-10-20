@@ -90,8 +90,14 @@ def test_real_result_feedback_fits_complete_frozen_request(task):
     assert before == (request.model_dump_json(), run.model_dump_json(), plan.model_dump_json())
 
 
-def test_repaired_t3_goal_routes_keep_actual_goal_feedback_within_frozen_capacity():
+@pytest.mark.parametrize("reported_policy", [None, "reported-observation-2"])
+def test_repaired_t3_goal_routes_keep_actual_goal_feedback_within_frozen_capacity(reported_policy):
     request, run, plan, kwargs = archived_context("T3", repair_routes=True)
+    if reported_policy:
+        # Measure only a hypothetical new policy's context, never rewrite the
+        # historical Run or treat its observations as newly admitted evidence.
+        run = run.model_copy(deep=True)
+        run.configuration = run.configuration.model_copy(update={"observation_delivery_policy": reported_policy})
     assert len(kwargs["feedback"]["current_goal_use"]) == len(request.goals)
     prepared = context.build_context(request, run, plan, **kwargs)
     assert prepared.input_token_bound <= 64000

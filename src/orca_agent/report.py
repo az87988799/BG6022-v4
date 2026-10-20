@@ -404,12 +404,27 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                         "Finite sampling describes only the sampled discrete geometries.",
                         "An optimized geometry alone does not establish vibrational stability or a global minimum."],
     }
+    if request and request.selection_reasons:
+        report["request"]["selection_reasons"] = _safe(request.selection_reasons, bounded=False)
+        selection_evidence = {}
+        for name in request.selection_reasons:
+            path = "request." + name
+            if path not in request.condition_evidence:
+                continue
+            evidence = request.condition_evidence[path]
+            # This is user-message provenance, not an HTTP authorization header.
+            # Keep its meaning explicit while retaining the report's secret filter.
+            if isinstance(evidence, dict) and "authorization" in evidence:
+                evidence = {key: value for key, value in evidence.items() if key != "authorization"}
+                evidence["user_request_authorization"] = request.condition_evidence[path]["authorization"]
+            selection_evidence[path] = _safe(evidence, bounded=False)
+        report["request"]["selection_evidence"] = selection_evidence
     if any(goal.get("verification_basis") == "reported_delivery" for goal in goals):
         report.update(reported_delivery_complete=complete,
             user_obligations_verification="unverified" if unverified_obligations else "checked")
     report["artifact_index"] = _delivery_index(store, run, request, report["results"])
     report["generated_scripts"] = [item for item in report["artifact_index"] if "generated_script" in item["purposes"]]
-    snapshot = delivery_snapshot(request, run, selections,
+    snapshot = delivery_snapshot(request, run, selections, plan=plan,
         control_generation=store.read_control(run.id)["generation"]) if request else None
     if snapshot:
         # Mandatory goals/facts are never silently dropped by the legacy audit
@@ -555,6 +570,17 @@ def render_report(report: dict[str, Any]) -> str:
                       "条件来源：" + _cell(request["condition_sources"])])
         if request["additional_conditions"]:
             lines.append("附加条件：" + _cell(request["additional_conditions"]))
+        if request.get("selection_reasons"):
+            lines.append("条件选择理由（Request v" + _cell(report["request_version"]) + " 原记录）：")
+            for name, reason in request["selection_reasons"].items():
+                path = "request." + name
+                value = request["additional_conditions"].get(name, request["conditions"].get(name))
+                lines.append("- `" + _cell(path) + "` = " + _cell(value)
+                             + "；来源 " + _cell(request["condition_sources"].get(name))
+                             + "；理由：" + _cell(reason, bounded=False))
+                evidence = request.get("selection_evidence", {}).get(path)
+                if evidence is not None:
+                    lines.append("选择记录及来源：" + _cell(evidence, bounded=False))
         if request["unresolved"]:
             lines.append("待明确事项：" + _cell(request["unresolved"]))
     for result in report["results"]:

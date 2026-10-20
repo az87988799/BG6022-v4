@@ -1,6 +1,7 @@
 """Authorized condition choices backed by retrieved evidence, within one Run."""
 
 import hashlib
+import json
 import re
 from copy import deepcopy
 from typing import Any, Literal
@@ -39,6 +40,8 @@ def selection_available(store, run):
     """Identity queries establish a graph, independently of method selection."""
     from orca_agent.tools.registry import get_tool
 
+    if simplified_workflow(run):
+        return _selection_before_science(store, run)
     if run.attempts:
         return False
     general = general_admission_enabled(store, run)
@@ -52,6 +55,99 @@ def selection_available(store, run):
                 or call.state not in {"completed", "failed", "cancelled"}):
             return False
     return True
+
+
+def _selection_before_science(store, run):
+    """Preparation does not close selection; uncertain/scientific execution does.
+
+    The context's store-less call only exposes a proposal. Activation rechecks
+    the immutable Results and execution receipts under the existing Run lock.
+    """
+    from orca_agent.tools.registry import get_tool
+
+    if run.usage.orca_starts_actual or run.internal_calls:
+        return False
+    for call in run.calls:
+        if call.state not in {"completed", "failed"} or call.result_id not in run.result_ids:
+            return False
+        if "execute_orca" in get_tool(call.tool).effects:
+            return False
+    for attempt in run.attempts:
+        step = attempt.frozen_step
+        if (attempt.state not in {"completed", "failed", "cancelled", "timed_out", "not_started"}
+                or attempt.finished_at is None or attempt.result_id not in run.result_ids
+                or step is None or (step.id, step.logical_id, step.tool)
+                != (attempt.step_id, attempt.logical_id, attempt.tool)):
+            return False
+        effects = get_tool(step.tool).effects
+        if attempt.execution_kind == "python":
+            # SDK capability is not execution: every native launch first
+            # persists an InternalCall, already excluded above.
+            if "execute_python" not in effects:
+                return False
+        elif ("execute_orca" not in effects or attempt.started
+              or attempt.state not in {"failed", "cancelled", "not_started"}):
+            return False
+    if store is None:
+        return True
+    try:
+        for attempt in run.attempts:
+            result = store.load_result(run.id, attempt.result_id)
+            if not _selection_attempt_evidence(store, run, attempt, result):
+                return False
+        for call in run.calls:
+            result = store.load_result(run.id, call.result_id)
+            if ((result.id, result.run_id, result.call_id, result.step_id, result.operation_status)
+                    != (call.result_id, run.id, call.id, call.step_id, call.state)):
+                return False
+            # Registered identity/prepared geometry are inputs, not completed
+            # scientific outputs. Other qualified sources keep conditions fixed.
+            if result.qualified_outputs and not set(get_tool(call.tool).effects) & {
+                    "query_external_identity", "prepare_geometry"}:
+                return False
+    except (OSError, ValueError, StoreError):
+        return False
+    return True
+
+
+def _selection_attempt_evidence(store, run, attempt, result):
+    """Bind a settled non-scientific Attempt to its original archived receipt."""
+    if ((result.id, result.run_id, result.attempt_id, result.step_id, result.operation_status)
+            != (attempt.result_id, run.id, attempt.id, attempt.step_id, attempt.state)
+            or result.qualified_outputs
+            or result.observations.get("evidence_collection_complete") is not True):
+        return False
+    execution = result.source.get("execution", {})
+    if (not isinstance(execution, dict) or execution.get("state") != attempt.state
+            or execution.get("reconciliation") or execution.get("collection_reconciliation")
+            or execution.get("control_action")):
+        return False
+    handle = execution.get("handle")
+    if handle is not None and not isinstance(handle, dict):
+        return False
+    if attempt.execution_kind == "orca" and (
+            execution.get("not_started") is not True
+            or execution.get("actual_start_status") not in {None, "not_started"}
+            or (handle or {}).get("actual_start_evidence")):
+        return False
+    step = attempt.frozen_step
+    code = getattr(step.parameters, "code" if attempt.execution_kind == "python" else "input", None)
+    if (code is None or result.source.get("code_sha256") != code.sha256
+            or attempt.consumption.get("code") != code.model_dump(mode="json")):
+        return False
+    store.artifact_path(code.artifact_id)
+    if store.load_artifact(code.artifact_id).sha256 != code.sha256:
+        return False
+    receipt = result.source.get("files", {}).get("execution.json", {})
+    artifact_id = receipt.get("artifact_id")
+    if artifact_id not in result.artifact_ids:
+        return False
+    artifact = store.load_artifact(artifact_id)
+    if (artifact.run_id, artifact.attempt_id, artifact.sha256) != (
+            run.id, attempt.id, receipt.get("sha256")):
+        return False
+    path = store.artifact_path(artifact_id)
+    return path.stat().st_size <= 1024 * 1024 and json.loads(path.read_bytes()) == execution
 
 # Keep punctuation belonging to a chemical identifier, including basis suffixes
 # such as (d,p). Closing prose parentheses and sentence punctuation delimit it.
@@ -200,7 +296,7 @@ def selected_request(store, run, prior, parameters):
     if set(parameters.choices) - set(selectable_conditions(prior)):
         raise StoreError("condition selection is outside the unchanged user authorization")
     if not selection_available(store, run):
-        raise StoreError("select conditions before geometry preparation or managed execution; identity queries must be complete")
+        raise StoreError("condition selection requires settled preparation and no actual or uncertain scientific execution")
     values = prior.model_dump(mode="json")
     corrections = []
     for name, choice in parameters.choices.items():

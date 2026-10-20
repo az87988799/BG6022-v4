@@ -42,7 +42,7 @@ class Config(BaseModel):
     execution: ExecutionConfiguration = Field(default_factory=ExecutionConfiguration)
     mechanical_progression: bool = Field(default=True, strict=True)
     workflow_policy: Literal["simplified-1"] | None = "simplified-1"
-    observation_delivery_policy: Literal["reported-observation-1"] | None = None
+    observation_delivery_policy: Literal["reported-observation-1", "reported-observation-2"] | None = None
 
     @model_serializer(mode="wrap")
     def preserve_historical_observation_policy(self, handler):

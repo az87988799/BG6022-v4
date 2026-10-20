@@ -66,7 +66,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v81"
+PROMPT_VERSION = "agent-json-v83"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -1936,43 +1936,42 @@ def _settled_history_references(run, originals, projected, feedback):
 def _capacity_code_rules(native):
     """Concise authoring contract; schemas and frozen execution limits stay full."""
     rules = (
-        "Plan writers+consumers together; code/input={producer_key,port:'written_artifact'}; "
-        "manifest={producer_key,port|file_key,target_path,purpose}. Program binds dependencies/IDs/hashes. "
-        "parameters.inputs=InputManifest; Step.inputs=evidence ports. No invented IDs, shell/subprocess/network/host paths. "
-        "Keep all Goals/conditions/minimum evidence/valid routes. Independent Python tasks use analysis budget; "
-        "same-logical retries also use code_retries. Save completed members; SDK waits consume script deadline. "
-        "Inspect each new result. Read missing evidence only; written code needs no reread. Binary data/manual indexes "
-        "do not prove formats. observations.json={version:1,observations:[{name:Goal.port,value:finite JSON,"
+        "Plan writers+consumers: code/input={producer_key,port:'written_artifact'}; "
+        "manifest={producer_key,port|file_key,target_path,purpose}; program binds dependencies/IDs/hashes. "
+        "parameters.inputs=InputManifest; Step.inputs=evidence ports. No invented IDs/shell/subprocess/network/host paths. "
+        "Keep Goals/conditions/minima/routes. Python:analysis budget; same-logical retries also code_retries. "
+        "Save completed members; SDK waits count in deadline. "
+        "Inspect results; read gaps, no code reread. Binary/manual index!=format proof. "
+        "observations.json={version:1,observations:[{name:Goal.port,value:finite JSON,"
         "unit:string|null,sources:[{filename:task-relative path,location:string|null}],formula:string|null,"
-        "artifacts:[task-relative filename],limitations:[]}]} with names=observation_names. "
-        "Keep complete sequences incl negative/zero, all structures, failures/exclusions and finite search scope. "
-        "Label subsets; never infer units/global optimum/scientific pass. Derived values retain formulas and original "
-        "sources/method/geometry relations. No authored checks/status/actual_conditions. Observations unqualified."
+        "artifacts:[task-relative filename],limitations:[]}]} names=observation_names. "
+        "Full sequences incl negative/zero; all structures/failures/exclusions/search scope. Label subsets. "
+        "No inferred units/global optimum/science. Derived:formula+original sources+method+geometry relations. "
+        "No authored checks/status/actual_conditions; observations unqualified."
     )
     if native["AUTHORITY"].get("failed_python_attempts") or native["AUTHORITY"].get("failed_native_attempts"):
         rules += (
-            " Repair: key:new,repair_of:failed frozen_step.id,code:new Python ref or input:new native ref,"
-            "inputs:optional replacement InputManifest. Omitted inputs preserve the old manifest. "
-            "Program retains logical_id/system/conditions/names/dependencies/Goal routes. History is not ready work."
+            " Repair: key:new,repair_of:failed frozen_step.id,code:new Python ref OR input:new native ref,"
+            "inputs:replacement InputManifest (omitted=old). Retain logical_id/system/conditions/names/dependencies/Goal routes. "
+            "History is not ready work."
         )
     if "native_input_contract" in native["AUTHORITY"]:
         rules += (
-            " ORCA follows native_input_contract/execution_resources. Program materializes omitted approved state/"
-            "resource/iteration controls; conflicts fail. TD NRoots stays explicit. orca.run.input is ORCA, never XYZ. "
-            "python.execute declares sdk_orca=true/false; true requires the qualified initial geometry or same-system "
-            "structure.prepare dependency. Task geometry cannot replace that identity anchor. "
+            " ORCA obeys native_input_contract/execution_resources; approved missing state/resource/iteration controls fill; "
+            "conflicts fail; TD NRoots explicit. orca.run.input=ORCA, not XYZ. "
+            "sdk_orca=true/false; true needs qualified initial geometry/same-system structure.prepare dependency, "
+            "never replaced by task geometry. "
             "from orca_task_sdk import run_orca,receipt_source,checkpoint. "
-            "run_orca(input_path,dependencies=(),request_key='calculation',purpose='new_candidate',retry_of=None). "
-            "Dependencies=relative XYZ basenames. Stable key+input reuses receipt; changed input needs new key. "
+            "run_orca(input_path,dependencies=(),request_key=key,purpose=purpose,retry_of=None). "
+            "Dependencies=relative XYZ basenames. Same key+input reuses receipt; new input needs new key. "
             "purpose=new_candidate|plan_addition|failure_retry; retry_of=prior failed key. "
-            "Unknown work:reconcile; all calls share budget. Check receipt.operation_status before parsing. "
-            "files maps original filenames to read-only copies; inspect keys, never guess filenames. "
-            "logs=stdout.out/stderr.txt; input=job.inp. receipt_source(receipt,'stdout.out',location='lines ...') "
-            "declares original SDK source/internal_request_key, not scientific qualification. Direct ORCA analysis "
-            "uses frozen task-relative filenames. Cite original outputs and local derived files. "
-            "checkpoint(state,request_key='batch_1',requires_decision=True,reason='Assess observations') saves JSON/keys "
-            "and exits for a decision; no blind replay/stack restoration. "
-            "ORCA %maxcore uses AUTHORITY.execution_resources.maxcore_mb per process, never total_memory_mb."
+            "Reconcile unknowns; shared budget. Parse after checking receipt.operation_status. "
+            "files:original name->read-only copy; inspect keys, never guess. logs=stdout.out/stderr.txt; input=job.inp. "
+            "receipt_source(receipt,filename,location=location) binds SDK source/internal_request_key. "
+            "Direct ORCA:frozen task-relative names. Cite original outputs+local derived files. "
+            "checkpoint(state,request_key=key,requires_decision=True,reason=reason) saves JSON/keys, "
+            "exits for decision; no blind replay/stack restoration. "
+            "%maxcore=execution_resources.maxcore_mb per process, not total_memory_mb."
         )
     return rules
 
@@ -2335,8 +2334,17 @@ def _public_delivery(snapshot, *, resources_in_authority=False, reference_arrays
             "original_text", "requested_minimum_evidence", "minimum_check_version",
             "minimum_evidence", "requested_geometry_artifact_ids", "source_geometry_artifact_id",
             "required_fact_refs", "required_blocker_refs", "explanation_refs", "next_action_refs")
+    work_refs = {item["value"]["work_ref"] for item in snapshot["facts"]
+                 if item["kind"] == "current_plan_work" and isinstance(item.get("value"), dict)
+                 and isinstance(item["value"].get("work_ref"), str)}
     references = {}
     for ref, source in snapshot["references"].items():
+        if ref in work_refs:
+            # Several Goals may share one bounded, authenticated failure. Keep
+            # its diagnostic and concrete continuation route once, joined by
+            # each Goal's required current_plan_work fact.
+            references[ref] = deepcopy(source)
+            continue
         # The short reference resolves to the complete immutable source map;
         # repeating all durable IDs, file digests and line traces has no bearing
         # on choosing a terminal explanation. Conditions and check failures do.
@@ -2459,7 +2467,9 @@ def _public_delivery(snapshot, *, resources_in_authority=False, reference_arrays
                                    for item in snapshot["explanations"]],
                   "blockers": [{key: value for key, value in item.items() if key not in {"text", "goal_refs"}}
                                for item in snapshot["blockers"]],
-                  "next_actions": [{key: value for key, value in item.items() if key not in {"text", "goal_refs"}}
+                  "next_actions": [{key: value for key, value in item.items() if key != "goal_refs"
+                                    and (key != "text" or item["kind"] in {
+                                        "continue_approved_plan", "repair_failed_execution", "repair_existing_evidence"})}
                                    for item in snapshot["next_actions"]],
                   "references": references, "resources": resources,
                   "goals": goals})
@@ -3178,14 +3188,20 @@ def build_context(
         "related_results": (feedback.get("new_result_ids", []) if feedback is not None
                             and "new_result_ids" in feedback else [result.id for result in results]),
     }
-    if (run.configuration and getattr(run.configuration, "observation_delivery_policy", None)
-            == "reported-observation-1"):
+    observation_policy = getattr(run.configuration, "observation_delivery_policy", None)
+    if observation_policy in {"reported-observation-1", "reported-observation-2"}:
         authority["observation_delivery_contract"] = {
-            "version": "reported-observation-1",
+            "version": observation_policy,
             "scope": "generic-observation-1 / reported_with_limitations only",
             "minimum_evidence": "Keep original obligations. An unregistered evaluator leaves an obligation unverified; it is not an unsupported user gap or a passed check.",
             "delivery": "Report sourced observations and mandatory verification limits. This grants no scientific qualification. Registered checks, explicit conditions and authenticated execution requirements remain binding.",
         }
+        if observation_policy == "reported-observation-2":
+            authority["observation_delivery_contract"].update(
+                minimum_evidence="Original obligations: no evaluator=unverified, not passed/user gap.",
+                delivery="Report sources+verification limits; unqualified. Checks/conditions/execution requirements bind.",
+                sources="Frozen artifact/byte limits; empty sources=manifest values only, not native execution/science.",
+                report_integrity="Derived values:exact member IDs; extrema identify members/aggregate. Disclose task seeds+input-generation limits: task seeds cannot seed an unseeded initial generator.")
     input_provenance = {}
     if not semantic_intake:
         by_result = {result.id: result for result in results}
@@ -3520,6 +3536,16 @@ def build_context(
                 "and omitted quote refers to its returned excerpt. Explicit wrong hash/quote fails. "
                 "Choose method/basis before scientific execution; geometry preparation may precede selection. "
                 "Explicit values, unknowns and user minimum evidence stay fixed; selection is not scientific validation.")
+            pending = [name for name in selectable_conditions(request)
+                       if name in {"method", "basis"} and getattr(request, name) is None]
+            if pending:
+                template["CONDITION_SELECTION_RULES"] += (
+                    " Replace example placeholders with your selected value and reasons. The outer reason is a root "
+                    "field; parameters has only request_version and choices. Complete DecisionIntent JSON example: "
+                    + _json({"action": "select_conditions", "parameters": {
+                        "request_version": request.version, "choices": {pending[0]: {
+                            "value": "<chosen_value>", "reason": "<choice_reason>"}}},
+                        "reason": "<overall_decision_reason>"}))
     if _simplified_workflow(run) and "TASK_CODE_RULES" in template:
         template["TASK_CODE_RULES"] = _simplified_code_rules(template["TASK_CODE_RULES"])
     if not final_only and not semantic_intake and set(examples) & {"initial_plan", "revise_plan"}:
