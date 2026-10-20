@@ -153,5 +153,62 @@
     "Full repository regression suite",
     "Per-Attempt disk hard quota and complete resource cost measurement",
     "Complete live zero-model reference orchestration chain"
-  ]
+  ],
+  "acceptance_review": {
+    "date": "2026-10-20",
+    "timezone": "Asia/Hong_Kong",
+    "user_request": "验收步骤6",
+    "reviewed_delivery_commit": "ba9be2d06e20395d3b71678277954f5b68169202",
+    "conclusion": "passed_step6_exit_conditions",
+    "blocking_findings": [],
+    "user_confirmation": "pending_separate_from_verification_result",
+    "independent_review": {
+      "reviewer": "/root/accept_step6_review",
+      "human_expert": false,
+      "result": "no_confirmed_step6_blockers",
+      "scope": "read-only freeze, budget, workspace, task rules and post-freeze holdout selection"
+    },
+    "freeze_check": {
+      "command": ".venv\\Scripts\\python.exe scripts/code_tools_acceptance.py verify --inspect-runtime",
+      "exit_code": 0,
+      "status": "matched",
+      "runtime_reobserved": true,
+      "runtime_metadata_verified": true,
+      "product_manifest_file_sha256": "95f8156de0cfdf67afd56e7b143c65282ce59592be05cab225a85908b6f1bb2b",
+      "evaluation_manifest_file_sha256": "819bfbdec67e30a6584ea925fe964123d50432e297d87c8ebdef9ff0e48244ab",
+      "production_changes_since_frozen_candidate": false
+    },
+    "repeated_tests": {
+      "command": ".venv\\Scripts\\python.exe -m pytest -q tests/unit/test_code_tools_freeze.py tests/unit/test_code_tools_batch.py tests/unit/test_code_tools_acceptance.py tests/unit/test_run_configuration.py tests/unit/test_store.py",
+      "exit_code": 0,
+      "passed": 217,
+      "skipped": 2,
+      "failed": 0,
+      "elapsed_seconds": 46.05,
+      "skip_reason": "The two real symlink fixtures require Windows creation permission unavailable on this host.",
+      "full_suite": false
+    },
+    "batch_check": {
+      "fixed_slots": 60,
+      "formal_slots": 21,
+      "reference_slots": 21,
+      "control_slots": 18,
+      "reserved_slots": 0,
+      "overrun_metrics": [],
+      "known_usage": {
+        "model_calls": 0,
+        "model_tokens": 0,
+        "orca_starts": 0,
+        "internal_work_units": 0,
+        "wall_seconds": 0
+      }
+    },
+    "live_execution_during_review": {
+      "project_model_calls": 0,
+      "orca_starts": 0,
+      "containers_started": 0,
+      "runtime_metadata_reads_only": true,
+      "step7_started": false
+    }
+  }
 }
