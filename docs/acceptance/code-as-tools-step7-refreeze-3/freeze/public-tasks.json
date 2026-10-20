@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "version": "code-tools-public-tasks-1",
+  "recorded_on": "2026-10-20",
+  "status": "rules_prepared_for_freeze_not_execution_evidence",
+  "authority": "../../CODE-AS-TOOLS-IMPLEMENTATION-PLAN.md",
+  "scoring_document": "scoring.md",
+  "repetitions": 3,
+  "required_public_runs": 15,
+  "holdouts": {
+    "ids": [
+      "H1",
+      "H2"
+    ],
+    "selection_status": "defined_by_post_freeze_selection_record",
+    "selection_record": "holdout-selection.json",
+    "rule": "产品冻结后由用户或未参与开发的独立评审选择，实际选择以holdout-selection.json为准；本文件不预选分子或题型，不向产品提供参考答案。"
+  },
+  "seed_policy": {
+    "seeds_by_repetition": [
+      1701,
+      1702,
+      1703
+    ],
+    "input_assembly": "original_text + separator + seed_suffix_template.format(seed=seeds_by_repetition[repeat-1]); separator is exactly two actual LF characters (U+000A, bytes 0A 0A), not literal backslash-n text; UTF-8 without BOM; do not add solver examples",
+    "separator": "\n\n",
+    "seed_suffix_template": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 {seed} 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "model_seed": "不添加提供商不支持的 seed 参数；模型非确定性如实记录。",
+    "independence": "每个任务/重复使用新的空任务工作区和 Run；不能导入前一次生成的 Plan、脚本、候选或参考答案。",
+    "failure_policy": "三次预约全部保留。自主修复在原重复内计费；不得换 Run ID 补挑三次成功，重冻后另立完整批次并保留旧批次。"
+  },
+  "formal_run_limits": {
+    "orca_starts": 12,
+    "internal_work_units": 10000,
+    "model_calls": 24,
+    "model_tokens": 1200000,
+    "run_seconds": 7200,
+    "meaning": "每项每次累计上限，包含失败、重试和补算；有效许可、CPU/内存/期限、额外启动及其他细分上限由冻结配置共同约束。"
+  },
+  "reference_slot_limits": {
+    "slots_per_task_repetition": 1,
+    "orca_starts": 30,
+    "internal_work_units": 30000,
+    "model_calls": 0,
+    "run_seconds": 21600,
+    "meaning": "独立参考的通用槽上界；公开任务另受每题更小的最大启动数约束。启动前核算内部工作量；参考失败和未知占用不清零；不满足时评分为未验证或失败。",
+    "retry_policy": "每个必需参考最多一次已确认失败后的同输入重试；须先对账，未知状态不得重启。不得为匹配产品值而改方法、几何、容差或选掉原参考失败。"
+  },
+  "common_requirements": [
+    "只向产品提供冻结自然语言和运行控制，不提供开发者写好的 Plan、ORCA 输入、科学求解脚本或参考结果。",
+    "产品自行确认分子身份，保存初始结构；所有公开任务指定中性单重态，电子态来源为本任务要求，不由电子数奇偶性推断。",
+    "方法和基组由 Agent 在许可内选择，计算前说明选择理由、实际来源、适用性和成本；按0056，非用户必需的官方资料检索不作为门槛；最终核对实际 ORCA 输入、输出和声明一致。",
+    "所有报告给出原始输入、输出、脚本、结构、表格、来源/hash、单位、实际条件、失败/排除清单和验证限制。",
+    "操作成功、科学检查覆盖、独立评分、目标完成和报告完成分别记录；独立评分不授予 QualifiedOutput。",
+    "表格中未计算或未收敛成员没有可用于排序的数值，不能把未知记为零。",
+    "每次至少一次真实模型及一次受管真实 ORCA，引用既有开发结果不替代本次执行。"
+  ],
+  "common_tolerances": {
+    "definition": "以下是预先选定的工程核对阈值，不是 ORCA/RDKit 对科学准确度的保证。与原始打印值核对和独立重算采用不同阈值。",
+    "reported_energy_vs_raw_hartree_abs": 1e-08,
+    "independent_fixed_geometry_energy_hartree_abs": 1e-06,
+    "reported_relative_energy_kj_mol_abs": 0.001,
+    "independent_relative_energy_kj_mol_abs": 0.01,
+    "reported_coordinate_angstrom_abs": 1e-06,
+    "reported_frequency_vs_raw_cm_inverse_abs": 0.01,
+    "independent_frequency_cm_inverse_abs": 2.0,
+    "reported_excitation_vs_raw_ev_abs": 0.0001,
+    "independent_excitation_ev_abs": 0.001,
+    "reported_oscillator_strength_abs": 1e-06,
+    "independent_oscillator_strength_abs": 0.0001,
+    "constrained_dihedral_degrees_abs": 0.5,
+    "relative_energy_tie_kj_mol": 0.01,
+    "printed_precision_rule": "原始字段或明确舍入的报告精度较粗时，允许 max(上述阈值, 最后打印位半单位加10^-12)；不得借显示舍入隐藏不同来源、方法、态编号或符号错误。完整机器表至少提供8位小数Eh、3位小数kJ/mol、2位小数cm^-1和4位小数eV。",
+    "energy_conversion_kj_mol_per_hartree": 2625.4996394799,
+    "conversion_rule": "相对能量采用本文件固定换算常数。若使用其他有来源常数，先按该常数核对自身算术，再按固定常数比较，不能混用单位；原始 ORCA eV 列优先于另行换算的 eV 值。"
+  },
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "乙醇自动方法选择、优化与振动频率",
+      "original_text": "请为乙醇（中性、单重态、气相）生成结构，在当前资源和预算内自行选择合适的方法和基组并说明依据，完成几何优化和该优化结构上的振动频率计算。交付初始结构、收敛后的全部9个原子坐标（注明Å）、完整27项频率和模式编号（注明cm^-1，保留平移/转动项），解释是否能支持局部极小值结论。保留原始输入、输出、脚本和失败尝试，分别说明执行、科学检查和验证缺项。不要把程序正常结束当成优化收敛或极小值确认；若预算内不能完成，准确说明未完成部分。",
+      "fixed_requirements": {
+        "identity_smiles": "CCO",
+        "formula": "C2H6O",
+        "atom_count": 9,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "method_basis": "agent_selected_before_execution",
+        "required_frequency_rows": 27,
+        "nonlinear_vibrational_modes": 21,
+        "minimum_status": "报告必须依据真实频率判断；显著虚频、近零未决振动或缺项不得声明已确认极小值。收敛优化及完整频率分析可完成本题，但极小值检查状态必须独立真实记录。"
+      },
+      "reference_protocol": {
+        "id": "R-T1-final-geometry-frequency",
+        "nominal_orca_starts": 1,
+        "maximum_orca_starts_including_reference_retry": 2,
+        "input_rule": "独立评审从实际已收敛优化的原始输出/最终XYZ取得几何；复制原方法、基组、电子态、环境、网格、SCF、频率类型及质量/缩放约定，仅去除Opt并对该精确几何重做Freq或原NumFreq。",
+        "checks": [
+          "独立从优化原始输出核对优化收敛标志及最终收敛表，最终坐标与频率计算几何一致。",
+          "独立读取原始频率表和hess，按模式编号核对27项；不能只比较生成脚本的JSON。",
+          "参考频率与同一实际方法/同一几何比较，不拿另一构象或另一方法的固定能量当答案。",
+          "参考缺失或频率差超过阈值时，记录具体模式和原因，不因产品自行passed而放行。"
+        ]
+      },
+      "scoring_section": "T1"
+    },
+    {
+      "id": "T2",
+      "title": "正己烷有限构象搜索与统一条件排名",
+      "original_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。",
+      "fixed_requirements": {
+        "identity_smiles": "CCCCCC",
+        "formula": "C6H14",
+        "atom_count": 20,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "method_basis": "one_agent_selected_pair_for_all_ranked_members",
+        "minimum_saved_candidates": 8,
+        "minimum_successful_distinct_ranked_candidates": 4,
+        "ranked_calculation_type": "single_point",
+        "dedup_heavy_atom_rmsd_angstrom": 0.15,
+        "maximum_required_reference_members": 4,
+        "optional_extra_members": "多于4个的额外比较必须有原始来源并纳入实际成本；独立参考按最低能量前4项选择，所有额外项仍逐原文核对，额外项不替换失败重复。"
+      },
+      "reference_protocol": {
+        "id": "R-T2-four-fixed-geometry-single-points",
+        "nominal_orca_starts": 4,
+        "maximum_orca_starts_including_reference_retry": 8,
+        "input_rule": "对报告能量最低的4个不同已计算成员，按实际几何和完全相同科学条件分别作独立单点；四项名单在参考启动前由原始能量表及稳定候选ID确定并保存hash。",
+        "checks": [
+          "从原始候选几何独立核对C6H14碳链身份；只读副本上对6个重原子采用碳链两个自同构映射、刚体旋转平移且禁止镜像反射求最小RMSD。",
+          "至少8份候选有代码、种子及产生/排除记录；至少4个排名成员两两RMSD大于0.15Å。",
+          "每项SCF收敛、正常结束；逐来源条件完全一致，未计算/失败/排除分别列示。",
+          "独立计算相对能量和排序；0.01kJ/mol内按并列组报告，组内候选ID排序只为稳定显示。"
+        ]
+      },
+      "scoring_section": "T2"
+    },
+    {
+      "id": "T3",
+      "title": "正丁烷中心二面角扫描及结果反馈",
+      "original_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。",
+      "fixed_requirements": {
+        "identity_smiles": "CCCC",
+        "formula": "C4H10",
+        "atom_count": 14,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "method_basis": "one_agent_selected_pair_for_all_points",
+        "coarse_angles_degrees": [
+          -180,
+          -120,
+          -60,
+          0,
+          60,
+          120,
+          180
+        ],
+        "coarse_points": 7,
+        "maximum_additional_angles": 2,
+        "constraint": "relaxed_scan_of_the_same_four_bonded_carbon_atoms",
+        "feedback": "必须存在粗扫结果后的主循环决策；事先无条件运行全部点不能单独证明反馈。"
+      },
+      "reference_protocol": {
+        "id": "R-T3-fixed-scan-geometries",
+        "nominal_orca_starts_max": 9,
+        "maximum_orca_starts_including_reference_retry": 18,
+        "input_rule": "对七个成功粗点及实际新增的至多两个点，使用每点收敛的原始几何及同一科学条件独立做单点；只删除几何优化/扫描指令，不改变能量模型。优化收敛和约束满足另从原始轨迹、最终表和坐标独立核对。",
+        "checks": [
+          "按化学键连通顺序确定四个碳原子，独立计算有符号周期二面角，误差不超过0.5度。",
+          "全部七个粗点及被判定为必需的加密点成功；每点原始能量和相对值均可追溯。",
+          "独立评审在查看粗扫能量前登记Agent事先提出的数值判据及判据hash；按scoring.md固定审核清单判断其可执行性，结果后不得改阈值。",
+          "按该判据独立复算继续/停止结论，并核对主循环决策时间在粗扫回执之后、加密执行之前。",
+          "图上的角度、能量、单位、缺项和曲线点数与机器表一致；插值不是新计算点。"
+        ]
+      },
+      "scoring_section": "T3"
+    },
+    {
+      "id": "T4",
+      "title": "丙酮低能电子激发",
+      "original_text": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。",
+      "fixed_requirements": {
+        "identity_smiles": "CC(=O)C",
+        "formula": "C3H6O",
+        "atom_count": 10,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "method_basis": "agent_selected_linear_response_TDDFT_with_explicit_TDA_choice",
+        "required_singlet_roots": 5,
+        "oscillator_strength_gauge": "electric_dipole_length",
+        "geometry": "本次Agent生成且明确说明的固定几何；不强制新增几何优化，若宣称优化则另需收敛证据。"
+      },
+      "reference_protocol": {
+        "id": "R-T4-five-root-response",
+        "nominal_orca_starts": 1,
+        "maximum_orca_starts_including_reference_retry": 2,
+        "input_rule": "独立评审以产品实际几何及相同方法、基组、TDA开关、SCF、积分网格和响应设置重做5个单重态；不继承产品GBW/参考结果，使用空参考目录。",
+        "checks": [
+          "原始响应输出有5个已收敛单重态，吸收表来自同一作业与同一长度规范。",
+          "独立关联基态到各目标态的编号，逐项核对能量、振子强度及单位；不使用轨道能差。",
+          "近简并态按scoring.md的预定能量分组核对能量集合和组总振子强度，原始态编号仍不得遗漏。",
+          "结论只覆盖实际结构和所选近似；无实验准确度或普适定量保证。"
+        ]
+      },
+      "scoring_section": "T4"
+    },
+    {
+      "id": "T5",
+      "title": "同一乙醇几何的气相与隐式水能量差",
+      "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+      "fixed_requirements": {
+        "identity_smiles": "CCO",
+        "formula": "C2H6O",
+        "atom_count": 9,
+        "charge": 0,
+        "multiplicity": 1,
+        "environments": [
+          "gas_phase",
+          "CPCM(water)"
+        ],
+        "method_basis": "one_agent_selected_pair_for_both_conditions",
+        "geometry_relation": "same_atomic_order_and_exact_input_coordinates",
+        "required_single_points": 2,
+        "difference_sign": "water_minus_gas",
+        "forbidden_substitution": "hydration_free_energy"
+      },
+      "reference_protocol": {
+        "id": "R-T5-matched-environment-single-points",
+        "nominal_orca_starts": 2,
+        "maximum_orca_starts_including_reference_retry": 4,
+        "input_rule": "从同一共用XYZ和两份实际输入创建两个干净独立参考目录；保持方法、基组、电荷、多重度、电子态、SCF与网格一致，仅保留预先要求的气相/CPCM水差别。",
+        "checks": [
+          "两次输入几何的有序元素和坐标一致；不同XYZ注释允许，但物理坐标不得重优化或改变。",
+          "原始输出确认气相与CPCM水实际生效，核对介电常数/空腔等实际可见设置，未显示的值保持未知。",
+          "逐次核对原始最终电子能量，独立按固定公式计算差值及单位。",
+          "结论不替代自由能；若输入只有CPCM而不能确认水，或两次科学设置不一致，则该比较不通过。"
+        ]
+      },
+      "scoring_section": "T5"
+    }
+  ],
+  "workflow_revision": "0056-simplified-1; task original_text and scientific requirements unchanged"
+}
