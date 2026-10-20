@@ -230,13 +230,19 @@ def _read_block(lines, index):
     name, body = match[1].casefold(), match[2]
     if name == "maxcore":
         return name, _integer(body, "%maxcore"), index
+    spans = [(len(body), index)]
     while index + 1 < len(lines) and not lines[index + 1].startswith(("!", "%", "*", "$")):
         index += 1
         body += " " + lines[index]
+        spans.append((len(body), index))
     tokens = _TOKEN.findall(body)
     value, end = _block(tokens, 0, name)
     if end != len(tokens):
-        raise ValueError("trailing input after a native control block")
+        offset = next(token.start() for position, token in enumerate(_TOKEN.finditer(body))
+                      if position == end)
+        line = next(index + 1 for stop, index in spans if offset < stop)
+        raise ValueError(f"trailing input after %{name} block at active input line {line} "
+                         "(blank/comment-only lines excluded)")
     return name, value, index
 
 

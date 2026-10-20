@@ -524,6 +524,10 @@ SCF 收敛不能证明全局最低或目标电子解正确；适用的稳定性�
 
 Run 配置版本 2 显式保存执行后端。Linux 选择还固定 `image_id`、`manifest_sha256`、`docker_context` 与可信宿主 `docker_path`，环境记录固定 daemon 身份及镜像内运行库清单；版本 1 或更早缺配置的历史 Run 仍按原 Windows 边界解释，禁止从当前配置推断迁移。缺失或变更的版本 2 执行快照须拒绝继续执行。
 
+新 Python 执行按 [0077](decisions/0077-isolated-python-runtime-files.md) 显式冻结 `python_runtime_layout=isolated-1`，运行器日志及启动元数据与任务文件命名空间分离；同名合法输入保留原路径和 hash。Linux 镜像清单须声明对应布局，Windows 使用独立日志目录；旧快照及句柄保留原布局，不从当前配置自动升级。
+
+原生控制块的尾随输入拒绝按 [0078](decisions/0078-native-block-error-location.md) 保留经校验块名和明确的有效输入行号，不回显未知正文，不改变解析、输入或执行。
+
 每次尝试记录声明、申请和实际执行情况。新资源配置必须在真实操作系统中验证；核数、总内存及并发约束不能只改显示值，无法满足约束时明确失败。环境并发大于 1 时同时约束所有 Run 的总 CPU/内存并验证竞争场景。Python 等待 SDK 的 ORCA 请求时不占用 ORCA 并发槽，但其内存与期限继续计量，不能因持有 Run 锁或额度造成死锁。
 
 `%maxcore` 不是整个作业的硬内存上限，应包含受管计算进程树的额外开销，并依赖实际执行环境管理总资源。[ORCA 并行说明](https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/parallel.html)

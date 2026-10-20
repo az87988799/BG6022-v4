@@ -752,12 +752,15 @@ class ExecutionConfiguration(Record):
         pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")] | None = None
     docker_path: Path | None = None
     native_input_policy: NativeInputPolicy | None = None
+    python_runtime_layout: Literal["isolated-1"] | None = None
 
     @model_serializer(mode="wrap")
     def preserve_historical_shape(self, handler):
         value = handler(self)
         if self.native_input_policy is None:
             value.pop("native_input_policy", None)
+        if self.python_runtime_layout is None:
+            value.pop("python_runtime_layout", None)
         return value
 
     @model_validator(mode="after")

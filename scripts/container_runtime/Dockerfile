@@ -19,11 +19,11 @@ COPY --from=compiler /build/sandbox.so /opt/orca-agent-runtime/sandbox.so
 COPY helper.py python_task.py /opt/orca-agent-runtime/
 COPY license-manifest.json wheel-license-evidence.json /opt/orca-agent-runtime/provenance/
 COPY wheelhouse-manifest.json write_runtime_manifest.py sandbox.c /build/
-RUN mkdir -p /work/task /work/requests /work/native /work/control /work/sealed /work/responses /work/gates \
-    && chown 10001:10001 /work/task /work/requests \
+RUN mkdir -p /work/task /work/python-runtime /work/requests /work/native /work/control /work/sealed /work/responses /work/gates \
+    && chown 10001:10001 /work/task /work/python-runtime /work/requests \
     && chown 10002:10002 /work/native \
     && chown 10003:10003 /work/control \
-    && chmod 0700 /work/task /work/native /work/control \
+    && chmod 0700 /work/task /work/python-runtime /work/native /work/control \
     && chmod 0755 /work /work/requests /work/sealed /work/responses /work/gates \
     && chown root:10002 /opt/orca \
     && chmod 0750 /opt/orca \

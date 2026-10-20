@@ -60,6 +60,8 @@ a022 已读原生错误被后续查询窗口挤掉的问题按 [0071](decisions/
 
 产物引用使用冻结 Run 额度和上述字节界，不再额外限制每项 64 个文件；目录概括只能规范化为本条已显式声明且验证通过的精确子文件。短寿命 ORCA 的启动确认改为 [0059](decisions/0059-durable-orca-exec-confirmation.md) 的可信启动握手与独立管理回执，新镜像单独冻结验证，历史 Run 不迁移。
 
+Python 运行器文件按 [0077](decisions/0077-isolated-python-runtime-files.md) 在新快照中显式隔离，合法输入与运行日志不再争用文件名；新镜像与实际容器验证单独记录。官方资料阅读采用 [0076](decisions/0076-query-centered-document-excerpts.md) 的保格式命中窗口及正文优先投影，新知识查询额度采用 [0067](decisions/0067-workflow-budget-within-existing-total-limits.md) 的有界值；旧 Run、原始字节、科学要求和累计消耗保留。
+
 2026-10-20 用户明确优先简化并跑通流程，取消一般名称查询的原名同义词/Wikidata 精确匹配步骤；新流程按 [0054](decisions/0054-simplify-name-resolution.md) 接受唯一且结构信息自洽的查询候选，保留原名、查询名及推断来源。其他协议阻碍另行按真实失败记录审查，实际交付与测试结果以对应报告为准。
 
 打通以下本机流程：

@@ -93,13 +93,14 @@ def result_file_index(result: Result, *, max_bytes=MAX_INDEX_BYTES, max_rows=MAX
     usable = [row for row in rows if row and len(digest_sets[row["artifact_id"]]) == 1]
     # Present task outputs before sealed inputs and coordinator files. This is
     # display order only: no file is selected, bound, read or executed for users.
+    log_prefix = "runtime-logs" if result.source.get("python_runtime_layout") == "isolated-1" else "task"
     def priority(row):
         name = row["file_key"]
         basename = name.rsplit("/", 1)[-1]
         if (("sdk/" in name or name.startswith("internal/"))
                 and basename in {"stdout.out", "stderr.txt", "response.json"}):
             return 0, name
-        if name in {"task/stdout.out", "task/stderr.txt", "task/observations.json"}:
+        if name in {f"{log_prefix}/stdout.out", f"{log_prefix}/stderr.txt", "task/observations.json"}:
             return 1, name
         if basename in {"job.inp", "native.inp", "worker-outcome.json"}:
             return 2, name

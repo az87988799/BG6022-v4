@@ -247,6 +247,7 @@ def run_managed(
     parent_job_name: str | None = None,
     on_poll: Callable[[dict], None] | None = None,
     argv0: str | None = None,
+    log_directory: Path | None = None,
 ) -> dict:
     """Run one immutable attempt. on_started must durably save before returning.
 
@@ -368,8 +369,9 @@ def run_managed(
                   "SetInformationJobObject(completion port)")
         # xb preserves earlier evidence even if the caller accidentally repeats.
         files.append(open(os.devnull, "rb"))
-        files.append((workdir / "stdout.out").open("xb", buffering=0))
-        files.append((workdir / "stderr.txt").open("xb", buffering=0))
+        logs = workdir if log_directory is None else log_directory.resolve(strict=True)
+        files.append((logs / "stdout.out").open("xb", buffering=0))
+        files.append((logs / "stderr.txt").open("xb", buffering=0))
         if cancel_requested and cancel_requested():
             result.update(state="cancelled", reason="cancelled_before_process_creation")
             return result
@@ -396,6 +398,8 @@ def run_managed(
             # Persist profile identity with launch intent evidence for future orphan
             # cleanup after a coordinator crash; cleanup itself requires reconciliation.
             result["handle"]["isolation"] = result["isolation"].copy()
+        if log_directory is not None:
+            result["handle"]["log_directory"] = str(logs)
         sample()
         if fault:
             fault("after_process_created")

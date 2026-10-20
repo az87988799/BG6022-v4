@@ -15,7 +15,7 @@ DECISION_CONTRACT_PROMPT_VERSIONS = frozenset({
     "agent-json-v22", "agent-json-v23", "agent-json-v24", "agent-json-v25", "agent-json-v26", "agent-json-v27",
     "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32", "agent-json-v33", "agent-json-v34",
     "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41",
-    "agent-json-v74", "agent-json-v75", "agent-json-v76", "agent-json-v77", "agent-json-v78", "agent-json-v79", "agent-json-v80", "agent-json-v81", "agent-json-v82", "agent-json-v83", "agent-json-v84", "agent-json-v85", "agent-json-v86", "agent-json-v87", "agent-json-v88", "agent-json-v89",
+    "agent-json-v74", "agent-json-v75", "agent-json-v76", "agent-json-v77", "agent-json-v78", "agent-json-v79", "agent-json-v80", "agent-json-v81", "agent-json-v82", "agent-json-v83", "agent-json-v84", "agent-json-v85", "agent-json-v86", "agent-json-v87", "agent-json-v88", "agent-json-v89", "agent-json-v90",
     "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47",
     "agent-json-v48", "agent-json-v49", "agent-json-v50", "agent-json-v51", "agent-json-v52", "agent-json-v53", "agent-json-v54", "agent-json-v55", "agent-json-v56", "agent-json-v57", "agent-json-v58", "agent-json-v59", "agent-json-v60", "agent-json-v61", "agent-json-v62", "agent-json-v63", "agent-json-v64", "agent-json-v65", "agent-json-v66", "agent-json-v67", "agent-json-v68", "agent-json-v69", "agent-json-v70", "agent-json-v71", "agent-json-v73"})
 

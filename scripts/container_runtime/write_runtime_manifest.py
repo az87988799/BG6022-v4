@@ -80,6 +80,7 @@ def main():
         "version": "local-linux-runtime-1",
         "platform": "linux/amd64",
         "isolation_policy": "linux-container-v1",
+        "python_runtime_layout": "isolated-1",
         "sandbox_source_sha256": hashlib.sha256(Path("/build/sandbox.c").read_bytes()).hexdigest(),
         "python": {
             "version": sys.version.split()[0],

@@ -66,7 +66,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v89"
+PROMPT_VERSION = "agent-json-v90"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -1253,10 +1253,11 @@ def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
     files = result.source.get("files")
     if isinstance(files, dict):
         diagnostic_artifacts = []
+        log_prefix = ("runtime-logs" if result.source.get("python_runtime_layout") == "isolated-1" else "task")
         names = [name for name in files if isinstance(name, str)
                  and name.rsplit("/", 1)[-1] in {"stdout.out", "stderr.txt", "response.json"}
                  and (result.operation_status != "completed" and ("sdk/" in name or name.startswith("internal/"))
-                      or name in {"task/stdout.out", "task/stderr.txt"})]
+                      or name in {f"{log_prefix}/stdout.out", f"{log_prefix}/stderr.txt"})]
         names.sort(key=lambda name: (not ("sdk/" in name or name.startswith("internal/")), name))
         for name in names[:8]:
             source = files.get(name)
@@ -1906,7 +1907,9 @@ def _failure_read_diagnostics(run, results):
             continue
         logs = result.source.get("files", {})
         evidence = []
-        for filename in ("task/stdout.out", "task/stderr.txt"):
+        prefix = ("runtime-logs" if attempt.execution_kind == "python" and run.configuration
+                  and run.configuration.execution.python_runtime_layout == "isolated-1" else "task")
+        for filename in (f"{prefix}/stdout.out", f"{prefix}/stderr.txt"):
             binding = logs.get(filename) if isinstance(logs, dict) else None
             if (not isinstance(binding, dict) or binding.get("artifact_id") not in result.artifact_ids
                     or not isinstance(binding.get("sha256"), str)

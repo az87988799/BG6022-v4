@@ -16,9 +16,10 @@ from pathlib import Path, PurePosixPath
 ROOT = Path("/work")
 RUNTIME = Path("/opt/orca-agent-runtime")
 AREAS = {"sealed": "sealed", "python": "task", "orca": "native",
-         "requests": "requests", "responses": "responses", "control": "control"}
+         "requests": "requests", "responses": "responses", "control": "control",
+         "python-runtime": "python-runtime"}
 UIDS = {"sealed": 0, "python": 10001, "orca": 10002, "requests": 10001,
-        "responses": 0, "control": 10003}
+        "responses": 0, "control": 10003, "python-runtime": 10001}
 CHUNK = 65536
 
 
@@ -178,22 +179,32 @@ def output_files(directory, limits, start):
             os.close(descriptor)
 
 
-def export(area, limits):
+def python_runtime_area(area, layout=None):
+    if layout is not None and (layout != "isolated-1" or area != "python"):
+        raise ValueError("invalid fixed Python runtime layout")
+    return "python-runtime" if layout == "isolated-1" else area
+
+
+def export(area, limits, layout=None):
     require_identity(area)
+    runtime_area = python_runtime_area(area, layout)
     start, count, total = time.monotonic(), 0, 0
-    directory = area_root(area)
+    sources = ([(area, "task/", False), (runtime_area, "runtime-logs/", True)]
+               if layout else [(area, "", True)])
     def expired(_number, _frame):
         raise TimeoutError("fixed collector lifetime exhausted")
 
     signal.signal(signal.SIGALRM, expired)
     signal.setitimer(signal.ITIMER_REAL, limits["seconds"])
-    for item in output_files(directory, limits, start):
-            if item == directory / ".launch.json":
+    for source_area, prefix, skip_identity in sources:
+        directory = area_root(source_area)
+        for item in output_files(directory, limits, start):
+            if skip_identity and item == directory / ".launch.json":
                 continue
             if time.monotonic() - start > limits["seconds"]:
                 raise TimeoutError("export deadline exhausted")
             path = item.relative_to(directory).as_posix()
-            fd = open_file(area, path, os.O_RDONLY)
+            fd = open_file(source_area, path, os.O_RDONLY)
             with os.fdopen(fd, "rb") as source:
                 info = os.fstat(source.fileno())
                 count += 1
@@ -201,7 +212,7 @@ def export(area, limits):
                 if (count > limits["count"] or info.st_size > limits["file_bytes"]
                         or total > limits["total_bytes"]):
                     raise ValueError("output budget exhausted")
-                header({"path": path, "size": info.st_size})
+                header({"path": prefix + path, "size": info.st_size})
                 digest = hashlib.sha256()
                 remaining = info.st_size
                 while remaining:
@@ -437,11 +448,12 @@ def supervise_orca(folder, area, timeout, env):
     return code if code >= 0 else 128 - code
 
 
-def launch(kind, timeout, area=None):
+def launch(kind, timeout, area=None, layout=None):
     area = area or kind
     require_identity(area)
     if kind not in {"python", "orca"} or base_area(area) != kind:
         raise ValueError("invalid workload kind")
+    runtime_area = python_runtime_area(area, layout)
     folder = area_root(area)
     os.chdir(folder)
     env = {"PATH": "/usr/bin:/bin", "HOME": str(folder),
@@ -455,19 +467,21 @@ def launch(kind, timeout, area=None):
                    OMPI_MCA_pml="ob1", OMPI_MCA_btl="self,vader",
                    OMPI_MCA_btl_vader_single_copy_mechanism="none")
         return supervise_orca(folder, area, timeout, env)
-    gated_child(folder, area, timeout)
-    with (folder / "stdout.out").open("xb", buffering=0) as out:
+    runtime_folder = area_root(runtime_area)
+    gated_child(runtime_folder, area, timeout)
+    with (runtime_folder / "stdout.out").open("xb", buffering=0) as out:
         os.dup2(out.fileno(), 1)
-    with (folder / "stderr.txt").open("xb", buffering=0) as err:
+    with (runtime_folder / "stderr.txt").open("xb", buffering=0) as err:
         os.dup2(err.fileno(), 2)
     executable = str(RUNTIME / "venv/bin/python")
     argv = [executable, "-I", str(RUNTIME / "python_task.py")]
     os.execve(executable, argv, env)
 
 
-def launch_identity(area, *, executable=False):
+def launch_identity(area, *, executable=False, layout=None):
     require_identity(area)
-    with os.fdopen(open_file(area, ".launch.json", os.O_RDONLY), "r") as stream:
+    runtime_area = python_runtime_area(area, layout)
+    with os.fdopen(open_file(runtime_area, ".launch.json", os.O_RDONLY), "r") as stream:
         expected = json.load(stream)
     actual = next((p for p in processes(os.getuid()) if p["pid"] == expected["pid"]), None)
     if not actual or actual["start_ticks"] != expected["start_ticks"]:
@@ -539,15 +553,16 @@ def main():
     elif command == "request":
         return read_request(int(args[0]), args[1] if len(args) > 1 else "request.json")
     elif command == "export":
-        export(args[0], json.loads(args[1]))
+        export(args[0], json.loads(args[1]), args[2] if len(args) > 2 else None)
     elif command == "snapshot":
         snapshot()
     elif command == "control":
         control(args[0])
     elif command == "launch":
-        return launch(args[0], float(args[1]), args[2] if len(args) > 2 else None)
+        return launch(args[0], float(args[1]), args[2] if len(args) > 2 else None,
+                      args[3] if len(args) > 3 else None)
     elif command == "identity":
-        launch_identity(args[0])
+        launch_identity(args[0], layout=args[1] if len(args) > 1 else None)
     elif command == "exec-identity":
         launch_identity(args[0], executable=True)
     elif command == "gate":

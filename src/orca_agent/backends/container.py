@@ -48,6 +48,8 @@ def _validate_execution(execution):
         raise ValueError("an explicit local Docker context is required")
     if value.get("_docker_endpoint") and not value["_docker_endpoint"].startswith(("npipe://", "unix://")):
         raise ValueError("recorded Docker endpoint must remain local")
+    if value.get("python_runtime_layout") not in {None, "isolated-1"}:
+        raise ValueError("unknown frozen Python runtime layout")
     return value
 
 
@@ -167,6 +169,9 @@ def inspect_environment(execution):
                 or labels.get("org.orca-agent.manifest-sha256") != value["manifest_sha256"]):
             raise ValueError("frozen runtime manifest hash differs from image labels")
         manifest = json.loads(raw)
+        if (value.get("python_runtime_layout") is not None
+                and manifest.get("python_runtime_layout") != value["python_runtime_layout"]):
+            raise ValueError("runtime image does not support the frozen Python layout")
         if any(not isinstance(manifest.get(key), dict) for key in ("orca", "mpi", "python")):
             raise ValueError("runtime manifest lacks fixed runtime identities")
         source = Path(__file__).with_name("container_runtime")
@@ -414,6 +419,11 @@ def _scoped_area(boundary, area):
     return area
 
 
+def _python_layout_args(boundary, area):
+    layout = boundary["execution"].get("python_runtime_layout") if area == "python" else None
+    return [layout] if layout is not None else []
+
+
 def stage(boundary, area, files, *, checkpoint=None):
     if area not in {"sealed", "python", "orca", "responses"}:
         raise ValueError("invalid staging area")
@@ -511,7 +521,8 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
     try:
         controls()
         args = ["exec", "--user", f"{_UID[area]}:{_UID[area]}", boundary["handle"]["container_id"],
-                PYTHON, "-I", HELPER, "launch", kind, str(timeout_s), scoped_area]
+                PYTHON, "-I", HELPER, "launch", kind, str(timeout_s), scoped_area,
+                *_python_layout_args(boundary, area)]
         process = subprocess.Popen(_argv(boundary["execution"], args), stdin=subprocess.DEVNULL,
             stdout=transport, stderr=transport, env=_environment(), shell=False,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
@@ -519,7 +530,8 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
         gate_deadline = min(deadline, time.monotonic() + 12)
         while time.monotonic() < gate_deadline:
             controls()
-            code, data, _ = _helper(boundary, _UID[area], ["identity", scoped_area], check=False)
+            code, data, _ = _helper(boundary, _UID[area],
+                ["identity", scoped_area, *_python_layout_args(boundary, area)], check=False)
             if code == 0:
                 identity = json.loads(data)
                 break
@@ -751,7 +763,12 @@ def collect(boundary, area, destination, *, limits, checkpoint=None):
     limits = dict(limits)
     deadline = time.monotonic() + limits["seconds"]
     maximum = limits["total_bytes"] + limits["count"] * 8196 + 8196
-    args = ["export", _scoped_area(boundary, area), json.dumps(limits, separators=(",", ":"))]
+    layout_args = _python_layout_args(boundary, area)
+    args = ["export", _scoped_area(boundary, area), json.dumps(limits, separators=(",", ":")), *layout_args]
+    if layout_args:
+        # New Python export contains task/ and runtime-logs/ in one stream,
+        # sharing every count/byte/deadline limit. The task cwd is unchanged.
+        destination = Path(destination).parent
     spool_path = boundary["local_root"] / ("container-export-" + uuid.uuid4().hex + ".bin")
     failure = None
     result = None

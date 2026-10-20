@@ -565,7 +565,9 @@ def _collect_execution_failure(store, run, attempt, files, outcome, diagnostics)
     if outcome["state"] not in {"failed", "timed_out", "cancelled"}:
         return
     evidence = []
-    for name in ("task/stdout.out", "task/stderr.txt"):
+    prefix = ("runtime-logs" if attempt.execution_kind == "python"
+              and store.run_configuration(run).execution.python_runtime_layout == "isolated-1" else "task")
+    for name in (f"{prefix}/stdout.out", f"{prefix}/stderr.txt"):
         binding = files.get(name)
         if isinstance(binding, dict) and binding.get("artifact_id") and binding.get("sha256"):
             artifact = store.load_artifact(binding["artifact_id"])
@@ -584,7 +586,11 @@ def collect_result(store, run, step, attempt, outcome):
     if outcome["state"] != "unknown":
         try:
             _collect_sdk_errors(store, run, attempt, root, files, diagnostics)
-            for folder in ("sealed", "task", "checkpoints"):
+            folders = ["sealed", "task", "checkpoints"]
+            if (attempt.execution_kind == "python"
+                    and store.run_configuration(run).execution.python_runtime_layout == "isolated-1"):
+                folders.append("runtime-logs")
+            for folder in folders:
                 if (root / folder).exists():
                     _archive(store, run, attempt, root / folder, folder + "/", files)
             # Coordinator records are outside every task-writable ACL tree.
@@ -647,6 +653,8 @@ def collect_result(store, run, step, attempt, outcome):
                                     for item in diagnostics),
                                 "scientific_validation": "unverified"},
                   source={"files": files, "execution": outcome,
+                          **({"python_runtime_layout": "isolated-1"} if attempt.execution_kind == "python"
+                             and store.run_configuration(run).execution.python_runtime_layout == "isolated-1" else {}),
                           "code_sha256": reference.sha256 if reference else None,
                           "request_version": attempt.request_version,
                           "plan_version": attempt.plan_version,
@@ -1113,6 +1121,11 @@ def execute(store, run, step, attempt, config, fault=None):
                 timeout = min(resources.script_timeout_seconds, (run.deadline - utc_now()).total_seconds())
                 environment.update(ORCA_TASK_REQUESTS=str(requests), ORCA_TASK_RESPONSES=str(responses),
                                    ORCA_TASK_TIMEOUT_SECONDS=str(timeout))
+                log_options = {}
+                if store.run_configuration(run).execution.python_runtime_layout == "isolated-1":
+                    log_directory = root / "runtime-logs"
+                    log_directory.mkdir()
+                    log_options["log_directory"] = log_directory
                 broker = _Broker(store, run, step, attempt, config, session, requests, responses,
                                  time.monotonic() + timeout, native_boundary)
                 lock = store.control_lock(run.id)
@@ -1135,7 +1148,7 @@ def execute(store, run, step, attempt, config, fault=None):
                         cores=resources.max_cores, total_memory_mb=resources.total_memory_mb,
                         timeout_s=timeout, environment=environment, isolation=session.policy(),
                         on_started=started, on_poll=broker.poll, job_name=attempt.execution_handle["job_name"],
-                        cancel_requested=lambda: store.read_signal(run.id) == "cancel", fault=hook)
+                        cancel_requested=lambda: store.read_signal(run.id) == "cancel", fault=hook, **log_options)
                 finally:
                     if locked:
                         lock.release()
