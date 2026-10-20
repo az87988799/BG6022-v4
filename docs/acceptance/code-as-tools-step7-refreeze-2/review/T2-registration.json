@@ -1,0 +1,87 @@
+{
+  "task": "T2",
+  "run_id": "run_7b39d335ffa944d0b2bb600615253962",
+  "observed_at_utc": "2026-10-20T11:42:13.386715+00:00",
+  "run_state": "failed",
+  "attempt_count": 0,
+  "orca_reserved": 0,
+  "orca_actual": 0,
+  "before_first_science": true,
+  "selected_conditions": {
+    "method": "B3LYP",
+    "basis": "def2-TZVP",
+    "charge": 0,
+    "multiplicity": 1,
+    "conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "electronic_state": "RKS",
+      "method": "B3LYP",
+      "basis": "def2-TZVP"
+    },
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "environment": "explicit",
+      "electronic_state": "default",
+      "method": "auto_selected",
+      "basis": "auto_selected"
+    }
+  },
+  "selection_decision": {
+    "id": "model_50f8dc6045da46639056df38d4f284f7",
+    "basis": {
+      "request_version": 2,
+      "plan_version": null,
+      "permission_version": 1,
+      "control_generation": 1
+    },
+    "record_sha256": "2c2790cb3197e904db5ffe7ff33d9ee177b2ed84ad5b35bf3cbb6a62921281c5",
+    "prior_plan_id": null,
+    "prior_plan_version": null,
+    "plan_id": null,
+    "plan_version": null,
+    "request_version": 3,
+    "user_message_ids": [],
+    "condition_selection": {
+      "schema": "condition-selection-2",
+      "parameters": {
+        "request_version": 2,
+        "choices": {
+          "method": {
+            "value": "B3LYP",
+            "reason": "Choose B3LYP for a uniform single-point comparison of all n-hexane conformers: it is a well-established hybrid GGA functional suitable for closed-shell organic molecules and is explicitly documented in the official ORCA 6.1 DFT manual page. Using one functional across all candidates satisfies the request's single-method/single-basis requirement, while the level stays tractable for many conformers. The source is the ORCA 6.1 'Density Functional Theory' manual entry (Result result_5ec8a462abfd4ae390b46b290b4a6e66) whose document hash is 94424fff...",
+            "sources": [
+              {
+                "result_id": "result_5ec8a462abfd4ae390b46b290b4a6e66",
+                "document_sha256": "94424fff221bde28abf4a32b7f1649771dcfde5585360082816107d4a6032c0c",
+                "quote": "B3LYP [230] B3LYP 20 The popular B3LYP functional (20% HF exchange) as defined in the TurboMole program system (LDAOPT C_VWN5)"
+              }
+            ]
+          },
+          "basis": {
+            "value": "def2-TZVP",
+            "reason": "Choose def2-TZVP as the orbital basis for every conformer single point: the official ORCA 6.1 Basis Sets manual states it is a polarized valence triple-zeta Karlsruhe basis covering H-Rn, directly invoked with the def2-TZVP keyword, with def2-ECP for heavier elements. It is appropriate for an organic molecule of this size and keeps one consistent basis across the entire comparison. The source is the ORCA 6.1 'Basis Sets' manual page (Result result_2e707a63cab74c2591aa329198fed903) whose document hash is 48750fa1....",
+            "sources": [
+              {
+                "result_id": "result_2e707a63cab74c2591aa329198fed903",
+                "document_sha256": "48750fa1c9dc25992c9e339648e52ef0f63423a7ad196e33b78609eb7143c4b6",
+                "quote": "The easiest way to use orbital and auxiliary basis sets in ORCA is via the simple input keywords. All available orbital basis set keywords can be found in Section 2.7.2 and all auxiliary basis set options in Section 2.7.4. For example, the Karlsruhe def2-TZVP basis set can be invoked via the def2-TZVP keyword.\n\ndef2-TZVP H–Rn def2-ECP (Rb–Rn) Polarized valence triple-\\(\\zeta\\). Quite similar to the older def-TZVPP for main group elements and TZVP for H."
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "criteria": "Original T2: save >=8 actual candidates; >=4 pairwise distinct (heavy carbon chain forward/reverse RMSD>0.15 angstrom) successful ORCA SP members with identical scientific conditions; all selection/exclusion/failure records; original absolute energy and relative kJ/mol ranking; finite-search limitations. Seed1701 if generator supports it, otherwise disclose inability. No independent reference computation authorized.",
+  "source_hashes": {
+    "run.json": "9247ca657652b68b0ee593586c163814a520698da1d1e965249c8b24c187af12",
+    "data/code-tools-refreeze-2-batch/workspaces/formal-T2-001/data/runs/run_7b39d335ffa944d0b2bb600615253962/decisions/model_5773890d039940a59650de068c304283.json": "fdab9a4d3124166a673634759c9d828ce15f791fd042210f2aa687d8434a9567"
+  },
+  "scope": "Read-only observation; no response, algorithm, computation or task changes supplied.",
+  "registration_timing": "Observed after terminal failure, with no science having started. This is retrospective condition preservation, not a claim of independent prospective preregistration.",
+  "run_already_terminal": true
+}

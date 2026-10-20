@@ -1,0 +1,85 @@
+{
+  "request_hash": "e4ad5fce9d042ac869608642337780405efe7773649b8c9acb7a8baee3f17bdb",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_ethanol",
+          "tool": "structure.resolve",
+          "system_id": "system_ethanol",
+          "parameters": {}
+        },
+        {
+          "key": "prepare_ethanol_geometry",
+          "tool": "structure.prepare",
+          "system_id": "system_ethanol",
+          "depends_on": [
+            "resolve_ethanol"
+          ],
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_ethanol",
+              "port": "resolved_identity"
+            }
+          },
+          "parameters": {}
+        }
+      ],
+      "goal_map": {
+        "goal_prepare_ethanol_geometry": {
+          "port": "prepared_geometry",
+          "step_key": "prepare_ethanol_geometry"
+        },
+        "goal_ethanol_optimized_coordinates": {
+          "port": "optimized_geometry",
+          "gap": "No optimization has been run; initial geometry must be prepared first."
+        },
+        "goal_ethanol_vibrational_frequencies": {
+          "port": "vibrational_frequencies",
+          "gap": "No optimized structure or frequency job exists yet."
+        },
+        "goal_local_minimum_assessment": {
+          "port": "local_minimum_conclusion",
+          "gap": "No optimization/frequency evidence exists yet to assess a local minimum."
+        },
+        "goal_random_seed_record": {
+          "port": "random_seed",
+          "gap": "No stochastic structure-search or random-number use has occurred yet; seed 1701 must be recorded in the eventual report."
+        },
+        "goal_retain_artifacts": {
+          "port": "retained_artifacts",
+          "gap": "No execution artifacts have been produced yet; all raw inputs, outputs, scripts and failures will be retained."
+        },
+        "goal_execution_science_verification_report": {
+          "port": "execution_science_verification_report",
+          "gap": "No execution or scientific verification evidence exists yet."
+        },
+        "goal_method_basis_rationale": {
+          "port": "method_basis_rationale",
+          "gap": "Method/basis rationale must be finalized against the actual selected Request conditions and cited manual evidence in a later reporting step."
+        }
+      }
+    },
+    "reason": "Start with the required identity-resolution and single initial-geometry preparation for neutral singlet gas-phase ethanol. These produce the qualified initial XYZ needed before any native ORCA optimization/frequency input can be authored and bound to a real prepared-geometry artifact. Unresolved goals are explicitly marked as gaps until execution evidence exists."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_ethanol\",\"tool\":\"structure.resolve\",\"system_id\":\"system_ethanol\",\"parameters\":{}},{\"key\":\"prepare_ethanol_geometry\",\"tool\":\"structure.prepare\",\"system_id\":\"system_ethanol\",\"depends_on\":[\"resolve_ethanol\"],\"inputs\":{\"identity\":{\"producer_key\":\"resolve_ethanol\",\"port\":\"resolved_identity\"}},\"parameters\":{}}],\"goal_map\":{\"goal_prepare_ethanol_geometry\":{\"port\":\"prepared_geometry\",\"step_key\":\"prepare_ethanol_geometry\"},\"goal_ethanol_optimized_coordinates\":{\"port\":\"optimized_geometry\",\"gap\":\"No optimization has been run; initial geometry must be prepared first.\"},\"goal_ethanol_vibrational_frequencies\":{\"port\":\"vibrational_frequencies\",\"gap\":\"No optimized structure or frequency job exists yet.\"},\"goal_local_minimum_assessment\":{\"port\":\"local_minimum_conclusion\",\"gap\":\"No optimization/frequency evidence exists yet to assess a local minimum.\"},\"goal_random_seed_record\":{\"port\":\"random_seed\",\"gap\":\"No stochastic structure-search or random-number use has occurred yet; seed 1701 must be recorded in the eventual report.\"},\"goal_retain_artifacts\":{\"port\":\"retained_artifacts\",\"gap\":\"No execution artifacts have been produced yet; all raw inputs, outputs, scripts and failures will be retained.\"},\"goal_execution_science_verification_report\":{\"port\":\"execution_science_verification_report\",\"gap\":\"No execution or scientific verification evidence exists yet.\"},\"goal_method_basis_rationale\":{\"port\":\"method_basis_rationale\",\"gap\":\"Method/basis rationale must be finalized against the actual selected Request conditions and cited manual evidence in a later reporting step.\"}}},\"reason\":\"Start with the required identity-resolution and single initial-geometry preparation for neutral singlet gas-phase ethanol. These produce the qualified initial XYZ needed before any native ORCA optimization/frequency input can be authored and bound to a real prepared-geometry artifact. Unresolved goals are explicitly marked as gaps until execution evidence exists.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 15795,
+    "completion_tokens": 2074,
+    "total_tokens": 17869,
+    "prompt_cache_hit_tokens": 1664,
+    "prompt_cache_miss_tokens": 14131
+  },
+  "response_hash": "b854a4fd9b7b7f33e5c6de5264fd227712110a0baa3cce0b58ac148f002ccdbd",
+  "response_bytes": 10536,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "6e115f7e-af8d-4262-9c6f-66d3d573d0cf",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 11.125
+}

@@ -1,0 +1,847 @@
+{
+  "id": "model_299632257cab4b1b9239e3b5646ad197",
+  "basis": {
+    "request_version": 2,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 1
+  },
+  "request": {
+    "id": "request_68186102b7514923a70e192ff2769cec",
+    "version": 2,
+    "original_text": "请为甲醛CH2O（中性、单重态、气相）生成一份合理结构，用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率。再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数。依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同。保留原始输入输出、生成与分析脚本、数据表及验证限制；不分别优化两个结构，不以永久偶极矩或有限频率动态响应替代静态极化率，不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "geometry_artifact_id": null,
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "HF",
+    "basis": "def2-SVP",
+    "conditions_source": {
+      "method": "explicit",
+      "basis": "explicit",
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "electronic_state": "explicit",
+      "environment": "explicit"
+    },
+    "goals": [
+      {
+        "id": "goal_prepare_ch2o",
+        "port": "prepared_geometry",
+        "required": true,
+        "minimum_check_version": "structure-prepare-3",
+        "evidence_contract_version": "legacy-1",
+        "verification": "reported_with_limitations",
+        "quantity": "合理结构",
+        "original_text": "请为甲醛CH2O（中性、单重态、气相）生成一份合理结构",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "甲醛CH2O"
+          ],
+          "canonical_names": [],
+          "query_name": "formaldehyde",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+            "text_basis": "甲醛CH2O",
+            "start": 2,
+            "end": 8,
+            "schema": "request-semantics-3"
+          }
+        },
+        "text_evidence": {
+          "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+          "text_basis": "请为甲醛CH2O（中性、单重态、气相）生成一份合理结构",
+          "start": 0,
+          "end": 27,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_ch2o"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_pol_original",
+        "port": "static_dipole_dipole_polarizability_tensor",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "固定几何上的静态电偶极-电偶极极化率",
+        "original_text": "用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率",
+        "identity": {
+          "requested_names": [
+            "甲醛CH2O"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+          "text_basis": "用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率",
+          "start": 28,
+          "end": 61,
+          "schema": "request-semantics-3",
+          "shared_constraints": [
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率",
+              "start": 28,
+              "end": 61,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心",
+              "start": 62,
+              "end": 91,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "保持原子顺序和内部几何",
+              "start": 117,
+              "end": 128,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "并对旋转副本用完全相同的科学设置独立计算该极化率",
+              "start": 129,
+              "end": 153,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率",
+              "start": 173,
+              "end": 209,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持",
+              "start": 247,
+              "end": 280,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "并解释为什么坐标分量和各向同性量的比较方式不同",
+              "start": 281,
+              "end": 304,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "不分别优化两个结构",
+              "start": 331,
+              "end": 340,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果",
+              "start": 365,
+              "end": 395,
+              "schema": "request-semantics-3"
+            }
+          ]
+        },
+        "system_ids": [
+          "system_ch2o"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_rotation_relation",
+        "port": "rotation_relation",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "旋转约定和实际数值设置",
+        "original_text": "再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。",
+        "identity": {
+          "requested_names": [
+            "甲醛CH2O"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+          "text_basis": "再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。",
+          "start": 62,
+          "end": 173,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_ch2o"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_pol_rotated",
+        "port": "static_dipole_dipole_polarizability_tensor_rotated",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "该极化率",
+        "original_text": "并对旋转副本用完全相同的科学设置独立计算该极化率",
+        "identity": {
+          "requested_names": [
+            "甲醛CH2O"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+          "text_basis": "并对旋转副本用完全相同的科学设置独立计算该极化率",
+          "start": 129,
+          "end": 153,
+          "schema": "request-semantics-3",
+          "shared_constraints": [
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率",
+              "start": 28,
+              "end": 61,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心",
+              "start": 62,
+              "end": 91,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "保持原子顺序和内部几何",
+              "start": 117,
+              "end": 128,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "并对旋转副本用完全相同的科学设置独立计算该极化率",
+              "start": 129,
+              "end": 153,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率",
+              "start": 173,
+              "end": 209,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持",
+              "start": 247,
+              "end": 280,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "并解释为什么坐标分量和各向同性量的比较方式不同",
+              "start": 281,
+              "end": 304,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "不分别优化两个结构",
+              "start": 331,
+              "end": 340,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果",
+              "start": 365,
+              "end": 395,
+              "schema": "request-semantics-3"
+            }
+          ]
+        },
+        "system_ids": [
+          "system_ch2o"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_deliver_results",
+        "port": "delivery_bundle",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率",
+        "original_text": "交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数",
+        "identity": {
+          "requested_names": [
+            "甲醛CH2O"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+          "text_basis": "交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数",
+          "start": 173,
+          "end": 246,
+          "schema": "request-semantics-3",
+          "shared_constraints": [
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率",
+              "start": 28,
+              "end": 61,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心",
+              "start": 62,
+              "end": 91,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "保持原子顺序和内部几何",
+              "start": 117,
+              "end": 128,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "并对旋转副本用完全相同的科学设置独立计算该极化率",
+              "start": 129,
+              "end": 153,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率",
+              "start": 173,
+              "end": 209,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持",
+              "start": 247,
+              "end": 280,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "并解释为什么坐标分量和各向同性量的比较方式不同",
+              "start": 281,
+              "end": 304,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "不分别优化两个结构",
+              "start": 331,
+              "end": 340,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果",
+              "start": 365,
+              "end": 395,
+              "schema": "request-semantics-3"
+            }
+          ]
+        },
+        "system_ids": [
+          "system_ch2o"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_verify_tensors",
+        "port": "tensor_transformation_verification",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "检验张量分量是否按坐标变换一致、各向同性值是否保持",
+        "original_text": "依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同",
+        "identity": {
+          "requested_names": [
+            "甲醛CH2O"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+          "text_basis": "依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同",
+          "start": 247,
+          "end": 304,
+          "schema": "request-semantics-3",
+          "shared_constraints": [
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率",
+              "start": 28,
+              "end": 61,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心",
+              "start": 62,
+              "end": 91,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "保持原子顺序和内部几何",
+              "start": 117,
+              "end": 128,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "并对旋转副本用完全相同的科学设置独立计算该极化率",
+              "start": 129,
+              "end": 153,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率",
+              "start": 173,
+              "end": 209,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持",
+              "start": 247,
+              "end": 280,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "并解释为什么坐标分量和各向同性量的比较方式不同",
+              "start": 281,
+              "end": 304,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "不分别优化两个结构",
+              "start": 331,
+              "end": 340,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果",
+              "start": 365,
+              "end": 395,
+              "schema": "request-semantics-3"
+            }
+          ]
+        },
+        "system_ids": [
+          "system_ch2o"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_preserve_artifacts",
+        "port": "artifact_preservation",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "保留原始输入输出、生成与分析脚本、数据表及验证限制",
+        "original_text": "保留原始输入输出、生成与分析脚本、数据表及验证限制",
+        "identity": {
+          "requested_names": [
+            "甲醛CH2O"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+          "text_basis": "保留原始输入输出、生成与分析脚本、数据表及验证限制",
+          "start": 305,
+          "end": 330,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_ch2o"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_seed_1701",
+        "port": "random_seed_record",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "种子 1701",
+        "original_text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "identity": {
+          "requested_names": [
+            "甲醛CH2O"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "start": 398,
+          "end": 469,
+          "schema": "request-semantics-3",
+          "shared_constraints": [
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率",
+              "start": 28,
+              "end": 61,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心",
+              "start": 62,
+              "end": 91,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "保持原子顺序和内部几何",
+              "start": 117,
+              "end": 128,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "并对旋转副本用完全相同的科学设置独立计算该极化率",
+              "start": 129,
+              "end": 153,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率",
+              "start": 173,
+              "end": 209,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持",
+              "start": 247,
+              "end": 280,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "并解释为什么坐标分量和各向同性量的比较方式不同",
+              "start": 281,
+              "end": 304,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "不分别优化两个结构",
+              "start": 331,
+              "end": 340,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+              "text_basis": "不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果",
+              "start": 365,
+              "end": 395,
+              "schema": "request-semantics-3"
+            }
+          ]
+        },
+        "system_ids": [
+          "system_ch2o"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      }
+    ],
+    "systems": [
+      {
+        "id": "system_ch2o",
+        "geometry_artifact_id": null,
+        "conditions": {},
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": "甲醛CH2O",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "甲醛CH2O"
+          ],
+          "canonical_names": [],
+          "query_name": "formaldehyde",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+            "text_basis": "甲醛CH2O",
+            "start": 2,
+            "end": 8,
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+        "text": "请为甲醛CH2O（中性、单重态、气相）生成一份合理结构，用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率。再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数。依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同。保留原始输入输出、生成与分析脚本、数据表及验证限制；不分别优化两个结构，不以永久偶极矩或有限频率动态响应替代静态极化率，不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "source": "user",
+        "created_at": "2026-10-20T12:27:40.190357+00:00",
+        "request_version": 1
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "explain_results": true,
+      "method": "HF",
+      "basis": "def2-SVP",
+      "charge": 0,
+      "multiplicity": 1,
+      "electronic_state": "RHF",
+      "environment": "gas_phase"
+    },
+    "normalization_status": "normalized",
+    "condition_evidence": {
+      "request.method": {
+        "value": "HF",
+        "source": "explicit",
+        "text_basis": "RHF/def2-SVP",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+        "start": 29,
+        "end": 41,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_35909dfaf1494f908ac0fe0fcae8a480"
+        ]
+      },
+      "request.basis": {
+        "value": "def2-SVP",
+        "source": "explicit",
+        "text_basis": "RHF/def2-SVP",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+        "start": 29,
+        "end": 41,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_35909dfaf1494f908ac0fe0fcae8a480"
+        ]
+      },
+      "request.charge": {
+        "value": 0,
+        "source": "explicit",
+        "text_basis": "（中性、单重态、气相）",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+        "start": 8,
+        "end": 19,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_35909dfaf1494f908ac0fe0fcae8a480"
+        ]
+      },
+      "request.multiplicity": {
+        "value": 1,
+        "source": "explicit",
+        "text_basis": "（中性、单重态、气相）",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+        "start": 8,
+        "end": 19,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_35909dfaf1494f908ac0fe0fcae8a480"
+        ]
+      },
+      "request.electronic_state": {
+        "value": "RHF",
+        "source": "explicit",
+        "text_basis": "RHF/def2-SVP",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+        "start": 29,
+        "end": 41,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_35909dfaf1494f908ac0fe0fcae8a480"
+        ]
+      },
+      "request.environment": {
+        "value": "gas_phase",
+        "source": "explicit",
+        "text_basis": "（中性、单重态、气相）",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_35909dfaf1494f908ac0fe0fcae8a480",
+        "start": 8,
+        "end": 19,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_35909dfaf1494f908ac0fe0fcae8a480"
+        ]
+      }
+    },
+    "semantic_defaults": {
+      "charge": 0,
+      "electronic_state": "RKS",
+      "environment": "gas_phase",
+      "multiplicity": 1
+    },
+    "automatic_selection": [],
+    "selection_reasons": {}
+  },
+  "plan": {
+    "id": "plan_662e5278f37d4807b93dec646bb4febe",
+    "version": 1,
+    "request_id": "request_68186102b7514923a70e192ff2769cec",
+    "request_version": 2,
+    "steps": [
+      {
+        "id": "step_876656dc8d004ba188ed392c484dc6cf",
+        "logical_id": "logical_cb599c55042c45ca8573e139157a2a92",
+        "tool": "structure.resolve",
+        "parameters": {
+          "system_id": "system_ch2o"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": "system_ch2o"
+      },
+      {
+        "id": "step_a25cedd097714ca5855a5407603df40a",
+        "logical_id": "logical_d654d471b0924d7195b129619ac99c08",
+        "tool": "structure.prepare",
+        "parameters": {
+          "system_id": "system_ch2o",
+          "charge": 0,
+          "multiplicity": 1
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_876656dc8d004ba188ed392c484dc6cf"
+        ],
+        "inputs": {
+          "identity": {
+            "producer_step_id": "step_876656dc8d004ba188ed392c484dc6cf",
+            "run_id": null,
+            "result_id": null,
+            "attempt_id": null,
+            "artifact_id": null,
+            "sha256": null,
+            "port": "resolved_identity",
+            "rule_version": null
+          }
+        },
+        "system_id": "system_ch2o"
+      }
+    ],
+    "goal_map": {
+      "goal_prepare_ch2o": {
+        "step_id": "step_a25cedd097714ca5855a5407603df40a",
+        "port": "prepared_geometry",
+        "evidence": null,
+        "gap": null
+      },
+      "goal_pol_original": {
+        "step_id": null,
+        "port": "static_dipole_dipole_polarizability_tensor",
+        "evidence": null,
+        "gap": "Requires the qualified prepared CH2O geometry first; a concrete RHF/def2-SVP static-polarizability input and an independent managed ORCA run cannot be authored without the real prepared_geometry artifact."
+      },
+      "goal_rotation_relation": {
+        "step_id": null,
+        "port": "rotation_relation",
+        "evidence": null,
+        "gap": "The rotation convention can be defined, but the numerical rotated XYZ and its relation to the original require the prepared geometry."
+      },
+      "goal_pol_rotated": {
+        "step_id": null,
+        "port": "static_dipole_dipole_polarizability_tensor_rotated",
+        "evidence": null,
+        "gap": "Requires an archived rotated XYZ derived from the prepared geometry and a separate managed ORCA run with identical settings; the rotated tensor may not be obtained by transforming the first result."
+      },
+      "goal_deliver_results": {
+        "step_id": null,
+        "port": "delivery_bundle",
+        "evidence": null,
+        "gap": "Depends on real outputs from both independent ORCA calculations, two archived XYZ files, the tensor table, isotropic values, and the comparison record."
+      },
+      "goal_verify_tensors": {
+        "step_id": null,
+        "port": "tensor_transformation_verification",
+        "evidence": null,
+        "gap": "Requires both real 3x3 tensors from actual ORCA outputs before component-level rotation comparison and isotropic invariance checks."
+      },
+      "goal_preserve_artifacts": {
+        "step_id": null,
+        "port": "artifact_preservation",
+        "evidence": null,
+        "gap": "Generation/analysis scripts, XYZ files, input/output files, data tables, and limitations will be archived as each producer executes."
+      },
+      "goal_seed_1701": {
+        "step_id": null,
+        "port": "random_seed_record",
+        "evidence": null,
+        "gap": "No random-number algorithm has been authored yet; seed 1701 will be recorded where applicable and any library limitation stated explicitly."
+      }
+    }
+  },
+  "related_results": [
+    "result_7a8da5db88ee408f8aaf56b01f22e69b"
+  ],
+  "user_message_ids": []
+}

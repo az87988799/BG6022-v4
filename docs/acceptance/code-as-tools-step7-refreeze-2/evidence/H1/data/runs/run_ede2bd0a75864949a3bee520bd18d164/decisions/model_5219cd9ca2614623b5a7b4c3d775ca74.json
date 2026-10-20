@@ -1,0 +1,718 @@
+{
+  "id": "model_5219cd9ca2614623b5a7b4c3d775ca74",
+  "basis": {
+    "request_version": 3,
+    "plan_version": 4,
+    "permission_version": 1,
+    "control_generation": 1
+  },
+  "request": {
+    "id": "request_44e11360f9df469daaeae84d102e6da4",
+    "version": 3,
+    "original_text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "geometry_artifact_id": null,
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "PBE0",
+    "basis": "def2-TZVP",
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "environment": "explicit",
+      "electronic_state": "default",
+      "method": "auto_selected",
+      "basis": "auto_selected"
+    },
+    "goals": [
+      {
+        "id": "goal_prepare_hcn_geometry",
+        "port": "prepared_geometry",
+        "required": true,
+        "minimum_check_version": "structure-prepare-3",
+        "evidence_contract_version": "legacy-1",
+        "verification": "qualified",
+        "quantity": "生成并保存一份合理结构",
+        "original_text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "氰化氢HCN"
+          ],
+          "canonical_names": [],
+          "query_name": "hydrogen cyanide",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+            "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+            "start": 2,
+            "end": 25,
+            "schema": "request-semantics-3"
+          }
+        },
+        "text_evidence": {
+          "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+          "text_basis": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。",
+          "start": 0,
+          "end": 64,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_giao_shielding_tensor",
+        "port": "giao_nmr_shielding_tensor",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量",
+        "original_text": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+          "text_basis": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+          "start": 128,
+          "end": 335,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {
+          "geometry_relation": "fixed_initial"
+        },
+        "minimum_evidence": [
+          "均注明ppm和对应坐标系",
+          "机器表至少保留3位小数",
+          "未收敛或缺少的核应明确标为未完成，不补造数值"
+        ],
+        "minimum_evidence_source": {
+          "均注明ppm和对应坐标系": "explicit",
+          "机器表至少保留3位小数": "explicit",
+          "未收敛或缺少的核应明确标为未完成，不补造数值": "explicit"
+        },
+        "unresolved": []
+      },
+      {
+        "id": "goal_isotropic_shielding",
+        "port": "giao_nmr_isotropic_shielding",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "各向同性屏蔽常数",
+        "original_text": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+          "text_basis": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+          "start": 128,
+          "end": 335,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {
+          "geometry_relation": "fixed_initial"
+        },
+        "minimum_evidence": [
+          "均注明ppm和对应坐标系",
+          "未收敛或缺少的核应明确标为未完成，不补造数值"
+        ],
+        "minimum_evidence_source": {
+          "均注明ppm和对应坐标系": "explicit",
+          "未收敛或缺少的核应明确标为未完成，不补造数值": "explicit"
+        },
+        "unresolved": []
+      },
+      {
+        "id": "goal_trace_consistency_check",
+        "port": "giao_nmr_trace_consistency",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "核对各向同性值与该核总张量迹的一致性",
+        "original_text": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+          "text_basis": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+          "start": 128,
+          "end": 335,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {
+          "geometry_relation": "fixed_initial"
+        },
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_method_cost_rationale",
+        "port": "method_cost_rationale",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "说明选择与成本依据并记录实际数值设置",
+        "original_text": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+          "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。",
+          "start": 64,
+          "end": 128,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_delivery_artifacts",
+        "port": "delivery_artifacts",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格",
+        "original_text": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+          "text_basis": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+          "start": 128,
+          "end": 335,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_method_geometry_limitations",
+        "port": "limitations",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "说明方法与几何的局限",
+        "original_text": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+          "text_basis": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+          "start": 128,
+          "end": 335,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_random_seed_record",
+        "port": "random_seed_record",
+        "required": false,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "统一采用种子 1701 并在报告中记录",
+        "original_text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "start": 337,
+          "end": 408,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_hcn"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      }
+    ],
+    "systems": [
+      {
+        "id": "system_hcn",
+        "geometry_artifact_id": null,
+        "conditions": {},
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": "氰化氢HCN",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "氰化氢HCN"
+          ],
+          "canonical_names": [],
+          "query_name": "hydrogen cyanide",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+            "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+            "start": 2,
+            "end": 25,
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_6b2eba544710496cb6c2e01496ac2743",
+        "text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "source": "user",
+        "created_at": "2026-10-20T12:18:40.823076+00:00",
+        "request_version": 1
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "electronic_state": "RKS",
+      "method": "PBE0",
+      "basis": "def2-TZVP"
+    },
+    "normalization_status": "normalized",
+    "condition_evidence": {
+      "request.charge": {
+        "value": 0,
+        "source": "explicit",
+        "text_basis": "中性",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+        "start": 15,
+        "end": 17,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_6b2eba544710496cb6c2e01496ac2743"
+        ]
+      },
+      "request.multiplicity": {
+        "value": 1,
+        "source": "explicit",
+        "text_basis": "单重态",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+        "start": 18,
+        "end": 21,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_6b2eba544710496cb6c2e01496ac2743"
+        ]
+      },
+      "request.environment": {
+        "value": "gas_phase",
+        "source": "explicit",
+        "text_basis": "气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+        "start": 22,
+        "end": 24,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_6b2eba544710496cb6c2e01496ac2743"
+        ]
+      },
+      "request.electronic_state": {
+        "value": "RKS",
+        "source": "default",
+        "text_basis": "",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": "local-hf-1",
+        "message_id": null,
+        "message_ids": [
+          "message_6b2eba544710496cb6c2e01496ac2743"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.method": {
+        "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+        "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择",
+        "start": 64,
+        "end": 104,
+        "schema": "request-semantics-3",
+        "source": "explicit"
+      },
+      "automatic_selection.basis": {
+        "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+        "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择",
+        "start": 64,
+        "end": 104,
+        "schema": "request-semantics-3",
+        "source": "explicit"
+      },
+      "request.method": {
+        "value": "PBE0",
+        "source": "auto_selected",
+        "request_version": 2,
+        "authorization": {
+          "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+          "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择",
+          "start": 64,
+          "end": 104,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        },
+        "reason": "PBE0 is an explicitly documented one-parameter hybrid functional (25% HF exchange) and is an allowed choice for this neutral closed-shell HCN task; it is inexpensive for three atoms while including exact-exchange admixture relevant to shielding. This fixes the wavefunction as RKS for the singlet. The citation identifies the documented functional; it is not scientific validation.",
+        "sources": [
+          {
+            "result_id": "result_f824542d685f47c4a478424bc017cb33",
+            "result_fingerprint": "c2143ea7f04153fae9676d1f3fbaa2011305e382d4ff34de7f887f91b6ea7a90",
+            "document_sha256": "94424fff221bde28abf4a32b7f1649771dcfde5585360082816107d4a6032c0c",
+            "excerpt_sha256": "ea2c10693bc09a34f175576f606b28db21794e407c0301d8e839ed336f9bb39e",
+            "quote": "PBE0 [229] PBE0 25 One-parameter hybrid version of PBE",
+            "kind": "official_document",
+            "document_id": "orca_dft",
+            "index_version": "knowledge-index-3",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/modelchemistries/DensityFunctionalTheory.html",
+            "title": "ORCA 6.1 Density Functional Theory"
+          }
+        ],
+        "schema": "condition-selection-2"
+      },
+      "request.basis": {
+        "value": "def2-TZVP",
+        "source": "auto_selected",
+        "request_version": 2,
+        "authorization": {
+          "message_id": "message_6b2eba544710496cb6c2e01496ac2743",
+          "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择",
+          "start": 64,
+          "end": 104,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        },
+        "reason": "def2-TZVP is an allowed polarized valence triple-zeta basis; for a three-atom molecule the cost is modest under the four-core / 192 MB-per-process limits, and the larger flexible basis is preferable to def2-SVP for the anisotropic GIAO tensor and its isotropic trace. The citation establishes the documented basis label, not scientific validation.",
+        "sources": [
+          {
+            "result_id": "result_993a5d9f91b841de93e0237dc3e2b588",
+            "result_fingerprint": "354c5fa8b5891bfba8c18dbb84d44a391c5a6cb8c6f436a9caa8c4ba585261fb",
+            "document_sha256": "48750fa1c9dc25992c9e339648e52ef0f63423a7ad196e33b78609eb7143c4b6",
+            "excerpt_sha256": "3919586b2fe4b5d16e2a88993df3219a3457c0837259654602b45447cd8d93ae",
+            "quote": "def2-TZVP H–Rn def2-ECP (Rb–Rn) Polarized valence triple-\\(\\zeta\\). Quite similar to the older def-TZVPP for main group elements and TZVP for H.",
+            "kind": "official_document",
+            "document_id": "orca_basis",
+            "index_version": "knowledge-index-3",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/basisset.html",
+            "title": "ORCA 6.1 Basis Sets"
+          }
+        ],
+        "schema": "condition-selection-2"
+      }
+    },
+    "semantic_defaults": {
+      "charge": 0,
+      "electronic_state": "RKS",
+      "environment": "gas_phase",
+      "multiplicity": 1
+    },
+    "automatic_selection": [
+      "method",
+      "basis"
+    ],
+    "selection_reasons": {
+      "method": "PBE0 is an explicitly documented one-parameter hybrid functional (25% HF exchange) and is an allowed choice for this neutral closed-shell HCN task; it is inexpensive for three atoms while including exact-exchange admixture relevant to shielding. This fixes the wavefunction as RKS for the singlet. The citation identifies the documented functional; it is not scientific validation.",
+      "basis": "def2-TZVP is an allowed polarized valence triple-zeta basis; for a three-atom molecule the cost is modest under the four-core / 192 MB-per-process limits, and the larger flexible basis is preferable to def2-SVP for the anisotropic GIAO tensor and its isotropic trace. The citation establishes the documented basis label, not scientific validation."
+    }
+  },
+  "plan": {
+    "id": "plan_98fae8ff4b904c01b5e9755799816270",
+    "version": 5,
+    "request_id": "request_44e11360f9df469daaeae84d102e6da4",
+    "request_version": 3,
+    "steps": [
+      {
+        "id": "step_6410a6aff1284e0a9a6a6deb355e03ae",
+        "logical_id": "logical_f4717354c2654b53bf9fcab3712dff78",
+        "tool": "orca.run",
+        "parameters": {
+          "input": {
+            "artifact_id": "artifact_2c5936fc70214a03a4f22974237c3ca4",
+            "sha256": "452bbb120111d9627881697ddf94adf211e1d6020008b311954b1369b575dfd8",
+            "language": "orca",
+            "version": 1
+          },
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "artifact_id": "artifact_20c5a2c764b446dab4b3336b8a408510",
+                "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+                "target_path": "prepared.xyz",
+                "purpose": "Fixed initial HCN geometry for the requested GIAO shielding calculation"
+              }
+            ]
+          },
+          "observation_names": [
+            "giao_nmr_shielding_tensor",
+            "giao_nmr_isotropic_shielding",
+            "giao_nmr_trace_consistency"
+          ],
+          "conditions": {
+            "wavefunction": "RKS",
+            "charge": 0,
+            "multiplicity": 1,
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "environment": "gas_phase"
+          }
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_1ffbd3afc34c48b38ea194229882bffa",
+          "step_261a3897a78b454cb07d0236ff0c273b"
+        ],
+        "inputs": {},
+        "system_id": "system_hcn"
+      },
+      {
+        "id": "step_119e1d51e69449a798d9de37b5e935d5",
+        "logical_id": "logical_f934ac6e7c914ef49305b3da56f2807d",
+        "tool": "workspace.write",
+        "parameters": {
+          "name": "hcn_nmr.inp",
+          "content": "! PBE0 def2-TZVP NMR NoAutoStart\n%maxcore 192\n%scf\n  MaxIter 256\n  AutoTRAH false\nend\n%eprnmr\n  Nuclei = all\nend\n* xyzfile 0 1 prepared.xyz\n",
+          "role": "orca"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": null
+      },
+      {
+        "id": "step_1ffbd3afc34c48b38ea194229882bffa",
+        "logical_id": "logical_2dc2b25b42f342b7902f5cd6e8aea5d9",
+        "tool": "workspace.write",
+        "parameters": {
+          "name": "hcn_nmr_rks.inp",
+          "content": "! RKS PBE0 def2-TZVP NMR NoAutoStart\n%maxcore 192\n%scf\n  MaxIter 256\n  AutoTRAH false\nend\n%eprnmr\n  Nuclei = all\nend\n* xyzfile 0 1 prepared.xyz\n",
+          "role": "orca"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": "system_hcn"
+      },
+      {
+        "id": "step_261a3897a78b454cb07d0236ff0c273b",
+        "logical_id": "logical_53f2b1b8217541a9aae9d4c31555db0f",
+        "tool": "structure.prepare",
+        "parameters": {
+          "system_id": "system_hcn",
+          "charge": 0,
+          "multiplicity": 1
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_a8b7ce3ba5184a279c6dd8bd88353f64"
+        ],
+        "inputs": {
+          "identity": {
+            "producer_step_id": "step_a8b7ce3ba5184a279c6dd8bd88353f64",
+            "run_id": null,
+            "result_id": null,
+            "attempt_id": null,
+            "artifact_id": null,
+            "sha256": null,
+            "port": "resolved_identity",
+            "rule_version": null
+          }
+        },
+        "system_id": "system_hcn"
+      },
+      {
+        "id": "step_3d1c3f94d12d4e28a0930c720b0fcf88",
+        "logical_id": "logical_0fb6d0d10d2c4f23b8dfdca7cd2d1e6c",
+        "tool": "orca.run",
+        "parameters": {
+          "input": {
+            "artifact_id": "artifact_b815457cc91147d0b2c3db5a3fcdb205",
+            "sha256": "84a2001cbed86ec49b47e5923c89d9d73ede11c56f8c3905724bfa17c7473d97",
+            "language": "orca",
+            "version": 1
+          },
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "artifact_id": "artifact_20c5a2c764b446dab4b3336b8a408510",
+                "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+                "target_path": "prepared.xyz",
+                "purpose": "Fixed initial HCN geometry for the requested GIAO shielding calculation"
+              }
+            ]
+          },
+          "observation_names": [],
+          "conditions": {
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_119e1d51e69449a798d9de37b5e935d5",
+          "step_261a3897a78b454cb07d0236ff0c273b"
+        ],
+        "inputs": {},
+        "system_id": "system_hcn"
+      },
+      {
+        "id": "step_888a8f3dac6145de93140e497b4c092b",
+        "logical_id": "logical_00b2fcd94b6f4517bcd20e41585c1272",
+        "tool": "workspace.write",
+        "parameters": {
+          "name": "method_notes.md",
+          "content": "# HCN GIAO shielding plan\n\nRequested system: neutral, singlet HCN in the gas phase, atoms ordered H-C-N.\n\nMethod choice: PBE0 (RKS for the closed-shell singlet). PBE0 is an allowed one-parameter hybrid functional (25% HF exchange) and is inexpensive for three atoms while including exact-exchange admixture relevant to shielding. Basis choice: def2-TZVP, an allowed polarized valence triple-zeta basis; the larger flexible basis is preferable to def2-SVP for anisotropic GIAO tensors while remaining modest for HCN under the four-core / 192 MB-per-process limits.\n\nPlanned ORCA controls: gas phase (no solvent), charge 0, multiplicity 1, RKS, PBE0/def2-TZVP, GIAO NMR shielding for all nuclei. Resource settings will be recorded in the actual input as required by the native input contract.\n\nRandom seed policy: any task-local stochastic algorithm will use seed 1701 and be recorded. If a library/model cannot accept a fixed seed, that will be recorded as not fixable rather than fabricated as deterministic. No random-number method is currently required for the geometry-preparation stage.\n",
+          "role": "text"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": null
+      },
+      {
+        "id": "step_a8b7ce3ba5184a279c6dd8bd88353f64",
+        "logical_id": "logical_930605d1600a4b95804179b1d0b68ae9",
+        "tool": "structure.resolve",
+        "parameters": {
+          "system_id": "system_hcn"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": "system_hcn"
+      }
+    ],
+    "goal_map": {
+      "goal_prepare_hcn_geometry": {
+        "step_id": "step_261a3897a78b454cb07d0236ff0c273b",
+        "port": "prepared_geometry",
+        "evidence": null,
+        "gap": null
+      },
+      "goal_giao_shielding_tensor": {
+        "step_id": null,
+        "port": "giao_nmr_shielding_tensor",
+        "evidence": null,
+        "gap": "Requires qualified HCN geometry and a completed GIAO calculation."
+      },
+      "goal_isotropic_shielding": {
+        "step_id": null,
+        "port": "giao_nmr_isotropic_shielding",
+        "evidence": null,
+        "gap": "Requires completed GIAO tensors for all three nuclei."
+      },
+      "goal_trace_consistency_check": {
+        "step_id": null,
+        "port": "giao_nmr_trace_consistency",
+        "evidence": null,
+        "gap": "Requires completed GIAO tensors and isotropic values."
+      },
+      "goal_method_cost_rationale": {
+        "step_id": null,
+        "port": "method_cost_rationale",
+        "evidence": null,
+        "gap": "Method rationale notes are being prepared; actual numerical settings await the ORCA input."
+      },
+      "goal_delivery_artifacts": {
+        "step_id": null,
+        "port": "delivery_artifacts",
+        "evidence": null,
+        "gap": "Requires prepared geometry, actual input, raw ORCA output, script, and final tables."
+      },
+      "goal_method_geometry_limitations": {
+        "step_id": null,
+        "port": "limitations",
+        "evidence": null,
+        "gap": "Requires actual method/geometry results before limitations can be stated."
+      },
+      "goal_random_seed_record": {
+        "step_id": null,
+        "port": "random_seed_record",
+        "evidence": null,
+        "gap": "Seed policy recorded; final report must confirm whether any stochastic method was used."
+      }
+    }
+  },
+  "related_results": [
+    "result_020d2a454ed24d2084cf7096974c1d95"
+  ],
+  "user_message_ids": []
+}

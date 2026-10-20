@@ -1,0 +1,146 @@
+{
+  "schema": "independent-holdout-requirement-registration-1",
+  "task": "H2",
+  "repeat": 1,
+  "recorded_at_utc": "2026-10-20T12:16:13.515016+00:00",
+  "status": "requirements_registered_before_task_start",
+  "source_hashes": {
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/holdout-selection.json": "3a014ecda9c045491ef8b0de56b27c5d9af3a4964ba412b91b845a659d50188a",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/scoring.md": "7a080249fbc79415eb008a63b6a7cb35ddaa4e250caf4c1b49b076fea2b1ae4a",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/runbook.md": "7b5326502792f5116a32c003456b7abb5d1c5474f301af0ed7b347b104dd0eff",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/public-tasks.json": "a9d734d178776ac5ce92c69fbeb7fe56a6ad680dc97d574c1d6bf90496885499",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/batch-policy.json": "4eb769bf72a473c55023db41bba7e65f1f43bab064a5211f4e616965565a9e81",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/product-freeze.json": "602bd3b22dc37d7ea08dedbc0a26b90e48401fb6223b191ead5800eacf51bf4a",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/evaluation-freeze.json": "bf834cb281bc63f185599dd8908b57614140e900ffceed0d8fcf86011c4dea38"
+  },
+  "observed_task_evidence_directory_exists": false,
+  "product_commit": "7cc496271909966de41fbadd15d8e24c095f97e1",
+  "product_manifest_sha256": "602bd3b22dc37d7ea08dedbc0a26b90e48401fb6223b191ead5800eacf51bf4a",
+  "novelty_status": "previously_exposed_not_a_fresh_holdout",
+  "original_text": "请为甲醛CH2O（中性、单重态、气相）生成一份合理结构，用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率。再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数。依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同。保留原始输入输出、生成与分析脚本、数据表及验证限制；不分别优化两个结构，不以永久偶极矩或有限频率动态响应替代静态极化率，不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果。",
+  "assembled_original_text_sha256": "0e8952892a0c6da9cfc096cf8d185e12564cfb49f70ab7d5adc445019bc9a43e",
+  "seed": 1701,
+  "fixed_requirements": {
+    "identity_smiles": "C=O",
+    "formula": "CH2O",
+    "atom_count": 4,
+    "charge": 0,
+    "multiplicity": 1,
+    "environment": "gas_phase",
+    "method": "RHF",
+    "basis_set": "def2-SVP",
+    "property": "static electric dipole-dipole polarizability",
+    "property_frequency": "zero_frequency_static",
+    "geometry_relation": "same ordered atoms; exact specified rigid active rotation only; no independent optimization",
+    "rotation": {
+      "axis_direction": [
+        1,
+        2,
+        3
+      ],
+      "angle_degrees": 37,
+      "sense": "right_hand_rule",
+      "center": "original Cartesian coordinate origin",
+      "convention": "active rotation of position vectors in a fixed laboratory frame; product must state its row/column representation"
+    },
+    "required_independent_property_jobs": 2,
+    "required_values": {
+      "raw_cartesian_tensor_components": 18,
+      "isotropic_polarizabilities": 2
+    },
+    "units": "atomic units of polarizability, e^2 a0^2/Eh; not Debye",
+    "numerical_settings": "same SCF, basis, response and numerical settings for both orientations; registered before execution",
+    "minimum_machine_decimal_places": {
+      "tensor": 7,
+      "isotropic": 5
+    },
+    "forbidden_substitutions": [
+      "permanent dipole",
+      "dynamic polarizability",
+      "hyperpolarizability",
+      "rotated algebraic tensor presented as a second ORCA calculation",
+      "independently optimized geometries"
+    ]
+  },
+  "frozen_tolerances": {
+    "definition": "预先固定的工程核对阈值；不同方向允许有限浮点和SCF响应数值误差，不代表所选方法的实验准确度。",
+    "cartesian_polarizability_tensor": {
+      "unit": "e^2 a0^2/Eh (atomic unit)",
+      "reported_vs_raw_abs_per_component": 1e-07,
+      "independent_same_settings_abs_per_component": 0.001,
+      "rotation_covariance_max_abs_component": 0.001,
+      "failure": "任一18项抄录/同设置参考或旋转协变残差越界即fail；第二次没有独立真实ORCA响应即fail。"
+    },
+    "isotropic_polarizability": {
+      "unit": "e^2 a0^2/Eh (atomic unit)",
+      "reported_vs_raw_abs": 1e-05,
+      "independent_same_settings_abs": 0.001,
+      "trace_over_three_consistency_abs": 1e-05,
+      "between_orientations_abs": 0.001,
+      "failure": "任一抄录、参考、迹核对或两方向差值越界即fail；缺参考则unverified，不事后扩大阈值。"
+    },
+    "coordinates": {
+      "unit": "angstrom",
+      "reported_vs_original_abs": 1e-06,
+      "specified_rotation_abs_per_coordinate": 1e-06,
+      "pairwise_distance_preservation_abs": 2e-06,
+      "reference_input_rule": "exact original atom order and coordinate values for each orientation",
+      "failure": "原子映射、主动旋转方向/角度/轴或固定内部几何不满足即fail；RMSD近似相同不替代规定旋转核对。"
+    },
+    "reported_rotation": {
+      "angle_unit": "degree",
+      "reported_angle_vs_required_abs": 1e-06,
+      "matrix_unit": "dimensionless",
+      "reported_matrix_vs_independent_required_rotation_abs_per_component": 1e-06,
+      "failure": "如交付矩阵，与指定旋转不一致即fail；若交付轴角，仍须据独立矩阵核对实际坐标，不能仅核对标签。"
+    }
+  },
+  "frozen_scoring_rules": [
+    "两方向真实响应、18项张量、两项各向同性量、固定旋转关系及原始文件全部必需；只解释理论不做第二次计算不能通过。",
+    "报告必须以该坐标系实际分量说明旋转关系，并用实测残差支持是否一致的结论；不能要求各个实验室坐标分量逐项不变。",
+    "方法固定为RHF/def2-SVP；不允许为修复旋转差异切换方法、基组、溶剂或单独改变其中一份数值设置。预算内可在同一Run重做两者且保留失败，最终同设置配对须在重做前登记。",
+    "只核对所选近似、固定几何和静态响应；无极小值、实验极化率或普适方法精度结论。独立评分通过不新增生产科学资格。",
+    "本题三次参考名义共6次ORCA，每个必需方向最多一次确认失败后重试，合计参考硬上限12次；正式运行和参考分别记账。"
+  ],
+  "run_budget": {
+    "logical_steps": 12,
+    "attempts_per_step": 3,
+    "orca_starts": 12,
+    "extra_orca_starts": 11,
+    "postprocess_starts": 0,
+    "run_seconds": 7200.0,
+    "model_calls": 24,
+    "plan_revisions": 12,
+    "model_tokens": 1200000,
+    "input_tokens": 64000,
+    "output_tokens": 32768,
+    "decision_rounds": 40,
+    "evidence_reads": 12,
+    "analysis_executions": 4,
+    "file_writes": 32,
+    "corrections_per_proposal": 2,
+    "transport_retries": 0,
+    "identity_queries": 2,
+    "structure_preparations": 1,
+    "knowledge_queries": 4,
+    "internal_work_units": 10000,
+    "code_retries": 2,
+    "artifact_count": 800,
+    "artifact_bytes": 268435456,
+    "artifact_total_bytes": 268435456
+  },
+  "review_authority": {
+    "read_only_existing_evidence": true,
+    "new_model_or_api_calls": false,
+    "new_orca_or_reference_execution": false,
+    "scientific_recalculation": false,
+    "posterior_basic_arithmetic": "Only raw/report transcription, trace/3 and specified coordinate/tensor transform checks when actual evidence exists; not independent reference execution.",
+    "output_scientific_qualification": "Keep production checks, independent review and user-goal completion separate.",
+    "result_values_read": false
+  },
+  "pending_registration": {
+    "product_approved_method_basis_and_numeric_settings": "await actual Request/Plan/selection and input evidence before examining scientific result values",
+    "actual_rotation_representation": "await product declaration; independent scoring uses active right-handed column-vector convention r2=R*r1, R by Rodrigues for normalized axis (1,2,3) and +37 degrees, alpha2=R*alpha1*R^T"
+  },
+  "reference_status": "not_executed_in_this_seven-task_single-repetition_batch; cannot mark independent same-settings reference checks passed"
+}

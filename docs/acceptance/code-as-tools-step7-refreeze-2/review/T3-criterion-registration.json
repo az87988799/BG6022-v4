@@ -1,0 +1,41 @@
+{
+  "schema": "independent-prescience-criterion-registration-1",
+  "task": "T3",
+  "run_id": "run_35cc4bcc85f3492babda693160dd846f",
+  "registered_at_utc": "2026-10-20T11:46:38.782653+00:00",
+  "status": "registered_from_approved_plan_before_observed_scientific_launch",
+  "source": {
+    "decision_path": "data/code-tools-refreeze-2-batch/workspaces/formal-T3-001/data/runs/run_35cc4bcc85f3492babda693160dd846f/decisions/model_db11914fc8a4407690e5f784f8e2c4a7.json",
+    "decision_file_sha256": "f6ab547a3ba174e4405735fadebcf77bf573233c8c9176dac9d9d8c8e55526f2",
+    "decision_id": "model_db11914fc8a4407690e5f784f8e2c4a7",
+    "plan_version": 1,
+    "step_id": "step_733a97fb8a8b4c5487d5357811b4a43c",
+    "filename": "scan_butane.py",
+    "code_utf8_sha256": "e6231b8a6d056fb1370847788498cad1db8286d1bcc5802cda3a453153db1bd0",
+    "criterion_code_line": 154,
+    "criterion_utf8_sha256": "684fec630b7df5952d7b50d49bd15b7f7496131f0fdf05e2fefca79d683aed2e"
+  },
+  "criterion_verbatim": "Criterion stated before scanning: use the 60-degree grid; if the lowest-energy converged grid point has at least one neighboring interval with |DeltaE| > 5 kJ/mol, or any adjacent converged pair differs by > 10 kJ/mol, propose at most two additional constrained optimizations at midpoint angles adjacent to the minimum or steepest interval. If the minimum is bracketed by neighbor differences <= 5 kJ/mol on both sides, or no converged points exist, stop without extra angles.",
+  "ordering_evidence": {
+    "run_json_sha256": "5dd4167f01cffb3fce7249b860f24db2bf7a1c2c81918139a3e21ec8950ded73",
+    "model_calls": 7,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "attempt_count": 0,
+    "internal_calls_count": 0,
+    "coarse_numerical_results_read": false
+  },
+  "checklist": {
+    "numeric_quantities_units_thresholds": "yes: adjacent/minimum-neighbor energy differences; kJ/mol; 5 and 10",
+    "recomputable_from_coarse_values": "quantities are recomputable; action precedence is ambiguous",
+    "curve_resolution_or_local_change": "yes: low-energy-neighbor/steep-interval midpoint rationale",
+    "can_trigger_or_not_on_finite_domain": "yes; no numerical control was executed",
+    "not_budget_only_or_unconditional": "yes",
+    "reviewer_changed_or_supplied_rule": false
+  },
+  "static_limitations": [
+    "Literal refinement trigger (any adjacent change >10) can coincide with literal stop condition (minimum bracketed by <=5 on both sides); no precedence is declared.",
+    "Generated recommendation checks only max_adj_delta >10 and otherwise states no >5 minimum-neighbor trigger, without computing the 5 kJ/mol branch.",
+    "This is pre-execution static review of the approved code, not scientific correctness or successful output validation."
+  ]
+}

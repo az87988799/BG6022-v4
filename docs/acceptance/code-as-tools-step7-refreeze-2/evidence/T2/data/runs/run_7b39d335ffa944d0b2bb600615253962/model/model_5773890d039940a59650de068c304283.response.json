@@ -1,0 +1,84 @@
+{
+  "request_hash": "4e1be0d84cf636a949ce5a5be738b1b67af810150a91cb26f2963c6589d15abc",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_nhexane",
+          "tool": "structure.resolve",
+          "system_id": "system_nhexane",
+          "parameters": {}
+        },
+        {
+          "key": "prepare_nhexane",
+          "tool": "structure.prepare",
+          "system_id": "system_nhexane",
+          "depends_on": [
+            "resolve_nhexane"
+          ],
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_nhexane",
+              "port": "resolved_identity"
+            }
+          }
+        }
+      ],
+      "goal_map": {
+        "goal_conformer_candidates": {
+          "gap": "No conformer-search Step or saved candidate structures exist yet; the search program must be authored as a workspace.write artifact after the prepared initial geometry exists.",
+          "port": "conformer_candidates"
+        },
+        "goal_selected_conformers": {
+          "gap": "No candidate pool exists, so no conformer subset can be selected yet.",
+          "port": "selected_conformers"
+        },
+        "goal_orca_single_point_energies": {
+          "gap": "No ORCA single-point inputs or receipts exist; each single point requires a real prepared/candidate geometry artifact id and hash.",
+          "port": "single_point_energies"
+        },
+        "goal_energy_ranking": {
+          "gap": "No absolute single-point energies are available to rank.",
+          "port": "relative_energy_ranking"
+        },
+        "goal_lowest_candidate_structure": {
+          "gap": "No computed energies exist to identify a lowest candidate structure.",
+          "port": "lowest_candidate_structure"
+        },
+        "goal_rmsd_duplicate_check": {
+          "gap": "No candidate conformer set exists to run the carbon-chain forward/reverse-mapped heavy-atom RMSD deduplication.",
+          "port": "rmsd_duplicate_check"
+        },
+        "goal_search_report": {
+          "gap": "Search has not been executed; scope, geometry provenance and force-field convergence cannot be reported yet.",
+          "port": "search_report"
+        },
+        "goal_random_seed": {
+          "gap": "No structure-generation/search code has run, so seed-1701 usage cannot be recorded.",
+          "port": "random_seed_record"
+        }
+      }
+    },
+    "reason": "Corrected proposal: add the required goal_map. Start with the two authorized preparation Steps (identity resolve -> initial geometry prepare), since all later Python/ORCA work needs real artifact_id/sha256 values that cannot be placeholdered. All eight Goals are mapped to gaps because no producing Step or evidence exists yet; the conformer-search program, candidate structures, ORCA single points, RMSD dedup, ranking and seed record will be planned after the prepared geometry receipt is available."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_nhexane\",\"tool\":\"structure.resolve\",\"system_id\":\"system_nhexane\",\"parameters\":{}},{\"key\":\"prepare_nhexane\",\"tool\":\"structure.prepare\",\"system_id\":\"system_nhexane\",\"depends_on\":[\"resolve_nhexane\"],\"inputs\":{\"identity\":{\"producer_key\":\"resolve_nhexane\",\"port\":\"resolved_identity\"}}}],\"goal_map\":{\"goal_conformer_candidates\":{\"gap\":\"No conformer-search Step or saved candidate structures exist yet; the search program must be authored as a workspace.write artifact after the prepared initial geometry exists.\",\"port\":\"conformer_candidates\"},\"goal_selected_conformers\":{\"gap\":\"No candidate pool exists, so no conformer subset can be selected yet.\",\"port\":\"selected_conformers\"},\"goal_orca_single_point_energies\":{\"gap\":\"No ORCA single-point inputs or receipts exist; each single point requires a real prepared/candidate geometry artifact id and hash.\",\"port\":\"single_point_energies\"},\"goal_energy_ranking\":{\"gap\":\"No absolute single-point energies are available to rank.\",\"port\":\"relative_energy_ranking\"},\"goal_lowest_candidate_structure\":{\"gap\":\"No computed energies exist to identify a lowest candidate structure.\",\"port\":\"lowest_candidate_structure\"},\"goal_rmsd_duplicate_check\":{\"gap\":\"No candidate conformer set exists to run the carbon-chain forward/reverse-mapped heavy-atom RMSD deduplication.\",\"port\":\"rmsd_duplicate_check\"},\"goal_search_report\":{\"gap\":\"Search has not been executed; scope, geometry provenance and force-field convergence cannot be reported yet.\",\"port\":\"search_report\"},\"goal_random_seed\":{\"gap\":\"No structure-generation/search code has run, so seed-1701 usage cannot be recorded.\",\"port\":\"random_seed_record\"}}},\"reason\":\"Corrected proposal: add the required goal_map. Start with the two authorized preparation Steps (identity resolve -> initial geometry prepare), since all later Python/ORCA work needs real artifact_id/sha256 values that cannot be placeholdered. All eight Goals are mapped to gaps because no producing Step or evidence exists yet; the conformer-search program, candidate structures, ORCA single points, RMSD dedup, ranking and seed record will be planned after the prepared geometry receipt is available.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 17109,
+    "completion_tokens": 776,
+    "total_tokens": 17885,
+    "prompt_cache_hit_tokens": 128,
+    "prompt_cache_miss_tokens": 16981
+  },
+  "response_hash": "9bcd11663633f5dfec2d28846a59a142e9eb8ab9f62dffd4a2f88747cb5ed6fa",
+  "response_bytes": 4141,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "e3a1dd96-6edb-428c-93a5-997d9d06786d",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 4.734000000011292
+}

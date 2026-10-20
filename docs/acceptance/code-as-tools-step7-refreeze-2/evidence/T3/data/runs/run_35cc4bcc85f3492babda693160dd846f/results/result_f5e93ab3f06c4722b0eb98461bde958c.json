@@ -1,0 +1,880 @@
+{
+  "id": "result_f5e93ab3f06c4722b0eb98461bde958c",
+  "run_id": "run_35cc4bcc85f3492babda693160dd846f",
+  "step_id": null,
+  "attempt_id": null,
+  "call_id": "call_02e2f56d42d54d08be00dc4c1e8c1b0a",
+  "supersedes_result_id": null,
+  "operation_status": "completed",
+  "checks": {
+    "text_window": [
+      {
+        "name": "bounded_evidence_read",
+        "status": "passed",
+        "detail": "operation only; content and observed values remain scientifically unverified",
+        "source": {
+          "artifact_id": "artifact_27d7d3ab15ac4c4c96bb9677adb17d68",
+          "sha256": "e6231b8a6d056fb1370847788498cad1db8286d1bcc5802cda3a453153db1bd0",
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 194
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        },
+        "rule_version": "evidence-read-1"
+      }
+    ]
+  },
+  "qualified_outputs": {},
+  "observations": {
+    "text_window": {
+      "artifact_id": "artifact_27d7d3ab15ac4c4c96bb9677adb17d68",
+      "sha256": "e6231b8a6d056fb1370847788498cad1db8286d1bcc5802cda3a453153db1bd0",
+      "role": "code",
+      "file": "artifacts/artifact_27d7d3ab15ac4c4c96bb9677adb17d68/files/scan_butane.py",
+      "source": {
+        "call_id": "call_d47ef950c8fb423db3981cc9f2c03ec9",
+        "role": "python",
+        "name": "scan_butane.py"
+      },
+      "view": {
+        "type": "raw_text",
+        "version": "1"
+      },
+      "path": [],
+      "geometry_indices": [],
+      "stage": "unknown",
+      "units": null,
+      "conditions": "unknown",
+      "scientific_status": "unverified",
+      "validation": "unverified observation; not a scientific qualification",
+      "lines": [
+        {
+          "line": 1,
+          "text": "import os, json, math, shutil, re"
+        },
+        {
+          "line": 2,
+          "text": "from orca_task_sdk import run_orca"
+        },
+        {
+          "line": 3,
+          "text": ""
+        },
+        {
+          "line": 4,
+          "text": "INITIAL_XYZ = \"initial.xyz\""
+        },
+        {
+          "line": 5,
+          "text": "ANGLES = [-180, -120, -60, 0, 60, 120, 180]"
+        },
+        {
+          "line": 6,
+          "text": "LABELS = {-180:\"m180\", -120:\"m120\", -60:\"m60\", 0:\"0\", 60:\"60\", 120:\"120\", 180:\"180\"}"
+        },
+        {
+          "line": 7,
+          "text": "HARTREE_TO_KJ = 2625.499639"
+        },
+        {
+          "line": 8,
+          "text": ""
+        },
+        {
+          "line": 9,
+          "text": ""
+        },
+        {
+          "line": 10,
+          "text": "def parse_xyz(path):"
+        },
+        {
+          "line": 11,
+          "text": "    with open(path, \"r\") as f:"
+        },
+        {
+          "line": 12,
+          "text": "        lines = [ln.rstrip(\"\\n\") for ln in f]"
+        },
+        {
+          "line": 13,
+          "text": "    n = int(lines[0].split()[0])"
+        },
+        {
+          "line": 14,
+          "text": "    atoms = []"
+        },
+        {
+          "line": 15,
+          "text": "    for ln in lines[2:2+n]:"
+        },
+        {
+          "line": 16,
+          "text": "        p = ln.split()"
+        },
+        {
+          "line": 17,
+          "text": "        if len(p) < 4:"
+        },
+        {
+          "line": 18,
+          "text": "            continue"
+        },
+        {
+          "line": 19,
+          "text": "        atoms.append((p[0], float(p[1]), float(p[2]), float(p[3])))"
+        },
+        {
+          "line": 20,
+          "text": "    return atoms"
+        },
+        {
+          "line": 21,
+          "text": ""
+        },
+        {
+          "line": 22,
+          "text": ""
+        },
+        {
+          "line": 23,
+          "text": "def sub(a,b): return (a[0]-b[0], a[1]-b[1], a[2]-b[2])"
+        },
+        {
+          "line": 24,
+          "text": "def dot(a,b): return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]"
+        },
+        {
+          "line": 25,
+          "text": "def cross(a,b): return (a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0])"
+        },
+        {
+          "line": 26,
+          "text": "def norm(a):"
+        },
+        {
+          "line": 27,
+          "text": "    n = math.sqrt(dot(a,a))"
+        },
+        {
+          "line": 28,
+          "text": "    return (a[0]/n, a[1]/n, a[2]/n)"
+        },
+        {
+          "line": 29,
+          "text": ""
+        },
+        {
+          "line": 30,
+          "text": ""
+        },
+        {
+          "line": 31,
+          "text": "def dihedral_deg(a,b,c,d):"
+        },
+        {
+          "line": 32,
+          "text": "    p0 = (a[1],a[2],a[3]); p1 = (b[1],b[2],b[3]); p2 = (c[1],c[2],c[3]); p3 = (d[1],d[2],d[3])"
+        },
+        {
+          "line": 33,
+          "text": "    b0 = sub(p1,p0); b1 = sub(p2,p1); b2 = sub(p3,p2); b1n = norm(b1)"
+        },
+        {
+          "line": 34,
+          "text": "    v = sub(b0, tuple(b1n[k]*dot(b0,b1n) for k in range(3)))"
+        },
+        {
+          "line": 35,
+          "text": "    w = sub(b2, tuple(b1n[k]*dot(b2,b1n) for k in range(3)))"
+        },
+        {
+          "line": 36,
+          "text": "    x = dot(v,w); y = dot(cross(b1n,v),w)"
+        },
+        {
+          "line": 37,
+          "text": "    return math.degrees(math.atan2(y,x))"
+        },
+        {
+          "line": 38,
+          "text": ""
+        },
+        {
+          "line": 39,
+          "text": ""
+        },
+        {
+          "line": 40,
+          "text": "def find_dihedral_indices(atoms):"
+        },
+        {
+          "line": 41,
+          "text": "    carbons = [i for i,a in enumerate(atoms) if a[0].upper() == \"C\"]"
+        },
+        {
+          "line": 42,
+          "text": "    adj = {i:[] for i in carbons}"
+        },
+        {
+          "line": 43,
+          "text": "    for ii,i in enumerate(carbons):"
+        },
+        {
+          "line": 44,
+          "text": "        for j in carbons[ii+1:]:"
+        },
+        {
+          "line": 45,
+          "text": "            d = math.sqrt(sum((atoms[i][k+1]-atoms[j][k+1])**2 for k in range(3)))"
+        },
+        {
+          "line": 46,
+          "text": "            if d <= 1.75:"
+        },
+        {
+          "line": 47,
+          "text": "                adj[i].append(j); adj[j].append(i)"
+        },
+        {
+          "line": 48,
+          "text": "    best = []"
+        },
+        {
+          "line": 49,
+          "text": "    for s in carbons:"
+        },
+        {
+          "line": 50,
+          "text": "        stack = [(s, [s])]"
+        },
+        {
+          "line": 51,
+          "text": "        while stack:"
+        },
+        {
+          "line": 52,
+          "text": "            cur, path = stack.pop()"
+        },
+        {
+          "line": 53,
+          "text": "            if len(path) > len(best):"
+        },
+        {
+          "line": 54,
+          "text": "                best = path"
+        },
+        {
+          "line": 55,
+          "text": "            for nxt in adj[cur]:"
+        },
+        {
+          "line": 56,
+          "text": "                if nxt not in path:"
+        },
+        {
+          "line": 57,
+          "text": "                    stack.append((nxt, path+[nxt]))"
+        },
+        {
+          "line": 58,
+          "text": "    if len(best) < 4:"
+        },
+        {
+          "line": 59,
+          "text": "        raise RuntimeError(\"Could not find a four-carbon chain; carbons=%s adj=%s\" % (carbons, adj))"
+        },
+        {
+          "line": 60,
+          "text": "    return best[:4]"
+        },
+        {
+          "line": 61,
+          "text": ""
+        },
+        {
+          "line": 62,
+          "text": ""
+        },
+        {
+          "line": 63,
+          "text": "def write_input(angle, idxs):"
+        },
+        {
+          "line": 64,
+          "text": "    i,j,k,l = idxs"
+        },
+        {
+          "line": 65,
+          "text": "    inp_name = \"scan_%s.inp\" % LABELS[angle]"
+        },
+        {
+          "line": 66,
+          "text": "    lines = ["
+        },
+        {
+          "line": 67,
+          "text": "      \"! B3LYP def2-TZVP RKS Opt NoAutoStart\","
+        },
+        {
+          "line": 68,
+          "text": "      \"%maxcore 192\","
+        },
+        {
+          "line": 69,
+          "text": "      \"%scf\","
+        },
+        {
+          "line": 70,
+          "text": "      \"  MaxIter 256\","
+        },
+        {
+          "line": 71,
+          "text": "      \"  AutoTRAH false\","
+        },
+        {
+          "line": 72,
+          "text": "      \"end\","
+        },
+        {
+          "line": 73,
+          "text": "      \"%geom\","
+        },
+        {
+          "line": 74,
+          "text": "      \"  MaxIter 128\","
+        },
+        {
+          "line": 75,
+          "text": "      \"  Constraints\","
+        },
+        {
+          "line": 76,
+          "text": "      \"    { D %d %d %d %d %.1f C }\" % (i,j,k,l,angle),"
+        },
+        {
+          "line": 77,
+          "text": "      \"  end\","
+        },
+        {
+          "line": 78,
+          "text": "      \"end\","
+        },
+        {
+          "line": 79,
+          "text": "      \"* xyzfile 0 1 initial.xyz\","
+        },
+        {
+          "line": 80,
+          "text": "    ]"
+        },
+        {
+          "line": 81,
+          "text": "    with open(inp_name,\"w\") as f:"
+        },
+        {
+          "line": 82,
+          "text": "        f.write(\"\\n\".join(lines)+\"\\n\")"
+        },
+        {
+          "line": 83,
+          "text": "    return inp_name"
+        },
+        {
+          "line": 84,
+          "text": ""
+        },
+        {
+          "line": 85,
+          "text": ""
+        },
+        {
+          "line": 86,
+          "text": "atoms = parse_xyz(INITIAL_XYZ)"
+        },
+        {
+          "line": 87,
+          "text": "idxs = find_dihedral_indices(atoms)"
+        },
+        {
+          "line": 88,
+          "text": "points = []"
+        },
+        {
+          "line": 89,
+          "text": "all_artifacts = []"
+        },
+        {
+          "line": 90,
+          "text": ""
+        },
+        {
+          "line": 91,
+          "text": "for angle in ANGLES:"
+        },
+        {
+          "line": 92,
+          "text": "    label = LABELS[angle]"
+        },
+        {
+          "line": 93,
+          "text": "    inp = write_input(angle, idxs)"
+        },
+        {
+          "line": 94,
+          "text": "    receipt = run_orca(inp, dependencies=[\"initial.xyz\"], request_key=\"scan_%s\" % label, purpose=\"new_candidate\")"
+        },
+        {
+          "line": 95,
+          "text": "    receipt_name = \"scan_%s_receipt.json\" % label"
+        },
+        {
+          "line": 96,
+          "text": "    with open(receipt_name,\"w\") as f:"
+        },
+        {
+          "line": 97,
+          "text": "        json.dump(receipt, f, indent=2, default=str)"
+        },
+        {
+          "line": 98,
+          "text": "    all_artifacts.append(receipt_name)"
+        },
+        {
+          "line": 99,
+          "text": "    files = receipt.get(\"files\", {}) or {}"
+        },
+        {
+          "line": 100,
+          "text": "    copied = {}"
+        },
+        {
+          "line": 101,
+          "text": "    for key, src in files.items():"
+        },
+        {
+          "line": 102,
+          "text": "        safe = re.sub(r\"[^A-Za-z0-9_.-]+\", \"_\", str(key))"
+        },
+        {
+          "line": 103,
+          "text": "        dst = \"scan_%s_%s\" % (label, safe)"
+        },
+        {
+          "line": 104,
+          "text": "        try:"
+        },
+        {
+          "line": 105,
+          "text": "            shutil.copyfile(src, dst)"
+        },
+        {
+          "line": 106,
+          "text": "            copied[key] = dst"
+        },
+        {
+          "line": 107,
+          "text": "            all_artifacts.append(dst)"
+        },
+        {
+          "line": 108,
+          "text": "        except Exception:"
+        },
+        {
+          "line": 109,
+          "text": "            copied[key] = None"
+        },
+        {
+          "line": 110,
+          "text": "    stdout_path = copied.get(\"stdout.out\")"
+        },
+        {
+          "line": 111,
+          "text": "    txt = \"\""
+        },
+        {
+          "line": 112,
+          "text": "    if stdout_path and os.path.exists(stdout_path):"
+        },
+        {
+          "line": 113,
+          "text": "        txt = open(stdout_path, errors=\"replace\").read()"
+        },
+        {
+          "line": 114,
+          "text": "    energies = re.findall(r\"FINAL SINGLE POINT ENERGY\\s+(-?\\d+\\.\\d+)\", txt)"
+        },
+        {
+          "line": 115,
+          "text": "    energy = float(energies[-1]) if energies else None"
+        },
+        {
+          "line": 116,
+          "text": "    converged = bool(re.search(r\"HURRAY|OPTIMIZATION HAS CONVERGED|The optimization has converged\", txt, re.IGNORECASE))"
+        },
+        {
+          "line": 117,
+          "text": "    actual = None"
+        },
+        {
+          "line": 118,
+          "text": "    xyz_path = copied.get(\"job.xyz\")"
+        },
+        {
+          "line": 119,
+          "text": "    if xyz_path and os.path.exists(xyz_path):"
+        },
+        {
+          "line": 120,
+          "text": "        final_atoms = parse_xyz(xyz_path)"
+        },
+        {
+          "line": 121,
+          "text": "        if len(final_atoms) >= 4:"
+        },
+        {
+          "line": 122,
+          "text": "            actual = dihedral_deg(final_atoms[idxs[0]], final_atoms[idxs[1]], final_atoms[idxs[2]], final_atoms[idxs[3]])"
+        },
+        {
+          "line": 123,
+          "text": "    fail = None"
+        },
+        {
+          "line": 124,
+          "text": "    if receipt.get(\"operation_status\") != \"completed\":"
+        },
+        {
+          "line": 125,
+          "text": "        fail = receipt.get(\"error\") or receipt.get(\"message\") or json.dumps({k:receipt.get(k) for k in (\"operation_status\",\"scientific_validation\")}, default=str)"
+        },
+        {
+          "line": 126,
+          "text": "    points.append({"
+        },
+        {
+          "line": 127,
+          "text": "        \"requested_angle_deg\": angle,"
+        },
+        {
+          "line": 128,
+          "text": "        \"actual_dihedral_deg\": actual,"
+        },
+        {
+          "line": 129,
+          "text": "        \"energy_hartree\": energy,"
+        },
+        {
+          "line": 130,
+          "text": "        \"converged\": converged,"
+        },
+        {
+          "line": 131,
+          "text": "        \"request_key\": \"scan_%s\" % label,"
+        },
+        {
+          "line": 132,
+          "text": "        \"input_filename\": inp,"
+        },
+        {
+          "line": 133,
+          "text": "        \"files\": copied,"
+        },
+        {
+          "line": 134,
+          "text": "        \"failure_reason\": fail"
+        },
+        {
+          "line": 135,
+          "text": "    })"
+        },
+        {
+          "line": 136,
+          "text": ""
+        },
+        {
+          "line": 137,
+          "text": "conv_energies = [p[\"energy_hartree\"] for p in points if p[\"converged\"] and p[\"energy_hartree\"] is not None]"
+        },
+        {
+          "line": 138,
+          "text": "all_energies = [p[\"energy_hartree\"] for p in points if p[\"energy_hartree\"] is not None]"
+        },
+        {
+          "line": 139,
+          "text": "ref = min(conv_energies) if conv_energies else (min(all_energies) if all_energies else None)"
+        },
+        {
+          "line": 140,
+          "text": "for p in points:"
+        },
+        {
+          "line": 141,
+          "text": "    if p[\"energy_hartree\"] is not None and ref is not None:"
+        },
+        {
+          "line": 142,
+          "text": "        p[\"relative_energy_kj_mol\"] = (p[\"energy_hartree\"] - ref) * HARTREE_TO_KJ"
+        },
+        {
+          "line": 143,
+          "text": "    else:"
+        },
+        {
+          "line": 144,
+          "text": "        p[\"relative_energy_kj_mol\"] = None"
+        },
+        {
+          "line": 145,
+          "text": ""
+        },
+        {
+          "line": 146,
+          "text": "sources = []"
+        },
+        {
+          "line": 147,
+          "text": "for p in points:"
+        },
+        {
+          "line": 148,
+          "text": "    sources.append({\"internal_request_key\": p[\"request_key\"], \"filename\": \"stdout.out\", \"location\": \"FINAL SINGLE POINT ENERGY; job.xyz final geometry\"})"
+        },
+        {
+          "line": 149,
+          "text": ""
+        },
+        {
+          "line": 150,
+          "text": "rel_points = [{\"requested_angle_deg\": p[\"requested_angle_deg\"], \"actual_dihedral_deg\": p[\"actual_dihedral_deg\"], \"relative_energy_kj_mol\": p[\"relative_energy_kj_mol\"], \"converged\": p[\"converged\"]} for p in points]"
+        },
+        {
+          "line": 151,
+          "text": ""
+        },
+        {
+          "line": 152,
+          "text": "rationale = \"B3LYP/def2-TZVP. ORCA 6.1 manual: B3LYP is the popular hybrid functional with 20% HF exchange (result_39c1b61f90a54983910f5843208f55e2); def2-TZVP is the Karlsruhe polarized valence triple-zeta basis for H-Rn (result_d087eafacb914c6fb00979050e3579a0). No dispersion correction is applied because the retrieved official excerpts did not document a B3LYP dispersion correction. Gas phase, neutral (charge 0), singlet RKS.\""
+        },
+        {
+          "line": 153,
+          "text": ""
+        },
+        {
+          "line": 154,
+          "text": "criterion = \"Criterion stated before scanning: use the 60-degree grid; if the lowest-energy converged grid point has at least one neighboring interval with |DeltaE| > 5 kJ/mol, or any adjacent converged pair differs by > 10 kJ/mol, propose at most two additional constrained optimizations at midpoint angles adjacent to the minimum or steepest interval. If the minimum is bracketed by neighbor differences <= 5 kJ/mol on both sides, or no converged points exist, stop without extra angles.\""
+        },
+        {
+          "line": 155,
+          "text": "sorted_conv = sorted([p for p in points if p[\"converged\"] and p[\"relative_energy_kj_mol\"] is not None], key=lambda p: p[\"requested_angle_deg\"])"
+        },
+        {
+          "line": 156,
+          "text": "max_adj_delta = None"
+        },
+        {
+          "line": 157,
+          "text": "if len(sorted_conv) >= 2:"
+        },
+        {
+          "line": 158,
+          "text": "    deltas = [abs(sorted_conv[i+1][\"relative_energy_kj_mol\"] - sorted_conv[i][\"relative_energy_kj_mol\"]) for i in range(len(sorted_conv)-1)]"
+        },
+        {
+          "line": 159,
+          "text": "    max_adj_delta = max(deltas)"
+        },
+        {
+          "line": 160,
+          "text": "if len(sorted_conv) >= 2 and max_adj_delta is not None and max_adj_delta > 10:"
+        },
+        {
+          "line": 161,
+          "text": "    recommendation = \"provisional: the converged grid shows a steep adjacent energy change (>10 kJ/mol); propose up to two midpoint angles adjacent to the minimum or steepest interval, with final choice made in the main decision loop after inspecting the full curve.\""
+        },
+        {
+          "line": 162,
+          "text": "elif len(sorted_conv) >= 2:"
+        },
+        {
+          "line": 163,
+          "text": "    recommendation = \"provisional: no additional angles according to the stated criterion; the converged grid's adjacent changes are <=10 kJ/mol and the minimum is bracketed without a >5 kJ/mol neighbor trigger.\""
+        },
+        {
+          "line": 164,
+          "text": "else:"
+        },
+        {
+          "line": 165,
+          "text": "    recommendation = \"provisional: insufficient converged points for a defensible refinement decision.\""
+        },
+        {
+          "line": 166,
+          "text": "decision = {\"criterion\": criterion, \"max_adjacent_converged_delta_kj_mol\": max_adj_delta, \"n_converged\": len(sorted_conv), \"recommendation\": recommendation, \"status\": \"preliminary_main_loop_decides\"}"
+        },
+        {
+          "line": 167,
+          "text": ""
+        },
+        {
+          "line": 168,
+          "text": "seed_text = \"No random number generation is used. Seed 1701 is recorded per request; ORCA SCF/optimization and this Python workflow expose no stochastic random-seed control, so determinism is not claimed for ORCA's internal numerical algorithms.\""
+        },
+        {
+          "line": 169,
+          "text": ""
+        },
+        {
+          "line": 170,
+          "text": "bundle = {"
+        },
+        {
+          "line": 171,
+          "text": "    \"initial_geometry\": INITIAL_XYZ,"
+        },
+        {
+          "line": 172,
+          "text": "    \"points\": points,"
+        },
+        {
+          "line": 173,
+          "text": "    \"failures\": [p for p in points if p[\"failure_reason\"] or not p[\"converged\"]],"
+        },
+        {
+          "line": 174,
+          "text": "    \"files\": sorted(set(all_artifacts)),"
+        },
+        {
+          "line": 175,
+          "text": "    \"method_basis_rationale\": rationale,"
+        },
+        {
+          "line": 176,
+          "text": "    \"scan_refinement_decision\": decision,"
+        },
+        {
+          "line": 177,
+          "text": "    \"random_seed_record\": seed_text"
+        },
+        {
+          "line": 178,
+          "text": "}"
+        },
+        {
+          "line": 179,
+          "text": ""
+        },
+        {
+          "line": 180,
+          "text": "observations = {"
+        },
+        {
+          "line": 181,
+          "text": "  \"version\": 1,"
+        },
+        {
+          "line": 182,
+          "text": "  \"observations\": ["
+        },
+        {
+          "line": 183,
+          "text": "    {\"name\":\"constrained_dihedral_scan\", \"value\":points, \"unit\":\"mixed (deg, hartree, boolean)\", \"sources\":sources, \"formula\":\"E_rel = (E - E_min)*2625.499639 kJ/mol per hartree\", \"artifacts\":sorted(set(all_artifacts)), \"limitations\":[\"Energies are raw ORCA final single point energies.\", \"Nonconverged points are flagged and are not treated as successful points.\"]},"
+        },
+        {
+          "line": 184,
+          "text": "    {\"name\":\"relative_energy_curve\", \"value\":rel_points, \"unit\":\"kJ/mol\", \"sources\":sources, \"formula\":\"E_rel = (E - E_min)*2625.499639; E_min is the lowest converged scan point\", \"artifacts\":sorted(set(all_artifacts)), \"limitations\":[\"Nonconverged points carry values relative to the converged reference but are flagged.\"]},"
+        },
+        {
+          "line": 185,
+          "text": "    {\"name\":\"method_basis_rationale\", \"value\":rationale, \"unit\":None, \"sources\":[], \"formula\":None, \"artifacts\":[], \"limitations\":[\"Rationale cites archived ORCA 6.1 manual excerpts; scientific qualification is not claimed.\"]},"
+        },
+        {
+          "line": 186,
+          "text": "    {\"name\":\"scan_refinement_decision\", \"value\":decision, \"unit\":None, \"sources\":sources, \"formula\":None, \"artifacts\":sorted(set(all_artifacts)), \"limitations\":[\"This is a preliminary decision aid; the final decision is made in the main decision loop after reviewing results.\"]},"
+        },
+        {
+          "line": 187,
+          "text": "    {\"name\":\"random_seed_record\", \"value\":seed_text, \"unit\":None, \"sources\":[], \"formula\":None, \"artifacts\":[], \"limitations\":[]},"
+        },
+        {
+          "line": 188,
+          "text": "    {\"name\":\"delivery_bundle\", \"value\":bundle, \"unit\":None, \"sources\":sources, \"formula\":None, \"artifacts\":sorted(set(all_artifacts)), \"limitations\":[\"Bundle is a preliminary manifest; nonconverged points remain failures.\"]}"
+        },
+        {
+          "line": 189,
+          "text": "  ]"
+        },
+        {
+          "line": 190,
+          "text": "}"
+        },
+        {
+          "line": 191,
+          "text": "with open(\"observations.json\",\"w\") as f:"
+        },
+        {
+          "line": 192,
+          "text": "    json.dump(observations, f, indent=2, default=str)"
+        },
+        {
+          "line": 193,
+          "text": "print(\"wrote observations.json with\", len(points), \"scan points\")"
+        }
+      ],
+      "returned_bytes": 10136,
+      "status": "observed",
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 194
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      }
+    }
+  },
+  "observation_records": [],
+  "diagnostics": [],
+  "artifact_ids": [
+    "artifact_27d7d3ab15ac4c4c96bb9677adb17d68"
+  ],
+  "source": {
+    "call_id": "call_d47ef950c8fb423db3981cc9f2c03ec9",
+    "role": "python",
+    "name": "scan_butane.py",
+    "tool": "evidence.text",
+    "consumption": {
+      "_decision_id": "model_cd410794c0a64a9c96848ed18aa84826"
+    },
+    "request_version": 3,
+    "plan_version": 1
+  },
+  "created_at": "2026-10-20T11:47:51.686480Z"
+}

@@ -1,0 +1,105 @@
+{
+  "schema": "independent-holdout-method-registration-1",
+  "task": "H2",
+  "registered_at_utc": "2026-10-20T12:32:44.842997+00:00",
+  "observed_run_state": "running",
+  "observed_model_calls": 12,
+  "observed_attempts": 0,
+  "observed_actual_orca_starts": 0,
+  "science_values_read": false,
+  "request_conditions": {
+    "explain_results": true,
+    "method": "HF",
+    "basis": "def2-SVP",
+    "charge": 0,
+    "multiplicity": 1,
+    "electronic_state": "RHF",
+    "environment": "gas_phase"
+  },
+  "request_version": 2,
+  "request_source": "data/code-tools-refreeze-2-batch/workspaces/formal-H2-001/data/runs/run_d4dfa0cf329b46308ff675c78dd6a861/decisions/model_299632257cab4b1b9239e3b5646ad197.json",
+  "actual_authored_convention": {
+    "rotation": "active right-hand column vector",
+    "axis": [
+      1,
+      2,
+      3
+    ],
+    "axis_normalized": true,
+    "angle_degrees": 37,
+    "center": [
+      0,
+      0,
+      0
+    ],
+    "coordinates": "rot = (R @ coords.T).T",
+    "tensor_comparison": "alpha_rotated_predicted = R @ alpha_original @ R.T",
+    "same_atom_order": true,
+    "two_real_sdk_jobs_declared": true
+  },
+  "actual_authored_settings": {
+    "method": "RHF",
+    "basis": "def2-SVP",
+    "charge": 0,
+    "multiplicity": 1,
+    "environment": "gas_phase",
+    "response": "%elprop Polar true",
+    "frequency": "static (no frequency block)",
+    "scf_maxiter": 256,
+    "autotrah": false,
+    "noautostart": true,
+    "maxcore_mb_per_process": 192
+  },
+  "status": "authored inputs and script observed before any Attempt; execution and scientific qualification pending",
+  "artifacts": [
+    {
+      "id": "artifact_98246124ed4247dbbd32c0fc01c4fd94",
+      "role": "code",
+      "metadata_path": "data/code-tools-refreeze-2-batch/workspaces/formal-H2-001/data/artifacts/artifact_98246124ed4247dbbd32c0fc01c4fd94/artifact.json",
+      "metadata_sha256": "321e817361d750fd918edfaddf4a58664eb174c4ce51227087b1ed01bd752eda",
+      "body_path": "data/code-tools-refreeze-2-batch/workspaces/formal-H2-001/data/artifacts/artifact_98246124ed4247dbbd32c0fc01c4fd94/files/polar_rotation_analysis.py",
+      "body_sha256": "a017b9c6d871bd577b5b90e64ac12dc9e179783735e4de0f5bc0c425f1f69649",
+      "text": "import json, math\nimport numpy as np\nfrom orca_task_sdk import run_orca, receipt_source\n\nNL = chr(10)\nAXIS = np.array([1.0, 2.0, 3.0])\nAXIS = AXIS / np.linalg.norm(AXIS)\nANGLE_DEG = 37.0\nTHETA = math.radians(ANGLE_DEG)\nK = np.array([[0.0, -AXIS[2], AXIS[1]], [AXIS[2], 0.0, -AXIS[0]], [-AXIS[1], AXIS[0], 0.0]])\nR = math.cos(THETA) * np.eye(3) + math.sin(THETA) * K + (1.0 - math.cos(THETA)) * np.outer(AXIS, AXIS)\n\ndef read_xyz(path):\n    lines = open(path, 'r').read().splitlines()\n    n = int(lines[0].strip())\n    symbols = []\n    coords = []\n    for ln in lines[2:2+n]:\n        p = ln.split()\n        symbols.append(p[0])\n        coords.append([float(p[1]), float(p[2]), float(p[3])])\n    return symbols, np.array(coords)\n\nsymbols, coords = read_xyz('prepared.xyz')\nrot = (R @ coords.T).T\nwith open('rotated.xyz', 'w') as f:\n    f.write(str(len(symbols)) + NL)\n    f.write('CH2O active rotation about origin; axis (1,2,3) normalized; right-hand rule; 37 deg' + NL)\n    for s, c in zip(symbols, rot):\n        f.write('%s %.12f %.12f %.12f%s' % (s, c[0], c[1], c[2], NL))\n\ndef pair_distances(c):\n    return np.array([np.linalg.norm(c[i] - c[j]) for i in range(len(c)) for j in range(i + 1, len(c))])\n\nd_before = pair_distances(coords)\nd_after = pair_distances(rot)\nmax_dist_change = float(np.max(np.abs(d_after - d_before)))\n\nrotation_record = {\n    'center': 'origin of the input coordinate frame (0,0,0)',\n    'axis_direction_in_original_frame': [1.0, 2.0, 3.0],\n    'axis_unit_vector': [float(x) for x in AXIS],\n    'angle_deg': ANGLE_DEG,\n    'handedness': 'right-hand rule; active rotation of the frozen geometry',\n    'rotation_matrix_row_major': [[float(x) for x in row] for row in R],\n    'atom_order_preserved': symbols,\n    'prepared_coordinates_angstrom': [[float(x) for x in row] for row in coords],\n    'rotated_coordinates_angstrom': [[float(x) for x in row] for row in rot],\n    'max_pair_distance_change_angstrom': max_dist_change,\n    'formula': 'R = cos(t) I + sin(t) K + (1-cos(t)) a a^T, t=37 deg, a=(1,2,3)/sqrt(14)'\n}\nwith open('rotation_record.json', 'w') as f:\n    json.dump(rotation_record, f, indent=2)\n\nseed_record = {\n    'requested_seed': 1701,\n    'random_numbers_used_in_authored_scripts': False,\n    'rotation': 'analytic Rodrigues rotation; no random numbers',\n    'orca': 'deterministic fixed-geometry electronic-structure input',\n    'initial_structure_generation': {\n        'generator': 'opi.Structure.from_smiles',\n        'random_seed_reported': None,\n        'seed_supported': False,\n        'note': 'The prepared geometry came from the completed structure preparation step with no exposed controllable seed; reproducibility is provided by reusing the immutable prepared.xyz rather than regenerating it.'\n    }\n}\nwith open('random_seed_1701.json', 'w') as f:\n    json.dump(seed_record, f, indent=2)\n\ndef checked_run(inp, deps, key):\n    try:\n        rec = run_orca(inp, dependencies=deps, request_key=key, purpose='new_candidate')\n    except Exception as exc:\n        with open('failed_' + key + '.json', 'w') as f:\n            json.dump({'request_key': key, 'error': repr(exc)}, f)\n        raise\n    if rec.get('operation_status') != 'completed':\n        with open('failed_' + key + '.json', 'w') as f:\n            json.dump({'request_key': key, 'receipt': rec}, f)\n        raise RuntimeError('ORCA run not completed for ' + key + ': ' + repr(rec.get('operation_status')))\n    return rec\n\nrec1 = checked_run('ch2o_pol_original.inp', ['prepared.xyz'], 'pol_original')\nrec2 = checked_run('ch2o_pol_rotated.inp', ['rotated.xyz'], 'pol_rotated')\n\ndef parse_polar(rec):\n    files = rec['files']\n    if 'stdout.out' not in files:\n        raise RuntimeError('stdout.out missing; keys=' + repr(list(files.keys())))\n    text = open(files['stdout.out'], 'r', errors='replace').read()\n    marker = 'raw cartesian tensor (atomic units):'\n    i = text.find(marker)\n    if i < 0:\n        raise RuntimeError('raw cartesian tensor marker not found in stdout.out')\n    j = text.find('diagonalized tensor:', i)\n    if j < 0:\n        raise RuntimeError('diagonalized tensor marker not found in stdout.out')\n    block = text[i + len(marker):j]\n    vals = []\n    for tok in block.split():\n        try:\n            vals.append(float(tok))\n        except ValueError:\n            pass\n    if len(vals) < 9:\n        raise RuntimeError('parsed fewer than 9 tensor components: ' + repr(vals))\n    tensor = np.array(vals[:9]).reshape(3, 3)\n    k = text.find('Isotropic polarizability')\n    if k < 0:\n        raise RuntimeError('isotropic polarizability marker not found')\n    tail = text[k:].split(':', 1)[1]\n    iso = None\n    for tok in tail.split():\n        try:\n            iso = float(tok)\n            break\n        except ValueError:\n            continue\n    if iso is None:\n        raise RuntimeError('isotropic polarizability value not found')\n    return tensor, iso\n\nT1, iso1 = parse_polar(rec1)\nT2, iso2 = parse_polar(rec2)\nTpred = R @ T1 @ R.T\ntensor_max_abs_diff = float(np.max(np.abs(Tpred - T2)))\niso_from_trace_1 = float(np.trace(T1) / 3.0)\niso_from_trace_2 = float(np.trace(T2) / 3.0)\niso_reported_diff = float(iso2 - iso1)\n\nwith open('polarizability_table.csv', 'w') as f:\n    f.write('quantity,row,col,value_atomic_units' + NL)\n    for label, T in [('original', T1), ('rotated_reported', T2), ('original_RARt_prediction', Tpred)]:\n        for i in range(3):\n            for j in range(3):\n                f.write('%s,%d,%d,%.10f%s' % (label, i + 1, j + 1, T[i, j], NL))\n    f.write('original,isotropic,,%.10f%s' % (iso1, NL))\n    f.write('rotated_reported,isotropic,,%.10f%s' % (iso2, NL))\n    f.write('original,isotropic_from_trace,,%.10f%s' % (iso_from_trace_1, NL))\n    f.write('rotated_reported,isotropic_from_trace,,%.10f%s' % (iso_from_trace_2, NL))\n\ntable_json = {\n    'unit': 'atomic units',\n    'original_tensor': [[float(x) for x in row] for row in T1],\n    'rotated_reported_tensor': [[float(x) for x in row] for row in T2],\n    'original_isotropic': iso1,\n    'rotated_reported_isotropic': iso2,\n    'original_isotropic_from_trace': iso_from_trace_1,\n    'rotated_isotropic_from_trace': iso_from_trace_2\n}\nwith open('polarizability_table.json', 'w') as f:\n    json.dump(table_json, f, indent=2)\n\nsrc1 = receipt_source(rec1, 'stdout.out', location='STATIC POLARIZABILITY TENSOR (Dipole/Dipole) and Isotropic polarizability')\nsrc2 = receipt_source(rec2, 'stdout.out', location='STATIC POLARIZABILITY TENSOR (Dipole/Dipole) and Isotropic polarizability')\n\nobs = [\n    {'name': 'rotation_convention', 'value': rotation_record, 'unit': 'angstrom', 'sources': [{'filename': 'prepared.xyz'}, {'filename': 'rotated.xyz'}, {'filename': 'rotation_record.json'}], 'formula': rotation_record['formula'], 'artifacts': ['rotated.xyz', 'rotation_record.json'], 'limitations': ['Rotation applied to the frozen prepared geometry; no reoptimization.']},\n    {'name': 'random_seed_record', 'value': seed_record, 'unit': None, 'sources': [{'filename': 'random_seed_1701.json'}], 'formula': None, 'artifacts': ['random_seed_1701.json'], 'limitations': ['Seed 1701 could not be imposed on opi.Structure.from_smiles because no seed control was exposed; determinism here comes from reusing the immutable prepared.xyz.']},\n    {'name': 'pol_original_tensor', 'value': [[float(x) for x in row] for row in T1], 'unit': 'atomic units', 'sources': [src1], 'formula': 'RHF/def2-SVP fixed-geometry static dipole-dipole polarizability', 'artifacts': ['polarizability_table.csv', 'polarizability_table.json'], 'limitations': ['Raw cartesian tensor components as printed by ORCA.']},\n    {'name': 'pol_original_isotropic', 'value': iso1, 'unit': 'atomic units', 'sources': [src1], 'formula': 'isotropic = Tr(alpha)/3', 'artifacts': ['polarizability_table.csv', 'polarizability_table.json'], 'limitations': ['Value as printed by ORCA.']},\n    {'name': 'pol_rotated_tensor', 'value': [[float(x) for x in row] for row in T2], 'unit': 'atomic units', 'sources': [src2], 'formula': 'independent ORCA RHF/def2-SVP calculation on rotated.xyz', 'artifacts': ['polarizability_table.csv', 'polarizability_table.json'], 'limitations': ['Raw cartesian tensor components as printed by ORCA for the independently computed rotated geometry.']},\n    {'name': 'pol_rotated_isotropic', 'value': iso2, 'unit': 'atomic units', 'sources': [src2], 'formula': 'isotropic = Tr(alpha)/3', 'artifacts': ['polarizability_table.csv', 'polarizability_table.json'], 'limitations': ['Value as printed by ORCA.']},\n    {'name': 'tensor_transformation_check', 'value': {'rotation_matrix_row_major': [[float(x) for x in row] for row in R], 'max_abs_difference_between_reported_rotated_and_R_alpha_Rt': tensor_max_abs_diff, 'formula': 'alpha_rotated_predicted = R alpha_original R^T', 'reported_tr_original': float(np.trace(T1)), 'reported_tr_rotated': float(np.trace(T2))}, 'unit': 'atomic units', 'sources': [src1, src2], 'formula': 'alpha prime = R alpha R^T for an active rotation R of the frozen molecule', 'artifacts': ['polarizability_table.csv', 'polarizability_table.json'], 'limitations': ['Comparison is numerical and limited by ORCA print precision and the fixed-geometry approximation.']},\n    {'name': 'isotropic_invariance_check', 'value': {'reported_isotropic_difference': iso_reported_diff, 'trace_derived_isotropic_original': iso_from_trace_1, 'trace_derived_isotropic_rotated': iso_from_trace_2, 'trace_derived_difference': float(iso_from_trace_2 - iso_from_trace_1)}, 'unit': 'atomic units', 'sources': [src1, src2], 'formula': 'alpha_iso = (alpha_xx + alpha_yy + alpha_zz)/3 is invariant under rotations', 'artifacts': ['polarizability_table.csv', 'polarizability_table.json'], 'limitations': ['Small differences reflect numerical precision of two independent SCF/CP-SCF calculations.']}\n]\n\nwith open('observations.json', 'w') as f:\n    json.dump({'version': 1, 'observations': obs}, f, indent=2)\n\nprint('rotation max pair-distance change (A):', max_dist_change)\nprint('original isotropic:', iso1)\nprint('rotated isotropic:', iso2)\nprint('max |R alpha R^T - rotated|:', tensor_max_abs_diff)\n"
+    },
+    {
+      "id": "artifact_9d7b03ecc9dd40b0a80de22cd76c0dd3",
+      "role": "native_input",
+      "metadata_path": "data/code-tools-refreeze-2-batch/workspaces/formal-H2-001/data/artifacts/artifact_9d7b03ecc9dd40b0a80de22cd76c0dd3/artifact.json",
+      "metadata_sha256": "083218c5974258b6106a7deb5ff8401d48916f543b38b456ca481c45b9f0b66f",
+      "body_path": "data/code-tools-refreeze-2-batch/workspaces/formal-H2-001/data/artifacts/artifact_9d7b03ecc9dd40b0a80de22cd76c0dd3/files/ch2o_pol_original.inp",
+      "body_sha256": "88e0c63bfbc8e1612673e421e107f84bd4c67c1f7fdb7d99c6c86ea5da812444",
+      "text": "! RHF def2-SVP NoAutoStart\n%maxcore 192\n%scf\n  MaxIter 256\n  AutoTRAH false\nend\n%elprop\n  Polar true\nend\n* xyzfile 0 1 prepared.xyz\n"
+    },
+    {
+      "id": "artifact_b6d9dee91f83454998ee1017bcceafb0",
+      "role": "prepared_geometry_candidate",
+      "metadata_path": "data/code-tools-refreeze-2-batch/workspaces/formal-H2-001/data/artifacts/artifact_b6d9dee91f83454998ee1017bcceafb0/artifact.json",
+      "metadata_sha256": "6896ca750da852b17ad756763c1a305a8f6331909cfa98ae8bf42ecf267a3f6d",
+      "body_path": "data/code-tools-refreeze-2-batch/workspaces/formal-H2-001/data/artifacts/artifact_b6d9dee91f83454998ee1017bcceafb0/files/prepared.xyz",
+      "body_sha256": "68e082ff0a4fc1368163d5e917d2eefeba3037220001cc8c8d7e98511157b09f",
+      "text": "4\n\nC            -0.0446780195663200            -0.0174057025478357             0.0007862623479016\nO             1.1778039074320570            -0.1522898485149855            -0.0178379214315723\nH            -0.3978115483273606             1.0072503214613107             0.0014969770947146\nH            -0.7353143395383778            -0.8375547703984894             0.0155546819889535\n\n"
+    },
+    {
+      "id": "artifact_f005c51ad3844776b63993373b36b71e",
+      "role": "native_input",
+      "metadata_path": "data/code-tools-refreeze-2-batch/workspaces/formal-H2-001/data/artifacts/artifact_f005c51ad3844776b63993373b36b71e/artifact.json",
+      "metadata_sha256": "a6c689d82e02ade3d662a98f81d82269356f8d532f532f83be9ea4d509e003f5",
+      "body_path": "data/code-tools-refreeze-2-batch/workspaces/formal-H2-001/data/artifacts/artifact_f005c51ad3844776b63993373b36b71e/files/ch2o_pol_rotated.inp",
+      "body_sha256": "02ce5c24db349618aa9ab49e5b2d93a8c1386542f1e2e4439680f077b3c9bc4b",
+      "text": "! RHF def2-SVP NoAutoStart\n%maxcore 192\n%scf\n  MaxIter 256\n  AutoTRAH false\nend\n%elprop\n  Polar true\nend\n* xyzfile 0 1 rotated.xyz\n"
+    }
+  ],
+  "reviewer_actions": [
+    "read existing JSON and artifact bytes",
+    "sha256 existing bytes"
+  ],
+  "not_performed": [
+    "network",
+    "model",
+    "ORCA",
+    "script execution",
+    "science recalculation",
+    "reference run"
+  ],
+  "request_source_sha256": "50cd5e4d13b873590c76d3d4546c8e12619a91dd6ab1c58daa6d91e05a06b9be"
+}

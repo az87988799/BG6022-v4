@@ -1,0 +1,51 @@
+{
+  "request_hash": "2629859b88596ce13f16b68844c3364af886e0f560b2277e3509f1f8adb50556",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_nhexane",
+          "tool": "structure.resolve",
+          "system_id": "system_nhexane",
+          "parameters": {},
+          "depends_on": []
+        },
+        {
+          "key": "prepare_nhexane",
+          "tool": "structure.prepare",
+          "system_id": "system_nhexane",
+          "depends_on": [
+            "resolve_nhexane"
+          ],
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_nhexane",
+              "port": "resolved_identity"
+            }
+          }
+        }
+      ]
+    },
+    "reason": "Start by resolving the requested n-hexane identity and preparing the single authorized initial geometry. The conformer-search Python Step and ORCA single-point Steps must be planned only after real prepared-geometry artifact IDs/hashes exist, so no placeholder code/input bindings are used."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_nhexane\",\"tool\":\"structure.resolve\",\"system_id\":\"system_nhexane\",\"parameters\":{},\"depends_on\":[]},{\"key\":\"prepare_nhexane\",\"tool\":\"structure.prepare\",\"system_id\":\"system_nhexane\",\"depends_on\":[\"resolve_nhexane\"],\"inputs\":{\"identity\":{\"producer_key\":\"resolve_nhexane\",\"port\":\"resolved_identity\"}}}]},\"reason\":\"Start by resolving the requested n-hexane identity and preparing the single authorized initial geometry. The conformer-search Python Step and ORCA single-point Steps must be planned only after real prepared-geometry artifact IDs/hashes exist, so no placeholder code/input bindings are used.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 16191,
+    "completion_tokens": 9732,
+    "total_tokens": 25923,
+    "prompt_cache_hit_tokens": 6656,
+    "prompt_cache_miss_tokens": 9535
+  },
+  "response_hash": "81e863735b60219507ed13e54b2d110f3ad93819748fa4c3939791e2296120ae",
+  "response_bytes": 40796,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "e2de9439-0db3-4820-b25f-7dc6429ed647",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 46.437999999994645
+}

@@ -1,0 +1,630 @@
+{
+  "id": "model_5773890d039940a59650de068c304283",
+  "basis": {
+    "request_version": 3,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 1
+  },
+  "request": {
+    "id": "request_3023783ee8a64bc5a91336c64253a7ca",
+    "version": 3,
+    "original_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "geometry_artifact_id": null,
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "B3LYP",
+    "basis": "def2-TZVP",
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "environment": "explicit",
+      "electronic_state": "default",
+      "method": "auto_selected",
+      "basis": "auto_selected"
+    },
+    "goals": [
+      {
+        "id": "goal_conformer_candidates",
+        "port": "conformer_candidates",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "低能构象",
+        "original_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构",
+        "identity": {
+          "requested_names": [
+            "正己烷"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+          "text_basis": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构",
+          "start": 0,
+          "end": 49,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_nhexane"
+        ],
+        "conditions": {},
+        "minimum_evidence": [
+          "实际保存至少8份候选结构"
+        ],
+        "minimum_evidence_source": {
+          "实际保存至少8份候选结构": "explicit"
+        },
+        "unresolved": []
+      },
+      {
+        "id": "goal_selected_conformers",
+        "port": "selected_conformers",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "至少4个不同的构象",
+        "original_text": "并从中选择至少4个不同的构象",
+        "identity": {
+          "requested_names": [
+            "正己烷"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+          "text_basis": "并从中选择至少4个不同的构象",
+          "start": 50,
+          "end": 64,
+          "schema": "request-semantics-3",
+          "shared_constraints": [
+            {
+              "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+              "text_basis": "实际保存至少8份候选结构",
+              "start": 37,
+              "end": 49,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+              "text_basis": "并从中选择至少4个不同的构象",
+              "start": 50,
+              "end": 64,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+              "text_basis": "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+              "start": 65,
+              "end": 95,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+              "text_basis": "至少4个参加比较的构象应两两不同",
+              "start": 151,
+              "end": 167,
+              "schema": "request-semantics-3"
+            }
+          ]
+        },
+        "system_ids": [
+          "system_nhexane"
+        ],
+        "conditions": {},
+        "minimum_evidence": [
+          "从中选择至少4个不同的构象"
+        ],
+        "minimum_evidence_source": {
+          "从中选择至少4个不同的构象": "explicit"
+        },
+        "unresolved": []
+      },
+      {
+        "id": "goal_orca_single_point_energies",
+        "port": "single_point_energies",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "真实ORCA单点能量比较",
+        "original_text": "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+        "identity": {
+          "requested_names": [
+            "正己烷"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+          "text_basis": "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+          "start": 65,
+          "end": 95,
+          "schema": "request-semantics-3",
+          "shared_constraints": [
+            {
+              "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+              "text_basis": "实际保存至少8份候选结构",
+              "start": 37,
+              "end": 49,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+              "text_basis": "并从中选择至少4个不同的构象",
+              "start": 50,
+              "end": 64,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+              "text_basis": "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+              "start": 65,
+              "end": 95,
+              "schema": "request-semantics-3"
+            },
+            {
+              "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+              "text_basis": "至少4个参加比较的构象应两两不同",
+              "start": 151,
+              "end": 167,
+              "schema": "request-semantics-3"
+            }
+          ]
+        },
+        "system_ids": [
+          "system_nhexane"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_energy_ranking",
+        "port": "relative_energy_ranking",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "绝对能量和相对最低项的kJ/mol排名",
+        "original_text": "交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构",
+        "identity": {
+          "requested_names": [
+            "正己烷"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+          "text_basis": "交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构",
+          "start": 168,
+          "end": 214,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_nhexane"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_lowest_candidate_structure",
+        "port": "lowest_candidate_structure",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "最低候选结构",
+        "original_text": "交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构",
+        "identity": {
+          "requested_names": [
+            "正己烷"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+          "text_basis": "交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构",
+          "start": 168,
+          "end": 214,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_nhexane"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_rmsd_duplicate_check",
+        "port": "rmsd_duplicate_check",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "重原子对齐RMSD检查重复",
+        "original_text": "请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同",
+        "identity": {
+          "requested_names": [
+            "正己烷"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+          "text_basis": "请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同",
+          "start": 111,
+          "end": 167,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_nhexane"
+        ],
+        "conditions": {},
+        "minimum_evidence": [
+          "至少4个参加比较的构象应两两不同"
+        ],
+        "minimum_evidence_source": {
+          "至少4个参加比较的构象应两两不同": "explicit"
+        },
+        "unresolved": []
+      },
+      {
+        "id": "goal_search_report",
+        "port": "search_report",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "搜索范围、几何来源以及力场处理是否收敛",
+        "original_text": "并说明搜索范围、几何来源以及力场处理是否收敛",
+        "identity": {
+          "requested_names": [
+            "正己烷"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+          "text_basis": "并说明搜索范围、几何来源以及力场处理是否收敛",
+          "start": 215,
+          "end": 237,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_nhexane"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_random_seed",
+        "port": "random_seed_record",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "种子 1701",
+        "original_text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性",
+        "identity": {
+          "requested_names": [
+            "正己烷"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性",
+          "start": 298,
+          "end": 368,
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_nhexane"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      }
+    ],
+    "systems": [
+      {
+        "id": "system_nhexane",
+        "geometry_artifact_id": null,
+        "conditions": {},
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": "正己烷",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "正己烷"
+          ],
+          "canonical_names": [],
+          "query_name": "n-hexane",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+            "text_basis": "正己烷",
+            "start": 3,
+            "end": 6,
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_73e756a577d940cd8a68d6e44a4b584e",
+        "text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "source": "user",
+        "created_at": "2026-10-20T11:37:21.956875+00:00",
+        "request_version": 1
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "electronic_state": "RKS",
+      "method": "B3LYP",
+      "basis": "def2-TZVP"
+    },
+    "normalization_status": "normalized",
+    "condition_evidence": {
+      "request.charge": {
+        "value": 0,
+        "source": "explicit",
+        "text_basis": "中性",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+        "start": 7,
+        "end": 9,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_73e756a577d940cd8a68d6e44a4b584e"
+        ]
+      },
+      "request.multiplicity": {
+        "value": 1,
+        "source": "explicit",
+        "text_basis": "单重态",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+        "start": 10,
+        "end": 13,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_73e756a577d940cd8a68d6e44a4b584e"
+        ]
+      },
+      "request.environment": {
+        "value": "gas_phase",
+        "source": "explicit",
+        "text_basis": "气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+        "start": 14,
+        "end": 16,
+        "schema": "request-semantics-3",
+        "message_ids": [
+          "message_73e756a577d940cd8a68d6e44a4b584e"
+        ]
+      },
+      "request.electronic_state": {
+        "value": "RKS",
+        "source": "default",
+        "text_basis": "",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": "local-hf-1",
+        "message_id": null,
+        "message_ids": [
+          "message_73e756a577d940cd8a68d6e44a4b584e"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.method": {
+        "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+        "text_basis": "方法和基组由你选择并说明依据",
+        "start": 96,
+        "end": 110,
+        "schema": "request-semantics-3",
+        "source": "explicit"
+      },
+      "automatic_selection.basis": {
+        "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+        "text_basis": "方法和基组由你选择并说明依据",
+        "start": 96,
+        "end": 110,
+        "schema": "request-semantics-3",
+        "source": "explicit"
+      },
+      "request.method": {
+        "value": "B3LYP",
+        "source": "auto_selected",
+        "request_version": 2,
+        "authorization": {
+          "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+          "text_basis": "方法和基组由你选择并说明依据",
+          "start": 96,
+          "end": 110,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        },
+        "reason": "Choose B3LYP for a uniform single-point comparison of all n-hexane conformers: it is a well-established hybrid GGA functional suitable for closed-shell organic molecules and is explicitly documented in the official ORCA 6.1 DFT manual page. Using one functional across all candidates satisfies the request's single-method/single-basis requirement, while the level stays tractable for many conformers. The source is the ORCA 6.1 'Density Functional Theory' manual entry (Result result_5ec8a462abfd4ae390b46b290b4a6e66) whose document hash is 94424fff...",
+        "sources": [
+          {
+            "result_id": "result_5ec8a462abfd4ae390b46b290b4a6e66",
+            "result_fingerprint": "ffee0657ac24b76edc3b71f1c5a0c00a40f0354a7ca3ea03c02d086291f32964",
+            "document_sha256": "94424fff221bde28abf4a32b7f1649771dcfde5585360082816107d4a6032c0c",
+            "excerpt_sha256": "27488620a22c601ffef383e5960ec059c4e584f077c50f6793772c65e3472e10",
+            "quote": "B3LYP [230] B3LYP 20 The popular B3LYP functional (20% HF exchange) as defined in the TurboMole program system (LDAOPT C_VWN5)",
+            "kind": "official_document",
+            "document_id": "orca_dft",
+            "index_version": "knowledge-index-3",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/modelchemistries/DensityFunctionalTheory.html",
+            "title": "ORCA 6.1 Density Functional Theory"
+          }
+        ],
+        "schema": "condition-selection-2"
+      },
+      "request.basis": {
+        "value": "def2-TZVP",
+        "source": "auto_selected",
+        "request_version": 2,
+        "authorization": {
+          "message_id": "message_73e756a577d940cd8a68d6e44a4b584e",
+          "text_basis": "方法和基组由你选择并说明依据",
+          "start": 96,
+          "end": 110,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        },
+        "reason": "Choose def2-TZVP as the orbital basis for every conformer single point: the official ORCA 6.1 Basis Sets manual states it is a polarized valence triple-zeta Karlsruhe basis covering H-Rn, directly invoked with the def2-TZVP keyword, with def2-ECP for heavier elements. It is appropriate for an organic molecule of this size and keeps one consistent basis across the entire comparison. The source is the ORCA 6.1 'Basis Sets' manual page (Result result_2e707a63cab74c2591aa329198fed903) whose document hash is 48750fa1....",
+        "sources": [
+          {
+            "result_id": "result_2e707a63cab74c2591aa329198fed903",
+            "result_fingerprint": "dbcb1f6c8d3bbb37b05e3437a20e3fc60faefb6f2c655f9fe4ce82b5e950bb7b",
+            "document_sha256": "48750fa1c9dc25992c9e339648e52ef0f63423a7ad196e33b78609eb7143c4b6",
+            "excerpt_sha256": "c59e4b351d2a3d15f3270a40ca115df538fac2a893279e84fbf39ee7f932c36b",
+            "quote": "The easiest way to use orbital and auxiliary basis sets in ORCA is via the simple input keywords. All available orbital basis set keywords can be found in Section 2.7.2 and all auxiliary basis set options in Section 2.7.4. For example, the Karlsruhe def2-TZVP basis set can be invoked via the def2-TZVP keyword.\n\ndef2-TZVP H–Rn def2-ECP (Rb–Rn) Polarized valence triple-\\(\\zeta\\). Quite similar to the older def-TZVPP for main group elements and TZVP for H.",
+            "kind": "official_document",
+            "document_id": "orca_basis",
+            "index_version": "knowledge-index-3",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/basisset.html",
+            "title": "ORCA 6.1 Basis Sets"
+          }
+        ],
+        "schema": "condition-selection-2"
+      }
+    },
+    "semantic_defaults": {
+      "charge": 0,
+      "electronic_state": "RKS",
+      "environment": "gas_phase",
+      "multiplicity": 1
+    },
+    "automatic_selection": [
+      "method",
+      "basis"
+    ],
+    "selection_reasons": {
+      "method": "Choose B3LYP for a uniform single-point comparison of all n-hexane conformers: it is a well-established hybrid GGA functional suitable for closed-shell organic molecules and is explicitly documented in the official ORCA 6.1 DFT manual page. Using one functional across all candidates satisfies the request's single-method/single-basis requirement, while the level stays tractable for many conformers. The source is the ORCA 6.1 'Density Functional Theory' manual entry (Result result_5ec8a462abfd4ae390b46b290b4a6e66) whose document hash is 94424fff...",
+      "basis": "Choose def2-TZVP as the orbital basis for every conformer single point: the official ORCA 6.1 Basis Sets manual states it is a polarized valence triple-zeta Karlsruhe basis covering H-Rn, directly invoked with the def2-TZVP keyword, with def2-ECP for heavier elements. It is appropriate for an organic molecule of this size and keeps one consistent basis across the entire comparison. The source is the ORCA 6.1 'Basis Sets' manual page (Result result_2e707a63cab74c2591aa329198fed903) whose document hash is 48750fa1...."
+    }
+  },
+  "plan": {
+    "id": "plan_71e8b19db88e48769926f1e867121afc",
+    "version": 1,
+    "request_id": "request_3023783ee8a64bc5a91336c64253a7ca",
+    "request_version": 3,
+    "steps": [
+      {
+        "id": "step_88e6049abb3a4e88858ff17b7fe82d07",
+        "logical_id": "logical_2d597106b55e426d9f94d269cbd9d1c9",
+        "tool": "structure.resolve",
+        "parameters": {
+          "system_id": "system_nhexane"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": "system_nhexane"
+      },
+      {
+        "id": "step_0bffd3bf7c904787999a697331a47673",
+        "logical_id": "logical_6f810a5b05a94fcd9608872cdec8799e",
+        "tool": "structure.prepare",
+        "parameters": {
+          "system_id": "system_nhexane",
+          "charge": 0,
+          "multiplicity": 1
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_88e6049abb3a4e88858ff17b7fe82d07"
+        ],
+        "inputs": {
+          "identity": {
+            "producer_step_id": "step_88e6049abb3a4e88858ff17b7fe82d07",
+            "run_id": null,
+            "result_id": null,
+            "attempt_id": null,
+            "artifact_id": null,
+            "sha256": null,
+            "port": "resolved_identity",
+            "rule_version": null
+          }
+        },
+        "system_id": "system_nhexane"
+      }
+    ],
+    "goal_map": {
+      "goal_conformer_candidates": {
+        "step_id": null,
+        "port": "conformer_candidates",
+        "evidence": null,
+        "gap": "No conformer-search Step or saved candidate structures exist yet; the search program must be authored as a workspace.write artifact after the prepared initial geometry exists."
+      },
+      "goal_selected_conformers": {
+        "step_id": null,
+        "port": "selected_conformers",
+        "evidence": null,
+        "gap": "No candidate pool exists, so no conformer subset can be selected yet."
+      },
+      "goal_orca_single_point_energies": {
+        "step_id": null,
+        "port": "single_point_energies",
+        "evidence": null,
+        "gap": "No ORCA single-point inputs or receipts exist; each single point requires a real prepared/candidate geometry artifact id and hash."
+      },
+      "goal_energy_ranking": {
+        "step_id": null,
+        "port": "relative_energy_ranking",
+        "evidence": null,
+        "gap": "No absolute single-point energies are available to rank."
+      },
+      "goal_lowest_candidate_structure": {
+        "step_id": null,
+        "port": "lowest_candidate_structure",
+        "evidence": null,
+        "gap": "No computed energies exist to identify a lowest candidate structure."
+      },
+      "goal_rmsd_duplicate_check": {
+        "step_id": null,
+        "port": "rmsd_duplicate_check",
+        "evidence": null,
+        "gap": "No candidate conformer set exists to run the carbon-chain forward/reverse-mapped heavy-atom RMSD deduplication."
+      },
+      "goal_search_report": {
+        "step_id": null,
+        "port": "search_report",
+        "evidence": null,
+        "gap": "Search has not been executed; scope, geometry provenance and force-field convergence cannot be reported yet."
+      },
+      "goal_random_seed": {
+        "step_id": null,
+        "port": "random_seed_record",
+        "evidence": null,
+        "gap": "No structure-generation/search code has run, so seed-1701 usage cannot be recorded."
+      }
+    }
+  },
+  "related_results": [],
+  "user_message_ids": []
+}

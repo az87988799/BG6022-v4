@@ -1,0 +1,125 @@
+{
+  "schema": "independent-holdout-requirement-registration-1",
+  "task": "H1",
+  "repeat": 1,
+  "recorded_at_utc": "2026-10-20T12:16:13.515016+00:00",
+  "status": "requirements_registered_before_task_start",
+  "source_hashes": {
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/holdout-selection.json": "3a014ecda9c045491ef8b0de56b27c5d9af3a4964ba412b91b845a659d50188a",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/scoring.md": "7a080249fbc79415eb008a63b6a7cb35ddaa4e250caf4c1b49b076fea2b1ae4a",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/runbook.md": "7b5326502792f5116a32c003456b7abb5d1c5474f301af0ed7b347b104dd0eff",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/public-tasks.json": "a9d734d178776ac5ce92c69fbeb7fe56a6ad680dc97d574c1d6bf90496885499",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/batch-policy.json": "4eb769bf72a473c55023db41bba7e65f1f43bab064a5211f4e616965565a9e81",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/product-freeze.json": "602bd3b22dc37d7ea08dedbc0a26b90e48401fb6223b191ead5800eacf51bf4a",
+    "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/evaluation-freeze.json": "bf834cb281bc63f185599dd8908b57614140e900ffceed0d8fcf86011c4dea38"
+  },
+  "observed_task_evidence_directory_exists": false,
+  "product_commit": "7cc496271909966de41fbadd15d8e24c095f97e1",
+  "product_manifest_sha256": "602bd3b22dc37d7ea08dedbc0a26b90e48401fb6223b191ead5800eacf51bf4a",
+  "novelty_status": "previously_exposed_not_a_fresh_holdout",
+  "original_text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+  "assembled_original_text_sha256": "ab07874b8c8ffd387c63496ed8f2ba29ab9d21530551b50c455309a342697820",
+  "seed": 1701,
+  "fixed_requirements": {
+    "identity_smiles": "C#N",
+    "formula": "CHN",
+    "connectivity": "H-C triple-bond N",
+    "atom_count": 3,
+    "charge": 0,
+    "multiplicity": 1,
+    "environment": "gas_phase",
+    "allowed_methods": [
+      "RHF",
+      "PBE0 with restricted closed-shell SCF"
+    ],
+    "allowed_basis_sets": [
+      "def2-SVP",
+      "def2-TZVP"
+    ],
+    "method_basis_selection": "one_pair_registered_before_first_scientific_execution",
+    "property": "GIAO total nuclear magnetic shielding",
+    "required_nuclei": "all three atoms with their actual original indices and element labels",
+    "required_values": {
+      "total_cartesian_tensor_components": 27,
+      "isotropic_shieldings": 3
+    },
+    "units": "ppm",
+    "geometry": "one current-run geometry generated and declared by product; no mandatory optimization; any optimization claim requires original convergence evidence",
+    "minimum_machine_decimal_places": 3,
+    "forbidden_substitutions": [
+      "chemical shift without reference",
+      "diamagnetic-only shielding",
+      "paramagnetic-only shielding",
+      "shielding tensor norm in place of isotropic shielding"
+    ]
+  },
+  "frozen_tolerances": {
+    "definition": "预先固定的工程核对阈值，不是核磁实验准确度保证。",
+    "total_shielding_tensor": {
+      "unit": "ppm",
+      "reported_vs_raw_abs_per_component": 0.001,
+      "independent_same_settings_abs_per_component": 0.05,
+      "failure": "任一必需分量越界、缺项、核标签错误、单位/总分量含义错误即fail；参考不可得则unverified。"
+    },
+    "isotropic_shielding": {
+      "unit": "ppm",
+      "reported_vs_raw_abs": 0.001,
+      "independent_same_settings_abs": 0.05,
+      "trace_over_three_consistency_abs": 0.001,
+      "failure": "任一核的抄录、同设置参考或trace/3一致性越界即fail；不以另一阈值放宽原始抄录。"
+    },
+    "geometry": {
+      "unit": "angstrom",
+      "reported_vs_original_coordinate_abs": 1e-06,
+      "reference_input_rule": "exact original atom order and coordinate values",
+      "failure": "参考或屏蔽来自未声明的不同几何，不能评分通过。"
+    }
+  },
+  "frozen_scoring_rules": [
+    "除共有证据门槛外，全部三个核、27项总张量分量及三项各向同性量均必需。只有汇总表而无可定位逐核原始证据不得通过。",
+    "所有量是所选近似与记录几何下的屏蔽；不要求它们接近实验位移或预设正负号。误称标定化学位移、隐瞒参考物缺失或声称实验精度则解释项fail。",
+    "不存在专用生产检查器时可作有验证说明的观察交付；不得把脚本自报passed或本独立评分写为新的生产科学资格。",
+    "本题三次参考名义共3次ORCA，含每次一次确认失败后重试的合计硬上限6次；正式运行和参考分别记账。"
+  ],
+  "run_budget": {
+    "logical_steps": 12,
+    "attempts_per_step": 3,
+    "orca_starts": 12,
+    "extra_orca_starts": 11,
+    "postprocess_starts": 0,
+    "run_seconds": 7200.0,
+    "model_calls": 24,
+    "plan_revisions": 12,
+    "model_tokens": 1200000,
+    "input_tokens": 64000,
+    "output_tokens": 32768,
+    "decision_rounds": 40,
+    "evidence_reads": 12,
+    "analysis_executions": 4,
+    "file_writes": 32,
+    "corrections_per_proposal": 2,
+    "transport_retries": 0,
+    "identity_queries": 2,
+    "structure_preparations": 1,
+    "knowledge_queries": 4,
+    "internal_work_units": 10000,
+    "code_retries": 2,
+    "artifact_count": 800,
+    "artifact_bytes": 268435456,
+    "artifact_total_bytes": 268435456
+  },
+  "review_authority": {
+    "read_only_existing_evidence": true,
+    "new_model_or_api_calls": false,
+    "new_orca_or_reference_execution": false,
+    "scientific_recalculation": false,
+    "posterior_basic_arithmetic": "Only raw/report transcription, trace/3 and specified coordinate/tensor transform checks when actual evidence exists; not independent reference execution.",
+    "output_scientific_qualification": "Keep production checks, independent review and user-goal completion separate.",
+    "result_values_read": false
+  },
+  "pending_registration": {
+    "product_approved_method_basis_and_numeric_settings": "await actual Request/Plan/selection and input evidence before examining scientific result values",
+    "actual_rotation_representation": "not applicable"
+  },
+  "reference_status": "not_executed_in_this_seven-task_single-repetition_batch; cannot mark independent same-settings reference checks passed"
+}

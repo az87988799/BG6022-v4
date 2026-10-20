@@ -1,0 +1,460 @@
+{
+  "id": "result_e557974e9c684502a119cf9d2877f214",
+  "run_id": "run_d4dfa0cf329b46308ff675c78dd6a861",
+  "step_id": null,
+  "attempt_id": null,
+  "call_id": "call_84310564c46046b1919d65aa6a85058d",
+  "supersedes_result_id": null,
+  "operation_status": "completed",
+  "checks": {
+    "text_window": [
+      {
+        "name": "bounded_evidence_read",
+        "status": "passed",
+        "detail": "operation only; content and observed values remain scientifically unverified",
+        "source": {
+          "artifact_id": "artifact_2fe5ad55c2794b519064420aa8b6f392",
+          "sha256": "705823bd4054a0b2c7a091f4e4f911db36d7b0fcfa6905b93ca5659fea405b67",
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 121
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 89
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        },
+        "rule_version": "evidence-read-1"
+      }
+    ]
+  },
+  "qualified_outputs": {},
+  "observations": {
+    "text_window": {
+      "artifact_id": "artifact_2fe5ad55c2794b519064420aa8b6f392",
+      "sha256": "705823bd4054a0b2c7a091f4e4f911db36d7b0fcfa6905b93ca5659fea405b67",
+      "role": "code",
+      "file": "artifacts/artifact_2fe5ad55c2794b519064420aa8b6f392/files/rotate_ch2o_geometry.py",
+      "source": {
+        "call_id": "call_6140a727a6c94aeb9a14d937d8611cfe",
+        "role": "python",
+        "name": "rotate_ch2o_geometry.py"
+      },
+      "view": {
+        "type": "raw_text",
+        "version": "1"
+      },
+      "path": [],
+      "geometry_indices": [],
+      "stage": "unknown",
+      "units": null,
+      "conditions": "unknown",
+      "scientific_status": "unverified",
+      "validation": "unverified observation; not a scientific qualification",
+      "lines": [
+        {
+          "line": 1,
+          "text": "\"\"\"Rigid active rotation of the prepared CH2O geometry about the coordinate origin."
+        },
+        {
+          "line": 2,
+          "text": ""
+        },
+        {
+          "line": 3,
+          "text": "Convention: active (alibi) rotation of the Cartesian coordinates, right-hand rule"
+        },
+        {
+          "line": 4,
+          "text": "about the axis (1,2,3) normalized to unit length, origin fixed at the origin of the"
+        },
+        {
+          "line": 5,
+          "text": "input coordinates, angle 37 degrees. Atom order and internal geometry are preserved."
+        },
+        {
+          "line": 6,
+          "text": "Coordinates in angstrom; the rotation matrix is dimensionless."
+        },
+        {
+          "line": 7,
+          "text": "No random numbers are used; the requested seed 1701 is recorded but not applicable."
+        },
+        {
+          "line": 8,
+          "text": "\"\"\""
+        },
+        {
+          "line": 9,
+          "text": "import json"
+        },
+        {
+          "line": 10,
+          "text": "import math"
+        },
+        {
+          "line": 11,
+          "text": "from pathlib import Path"
+        },
+        {
+          "line": 12,
+          "text": ""
+        },
+        {
+          "line": 13,
+          "text": "import numpy as np"
+        },
+        {
+          "line": 14,
+          "text": ""
+        },
+        {
+          "line": 15,
+          "text": "AXIS_RAW = [1.0, 2.0, 3.0]"
+        },
+        {
+          "line": 16,
+          "text": "ANGLE_DEG = 37.0"
+        },
+        {
+          "line": 17,
+          "text": "SEED = 1701"
+        },
+        {
+          "line": 18,
+          "text": ""
+        },
+        {
+          "line": 19,
+          "text": "axis = np.array(AXIS_RAW, dtype=float)"
+        },
+        {
+          "line": 20,
+          "text": "axis = axis / np.linalg.norm(axis)"
+        },
+        {
+          "line": 21,
+          "text": "theta = math.radians(ANGLE_DEG)"
+        },
+        {
+          "line": 22,
+          "text": "K = np.array([[0.0, -axis[2], axis[1]],"
+        },
+        {
+          "line": 23,
+          "text": "              [axis[2], 0.0, -axis[0]],"
+        },
+        {
+          "line": 24,
+          "text": "              [-axis[1], axis[0], 0.0]])"
+        },
+        {
+          "line": 25,
+          "text": "R = np.eye(3) + math.sin(theta) * K + (1.0 - math.cos(theta)) * (K @ K)"
+        },
+        {
+          "line": 26,
+          "text": ""
+        },
+        {
+          "line": 27,
+          "text": "src = Path(\"ch2o_original.xyz\")"
+        },
+        {
+          "line": 28,
+          "text": "lines = src.read_text(encoding=\"utf-8\").splitlines()"
+        },
+        {
+          "line": 29,
+          "text": "n = int(lines[0].split()[0])"
+        },
+        {
+          "line": 30,
+          "text": "atoms, coords = [], []"
+        },
+        {
+          "line": 31,
+          "text": "for ln in lines[2:2 + n]:"
+        },
+        {
+          "line": 32,
+          "text": "    parts = ln.split()"
+        },
+        {
+          "line": 33,
+          "text": "    atoms.append(parts[0])"
+        },
+        {
+          "line": 34,
+          "text": "    coords.append([float(parts[1]), float(parts[2]), float(parts[3])])"
+        },
+        {
+          "line": 35,
+          "text": "X = np.array(coords, dtype=float)"
+        },
+        {
+          "line": 36,
+          "text": "Y = X @ R.T"
+        },
+        {
+          "line": 37,
+          "text": ""
+        },
+        {
+          "line": 38,
+          "text": "rot_path = Path(\"ch2o_rotated.xyz\")"
+        },
+        {
+          "line": 39,
+          "text": "hdr = (\"active rigid rotation about origin, axis (1,2,3) normalized, 37 deg, \""
+        },
+        {
+          "line": 40,
+          "text": "       \"right-hand rule; atom order preserved; angstrom\")"
+        },
+        {
+          "line": 41,
+          "text": "rot_lines = [str(n), hdr]"
+        },
+        {
+          "line": 42,
+          "text": "for a, y in zip(atoms, Y):"
+        },
+        {
+          "line": 43,
+          "text": "    rot_lines.append(\"%-2s %20.12f %20.12f %20.12f\" % (a, y[0], y[1], y[2]))"
+        },
+        {
+          "line": 44,
+          "text": "rot_path.write_text(\"\\n\".join(rot_lines) + \"\\n\", encoding=\"utf-8\")"
+        },
+        {
+          "line": 45,
+          "text": ""
+        },
+        {
+          "line": 46,
+          "text": "def dists(P):"
+        },
+        {
+          "line": 47,
+          "text": "    return np.linalg.norm(P[:, None, :] - P[None, :, :], axis=-1)"
+        },
+        {
+          "line": 48,
+          "text": ""
+        },
+        {
+          "line": 49,
+          "text": "dev = float(np.max(np.abs(dists(X) - dists(Y))))"
+        },
+        {
+          "line": 50,
+          "text": ""
+        },
+        {
+          "line": 51,
+          "text": "record = {"
+        },
+        {
+          "line": 52,
+          "text": "    \"version\": 1,"
+        },
+        {
+          "line": 53,
+          "text": "    \"source_file\": \"ch2o_original.xyz\","
+        },
+        {
+          "line": 54,
+          "text": "    \"rotated_file\": \"ch2o_rotated.xyz\","
+        },
+        {
+          "line": 55,
+          "text": "    \"units\": \"angstrom\","
+        },
+        {
+          "line": 56,
+          "text": "    \"axis_raw\": AXIS_RAW,"
+        },
+        {
+          "line": 57,
+          "text": "    \"axis_unit\": axis.tolist(),"
+        },
+        {
+          "line": 58,
+          "text": "    \"angle_deg\": ANGLE_DEG,"
+        },
+        {
+          "line": 59,
+          "text": "    \"origin\": [0.0, 0.0, 0.0],"
+        },
+        {
+          "line": 60,
+          "text": "    \"rotation_kind\": \"active (alibi) rotation of coordinates, right-hand rule\","
+        },
+        {
+          "line": 61,
+          "text": "    \"rotation_matrix\": R.tolist(),"
+        },
+        {
+          "line": 62,
+          "text": "    \"atom_order_preserved\": [a for a in atoms],"
+        },
+        {
+          "line": 63,
+          "text": "    \"max_pairwise_distance_deviation_angstrom\": dev,"
+        },
+        {
+          "line": 64,
+          "text": "    \"random_seed\": SEED,"
+        },
+        {
+          "line": 65,
+          "text": "    \"random_seed_note\": \"no random numbers used in geometry generation or rotation; seed recorded only as requested\","
+        },
+        {
+          "line": 66,
+          "text": "}"
+        },
+        {
+          "line": 67,
+          "text": "Path(\"rotation_record.json\").write_text(json.dumps(record, indent=2), encoding=\"utf-8\")"
+        },
+        {
+          "line": 68,
+          "text": ""
+        },
+        {
+          "line": 69,
+          "text": "obs = {"
+        },
+        {
+          "line": 70,
+          "text": "    \"version\": 1,"
+        },
+        {
+          "line": 71,
+          "text": "    \"observations\": ["
+        },
+        {
+          "line": 72,
+          "text": "        {"
+        },
+        {
+          "line": 73,
+          "text": "            \"name\": \"rotation_relation\","
+        },
+        {
+          "line": 74,
+          "text": "            \"value\": R.tolist(),"
+        },
+        {
+          "line": 75,
+          "text": "            \"unit\": \"dimensionless\","
+        },
+        {
+          "line": 76,
+          "text": "            \"sources\": ["
+        },
+        {
+          "line": 77,
+          "text": "                {\"filename\": \"ch2o_original.xyz\","
+        },
+        {
+          "line": 78,
+          "text": "                 \"location\": \"lines 3-%d (Cartesian coordinates, angstrom)\" % (2 + n)}"
+        },
+        {
+          "line": 79,
+          "text": "            ],"
+        },
+        {
+          "line": 80,
+          "text": "            \"formula\": \"R = I + sin(theta) K + (1-cos(theta)) K^2 with K = skew(axis/|axis|), axis=(1,2,3), theta=37 deg; active rotation y = R x about the coordinate origin\","
+        },
+        {
+          "line": 81,
+          "text": "            \"artifacts\": [\"ch2o_rotated.xyz\", \"rotation_record.json\"],"
+        },
+        {
+          "line": 82,
+          "text": "            \"limitations\": [\"Input coordinates in angstrom; rotation matrix dimensionless.\","
+        },
+        {
+          "line": 83,
+          "text": "                            \"No random numbers used; requested seed 1701 recorded but not applicable.\"]"
+        },
+        {
+          "line": 84,
+          "text": "        }"
+        },
+        {
+          "line": 85,
+          "text": "    ]"
+        },
+        {
+          "line": 86,
+          "text": "}"
+        },
+        {
+          "line": 87,
+          "text": "Path(\"observations.json\").write_text(json.dumps(obs, indent=2), encoding=\"utf-8\")"
+        },
+        {
+          "line": 88,
+          "text": "print(json.dumps({\"n_atoms\": n, \"max_pairwise_distance_deviation_angstrom\": dev}))"
+        }
+      ],
+      "returned_bytes": 3421,
+      "status": "observed",
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 121
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 89
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      }
+    }
+  },
+  "observation_records": [],
+  "diagnostics": [],
+  "artifact_ids": [
+    "artifact_2fe5ad55c2794b519064420aa8b6f392"
+  ],
+  "source": {
+    "call_id": "call_6140a727a6c94aeb9a14d937d8611cfe",
+    "role": "python",
+    "name": "rotate_ch2o_geometry.py",
+    "tool": "evidence.text",
+    "consumption": {
+      "_decision_id": "model_1aaa8091a8664e6e9b1cf22d2ad86cf5"
+    },
+    "request_version": 2,
+    "plan_version": 3
+  },
+  "created_at": "2026-10-20T12:34:12.283879Z"
+}

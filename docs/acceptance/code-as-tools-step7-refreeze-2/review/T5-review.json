@@ -1,0 +1,663 @@
+{
+  "schema": "independent-terminal-task-review-1",
+  "task": "T5",
+  "repeat": 1,
+  "run_id": "run_2815b4182178486a8f35829415da0873",
+  "reviewed_at_utc": "2026-10-20T12:22:21.540721+00:00",
+  "review_timing": "Post-terminal independent review. No pre-science registration is claimed; no scientific launch occurred.",
+  "scope": {
+    "product_read_only": true,
+    "only_new_review_file_written": true,
+    "reviewer_model_calls": 0,
+    "reviewer_scientific_calls": 0,
+    "reviewer_network_calls": 0,
+    "product_or_freeze_modified": false,
+    "rerun_resume_or_injection": false,
+    "reference_calculations": 0
+  },
+  "conclusion": {
+    "run_state": "failed",
+    "delivery_status": "partial",
+    "goal_status": {
+      "raw_request": "insufficient_evidence"
+    },
+    "user_goal_completed": false,
+    "acceptance": "failed_before_normalization_commit",
+    "normalization_status": "pending",
+    "request_version": 1,
+    "plan_id": null,
+    "attempt_count": 0,
+    "tool_call_count": 0,
+    "internal_calls": 0,
+    "actual_orca": 0,
+    "reserved_orca": 0,
+    "scientific_outputs": 0,
+    "independent_reference": "not_run_not_authorized"
+  },
+  "terminal_evidence": {
+    "started_at": "2026-10-20T12:16:29.704261+00:00",
+    "finished_at": "2026-10-20T12:17:26.163847+00:00",
+    "post_verify_finished_at": "2026-10-20T12:17:50.457168+00:00",
+    "post_verify_returncode": 0,
+    "post_verify_status": "matched",
+    "code_commit": "7cc496271909966de41fbadd15d8e24c095f97e1",
+    "manifest_sha256": "9946270b24fa42339aad8294bd80db1d9661a2b0da76f7618aa7f89c02912820",
+    "slot_overruns": {}
+  },
+  "original_task_preservation": {
+    "text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "original_file": {
+      "path": "data/code-tools-refreeze-2-batch/workspaces/formal-T5-001/original.txt",
+      "bytes": 823,
+      "sha256": "f6676760c0f751d4e84ec6b0c814362e51d9e8089194f53102c8fbf0ad042a59"
+    },
+    "matches_driver_hash": true,
+    "matches_request_original_exactly": true,
+    "all_three_model_requests_contain_full_original_exactly": true,
+    "scientific_unit_slash_preserved": true,
+    "interpretation": "No original-text clipping or kJ/mol slash loss was observed in the three saved model contexts. Pending raw Request remains intact. Candidate Goals are not committed Goals."
+  },
+  "acceptance_scope": {
+    "scoring_source": "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/scoring.md:91-97",
+    "requirements": [
+      "Identical ordered ethanol coordinates for two SP jobs; neutral singlet and same selected method/basis/state/SCF/grid.",
+      "Only solvent-model-required differences between gas and ORCA C-PCM water.",
+      "Original inputs/outputs, common XYZ/hash, absolute Eh and signed (water-gas)*2625.4996394799 kJ/mol.",
+      "No separate optimizations, complete hydration-free-energy claim or fabricated thermal/standard-state corrections.",
+      "Seed 1701 when controllable, explicit uncontrolled provenance otherwise."
+    ],
+    "all_scientific_checks": "not_exercised; no Plan or native input exists",
+    "reference_two_SP": "not_authorized_not_executed"
+  },
+  "failure_chain": {
+    "first_response": [
+      "Two energy Goals omit fixed_initial; program reports both required relations in the same aggregate diagnostic.",
+      "water_solvent evidence quote contains original C-PCM water wording but no recognized alias."
+    ],
+    "second_response": [
+      "Both energy Goals change to fixed_initial; geometry errors disappear.",
+      "Water quote narrows to exact ORCA C-PCM水环境; same lexical rejection remains."
+    ],
+    "third_response": [
+      "Water quote narrows to exact 水环境; same lexical rejection remains."
+    ],
+    "terminal_reason": "bounded proposal correction or transport retry exhausted",
+    "correction_budget": 2,
+    "transport_retries": 0,
+    "all_rejected_decisions_full": [
+      {
+        "id": "model_6fc7cdc21556414995db997856c0be28",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+            "path": [
+              "parameters"
+            ],
+            "corrections": [
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  2,
+                  "conditions",
+                  "environment"
+                ],
+                "reason": "condition_evidence_invalid",
+                "diagnostic": "explicit condition lacks a supported lexical value basis",
+                "instruction": "Correct this field's source evidence using the diagnostic. An explicit value needs its exact user wording or a supported lexical alias; genuine conflicts/unknowns remain gaps. Preserve the user's physical condition; do not invent values or replace it with a default."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  1,
+                  "geometry_relation"
+                ],
+                "reason": "preserve_explicit_geometry_relation",
+                "required_relation": "fixed_initial",
+                "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  2,
+                  "geometry_relation"
+                ],
+                "reason": "preserve_explicit_geometry_relation",
+                "required_relation": "fixed_initial",
+                "instruction": "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "model_9f269ea1294f46c98f36d8c594119851",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+            "path": [
+              "parameters"
+            ],
+            "corrections": [
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  2,
+                  "conditions",
+                  "environment"
+                ],
+                "reason": "condition_evidence_invalid",
+                "diagnostic": "explicit condition lacks a supported lexical value basis",
+                "instruction": "Correct this field's source evidence using the diagnostic. An explicit value needs its exact user wording or a supported lexical alias; genuine conflicts/unknowns remain gaps. Preserve the user's physical condition; do not invent values or replace it with a default."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "model_45ffec3253694de9a02ad2c10f51ca31",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+            "path": [
+              "parameters"
+            ],
+            "corrections": [
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  2,
+                  "conditions",
+                  "environment"
+                ],
+                "reason": "condition_evidence_invalid",
+                "diagnostic": "explicit condition lacks a supported lexical value basis",
+                "instruction": "Correct this field's source evidence using the diagnostic. An explicit value needs its exact user wording or a supported lexical alias; genuine conflicts/unknowns remain gaps. Preserve the user's physical condition; do not invent values or replace it with a default."
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "run_diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_6fc7cdc21556414995db997856c0be28",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_9f269ea1294f46c98f36d8c594119851",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_45ffec3253694de9a02ad2c10f51ca31",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "StoreError",
+        "message": "bounded proposal correction or transport retry exhausted",
+        "environment_occupied": false
+      }
+    ]
+  },
+  "cause_assessment": {
+    "confirmed": [
+      {
+        "claim": "The water environment lexical vocabulary does not recognize the actual user wording 水环境 / C-PCM水环境.",
+        "source_path": "src/orca_agent/semantic.py",
+        "lines": [
+          57,
+          65
+        ],
+        "allowed_water_aliases": [
+          "水溶剂",
+          "水溶液",
+          "water solvent",
+          "aqueous"
+        ]
+      },
+      {
+        "claim": "Explicit source location is authenticated before value support is checked; literal water_solvent or one lexical alias must be present in that quote. All three quotes are exact user text but lack every listed alias.",
+        "source_path": "src/orca_agent/semantic.py",
+        "lines": [
+          951,
+          967
+        ]
+      },
+      {
+        "claim": "Geometry-relation correction is effective from response 2; both fixed_initial requests are retained and no geometry rejection repeats.",
+        "evidence": "Run.decisions[1..2].parameters.requirement and archived responses"
+      },
+      {
+        "claim": "The same condition_evidence_invalid error occurs in every attempt, including the third/final response. The diagnostic asks for exact wording or supported alias but does not disclose the specific accepted water alias set.",
+        "evidence": "Run.decisions[action=rejected].parameters.requirement (copied in full above)"
+      }
+    ],
+    "classification": "Confirmed lexical coverage/feedback mismatch: the provided exact user phrase is rejected by a small closed alias set. It is not an absent quote or duplicate-quote location failure.",
+    "inference": "Both later model attempts focus on shrinking the quote, consistent with generic evidence feedback; the recorded data does not prove which alternative proposal would have been selected or accepted.",
+    "no_counterfactual_test_or_product_fix_performed": true
+  },
+  "simplification_exercise": {
+    "aggregate_errors": "Observed first rejection aggregates environment and two geometry corrections; later rejections narrow to environment.",
+    "shared_duplicate_quote_binding": "Two energy Goals reuse the same literal source text without a repeated-quote error; full commit is blocked earlier, so full successful materialization is not proven.",
+    "program_defaults": "Model proposes RKS/default/local-hf-1 in all three candidates; none commits, so no omitted-default program insertion success claimed.",
+    "generated_notices": "No normalization commit, notice generation/executable progression not exercised.",
+    "fixed_geometry_protection": "Correctly rejects the first omitted fixed_initial and retains the corrected relation later."
+  },
+  "conditions_and_science": {
+    "requested_charge": 0,
+    "requested_multiplicity": 1,
+    "requested_environments": [
+      "gas",
+      "ORCA C-PCM water"
+    ],
+    "candidate_RKS_origin": "default/local-hf-1, uncommitted",
+    "method_and_basis": "Delegated by user; no selection occurred.",
+    "actual_method_basis_solvent_geometry": "none: no prepared geometry/native input/Attempt",
+    "scientific_or_reference_qualification": "not_verified"
+  },
+  "model_integrity": {
+    "records": [
+      {
+        "call": 1,
+        "id": "model_6fc7cdc21556414995db997856c0be28",
+        "created_at": "2026-10-20T12:16:30.716026+00:00",
+        "request": {
+          "path": "data/code-tools-refreeze-2-batch/workspaces/formal-T5-001/data/runs/run_2815b4182178486a8f35829415da0873/model/model_6fc7cdc21556414995db997856c0be28.request.json",
+          "bytes": 21374,
+          "sha256": "d54abdb41931d15e26821768dc00a427c1cbd97d589a925d73467b136fb30d78"
+        },
+        "response": {
+          "path": "data/code-tools-refreeze-2-batch/workspaces/formal-T5-001/data/runs/run_2815b4182178486a8f35829415da0873/model/model_6fc7cdc21556414995db997856c0be28.response.json",
+          "bytes": 9872,
+          "sha256": "9ba8314fccef4214d232a5f5d8d4e88e5f22b72324b4619271f7dddccd4246b8"
+        },
+        "request_hash_matches": true,
+        "response_record_hash_matches": true,
+        "raw_content_utf8_sha256": "9bfc44c74295b79fc86e9f55e022b1a95d7656fe40f48d8ccaa12e21037843bc",
+        "raw_content_utf8_bytes": 3720,
+        "raw_content_json_equals_proposal": true,
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 5015,
+          "completion_tokens": 4592,
+          "total_tokens": 9607,
+          "prompt_cache_hit_tokens": 3840,
+          "prompt_cache_miss_tokens": 1175
+        },
+        "full_original_visible_exactly": true,
+        "kJ_per_mol_slash_preserved": true,
+        "water_condition": {
+          "source": "explicit",
+          "value": "water_solvent",
+          "text_basis": "气相与ORCA C-PCM水环境下的单点电子能量",
+          "message_id": "message_629ec8b6ad4a44248a01952184471101"
+        },
+        "water_quote_occurrences": 1,
+        "quote_contiguous_in_original": true,
+        "supported_aliases_in_quote": [],
+        "gas_geometry_relation": null,
+        "water_geometry_relation": null,
+        "goals": [
+          {
+            "key": "structure",
+            "port": "prepared_geometry",
+            "quantity": "生成一份结构",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标",
+            "minimum_evidence": null
+          },
+          {
+            "key": "gas_energy",
+            "port": "energy",
+            "quantity": "单点电子能量",
+            "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+            "minimum_evidence": null
+          },
+          {
+            "key": "water_energy",
+            "port": "energy",
+            "quantity": "单点电子能量",
+            "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+            "minimum_evidence": null
+          },
+          {
+            "key": "delta_e",
+            "port": "energy_difference",
+            "quantity": "kJ/mol差值及符号解释",
+            "text_basis": "按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释",
+            "minimum_evidence": null
+          },
+          {
+            "key": "delivery",
+            "port": "report",
+            "quantity": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh）",
+            "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh）",
+            "minimum_evidence": null
+          },
+          {
+            "key": "seed",
+            "port": "sampling",
+            "quantity": "种子 1701",
+            "text_basis": "统一采用种子 1701 并在报告中记录",
+            "minimum_evidence": null
+          }
+        ],
+        "reason": "General ethanol task: explicit neutral/singlet (charge 0, multiplicity 1); method/basis delegated -> automatic_selection; electronic_state RKS adopted from local-hf-1 default. Two single-point energies (gas and C-PCM water) share one prepared geometry, so geometry_relation omitted (generated task, single point does not bind exact initial XYZ). Goals cover structure prep, both energies, ΔE in kJ/mol, delivery contents, and seed 1701. ΔE is electronic energy difference under the specified model, not hydration free energy; explain_results=true covers conditions/limitations explanation."
+      },
+      {
+        "call": 2,
+        "id": "model_9f269ea1294f46c98f36d8c594119851",
+        "created_at": "2026-10-20T12:16:51.614967+00:00",
+        "request": {
+          "path": "data/code-tools-refreeze-2-batch/workspaces/formal-T5-001/data/runs/run_2815b4182178486a8f35829415da0873/model/model_9f269ea1294f46c98f36d8c594119851.request.json",
+          "bytes": 27987,
+          "sha256": "3144794b5526ced29f73b26004ba5dd3d29c262cabdc4e74fb9de2d09d320630"
+        },
+        "response": {
+          "path": "data/code-tools-refreeze-2-batch/workspaces/formal-T5-001/data/runs/run_2815b4182178486a8f35829415da0873/model/model_9f269ea1294f46c98f36d8c594119851.response.json",
+          "bytes": 10590,
+          "sha256": "e8b552ae4b8468de04c172c91569c66b2981c97a0688f923c928184446047692"
+        },
+        "request_hash_matches": true,
+        "response_record_hash_matches": true,
+        "raw_content_utf8_sha256": "d24a9c298dfc6da8273de0c7740f91b53519701cedf5d39172a233ef3d7fca7c",
+        "raw_content_utf8_bytes": 4063,
+        "raw_content_json_equals_proposal": true,
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 6669,
+          "completion_tokens": 4452,
+          "total_tokens": 11121,
+          "prompt_cache_hit_tokens": 3840,
+          "prompt_cache_miss_tokens": 2829
+        },
+        "full_original_visible_exactly": true,
+        "kJ_per_mol_slash_preserved": true,
+        "water_condition": {
+          "source": "explicit",
+          "value": "water_solvent",
+          "text_basis": "ORCA C-PCM水环境",
+          "message_id": "message_629ec8b6ad4a44248a01952184471101"
+        },
+        "water_quote_occurrences": 1,
+        "quote_contiguous_in_original": true,
+        "supported_aliases_in_quote": [],
+        "gas_geometry_relation": "fixed_initial",
+        "water_geometry_relation": "fixed_initial",
+        "goals": [
+          {
+            "key": "structure",
+            "port": "prepared_geometry",
+            "quantity": "生成一份结构",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标",
+            "minimum_evidence": null
+          },
+          {
+            "key": "gas_energy",
+            "port": "energy",
+            "quantity": "单点电子能量",
+            "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+            "minimum_evidence": null
+          },
+          {
+            "key": "water_energy",
+            "port": "energy",
+            "quantity": "单点电子能量",
+            "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+            "minimum_evidence": null
+          },
+          {
+            "key": "delta_e",
+            "port": "energy_difference",
+            "quantity": "kJ/mol差值及符号解释",
+            "text_basis": "按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释",
+            "minimum_evidence": null
+          },
+          {
+            "key": "delivery",
+            "port": "report",
+            "quantity": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh）",
+            "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+            "minimum_evidence": null
+          },
+          {
+            "key": "seed",
+            "port": "sampling",
+            "quantity": "种子 1701",
+            "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "minimum_evidence": null
+          }
+        ],
+        "reason": "Corrected the water environment evidence to exact contiguous user text 'ORCA C-PCM水环境' and narrowed gas evidence to '气相'. Added fixed_initial to both single-point energy goals because the user explicitly requires identical atom order/coordinates and no separate geometry optimization. Preserved delegated method/basis selection, explicit neutral/singlet, default RKS, all quantities, seed 1701, and delivery/limitation requirements."
+      },
+      {
+        "call": 3,
+        "id": "model_45ffec3253694de9a02ad2c10f51ca31",
+        "created_at": "2026-10-20T12:17:10.848072+00:00",
+        "request": {
+          "path": "data/code-tools-refreeze-2-batch/workspaces/formal-T5-001/data/runs/run_2815b4182178486a8f35829415da0873/model/model_45ffec3253694de9a02ad2c10f51ca31.request.json",
+          "bytes": 27623,
+          "sha256": "9de83ffe07b609337c14312043eecdd15aad0a9cafa9c51d12fb888f7721e9cf"
+        },
+        "response": {
+          "path": "data/code-tools-refreeze-2-batch/workspaces/formal-T5-001/data/runs/run_2815b4182178486a8f35829415da0873/model/model_45ffec3253694de9a02ad2c10f51ca31.response.json",
+          "bytes": 10550,
+          "sha256": "c643f5608394f4da4e7f6019bd2441f8d8075dae1b353b09d5f239bff038fb8b"
+        },
+        "request_hash_matches": true,
+        "response_record_hash_matches": true,
+        "raw_content_utf8_sha256": "e46b93958c9dcfe5433bbf5fcceb72c6edffc9004342d780bf67f15ab9c689fb",
+        "raw_content_utf8_bytes": 4043,
+        "raw_content_json_equals_proposal": true,
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 6581,
+          "completion_tokens": 3342,
+          "total_tokens": 9923,
+          "prompt_cache_hit_tokens": 3840,
+          "prompt_cache_miss_tokens": 2741
+        },
+        "full_original_visible_exactly": true,
+        "kJ_per_mol_slash_preserved": true,
+        "water_condition": {
+          "source": "explicit",
+          "message_id": "message_629ec8b6ad4a44248a01952184471101",
+          "text_basis": "水环境",
+          "value": "water_solvent"
+        },
+        "water_quote_occurrences": 1,
+        "quote_contiguous_in_original": true,
+        "supported_aliases_in_quote": [],
+        "gas_geometry_relation": "fixed_initial",
+        "water_geometry_relation": "fixed_initial",
+        "goals": [
+          {
+            "key": "structure",
+            "port": "prepared_geometry",
+            "quantity": "生成一份结构",
+            "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标",
+            "minimum_evidence": null
+          },
+          {
+            "key": "gas_energy",
+            "port": "energy",
+            "quantity": "单点电子能量",
+            "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+            "minimum_evidence": null
+          },
+          {
+            "key": "water_energy",
+            "port": "energy",
+            "quantity": "单点电子能量",
+            "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+            "minimum_evidence": null
+          },
+          {
+            "key": "delta_e",
+            "port": "energy_difference",
+            "quantity": "kJ/mol差值及符号解释",
+            "text_basis": "按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释",
+            "minimum_evidence": null
+          },
+          {
+            "key": "delivery",
+            "port": "report",
+            "quantity": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh）",
+            "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+            "minimum_evidence": null
+          },
+          {
+            "key": "seed",
+            "port": "sampling",
+            "quantity": "种子 1701",
+            "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+            "minimum_evidence": null
+          }
+        ],
+        "reason": "Corrected the rejected water-environment condition evidence: use contiguous exact user wording '水环境' for explicit environment=water_solvent, while retaining 'ORCA C-PCM水环境' in the water_energy goal text_basis. Preserved delegated method/basis selection, neutral/singlet, default RKS, fixed_initial single-point relation for identical prepared coordinates, all quantities, seed 1701, and delivery/limitation requirements."
+      }
+    ],
+    "all_request_response_hashes_match": true,
+    "all_raw_final_content_matches_proposal": true,
+    "limitation": "raw_content preserves final assistant content, not full HTTP wire body/private reasoning; stored response_hash cannot be independently rehashed from absent wire bytes."
+  },
+  "usage": {
+    "internal_work_units": 0,
+    "internal_calls_by_purpose": {},
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 0.0,
+    "cpu_seconds": 0.0,
+    "resource_usage_complete": true,
+    "logical_attempts": {},
+    "fingerprint_attempts": {},
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 3,
+    "model_tokens_used": 30651,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 0,
+    "decision_rounds": 3,
+    "evidence_reads": 0,
+    "analysis_executions": 0,
+    "logical_steps": [],
+    "identity_queries": 0,
+    "structure_preparations": 0,
+    "knowledge_queries": 0
+  },
+  "driver_wall_seconds": 56.312000000005355,
+  "known_model_cost_estimate_usd": "0.0203427",
+  "cost_scope": "Recorded model estimates only; zero scientific execution, no full billing claim.",
+  "evidence_index": [
+    {
+      "path": "src/orca_agent/semantic.py",
+      "bytes": 137686,
+      "sha256": "21a916e68b2aee273f12194e8677d1ea28f3125eafd756dfa935cf539bd52a17"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/scoring.md",
+      "bytes": 20682,
+      "sha256": "7a080249fbc79415eb008a63b6a7cb35ddaa4e250caf4c1b49b076fea2b1ae4a"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-2/freeze/public-tasks.json",
+      "bytes": 17523,
+      "sha256": "a9d734d178776ac5ce92c69fbeb7fe56a6ad680dc97d574c1d6bf90496885499"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/workspaces/formal-T5-001/data/runs/run_2815b4182178486a8f35829415da0873/run.json",
+      "bytes": 26360,
+      "sha256": "cd2286243a7455e4b30dd570e23c9f0233ed71fb9f0465fd6715f213395f3071"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/workspaces/formal-T5-001/data/runs/run_2815b4182178486a8f35829415da0873/request-revisions/1.json",
+      "bytes": 2756,
+      "sha256": "1e74d52740aac41b91dd159465ae2c29b1009a35f5013442a2ed7dfa7c552f6d"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/first-repetition-evidence/T5/start.json",
+      "bytes": 731,
+      "sha256": "c6c0b15302d7b170a76af2316017c648363598a958b292cc05b354114b6f8ed4"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/first-repetition-evidence/T5/outcome.json",
+      "bytes": 1280,
+      "sha256": "aeea25c0de6929e7cd7ac708e948912166d8eef83d38ef971a1dfd19edd752b1"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/first-repetition-evidence/T5/pre-verify.json",
+      "bytes": 1160,
+      "sha256": "3570cbfa8cea634818d9eda5e40a6d3413ca0b461f73638d7741d9eecac8044e"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/first-repetition-evidence/T5/post-verify.json",
+      "bytes": 1160,
+      "sha256": "19a539a0fa63311cd32089c02dac2c44bde677933575f5f1eadb703f46010caa"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/first-repetition-evidence/T5/budget-check.json",
+      "bytes": 26,
+      "sha256": "2ac6c420c26e5b6998e45669412e6d2120be2167444889e992dd376091d3db9c"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/first-repetition-evidence/T5/batch-after.json",
+      "bytes": 91154,
+      "sha256": "1929f728f996e61e967fa6e68b1a62ce8559f9f0762dc43760481a6d5519bd88"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/first-repetition-evidence/T5/knowledge-audit.json",
+      "bytes": 290,
+      "sha256": "9c2a8e2b0d5b91ba98fd2cb424eec66a4840cfd3c0d6403c0e050213371e1bf9"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/first-repetition-evidence/T5/report.json",
+      "bytes": 20730,
+      "sha256": "951b77896f37846aae135ab6ff80e7a02b74e435182501099f739962c4cf2def"
+    },
+    {
+      "path": "data/code-tools-refreeze-2-batch/first-repetition-evidence/T5/report.txt",
+      "bytes": 3856,
+      "sha256": "fb572ce589574b22c94ef5c18eeadb7f663b285c0dc94fbfcbe4902143e861d8"
+    }
+  ]
+}

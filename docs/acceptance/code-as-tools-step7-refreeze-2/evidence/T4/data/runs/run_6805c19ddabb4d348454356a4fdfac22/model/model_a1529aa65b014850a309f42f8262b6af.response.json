@@ -1,0 +1,152 @@
+{
+  "request_hash": "014d658126ca70792e8445279717000fef9ebda372789bdfc374ed4bc4b5ce84",
+  "proposal": {
+    "action": "normalize_request",
+    "parameters": {
+      "schema_version": "request-semantics-3",
+      "message_ids": [
+        "message_d8278e172f8f4b639d2e9527d7f46c84"
+      ],
+      "kind": "normalize",
+      "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "identities": [
+        {
+          "key": "acetone",
+          "name": "丙酮",
+          "query_name": "acetone",
+          "text_basis": "丙酮",
+          "message_id": "message_d8278e172f8f4b639d2e9527d7f46c84"
+        }
+      ],
+      "conditions": {
+        "charge": {
+          "source": "explicit",
+          "value": 0,
+          "message_id": "message_d8278e172f8f4b639d2e9527d7f46c84",
+          "text_basis": "丙酮（中性、单重态、气相）"
+        },
+        "multiplicity": {
+          "source": "explicit",
+          "value": 1,
+          "message_id": "message_d8278e172f8f4b639d2e9527d7f46c84",
+          "text_basis": "丙酮（中性、单重态、气相）"
+        },
+        "environment": {
+          "source": "explicit",
+          "value": "gas_phase",
+          "message_id": "message_d8278e172f8f4b639d2e9527d7f46c84",
+          "text_basis": "丙酮（中性、单重态、气相）"
+        },
+        "electronic_state": {
+          "source": "default",
+          "default_rule": "local-hf-1",
+          "value": "RKS"
+        }
+      },
+      "automatic_selection": {
+        "method": {
+          "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+          "message_id": "message_d8278e172f8f4b639d2e9527d7f46c84"
+        },
+        "basis": {
+          "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+          "message_id": "message_d8278e172f8f4b639d2e9527d7f46c84"
+        }
+      },
+      "goals": [
+        {
+          "key": "acetone_geometry",
+          "port": "prepared_geometry",
+          "quantity": "合理结构",
+          "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+          "system_refs": [
+            "acetone"
+          ],
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "tddft_tda_choice",
+          "port": "tddft_tda_choice",
+          "quantity": "选用完整TDDFT还是TDA及选择依据",
+          "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据",
+          "system_refs": [
+            "acetone"
+          ],
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "excitation_energies",
+          "port": "vertical_excitation_energies_ev",
+          "quantity": "激发能（eV）",
+          "text_basis": "计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。",
+          "system_refs": [
+            "acetone"
+          ],
+          "geometry_relation": "fixed_initial",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "oscillator_strengths",
+          "port": "oscillator_strengths_length_gauge",
+          "quantity": "电偶极长度规范的无量纲振子强度",
+          "text_basis": "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+          "system_refs": [
+            "acetone"
+          ],
+          "geometry_relation": "fixed_initial",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "state_analysis",
+          "port": "state_analysis_low_vs_strong",
+          "quantity": "低能态与较强跃迁的区别",
+          "text_basis": "分析低能态与较强跃迁的区别",
+          "system_refs": [
+            "acetone"
+          ],
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "delivery_bundle",
+          "port": "delivery_bundle",
+          "quantity": "计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+          "text_basis": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。",
+          "system_refs": [
+            "acetone"
+          ],
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "random_seed",
+          "port": "random_seed",
+          "quantity": "种子 1701",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "system_refs": [
+            "acetone"
+          ],
+          "verification": "reported_with_limitations"
+        }
+      ]
+    },
+    "reason": "Parsed Chinese request: identity acetone, explicit neutral/singlet/gas conditions, delegated TDDFT method/basis selection. Created goals for geometry preparation, TDDFT/TDA rationale, vertical excitation energies and length-gauge oscillator strengths on the prepared geometry, low-vs-strong transition analysis, delivery bundle, and random seed 1701 reporting. No clarification needed; geometry preparation is authorized, so no missing-geometry gap."
+  },
+  "raw_content": "{\"action\":\"normalize_request\",\"parameters\":{\"schema_version\":\"request-semantics-3\",\"message_ids\":[\"message_d8278e172f8f4b639d2e9527d7f46c84\"],\"kind\":\"normalize\",\"text_basis\":\"请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。\\n\\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。\",\"identities\":[{\"key\":\"acetone\",\"name\":\"丙酮\",\"query_name\":\"acetone\",\"text_basis\":\"丙酮\",\"message_id\":\"message_d8278e172f8f4b639d2e9527d7f46c84\"}],\"conditions\":{\"charge\":{\"source\":\"explicit\",\"value\":0,\"message_id\":\"message_d8278e172f8f4b639d2e9527d7f46c84\",\"text_basis\":\"丙酮（中性、单重态、气相）\"},\"multiplicity\":{\"source\":\"explicit\",\"value\":1,\"message_id\":\"message_d8278e172f8f4b639d2e9527d7f46c84\",\"text_basis\":\"丙酮（中性、单重态、气相）\"},\"environment\":{\"source\":\"explicit\",\"value\":\"gas_phase\",\"message_id\":\"message_d8278e172f8f4b639d2e9527d7f46c84\",\"text_basis\":\"丙酮（中性、单重态、气相）\"},\"electronic_state\":{\"source\":\"default\",\"default_rule\":\"local-hf-1\",\"value\":\"RKS\"}},\"automatic_selection\":{\"method\":{\"text_basis\":\"自行选择适合当前预算的线性响应TDDFT方法和基组\",\"message_id\":\"message_d8278e172f8f4b639d2e9527d7f46c84\"},\"basis\":{\"text_basis\":\"自行选择适合当前预算的线性响应TDDFT方法和基组\",\"message_id\":\"message_d8278e172f8f4b639d2e9527d7f46c84\"}},\"goals\":[{\"key\":\"acetone_geometry\",\"port\":\"prepared_geometry\",\"quantity\":\"合理结构\",\"text_basis\":\"请为丙酮（中性、单重态、气相）生成合理结构\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\"},{\"key\":\"tddft_tda_choice\",\"port\":\"tddft_tda_choice\",\"quantity\":\"选用完整TDDFT还是TDA及选择依据\",\"text_basis\":\"自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\"},{\"key\":\"excitation_energies\",\"port\":\"vertical_excitation_energies_ev\",\"quantity\":\"激发能（eV）\",\"text_basis\":\"计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。\",\"system_refs\":[\"acetone\"],\"geometry_relation\":\"fixed_initial\",\"verification\":\"reported_with_limitations\"},{\"key\":\"oscillator_strengths\",\"port\":\"oscillator_strengths_length_gauge\",\"quantity\":\"电偶极长度规范的无量纲振子强度\",\"text_basis\":\"按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项\",\"system_refs\":[\"acetone\"],\"geometry_relation\":\"fixed_initial\",\"verification\":\"reported_with_limitations\"},{\"key\":\"state_analysis\",\"port\":\"state_analysis_low_vs_strong\",\"quantity\":\"低能态与较强跃迁的区别\",\"text_basis\":\"分析低能态与较强跃迁的区别\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\"},{\"key\":\"delivery_bundle\",\"port\":\"delivery_bundle\",\"quantity\":\"计算几何、实际输入、原始响应及吸收表、生成脚本和数据表\",\"text_basis\":\"交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\"},{\"key\":\"random_seed\",\"port\":\"random_seed\",\"quantity\":\"种子 1701\",\"text_basis\":\"若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\"}]},\"reason\":\"Parsed Chinese request: identity acetone, explicit neutral/singlet/gas conditions, delegated TDDFT method/basis selection. Created goals for geometry preparation, TDDFT/TDA rationale, vertical excitation energies and length-gauge oscillator strengths on the prepared geometry, low-vs-strong transition analysis, delivery bundle, and random seed 1701 reporting. No clarification needed; geometry preparation is authorized, so no missing-geometry gap.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 5056,
+    "completion_tokens": 9770,
+    "total_tokens": 14826,
+    "prompt_cache_hit_tokens": 3840,
+    "prompt_cache_miss_tokens": 1216
+  },
+  "response_hash": "40d50d8d14cef4b4daf005fe2a4e324663f929d27f729a4ecac07f96d423e0bc",
+  "response_bytes": 44513,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "3ad44136-fe7d-469b-a88d-bbd40024ecc4",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 41.67200000000594
+}
