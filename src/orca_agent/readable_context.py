@@ -210,7 +210,12 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
                 "input_ports": tool.get("check_contract", {}).get("input_ports", {})}
             for tool in template["TOOL_CATALOG"]]
         for tool in wire["TOOLS"]:
-            declaration = tools[tool["name"]].check_contract.get("sdk_orca_declaration")
+            definition = tools[tool["name"]]
+            collector = definition.check_contract.get("named_observation_collector")
+            if collector is not None:
+                tool["named_observation_collector"] = collector
+                tool["output_contract"] = definition.parameter_schema["properties"]["observation_names"]["description"]
+            declaration = definition.check_contract.get("sdk_orca_declaration")
             if declaration and isinstance(tool["parameters"], dict):
                 tool["sdk_orca_declaration"] = declaration
                 if declaration.get("required_for_new_code_proposals"):
@@ -225,7 +230,8 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
                 tool["immediate"] = True
             if isinstance(tool["parameters"], str):
                 for key in list(tool):
-                    if key not in {"name", "effects", "output_ports", "observation_outputs", "parameters", "call_budget"}:
+                    if key not in {"name", "effects", "output_ports", "observation_outputs", "parameters", "call_budget",
+                                   "named_observation_collector", "output_contract"}:
                         tool.pop(key)
                 tool["parameters"] = "deferred; existing validated parameters only"
             elif confirmed_parameters and tool["effects"] != ["read_registered_artifact"]:
@@ -240,7 +246,8 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
                 tool["inherited_parameters"] = sorted(inherited)
         # Irrelevant capabilities remain authorized in AUTHORITY.permission,
         # but do not compete with the current goal/dependency tools in this view.
-        wire["TOOLS"] = [tool for tool in wire["TOOLS"] if isinstance(tool["parameters"], dict)]
+        wire["TOOLS"] = [tool for tool in wire["TOOLS"] if isinstance(tool["parameters"], dict)
+                         or "named_observation_collector" in tool]
         if "call_tool" in actions:
             for tool in wire["TOOLS"]:
                 if tool.get("immediate"):

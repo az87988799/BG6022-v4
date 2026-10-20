@@ -64,6 +64,8 @@ Python 运行器文件按 [0077](decisions/0077-isolated-python-runtime-files.md
 
 a026 完成真实计算后暴露的观察路线承诺与全局环境机械前提按 [0079](decisions/0079-native-observation-routes-and-scoped-comparisons.md) 修正：新通用值路线依据 Tool 的实际命名值收集能力，多环境派生量按各明确源 Goal 核对真实原件。旧 Plan 可读、原失败及费用保留；不以修正后回放冒称旧候选成功。
 
+上述能力按 [0080](decisions/0080-named-observation-capability-context.md) 从同一 Tool 定义投影至最终实际发送请求，不能只修内部目录而让上下文压缩丢掉说明；同源投影仍受原有容量和权限边界约束。
+
 2026-10-20 用户明确优先简化并跑通流程，取消一般名称查询的原名同义词/Wikidata 精确匹配步骤；新流程按 [0054](decisions/0054-simplify-name-resolution.md) 接受唯一且结构信息自洽的查询候选，保留原名、查询名及推断来源。其他协议阻碍另行按真实失败记录审查，实际交付与测试结果以对应报告为准。
 
 打通以下本机流程：
