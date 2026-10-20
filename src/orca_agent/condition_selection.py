@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 from pydantic import Field, ValidationError
 
+from orca_agent.applicability import coordinate_method_reference
 from orca_agent.models import Identifier, Record, Request, fingerprint, require_electronic_integer
 from orca_agent.proposals import ProposalError, _schema_error
 from orca_agent.store import StoreError
@@ -350,6 +351,15 @@ def selected_request(store, run, prior, parameters):
     if corrections:
         raise ProposalError("Correct the identified selection fields using retrieved evidence; no condition was selected.",
                             path=["parameters", "choices"], corrections=corrections)
+    if simplified_workflow(run):
+        values, conflicts = coordinate_method_reference(values)
+        if conflicts:
+            raise ProposalError(
+                "RHF specifies an RHF reference. Only an authenticated default may inherit it; "
+                "preserve explicit, unknown and scoped conditions. Choose a compatible authorized method "
+                "or resolve the identified condition conflict before scientific execution.",
+                path=["parameters", "choices", "method"], reason="method_reference_conflict",
+                condition_conflicts=conflicts)
     values["version"] = prior.version + 1
     return Request.model_validate(values)
 

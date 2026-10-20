@@ -132,6 +132,9 @@ def collect_goal_selections(store, run, request, plan=None, results=None):
             if _continuation_policy(run):
                 selection["continuation_evidence"] = _continuation_evidence(
                     store, run, request, plan, goal, result, observed)
+        if _continuation_policy(run):
+            selection["analysis_source_candidates"] = _current_analysis_sources(
+                store, run, request, plan, goal, selection, whole_integrity)
         selections[goal.id] = selection
     return selections
 
@@ -392,6 +395,98 @@ def _current_records(run, request, plan):
     return records
 
 
+def _current_analysis_sources(store, run, request, plan, goal, selection, integrity_cache):
+    """Current raw files may support authoring, without becoming a Goal answer.
+
+    A structured Plan gap is not evidence that computation is still needed.
+    Neither its free text nor any task-authored file grants execution rights.
+    """
+    if (not goal.required or goal.evidence_contract_version != "generic-observation-1"
+            or goal.verification != "reported_with_limitations" or not plan):
+        return []
+    binding = plan.goal_map.get(goal.id)
+    if not binding or binding.port != goal.port:
+        return []
+    selected = selection.get("result")
+    selected_execution = selection.get("continuation_evidence")
+    rejected_analysis = (selected is not None and selected.operation_status == "completed"
+        and selection.get("source_integrity", {}).get("status") == "verified"
+        and selected_execution is not None
+        and not any(call["state"] != "completed" for call in selected_execution["internal_calls"])
+        and {"requested_observation_missing", "generic_observation_differs_from_archived_manifest"}.intersection(
+            (selection.get("assessment") or {}).get("reasons", []))
+        and not any(item.name == goal.port for item in selected.observation_records)
+        and any(entry.get("category") == "observation_manifest_rejected" and entry.get("name") == goal.port
+                for entry in selected.diagnostics))
+    if not binding.gap and not rejected_analysis:
+        return []
+    systems = goal.system_ids or [item.id for item in request.systems]
+    if len(systems) != 1 or systems[0] not in {item.id for item in request.systems}:
+        return []
+    sources = []
+    for record in _current_records(run, request, plan).values():
+        step = record.frozen_step
+        system = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
+        if (system != systems[0] or getattr(record, "execution_kind", None) not in {"orca", "python"}
+                or record.state != "completed" or record.finished_at is None
+                or record.result_id not in run.result_ids
+                or run.selected_results.get(record.step_id) != record.result_id
+                or any(call.parent_attempt_id == record.id and call.state != "completed"
+                       for call in run.internal_calls)):
+            continue
+        try:
+            result = store.load_result(run.id, record.result_id)
+            if ((result.run_id, result.attempt_id, result.step_id) != (run.id, record.id, record.step_id)
+                    or result.operation_status != "completed"
+                    or result.source.get("request_version") != request.version
+                    or result.observations.get("evidence_collection_complete") is not True):
+                continue
+            code = getattr(step.parameters, "code", None) or getattr(step.parameters, "input", None)
+            artifact = store.load_artifact(code.artifact_id)
+            store.artifact_path(artifact.id)
+            if artifact.sha256 != code.sha256 or result.source.get("code_sha256") != code.sha256:
+                continue
+            integrity = integrity_cache.get(result.id)
+            if integrity is None:
+                integrity = _source_integrity(store, result)
+                integrity_cache[result.id] = integrity
+            if integrity["status"] != "verified":
+                continue
+            files = {}
+            for name, reference in result.source.get("files", {}).items():
+                if not name.startswith("task/") or not isinstance(reference, dict):
+                    continue
+                raw = store.load_artifact(reference["artifact_id"])
+                if ((raw.run_id, raw.attempt_id) != (run.id, record.id)
+                        or raw.id not in result.artifact_ids or raw.sha256 != reference.get("sha256")
+                        or raw.source.get("task_path") != name):
+                    raise ValueError("current task file provenance differs")
+                if raw.size:
+                    files[name] = {"artifact_id": raw.id, "sha256": raw.sha256}
+            if files:
+                file_view = _value(files, limit=1536)
+                if file_view.get("projection") == "reference":
+                    # Keep one immediately readable handle when the complete
+                    # index stays in the referenced Result. A stream is an
+                    # inspection candidate, never evidence of a physical value.
+                    name = "task/stdout.out" if "task/stdout.out" in files else next(iter(files))
+                    file_view["inspection_file"] = {"name": name, **files[name]}
+                sources.append({"run_id": run.id, "result_id": result.id,
+                    "result_fingerprint": _digest(result_fingerprint_payload(result, exclude={"created_at"})),
+                    "attempt_id": record.id, "step_id": record.step_id, "system_id": system,
+                    "request_version": request.version, "source_integrity": "verified",
+                    "files": file_view, "files_field": "source.files"})
+        except (AttributeError, KeyError, TypeError, ValueError, OSError, RuntimeError):
+            continue
+    if rejected_analysis and not any(source["result_id"] == selected.id
+            and source["result_fingerprint"] == _digest(result_fingerprint_payload(selected, exclude={"created_at"}))
+            for source in sources):
+        # A good neighboring native Result cannot authenticate a damaged or
+        # foreign analysis Result's rejection. Both retain their own lineage.
+        return []
+    return sources
+
+
 def _continuation_evidence(store, run, request, plan, goal, result, observed):
     """Authenticate current producer diagnostics; task declarations grant no rights."""
     record = _current_records(run, request, plan).get(result.step_id)
@@ -565,6 +660,32 @@ def _goal_continuation(request, run, plan, goal, selection, resources):
     pending = _approved_goal_work(request, run, plan, goal, resources)
     if pending:
         return pending
+    candidates = selection.get("analysis_source_candidates")
+    if candidates:
+        from orca_agent.models import Step
+
+        logical = set(run.usage.logical_steps) | {step.logical_id for step in plan.steps}
+        writer = Step(id="continuation_writer", logical_id="continuation_writer", tool="workspace.write",
+            parameters={"name": "analysis.py", "role": "python", "content": ""})
+        analysis = Step(id="continuation_analysis", logical_id="continuation_analysis", tool="python.execute",
+            parameters={"code": {"artifact_id": "continuation_code", "sha256": "0" * 64},
+                        "sdk_orca": False})
+        if (run.usage.plan_revisions < run.budget.plan_revisions
+                and len(logical) + 2 <= run.budget.logical_steps
+                and _work_budget(run, [writer, analysis], resources)):
+            work = {"kind": "plan_analysis_from_current_evidence", "route": "new_analysis_step",
+                "source_candidates": candidates, "new_orca_starts_required": 0,
+                "validation": "Inspect the pinned current files, then explicitly propose a writer and sdk_orca=false analysis Step. File existence does not establish the requested quantity, conditions or scientific qualification; preserve the Goal and apply all existing source and evidence checks."}
+            selected = selection.get("result")
+            if selected:
+                work["rejected_result_id"] = selected.id
+                work["diagnostics_field"] = "diagnostics"
+                work["admission_diagnostics"] = list({entry.get("detail", "")[:512]: {
+                    "category": "observation_manifest_rejected", "detail": entry.get("detail", "")[:512]}
+                    for entry in selected.diagnostics
+                    if entry.get("category") == "observation_manifest_rejected"
+                    and isinstance(entry.get("detail"), str)}.values())
+            return work
     evidence = selection.get("continuation_evidence")
     if not evidence or selection.get("source_integrity", {}).get("status") != "verified":
         return None
@@ -758,6 +879,8 @@ def delivery_snapshot(request, run, selections, *, plan=None, results=None, allo
                 continue_text = "Continue the listed approved Steps in dependency order through normal admission; preserve the current Goal and scientific conditions."
             elif continuation["kind"] == "repair_existing_evidence":
                 continue_text = "Revise the Plan with a new writer and analysis-only follow-up Step using pinned completed raw evidence; repair the observation manifest and Goal binding without starting ORCA."
+            elif continuation["kind"] == "plan_analysis_from_current_evidence":
+                continue_text = "Inspect the current source candidates and propose a new writer plus an explicit sdk_orca=false analysis Step for the unchanged Goal. Bind its sourced observation to the Goal through the normal checks; do not repeat ORCA or assume the raw files already contain the required quantity."
             elif continuation["route"] == "new_followup_step":
                 continue_text = "Use the exact archived failure diagnostic to revise the input/code in a new writer and follow-up Python Step. Preserve the successful outer Step; do not use repair_of on it. For each failed SDK call use a new request key with purpose='failure_retry' and retry_of equal to the listed original key. Keep all physical targets and checks."
             else:

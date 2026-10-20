@@ -110,10 +110,9 @@ def profile_contract(policy):
         "block_syntax": "Open scalar scientific key/value pairs, including comma-separated values; "
             "managed %geom Constraints {...} end and Scan B/A/D indices = start,end,count end. "
             "Unknown control blocks, file paths, external programs, restarts and unaccounted nesting are refused.",
-        "geometry": "* xyzfile <charge> <multiplicity> <basename.xyz>; pin and declare that XYZ dependency. "
-            "Place coordinates before nuclear-property %eprnmr blocks or Nuclei selectors "
-            "(including atom index 0). This ordering rule does not supply scientific property syntax; "
-            "use the documented ORCA syntax. Blocks are not automatically reordered.",
+        "geometry": "* xyzfile <charge> <multiplicity> <basename.xyz>; pin the XYZ dependency. "
+            "Place coordinates before nuclear-property %eprnmr blocks, including Nuclei selector 0. "
+            "Blocks stay in declared order; ORCA validates property syntax.",
         "task_geometry": {"enabled": policy.allow_task_geometry,
             "scope": "Must preserve initial atom count and ordered elements when task geometry is authorized."},
         "request_binding": "Explicit method/basis/state/charge/multiplicity/environment compared with Request; "

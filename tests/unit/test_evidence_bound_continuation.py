@@ -164,7 +164,8 @@ def test_outer_sdk_failure_before_native_submission_still_requires_science_budge
     assert not [item for item in snapshot["facts"] if item["kind"] == "current_plan_work"]
 
 
-def test_program_selected_terminal_request_with_real_cost_can_finish_after_settlement(archived_failure, tmp_path, monkeypatch):
+@pytest.mark.parametrize("charge_reserved", [False, True])
+def test_program_selected_terminal_request_with_real_cost_can_finish_after_settlement(archived_failure, tmp_path, monkeypatch, charge_reserved):
     archived, request, run, plan, selections = deepcopy(archived_failure)
     run.budget.model_tokens = run.usage.model_tokens_used + run.usage.model_tokens_unknown + 100000
     now = run.created_at + timedelta(minutes=6)
@@ -183,12 +184,17 @@ def test_program_selected_terminal_request_with_real_cost_can_finish_after_settl
     record = {"id": "offline_final", "request_hash": prepared.request_hash,
         "transport_limits": prepared.limits.model_dump(), "model_profile": prepared.model_profile,
         "input_reserved": prepared.input_token_bound, "output_reserved": prepared.output_token_bound}
-    run.usage.model_tokens_used += prepared.reserved_tokens
+    run.usage.model_tokens_used += prepared.reserved_tokens if charge_reserved else 1000
     # Omitting the cost of another real request incorrectly claims room remains.
     with pytest.raises(ProposalError):
         validate_continuation_before_stop(request, run, snapshot)
     cost = _authenticated_terminal_cost(store, run, record)
     assert cost is not None
+    if not charge_reserved:
+        from orca_agent.decision_purpose import DecisionPurpose
+
+        assert model_usage.final_explanation_budget(request, run,
+            purpose=DecisionPurpose("planning", ()), prepared=cost)["can_send_before_final"]
     validate_continuation_before_stop(request, run, snapshot, terminal_cost=cost)
     path.write_text(prepared.canonical_body + " ", encoding="utf-8", newline="")
     with pytest.raises(StoreError, match="request changed"):

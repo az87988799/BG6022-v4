@@ -2469,7 +2469,8 @@ def _public_delivery(snapshot, *, resources_in_authority=False, reference_arrays
                                for item in snapshot["blockers"]],
                   "next_actions": [{key: value for key, value in item.items() if key != "goal_refs"
                                     and (key != "text" or item["kind"] in {
-                                        "continue_approved_plan", "repair_failed_execution", "repair_existing_evidence"})}
+                                        "continue_approved_plan", "repair_failed_execution", "repair_existing_evidence",
+                                        "plan_analysis_from_current_evidence"})}
                                    for item in snapshot["next_actions"]],
                   "references": references, "resources": resources,
                   "goals": goals})

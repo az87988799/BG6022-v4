@@ -12,7 +12,12 @@ from typing import Any, Literal, get_args
 
 from pydantic import Field, ValidationError
 
-from orca_agent.applicability import PROFILE, canonical_condition, effective_conditions
+from orca_agent.applicability import (
+    PROFILE,
+    canonical_condition,
+    coordinate_method_reference,
+    effective_conditions,
+)
 from orca_agent.condition_selection import (
     commit_selections as commit_selections,
 )
@@ -22,7 +27,7 @@ from orca_agent.condition_selection import (
 from orca_agent.condition_selection import (
     selection_action_parameters as selection_action_parameters,
 )
-from orca_agent.condition_selection import simplified_workflow
+from orca_agent.condition_selection import selection_available, simplified_workflow
 from orca_agent.minimum_evidence import LEGACY_NAMES, REQUIREMENTS
 from orca_agent.minimum_evidence import RULE_VERSION as MINIMUM_EVIDENCE_VERSION
 from orca_agent.model_usage import current_basis
@@ -525,7 +530,8 @@ def _field_evidence_corrections(candidate, request, messages):
             corrections.append(correction)
             continue
         try:
-            _field(path[-1], field, request, messages, system=system)
+            _field(path[-1], field, request, messages, system=system,
+                   method_reference=candidate.conditions.get("method") if path[0] == "conditions" else None)
         except StoreError as exc:
             corrections.append({"path": path, "reason": "condition_evidence_invalid",
                                 "diagnostic": str(exc)[:300]})
@@ -647,7 +653,8 @@ def _omitted_default_corrections(candidate, request, messages):
                 value = request.semantic_defaults[name]
                 evidence = FieldEvidence(source="default", default_rule="local-hf-1", value=value)
                 try:
-                    _field(name, evidence, request, request.messages + messages, system=system)
+                    _field(name, evidence, request, request.messages + messages, system=system,
+                           method_reference=candidate.conditions.get("method") if system is None or len(systems) == 1 else None)
                 except StoreError:
                     continue  # Explicit/unknown/conflicting user conditions still block defaults.
                 path = (["system_conditions", scope, name] if scope is not None and len(systems) > 1
@@ -1103,7 +1110,7 @@ def _environment_mapping(value, text):
              "model_basis": model_match.group(), "solvent_basis": solvent_match.group()})
 
 
-def _field(name, item, request, messages, *, system=None):
+def _field(name, item, request, messages, *, system=None, method_reference=None):
     if name not in CONDITIONS:
         path = name if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]{0,63}", str(name)) else "[field]"
         raise StoreError(f"semantic condition {path} is outside the field whitelist; allowed keys: "
@@ -1282,7 +1289,29 @@ def _field(name, item, request, messages, *, system=None):
             "temperature_K": r"温度|\btemperature\b",
             "standard_state": r"标准态|\bstandard\s+state\b",
         }
-        if any(re.search(mentions[name], clause, re.I) for message in messages
+        default_messages = messages
+        if name == "electronic_state" and _simplified_request(request):
+            mentions[name] += r"|(?<![A-Za-z0-9_])(?:RKS|UKS|ROHF|ROKS)(?![A-Za-z0-9_])"
+        if (name == "electronic_state" and _simplified_request(request)
+                and method_reference is not None and method_reference.source == "explicit"
+                and isinstance(method_reference.value, str) and method_reference.value.strip().upper() == "RHF"):
+            # Authenticate the method first. Its RHF token is consumed by the
+            # shared coordinator below; an independent reference declaration
+            # still forbids labeling that declaration as a default.
+            _field("method", method_reference, request, messages, system=system)
+            mentions[name] += r"|(?<![A-Za-z0-9_])RHF(?![A-Za-z0-9_])"
+            spans = _quote_occurrences(method_reference.text_basis, messages, method_reference.message_id)
+            default_messages = []
+            for message in messages:
+                text = message["text"]
+                positions = [(match.start(), match.end()) for match in re.finditer(
+                    r"(?<![A-Za-z0-9_])RHF(?![A-Za-z0-9_])", text, re.I)
+                    if any(source.get("id") == message.get("id") and start <= match.start() and match.end() <= end
+                           for source, start, end in spans)]
+                for start, end in reversed(positions):
+                    text = text[:start] + " " * (end - start) + text[end:]
+                default_messages.append({**message, "text": text})
+        if any(re.search(mentions[name], clause, re.I) for message in default_messages
                for clause, _ in _field_propositions(request, message, 0, len(message["text"]), system=system)):
             raise StoreError("a condition declared in user text cannot be labeled or overwritten as a default")
     elif item.source == "inferred":
@@ -1296,6 +1325,24 @@ def _field(name, item, request, messages, *, system=None):
     elif name in PHYSICAL:
         raise StoreError("physical scientific conditions cannot be waived as not_applicable")
     return value, item.source, evidence
+
+
+def _coordinated_method_reference(values, store, run):
+    updated, conflicts = coordinate_method_reference(values)
+    if conflicts:
+        raise ProposalError(
+            "RHF specifies an RHF reference. Preserve explicit, unknown and scoped conditions; "
+            "only an authenticated default may inherit the method's reference. "
+            "Resolve the identified condition conflict before scientific execution.",
+            path=["parameters", "conditions", "electronic_state"],
+            reason="method_reference_conflict", condition_conflicts=conflicts)
+    if updated != values and not selection_available(store, run):
+        raise ProposalError(
+            "Method-derived reference inheritance requires settled preparation and no actual or uncertain "
+            "scientific execution. Preserve the recorded conditions of existing execution.",
+            path=["parameters", "conditions", "electronic_state"],
+            reason="method_reference_requires_before_science")
+    return updated
 
 
 _GEOMETRY_NOUN = r"(?:候选|构象|结构|几何|坐标|副本|XYZ|candidate|conformer|structure|geometr(?:y|ies)|coordinates?|cop(?:y|ies))"
@@ -2379,7 +2426,8 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
             raise StoreError("semantic conditions cannot invent a system")
         target = next(s for s in values["systems"] if s["id"] == scope) if scope else values
         for name, field in fields.items():
-            value, source, evidence = _field(name, field, request, grounding, system=system)
+            value, source, evidence = _field(name, field, request, grounding, system=system,
+                method_reference=candidate.conditions.get("method") if scope is None else None)
             target["conditions"][name] = value
             target["conditions_source"][name] = source
             if scope is None and name in {"method", "basis", "charge", "multiplicity"}:
@@ -2434,6 +2482,8 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
             # Preserve the actionable missing-energy correction before the
             # Request shape validator rejects an entirely optional goal set.
             _require_energy_coverage(candidate, request, grounding, goals)
+        if simplified_workflow(run):
+            values = _coordinated_method_reference(values, store, run)
         # Consume the already authenticated current conditions, using the same
         # scope resolver as execution. Goal construction still validates
         # inheritance against the original Request above.
@@ -2481,6 +2531,8 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
         for goal in values["goals"]:
             goal["unresolved"] = [gap for gap in goal["unresolved"] if gap != placeholder]
     values.update(version=request.version + 1, messages=request.messages + pending)
+    if simplified_workflow(run):
+        values = _coordinated_method_reference(values, store, run)
     updated = _missing_information(Request.model_validate(values))
     prior_gaps = set(request.unresolved) | set(question_gaps) | {gap for goal in request.goals for gap in goal.unresolved}
     current_gaps = set(updated.unresolved) | {gap for goal in updated.goals for gap in goal.unresolved}

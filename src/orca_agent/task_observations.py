@@ -173,9 +173,24 @@ def _internal_source_artifact(store, receipt, name, *, general):
     return artifact
 
 
-def _task_artifact(store, run, attempt, files, name, *, role):
+def _task_file_key(files, name, *, simplified=False):
+    """One exact key or a unique equivalent within the task archive namespace."""
+    name = _task_relative(name)
+    candidates = [name] if simplified and name.startswith("task/") and name in files else []
+    if "task/" + name in files:
+        candidates.append("task/" + name)
+    if not candidates:
+        return None
+    key = candidates[0]
+    if any(files[other] != files[key] for other in candidates[1:]):
+        raise ValueError("observation task file key is ambiguous")
+    return key
+
+
+def _task_artifact(store, run, attempt, files, name, *, role, simplified=False):
     """One exact archive binding for ordinary sources and declared products."""
-    selected = files.get("task/" + _task_relative(name))
+    key = _task_file_key(files, name, simplified=simplified)
+    selected = files.get(key)
     if selected is None:
         raise ValueError(f"observation {role} was not archived")
     artifact = store.load_artifact(selected["artifact_id"])
@@ -187,6 +202,24 @@ def _task_artifact(store, run, attempt, files, name, *, role):
     return artifact
 
 
+def _task_source_name(store, run, attempt, files, name, declaration, source_index, normalizations):
+    """Resolve one controlled archive key before using the frozen input target."""
+    key = _task_file_key(files, name, simplified=True)
+    if key is None:
+        return name
+    relative = key[5:]
+    # The copy must be this producer's real, unchanged archive, even when its
+    # frozen input later resolves to an original native receipt from another Attempt.
+    artifact = _task_artifact(store, run, attempt, files, relative, role="task source")
+    if relative != name and normalizations is not None:
+        normalizations.append({"source_index": source_index,
+            "original_source": declaration.model_dump(mode="json", exclude_none=True),
+            "basis": "exact_current_result_task_file_key_to_frozen_input_target",
+            "resolved_file_key": key, "resolved_target_path": relative,
+            "artifact_id": artifact.id, "sha256": artifact.sha256})
+    return relative
+
+
 def _record(store, run, step, attempt, files, item, *, simplified=False, normalizations=None,
             flexible_sources=False, record_index=None):
     sources, native_conditions = [], []
@@ -195,10 +228,20 @@ def _record(store, run, step, attempt, files, item, *, simplified=False, normali
     if not simplified and len(item.artifacts) > 64:
         raise ValueError("legacy observation artifacts exceed 64 items")
     artifact_names = list(dict.fromkeys(_task_relative(name) for name in item.artifacts))
-    if simplified and len(artifact_names) > run.budget.artifact_count:
+    declared_artifacts = {}
+    for artifact_index, name in enumerate(artifact_names):
+        artifact = _task_artifact(store, run, attempt, files, name,
+                                  role="analysis artifact", simplified=simplified)
+        key = _task_file_key(files, name, simplified=simplified)
+        relative = key[5:]
+        declared_artifacts[relative] = artifact
+        if relative != name and normalizations is not None:
+            normalizations.append({"artifact_index": artifact_index, "original_artifact": name,
+                "basis": "exact_current_result_task_file_key",
+                "resolved_file_key": key, "resolved_target_path": relative,
+                "artifact_id": artifact.id, "sha256": artifact.sha256})
+    if simplified and len(declared_artifacts) > run.budget.artifact_count:
         raise ValueError("observation artifacts exceed the frozen Run artifact_count allowance")
-    declared_artifacts = {name: _task_artifact(store, run, attempt, files, name,
-                                             role="analysis artifact") for name in artifact_names}
     for source_index, declaration in enumerate(item.sources):
         name = _task_relative(declaration.filename)
         admitted = {}
@@ -221,6 +264,9 @@ def _record(store, run, step, attempt, files, item, *, simplified=False, normali
             native_conditions.append(admitted)
         else:
             parent = attempt
+            if simplified:
+                name = _task_source_name(store, run, attempt, files, name, declaration,
+                                         source_index, normalizations)
             registered_input = _registered_input(store, run, step, name, files) if general else None
             if registered_input is not None:
                 artifact = registered_input

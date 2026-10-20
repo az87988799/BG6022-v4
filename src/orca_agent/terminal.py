@@ -132,14 +132,18 @@ def validate_continuation_before_stop(request, run, snapshot, *, terminal_cost=N
     margin = final_explanation_budget(request, run, purpose=DecisionPurpose("planning", ()))
     if not margin["can_send_before_final"]:
         return
-    if terminal_cost is not None and not final_explanation_budget(request, run,
-            purpose=DecisionPurpose("planning", ()), prepared=terminal_cost)["can_send_before_final"]:
+    # This is returned only from the hash-authenticated program request whose
+    # allowed actions were already narrowed to final delivery. Actual token
+    # settlement may release capacity; that cannot retroactively revoke the
+    # terminal-only instruction the model received.
+    if terminal_cost is not None:
         return
     _reject("terminal_current_work_remaining", ["action"],
         goal_refs=list(dict.fromkeys(fact["goal_ref"] for fact in work)),
         required_fact_refs=[fact["ref"] for fact in work],
         next_action_refs=[action["ref"] for action in snapshot["next_actions"]
-            if action["kind"] in {"continue_approved_plan", "repair_failed_execution", "repair_existing_evidence"}],
+            if action["kind"] in {"continue_approved_plan", "repair_failed_execution", "repair_existing_evidence",
+                                  "plan_analysis_from_current_evidence"}],
         guidance="Continue the current approved work or propose the evidence-bound repair shown in the delivery snapshot. Stop cannot replace that work while its permission and necessary budgets remain. No execution is automatic.")
 
 

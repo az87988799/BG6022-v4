@@ -6,6 +6,8 @@ that unchanged evidence can answer the current Request, including its geometry.
 
 from __future__ import annotations
 
+from copy import deepcopy
+
 from orca_agent.versions import CURRENT_CHECK_VERSION
 
 CONDITION_FIELDS = ("method", "basis", "charge", "multiplicity", "electronic_state", "environment")
@@ -30,6 +32,79 @@ def canonical_condition(name, value):
         if name == "environment" and value.lower() in {"gas", "gas_phase", "gas phase"}:
             return "gas_phase"
     return value
+
+
+def coordinate_method_reference(values):
+    """Derive RHF's stated reference only from an authenticated old default.
+
+    Callers own admission and the before-science boundary. This pure function
+    neither infers molecular spin nor replaces independent scoped declarations.
+    """
+    updated = deepcopy(values)
+    conditions = values.get("conditions", {})
+    origins = values.get("conditions_source", {})
+    evidence = values.get("condition_evidence", {})
+    state = conditions.get("electronic_state")
+    conflicts, inherited_scopes, method_sources = [], [], {}
+    scopes = values.get("systems") or [{"id": None}]
+
+    def rhf(value):
+        return isinstance(value, str) and value.strip().upper() == "RHF"
+
+    def conflict(path, reason):
+        conflicts.append({"path": path, "reason": reason})
+
+    for system in scopes:
+        scoped = system.get("conditions", {})
+        method = scoped.get("method", conditions.get("method", values.get("method")))
+        if "electronic_state" not in scoped:
+            inherited_scopes.append((system.get("id"), method))
+        if not rhf(method):
+            continue
+        prefix = ["systems", system["id"]] if system.get("id") else []
+        if "electronic_state" in scoped:
+            if (not rhf(scoped["electronic_state"])
+                    or system.get("conditions_source", {}).get("electronic_state")
+                    in {"unknown", "inferred", "not_applicable"}):
+                conflict([*prefix, "conditions", "electronic_state"], "explicit_method_reference_conflict")
+        elif not rhf(state) or origins.get("electronic_state") in {"unknown", "inferred", "not_applicable"}:
+            method_key = (system["id"] if "method" in scoped else "request") + ".method"
+            proof = evidence.get(method_key, {})
+            source = (system.get("conditions_source", {}) if "method" in scoped else origins).get("method")
+            if (source not in {"explicit", "auto_selected", "inherited", "default"}
+                    or proof.get("source") != source or not rhf(proof.get("value"))):
+                conflict([*prefix, "conditions", "method"], "method_reference_source_unconfirmed")
+            else:
+                method_sources[method_key] = deepcopy(proof)
+        for goal in values.get("goals", []):
+            if goal.get("system_ids") and system.get("id") not in goal["system_ids"]:
+                continue
+            if ("electronic_state" in goal.get("conditions", {})
+                    and not rhf(goal["conditions"]["electronic_state"])):
+                conflict(["goals", goal["id"], "conditions", "electronic_state"],
+                         "explicit_method_reference_conflict")
+
+    if method_sources:
+        default = evidence.get("request.electronic_state", {})
+        if (origins.get("electronic_state") != "default" or default.get("source") != "default"
+                or default.get("default_rule") != "local-hf-1"
+                or canonical_condition("electronic_state", state) is None
+                or default.get("value") != state
+                or values.get("semantic_defaults", {}).get("electronic_state") != state):
+            conflict(["conditions", "electronic_state"], "method_reference_requires_authenticated_default")
+        # A shared default cannot change a different method's inherited setting.
+        for system_id, method in inherited_scopes:
+            if not rhf(method):
+                conflict(["systems", system_id, "conditions", "electronic_state"],
+                         "method_reference_shared_scope_conflict")
+        if not conflicts:
+            updated["conditions"]["electronic_state"] = "RHF"
+            updated["conditions_source"]["electronic_state"] = "inherited"
+            updated["condition_evidence"]["request.electronic_state"] = {
+                "value": "RHF", "source": "inherited", "rule": "method-reference-1",
+                "previous_default": deepcopy(default), "method_source": method_sources,
+                "scientific_validation": "not_established_by_reference_inheritance"}
+    return updated, conflicts
 
 
 def effective_conditions(request, goal=None, system_id=None):
