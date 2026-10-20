@@ -120,7 +120,8 @@ def optimize_context_wire(wire, *, simplify_schema, source_references=None):
     allowed = set(wire.get("AUTHORITY", {}).get("decision_purpose", {}).get("allowed_actions", []))
     # Unknown/new action shapes retain all authoring guidance. A ready Step is
     # insufficient when revising its Plan is still an allowed alternative.
-    read_effects = {"read_registered_artifact", "query_external_document", "query_external_identity"}
+    read_effects = {"read_registered_artifact", "query_external_document", "query_external_identity",
+                    "archive_retrieved_evidence"}
     short_immediate = {tool["name"] for tool in wire.get("TOOLS", [])
                        if tool.get("immediate") and tool.get("effects")
                        and set(tool["effects"]) <= read_effects}

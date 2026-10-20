@@ -2,6 +2,7 @@
 
 import base64
 import hashlib
+import json
 import time
 
 import pytest
@@ -207,8 +208,10 @@ def test_only_unrestricted_python_receives_candidate_geometry_binding(tmp_path, 
         assert bound["initial_atom_symbols"] == ["H", "H"]
 
 
-def test_direct_reservation_is_atomic_idempotent_and_survives_reopen(tmp_path, monkeypatch):
-    store, run, step, prepared, _ = setup_native(tmp_path, monkeypatch)
+@pytest.mark.parametrize("profile", ["bounded-analytic-1", "managed-native-1"])
+def test_direct_reservation_is_atomic_idempotent_and_survives_reopen(tmp_path, monkeypatch, profile):
+    store, run, step, prepared, _ = setup_native(
+        tmp_path, monkeypatch, policy=NativeInputPolicy(profile=profile))
     attempt = store.reserve_attempt(run, step)
     store.reserve_native_workload(run, attempt, prepared)
     assert run.usage.internal_work_units == 12 and run.usage.orca_starts_reserved == 1
@@ -225,6 +228,82 @@ def test_direct_reservation_is_atomic_idempotent_and_survives_reopen(tmp_path, m
     with pytest.raises(StoreError, match="unstarted"):
         reopened.reserve_native_workload(persisted, persisted.attempts[0], prepared)
     assert reopened.environment_lease() is not None
+
+
+@pytest.mark.parametrize("profile,version,other", [
+    ("bounded-analytic-1", "native-orca-input-2", "managed-native-1"),
+    ("managed-native-1", "native-orca-input-3", "bounded-analytic-1"),
+])
+def test_direct_workload_uses_run_frozen_profile_not_reopened_default(
+    tmp_path, monkeypatch, profile, version, other,
+):
+    store, run, step, prepared, _ = setup_native(
+        tmp_path, monkeypatch, policy=NativeInputPolicy(profile=profile))
+    attempt = store.reserve_attempt(run, step)
+    snapshot_path = store.path(f"runs/{run.id}/configuration.json")
+    snapshot_bytes = snapshot_path.read_bytes()
+    opposite = run.configuration.model_copy(update={"execution": run.configuration.execution.model_copy(
+        update={"native_input_policy": NativeInputPolicy(profile=other)})})
+    reopened = Store(store.root, environment_root=store.environment_root, configuration=opposite)
+    historical = reopened.load_run(run.id)
+    assert reopened.run_configuration(historical).execution.native_input_policy.profile == profile
+    for foreign_version in {"native-orca-input-1", "native-orca-input-2", "native-orca-input-3"} - {version}:
+        with pytest.raises(StoreError, match="admitted, unstarted"):
+            reopened.reserve_native_workload(historical, historical.attempts[0],
+                                             {**prepared, "admission_version": foreign_version})
+    assert reopened.load_run(run.id).usage.internal_work_units == 0
+    reopened.reserve_native_workload(historical, historical.attempts[0], prepared)
+    assert historical.attempts[0].native_workload["admission_version"] == version
+    assert historical.usage.internal_work_units == 12
+    assert snapshot_path.read_bytes() == snapshot_bytes
+    assert attempt.native_workload is None  # The old in-memory snapshot was not rewritten.
+
+
+@pytest.mark.parametrize("profile,version", [
+    ("bounded-analytic-1", "native-orca-input-2"),
+    ("managed-native-1", "native-orca-input-3"),
+])
+def test_direct_native_preparation_reserves_work_before_process_boundary(
+    tmp_path, monkeypatch, profile, version,
+):
+    """Real direct preparation/reservation/collection; only OS launch is replaced."""
+    from orca_agent import runner
+
+    store, run, step, _, _ = setup_native(
+        tmp_path, monkeypatch, policy=NativeInputPolicy(profile=profile))
+    attempt = store.reserve_attempt(run, step)
+    attempt.execution_handle = {"job_name": "offline-native-admission-only"}
+    store.update_lease_handle(run.id, attempt.id, attempt.execution_handle)
+    store.save_run(run)
+    reached = []
+
+    def no_process(store, run, step, config, prepared, workdir, root, **kwargs):
+        reached.append(prepared)
+        persisted = store.load_run(run.id)
+        assert persisted.usage.internal_work_units == 12
+        assert persisted.attempts[0].native_workload["admission_version"] == version
+        assert json.loads((root / "prepared.json").read_bytes()) == prepared
+        assert (workdir / "job.inp").read_bytes() == INPUT.encode()
+        assert (workdir / "initial.xyz").read_bytes() == XYZ
+        return {"state": "failed", "reason": "offline test stops at the process boundary",
+                "not_started": True, "handle": None, "exit_code": None, "resource_usage": {}}
+
+    monkeypatch.setattr(managed, "launch_orca", no_process)
+    result, execution = managed.execute(
+        store, run, step, attempt, Config(data_root=store.root, execution=run.configuration.execution))
+    assert len(reached) == 1
+    assert execution["reason"] == "offline test stops at the process boundary"
+    assert result.operation_status == "failed" and not result.qualified_outputs
+    assert result.observations["scientific_validation"] == "unverified"
+    assert result.observations["evidence_collection_complete"]
+    assert {"prepared.json", "execution.json", "task/job.inp", "task/initial.xyz"} <= result.source["files"].keys()
+    store.save_result(result)
+    runner._settle(store, run, attempt, result, execution)
+    persisted = store.load_run(run.id)
+    assert persisted.usage.internal_work_units == 12
+    assert persisted.usage.orca_starts_reserved == 1
+    assert persisted.usage.orca_starts_actual == 0 and not persisted.attempts[0].started
+    assert store.environment_lease() is None
 
 
 def test_underbudget_refused_before_native_workload_or_any_actual_start(tmp_path, monkeypatch):

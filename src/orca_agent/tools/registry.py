@@ -184,9 +184,9 @@ TOOLS: dict[str, _Registration] = {
 
 
 TOOLS["knowledge.search"] = _register(
-    SearchParameters, name="knowledge.search", description="Search versioned ORCA/OPI/RDKit documents and three local input/method/diagnosis guides using English terms; retrieves bounded source excerpts. No science execution.",
+    SearchParameters, name="knowledge.search", description="Search versioned ORCA/OPI/RDKit documents and three local input/method/diagnosis guides using English terms; retrieves bounded source excerpts and archives the same response bytes within Artifact limits. No conversion or science execution.",
     input_roles=[], output_ports=[], observation_outputs=["document_excerpt"],
-    effects=["query_external_document"], max_cores=0, max_memory_mb=0,
+    effects=["query_external_document", "archive_retrieved_evidence"], max_cores=0, max_memory_mb=0,
     check_version="knowledge-answer-1", check_contract={"immediate": True},
     usage_counter="knowledge_queries", implementation="orca_agent.tools.knowledge.retrieve")
 TOOLS["knowledge.answer"] = _register(

@@ -656,6 +656,29 @@ def test_prior_source_receipts_remain_available_after_multiple_searches(tmp_path
     assert wire["AUTHORITY"]["related_results"] == [second.id]
 
 
+@pytest.mark.parametrize("top_url,source_url", [
+    ("package://orca_agent/tools/knowledge.py#guide_method-1", "package://private/document.txt"),
+    ("package://orca_agent/tools/knowledge.py#guide_method-1", "C:/private/document.txt"),
+    ("package://private/document.txt", "package://private/document.txt"),
+])
+def test_document_archive_projection_does_not_restore_unapproved_source_paths(top_url, source_url):
+    document = {"url": top_url, "source": {"url": source_url}, "excerpt": "Exact supporting quote.",
+                "document_sha256": "a" * 64, "excerpt_sha256": "b" * 64}
+    result = Result(run_id="run", operation_status="completed",
+                    observations={"document_excerpt": document})
+    before = result.model_copy(deep=True)
+    projected = context._result(result, 1)["unqualified_observations"]["document_excerpt"]
+    assert projected["source"]["url"] == context._safe(source_url) != source_url
+    assert projected["excerpt"] == document["excerpt"]
+    assert projected["document_sha256"] == document["document_sha256"]
+    assert projected["excerpt_sha256"] == document["excerpt_sha256"]
+    if top_url == source_url:
+        assert projected["url"] == context._safe(top_url) != top_url
+    else:
+        assert projected["url"] == top_url
+    assert result == before
+
+
 def test_mixed_identity_rules_are_visible_per_system_without_upgrading_legacy_contract(tmp_path):
     from orca_agent.input_bindings import input_check_version, required_input_rule
     from orca_agent.tools.registry import get_tool

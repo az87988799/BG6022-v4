@@ -153,6 +153,14 @@ def validate_code_inputs(store, permission, step, *, run=None):
 def _step_permissions(step: Step, run: Run, *, authorized_artifacts=()) -> None:
     tool = get_tool(step.tool)
     permission = run.permission
+    input_ports = tool.check_contract.get("input_ports")
+    if input_ports is not None:
+        _require(set(step.inputs) == set(input_ports),
+                 f"{step.tool} Step.inputs requires the declared roles {sorted(input_ports)}; "
+                 "output port names are reference.port values, not input role aliases")
+        for role, port in input_ports.items():
+            _require(step.inputs[role].port == port,
+                     f"{step.tool} Step.inputs.{role} must reference output port {port}")
     _require(not tool.check_contract.get("immediate_only"),
              "this Tool requires an immediate decision after inspecting current evidence, not a planned Step")
     _require(step.tool in permission.allowed_tools, "tool is outside the permission snapshot")

@@ -20,7 +20,8 @@ def call(document, query):
 def test_guides_are_versioned_bounded_sources_without_network(monkeypatch, document):
     monkeypatch.setattr(knowledge.httpx, "Client", lambda **kwargs: pytest.fail("packaged guide opened network"))
     original = dict(knowledge.GUIDES)
-    result = knowledge.retrieve(None, None, call(document, "input" if document == "guide_input" else "method" if document == "guide_method" else "output"))
+    result, raw, _ = knowledge._retrieve(None, None, call(document, "input" if document == "guide_input" else "method" if document == "guide_method" else "output"))
+    assert raw == knowledge.GUIDES[document].encode()
     assert result["status"] == "found" and result["kind"] == "project_guide"
     assert result["document_id"] == document and result["document_version"] == "guide-1"
     assert result["rendering_version"] == "text-1"
@@ -50,7 +51,8 @@ def test_official_index_records_actual_bytes_excerpt_and_version(monkeypatch, do
     paragraph = "A versioned synthetic frequency and basis explanation."
     raw = paragraph.encode() if document == "rdkit" else f"<article><p>{paragraph}</p></article>".encode()
     requests = mock_server(monkeypatch, lambda request: httpx.Response(200, content=raw))
-    result = knowledge.retrieve(None, None, call(document, "frequency basis"))
+    result, retrieved, _ = knowledge._retrieve(None, None, call(document, "frequency basis"))
+    assert retrieved == raw
     assert len(requests) == 1 and str(requests[0].url) == knowledge.DOCUMENTS[document][1]
     assert result["status"] == "found" and result["kind"] == "official_document"
     assert result["document_version"] == ("2025.09.6" if document == "rdkit" else "6.1")
@@ -65,7 +67,7 @@ def test_retrieval_does_not_follow_redirects_retry_or_accept_oversized_documents
     requests = mock_server(monkeypatch, lambda request: httpx.Response(status, content=body,
         headers={"Location": "https://unregistered.invalid/private"}))
     with pytest.raises((httpx.HTTPStatusError, ValueError)):
-        knowledge.retrieve(None, None, call("orca_input", "input"))
+        knowledge._retrieve(None, None, call("orca_input", "input"))
     assert len(requests) == 1
 
 
@@ -80,7 +82,7 @@ def test_search_schema_comes_from_same_fixed_index_and_cannot_select_arbitrary_u
 def test_html_rendering_normalizes_source_whitespace_without_splitting_inline_words(monkeypatch):
     raw = b'<article><p>A\n  short\t paragraph with <em>inline</em> <b>text</b> and Word<span>Part</span>.\r\nNext&nbsp;sentence.</p></article>'
     requests = mock_server(monkeypatch, lambda request: httpx.Response(200, content=raw))
-    result = knowledge.retrieve(None, None, call("orca_dft", "short paragraph"))
+    result, _, _ = knowledge._retrieve(None, None, call("orca_dft", "short paragraph"))
     assert result["excerpt"] == "A short paragraph with inline text and WordPart. Next sentence."
     assert result["document_sha256"] == hashlib.sha256(raw).hexdigest()
     assert result["excerpt_sha256"] == hashlib.sha256(result["excerpt"].encode()).hexdigest()
@@ -109,7 +111,7 @@ def test_actual_official_html_fragments_keep_row_identity_and_normalized_quote(m
     manifest = json.loads((directory / "orca-readable-fragments.json").read_bytes())
     assert hashlib.sha256(raw).hexdigest() == manifest["fixture_sha256"]
     requests = mock_server(monkeypatch, lambda request: httpx.Response(200, content=raw))
-    result = knowledge.retrieve(None, None, call("orca_basis", "def2-SVP"))
+    result, _, _ = knowledge._retrieve(None, None, call("orca_basis", "def2-SVP"))
     assert result["document_sha256"] == hashlib.sha256(raw).hexdigest()
     assert result["coverage"]["table_row_labels"] == {"2": "def2-SVP", "3": "def2-SVPD"}
     assert "def2-SVP H\u2013Rn def2-ECP (Rb\u2013Rn) Polarized valence double-" in result["excerpt"]
@@ -157,7 +159,7 @@ def test_general_manual_sections_keep_single_get_hash_and_scoped_discovery(monke
     requests = mock_server(monkeypatch, lambda request: httpx.Response(200, content=raw))
     policy = SimpleNamespace(profile="managed-native-1")
     store = SimpleNamespace(run_configuration=lambda run: SimpleNamespace(execution=SimpleNamespace(native_input_policy=policy)))
-    result = knowledge.retrieve(store, None, call("orca:contents/spectroscopyproperties/tddft.html", "response"))
+    result, _, _ = knowledge._retrieve(store, None, call("orca:contents/spectroscopyproperties/tddft.html", "response"))
     assert len(requests) == 1
     assert str(requests[0].url) == knowledge.MANUAL_ROOT + "contents/spectroscopyproperties/tddft.html"
     assert result["document_sha256"] == hashlib.sha256(raw).hexdigest()
@@ -165,7 +167,7 @@ def test_general_manual_sections_keep_single_get_hash_and_scoped_discovery(monke
     assert result["scientific_qualification"] is False
     policy.profile = "bounded-analytic-1"
     with pytest.raises(ValueError, match="explicit managed-native"):
-        knowledge.retrieve(store, None, call("orca:index.html", "input"))
+        knowledge._retrieve(store, None, call("orca:index.html", "input"))
     assert len(requests) == 1
 
 
@@ -179,3 +181,72 @@ def test_discovered_manual_references_share_call_schema_length_bound():
     assert knowledge.SearchParameters(document=accepted, query="input").document == accepted
     with pytest.raises(ValidationError):
         knowledge.SearchParameters(document=rejected, query="input")
+
+
+def archived_run(tmp_path, **budget):
+    from orca_agent.models import BudgetLimits, Goal, PermissionSnapshot, Request
+    from orca_agent.store import Store
+    store = Store(tmp_path, environment_root=tmp_path / "environment")
+    request = Request(goals=[Goal(id="question", port="knowledge_answer", minimum_check_version="knowledge-answer-1")])
+    # Archiving retrieved evidence is part of this read operation, not permission
+    # to generate task files or run arbitrary code.
+    run = store.create_run(request, None, PermissionSnapshot(allowed_tools=["knowledge.search"]),
+                           BudgetLimits(knowledge_queries=3, **budget))
+    return store, run
+
+
+@pytest.mark.parametrize("query,status", [("frequency", "found"), ("unrelated", "missing")])
+def test_real_dispatch_archives_exact_decompressed_body_and_counts_quota(tmp_path, monkeypatch, query, status):
+    import gzip
+    from orca_agent.tools.dispatch import execute_call
+    raw = b"<article><p>Frequency explanation \xff is not transcoded in the archive.</p></article>"
+    requests = mock_server(monkeypatch, lambda request: httpx.Response(
+        200, content=gzip.compress(raw), headers={"Content-Encoding": "gzip"}))
+    store, run = archived_run(tmp_path)
+    result = execute_call(store, run, "knowledge.search", {"document": "orca_frequencies", "query": query})
+    excerpt = result.observations["document_excerpt"]
+    assert result.operation_status == "completed" and excerpt["status"] == status
+    assert len(requests) == len(result.artifact_ids) == 1
+    artifact = store.load_artifact(excerpt["document_artifact_id"])
+    assert store.artifact_path(artifact.id).read_bytes() == raw
+    assert artifact.sha256 == excerpt["document_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert excerpt["document_archive_complete"] is True and excerpt["document_bytes"] == len(raw)
+    assert result.source["files"]["document.html"] == {"artifact_id": artifact.id, "sha256": artifact.sha256}
+    assert artifact.source["call_id"] == result.call_id and artifact.role == "knowledge_document"
+    assert store.artifact_budget_usage(run)["reserved_bytes"] == len(raw)
+    assert not result.qualified_outputs and not run.attempts and not run.permission.artifact_writes
+    assert run.usage.knowledge_queries == 1 and run.usage.orca_starts_actual == 0
+
+
+@pytest.mark.parametrize("budget", [{"artifact_count": 0}, {"artifact_bytes": 1}, {"artifact_total_bytes": 1}])
+def test_archive_quota_failure_retains_raw_call_file_but_never_claims_complete_document(tmp_path, monkeypatch, budget):
+    from orca_agent.tools.dispatch import execute_call
+    raw = b"<article><p>Input explanation.</p></article>"
+    requests = mock_server(monkeypatch, lambda request: httpx.Response(200, content=raw))
+    store, run = archived_run(tmp_path, **budget)
+    result = execute_call(store, run, "knowledge.search", {"document": "orca_input", "query": "input"})
+    excerpt = result.observations["document_excerpt"]
+    assert result.operation_status == "failed" and not result.artifact_ids and not result.qualified_outputs
+    assert excerpt["status"] == "archive_failed" and excerpt["document_archive_complete"] is False
+    assert all(check.status == "unverified" for checks in result.checks.values() for check in checks)
+    assert result.diagnostics[0]["reason"] == "artifact_budget_exhausted"
+    assert store.path(f"runs/{run.id}/calls/{result.call_id}/document.html").read_bytes() == raw
+    assert len(requests) == 1 and run.usage.knowledge_queries == 1
+    with pytest.raises(ValueError, match="successful document retrieval"):
+        knowledge.answer(store, run, SimpleNamespace(parameters={"goal_id": "question",
+            "answer": "Cannot cite an incompletely archived retrieval.", "source_result_ids": [result.id],
+            "limitations": []}))
+    from orca_agent.condition_selection import _source
+    with pytest.raises(ValueError, match="completed knowledge.search"):
+        _source(store, run, SimpleNamespace(result_id=result.id, document_sha256=excerpt["document_sha256"],
+                quote=excerpt["excerpt"]), path=["choices", "method", "sources", 0])
+
+
+def test_packaged_guide_dispatch_archives_frozen_bytes_without_network(tmp_path, monkeypatch):
+    from orca_agent.tools.dispatch import execute_call
+    monkeypatch.setattr(knowledge.httpx, "Client", lambda **kwargs: pytest.fail("guide opened network"))
+    store, run = archived_run(tmp_path)
+    result = execute_call(store, run, "knowledge.search", {"document": "guide_input", "query": "input"})
+    excerpt = result.observations["document_excerpt"]
+    assert store.artifact_path(excerpt["document_artifact_id"]).read_bytes() == knowledge.GUIDES["guide_input"].encode()
+    assert excerpt["document_archive_complete"] is True and run.usage.knowledge_queries == 1

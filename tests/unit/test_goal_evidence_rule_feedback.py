@@ -24,7 +24,14 @@ def case():
     request = Request.model_validate(data["request"])
     prior = Plan.model_validate(data["plan"])
     run = Run.model_validate(data["run_context"])
-    store = SimpleNamespace(load_plan=lambda _: prior, load_request=lambda _: request)
+    def missing_result(run_id, result_id):
+        assert run_id == run.id and result_id in run.result_ids
+        # This historical fixture contains Request/Plan/Run, not Result bodies.
+        # Do not invent settled evidence: the proposal supplies every Step.
+        raise FileNotFoundError("Result body is not included in this fixture")
+
+    store = SimpleNamespace(load_plan=lambda _: prior, load_request=lambda _: request,
+                            load_result=missing_result)
     return data, request, prior, run, store
 
 

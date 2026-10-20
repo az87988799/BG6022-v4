@@ -39,10 +39,13 @@ def test_real_reply_reaches_general_evidence_validation_without_legacy_sampling_
     with pytest.raises(ProposalError) as rejected:
         commit_candidate(store, run, proposed, decision_id="offline_replay", basis=current_basis(store, run))
     detail = rejected.value.detail
-    assert detail["path"] == ["parameters", "goals", 0, "minimum_evidence", 2]
-    assert detail["invalid_value"] == "初始结构保留"
-    assert "保留初始结构" in detail["user_text"]
-    assert "registered requirements or exact user wording" in str(rejected.value)
+    correction = next(row for row in detail["corrections"] if
+                      row["path"] == ["parameters", "goals", 0, "minimum_evidence", 2])
+    assert correction["reason"] == "minimum_evidence_requires_exact_user_wording"
+    assert correction["invalid_value"] == "初始结构保留"
+    assert "保留初始结构" in correction["user_text"]
+    assert "contiguous exact quote" in correction["instruction"]
+    assert "delete a requirement" in correction["instruction"]
     assert "affirmative matching user intent" not in str(rejected.value)
     assert proposed == before and not run.decisions and not run.calls and not run.attempts
     assert hashlib.sha256(FIXTURE.read_bytes()).hexdigest() == DIGEST

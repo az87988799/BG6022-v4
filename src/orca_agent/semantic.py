@@ -267,11 +267,22 @@ def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_
             "Input Goals omit geometry_relation; preparing initial geometry is not a scientific fixed_initial or optimized result. "
             "Every general scientific Goal must supply quantity as an exact user phrase and a stable port identifier "
             "chosen for that quantity; absence of a registered property port/checker is not an unresolved user fact. "
+            "A query explicitly requests existing evidence; a general quantity without query remains a generated "
+            "observation even when its port spelling also names a read Tool output. Bind every molecular Goal, "
+            "including report/seed/delivery Goals, to its exact system_refs. "
             "Keep requested delivery contents in quantities, Goals and result data; do not turn each content item into "
             "an additional scientific minimum_evidence guarantee. Preserve every explicitly demanded scientific minimum. "
+            "Each nonregistered minimum_evidence entry must copy one contiguous exact user quote, without "
+            "reordering words, adding a summary, or changing numbers/units. Never delete a requirement to fix its wording. "
             "Default verification=reported_with_limitations; qualified requires an explicit user minimum-evidence demand. "
             "Preserve geometry_relation only when the user explicitly requires one unambiguous optimized/fixed_initial relation. "
-            "General tasks may use multiple geometries. When routine steps are delegated and no scalar relation is specified, "
+            "Ground it in the quantity's own clause; do not apply a calculation's geometry label to unrelated "
+            "reporting or random-seed Goals. fixed_initial binds the exact initial/prepared XYZ; single-point calculation "
+            "or fixed internal geometry does not itself establish that binding. A prohibition on optimization is not optimized. "
+            "General tasks may use multiple candidate/derived geometries. Do not impose one fixed_initial/optimized label "
+            "on their per-geometry calculations; preserve every geometry constraint and independently requested calculation "
+            "verbatim in relevant text_basis or minimum_evidence. An explicit initial XYZ/hash restriction still binds. "
+            "When routine steps are delegated and no scalar relation is specified, "
             "omit geometry_relation, choose the program steps within budget and record each source's actual geometry relation; "
             "do not require a user SP-versus-Opt choice. Never change an explicit geometry requirement. "
             "Preserve an explicitly requested unit verbatim in minimum_evidence; an absent unit is not proof of compliance. "
@@ -390,7 +401,8 @@ def _uses_general_goal(candidate, item, request):
             for goal in request.goals):
         return False  # Adding a quantity cannot discard a frozen criterion.
     return (candidate.schema_version == VERSION and item.port not in INPUT_TOOLS
-            and item.port not in READ_TOOLS and item.port != "knowledge_answer"
+            and (item.port not in READ_TOOLS or item.quantity is not None and item.query is None)
+            and item.port != "knowledge_answer"
             and (item.port not in RULES or item.quantity is not None
                  or any(system.identity.get("contract") == "general-identity-2"
                         for system in request.systems if system.id in item.system_refs)))
@@ -401,7 +413,8 @@ def _omitted_default_corrections(candidate, request, messages):
     missing = {}
     systems = {system.id: system for system in request.systems}
     for goal in candidate.goals or []:
-        if (not goal.required or goal.port in READ_TOOLS or goal.port in INPUT_TOOLS
+        if (not goal.required or goal.port in READ_TOOLS and not _uses_general_goal(candidate, goal, request)
+                or goal.port in INPUT_TOOLS
                 or goal.port == "knowledge_answer"
                 or goal.port in {"sampling", "sampling_check", "unresolved", "artifacts", "observations"}
                     and not _uses_general_goal(candidate, goal, request)
@@ -458,7 +471,29 @@ def _validate_general_intake(candidate, request, messages, run):
                 "instruction": "Preserve the user authorization here; omit the field from conditions until select_conditions.",
                 "user_evidence": evidence})
     has_general = False
+    systems = {system.id for system in request.systems}
     for index, item in enumerate(candidate.goals or []):
+        general = _uses_general_goal(candidate, item, request)
+        if general or item.port in INPUT_TOOLS:
+            message, _, _ = _locate(item.text_basis, messages, item.message_id)
+            if (not item.system_refs or len(item.system_refs) != len(set(item.system_refs))
+                    or set(item.system_refs) - systems
+                    or item.port in INPUT_TOOLS and len(item.system_refs) != 1):
+                corrections.append({"path": ["goals", index, "system_refs"],
+                    "reason": "goal_requires_exact_registered_targets", "available_system_ids": sorted(systems)})
+            for requirement_index, requirement in enumerate(item.minimum_evidence):
+                canonical = LEGACY_NAMES.get(requirement, requirement)
+                input_rules = set()
+                if item.port in INPUT_TOOLS and len(item.system_refs) == 1 and item.system_refs[0] in systems:
+                    from orca_agent.input_bindings import input_check_version
+
+                    input_rules = {item.port, input_check_version(
+                        get_tool(INPUT_TOOLS[item.port]), request, item.system_refs[0])}
+                if (canonical not in REQUIREMENTS and requirement not in input_rules
+                        and (not requirement.strip() or requirement not in message["text"])):
+                    corrections.append({"path": ["goals", index, "minimum_evidence", requirement_index],
+                        "reason": "minimum_evidence_requires_exact_user_wording", "invalid_value": requirement,
+                        "user_text": message["text"], "registered_requirements": sorted(REQUIREMENTS)})
         if item.port in INPUT_TOOLS:
             # Report this independent input error alongside science/selection
             # errors, rather than hiding it until the next correction round.
@@ -466,8 +501,11 @@ def _validate_general_intake(candidate, request, messages, run):
             if item.geometry_relation is not None:
                 corrections.append({"path": ["goals", index, "geometry_relation"],
                     "reason": "input_preparation_has_no_scientific_geometry_relation"})
+            if item.quantity is not None and item.quantity not in item.text_basis:
+                corrections.append({"path": ["goals", index, "quantity"],
+                    "reason": "general_quantity_requires_exact_user_phrase"})
             continue
-        if not _uses_general_goal(candidate, item, request):
+        if not general:
             continue
         has_general = True
         message, _, _ = _locate(item.text_basis, messages, item.message_id)
@@ -481,7 +519,7 @@ def _validate_general_intake(candidate, request, messages, run):
         if item.verification == "qualified" and not _qualification_quotes(message["text"]):
             corrections.append({"path": ["goals", index, "verification"], "reason": "no_user_demand_for_specialized_qualification",
                 "instruction": "Use reported_with_limitations unless the user explicitly demands a stronger evidence guarantee."})
-        relation = _text_geometry_relation(request, [message], item.system_refs)
+        relation = _general_goal_geometry_relation(request, message, item)
         if relation is not None and item.geometry_relation != relation:
             corrections.append({"path": ["goals", index, "geometry_relation"],
                 "reason": "preserve_explicit_geometry_relation", "required_relation": relation,
@@ -489,7 +527,13 @@ def _validate_general_intake(candidate, request, messages, run):
         elif item.geometry_relation is not None and relation is None:
             corrections.append({"path": ["goals", index, "geometry_relation"],
                 "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text"})
-        single_scientific_goal = sum(goal.port not in READ_TOOLS and goal.port not in INPUT_TOOLS
+        for obligation in _general_geometry_obligations(request, message, item):
+            if obligation not in item.text_basis and not any(
+                    obligation in requirement for requirement in item.minimum_evidence):
+                corrections.append({"path": ["goals", index, "text_basis"],
+                    "reason": "preserve_general_geometry_obligation", "user_evidence": obligation})
+        single_scientific_goal = sum((goal.port not in READ_TOOLS or _uses_general_goal(candidate, goal, request))
+            and goal.port not in INPUT_TOOLS
             and goal.port != "knowledge_answer" and (goal.port not in {"sampling", "sampling_check"}
                 or _uses_general_goal(candidate, goal, request))
             for goal in candidate.goals or []) == 1
@@ -514,6 +558,10 @@ def _validate_general_intake(candidate, request, messages, run):
                 corrections.append({"path": ["notices", notice_index], "reason": "legacy_qualified_scope_is_not_a_general_molecule_whitelist"})
     if corrections:
         instructions = {
+            "goal_requires_exact_registered_targets":
+                "Bind this molecular Goal to its exact available system IDs (one target for input acquisition), including report/seed/delivery Goals. Do not drop a Goal or invent a target to fix the binding.",
+            "minimum_evidence_requires_exact_user_wording":
+                "Keep this minimum-evidence obligation, but express it using a contiguous exact quote from user_text or an applicable registered requirement. Do not paraphrase/reorder the quote, invent a guarantee, delete a requirement, or weaken its numbers and units.",
             "authorized_default_requires_explicit_adoption":
                 "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field.",
             "input_preparation_has_no_scientific_geometry_relation": _INPUT_RELATION_INSTRUCTION,
@@ -528,7 +576,9 @@ def _validate_general_intake(candidate, request, messages, run):
             "preserve_explicit_geometry_relation":
                 "Set this geometry_relation to the supplied required_relation grounded in user text. Preserve the Goal, quantity, target and minimum evidence; the program will not fill in the relation.",
             "geometry_relation_is_unknown_or_ambiguous_in_user_text":
-                "Omit this geometry_relation or set it to null when the user text does not unambiguously select one. Preserve a genuine ambiguity for clarification instead of choosing a relation from the port name.",
+                "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification.",
+            "preserve_general_geometry_obligation":
+                "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation.",
             "preserve_explicit_unit_requirement":
                 "Add the supplied exact user_evidence unit phrase to this minimum_evidence array without removing other requirements. Retain it as an obligation; an unverified unit does not satisfy it.",
             "checker_coverage_is_a_delivery_limitation_not_a_user_gap":
@@ -957,6 +1007,142 @@ def _field(name, item, request, messages, *, system=None):
     return value, item.source, evidence
 
 
+_GEOMETRY_NOUN = r"(?:候选|构象|结构|几何|坐标|副本|XYZ|candidate|conformer|structure|geometr(?:y|ies)|coordinates?|cop(?:y|ies))"
+_GEOMETRY_MEMBER = r"(?:候选|构象|结构|几何|副本|XYZ|candidate|conformer|structure|geometr(?:y|ies)|cop(?:y|ies))"
+_DERIVED_GEOMETRY = re.compile(
+    r"(?:每(?:个|份|种)|各(?:个|份|种)?|不同|多(?:个|份|种)|至少\s*[二三四五六七八九十\d]+|[二两三四五六七八九十2-9]\s*[个份种])"
+    r"[^，,。.;；、\n]{0,24}" + _GEOMETRY_MEMBER
+    + r"|\b(?:each|different|multiple|several|at\s+least\s+\d+)\b[^，,。.;；、\n]{0,40}" + _GEOMETRY_MEMBER
+    + r"|(?:每个|所有|各)(?:扫描)?点的(?:结构|几何|坐标)"
+    + r"|\b(?:each|all)\s+(?:scan\s+)?points?\b.{0,24}(?:structure|geometry|coordinates?)"
+    + r"|(?:旋转|平移|变换|变形|rotate|rotat(?:ed|ion)|translate|transform).{0,40}" + _GEOMETRY_NOUN
+    + r"|" + _GEOMETRY_NOUN + r".{0,40}(?:旋转|平移|变换|变形|rotate|rotation|translate|transform)",
+    re.I)
+_GEOMETRY_CONSTRAINT = re.compile(
+    r"单点|固定|初始|原子顺序|内部几何|优化|坐标|XYZ|hash|哈希|"
+    r"\b(?:single[- ]point|fixed|initial|atom\s+order|internal\s+geometry|optimi[sz]\w*|coordinates?)\b",
+    re.I)
+_INITIAL_XYZ = re.compile(
+    r"(?:初始|已注册|注册的|已提供|提供的|已准备|准备的)\s*(?:XYZ|坐标)|"
+    r"\b(?:initial|registered|provided|prepared)\s+(?:XYZ|coordinates?)\b", re.I)
+_SHARED_COORDINATES = re.compile(
+    r"(?:保持|使用).{0,24}(?:完全相同|相同|同一份).{0,24}坐标|共用\s*XYZ|"
+    r"\b(?:keep|use|share)\s+(?:the\s+)?(?:exactly\s+)?same\s+(?:XYZ|coordinates?)\b", re.I)
+_INITIAL_HASH = re.compile(
+    r"(?:" + _INITIAL_XYZ.pattern + r").{0,32}(?:hash|哈希|字节).{0,16}(?:相同|一致|不变|不改变)|"
+    r"(?:保持|不改变|不得改变|相同|一致).{0,24}(?:" + _INITIAL_XYZ.pattern + r").{0,24}(?:hash|哈希|字节)|"
+    r"\b(?:keep|same|unchanged|identical|preserve)\b.{0,40}(?:initial|registered|provided|prepared)"
+    r"\s+(?:XYZ|coordinate\w*).{0,24}(?:hash|bytes)\b", re.I)
+
+
+def _general_geometry_clauses(request, message, item):
+    system = next((system for system in request.systems if item.system_refs == [system.id]), None)
+    return [clause for clause, _ in _field_propositions(
+        request, message, 0, len(message["text"]), system=system)]
+
+
+def _task_geometry_clauses(request, message, item):
+    """Positive coordinate multiplicity/transform intent, never permission."""
+    return [clause for clause in _general_geometry_clauses(request, message, item)
+            if _DERIVED_GEOMETRY.search(clause) and not re.search(
+                r"不要|不得|不能|禁止|不分别|不单独|无需|无须|是否|未知|不确定|"
+                r"\b(?:not|never|without|unknown|uncertain|whether)\b|n't\b", clause, re.I)]
+
+
+def _general_geometry_context(request, message, item):
+    """A property clause can constrain its Goal, not every Goal in the message."""
+    _, start, _ = _locate(item.text_basis, [message], item.message_id)
+    occurrences = [(start + match.start(), start + match.end())
+                   for match in re.finditer(re.escape(item.quantity or ""), item.text_basis)
+                   if item.quantity]
+    text = message["text"]
+    contexts = []
+    sentences = list(re.finditer(r"[^。.;；\n!?？]+", text))
+    for sentence_index, sentence in enumerate(sentences):
+        relevant = [(begin, stop) for begin, stop in occurrences
+                    if sentence.start() < stop and sentence.end() > begin]
+        if not relevant:
+            continue
+        # A preceding instruction in this same sentence also applies when
+        # the candidate quotes only the property, e.g. "optimize, then energy".
+        last = max(stop for _, stop in relevant)
+        clauses = [part for left, _, part in _propositions(sentence.group())
+                   if sentence.start() + left < last]
+        context = "，".join(clauses)
+        if sentence_index:
+            previous = sentences[sentence_index - 1].group()
+            # A standalone geometry condition continues into the next
+            # sentence. A previous calculation/report is a separate Goal,
+            # not a condition to stamp onto every later Goal.
+            separate_action = re.search(
+                r"计算|分析|交付|报告|记录|检验|比较|扫描|"
+                r"\b(?:calculate|compute|analy[sz]e|deliver|report|record|check|compare|scan)\b",
+                previous, re.I)
+            if not separate_action:
+                context = previous + "，" + context
+        contexts.append(context)
+    return "，".join(contexts)
+
+
+def _general_scalar_geometry_relation(request, message, item, context):
+    relation = _text_geometry_relation(request, [{"text": context}], item.system_refs)
+    clauses = _general_geometry_clauses(request, message, item)
+    # A hard initial-byte restriction cannot be erased merely because another
+    # clause mentions candidates. Explicitly incompatible instructions remain
+    # constrained, rather than becoming implicit execution authorization.
+    hard_initial = any(_INITIAL_HASH.search(clause) and not re.search(
+        r"不要求|无需|无须|是否|未知|不确定|\b(?:not\s+required|unknown|uncertain|whether)\b",
+        clause, re.I) for clause in clauses)
+    explicit_initial = bool(_INITIAL_XYZ.search(context))
+    if hard_initial or (explicit_initial or _SHARED_COORDINATES.search(context)) and relation != "optimized" and not re.search(
+            r"不要|不得使用|不能使用|禁止使用|未知|不确定|是否|"
+            r"\b(?:not|never|without|unknown|uncertain|whether)\b|n't\b", context, re.I):
+        return "fixed_initial"
+    if _task_geometry_clauses(request, message, item):
+        # A true initial-geometry scalar Goal is still expressible alongside
+        # candidate generation; per-candidate or transformed-coordinate Goals
+        # have no single initial hash/optimized-result relation.
+        return "fixed_initial" if relation == "fixed_initial" and re.search(
+            r"初始几何|\binitial\s+geometry\b", context, re.I) else None
+    if relation == "fixed_initial" and not re.search(
+            r"初始几何|固定几何|(?:保持|使用|共用).{0,20}(?:相同|同一份).{0,20}(?:坐标|几何)|"
+            r"\b(?:(?:initial|fixed)\s+geometry|(?:keep|use|share)\s+(?:the\s+)?same\s+(?:coordinates|geometry))\b",
+            context, re.I):
+        # SP specifies an operation on its supplied geometry, not the identity
+        # of that geometry. Legacy scalar SP semantics remain separate.
+        return None
+    return relation
+
+
+def _general_goal_geometry_relation(request, message, item):
+    context = _general_geometry_context(request, message, item)
+    relation = _general_scalar_geometry_relation(request, message, item, context)
+    if relation is None and item.geometry_relation is not None:
+        # An explicit proposal may link a property to a preceding geometry
+        # instruction. Validate that choice against the whole message, but do
+        # not manufacture the same scalar label for unrelated delivery Goals.
+        relation = _general_scalar_geometry_relation(request, message, item, message["text"])
+    return relation
+
+
+def _general_geometry_obligations(request, message, item):
+    """Retain non-scalar geometry instructions as authenticated source text."""
+    context = _general_geometry_context(request, message, item)
+    multiple = _task_geometry_clauses(request, message, item)
+    if not multiple:
+        # Even a single general SP operation need not mean the registered
+        # initial XYZ. Preserve its operation type when a quote clips it off.
+        return [clause for clause in _general_geometry_clauses(request, message, item)
+                if clause in context and re.search(r"单点|\b(?:sp|single[- ]point)\b", clause, re.I)]
+    if not (_GEOMETRY_CONSTRAINT.search(context) or _DERIVED_GEOMETRY.search(context)):
+        return []
+    return [clause for clause in _general_geometry_clauses(request, message, item)
+            if (_DERIVED_GEOMETRY.search(clause) or _GEOMETRY_CONSTRAINT.search(clause)
+                or re.search(r"(?:独立|真实|实际|第二次|两次).{0,32}(?:计算|ORCA|结果)|"
+                             r"\b(?:independent|real|actual|second|both)\b.{0,40}"
+                             r"(?:calculat|computation|ORCA|result)", clause, re.I))]
+
+
 def _text_geometry_relation(request, messages, system_ids):
     """Finite grounding for new text intake; silence never selects SP or Opt."""
     scope = next((s for s in request.systems if system_ids == [s.id]), None)
@@ -987,13 +1173,25 @@ def _text_geometry_relation(request, messages, system_ids):
                 denied.add("optimized")
                 clause = re.sub(forbidden_label, " ", clause, flags=re.I)
                 relation_text = re.sub(forbidden_label, " ", relation_text, flags=re.I)
+            forbidden_operation = (
+                r"(?:不(?:要|得|能|许|必|需|须)?|禁止|无需|无须|别)\s*(?:分别|单独|重新|再)?\s*优化"
+                r"|\b(?:do\s+not|don't|never|must\s+not|without)\s+(?:(?:separately|independently)\s+)?"
+                r"optimi[sz](?:e|ing|ation)\b")
+            if re.search(forbidden_operation, clause, re.I):
+                denied.add("optimized")
+                clause = re.sub(forbidden_operation, " ", clause, flags=re.I)
+                relation_text = re.sub(forbidden_operation, " ", relation_text, flags=re.I)
             if re.search(r"不要|不得|不确定|未知|\b(?:not|unknown|uncertain)\b", clause, re.I):
                 if re.search(r"几何|单点|优化|\b(?:geometry|sp|opt|optimization|energy\s+relation)\b", clause, re.I):
                     uncertain = True
                 continue
             if re.search(r"优化|\b(?:opt|optimi[sz](?:e|ed|ation))\b", clause, re.I):
                 current.add("optimized")
-            if re.search(r"单点|初始几何|\b(?:sp|single[- ]point|initial\s+geometry)\b", relation_text, re.I):
+            if re.search(r"单点|初始几何|固定几何|"
+                         r"(?:保持|使用|共用).{0,20}(?:相同|同一份).{0,20}(?:坐标|几何)|"
+                         r"\b(?:sp|single[- ]point|(?:initial|fixed)\s+geometry|"
+                         r"(?:keep|use|share)\s+(?:the\s+)?same\s+(?:coordinates|geometry))\b",
+                         relation_text, re.I):
                 current.add("fixed_initial")
         if uncertain or current & denied:
             selected = set()
@@ -1103,6 +1301,20 @@ def _explicit_energy_requests(request, messages):
 
 def _require_energy_coverage(candidate, request, messages, goals):
     missing = []
+    def energy_quantity(goal, obligation):
+        if goal.evidence_contract_version != "generic-observation-1":
+            return goal.port == "energy"
+        # General quantities, not registry spellings, identify the requested
+        # physical output. Match an authenticated occurrence in this obligation;
+        # an unrelated energy mention in a key/reason/other clause cannot cover it.
+        quantity = goal.quantity or ""
+        evidence = goal.text_evidence
+        return (bool(_ELECTRONIC_ENERGY.search(quantity))
+                and evidence.get("message_id") == obligation["message_id"]
+                and any(evidence["start"] + match.start() < obligation["end"]
+                        and evidence["start"] + match.end() > obligation["start"]
+                        for match in re.finditer(re.escape(quantity), goal.original_text)))
+
     def goal_targets(goal):
         known = goal.identity.get("canonical_names", [])
         # Coverage has independently grounded the target in user text. An
@@ -1110,17 +1322,30 @@ def _require_energy_coverage(candidate, request, messages, goals):
         # registry uniqueness alone never creates a new target obligation.
         return set(known) if known else {_registered_identity(system) for system in request.systems
                                          if system.id in goal.system_ids}
+
+    def geometry_matches(goal, obligation):
+        required = obligation["geometry_relation"]
+        if goal.evidence_contract_version == "generic-observation-1":
+            item = next((item for item in candidate.goals or [] if goal.id == "goal_" + item.key), None)
+            if item is None:
+                return False
+            message, _, _ = _locate(item.text_basis, messages, item.message_id)
+            # Reuse general geometry grounding: per-candidate SP is not the
+            # legacy scalar obligation to reuse one exact initial XYZ.
+            required = _general_goal_geometry_relation(request, message, item)
+        return required is None or goal.conditions.get("geometry_relation") == required
+
     for obligation in _explicit_energy_requests(request, messages):
-        if any(goal.port == "energy" and goal.required
+        if any(energy_quantity(goal, obligation) and goal.required
                and (obligation["target"] is None
                     or goal_targets(goal) == {obligation["target"]})
-               and (obligation["geometry_relation"] is None
-                    or goal.conditions.get("geometry_relation") == obligation["geometry_relation"])
+               and geometry_matches(goal, obligation)
                for goal in goals):
             continue
         missing.append(obligation)
     if missing:
         raise ProposalError("Preserve each explicit electronic-energy request as a required energy Goal "
+                            "or an authenticated general electronic-energy quantity "
                             "with its named target and stated geometry relation; a key, reason or "
                             "optimized_geometry Goal cannot substitute.",
                             path=["parameters", "goals"], missing_energy_requests=missing)

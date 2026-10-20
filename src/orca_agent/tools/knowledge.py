@@ -194,7 +194,7 @@ class _ManualLinks(HTMLParser):
                 self.links.append(reference)
 
 
-def retrieve(store, run, call):
+def _retrieve(store, run, call):
     identifier = call.parameters["document"]
     if identifier in DOCUMENTS:
         title, url = DOCUMENTS[identifier]
@@ -245,7 +245,34 @@ def retrieve(store, run, call):
         links = _ManualLinks(url)
         links.feed(text)
         result["manual_references"] = links.links
-    return result
+    return result, bytes(raw), metadata["format"]
+
+
+def retrieve(store, run, call):
+    """Archive the bytes from this one retrieval, without another request or conversion."""
+    from orca_agent.store import BudgetExceeded, atomic_write
+
+    result, raw, format_name = _retrieve(store, run, call)
+    filename = "document.html" if format_name == "html" else "document.txt"
+    path = store.path(f"runs/{run.id}/calls/{call.id}/{filename}")
+    atomic_write(path, raw, immutable=True)
+    source = {"run_id": run.id, "call_id": call.id, "tool": call.tool,
+              "url": result["url"], "document_id": result["document_id"],
+              "document_version": result["document_version"], "accessed_at": result["accessed_at"],
+              "byte_semantics": "HTTP content-decoded body before UTF-8 text decoding; packaged guides use UTF-8 bytes",
+              "scientific_qualification": False}
+    try:
+        artifact = store.import_artifact(path, "knowledge_document", run_id=run.id,
+                                         source=source, expected_sha256=result["document_sha256"])
+    except BudgetExceeded:
+        return {**result, "status": "archive_failed", "operation_status": "failed",
+                "document_archive_complete": False, "artifact_ids": [],
+                "diagnostics": [{"category": "document_archive_failed", "reason": "artifact_budget_exhausted",
+                                 "raw_call_file_retained": filename}],
+                "source": source}
+    return {**result, "artifact_ids": [artifact.id], "document_artifact_id": artifact.id,
+            "document_archive_complete": True, "document_bytes": len(raw),
+            "source": {**source, "files": {filename: {"artifact_id": artifact.id, "sha256": artifact.sha256}}}}
 
 
 def question_source_facts(store, source_run):

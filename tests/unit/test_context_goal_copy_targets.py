@@ -75,7 +75,8 @@ def test_planning_prompt_uses_request_ids_when_status_contains_retired_goal():
     wire = decoded(prepared)
     if wire["AUTHORITY"].get("response_contract") == "decision-intent-2":
         assert any(instruction in prompt for instruction in (
-            "Map every required Goal ID/port.", "Keep Goal IDs/ports/satisfied bindings."))
+            "Map new or changed Goal bindings with their exact IDs/ports.",
+            "Keep Goal IDs/ports; unchanged settled bindings are retained."))
         assert set(wire["RESPONSE_ENVELOPE"]) == {"action", "parameters", "reason"}
         assert "initial_plan" in wire["ACTION_SCHEMAS"]
     else:

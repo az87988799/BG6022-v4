@@ -1,0 +1,85 @@
+# Re-frozen regression profile. This file does not authorize a live run.
+# Explicit generated-code profile. Install the licensed ORCA image before use.
+# No credentials, molecular algorithm, Plan or task script belongs in this file.
+data_root = 'data/code-tools-refreeze-1'
+model_profile = 'thinking_low' # Explicit profile; each Run freezes its configuration.
+
+[resources]
+max_cores = 4
+total_memory_mb = 1024
+maxcore_mb = 192
+environment_concurrency = 1
+job_timeout_seconds = 900
+script_timeout_seconds = 1200
+collection_timeout_seconds = 180
+
+[model]
+model_name = 'deepseek-flash'
+input_tokens = 64000
+output_tokens = 32768
+timeout_seconds = 180
+response_bytes = 524288
+proposal_bytes = 131072
+
+[execution]
+backend = 'linux-container'
+docker_path = 'C:\Program Files\Docker\Docker\resources\bin\docker.exe'
+docker_context = 'desktop-linux'
+# Fixed local image with the current receipt_source SDK; never migrates old Runs.
+image_id = 'sha256:9f94e9441855d81fcfdf694b9330808cfeee12637ef1093532f56ad129000df3'
+manifest_sha256 = 'cfad02c520be38c57130d9e25fc6420874f6248dfa6c762cc4621e4336f0cba4'
+
+[execution.native_input_policy]
+profile = 'managed-native-1'
+allow_task_geometry = true # New Runs only; preserves initial geometry and ordered elements.
+max_atoms = 1024
+max_geom_iterations = 128
+max_scf_iterations = 256
+max_response_iterations = 128
+
+[text]
+enabled = true
+
+[text.defaults]
+# Disclosed profile defaults, never inferred from electron parity.
+charge = 0
+multiplicity = 1
+electronic_state = 'RKS'
+environment = 'gas_phase'
+
+[text.permission]
+model_execution = true
+scientific_execution = true
+code_execution = true
+artifact_writes = true
+external_identity_queries = true
+geometry_preparation = true
+allowed_tools = ['structure.resolve', 'structure.prepare', 'workspace.write', 'python.execute', 'orca.run', 'evidence.list', 'evidence.discover', 'evidence.search', 'evidence.value', 'evidence.text', 'knowledge.search', 'knowledge.answer']
+max_cores = 4
+max_memory_mb = 1024
+allow_additional_science = true
+
+[text.budget]
+logical_steps = 12
+attempts_per_step = 3
+orca_starts = 12
+extra_orca_starts = 11
+internal_work_units = 10000
+code_retries = 2
+run_seconds = 7200
+model_calls = 24
+plan_revisions = 12
+model_tokens = 1200000
+input_tokens = 64000
+output_tokens = 32768
+decision_rounds = 40
+evidence_reads = 12
+analysis_executions = 4
+corrections_per_proposal = 2
+transport_retries = 0
+identity_queries = 2
+structure_preparations = 1
+knowledge_queries = 4
+artifact_count = 800
+artifact_bytes = 268435456
+artifact_total_bytes = 268435456

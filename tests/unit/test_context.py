@@ -151,7 +151,7 @@ def test_actual_proposal_schema_and_bounded_default_context():
     request, run = objects()
     context = build_context(request, run, relevant_tools=["orca.sp", "orca.opt"])
     data = payload(context)
-    assert context.prompt_version == "agent-json-v59"
+    assert context.prompt_version == "agent-json-v73"
     assert "reason<=1000" in context.body()["messages"][0]["content"]
     assert context.input_token_bound < 12000
     assert set(data["PROPOSAL_SCHEMA"]["properties"]) == set(Proposal.model_fields)
@@ -250,7 +250,9 @@ def test_native_envelope_and_step_examples_have_no_action_wrapper_or_input_alias
     prepared = build_context(request, run, relevant_tools=run.permission.allowed_tools)
     raw = json.loads(prepared.body()["messages"][1]["content"])
     data = payload(prepared)
-    assert list(raw)[-1] == "RESPONSE_ENVELOPE"
+    # Stable contracts precede volatile state in the current wire format.
+    assert list(raw)[-3:] == ["AUTHORITY", "CONTROL", "DATA"]
+    assert list(raw).index("RESPONSE_ENVELOPE") < list(raw).index("AUTHORITY")
     envelope = raw["RESPONSE_ENVELOPE"]
     assert set(envelope) == set(Proposal.model_fields)
     for key in ("request_version", "plan_version", "permission_version", "control_generation", "related_results"):
@@ -280,7 +282,9 @@ def test_action_enum_comes_from_current_native_examples_and_reason_template(stat
         run.goal_status = {"energy": "satisfied"}
     context = build_context(request, run, plan, feedback=feedback)
     data = payload(context)
-    actions = list(data["ACTION_PARAMETERS"])
+    actions = data["PROPOSAL_SCHEMA"]["properties"]["action"]["enum"]
+    # JSON object key ordering is canonicalized independently of enum order.
+    assert set(actions) == set(data["ACTION_PARAMETERS"]) and len(actions) == len(set(actions))
     assert data["PROPOSAL_SCHEMA"]["properties"]["action"] == {"enum": actions}
     if state == "needs_revision":
         assert actions == ["revise_plan", "clarify", "stop"]

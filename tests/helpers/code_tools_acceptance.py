@@ -46,10 +46,32 @@ def write_new(path, value):
         stream.write("\n")
 
 
-def asset_files(project):
+def acceptance_directory(project, directory=DIRECTORY):
     project = Path(project).resolve(strict=True)
+    candidate = project / directory
+    if (Path(directory).is_absolute() or ".." in Path(directory).parts
+            or not candidate.resolve().is_relative_to(project / "docs/acceptance")
+            or any(batch._is_link(item) for item in (candidate, *candidate.parents))):
+        raise FreezeError("acceptance directory must remain inside repository docs/acceptance")
+    return candidate
+
+
+def candidate_batch_root(project, value):
+    """Check lexical path components before resolving, including the data root."""
+    project = Path(project).absolute()
+    data = batch._root(project / "data")
+    root = batch._root(project / value)
+    if root == data or not root.is_relative_to(data):
+        raise FreezeError("batch root must be a directory inside repository data")
+    return root
+
+
+def asset_files(project, *, directory=DIRECTORY):
+    project = Path(project).resolve(strict=True)
+    selected = acceptance_directory(project, directory).relative_to(project).as_posix()
+    excluded = {f"{selected}/{name}" for name in ("evaluation-freeze.json", "report.md", "validation.json")}
     names = set()
-    for relative in ASSET_ROOTS:
+    for relative in ("scripts", "tests/helpers", selected):
         directory = project / relative
         if (not directory.is_dir() or directory.is_symlink()
                 or getattr(directory, "is_junction", lambda: False)()
@@ -65,7 +87,7 @@ def asset_files(project):
             for name in files:
                 item = Path(current) / name
                 relative_name = item.relative_to(project).as_posix()
-                if item.suffix not in {".pyc", ".pyo"} and relative_name not in EXCLUDED:
+                if item.suffix not in {".pyc", ".pyo"} and relative_name not in excluded:
                     names.add(relative_name)
     for item in (project / "tests/unit").glob("test_code_tools_*.py"):
         if item.is_symlink() or not item.resolve().is_relative_to(project):
@@ -79,7 +101,7 @@ def asset_files(project):
             raise FreezeError("test package initializer is not an ordinary file")
         names.add("tests/__init__.py")
     for required in REQUIRED:
-        if f"{DIRECTORY}/{required}" not in names:
+        if f"{selected}/{required}" not in names:
             raise FreezeError("missing required acceptance asset: " + required)
     return {name: digest(project / name) for name in sorted(names)}
 
@@ -97,8 +119,8 @@ def validate_helper_imports(project):
                 raise FreezeError("acceptance helper import origin changed")
 
 
-def task_texts(project):
-    directory = Path(project) / DIRECTORY
+def task_texts(project, *, directory=DIRECTORY):
+    directory = acceptance_directory(project, directory)
     public = read_json(directory / "public-tasks.json")
     holdouts = read_json(directory / "holdout-selection.json")
     controls = read_json(directory / "controls.json")
@@ -132,10 +154,12 @@ def task_texts(project):
     return texts
 
 
-def check_rules(project):
-    directory = Path(project) / DIRECTORY
+def check_rules(project, *, directory=DIRECTORY):
+    selected = directory
+    directory = acceptance_directory(project, selected)
     product = read_json(directory / "product-freeze.json")
     event = read_json(directory / "product-freeze-event.json")
+    candidate_batch_root(project, event["batch_root"])
     holdouts = read_json(directory / "holdout-selection.json")
     product_sha = digest(directory / "product-freeze.json")
     if (event["product_manifest_sha256"] != product_sha
@@ -144,7 +168,19 @@ def check_rules(project):
             or datetime.fromisoformat(holdouts["selected_at_utc"])
             <= datetime.fromisoformat(event["frozen_at_utc"])):
         raise FreezeError("holdouts must bind the already frozen product")
-    texts = task_texts(project)
+    if (directory / "prior-holdout-selection.json").exists() and (
+            holdouts.get("selection_kind") != "user_requested_regression"):
+        raise FreezeError("regression tasks must disclose prior exposure")
+    if holdouts.get("selection_kind") == "user_requested_regression":
+        source = read_json(directory / "prior-holdout-selection.json")
+        if (holdouts.get("novelty_status") != "previously_exposed_not_a_fresh_holdout"
+                or digest(directory / "prior-holdout-selection.json") != holdouts.get("source_selection_sha256")
+                or holdouts["tasks"] != source["tasks"]
+                or holdouts["repetitions"] != source["repetitions"]):
+            raise FreezeError("regression tasks must retain their prior selection and disclose exposure")
+    elif holdouts.get("selection_kind") not in (None, "post_freeze_holdout"):
+        raise FreezeError("unknown task selection kind")
+    texts = task_texts(project, directory=selected)
     policy = batch._policy(read_json(directory / "batch-policy.json"))
     config = load_config(directory / "runtime.toml")
     if policy["configuration_sha256"] != batch.canonical_sha256(config.model_dump(mode="json")):
@@ -178,17 +214,18 @@ def check_rules(project):
     return {"task_slots": len(slots), "limits": policy["limits"]}
 
 
-def build_evaluation_manifest(project):
-    checks = check_rules(project)
+def build_evaluation_manifest(project, *, directory=DIRECTORY):
+    checks = check_rules(project, directory=directory)
     return {"schema_version": 1, "product_manifest_sha256": digest(
-        Path(project) / DIRECTORY / "product-freeze.json"),
-        "assets": asset_files(project), "rules": checks,
+        acceptance_directory(project, directory) / "product-freeze.json"),
+        "assets": asset_files(project, directory=directory), "rules": checks,
         "scope": "integrity and bounded preparation only; no scientific scores"}
 
 
-def verify(project, *, inspect_runtime=False):
+def verify(project, *, inspect_runtime=False, directory=DIRECTORY):
     """A static check never claims that cached runtime evidence was reobserved."""
-    directory = Path(project) / DIRECTORY
+    selected = directory
+    directory = acceptance_directory(project, selected)
     validate_helper_imports(project)
     manifest = read_json(directory / "product-freeze.json")
     config = load_config(directory / "runtime.toml")
@@ -198,7 +235,7 @@ def verify(project, *, inspect_runtime=False):
     else:
         runtime = {k: v for k, v in manifest["runtime"].items() if k != "coverage"}
     product = validate_product_manifest(project, manifest, config, runtime=runtime)
-    expected = build_evaluation_manifest(project)
+    expected = build_evaluation_manifest(project, directory=selected)
     if expected != read_json(directory / "evaluation-freeze.json"):
         raise FreezeError("evaluation assets or their file set changed after freeze")
     return {**product, "runtime_reobserved": inspect_runtime,
@@ -207,19 +244,20 @@ def verify(project, *, inspect_runtime=False):
         **expected["rules"], "model_calls": 0, "orca_starts": 0}
 
 
-def initialize_batch(project):
-    verified = verify(project, inspect_runtime=True)
-    directory = Path(project) / DIRECTORY
+def initialize_batch(project, *, directory=DIRECTORY):
+    verified = verify(project, inspect_runtime=True, directory=directory)
+    directory = acceptance_directory(project, directory)
     event = read_json(directory / "product-freeze-event.json")
     return batch.create_batch(event["batch_root"], freeze_sha256=verified["evaluation_sha256"],
         policy=read_json(directory / "batch-policy.json"),
         environment_root=event["environment_root"])
 
 
-def prepare(project, *, task_id, repeat, category):
+def prepare(project, *, task_id, repeat, category, directory=DIRECTORY):
     """Reserve and prepare only. It does not create or execute a product Run."""
-    initialize_batch(project)
-    directory = Path(project) / DIRECTORY
+    selected = directory
+    initialize_batch(project, directory=selected)
+    directory = acceptance_directory(project, selected)
     policy = read_json(directory / "batch-policy.json")
     event = read_json(directory / "product-freeze-event.json")
     key = batch.slot_id(task_id, repeat, category)
@@ -228,6 +266,6 @@ def prepare(project, *, task_id, repeat, category):
     if slot is None:
         raise FreezeError("task slot is not in the frozen batch")
     batch.reserve_slot(event["batch_root"], task_id=task_id, repeat=repeat, category=category)
-    return batch.prepare_workspace(event["batch_root"], key, original_text=task_texts(project)[key],
+    return batch.prepare_workspace(event["batch_root"], key, original_text=task_texts(project, directory=selected)[key],
         configuration=load_config(directory / "runtime.toml").model_dump(mode="json"),
         run_budget=slot["run_budget"])

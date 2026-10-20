@@ -114,12 +114,13 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
         if request["normalization_status"] == "pending":
             wire["INTENT_RULES"]["instruction"] = (
                 "Interpret current user text: emit schema_version, message_ids, kind=normalize, text_basis, "
-                "goals and conditions. Quote verbatim contiguous user text. For coordinated goals reuse the whole "
-                "original sentence in each text_basis; never reconstruct a phrase by omitting intervening words. "
+                "goals and conditions. Quote verbatim contiguous user text. Use the complete relevant clause/sentence "
+                "for each text_basis, including shared conditions; never reconstruct a phrase by omitting intervening words. "
+                "quantity and each nonregistered minimum_evidence must also be contiguous exact user quotes. "
                 "Shared physical conditions go once "
                 "in top-level conditions; preserve differing/scoped values in system_conditions or Goal.conditions. "
-                "Each new Goal binds its system_refs directly; "
-                "omit goal_bindings/replaces/resolves. energy/dipole_moment Goal geometry_relation=fixed_initial for SP, "
+                "Each new molecular Goal, including delivery and seed records, binds its system_refs directly; "
+                "omit goal_bindings/replaces/resolves. Legacy scalar energy/dipole_moment Goal geometry_relation=fixed_initial for SP, "
                 "optimized for optimized properties; ambiguous relation needs clarification. Conditions need "
                 "source and text_basis for explicit values; allowed defaults use default_rule=local-hf-1. "
                 "Omit unused optional fields. Preserve unsupported/unknown requirements. "
@@ -128,6 +129,16 @@ def readable_context(template, envelope, *, semantic_intake, tools, confirmed_pa
                 "physical conditions and geometry_relation. The question is its original text_basis. "
                 "A knowledge explanation never needs geometry acquisition or ORCA. "
                 "When all requested conditions are clear, omit questions/notices/unresolved.")
+            if "generated_task_intent" in contract:
+                wire["INTENT_RULES"]["instruction"] += (
+                    " For general generated tasks use generated_task_intent: geometry labels constrain the "
+                    "quantity's own clause, not every Goal in the message. Explicit no-optimization never means optimized. "
+                    "A general per-candidate single point or a coordinate transformation preserving internal geometry "
+                    "does not mean one exact initial XYZ; omit an inapplicable scalar relation while retaining every "
+                    "original geometry restriction and independently required calculation in text_basis/minimum_evidence. "
+                    "An explicit initial XYZ/hash constraint must remain fixed_initial. "
+                    "Before submission explicitly adopt every applicable authorized_default with its exact source/default_rule; "
+                    "do not leave a configured applicable default merely implicit.")
     else:
         wire["TOOLS"] = [{key: value for key, value in tool.items() if key in {
             "name", "description", "effects", "input_roles", "output_ports",

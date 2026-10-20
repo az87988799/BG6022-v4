@@ -12,7 +12,9 @@ from tests.unit.test_semantic_control import candidate
 
 
 @pytest.mark.parametrize("scientific_permission", [False, True])
-def test_no_calculation_instruction_still_delivers_existing_field_query(tmp_path, monkeypatch, scientific_permission):
+@pytest.mark.parametrize("quantity", [None, "field a"])
+def test_no_calculation_instruction_still_delivers_existing_field_query(
+        tmp_path, monkeypatch, scientific_permission, quantity):
     store = store_at(tmp_path)
     raw = tmp_path / "raw.json"
     raw.write_text('{"a": 3}', encoding="utf-8")
@@ -24,7 +26,8 @@ def test_no_calculation_instruction_still_delivers_existing_field_query(tmp_path
     permission = run.permission.model_dump_json()
     monkeypatch.setattr(agent, "_science", lambda *args, **kwargs: pytest.fail("read-only scope reached science"))
     normalize = {"action": "normalize_request", "parameters": candidate(store, run, kind="normalize", goals=[{
-        "key": "read", "port": "value_observation", "text_basis": "Read field a from the registered file",
+        "key": "read", "port": "value_observation", "quantity": quantity,
+        "text_basis": "Read field a from the registered file",
         "query": {"artifact_id": artifact.id, "path": [{"kind": "key", "key": "a"}]}}])}
     transport = ScriptedTransport(normalize, initial_proposal)
     completed = agent.execute(store, Config(), run.id, transport=transport)
@@ -38,6 +41,7 @@ def test_no_calculation_instruction_still_delivers_existing_field_query(tmp_path
     request = store.load_request(completed)
     assert request.method is request.basis is request.charge is request.multiplicity is None
     assert request.unresolved == request.goals[0].unresolved == []
+    assert request.goals[0].evidence_contract_version == "legacy-1"
     assert store.active_clarification(completed) is None
     result = store.load_result(completed.id, completed.result_ids[0])
     assert result.observations["value_observation"]["value"] == 3

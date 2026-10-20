@@ -18,19 +18,19 @@ def outcome(state="completed"):
             "reason": "unit test execution fact only; no process was launched"}
 
 
-@pytest.mark.parametrize("snapshot,field,value", [
-    ("permission", "code_execution", False),
-    ("budget", "orca_starts", 1000),
+@pytest.mark.parametrize("snapshot,field,value,diagnostic", [
+    ("permission", "code_execution", False, "immutable permission changed"),
+    ("budget", "orca_starts", 1000, "budget snapshot mismatch"),
 ])
 def test_managed_control_revalidates_immutable_admission_snapshots(
-    tmp_path, monkeypatch, snapshot, field, value,
+    tmp_path, monkeypatch, snapshot, field, value, diagnostic,
 ):
     store, run, step, _ = make_task(tmp_path, monkeypatch)
     path = store.path(f"runs/{run.id}/{snapshot}.json")
     changed = json.loads(path.read_bytes())
     changed[field] = value
     path.write_text(json.dumps(changed), encoding="utf-8")
-    with pytest.raises(ValueError, match=f"immutable {snapshot} changed"):
+    with pytest.raises(ValueError, match=diagnostic):
         managed._control(store, run, step)
     assert not run.attempts
     assert run.usage.orca_starts_reserved == 0

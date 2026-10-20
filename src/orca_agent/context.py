@@ -444,7 +444,8 @@ def optimize_model_messages(messages, max_output_tokens, *, source_references=No
     for tool in optimized.get("TOOLS", []):
         if tool.get("immediate"):
             definition = get_tool(tool["name"])
-            if set(definition.effects) <= {"read_registered_artifact", "query_external_document", "query_external_identity"}:
+            if set(definition.effects) <= {"read_registered_artifact", "query_external_document", "query_external_identity",
+                                           "archive_retrieved_evidence"}:
                 short.add(tool["name"])
     minimum = None
     if actions <= {"stop", "clarify"} and "stop" in actions:
@@ -946,7 +947,13 @@ def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
         summary["unqualified_observations"] = {"document_excerpt": _safe(document)}
         from orca_agent.tools.knowledge import DOCUMENTS
         if document.get("url") in {entry[1] for entry in DOCUMENTS.values()}:
-            summary["unqualified_observations"]["document_excerpt"]["url"] = document["url"]
+            projected_document = summary["unqualified_observations"]["document_excerpt"]
+            projected_document["url"] = document["url"]
+            source = document.get("source")
+            # Preserve the same approved locator in the archival receipt.
+            # Other nested URLs and paths still pass through normal redaction.
+            if isinstance(source, dict) and source.get("url") == document["url"]:
+                projected_document["source"]["url"] = document["url"]
     written = result.observations.get("written_artifact")
     if (isinstance(written, dict) and result.source.get("tool") == "workspace.write"
             and written.get("artifact_id") in result.artifact_ids):
@@ -1508,7 +1515,8 @@ def _consumed_read_previews(run, originals, projected):
     This is a display window, not history deletion or another evidence read.
     New feedback, failed reads, qualified outputs and task observations stay.
     """
-    query_effects = {"read_registered_artifact", "query_external_document", "query_external_identity"}
+    query_effects = {"read_registered_artifact", "query_external_document", "query_external_identity",
+                     "archive_retrieved_evidence"}
     eligible = [result for result in originals if result.id in run.processed_feedback
         and result.operation_status == "completed"
         and (effects := _call_execution(run, result).get("effects"))

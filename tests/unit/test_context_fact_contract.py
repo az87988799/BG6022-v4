@@ -259,6 +259,11 @@ def test_retained_v8_request_rebuild_preserves_facts_without_rewriting_real_evid
     run.goal_status = authority["goal_status"]
     results = [store.load_result(run.id, result["result_id"]) for result in original["DATA"]["results"]]
     run.result_ids = [result.id for result in results]
+    # The final persisted Run has already consumed this request's feedback.
+    # Reconstruct the pre-send state from its archived related-result boundary,
+    # so a new result cannot be mistaken for an older consumed read preview.
+    run.processed_feedback = [identifier for identifier in run.result_ids
+                              if identifier not in authority["related_results"]]
     run.calls = [call for call in run.calls if call.result_id in run.result_ids]
     run.selected_results = {key: value for key, value in run.selected_results.items() if value in run.result_ids}
     for field in ("model_calls", "model_tokens_used", "model_tokens_unknown", "evidence_reads", "analysis_executions"):

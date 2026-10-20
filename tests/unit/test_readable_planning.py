@@ -8,6 +8,7 @@ from test_structure_input_chain import intake
 from orca_agent import agent, runner
 from orca_agent.context import build_context
 from orca_agent.delivery import collect_delivery_snapshot
+from orca_agent.planning import PlanningError, validate_revision
 from orca_agent.proposals import DecisionIntent, materialize_plan
 
 
@@ -67,3 +68,22 @@ def test_intent_cannot_supply_execution_identity_or_override_known_conditions(tm
         candidate.validate_request(store.load_request(run))
     assert store.load_plan(run) is None
     assert not run.attempts and not run.calls
+
+
+@pytest.mark.parametrize("mutation", ["output_port_as_role", "missing_role", "extra_role"])
+def test_plan_rejects_misbound_input_roles_before_activation_or_execution(tmp_path, mutation):
+    store, run = intake(tmp_path)
+    request = store.load_request(run)
+    values = proposal()
+    inputs = values["steps"][1]["inputs"]
+    if mutation == "output_port_as_role":
+        inputs["resolved_identity"] = inputs.pop("identity")
+    elif mutation == "missing_role":
+        inputs.clear()
+    else:
+        inputs["unregistered_role"] = dict(inputs["identity"])
+    plan = materialize_plan(store, run, values)
+    with pytest.raises(PlanningError, match="Step.inputs requires the declared roles"):
+        validate_revision(request, None, request, plan, run)
+    assert store.load_plan(run) is None and not run.calls and not run.attempts
+    assert run.usage.identity_queries == run.usage.structure_preparations == 0

@@ -10,7 +10,7 @@ from orca_agent import agent
 from orca_agent.config import Config
 from orca_agent.model_usage import current_basis
 from orca_agent.natural import apply_user_update, initialize_bundle
-from orca_agent.semantic import VERSION, commit_candidate
+from orca_agent.semantic import VERSION, commit_candidate, deterministic_message
 from orca_agent.store import ControlChanged, StoreError
 
 
@@ -72,13 +72,38 @@ def test_raw_text_to_request_to_plan_to_query_one_loop(tmp_path):
 
 
 def test_continue_consumes_message_without_a_model_and_keeps_budget(tmp_path):
-    store, run, _, _ = query_run(tmp_path)
+    store, run, _, plan = query_run(tmp_path)
     message = store.enqueue_message(run.id, "继续，沿用之前的全部条件")
-    completed = agent.execute(store, Config(), run.id, transport=ScriptedTransport())
+    updated, action = deterministic_message(store, run)
+    assert action == "continue" and updated.processed_messages == [message]
+    assert updated.usage == run.usage and updated.budget == run.budget
+    assert updated.deadline == run.deadline and store.load_plan(updated) == plan
+    assert not updated.model_records and not updated.calls
+
+
+def test_continue_redecides_before_ready_tool_and_retains_cumulative_budget(tmp_path):
+    store, run, _, plan = query_run(tmp_path)
+    message = store.enqueue_message(run.id, "继续，沿用之前的全部条件")
+
+    def choose_ready_read(data):
+        current = store.load_run(run.id)
+        assert current.processed_messages == [message]
+        assert not current.calls and current.usage.evidence_reads == 0
+        assert current.budget == run.budget and current.deadline == run.deadline
+        assert store.load_plan(current) == plan
+        step_id = data["AUTHORITY"]["plan"]["goal_map"]["read"]["step_id"]
+        assert step_id == plan.steps[0].id
+        return {"action": "call_tool", "parameters": {"step_id": step_id}}
+
+    transport = ScriptedTransport(choose_ready_read)
+    completed = agent.execute(store, Config(), run.id, transport=transport)
     assert completed.state == "completed", completed.diagnostics
     assert completed.processed_messages == [message]
-    assert completed.usage.model_calls == completed.usage.plan_revisions == 0
+    assert completed.usage.model_calls == len(transport.sent) == 1
+    assert completed.usage.model_tokens_used == 75 and completed.usage.model_tokens_unknown == 0
+    assert completed.usage.plan_revisions == 0 and completed.budget == run.budget
     assert completed.usage.evidence_reads == 1 and completed.deadline == run.deadline
+    assert completed.calls[0].step_id == plan.steps[0].id and not completed.attempts
 
 
 @pytest.mark.parametrize("text", ["现在是什么状态", "status"])

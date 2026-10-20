@@ -334,6 +334,87 @@ def test_general_alias_uses_independent_named_entity_and_same_pubchem_cid(tmp_pa
         assert store.artifact_path(artifact_id).read_bytes() == response
 
 
+@pytest.mark.parametrize("original,name,query,smiles,formula", [
+    ("甲醛CH2O", "甲醛", "formaldehyde", "C=O", "CH2O"),
+    ("乙醇（C2H6O）", "乙醇", "ethanol", "CCO", "C2H6O"),
+    ("丙酮 C3H6O", "丙酮", "acetone", "CC(=O)C", "C3H6O"),
+])
+def test_explicit_name_formula_keeps_original_and_requires_independent_name_cid(
+        tmp_path, monkeypatch, original, name, query, smiles, formula):
+    store, run, parameters = intake(tmp_path, name=original, automatic=False)
+    parameters["identities"][0]["query_name"] = query
+    run = commit_candidate(store, run, parameters, decision_id="normalize", basis=current_basis(store, run))
+    search, entities = wikidata(name)
+    responses = [pubchem(smiles, formula), json.dumps({"InformationList": {"Information": [
+        {"CID": 123, "Synonym": [query, formula]}]}}).encode(),
+        json.dumps(search).encode(), json.dumps(entities).encode()]
+    urls = []
+    def receive(_, url, **kwargs):
+        urls.append(url)
+        return 200, responses[len(urls) - 1], True
+    monkeypatch.setattr(structure, "_paced_query", receive)
+    result = structure.resolve(store, run, tool_call(store, run, "structure.resolve", {"system_id": "system_target"}))
+    assert result["operation_status"] == "completed"
+    assert len(urls) == 4  # A matching formula in synonyms is not name evidence.
+    assert urls[2] == structure._wikidata_search_url(name)
+    document = result["identity"]
+    assert document["name_evidence"]["original_name"] == original
+    assert document["name_evidence"]["name_for_evidence"] == name
+    assert document["name_evidence"]["formula_matches_graph"] is True
+    assert document["name_cross_reference"]["original_name"] == name
+    assert document["name_cross_reference"]["pubchem_cid"] == document["cid"]
+    assert store.load_request(run).systems[0].identity["requested_names"] == [original]
+    assert len(result["qualified_outputs"]) == 1 and not run.attempts
+
+
+def test_conflicting_formula_cannot_be_discarded_to_make_a_name_match(tmp_path, monkeypatch):
+    store, run, parameters = intake(tmp_path, name="甲醛CH2O2", automatic=False)
+    parameters["identities"][0]["query_name"] = "formaldehyde"
+    run = commit_candidate(store, run, parameters, decision_id="normalize", basis=current_basis(store, run))
+    calls = []
+    def receive(_, url, **kwargs):
+        calls.append(url)
+        return 200, pubchem("C=O", "CH2O"), True
+    monkeypatch.setattr(structure, "_paced_query", receive)
+    result = structure.resolve(store, run, tool_call(store, run, "structure.resolve", {"system_id": "system_target"}))
+    assert result["operation_status"] == "failed" and not result["qualified_outputs"]
+    assert "formula conflicts" in result["diagnostics"][0]["detail"]
+    assert len(calls) == len(result["artifact_ids"]) == 1
+
+
+def test_matching_formula_without_independent_name_evidence_is_not_qualified(tmp_path, monkeypatch):
+    store, run, parameters = intake(tmp_path, name="未知名称CH2O", automatic=False)
+    parameters["identities"][0]["query_name"] = "formaldehyde"
+    run = commit_candidate(store, run, parameters, decision_id="normalize", basis=current_basis(store, run))
+    responses = [pubchem("C=O", "CH2O"), json.dumps({"InformationList": {"Information": [
+        {"CID": 123, "Synonym": ["formaldehyde", "CH2O"]}]}}).encode(), b'{"search": []}']
+    calls = []
+    def receive(_, url, **kwargs):
+        calls.append(url)
+        return 200, responses[len(calls) - 1], True
+    monkeypatch.setattr(structure, "_paced_query", receive)
+    result = structure.resolve(store, run, tool_call(store, run, "structure.resolve", {"system_id": "system_target"}))
+    assert result["operation_status"] == "failed" and not result["qualified_outputs"]
+    assert result["diagnostics"][0]["reason"] == "original_name_evidence_unverified"
+    assert result["identity"]["alias_verified"] is False
+    assert len(calls) == 3 and len(result["artifact_ids"]) == 4
+    for response, artifact_id in zip(responses, result["artifact_ids"]):
+        assert store.artifact_path(artifact_id).read_bytes() == response
+
+
+@pytest.mark.parametrize("name", ["CH2O", "1,2-dichloroethane", "ethanol (ACS)", "methanalCH2O"])
+def test_name_formula_rule_does_not_split_bare_formula_or_unmarked_english_name(name):
+    document = structure.validate_pubchem_response(pubchem("C=O", "CH2O"), "formaldehyde", general=True)
+    assert structure._name_evidence_target(name, document) == (name, None)
+
+
+def test_name_formula_rule_accepts_one_character_chinese_name_without_a_name_allowlist():
+    document = structure.validate_pubchem_response(pubchem("O", "H2O"), "water", general=True)
+    name, evidence = structure._name_evidence_target("水H2O", document)
+    assert name == "水" and evidence["original_name"] == "水H2O"
+    assert evidence["formula_matches_graph"] is True
+
+
 @pytest.mark.parametrize("url", ["https://www.wikidata.org/w/api.php?action=edit", "https://www.wikidata.org/wiki/Q123",
     "https://evil.invalid/w/api.php?action=wbsearchentities", "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=../../secret"])
 def test_only_fixed_read_identity_endpoints_are_allowed(url):

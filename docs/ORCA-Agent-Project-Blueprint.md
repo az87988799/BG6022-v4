@@ -304,6 +304,8 @@ OPI 也有输入写入、执行和输出读取接口；这些功能可以分开�
 
 2026-10-20 按用户清理样例范围限制的要求，新 Code as Tools Run 使用显式 `managed-native-1` 准入，解除有限方法/基组、H–Ar、气相、受限单重态和强制 Opt+Freq 组合的门槛；保留已声明依赖、可管理执行结构、资源及累计预算。参数标签、原始输出与科学资格分开记录，未检查的观察可以带限制交付。不同条件的派生分析逐来源核对，已有冻结文件分析不强迫新计算。原始策略及历史事实不升级，具体契约与未支持执行结构见 [0050](decisions/0050-code-as-tools-general-admission.md) 和[原生输入边界](native-orca-input.md)。
 
+首轮复测修复遵循 [0052](decisions/0052-first-round-contract-repair-and-refreeze.md)：工作量预约精确绑定 Run 原策略的准入版本；计划输入角色在批准前按 Tool 定义校验。规范化须保留否定与局部/共享几何约束，通用观察和既有证据查询按显式查询意图区分，不能仅凭端口同名切换证据契约。已检索正文归档保留同一次响应的原字节，不增加网络请求、转换或科学执行；正文及摘要仍是不可信资料，不能提供执行许可或科学资格。旧 Run 与原冻结批次保持原事实。
+
 ### 7.2 只读与产物规则
 
 OPI 的 `Output.parse()` 默认创建缺失的 JSON；只读路径必须显式禁用创建，按已有产物选择读取项，并保持重写 JSON 的调试选项关闭。缺文件时返回缺失事实或明确的后处理需求。[OPI Output API](https://www.faccts.de/docs/opi/2.0/docs/contents/api/opi/output/core/index.html#opi.output.core.Output.parse)

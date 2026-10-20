@@ -998,6 +998,8 @@ class Store:
         A repeated identical prelaunch check is idempotent, not permission to
         launch an unknown or previously started Attempt again.
         """
+        from orca_agent.orca.native_profile import profile_contract
+
         with self.run_lock(run.id), self.control_lock(run.id), self._environment_lock():
             if self.load_run(run.id) != run:
                 raise StoreError("stale Run at native workload reservation")
@@ -1005,7 +1007,8 @@ class Store:
             policy = self.run_configuration(run).execution.native_input_policy
             if (actual != attempt or attempt.execution_kind != "orca" or attempt.tool != "orca.run"
                     or attempt.state != "intent" or attempt.started or attempt.finished_at
-                    or policy is None or prepared.get("admission_version") != "native-orca-input-2"
+                    or policy is None
+                    or prepared.get("admission_version") != profile_contract(policy)["admission_version"]
                     or prepared.get("native_input_policy") != policy.model_dump(mode="json")
                     or prepared.get("input_sha256") != attempt.frozen_step.parameters.input.sha256):
                 raise StoreError("native workload requires its admitted, unstarted direct Attempt")

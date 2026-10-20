@@ -534,6 +534,33 @@ def _failure(run, call, reason, artifacts=(), *, status="failed", **facts):
             "source": _source(run, call, **facts)}
 
 
+def _name_evidence_target(original_name, document):
+    """Separate an explicit trailing formula, without treating it as a name match."""
+    from collections import Counter
+    from rdkit import Chem
+
+    formula = r"(?:[A-Z][a-z]?(?:[1-9][0-9]*)?)+"
+    patterns = (rf"(.+?)\s*\(\s*({formula})\s*\)", rf"(.+?)\s*（\s*({formula})\s*）",
+                rf"(.+?)\s+({formula})", rf"(.*[\u3400-\u9fff])({formula})")
+    match = next((found for pattern in patterns
+                  if (found := re.fullmatch(pattern, original_name))), None)
+    if match is None:
+        return original_name, None
+    name, declared = match.group(1).strip(), match.group(2)
+    elements = {Chem.GetPeriodicTable().GetElementSymbol(number) for number in range(1, 119)}
+    counts = Counter()
+    for element, count in re.findall(r"([A-Z][a-z]?)([0-9]*)", declared):
+        if element not in elements:
+            return original_name, None  # E.g. a grade abbreviation is not a formula.
+        counts[element] += int(count or 1)
+    if counts != Counter(document["elements"]):
+        raise ValueError("explicit name formula conflicts with the returned complete identity graph")
+    return name, {"rule": "explicit-name-formula-1", "original_name": original_name,
+                  "name_for_evidence": name, "explicit_formula": declared,
+                  "resolved_formula": document["formula"], "formula_matches_graph": True,
+                  "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."}
+
+
 def resolve(store, run, call):
     requirement = validate_call_inputs(store, run, call.parameters, call.tool, call.consumption)
     if recovered := _begin(store, run, call):
@@ -557,7 +584,10 @@ def resolve(store, run, call):
             return _finish(store, run, call, _failure(run, call, "pubchem_http_or_response_bound", artifacts, **source))
         document = {**validate_pubchem_response(raw, canonical, general=requirement["general_identity"]), "query": source}
         if requirement["general_identity"]:
-            requested_name = requirement["requested_identity"]["requested_names"][0]
+            original_name = requirement["requested_identity"]["requested_names"][0]
+            requested_name, name_evidence = _name_evidence_target(original_name, document)
+            if name_evidence is not None:
+                document["name_evidence"] = source["name_evidence"] = name_evidence
             document["alias_verified"] = canonical == requested_name
             if not document["alias_verified"]:
                 alias_url = ("https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/"
@@ -612,6 +642,10 @@ def resolve(store, run, call):
                         document["limitations"].append("The inferred lookup alias was not confirmed against the original user name.")
         artifact = _artifact(store, run, call, "identity.json", "resolved_identity", _json_bytes(document))
         artifacts.append(artifact.id)
+        if requirement["general_identity"] and document["alias_verified"] is not True:
+            failure = _failure(run, call, "original_name_evidence_unverified", artifacts, **source)
+            failure["identity"] = document
+            return _finish(store, run, call, failure)
         check = {"name": "supported_identity_graph", "status": "passed", "rule_version": rule,
                  "detail": ("One returned name candidate and internally consistent graph/formula/charge; ambiguity retained."
                             if requirement["general_identity"] else

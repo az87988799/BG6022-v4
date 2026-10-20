@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "version": "code-tools-post-freeze-holdouts-1",
+  "selected_at_utc": "2026-10-20T05:04:59.6324947+00:00",
+  "status": "post_freeze_task_selection_only_no_formal_or_reference_execution",
+  "product_commit": "5e6e9e38c7e24a10180d474bf95068692b7f9cca",
+  "product_manifest_sha256": "95f8156de0cfdf67afd56e7b143c65282ce59592be05cab225a85908b6f1bb2b",
+  "repetitions": 3,
+  "reviewer": {
+    "identity": "独立 AI 评审子任务 /root/holdout_review",
+    "human_expert": false,
+    "independence": "本评审未参与该产品开发；收到冻结事件后才检索开发历史并选择题目。这里的独立性指与产品实现及正式运行分离的评审角色，不表示人类领域专家认证或独立机构审计。",
+    "scope": "仅选择两项保留任务并固定参考、容差和评分；未调用产品模型、ORCA、容器或参考求解；未修改产品或其他验收文件。"
+  },
+  "freeze_verification": {
+    "manifest_path": "docs/acceptance/code-as-tools-step6/product-freeze.json",
+    "event_path": "docs/acceptance/code-as-tools-step6/product-freeze-event.json",
+    "frozen_at_utc": "2026-10-20T12:59:52.422514+08:00",
+    "verified_at_utc": "2026-10-20T13:00:39.938781+08:00",
+    "actual_manifest_sha256": "95f8156de0cfdf67afd56e7b143c65282ce59592be05cab225a85908b6f1bb2b",
+    "hash_matches_event": true,
+    "commit_matches_manifest_and_event": true,
+    "selection_must_be_strictly_after_freeze": true
+  },
+  "novelty_review": {
+    "method": "先以 rg 筛选验收报告、任务定义与决策记录，再有界读取相关段落；另读最近 50 条涉及 docs/acceptance 和 docs/decisions 的提交主题。未读取凭据。检索中的 ORCA 贡献者列表或默认输出中出现的性质名称，不作为已经完成该科学任务的证据。",
+    "search_roots": [
+      "docs/acceptance",
+      "docs/decisions"
+    ],
+    "search_terms": [
+      "NMR",
+      "shielding",
+      "屏蔽",
+      "核磁",
+      "polarizability",
+      "极化率",
+      "有限场",
+      "旋转不变",
+      "张量",
+      "Mulliken",
+      "Loewdin",
+      "同位素",
+      "dipole",
+      "偶极"
+    ],
+    "reviewed_files": [
+      "AGENTS.md",
+      "docs/CODE-AS-TOOLS-IMPLEMENTATION-PLAN.md",
+      "docs/ORCA-Agent-Project-Blueprint.md",
+      "docs/acceptance/code-as-tools-step6/public-tasks.json",
+      "docs/acceptance/code-as-tools-step6/scoring.md",
+      "docs/acceptance/code-as-tools-step6/product-freeze.json",
+      "docs/acceptance/code-as-tools-step6/product-freeze-event.json",
+      "docs/acceptance/code-as-tools-general-admission/report.md",
+      "docs/acceptance/code-as-tools-merge-readiness/report.md",
+      "docs/acceptance/code-as-tools-step5-completion/report.md",
+      "docs/acceptance/web-properties-knowledge/README.md",
+      "docs/decisions/0050-code-as-tools-general-admission.md",
+      "docs/decisions/0030-knowledge-query-completion.md"
+    ],
+    "history_review": {
+      "command": "git log -50 --format=%h:%s -- docs/acceptance docs/decisions",
+      "recent_commits": [
+        "5e6e9e3",
+        "367c616",
+        "d290ca4",
+        "98b3132",
+        "379d733",
+        "87d1e62",
+        "620e6aa",
+        "6c1de6e",
+        "7860db0",
+        "4136843",
+        "f1b7fb7",
+        "e12e734",
+        "9e6ac3f"
+      ],
+      "finding": "开发主题覆盖通用执行、乙醇优化/频率、己烷构象、多计算、来源绑定、偶极矩和知识查询；未发现以核磁屏蔽或静态极化率张量旋转协变为目标的既有开发任务。"
+    },
+    "excluded_previously_developed_families": [
+      "乙醇优化与频率",
+      "己烷构象搜索与排序",
+      "丁烷二面角扫描与加密",
+      "丙酮电子激发",
+      "同几何气相/CPCM水电子能比较",
+      "水优化偶极矩",
+      "开放壳层单点",
+      "重离子单点",
+      "MP2单点",
+      "CPCM",
+      "TDDFT",
+      "独立Opt/Freq",
+      "NumFreq",
+      "二点松弛扫描"
+    ],
+    "H1_reason": "目标是逐核 GIAO 磁屏蔽的完整笛卡尔张量及其迹，不是能量、偶极矩、频率或激发态。需要现场获取和解释此前未验收的磁响应字段、核编号及ppm单位；把旧题换成HCN不能完成本目标。",
+    "H2_reason": "目标是静态电偶极-电偶极响应张量及对已知刚体旋转的协变核对。旧记录出现极化率仅为知识查询偏题及概念说明，没有真实极化率任务或旋转一致性验收。永久偶极矩或相同几何环境能差不能替代本题的响应张量与两套坐标系关系。",
+    "limits": "新颖性结论针对本次检索的仓库开发记录；不声称穷尽未记录的历史活动。官方手册已有通用功能示例，不等同于产品预置本题完整解法；本评审不会将手册示例或参考程序注入正式任务。"
+  },
+  "shared_rules": {
+    "scoring_document": "scoring.md",
+    "seed_policy_source": "public-tasks.json#/seed_policy",
+    "seeds_by_repetition": [
+      1701,
+      1702,
+      1703
+    ],
+    "product_input": "只传每题 original_text 及 public-tasks.json 的两个实际LF和种子后缀；不传本文件中的独立参考协议、评分公式、参考输出或前题脚本。",
+    "formal_limits_per_repetition": {
+      "model_calls": 24,
+      "model_tokens": 1200000,
+      "orca_starts": 12,
+      "internal_work_units": 10000,
+      "run_seconds": 7200
+    },
+    "resources": {
+      "max_cores": 4,
+      "total_memory_mb": 1024,
+      "maxcore_mb": 192,
+      "environment_concurrency": 1,
+      "job_timeout_seconds": 900,
+      "script_timeout_seconds": 1200
+    },
+    "reference_limits_per_repetition": {
+      "model_calls": 0,
+      "internal_work_units": 30000,
+      "run_seconds": 21600,
+      "orca_starts_generic_ceiling": 30
+    },
+    "reference_retry_policy": "每个必需参考只允许一次已确认失败后的同输入重试；先对账，未知状态保守计费且不得重启。每题另受更小的参考启动硬上限约束，失败、重试与未知占用均累计。",
+    "reference_timing": "只在步骤7对应产品产物完整归档后生成独立参考。参考启动前登记原始实际输入/几何/hash、独立参考输入/hash、转换差异、程序与镜像版本、预算预约；不能把参考答案、程序或诊断反馈给仍运行的产品。",
+    "automatic_choices": "只允许在各题预定有限集合内选择；首次科学执行前登记选择、官方依据、理由、电荷/自旋/环境/几何和SCF/网格/RI/响应等实际设置及其hash。修复不得变更题目固定物理量或条件；改变已授权的自动选项须在下一次执行前留痕，最终参考采用最终声明成功的精确设置。不能看结果后改变可接受方法集合、参考生成规则或容差。",
+    "reference_independence": "使用相同冻结ORCA与运行环境，在干净参考目录从实际输入与几何重新计算，不继承产品GBW或其他计算结果。逐原始输出人工读取，或使用仅供评审的独立短核对程序；不得以产品生成解析器验证自身。相同程序重算只证明可重现性，不宣称实验准确度或跨程序验证。",
+    "printed_precision": "抄录阈值为各题明确数值；若原始字段或明确显示舍入较粗，允许 max(该阈值,最后打印位半单位+1e-12)。机器表须至少达到各题指定精度；不能借舍入掩盖核编号、坐标轴、物理量、符号或单位错误。",
+    "incidental_quantities": "若产品额外报告能量或其他公开矩阵已有物理量，仍按 public-tasks.json 的对应单位与容差核对原始证据；可选附加结果不能替代本题必需项。",
+    "pass_rule": "每次所有必需项及独立参考均通过，且无开发者代写科学Plan/输入/脚本，才记该次pass。fail和unverified均不满足任务通过；三个固定重复必须各自通过。执行成功、科学检查覆盖、独立评分、目标满足和报告完成分别记录，独立评分不授予QualifiedOutput。"
+  },
+  "feasibility_sources": [
+    {
+      "title": "ORCA 6.1 Manual 5.21 Nuclear Magnetic Resonance Parameters",
+      "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/spectroscopyproperties/nmr.html",
+      "checked_on_utc": "2026-10-20",
+      "support": "HF及标准GGA/杂化DFT支持GIAO屏蔽；逐核输出总屏蔽张量及各向同性部分，单位ppm。这里只核对可行性，不复制示例输入或数值。"
+    },
+    {
+      "title": "ORCA 6.1 Manual 5.20 Electrical Properties",
+      "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/spectroscopyproperties/electric.html",
+      "checked_on_utc": "2026-10-20",
+      "support": "HF/DFT支持CP-SCF解析静态极化率；输出笛卡尔张量、主值和各向同性极化率，原始张量单位为原子单位。这里只核对功能，不提供求解输入。"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "H1",
+      "title": "HCN逐核GIAO核磁屏蔽张量与各向同性屏蔽",
+      "original_text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。",
+      "fixed_requirements": {
+        "identity_smiles": "C#N",
+        "formula": "CHN",
+        "connectivity": "H-C triple-bond N",
+        "atom_count": 3,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "allowed_methods": [
+          "RHF",
+          "PBE0 with restricted closed-shell SCF"
+        ],
+        "allowed_basis_sets": [
+          "def2-SVP",
+          "def2-TZVP"
+        ],
+        "method_basis_selection": "one_pair_registered_before_first_scientific_execution",
+        "property": "GIAO total nuclear magnetic shielding",
+        "required_nuclei": "all three atoms with their actual original indices and element labels",
+        "required_values": {
+          "total_cartesian_tensor_components": 27,
+          "isotropic_shieldings": 3
+        },
+        "units": "ppm",
+        "geometry": "one current-run geometry generated and declared by product; no mandatory optimization; any optimization claim requires original convergence evidence",
+        "minimum_machine_decimal_places": 3,
+        "forbidden_substitutions": [
+          "chemical shift without reference",
+          "diamagnetic-only shielding",
+          "paramagnetic-only shielding",
+          "shielding tensor norm in place of isotropic shielding"
+        ]
+      },
+      "reference_protocol": {
+        "id": "R-H1-three-nucleus-GIAO-shielding",
+        "nominal_orca_starts": 1,
+        "maximum_orca_starts_including_reference_retry": 2,
+        "input_rule": "从产品声明成功的屏蔽作业实际输入及原始计算几何创建一个干净参考。保持精确原子顺序/坐标、RHF或PBE0、基组、电子态、GIAO、所选核、SCF/网格/RI及响应设置。若产品先优化，只去除优化控制并在其最终声明的屏蔽几何重做同一屏蔽计算；不更换方法、不修补产品缺少的核、不继承GBW。转换逐行登记。",
+        "checks": [
+          "独立确认三原子HCN连接、顺序、电荷、多重度与气相；不能把氰根阴离子或H-N-C当HCN。",
+          "原始作业正常结束，SCF及相关磁响应收敛；完整核标签与几何来源唯一可绑定。",
+          "逐核独立读取Total shielding tensor及isotropic字段，检查27项分量和3项各向同性值；不同贡献或重复输出块不可串接。",
+          "独立以每个总张量的trace/3核对各向同性值，不对非对称屏蔽张量强行对称化，也不用张量范数或奇异值平均替代迹。",
+          "对产品自身原始文件先做严格抄录核对，再逐核逐分量与同设置参考比较；原始核编号必须保留，禁止按数值大小重配原子。"
+        ]
+      },
+      "tolerances": {
+        "definition": "预先固定的工程核对阈值，不是核磁实验准确度保证。",
+        "total_shielding_tensor": {
+          "unit": "ppm",
+          "reported_vs_raw_abs_per_component": 0.001,
+          "independent_same_settings_abs_per_component": 0.05,
+          "failure": "任一必需分量越界、缺项、核标签错误、单位/总分量含义错误即fail；参考不可得则unverified。"
+        },
+        "isotropic_shielding": {
+          "unit": "ppm",
+          "reported_vs_raw_abs": 0.001,
+          "independent_same_settings_abs": 0.05,
+          "trace_over_three_consistency_abs": 0.001,
+          "failure": "任一核的抄录、同设置参考或trace/3一致性越界即fail；不以另一阈值放宽原始抄录。"
+        },
+        "geometry": {
+          "unit": "angstrom",
+          "reported_vs_original_coordinate_abs": 1E-06,
+          "reference_input_rule": "exact original atom order and coordinate values",
+          "failure": "参考或屏蔽来自未声明的不同几何，不能评分通过。"
+        }
+      },
+      "scoring_rules": [
+        "除共有证据门槛外，全部三个核、27项总张量分量及三项各向同性量均必需。只有汇总表而无可定位逐核原始证据不得通过。",
+        "所有量是所选近似与记录几何下的屏蔽；不要求它们接近实验位移或预设正负号。误称标定化学位移、隐瞒参考物缺失或声称实验精度则解释项fail。",
+        "不存在专用生产检查器时可作有验证说明的观察交付；不得把脚本自报passed或本独立评分写为新的生产科学资格。",
+        "本题三次参考名义共3次ORCA，含每次一次确认失败后重试的合计硬上限6次；正式运行和参考分别记账。"
+      ]
+    },
+    {
+      "id": "H2",
+      "title": "甲醛静态极化率张量的刚体旋转协变与各向同性一致性",
+      "original_text": "请为甲醛CH2O（中性、单重态、气相）生成一份合理结构，用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率。再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数。依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同。保留原始输入输出、生成与分析脚本、数据表及验证限制；不分别优化两个结构，不以永久偶极矩或有限频率动态响应替代静态极化率，不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果。",
+      "fixed_requirements": {
+        "identity_smiles": "C=O",
+        "formula": "CH2O",
+        "atom_count": 4,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "method": "RHF",
+        "basis_set": "def2-SVP",
+        "property": "static electric dipole-dipole polarizability",
+        "property_frequency": "zero_frequency_static",
+        "geometry_relation": "same ordered atoms; exact specified rigid active rotation only; no independent optimization",
+        "rotation": {
+          "axis_direction": [
+            1,
+            2,
+            3
+          ],
+          "angle_degrees": 37,
+          "sense": "right_hand_rule",
+          "center": "original Cartesian coordinate origin",
+          "convention": "active rotation of position vectors in a fixed laboratory frame; product must state its row/column representation"
+        },
+        "required_independent_property_jobs": 2,
+        "required_values": {
+          "raw_cartesian_tensor_components": 18,
+          "isotropic_polarizabilities": 2
+        },
+        "units": "atomic units of polarizability, e^2 a0^2/Eh; not Debye",
+        "numerical_settings": "same SCF, basis, response and numerical settings for both orientations; registered before execution",
+        "minimum_machine_decimal_places": {
+          "tensor": 7,
+          "isotropic": 5
+        },
+        "forbidden_substitutions": [
+          "permanent dipole",
+          "dynamic polarizability",
+          "hyperpolarizability",
+          "rotated algebraic tensor presented as a second ORCA calculation",
+          "independently optimized geometries"
+        ]
+      },
+      "reference_protocol": {
+        "id": "R-H2-two-orientation-static-polarizability",
+        "nominal_orca_starts": 2,
+        "maximum_orca_starts_including_reference_retry": 4,
+        "input_rule": "分别从两份产品实际输入及实际XYZ建立两个干净参考目录，同样RHF/def2-SVP、气相、相同电子态、静态响应及全部SCF/响应/数值设置，重做各自固定几何的极化率。两份XYZ先独立核对规定旋转关系，不用产品变换代码作唯一判据。不得对产品旋转错误先更正后以参考替其完成任务，不复制GBW或第一份计算响应到第二份。",
+        "checks": [
+          "独立确认两份几何都是相同有序CH2O；按规定轴、角、方向和原点构造独立旋转关系，核对每个坐标及全部原子间距。",
+          "两次都有各自真实ORCA启动、正常终止、SCF与静态CP-SCF响应收敛及原始STATIC POLARIZABILITY TENSOR证据，不能仅有一份真实响应。",
+          "逐次从原始笛卡尔张量读取九项分量及各向同性量，核对物理类型、原子单位与输入坐标系。",
+          "对每次独立用trace(alpha)/3核对各向同性值；逐项先核对原始抄录，再核对该方向的独立参考。",
+          "在统一列向量主动旋转约定下独立核对alpha_rotated=R*alpha_original*transpose(R)，并核对两次各向同性量之差。若产品采用行向量，先按其事先声明约定转换；不可在看到数值后挑选R或转置关系。",
+          "原始张量必须全部保存；超出冻结容差如实失败，不通过平均两次结果、调整旋转角、重优化或改阈值掩盖差异。"
+        ]
+      },
+      "tolerances": {
+        "definition": "预先固定的工程核对阈值；不同方向允许有限浮点和SCF响应数值误差，不代表所选方法的实验准确度。",
+        "cartesian_polarizability_tensor": {
+          "unit": "e^2 a0^2/Eh (atomic unit)",
+          "reported_vs_raw_abs_per_component": 1E-07,
+          "independent_same_settings_abs_per_component": 0.001,
+          "rotation_covariance_max_abs_component": 0.001,
+          "failure": "任一18项抄录/同设置参考或旋转协变残差越界即fail；第二次没有独立真实ORCA响应即fail。"
+        },
+        "isotropic_polarizability": {
+          "unit": "e^2 a0^2/Eh (atomic unit)",
+          "reported_vs_raw_abs": 1E-05,
+          "independent_same_settings_abs": 0.001,
+          "trace_over_three_consistency_abs": 1E-05,
+          "between_orientations_abs": 0.001,
+          "failure": "任一抄录、参考、迹核对或两方向差值越界即fail；缺参考则unverified，不事后扩大阈值。"
+        },
+        "coordinates": {
+          "unit": "angstrom",
+          "reported_vs_original_abs": 1E-06,
+          "specified_rotation_abs_per_coordinate": 1E-06,
+          "pairwise_distance_preservation_abs": 2E-06,
+          "reference_input_rule": "exact original atom order and coordinate values for each orientation",
+          "failure": "原子映射、主动旋转方向/角度/轴或固定内部几何不满足即fail；RMSD近似相同不替代规定旋转核对。"
+        },
+        "reported_rotation": {
+          "angle_unit": "degree",
+          "reported_angle_vs_required_abs": 1E-06,
+          "matrix_unit": "dimensionless",
+          "reported_matrix_vs_independent_required_rotation_abs_per_component": 1E-06,
+          "failure": "如交付矩阵，与指定旋转不一致即fail；若交付轴角，仍须据独立矩阵核对实际坐标，不能仅核对标签。"
+        }
+      },
+      "scoring_rules": [
+        "两方向真实响应、18项张量、两项各向同性量、固定旋转关系及原始文件全部必需；只解释理论不做第二次计算不能通过。",
+        "报告必须以该坐标系实际分量说明旋转关系，并用实测残差支持是否一致的结论；不能要求各个实验室坐标分量逐项不变。",
+        "方法固定为RHF/def2-SVP；不允许为修复旋转差异切换方法、基组、溶剂或单独改变其中一份数值设置。预算内可在同一Run重做两者且保留失败，最终同设置配对须在重做前登记。",
+        "只核对所选近似、固定几何和静态响应；无极小值、实验极化率或普适方法精度结论。独立评分通过不新增生产科学资格。",
+        "本题三次参考名义共6次ORCA，每个必需方向最多一次确认失败后重试，合计参考硬上限12次；正式运行和参考分别记账。"
+      ]
+    }
+  ]
+}

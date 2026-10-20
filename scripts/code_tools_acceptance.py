@@ -23,11 +23,17 @@ def main(argv=None):
         "freeze-product", "freeze-evaluation", "verify", "init-batch", "prepare"])
     parser.add_argument("--inspect-runtime", action="store_true",
         help="Explicitly read local Docker metadata; no pull, container or scientific run")
+    parser.add_argument("--directory", default=acceptance.DIRECTORY,
+        help="Explicit repository acceptance directory; never overwrites an existing freeze")
+    parser.add_argument("--code-commit", help="Concrete committed product candidate for freeze-product")
+    parser.add_argument("--batch-root", help="New batch root inside repository data for freeze-product")
     parser.add_argument("--task")
     parser.add_argument("--repeat", type=int, default=1)
     parser.add_argument("--category", choices=["formal", "reference", "control"], default="formal")
     args = parser.parse_args(argv)
-    directory = PROJECT / acceptance.DIRECTORY
+    directory = acceptance.acceptance_directory(PROJECT, args.directory)
+    if args.action != "freeze-product" and (args.code_commit or args.batch_root):
+        parser.error("candidate and batch root may only be specified during product freezing")
     if args.action == "freeze-product":
         if not args.inspect_runtime:
             parser.error("product freezing requires explicit --inspect-runtime")
@@ -36,33 +42,38 @@ def main(argv=None):
         runtime = inspect_environment(config.execution)
         if not runtime.get("verified"):
             parser.error("the configured local runtime is not verified")
-        manifest = build_product_manifest(PROJECT, config, runtime=runtime)
+        options = {"code_commit": args.code_commit} if args.code_commit else {}
+        batch_root = acceptance.candidate_batch_root(
+            PROJECT, args.batch_root or "data/code-tools-formal-batch")
+        if batch_root.exists() and any(batch_root.iterdir()):
+            parser.error("new candidate requires a new empty batch root")
+        manifest = build_product_manifest(PROJECT, config, runtime=runtime, **options)
         target = directory / "product-freeze.json"
         acceptance.write_new(target, manifest)
         result = {"frozen_at_utc": datetime.now(timezone.utc).isoformat(),
             "product_commit": manifest["code_commit"],
             "product_manifest_sha256": acceptance.digest(target),
             "environment_root": str(default_environment_root().resolve()),
-            "batch_root": str((PROJECT / "data/code-tools-formal-batch").resolve()),
+            "batch_root": str(batch_root),
             "model_calls": 0, "orca_starts": 0, "workloads_started": 0}
         acceptance.write_new(directory / "product-freeze-event.json", result)
     elif args.action == "freeze-evaluation":
-        result = acceptance.build_evaluation_manifest(PROJECT)
+        result = acceptance.build_evaluation_manifest(PROJECT, directory=args.directory)
         acceptance.write_new(directory / "evaluation-freeze.json", result)
         result = {"evaluation_sha256": acceptance.digest(directory / "evaluation-freeze.json"),
             "assets": len(result["assets"]), **result["rules"]}
     elif args.action == "verify":
-        result = acceptance.verify(PROJECT, inspect_runtime=args.inspect_runtime)
+        result = acceptance.verify(PROJECT, inspect_runtime=args.inspect_runtime, directory=args.directory)
     elif args.action == "init-batch":
         if not args.inspect_runtime:
             parser.error("batch preparation requires explicit --inspect-runtime")
-        snapshot = acceptance.initialize_batch(PROJECT)
+        snapshot = acceptance.initialize_batch(PROJECT, directory=args.directory)
         result = {name: snapshot[name] for name in ("identity", "totals", "overrun_metrics")}
         result["reserved_slots"] = len(snapshot["rows"])
     else:
         if not args.inspect_runtime or not args.task:
             parser.error("prepare requires --inspect-runtime and --task")
-        result = acceptance.prepare(PROJECT, task_id=args.task, repeat=args.repeat, category=args.category)
+        result = acceptance.prepare(PROJECT, task_id=args.task, repeat=args.repeat, category=args.category, directory=args.directory)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

@@ -281,7 +281,8 @@ def execute_call(store, run, tool_name, parameters, *, step=None, results=None, 
             # Qualification applies only to the bounded reading operation, not
             # to the observed physical quantity. A missing field is still an
             # honest successful operation but lacks the requested extracted value.
-            found = data.get("status") not in {"missing", "missing_json"}
+            found = (data.get("operation_status", "completed") == "completed"
+                     and data.get("status") not in {"missing", "missing_json"})
             checks.update({port: [Check(
                 name=("immutable_task_file_write" if "write_artifact" in definition.effects else
                       "non_scientific_delivery" if definition.check_version == "knowledge-answer-1"

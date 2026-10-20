@@ -128,7 +128,7 @@ def test_static_verification_does_not_claim_runtime_reobservation(monkeypatch):
     monkeypatch.setattr(acceptance, "load_config", lambda p: object())
     monkeypatch.setattr(acceptance, "validate_product_manifest", lambda *a, **kw: {
         "status": "matched", "runtime_metadata_verified": True})
-    monkeypatch.setattr(acceptance, "build_evaluation_manifest", lambda p: copy.deepcopy(evaluation))
+    monkeypatch.setattr(acceptance, "build_evaluation_manifest", lambda p, **kw: copy.deepcopy(evaluation))
     monkeypatch.setattr(acceptance, "digest", lambda p: "0" * 64)
     result = acceptance.verify(PROJECT)
     assert not result["runtime_metadata_verified"]
@@ -141,6 +141,71 @@ def test_evaluation_manifest_tamper_is_rejected(monkeypatch):
         "runtime": {"verified": False}} if p.name == "product-freeze.json" else {"assets": {"evil": "x"}})
     monkeypatch.setattr(acceptance, "load_config", lambda p: object())
     monkeypatch.setattr(acceptance, "validate_product_manifest", lambda *a, **kw: {"status": "matched"})
-    monkeypatch.setattr(acceptance, "build_evaluation_manifest", lambda p: {"assets": {}})
+    monkeypatch.setattr(acceptance, "build_evaluation_manifest", lambda p, **kw: {"assets": {}})
     with pytest.raises(FreezeError, match="evaluation assets"):
         acceptance.verify(PROJECT)
+
+
+def test_new_candidate_directory_keeps_old_freeze_separate(assets):
+    selected = "docs/acceptance/another-candidate/freeze"
+    for name in acceptance.REQUIRED:
+        write(assets / selected / name, {})
+    write(assets / selected / "prior-holdout-selection.json", {"source": "old"})
+    before = acceptance.asset_files(assets, directory=selected)
+    assert f"{selected}/prior-holdout-selection.json" in before
+    assert not any(name.startswith(acceptance.DIRECTORY + "/") for name in before)
+    write(assets / acceptance.DIRECTORY / "controls.json", {"historical": True})
+    assert acceptance.asset_files(assets, directory=selected) == before
+    write(assets / selected / "new-driver.py", {"injected": True})
+    assert acceptance.asset_files(assets, directory=selected) != before
+
+
+@pytest.mark.parametrize("directory", ["../outside", "docs/acceptance/../outside", "src"])
+def test_candidate_directory_cannot_escape_acceptance(assets, directory):
+    with pytest.raises(FreezeError, match="inside repository"):
+        acceptance.asset_files(assets, directory=directory)
+
+
+@pytest.mark.parametrize("change", [None, "task", "digest", "novelty", "kind"])
+def test_reexposed_tasks_require_exact_prior_source_and_disclosure(tmp_path, change):
+    selected = "docs/acceptance/another-candidate/freeze"
+    original = PROJECT / acceptance.DIRECTORY
+    for name in acceptance.REQUIRED:
+        target = tmp_path / selected / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((original / name).read_bytes())
+    source = tmp_path / selected / "prior-holdout-selection.json"
+    source.write_bytes((original / "holdout-selection.json").read_bytes())
+    event_path = tmp_path / selected / "product-freeze-event.json"
+    event = acceptance.read_json(event_path)
+    event["batch_root"] = str(tmp_path / "data/new-candidate")
+    write(event_path, event)
+    holdouts = acceptance.read_json(source)
+    holdouts.update(selection_kind="user_requested_regression",
+                    source_selection_sha256=acceptance.digest(source),
+                    novelty_status="previously_exposed_not_a_fresh_holdout")
+    if change == "task":
+        holdouts["tasks"][0]["original_text"] += " easier"
+    elif change == "digest":
+        holdouts["source_selection_sha256"] = "0" * 64
+    elif change == "novelty":
+        holdouts["novelty_status"] = "unseen"
+    elif change == "kind":
+        holdouts.pop("selection_kind")
+    write(tmp_path / selected / "holdout-selection.json", holdouts)
+    if change is None:
+        assert acceptance.check_rules(tmp_path, directory=selected)["task_slots"] == 60
+    else:
+        with pytest.raises(FreezeError, match="regression tasks"):
+            acceptance.check_rules(tmp_path, directory=selected)
+
+
+def test_new_batch_rejects_external_or_redirected_data_root(tmp_path, monkeypatch):
+    assert acceptance.candidate_batch_root(tmp_path, "data/new") == tmp_path / "data/new"
+    for path in ("data", "elsewhere", "../outside"):
+        with pytest.raises(FreezeError, match="inside repository data"):
+            acceptance.candidate_batch_root(tmp_path, path)
+    original = batch._is_link
+    monkeypatch.setattr(batch, "_is_link", lambda p: p == tmp_path / "data" or original(p))
+    with pytest.raises(ValueError, match="symlinks or junctions"):
+        acceptance.candidate_batch_root(tmp_path, "data/new")
