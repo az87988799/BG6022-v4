@@ -1,0 +1,829 @@
+{
+  "schema_version": 1,
+  "reviewed_at_utc": "2026-10-20T06:59:18.468926+00:00",
+  "task": "T3",
+  "formal_repeat": 1,
+  "run_id": "run_eadf1e201ee7402cbbdebc7332dfa0df",
+  "product_commit": "46209c0bdba3876031566831170bb64e8585dc97",
+  "overall_verdict": "fail",
+  "reference": "unverified_not_executed",
+  "dimensions": {
+    "normalization": {
+      "status": "fail",
+      "reason": "Three normalize_request proposals rejected; active Request remains raw v1."
+    },
+    "plan": {
+      "status": "fail",
+      "reason": "No Plan approved."
+    },
+    "startup": {
+      "status": "fail",
+      "python_attempts": 0,
+      "orca_actual": 0,
+      "reason": "Seven required scan points not started."
+    },
+    "scientific_evidence": {
+      "status": "fail",
+      "reason": "No constrained-optimization output, actual angles, convergence or energy values."
+    },
+    "source_consistency": {
+      "status": "unverified",
+      "reason": "No scientific numeric sources exist to compare. All three model request payloads preserve full user text."
+    },
+    "goal_completion": {
+      "status": "fail",
+      "product_goal_status": {
+        "raw_request": "insufficient_evidence"
+      },
+      "user_goal_complete": false
+    },
+    "report_completion": {
+      "status": "pass",
+      "scope": "Fallback partial report exists and does not assert user goal completion.",
+      "delivery_status": "partial",
+      "normal_terminal_deliveries": 0,
+      "fallback_report_count": 1
+    }
+  },
+  "minimum_fact_check_outcomes": [
+    {
+      "requirement": "Confirm C4H10, 14 atoms, four bonded carbons, neutral singlet gas phase and one scientific setting for all points.",
+      "status": "fail",
+      "reason": "No accepted executable task or scientific evidence was produced."
+    },
+    {
+      "requirement": "Before reading coarse energy values, retain the product-declared refinement criterion verbatim with source hash and observation time. It needs a numeric quantity/unit/threshold, recomputable coarse-data trigger, curve-resolution/low-energy/local-variation relevance and a nonconstant possible trigger; budget alone or fixed two extra points is insufficient.",
+      "status": "fail",
+      "reason": "No accepted executable task or scientific evidence was produced."
+    },
+    {
+      "requirement": "All seven coarse angles -180,-120,-60,0,60,120,180 degrees require their own source and optimization convergence; both endpoints are retained without treating them as distinct periodic angles.",
+      "status": "fail",
+      "reason": "No accepted executable task or scientific evidence was produced."
+    },
+    {
+      "requirement": "Audit constrained relaxed optimization and actual final dihedral within 0.5 degree; an unconstrained optimization followed by angle labels is insufficient.",
+      "status": "fail",
+      "reason": "No accepted executable task or scientific evidence was produced."
+    },
+    {
+      "requirement": "Trace coarse observations returning to the same Agent decision loop, declared trigger, continue/stop decision, and actual at-most-two new nonperiodically-duplicate points. No reviewer supplies the criterion or tunes it after values.",
+      "status": "fail",
+      "reason": "No accepted executable task or scientific evidence was produced."
+    },
+    {
+      "requirement": "Check degree/kJ/mol axes, CSV-to-plot consistency, failed-point representation, original inputs/trajectories/output and all workload receipts. A budget-limited incomplete refinement remains partial; endpoint discrepancies cannot be hidden by averaging.",
+      "status": "fail",
+      "reason": "No accepted executable task or scientific evidence was produced."
+    }
+  ],
+  "refinement_rule_registration": {
+    "path": "E:\\BG6022-V4\\docs\\acceptance\\code-as-tools-step7-refreeze-1\\review\\registration-t3.json",
+    "bytes": 2604,
+    "sha256": "f6964d3b0e6f7d06ae0e743d8e8930e13edb864cbe1bbc0644b126e847f0c216"
+  },
+  "rejection_count": 3,
+  "complete_rejections": [
+    {
+      "run_decision": {
+        "id": "model_78dfb7b531aa41baad726f25ccfda3a9",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+            "path": [
+              "parameters"
+            ],
+            "corrections": [
+              {
+                "path": [
+                  "parameters",
+                  "conditions",
+                  "electronic_state"
+                ],
+                "reason": "authorized_default_requires_explicit_adoption",
+                "authorized_default": {
+                  "source": "default",
+                  "default_rule": "local-hf-1",
+                  "value": "RKS"
+                },
+                "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  1,
+                  "geometry_relation"
+                ],
+                "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+                "instruction": "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  1,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  1,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "若某一库或模型不支持固定种子",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  1,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "明确记为不可固定",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  2,
+                  "geometry_relation"
+                ],
+                "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+                "instruction": "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  2,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  2,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  2,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "若某一库或模型不支持固定种子",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  2,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "明确记为不可固定",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  3,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  3,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "记录每个实际角度、优化是否收敛和电子能量",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  3,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  3,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "若某一库或模型不支持固定种子",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  3,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "明确记为不可固定",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  6,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  6,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "记录每个实际角度、优化是否收敛和电子能量",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  6,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "若某一库或模型不支持固定种子",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              },
+              {
+                "path": [
+                  "parameters",
+                  "goals",
+                  6,
+                  "text_basis"
+                ],
+                "reason": "preserve_general_geometry_obligation",
+                "user_evidence": "明确记为不可固定",
+                "instruction": "Keep the supplied exact user_evidence in this Goal's contiguous text_basis or minimum_evidence. A null scalar geometry_relation does not waive per-geometry calculation types, coordinate restrictions, optimization prohibitions or independently required real calculations. Do not drop or summarize the obligation."
+              }
+            ]
+          }
+        }
+      },
+      "response_source": {
+        "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-T3-001\\data\\runs\\run_eadf1e201ee7402cbbdebc7332dfa0df\\model\\model_78dfb7b531aa41baad726f25ccfda3a9.response.json",
+        "bytes": 15319,
+        "sha256": "1047ac674f7d2673dd2252038982f929555be09aa7126701ba350b1339d18cb4"
+      },
+      "response_finish_reason": "stop",
+      "proposed_action": "normalize_request",
+      "proposal_reason": "Normalize: user requests n-butane central C-C-C-C dihedral constrained scan at seven angles with delegated method/basis, explicit neutral singlet gas phase, seed 1701, relative energy curve, pre/post decision, delivery and failure list. Created identity, explicit conditions, automatic method/basis selection, and eight goals preserving exact user quotes.",
+      "proposal_conditions": {
+        "charge": {
+          "source": "explicit",
+          "value": 0,
+          "text_basis": "中性",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        },
+        "multiplicity": {
+          "source": "explicit",
+          "value": 1,
+          "text_basis": "单重态",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        },
+        "environment": {
+          "source": "explicit",
+          "value": "gas_phase",
+          "text_basis": "气相",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        }
+      },
+      "proposal_goal_refs": [
+        {
+          "local_ref": null,
+          "port": "prepared_geometry",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "初始结构"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "optimized_geometry",
+          "geometry_relation": "optimized",
+          "minimum_evidence": [
+            "先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "energy",
+          "geometry_relation": "optimized",
+          "minimum_evidence": [
+            "记录每个实际角度、优化是否收敛和电子能量"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "relative_energy_curve",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "画出相对能量曲线"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "pre_scan_criterion",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "post_scan_decision",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定",
+            "如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "delivery",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单",
+            "不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "random_seed",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录",
+            "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性"
+          ],
+          "system_refs_note": null
+        }
+      ]
+    },
+    {
+      "run_decision": {
+        "id": "model_e8a421e42c644066bf934d8ff266f7c9",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "New unresolved conditions, including detected unsupported scope, require a visible question or unsupported-scope notice in parameters.notices. Preserve explicit user choices; do not ask to reconfirm them.",
+            "path": [
+              "parameters",
+              "questions"
+            ],
+            "new_unresolved": [
+              "unsupported_minimum_evidence:初始结构"
+            ]
+          }
+        }
+      },
+      "response_source": {
+        "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-T3-001\\data\\runs\\run_eadf1e201ee7402cbbdebc7332dfa0df\\model\\model_e8a421e42c644066bf934d8ff266f7c9.response.json",
+        "bytes": 23261,
+        "sha256": "195ab54f612d9d8db282a72e158c10e313574eb60f00e01ebca096bf587f6556"
+      },
+      "response_finish_reason": "stop",
+      "proposed_action": "normalize_request",
+      "proposal_reason": "Corrected proposal: adopted authorized electronic_state default RKS with default_rule local-hf-1; omitted ambiguous scalar geometry_relation for per-angle constrained scan, energy, curve, and delivery goals while preserving all original geometry/calculation obligations verbatim; retained explicit charge/multiplicity/environment, delegated method/basis selection, identity, seed, and delivery/failure requirements.",
+      "proposal_conditions": {
+        "charge": {
+          "source": "explicit",
+          "value": 0,
+          "text_basis": "中性",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        },
+        "multiplicity": {
+          "source": "explicit",
+          "value": 1,
+          "text_basis": "单重态",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        },
+        "environment": {
+          "source": "explicit",
+          "value": "gas_phase",
+          "text_basis": "气相",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        },
+        "electronic_state": {
+          "source": "default",
+          "value": "RKS",
+          "default_rule": "local-hf-1",
+          "text_basis": "中性、单重态、气相",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        }
+      },
+      "proposal_goal_refs": [
+        {
+          "local_ref": null,
+          "port": "prepared_geometry",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "初始结构"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "optimized_geometry",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "energy",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "记录每个实际角度、优化是否收敛和电子能量"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "relative_energy_curve",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "画出相对能量曲线"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "pre_scan_criterion",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "post_scan_decision",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定",
+            "如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "delivery",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单",
+            "不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "random_seed",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录",
+            "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性"
+          ],
+          "system_refs_note": null
+        }
+      ]
+    },
+    {
+      "run_decision": {
+        "id": "model_9da67adbd553410aae1472458e803b8c",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Use the declared parameter schema at each listed path.",
+            "errors": [
+              {
+                "type": "extra_forbidden",
+                "loc": [
+                  "parameters",
+                  "goals",
+                  1,
+                  "system_refs_note"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "response_source": {
+        "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-T3-001\\data\\runs\\run_eadf1e201ee7402cbbdebc7332dfa0df\\model\\model_9da67adbd553410aae1472458e803b8c.response.json",
+        "bytes": 23789,
+        "sha256": "ac8d2c70d2799a9857f576a63eb530ca1e444a563a26948478c4b207457a49d5"
+      },
+      "response_finish_reason": "stop",
+      "proposed_action": "normalize_request",
+      "proposal_reason": "Fixed CONTROL.validation_error: removed '初始结构' from initial_geometryGoal minimum_evidence (an unregistered delivery-content item, violating minimum_evidence rules) while keeping it in the Goal quantity/text_basis and delivery minimum; no new unresolved introduced, so no clarifying question/notice needed. Unchanged otherwise: explicit charge=0, multiplicity=1, environment=gas_phase; adopted electronic_state=RKS with default_rule=local-hf-1 and source=default; method/basis delegated via automatic_selection with exact authorization quote; per-angle constrained optimizations, energies, relative curve, seed 1701 and failure-list obligations preserved verbatim; scalar geometry_relation omitted as unspecified for this multi-geometry scan.",
+      "proposal_conditions": {
+        "charge": {
+          "source": "explicit",
+          "value": 0,
+          "text_basis": "中性",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        },
+        "multiplicity": {
+          "source": "explicit",
+          "value": 1,
+          "text_basis": "单重态",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        },
+        "environment": {
+          "source": "explicit",
+          "value": "gas_phase",
+          "text_basis": "气相",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        },
+        "electronic_state": {
+          "source": "default",
+          "value": "RKS",
+          "default_rule": "local-hf-1",
+          "text_basis": "中性、单重态、气相",
+          "message_id": "message_fb1c192a54d04796bb8677f8cee2f92b"
+        }
+      },
+      "proposal_goal_refs": [
+        {
+          "local_ref": null,
+          "port": "prepared_geometry",
+          "geometry_relation": null,
+          "minimum_evidence": null,
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "optimized_geometry",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "energy",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "记录每个实际角度、优化是否收敛和电子能量"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "relative_energy_curve",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "画出相对能量曲线"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "pre_scan_criterion",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "post_scan_decision",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定",
+            "如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "delivery",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单",
+            "不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态"
+          ],
+          "system_refs_note": null
+        },
+        {
+          "local_ref": null,
+          "port": "random_seed",
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录",
+            "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性"
+          ],
+          "system_refs_note": null
+        }
+      ]
+    }
+  ],
+  "rejection_summary": [
+    {
+      "ordinal": 1,
+      "classification": "semantic_contract",
+      "details": "Explicit adoption of default electronic_state RKS missing; scalar optimized incorrectly attached to multi-geometry scan goals; exact cross-goal geometry/delivery/seed obligations missing. Complete aggregate correction list retained in Run."
+    },
+    {
+      "ordinal": 2,
+      "classification": "unsupported_minimum_requires_visible_notice",
+      "details": "New unresolved unsupported_minimum_evidence:初始结构 lacked a visible question/unsupported-scope notice."
+    },
+    {
+      "ordinal": 3,
+      "classification": "extra_schema_field",
+      "details": "parameters.goals[1].system_refs_note is extra_forbidden. Last detail is preserved in Run, not inferred from a missing follow-up correction."
+    }
+  ],
+  "stop_classification": {
+    "category": "bounded_proposal_correction_exhausted",
+    "run_diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_78dfb7b531aa41baad726f25ccfda3a9",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_e8a421e42c644066bf934d8ff266f7c9",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_9da67adbd553410aae1472458e803b8c",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "StoreError",
+        "message": "bounded proposal correction or transport retry exhausted",
+        "environment_occupied": false
+      }
+    ],
+    "final_model_finish_reason": "stop",
+    "reason": "All responses finished normally (stop) but three proposals were rejected; this is semantic/schema recovery exhaustion, not truncation, ORCA failure or total model-call budget exhaustion."
+  },
+  "usage": {
+    "internal_work_units": 0,
+    "internal_calls_by_purpose": {},
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 0.0,
+    "cpu_seconds": 0.0,
+    "resource_usage_complete": true,
+    "logical_attempts": {},
+    "fingerprint_attempts": {},
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 3,
+    "model_tokens_used": 43151,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 0,
+    "decision_rounds": 3,
+    "evidence_reads": 0,
+    "analysis_executions": 0,
+    "logical_steps": [],
+    "identity_queries": 0,
+    "structure_preparations": 0,
+    "knowledge_queries": 0
+  },
+  "settlement": {
+    "known_usage": {
+      "model_calls": 3,
+      "wall_seconds": 86.78100000000268,
+      "model_tokens": 43151,
+      "orca_starts": 0,
+      "internal_work_units": 0
+    },
+    "unknown_fields": {}
+  },
+  "driver_wall_seconds": 86.78100000000268,
+  "sources": [
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\first-repetition-evidence\\T3\\start.json",
+      "bytes": 731,
+      "sha256": "d3bff06e630a848a8b4b462f26ec45416d00a9446d218d5103d97c54357dd40e"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\first-repetition-evidence\\T3\\outcome.json",
+      "bytes": 1278,
+      "sha256": "fcba3f9a759c66977e5c571a74d68ab3946e117af6e2b155bfd4b9557eca3dfd"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\first-repetition-evidence\\T3\\report.json",
+      "bytes": 21513,
+      "sha256": "1c7b3358b2d887470562ef4e02c3add2428b77269792ca4368052bc4fba46d5b"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-T3-001\\data\\runs\\run_eadf1e201ee7402cbbdebc7332dfa0df\\run.json",
+      "bytes": 36890,
+      "sha256": "c994a821fadd75567a4b3eb9e581996ca0e517191fd0e6141ae46c7972b7b8f0"
+    },
+    {
+      "path": "E:\\BG6022-V4\\docs\\acceptance\\code-as-tools-step7-refreeze-1\\review\\t3-terminal-source-index.json",
+      "bytes": 7648,
+      "sha256": "acb4e435008d32cd9db2219cff78fa91ea0f991981fe313e6cabdcbbf53567ba"
+    },
+    {
+      "path": "E:\\BG6022-V4\\docs\\acceptance\\code-as-tools-step7-refreeze-1\\review\\t3-model-projection-audit-initial.json",
+      "bytes": 17339,
+      "sha256": "6313d60c1553493e7bfcb9667843ca023fab413548bd91aa48a4b7dbd1ef8b2d"
+    }
+  ],
+  "limitations": [
+    "No scientific numbers, independent references or feedback controls were executed or validated.",
+    "Rejected proposals are not actual approved methods or execution choices.",
+    "Reviewer writes only independent review evidence; no frozen product repairs/restarts.",
+    "A partial fallback failure report is not a passed target."
+  ]
+}

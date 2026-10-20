@@ -1,0 +1,125 @@
+{
+  "registered_at_utc": "2026-10-20T07:26:55.405388+00:00",
+  "source_observed_at_utc": "2026-10-20T07:24:50.434734+00:00",
+  "task": "H2",
+  "run_id": "run_98f10cff7e054505ac4a853a07505b55",
+  "scope": "Blind actual approved Request/Plan and generated source registration; scientific tensors not read",
+  "status_at_source_observation": {
+    "task": "H2",
+    "run_id": "run_98f10cff7e054505ac4a853a07505b55",
+    "state": "running",
+    "request_version": 2,
+    "plan_version": 2,
+    "model_calls": 9,
+    "orca_starts_actual": 0,
+    "attempts": 0,
+    "outcome_exists": false
+  },
+  "approved_request_version": 2,
+  "approved_plan_version": 2,
+  "conditions": {
+    "explain_results": true,
+    "method": "RHF",
+    "basis": "def2-SVP",
+    "charge": 0,
+    "multiplicity": 1,
+    "electronic_state": "RHF",
+    "environment": "gas_phase"
+  },
+  "rotation_convention": {
+    "kind": "active right-handed",
+    "axis_direction": [
+      1,
+      2,
+      3
+    ],
+    "angle_degrees": 37,
+    "center": [
+      0,
+      0,
+      0
+    ],
+    "representation": "column position vector r_prime = R r",
+    "matrix_formula": "Rodrigues: R = cos(theta) I + sin(theta) [u]_cross + (1-cos(theta)) u u^T",
+    "tensor_check_fixed_before_results": "alpha_rotated = R alpha_original R^T; no post-hoc transpose choice"
+  },
+  "generated_input_template": {
+    "keywords": "RHF def2-SVP NoAutoStart",
+    "maxcore_mb_per_process": 192,
+    "scf": "MaxIter 256 AutoTRAH false",
+    "response": "%elprop Polar true end",
+    "charge": 0,
+    "multiplicity": 1,
+    "original_geometry": "original.xyz",
+    "rotated_geometry": "rotated.xyz",
+    "explicit_optimization": false
+  },
+  "source_inputs": [
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-H2-001\\data\\artifacts\\artifact_2ffc7a4883eb46cb93d646b062a2c409\\files\\make_ch2o_polarizability.py",
+      "sha256": "5f54139d23c56dc638a91ca5a3d590b1892ac500b1d4e4135343a066afced128",
+      "bytes": 2625,
+      "text": "import json, math\nfrom pathlib import Path\n\n\ndef parse_xyz(path):\n    lines = Path(path).read_text().splitlines()\n    n = int(lines[0].strip())\n    atoms = []\n    for line in lines[2:2+n]:\n        p = line.split()\n        atoms.append((p[0], [float(p[1]), float(p[2]), float(p[3])]))\n    if len(atoms) != n:\n        raise ValueError(f\"expected {n} atoms, found {len(atoms)}\")\n    return atoms\n\n\ndef write_xyz(path, atoms):\n    lines = [str(len(atoms)), \"\"]\n    for sym, xyz in atoms:\n        lines.append(f\"{sym:2s} {xyz[0]: .15f} {xyz[1]: .15f} {xyz[2]: .15f}\")\n    Path(path).write_text(\"\\n\".join(lines) + \"\\n\")\n\n\ndef rotation_matrix():\n    axis = [1.0, 2.0, 3.0]\n    norm = math.sqrt(sum(v*v for v in axis))\n    u = [v/norm for v in axis]\n    theta = math.radians(37.0)\n    c = math.cos(theta)\n    s = math.sin(theta)\n    ux, uy, uz = u\n    R = [\n        [c + ux*ux*(1-c), ux*uy*(1-c) - uz*s, ux*uz*(1-c) + uy*s],\n        [uy*ux*(1-c) + uz*s, c + uy*uy*(1-c), uy*uz*(1-c) - ux*s],\n        [uz*ux*(1-c) - uy*s, uz*uy*(1-c) + ux*s, c + uz*uz*(1-c)],\n    ]\n    return axis, u, theta, R\n\n\ndef rotate_xyz(xyz, R):\n    return [sum(R[i][j]*xyz[j] for j in range(3)) for i in range(3)]\n\n\ndef make_inp(path, xyz_name):\n    content = f\"\"\"%maxcore 192\n! RHF def2-SVP NoAutoStart\n%scf MaxIter 256 AutoTRAH false end\n%elprop Polar true end\n* xyzfile 0 1 {xyz_name}\n\"\"\"\n    Path(path).write_text(content)\n\n\natoms = parse_xyz(\"prepared.xyz\")\nwrite_xyz(\"original.xyz\", atoms)\n\naxis, u, theta, R = rotation_matrix()\nrotated_atoms = [(sym, rotate_xyz(xyz, R)) for sym, xyz in atoms]\nwrite_xyz(\"rotated.xyz\", rotated_atoms)\n\nmake_inp(\"orca_original.inp\", \"original.xyz\")\nmake_inp(\"orca_rotated.inp\", \"rotated.xyz\")\n\nrecord = {\n    \"version\": 1,\n    \"rotation_convention\": \"active right-handed rotation about an axis through the original coordinate origin; coordinates transformed as r_prime = R r\",\n    \"axis_direction\": axis,\n    \"axis_unit\": u,\n    \"angle_degrees\": 37.0,\n    \"angle_radians\": theta,\n    \"origin\": [0.0, 0.0, 0.0],\n    \"rotation_matrix\": R,\n    \"formula\": \"R = cos(theta) I + sin(theta) [u]_x + (1-cos(theta)) u u^T\",\n    \"atom_order_preserved\": True,\n    \"internal_geometry_unchanged\": True,\n    \"source_geometry\": \"prepared.xyz\",\n    \"original_xyz\": \"original.xyz\",\n    \"rotated_xyz\": \"rotated.xyz\",\n    \"orca_inputs\": {\"original\": \"orca_original.inp\", \"rotated\": \"orca_rotated.inp\"},\n    \"original_atoms\": [{\"symbol\": sym, \"xyz\": xyz} for sym, xyz in atoms],\n    \"rotated_atoms\": [{\"symbol\": sym, \"xyz\": xyz} for sym, xyz in rotated_atoms],\n}\nPath(\"rotation_record.json\").write_text(json.dumps(record, indent=2) + \"\\n\")\n"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-H2-001\\data\\artifacts\\artifact_fac94c88d3704dae82bc92a1e0b28af0\\files\\prepared.xyz",
+      "sha256": "68e082ff0a4fc1368163d5e917d2eefeba3037220001cc8c8d7e98511157b09f",
+      "bytes": 384,
+      "text": "4\n\nC            -0.0446780195663200            -0.0174057025478357             0.0007862623479016\nO             1.1778039074320570            -0.1522898485149855            -0.0178379214315723\nH            -0.3978115483273606             1.0072503214613107             0.0014969770947146\nH            -0.7353143395383778            -0.8375547703984894             0.0155546819889535\n\n"
+    }
+  ],
+  "sources": [
+    {
+      "path": "E:\\BG6022-V4\\docs\\acceptance\\code-as-tools-step7-refreeze-1\\review\\blind-capture-h2-0d09dc3153050fed.json",
+      "sha256": "51e33a5be8e86ef2ca51c6b964c1aec951d2c00e97601c7ebbda3fc4f528d25c",
+      "bytes": 48217
+    },
+    {
+      "path": "E:\\BG6022-V4\\docs\\acceptance\\code-as-tools-step7-refreeze-1\\review\\multi-task-preregistration.json",
+      "sha256": "1736e43fcca003acd7ecfbf95d432ac446c8713372d8009aaff9d12cd149f85b",
+      "bytes": 42336
+    }
+  ],
+  "pre_registered_tolerances": {
+    "definition": "预先固定的工程核对阈值；不同方向允许有限浮点和SCF响应数值误差，不代表所选方法的实验准确度。",
+    "cartesian_polarizability_tensor": {
+      "unit": "e^2 a0^2/Eh (atomic unit)",
+      "reported_vs_raw_abs_per_component": 1e-07,
+      "independent_same_settings_abs_per_component": 0.001,
+      "rotation_covariance_max_abs_component": 0.001,
+      "failure": "任一18项抄录/同设置参考或旋转协变残差越界即fail；第二次没有独立真实ORCA响应即fail。"
+    },
+    "isotropic_polarizability": {
+      "unit": "e^2 a0^2/Eh (atomic unit)",
+      "reported_vs_raw_abs": 1e-05,
+      "independent_same_settings_abs": 0.001,
+      "trace_over_three_consistency_abs": 1e-05,
+      "between_orientations_abs": 0.001,
+      "failure": "任一抄录、参考、迹核对或两方向差值越界即fail；缺参考则unverified，不事后扩大阈值。"
+    },
+    "coordinates": {
+      "unit": "angstrom",
+      "reported_vs_original_abs": 1e-06,
+      "specified_rotation_abs_per_coordinate": 1e-06,
+      "pairwise_distance_preservation_abs": 2e-06,
+      "reference_input_rule": "exact original atom order and coordinate values for each orientation",
+      "failure": "原子映射、主动旋转方向/角度/轴或固定内部几何不满足即fail；RMSD近似相同不替代规定旋转核对。"
+    },
+    "reported_rotation": {
+      "angle_unit": "degree",
+      "reported_angle_vs_required_abs": 1e-06,
+      "matrix_unit": "dimensionless",
+      "reported_matrix_vs_independent_required_rotation_abs_per_component": 1e-06,
+      "failure": "如交付矩阵，与指定旋转不一致即fail；若交付轴角，仍须据独立矩阵核对实际坐标，不能仅核对标签。"
+    }
+  },
+  "before_first_scientific_execution_observed": true,
+  "no_scientific_results_read": true,
+  "independent_reference_status": "unverified_not_authorized_not_executed",
+  "limitations": [
+    "This captures planned/generated source at ORCA actual 0, Attempts 0, not confirmation that generated ORCA inputs are valid, executed, converged or scientifically qualified.",
+    "The script writes inputs and a rotation record but has not yet been observed executing in this registration. Actual generated files and launch ordering will be checked separately.",
+    "Run counter read is not atomic with possible concurrent launch; immutable source chronology and terminal Attempt records will be reconciled.",
+    "H2 was exposed before this batch; reviewer participated in general repairs and is not developer-blind."
+  ]
+}

@@ -1,0 +1,908 @@
+{
+  "id": "result_875f70acb041427bb5922d83f692190a",
+  "run_id": "run_98f10cff7e054505ac4a853a07505b55",
+  "step_id": null,
+  "attempt_id": null,
+  "call_id": "call_246873158dff428a99ff170452b8fdc9",
+  "supersedes_result_id": null,
+  "operation_status": "completed",
+  "checks": {
+    "text_window": [
+      {
+        "name": "bounded_evidence_read",
+        "status": "passed",
+        "detail": "operation only; content and observed values remain scientifically unverified",
+        "source": {
+          "artifact_id": "artifact_d6477ce91a494294beeeb7f9cf92c622",
+          "sha256": "1d5d80f30a397c44e4388895c6d8894815ad4927a31f0b21ce5674e2b1a7e650",
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        },
+        "rule_version": "evidence-read-1"
+      }
+    ]
+  },
+  "qualified_outputs": {},
+  "observations": {
+    "text_window": {
+      "artifact_id": "artifact_d6477ce91a494294beeeb7f9cf92c622",
+      "sha256": "1d5d80f30a397c44e4388895c6d8894815ad4927a31f0b21ce5674e2b1a7e650",
+      "role": "code",
+      "file": "artifacts/artifact_d6477ce91a494294beeeb7f9cf92c622/files/run_ch2o_polarizability.py",
+      "source": {
+        "call_id": "call_47a7d1fde78244578fa5960153b8fd95",
+        "role": "python",
+        "name": "run_ch2o_polarizability.py"
+      },
+      "view": {
+        "type": "raw_text",
+        "version": "1"
+      },
+      "path": [],
+      "geometry_indices": [],
+      "stage": "unknown",
+      "units": null,
+      "conditions": "unknown",
+      "scientific_status": "unverified",
+      "validation": "unverified observation; not a scientific qualification",
+      "lines": [
+        {
+          "line": 1,
+          "text": "import json, math"
+        },
+        {
+          "line": 2,
+          "text": "from pathlib import Path"
+        },
+        {
+          "line": 3,
+          "text": ""
+        },
+        {
+          "line": 4,
+          "text": ""
+        },
+        {
+          "line": 5,
+          "text": "def parse_xyz(path):"
+        },
+        {
+          "line": 6,
+          "text": "    lines = Path(path).read_text().splitlines()"
+        },
+        {
+          "line": 7,
+          "text": "    n = int(lines[0].strip())"
+        },
+        {
+          "line": 8,
+          "text": "    atoms = []"
+        },
+        {
+          "line": 9,
+          "text": "    for line in lines[2:2+n]:"
+        },
+        {
+          "line": 10,
+          "text": "        p = line.split()"
+        },
+        {
+          "line": 11,
+          "text": "        atoms.append((p[0], [float(p[1]), float(p[2]), float(p[3])]))"
+        },
+        {
+          "line": 12,
+          "text": "    if len(atoms) != n:"
+        },
+        {
+          "line": 13,
+          "text": "        raise ValueError(f\"expected {n} atoms, found {len(atoms)}\")"
+        },
+        {
+          "line": 14,
+          "text": "    return atoms"
+        },
+        {
+          "line": 15,
+          "text": ""
+        },
+        {
+          "line": 16,
+          "text": ""
+        },
+        {
+          "line": 17,
+          "text": "def write_xyz(path, atoms):"
+        },
+        {
+          "line": 18,
+          "text": "    lines = [str(len(atoms)), \"\"]"
+        },
+        {
+          "line": 19,
+          "text": "    for sym, xyz in atoms:"
+        },
+        {
+          "line": 20,
+          "text": "        lines.append(f\"{sym:2s} {xyz[0]: .15f} {xyz[1]: .15f} {xyz[2]: .15f}\")"
+        },
+        {
+          "line": 21,
+          "text": "    Path(path).write_text(\"\\n\".join(lines) + \"\\n\")"
+        },
+        {
+          "line": 22,
+          "text": ""
+        },
+        {
+          "line": 23,
+          "text": ""
+        },
+        {
+          "line": 24,
+          "text": "def rotation_matrix():"
+        },
+        {
+          "line": 25,
+          "text": "    axis = [1.0, 2.0, 3.0]"
+        },
+        {
+          "line": 26,
+          "text": "    norm = math.sqrt(sum(v*v for v in axis))"
+        },
+        {
+          "line": 27,
+          "text": "    u = [v/norm for v in axis]"
+        },
+        {
+          "line": 28,
+          "text": "    theta = math.radians(37.0)"
+        },
+        {
+          "line": 29,
+          "text": "    c = math.cos(theta)"
+        },
+        {
+          "line": 30,
+          "text": "    s = math.sin(theta)"
+        },
+        {
+          "line": 31,
+          "text": "    ux, uy, uz = u"
+        },
+        {
+          "line": 32,
+          "text": "    R = ["
+        },
+        {
+          "line": 33,
+          "text": "        [c + ux*ux*(1-c), ux*uy*(1-c) - uz*s, ux*uz*(1-c) + uy*s],"
+        },
+        {
+          "line": 34,
+          "text": "        [uy*ux*(1-c) + uz*s, c + uy*uy*(1-c), uy*uz*(1-c) - ux*s],"
+        },
+        {
+          "line": 35,
+          "text": "        [uz*ux*(1-c) - uy*s, uz*uy*(1-c) + ux*s, c + uz*uz*(1-c)],"
+        },
+        {
+          "line": 36,
+          "text": "    ]"
+        },
+        {
+          "line": 37,
+          "text": "    return axis, u, theta, R"
+        },
+        {
+          "line": 38,
+          "text": ""
+        },
+        {
+          "line": 39,
+          "text": ""
+        },
+        {
+          "line": 40,
+          "text": "def rotate_xyz(xyz, R):"
+        },
+        {
+          "line": 41,
+          "text": "    return [sum(R[i][j]*xyz[j] for j in range(3)) for i in range(3)]"
+        },
+        {
+          "line": 42,
+          "text": ""
+        },
+        {
+          "line": 43,
+          "text": ""
+        },
+        {
+          "line": 44,
+          "text": "def make_inp(path, xyz_name):"
+        },
+        {
+          "line": 45,
+          "text": "    content = f\"\"\"%maxcore 192"
+        },
+        {
+          "line": 46,
+          "text": "! RHF def2-SVP NoAutoStart"
+        },
+        {
+          "line": 47,
+          "text": "%scf MaxIter 256 AutoTRAH false end"
+        },
+        {
+          "line": 48,
+          "text": "%elprop Polar true end"
+        },
+        {
+          "line": 49,
+          "text": "* xyzfile 0 1 {xyz_name}"
+        },
+        {
+          "line": 50,
+          "text": "\"\"\""
+        },
+        {
+          "line": 51,
+          "text": "    Path(path).write_text(content)"
+        },
+        {
+          "line": 52,
+          "text": ""
+        },
+        {
+          "line": 53,
+          "text": ""
+        },
+        {
+          "line": 54,
+          "text": "atoms = parse_xyz(\"prepared.xyz\")"
+        },
+        {
+          "line": 55,
+          "text": "write_xyz(\"original.xyz\", atoms)"
+        },
+        {
+          "line": 56,
+          "text": ""
+        },
+        {
+          "line": 57,
+          "text": "axis, u, theta, R = rotation_matrix()"
+        },
+        {
+          "line": 58,
+          "text": "rotated_atoms = [(sym, rotate_xyz(xyz, R)) for sym, xyz in atoms]"
+        },
+        {
+          "line": 59,
+          "text": "write_xyz(\"rotated.xyz\", rotated_atoms)"
+        },
+        {
+          "line": 60,
+          "text": ""
+        },
+        {
+          "line": 61,
+          "text": "make_inp(\"orca_original.inp\", \"original.xyz\")"
+        },
+        {
+          "line": 62,
+          "text": "make_inp(\"orca_rotated.inp\", \"rotated.xyz\")"
+        },
+        {
+          "line": 63,
+          "text": ""
+        },
+        {
+          "line": 64,
+          "text": "record = {"
+        },
+        {
+          "line": 65,
+          "text": "    \"version\": 1,"
+        },
+        {
+          "line": 66,
+          "text": "    \"rotation_convention\": \"active right-handed rotation about an axis through the original coordinate origin; coordinates transformed as r_prime = R r\","
+        },
+        {
+          "line": 67,
+          "text": "    \"axis_direction\": axis,"
+        },
+        {
+          "line": 68,
+          "text": "    \"axis_unit\": u,"
+        },
+        {
+          "line": 69,
+          "text": "    \"angle_degrees\": 37.0,"
+        },
+        {
+          "line": 70,
+          "text": "    \"angle_radians\": theta,"
+        },
+        {
+          "line": 71,
+          "text": "    \"origin\": [0.0, 0.0, 0.0],"
+        },
+        {
+          "line": 72,
+          "text": "    \"rotation_matrix\": R,"
+        },
+        {
+          "line": 73,
+          "text": "    \"formula\": \"R = cos(theta) I + sin(theta) [u]_x + (1-cos(theta)) u u^T\","
+        },
+        {
+          "line": 74,
+          "text": "    \"atom_order_preserved\": True,"
+        },
+        {
+          "line": 75,
+          "text": "    \"internal_geometry_unchanged\": True,"
+        },
+        {
+          "line": 76,
+          "text": "    \"source_geometry\": \"prepared.xyz\","
+        },
+        {
+          "line": 77,
+          "text": "    \"original_xyz\": \"original.xyz\","
+        },
+        {
+          "line": 78,
+          "text": "    \"rotated_xyz\": \"rotated.xyz\","
+        },
+        {
+          "line": 79,
+          "text": "    \"orca_inputs\": {\"original\": \"orca_original.inp\", \"rotated\": \"orca_rotated.inp\"},"
+        },
+        {
+          "line": 80,
+          "text": "    \"original_atoms\": [{\"symbol\": sym, \"xyz\": xyz} for sym, xyz in atoms],"
+        },
+        {
+          "line": 81,
+          "text": "    \"rotated_atoms\": [{\"symbol\": sym, \"xyz\": xyz} for sym, xyz in rotated_atoms],"
+        },
+        {
+          "line": 82,
+          "text": "}"
+        },
+        {
+          "line": 83,
+          "text": "Path(\"rotation_record.json\").write_text(json.dumps(record, indent=2) + \"\\n\")"
+        },
+        {
+          "line": 84,
+          "text": ""
+        },
+        {
+          "line": 85,
+          "text": "import shutil"
+        },
+        {
+          "line": 86,
+          "text": "from orca_task_sdk import run_orca, receipt_source"
+        },
+        {
+          "line": 87,
+          "text": ""
+        },
+        {
+          "line": 88,
+          "text": ""
+        },
+        {
+          "line": 89,
+          "text": "def copy_receipt_file(receipt, key, dest):"
+        },
+        {
+          "line": 90,
+          "text": "    files = receipt.get(\"files\", {})"
+        },
+        {
+          "line": 91,
+          "text": "    if key not in files:"
+        },
+        {
+          "line": 92,
+          "text": "        raise RuntimeError(\"missing \" + key + \" in files keys: \" + str(sorted(files)))"
+        },
+        {
+          "line": 93,
+          "text": "    shutil.copyfile(files[key], dest)"
+        },
+        {
+          "line": 94,
+          "text": "    return dest"
+        },
+        {
+          "line": 95,
+          "text": ""
+        },
+        {
+          "line": 96,
+          "text": ""
+        },
+        {
+          "line": 97,
+          "text": "def parse_tensor(text):"
+        },
+        {
+          "line": 98,
+          "text": "    lines = text.splitlines()"
+        },
+        {
+          "line": 99,
+          "text": "    start = None"
+        },
+        {
+          "line": 100,
+          "text": "    for i, line in enumerate(lines):"
+        },
+        {
+          "line": 101,
+          "text": "        if \"raw cartesian tensor\" in line.lower():"
+        },
+        {
+          "line": 102,
+          "text": "            start = i + 1"
+        },
+        {
+          "line": 103,
+          "text": "            break"
+        },
+        {
+          "line": 104,
+          "text": "    if start is None:"
+        },
+        {
+          "line": 105,
+          "text": "        raise RuntimeError(\"raw cartesian tensor block not found\")"
+        },
+        {
+          "line": 106,
+          "text": "    rows = []"
+        },
+        {
+          "line": 107,
+          "text": "    for line in lines[start:]:"
+        },
+        {
+          "line": 108,
+          "text": "        parts = line.split()"
+        },
+        {
+          "line": 109,
+          "text": "        if len(parts) < 3:"
+        },
+        {
+          "line": 110,
+          "text": "            continue"
+        },
+        {
+          "line": 111,
+          "text": "        try:"
+        },
+        {
+          "line": 112,
+          "text": "            vals = [float(parts[0]), float(parts[1]), float(parts[2])]"
+        },
+        {
+          "line": 113,
+          "text": "        except ValueError:"
+        },
+        {
+          "line": 114,
+          "text": "            continue"
+        },
+        {
+          "line": 115,
+          "text": "        rows.append(vals)"
+        },
+        {
+          "line": 116,
+          "text": "        if len(rows) == 3:"
+        },
+        {
+          "line": 117,
+          "text": "            break"
+        },
+        {
+          "line": 118,
+          "text": "    if len(rows) != 3:"
+        },
+        {
+          "line": 119,
+          "text": "        raise RuntimeError(\"incomplete raw cartesian tensor\")"
+        },
+        {
+          "line": 120,
+          "text": "    return rows"
+        },
+        {
+          "line": 121,
+          "text": ""
+        },
+        {
+          "line": 122,
+          "text": ""
+        },
+        {
+          "line": 123,
+          "text": "def parse_isotropic(text):"
+        },
+        {
+          "line": 124,
+          "text": "    for line in text.splitlines():"
+        },
+        {
+          "line": 125,
+          "text": "        if \"isotropic polarizability\" in line.lower():"
+        },
+        {
+          "line": 126,
+          "text": "            parts = line.replace(\":\", \" \").split()"
+        },
+        {
+          "line": 127,
+          "text": "            for token in reversed(parts):"
+        },
+        {
+          "line": 128,
+          "text": "                try:"
+        },
+        {
+          "line": 129,
+          "text": "                    return float(token)"
+        },
+        {
+          "line": 130,
+          "text": "                except ValueError:"
+        },
+        {
+          "line": 131,
+          "text": "                    pass"
+        },
+        {
+          "line": 132,
+          "text": "    raise RuntimeError(\"isotropic polarizability not found\")"
+        },
+        {
+          "line": 133,
+          "text": ""
+        },
+        {
+          "line": 134,
+          "text": ""
+        },
+        {
+          "line": 135,
+          "text": "rec1 = run_orca(\"orca_original.inp\", dependencies=[\"original.xyz\"], request_key=\"polar_original\", purpose=\"new_candidate\", retry_of=None)"
+        },
+        {
+          "line": 136,
+          "text": "rec2 = run_orca(\"orca_rotated.inp\", dependencies=[\"rotated.xyz\"], request_key=\"polar_rotated\", purpose=\"new_candidate\", retry_of=None)"
+        },
+        {
+          "line": 137,
+          "text": ""
+        },
+        {
+          "line": 138,
+          "text": "for tag, rec in [(\"original\", rec1), (\"rotated\", rec2)]:"
+        },
+        {
+          "line": 139,
+          "text": "    for key in [\"stdout.out\", \"stderr.txt\", \"job.inp\", \"job.xyz\"]:"
+        },
+        {
+          "line": 140,
+          "text": "        if key in rec.get(\"files\", {}):"
+        },
+        {
+          "line": 141,
+          "text": "            copy_receipt_file(rec, key, tag + \"_\" + Path(key).name)"
+        },
+        {
+          "line": 142,
+          "text": ""
+        },
+        {
+          "line": 143,
+          "text": "text1 = Path(\"original_stdout.out\").read_text()"
+        },
+        {
+          "line": 144,
+          "text": "text2 = Path(\"rotated_stdout.out\").read_text()"
+        },
+        {
+          "line": 145,
+          "text": "alpha1 = parse_tensor(text1)"
+        },
+        {
+          "line": 146,
+          "text": "alpha2 = parse_tensor(text2)"
+        },
+        {
+          "line": 147,
+          "text": "iso1 = parse_isotropic(text1)"
+        },
+        {
+          "line": 148,
+          "text": "iso2 = parse_isotropic(text2)"
+        },
+        {
+          "line": 149,
+          "text": ""
+        },
+        {
+          "line": 150,
+          "text": "alpha2_pred = [[sum(R[i][k] * alpha1[k][l] * R[j][l] for k in range(3) for l in range(3)) for j in range(3)] for i in range(3)]"
+        },
+        {
+          "line": 151,
+          "text": "max_abs_error = max(abs(alpha2[i][j] - alpha2_pred[i][j]) for i in range(3) for j in range(3))"
+        },
+        {
+          "line": 152,
+          "text": "iso_diff = abs(iso2 - iso1)"
+        },
+        {
+          "line": 153,
+          "text": ""
+        },
+        {
+          "line": 154,
+          "text": "data = {"
+        },
+        {
+          "line": 155,
+          "text": "    \"version\": 1,"
+        },
+        {
+          "line": 156,
+          "text": "    \"units\": \"atomic units\","
+        },
+        {
+          "line": 157,
+          "text": "    \"rotation\": record,"
+        },
+        {
+          "line": 158,
+          "text": "    \"original_tensor\": alpha1,"
+        },
+        {
+          "line": 159,
+          "text": "    \"rotated_tensor\": alpha2,"
+        },
+        {
+          "line": 160,
+          "text": "    \"original_isotropic\": iso1,"
+        },
+        {
+          "line": 161,
+          "text": "    \"rotated_isotropic\": iso2,"
+        },
+        {
+          "line": 162,
+          "text": "    \"rotated_tensor_predicted_from_original\": alpha2_pred,"
+        },
+        {
+          "line": 163,
+          "text": "    \"tensor_transform_max_abs_error\": max_abs_error,"
+        },
+        {
+          "line": 164,
+          "text": "    \"isotropic_difference\": iso_diff,"
+        },
+        {
+          "line": 165,
+          "text": "    \"formulas\": {"
+        },
+        {
+          "line": 166,
+          "text": "        \"tensor_transform\": \"alpha_rotated = R alpha_original R^T for active rotation r' = R r\","
+        },
+        {
+          "line": 167,
+          "text": "        \"isotropic\": \"alpha_iso = (alpha_xx + alpha_yy + alpha_zz)/3\","
+        },
+        {
+          "line": 168,
+          "text": "    },"
+        },
+        {
+          "line": 169,
+          "text": "    \"request_keys\": {\"original\": \"polar_original\", \"rotated\": \"polar_rotated\"},"
+        },
+        {
+          "line": 170,
+          "text": "}"
+        },
+        {
+          "line": 171,
+          "text": "Path(\"polarizability_data.json\").write_text(json.dumps(data, indent=2) + \"\\n\")"
+        },
+        {
+          "line": 172,
+          "text": ""
+        },
+        {
+          "line": 173,
+          "text": "src1 = receipt_source(rec1, \"stdout.out\", location=\"STATIC POLARIZABILITY TENSOR (Dipole/Dipole)\")"
+        },
+        {
+          "line": 174,
+          "text": "src2 = receipt_source(rec2, \"stdout.out\", location=\"STATIC POLARIZABILITY TENSOR (Dipole/Dipole)\")"
+        },
+        {
+          "line": 175,
+          "text": ""
+        },
+        {
+          "line": 176,
+          "text": "common_limitations = ["
+        },
+        {
+          "line": 177,
+          "text": "    \"RHF/def2-SVP gas phase, fixed geometry, static electric-field response only; no geometry optimization and no frequency-dependent response.\","
+        },
+        {
+          "line": 178,
+          "text": "    \"Tensor values are the raw cartesian static dipole-dipole polarizability printed by ORCA %elprop Polar true.\","
+        },
+        {
+          "line": 179,
+          "text": "]"
+        },
+        {
+          "line": 180,
+          "text": ""
+        },
+        {
+          "line": 181,
+          "text": "obs = ["
+        },
+        {
+          "line": 182,
+          "text": "    {"
+        },
+        {
+          "line": 183,
+          "text": "        \"name\": \"original_tensor\","
+        },
+        {
+          "line": 184,
+          "text": "        \"value\": alpha1,"
+        },
+        {
+          "line": 185,
+          "text": "        \"unit\": \"atomic units\","
+        },
+        {
+          "line": 186,
+          "text": "        \"sources\": [src1],"
+        },
+        {
+          "line": 187,
+          "text": "        \"formula\": \"ORCA static dipole-dipole polarizability raw cartesian tensor\","
+        },
+        {
+          "line": 188,
+          "text": "        \"artifacts\": [\"original.xyz\", \"orca_original.inp\", \"original_stdout.out\", \"rotation_record.json\"],"
+        },
+        {
+          "line": 189,
+          "text": "        \"limitations\": common_limitations,"
+        },
+        {
+          "line": 190,
+          "text": "    },"
+        },
+        {
+          "line": 191,
+          "text": "    {"
+        },
+        {
+          "line": 192,
+          "text": "        \"name\": \"rotated_tensor\","
+        },
+        {
+          "line": 193,
+          "text": "        \"value\": alpha2,"
+        },
+        {
+          "line": 194,
+          "text": "        \"unit\": \"atomic units\","
+        },
+        {
+          "line": 195,
+          "text": "        \"sources\": [src2],"
+        },
+        {
+          "line": 196,
+          "text": "        \"formula\": \"ORCA static dipole-dipole polarizability raw cartesian tensor for independently computed rotated geometry\","
+        },
+        {
+          "line": 197,
+          "text": "        \"artifacts\": [\"rotated.xyz\", \"orca_rotated.inp\", \"rotated_stdout.out\", \"rotation_record.json\"],"
+        },
+        {
+          "line": 198,
+          "text": "        \"limitations\": common_limitations,"
+        },
+        {
+          "line": 199,
+          "text": "    },"
+        },
+        {
+          "line": 200,
+          "text": "    {"
+        }
+      ],
+      "returned_bytes": 7009,
+      "status": "observed",
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      }
+    }
+  },
+  "observation_records": [],
+  "diagnostics": [],
+  "artifact_ids": [
+    "artifact_d6477ce91a494294beeeb7f9cf92c622"
+  ],
+  "source": {
+    "call_id": "call_47a7d1fde78244578fa5960153b8fd95",
+    "role": "python",
+    "name": "run_ch2o_polarizability.py",
+    "tool": "evidence.text",
+    "consumption": {
+      "_decision_id": "model_d01a0ccda956478b8241ba0a00f5aa8d"
+    },
+    "request_version": 2,
+    "plan_version": 3
+  },
+  "created_at": "2026-10-20T07:27:47.419165Z"
+}

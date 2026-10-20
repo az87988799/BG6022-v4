@@ -1,0 +1,77 @@
+{
+  "observed_at_utc": "2026-10-20T07:00:10.979877+00:00",
+  "task": "T4",
+  "run_id": "run_e73b6f1fdc0845b98541046756dd0489",
+  "scope": "Blind approved condition selection registration; no scientific numerical outputs read",
+  "approved_request_version": 3,
+  "conditions": {
+    "explain_results": true,
+    "charge": 0,
+    "multiplicity": 1,
+    "environment": "gas_phase",
+    "electronic_state": "RKS",
+    "method": "PBE0",
+    "basis": "def2-SVP"
+  },
+  "selection_reasons": {
+    "method": "Select PBE0 under the 4-core/192 MB process budget. ORCA documentation identifies PBE0 as a global hybrid with 25% HF exchange, suitable for a bounded linear-response TDDFT calculation of valence singlet excitations in acetone. This selection is a planning choice, not independent scientific validation; the calculation will need to specify full TDDFT rather than TDA, 5 roots, singlets only, and gas-phase conditions.",
+    "basis": "Select def2-SVP as an affordable polarized valence double-zeta basis for acetone C/O/H. The official ORCA basis documentation lists def2-SVP with H–Rn coverage and ECPs for heavier elements, so all acetone elements are covered. Diffuse functions are absent, so Rydberg states are not targeted; this limitation remains explicit."
+  },
+  "selection_record": {
+    "schema": "condition-selection-2",
+    "parameters": {
+      "request_version": 2,
+      "choices": {
+        "method": {
+          "value": "PBE0",
+          "reason": "Select PBE0 under the 4-core/192 MB process budget. ORCA documentation identifies PBE0 as a global hybrid with 25% HF exchange, suitable for a bounded linear-response TDDFT calculation of valence singlet excitations in acetone. This selection is a planning choice, not independent scientific validation; the calculation will need to specify full TDDFT rather than TDA, 5 roots, singlets only, and gas-phase conditions.",
+          "sources": [
+            {
+              "result_id": "result_0ae98ab7b75645c1a26d8a4b35aab1d8",
+              "document_sha256": "94424fff221bde28abf4a32b7f1649771dcfde5585360082816107d4a6032c0c",
+              "quote": "PBE0 [229] PBE0 25 One-parameter hybrid version of PBE"
+            }
+          ]
+        },
+        "basis": {
+          "value": "def2-SVP",
+          "reason": "Select def2-SVP as an affordable polarized valence double-zeta basis for acetone C/O/H. The official ORCA basis documentation lists def2-SVP with H–Rn coverage and ECPs for heavier elements, so all acetone elements are covered. Diffuse functions are absent, so Rydberg states are not targeted; this limitation remains explicit.",
+          "sources": [
+            {
+              "result_id": "result_826a73a0ba9948be82789b55c3128d20",
+              "document_sha256": "48750fa1c9dc25992c9e339648e52ef0f63423a7ad196e33b78609eb7143c4b6",
+              "quote": "def2-SVP H–Rn def2-ECP (Rb–Rn) Polarized valence double-"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "explicit_response_choice_in_selection_reason": "full TDDFT rather than TDA, 5 roots, singlets only, gas phase",
+  "actual_response_input_status": "unverified_no_input_at_registration",
+  "orca_starts_actual_at_observation": 0,
+  "python_attempts_at_observation": 0,
+  "registered_before_first_orca_start": true,
+  "sources": [
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\first-repetition-evidence\\T4\\start.json",
+      "sha256": "97a1ccc76d646b36b140fcb0e22ba0c202fc0afba136589979ed0957140bd732",
+      "bytes": 731
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-T4-001\\data\\runs\\run_e73b6f1fdc0845b98541046756dd0489\\decisions\\model_e8683ffeeb154b41ae0406530c679f58.json",
+      "sha256": "b72a0255114a86429a1aa089df8d7e9a6eb5c1dd2f2fed193ab32a05b322e3a2",
+      "bytes": 21426
+    },
+    {
+      "path": "E:\\BG6022-V4\\docs\\acceptance\\code-as-tools-step7-refreeze-1\\review\\registration-t4-run-snapshot.json",
+      "sha256": "ad62bbc6486b61b8174bd5e25b43f35f6b546e127e16cf6519c99e080b03b010",
+      "bytes": 47329
+    }
+  ],
+  "limitations": [
+    "Actual full TDDFT/TDA, root count, response convergence, grid/SCF and computation geometry must be checked against later source input and raw output.",
+    "Method selection reason is recorded, not a scientific accuracy endorsement.",
+    "No independent reference execution is authorized."
+  ]
+}

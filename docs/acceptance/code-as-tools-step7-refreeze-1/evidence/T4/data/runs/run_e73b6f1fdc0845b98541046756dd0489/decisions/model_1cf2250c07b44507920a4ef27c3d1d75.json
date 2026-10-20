@@ -1,0 +1,565 @@
+{
+  "id": "model_1cf2250c07b44507920a4ef27c3d1d75",
+  "basis": {
+    "request_version": 3,
+    "plan_version": 1,
+    "permission_version": 1,
+    "control_generation": 1
+  },
+  "request": {
+    "id": "request_0a228dc84a3e47c288c3cc5cd3a3d132",
+    "version": 3,
+    "original_text": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "geometry_artifact_id": null,
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "PBE0",
+    "basis": "def2-SVP",
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "environment": "explicit",
+      "electronic_state": "default",
+      "method": "auto_selected",
+      "basis": "auto_selected"
+    },
+    "goals": [
+      {
+        "id": "goal_acetone_geometry",
+        "port": "prepared_geometry",
+        "required": true,
+        "minimum_check_version": "structure-prepare-2",
+        "evidence_contract_version": "legacy-1",
+        "verification": "reported_with_limitations",
+        "quantity": "合理结构",
+        "original_text": "请为丙酮（中性、单重态、气相）生成合理结构",
+        "identity": {
+          "contract": "general-identity-2",
+          "requested_names": [
+            "丙酮"
+          ],
+          "canonical_names": [],
+          "query_name": "acetone",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+            "start": 0,
+            "end": 21,
+            "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+            "schema": "request-semantics-3"
+          }
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 0,
+          "end": 21,
+          "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_excitation_spectrum",
+        "port": "vertical_excitations",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "最低5个单重垂直电子激发",
+        "original_text": "计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 70,
+          "end": 131,
+          "text_basis": "计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [
+          "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度",
+          "保留弱跃迁和零强度项",
+          "不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能"
+        ],
+        "minimum_evidence_source": {
+          "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度": "explicit",
+          "保留弱跃迁和零强度项": "explicit",
+          "不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能": "explicit"
+        },
+        "unresolved": []
+      },
+      {
+        "id": "goal_method_rationale",
+        "port": "method_selection_rationale",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "选用完整TDDFT还是TDA及选择依据",
+        "original_text": "说明选用完整TDDFT还是TDA及选择依据",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 48,
+          "end": 69,
+          "text_basis": "说明选用完整TDDFT还是TDA及选择依据",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_excitation_analysis",
+        "port": "excitation_analysis",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "低能态与较强跃迁的区别",
+        "original_text": "并分析低能态与较强跃迁的区别",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 132,
+          "end": 146,
+          "text_basis": "并分析低能态与较强跃迁的区别",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_delivery_bundle",
+        "port": "delivery_bundle",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+        "original_text": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 147,
+          "end": 176,
+          "text_basis": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_geometry_provenance",
+        "port": "geometry_provenance",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "几何来源和验证限制",
+        "original_text": "说明几何来源和验证限制",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 177,
+          "end": 188,
+          "text_basis": "说明几何来源和验证限制",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_random_seed_policy",
+        "port": "random_seed_policy",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "种子 1701",
+        "original_text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 235,
+          "end": 306,
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [
+          "统一采用种子 1701 并在报告中记录",
+          "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性"
+        ],
+        "minimum_evidence_source": {
+          "统一采用种子 1701 并在报告中记录": "explicit",
+          "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性": "explicit"
+        },
+        "unresolved": []
+      }
+    ],
+    "systems": [
+      {
+        "id": "system_acetone",
+        "geometry_artifact_id": null,
+        "conditions": {},
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": "丙酮",
+        "identity": {
+          "contract": "general-identity-2",
+          "requested_names": [
+            "丙酮"
+          ],
+          "canonical_names": [],
+          "query_name": "acetone",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+            "start": 0,
+            "end": 21,
+            "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "text": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "source": "user",
+        "created_at": "2026-10-20T06:58:36.642352+00:00",
+        "request_version": 1
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "electronic_state": "RKS",
+      "method": "PBE0",
+      "basis": "def2-SVP"
+    },
+    "normalization_status": "normalized",
+    "condition_evidence": {
+      "request.charge": {
+        "value": 0,
+        "source": "explicit",
+        "text_basis": "中性、单重态、气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 5,
+        "end": 14,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.multiplicity": {
+        "value": 1,
+        "source": "explicit",
+        "text_basis": "中性、单重态、气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 5,
+        "end": 14,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.environment": {
+        "value": "gas_phase",
+        "source": "explicit",
+        "text_basis": "中性、单重态、气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 5,
+        "end": 14,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.electronic_state": {
+        "value": "RKS",
+        "source": "default",
+        "text_basis": "",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": "local-hf-1",
+        "message_id": null,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.method": {
+        "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 22,
+        "end": 47,
+        "source": "explicit",
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.basis": {
+        "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 22,
+        "end": 47,
+        "source": "explicit",
+        "schema": "request-semantics-3"
+      },
+      "request.method": {
+        "value": "PBE0",
+        "source": "auto_selected",
+        "request_version": 2,
+        "authorization": {
+          "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 22,
+          "end": 47,
+          "source": "explicit",
+          "schema": "request-semantics-3"
+        },
+        "reason": "Select PBE0 under the 4-core/192 MB process budget. ORCA documentation identifies PBE0 as a global hybrid with 25% HF exchange, suitable for a bounded linear-response TDDFT calculation of valence singlet excitations in acetone. This selection is a planning choice, not independent scientific validation; the calculation will need to specify full TDDFT rather than TDA, 5 roots, singlets only, and gas-phase conditions.",
+        "sources": [
+          {
+            "result_id": "result_0ae98ab7b75645c1a26d8a4b35aab1d8",
+            "result_fingerprint": "3875308b1e52d78d8afd07ecf8c3d0bdd14950b0de3360ef3332f4623433b734",
+            "document_sha256": "94424fff221bde28abf4a32b7f1649771dcfde5585360082816107d4a6032c0c",
+            "excerpt_sha256": "eb99da5a164dd825d85c0cfa6f7878297b96b7685127f13d6bd4ad097f42cfec",
+            "quote": "PBE0 [229] PBE0 25 One-parameter hybrid version of PBE",
+            "kind": "official_document",
+            "document_id": "orca_dft",
+            "index_version": "knowledge-index-3",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/modelchemistries/DensityFunctionalTheory.html",
+            "title": "ORCA 6.1 Density Functional Theory"
+          }
+        ],
+        "schema": "condition-selection-2"
+      },
+      "request.basis": {
+        "value": "def2-SVP",
+        "source": "auto_selected",
+        "request_version": 2,
+        "authorization": {
+          "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 22,
+          "end": 47,
+          "source": "explicit",
+          "schema": "request-semantics-3"
+        },
+        "reason": "Select def2-SVP as an affordable polarized valence double-zeta basis for acetone C/O/H. The official ORCA basis documentation lists def2-SVP with H–Rn coverage and ECPs for heavier elements, so all acetone elements are covered. Diffuse functions are absent, so Rydberg states are not targeted; this limitation remains explicit.",
+        "sources": [
+          {
+            "result_id": "result_826a73a0ba9948be82789b55c3128d20",
+            "result_fingerprint": "6df4609519906b481e6909fff13bc5fc86b6b997cc371a951de17099ebf720c2",
+            "document_sha256": "48750fa1c9dc25992c9e339648e52ef0f63423a7ad196e33b78609eb7143c4b6",
+            "excerpt_sha256": "02ba92a7f694c5534946f61ac4e72ad48dfe17329fd5e575e1f4709cb27f518c",
+            "quote": "def2-SVP H–Rn def2-ECP (Rb–Rn) Polarized valence double-",
+            "kind": "official_document",
+            "document_id": "orca_basis",
+            "index_version": "knowledge-index-3",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/basisset.html",
+            "title": "ORCA 6.1 Basis Sets"
+          }
+        ],
+        "schema": "condition-selection-2"
+      }
+    },
+    "semantic_defaults": {
+      "charge": 0,
+      "electronic_state": "RKS",
+      "environment": "gas_phase",
+      "multiplicity": 1
+    },
+    "automatic_selection": [
+      "method",
+      "basis"
+    ],
+    "selection_reasons": {
+      "method": "Select PBE0 under the 4-core/192 MB process budget. ORCA documentation identifies PBE0 as a global hybrid with 25% HF exchange, suitable for a bounded linear-response TDDFT calculation of valence singlet excitations in acetone. This selection is a planning choice, not independent scientific validation; the calculation will need to specify full TDDFT rather than TDA, 5 roots, singlets only, and gas-phase conditions.",
+      "basis": "Select def2-SVP as an affordable polarized valence double-zeta basis for acetone C/O/H. The official ORCA basis documentation lists def2-SVP with H–Rn coverage and ECPs for heavier elements, so all acetone elements are covered. Diffuse functions are absent, so Rydberg states are not targeted; this limitation remains explicit."
+    }
+  },
+  "plan": {
+    "id": "plan_1fb1c2cf811c432ba1f3d93a7c2ac31e",
+    "version": 2,
+    "request_id": "request_0a228dc84a3e47c288c3cc5cd3a3d132",
+    "request_version": 3,
+    "steps": [
+      {
+        "id": "step_ac271623615046abb56ed6ea5e90de19",
+        "logical_id": "logical_7c9e1a6fcc484f53b574bd6af8cd73ef",
+        "tool": "workspace.write",
+        "parameters": {
+          "name": "tddft.inp",
+          "content": "! PBE0 def2-SVP RKS NoAutoStart\n%maxcore 192\n%scf MaxIter 128 AutoTRAH false end\n%tddft NRoots 5 MaxIter 128 TDA false Triplets false end\n* xyzfile 0 1 coords.xyz\n",
+          "role": "orca"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": null
+      },
+      {
+        "id": "step_a4431fc179a64a248cfc42e514f2ad1e",
+        "logical_id": "logical_df9a8aa4a8e04cae898582809701e41d",
+        "tool": "structure.prepare",
+        "parameters": {
+          "system_id": "system_acetone",
+          "charge": 0,
+          "multiplicity": 1
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_d449671f6be843e58f490c93673fed04"
+        ],
+        "inputs": {
+          "identity": {
+            "producer_step_id": "step_d449671f6be843e58f490c93673fed04",
+            "run_id": null,
+            "result_id": null,
+            "attempt_id": null,
+            "artifact_id": null,
+            "sha256": null,
+            "port": "resolved_identity",
+            "rule_version": null
+          }
+        },
+        "system_id": "system_acetone"
+      },
+      {
+        "id": "step_d449671f6be843e58f490c93673fed04",
+        "logical_id": "logical_765fdaa42cc04513a0b5ddbb2899949d",
+        "tool": "structure.resolve",
+        "parameters": {
+          "system_id": "system_acetone"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": "system_acetone"
+      }
+    ],
+    "goal_map": {
+      "goal_acetone_geometry": {
+        "step_id": "step_a4431fc179a64a248cfc42e514f2ad1e",
+        "port": "prepared_geometry",
+        "evidence": null,
+        "gap": null
+      },
+      "goal_excitation_spectrum": {
+        "step_id": null,
+        "port": "vertical_excitations",
+        "evidence": null,
+        "gap": "requires prepared geometry and a managed ORCA TDDFT calculation"
+      },
+      "goal_method_rationale": {
+        "step_id": null,
+        "port": "method_selection_rationale",
+        "evidence": null,
+        "gap": "requires selected method details and actual managed TDDFT input/receipt"
+      },
+      "goal_excitation_analysis": {
+        "step_id": null,
+        "port": "excitation_analysis",
+        "evidence": null,
+        "gap": "requires computed vertical excitation spectrum"
+      },
+      "goal_delivery_bundle": {
+        "step_id": null,
+        "port": "delivery_bundle",
+        "evidence": null,
+        "gap": "requires completed calculations, source files, input, and data tables"
+      },
+      "goal_geometry_provenance": {
+        "step_id": null,
+        "port": "geometry_provenance",
+        "evidence": null,
+        "gap": "requires actual prepared-geometry receipt and documented limitations"
+      },
+      "goal_random_seed_policy": {
+        "step_id": null,
+        "port": "random_seed_policy",
+        "evidence": null,
+        "gap": "requires recording whether structure preparation/search uses randomness and seed 1701 support"
+      }
+    }
+  },
+  "related_results": [
+    "result_8351fde10bc74a87b0d55deeac736875"
+  ],
+  "user_message_ids": []
+}

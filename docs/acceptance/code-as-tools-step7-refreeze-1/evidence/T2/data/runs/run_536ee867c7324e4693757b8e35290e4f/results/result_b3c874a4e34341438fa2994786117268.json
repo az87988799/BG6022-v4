@@ -1,0 +1,908 @@
+{
+  "id": "result_b3c874a4e34341438fa2994786117268",
+  "run_id": "run_536ee867c7324e4693757b8e35290e4f",
+  "step_id": null,
+  "attempt_id": null,
+  "call_id": "call_d6dd7f4774af467fa2b4052434a6f1d4",
+  "supersedes_result_id": null,
+  "operation_status": "completed",
+  "checks": {
+    "text_window": [
+      {
+        "name": "bounded_evidence_read",
+        "status": "passed",
+        "detail": "operation only; content and observed values remain scientifically unverified",
+        "source": {
+          "artifact_id": "artifact_f249ed0648d8496a86bbe8b8c4a3622b",
+          "sha256": "c83b9da4df9c28a69d76f87e2c029a6f0788088e78d5f4232abd8c3291e6192e",
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        },
+        "rule_version": "evidence-read-1"
+      }
+    ]
+  },
+  "qualified_outputs": {},
+  "observations": {
+    "text_window": {
+      "artifact_id": "artifact_f249ed0648d8496a86bbe8b8c4a3622b",
+      "sha256": "c83b9da4df9c28a69d76f87e2c029a6f0788088e78d5f4232abd8c3291e6192e",
+      "role": "code",
+      "file": "artifacts/artifact_f249ed0648d8496a86bbe8b8c4a3622b/files/hexane_conformer_search_v2.py",
+      "source": {
+        "call_id": "call_7cbedbfa22184964b757d5a1c5ca703b",
+        "role": "python",
+        "name": "hexane_conformer_search_v2.py"
+      },
+      "view": {
+        "type": "raw_text",
+        "version": "1"
+      },
+      "path": [],
+      "geometry_indices": [],
+      "stage": "unknown",
+      "units": null,
+      "conditions": "unknown",
+      "scientific_status": "unverified",
+      "validation": "unverified observation; not a scientific qualification",
+      "lines": [
+        {
+          "line": 1,
+          "text": "import json, math, os"
+        },
+        {
+          "line": 2,
+          "text": "from rdkit import Chem"
+        },
+        {
+          "line": 3,
+          "text": "from rdkit.Chem import AllChem, rdMolAlign"
+        },
+        {
+          "line": 4,
+          "text": "from orca_task_sdk import run_orca, receipt_source"
+        },
+        {
+          "line": 5,
+          "text": ""
+        },
+        {
+          "line": 6,
+          "text": "SEED = 1701"
+        },
+        {
+          "line": 7,
+          "text": "THRESH = 0.15"
+        },
+        {
+          "line": 8,
+          "text": "N_EMBED = 60"
+        },
+        {
+          "line": 9,
+          "text": "N_ORCA = 5"
+        },
+        {
+          "line": 10,
+          "text": "HKJ = 2625.499639"
+        },
+        {
+          "line": 11,
+          "text": "METHOD = 'B3LYP'"
+        },
+        {
+          "line": 12,
+          "text": "BASIS = 'def2-SVP'"
+        },
+        {
+          "line": 13,
+          "text": "CHARGE = 0"
+        },
+        {
+          "line": 14,
+          "text": "MULT = 1"
+        },
+        {
+          "line": 15,
+          "text": ""
+        },
+        {
+          "line": 16,
+          "text": ""
+        },
+        {
+          "line": 17,
+          "text": "def conf_xyz(mol, cid, comment):"
+        },
+        {
+          "line": 18,
+          "text": "    c = mol.GetConformer(cid)"
+        },
+        {
+          "line": 19,
+          "text": "    out = [str(mol.GetNumAtoms()), comment]"
+        },
+        {
+          "line": 20,
+          "text": "    for i, a in enumerate(mol.GetAtoms()):"
+        },
+        {
+          "line": 21,
+          "text": "        p = c.GetAtomPosition(i)"
+        },
+        {
+          "line": 22,
+          "text": "        out.append('%s %.6f %.6f %.6f' % (a.GetSymbol(), p.x, p.y, p.z))"
+        },
+        {
+          "line": 23,
+          "text": "    return '\\n'.join(out) + '\\n'"
+        },
+        {
+          "line": 24,
+          "text": ""
+        },
+        {
+          "line": 25,
+          "text": ""
+        },
+        {
+          "line": 26,
+          "text": "mol = Chem.AddHs(Chem.MolFromSmiles('CCCCCC'))"
+        },
+        {
+          "line": 27,
+          "text": "ps = AllChem.ETKDGv3()"
+        },
+        {
+          "line": 28,
+          "text": "ps.randomSeed = SEED"
+        },
+        {
+          "line": 29,
+          "text": "ps.numThreads = 1"
+        },
+        {
+          "line": 30,
+          "text": "ps.pruneRmsThresh = -1.0"
+        },
+        {
+          "line": 31,
+          "text": "AllChem.EmbedMultipleConfs(mol, numConfs=N_EMBED, params=ps)"
+        },
+        {
+          "line": 32,
+          "text": "conf_ids = [c.GetId() for c in mol.GetConformers()]"
+        },
+        {
+          "line": 33,
+          "text": "ffres = AllChem.MMFFOptimizeMoleculeConfs(mol, maxIters=2000, numThreads=1)"
+        },
+        {
+          "line": 34,
+          "text": ""
+        },
+        {
+          "line": 35,
+          "text": "cands = []"
+        },
+        {
+          "line": 36,
+          "text": "for i, cid in enumerate(conf_ids):"
+        },
+        {
+          "line": 37,
+          "text": "    nconv, e = ffres[i]"
+        },
+        {
+          "line": 38,
+          "text": "    fn = 'cand_%02d.xyz' % (i + 1)"
+        },
+        {
+          "line": 39,
+          "text": "    with open(fn, 'w') as fh:"
+        },
+        {
+          "line": 40,
+          "text": "        fh.write(conf_xyz(mol, cid, 'n-hexane %s RDKit ETKDGv3 seed=1701 MMFF94' % fn))"
+        },
+        {
+          "line": 41,
+          "text": "    cands.append({'id': fn[:-4], 'file': fn, 'cid': cid,"
+        },
+        {
+          "line": 42,
+          "text": "                  'mmff_kcal_mol': float(e), 'ff_converged': bool(nconv == 0)})"
+        },
+        {
+          "line": 43,
+          "text": ""
+        },
+        {
+          "line": 44,
+          "text": ""
+        },
+        {
+          "line": 45,
+          "text": "def heavy_conf(cid):"
+        },
+        {
+          "line": 46,
+          "text": "    m = Chem.Mol(mol)"
+        },
+        {
+          "line": 47,
+          "text": "    m.RemoveAllConformers()"
+        },
+        {
+          "line": 48,
+          "text": "    m.AddConformer(Chem.Conformer(mol.GetConformer(cid)), assignId=True)"
+        },
+        {
+          "line": 49,
+          "text": "    return Chem.RemoveHs(m)"
+        },
+        {
+          "line": 50,
+          "text": ""
+        },
+        {
+          "line": 51,
+          "text": ""
+        },
+        {
+          "line": 52,
+          "text": "def heavy_rmsd(h1, h2):"
+        },
+        {
+          "line": 53,
+          "text": "    try:"
+        },
+        {
+          "line": 54,
+          "text": "        return float(rdMolAlign.GetBestRMS(h1, h2, prbId=0, refId=0))"
+        },
+        {
+          "line": 55,
+          "text": "    except Exception:"
+        },
+        {
+          "line": 56,
+          "text": "        c1 = h1.GetConformer(0)"
+        },
+        {
+          "line": 57,
+          "text": "        c2 = h2.GetConformer(0)"
+        },
+        {
+          "line": 58,
+          "text": "        n = h1.GetNumAtoms()"
+        },
+        {
+          "line": 59,
+          "text": "        best = None"
+        },
+        {
+          "line": 60,
+          "text": "        for rev in (False, True):"
+        },
+        {
+          "line": 61,
+          "text": "            s = 0.0"
+        },
+        {
+          "line": 62,
+          "text": "            for i in range(n):"
+        },
+        {
+          "line": 63,
+          "text": "                p = c1.GetAtomPosition(i)"
+        },
+        {
+          "line": 64,
+          "text": "                q = c2.GetAtomPosition(n - 1 - i if rev else i)"
+        },
+        {
+          "line": 65,
+          "text": "                s += (p.x - q.x) ** 2 + (p.y - q.y) ** 2 + (p.z - q.z) ** 2"
+        },
+        {
+          "line": 66,
+          "text": "            r = math.sqrt(s / n)"
+        },
+        {
+          "line": 67,
+          "text": "            best = r if best is None else min(best, r)"
+        },
+        {
+          "line": 68,
+          "text": "        return float(best)"
+        },
+        {
+          "line": 69,
+          "text": ""
+        },
+        {
+          "line": 70,
+          "text": ""
+        },
+        {
+          "line": 71,
+          "text": "byid = {}"
+        },
+        {
+          "line": 72,
+          "text": "heavies = {}"
+        },
+        {
+          "line": 73,
+          "text": "kept = []"
+        },
+        {
+          "line": 74,
+          "text": "for cand in sorted(cands, key=lambda r: (r['mmff_kcal_mol'], r['id'])):"
+        },
+        {
+          "line": 75,
+          "text": "    h = heavy_conf(cand['cid'])"
+        },
+        {
+          "line": 76,
+          "text": "    heavies[cand['id']] = h"
+        },
+        {
+          "line": 77,
+          "text": "    byid[cand['id']] = cand"
+        },
+        {
+          "line": 78,
+          "text": "    best = None"
+        },
+        {
+          "line": 79,
+          "text": "    bestid = None"
+        },
+        {
+          "line": 80,
+          "text": "    for k in kept:"
+        },
+        {
+          "line": 81,
+          "text": "        r = heavy_rmsd(h, heavies[k])"
+        },
+        {
+          "line": 82,
+          "text": "        if best is None or r < best:"
+        },
+        {
+          "line": 83,
+          "text": "            best = r"
+        },
+        {
+          "line": 84,
+          "text": "            bestid = k"
+        },
+        {
+          "line": 85,
+          "text": "    cand['min_rmsd_A'] = None if best is None else round(best, 4)"
+        },
+        {
+          "line": 86,
+          "text": "    if best is not None and best < THRESH:"
+        },
+        {
+          "line": 87,
+          "text": "        cand['duplicate_of'] = bestid"
+        },
+        {
+          "line": 88,
+          "text": "    else:"
+        },
+        {
+          "line": 89,
+          "text": "        cand['duplicate_of'] = None"
+        },
+        {
+          "line": 90,
+          "text": "        kept.append(cand['id'])"
+        },
+        {
+          "line": 91,
+          "text": ""
+        },
+        {
+          "line": 92,
+          "text": "selected_ids = kept[:N_ORCA]"
+        },
+        {
+          "line": 93,
+          "text": ""
+        },
+        {
+          "line": 94,
+          "text": "ORCA_INP = '! RKS B3LYP def2-SVP SP NoAutoStart\\n%maxcore 192\\n%scf\\n  MaxIter 256\\n  AutoTRAH false\\nend\\n* xyzfile 0 1 {xyz}\\n'"
+        },
+        {
+          "line": 95,
+          "text": ""
+        },
+        {
+          "line": 96,
+          "text": "runs = []"
+        },
+        {
+          "line": 97,
+          "text": "for cid_ in selected_ids:"
+        },
+        {
+          "line": 98,
+          "text": "    c = byid[cid_]"
+        },
+        {
+          "line": 99,
+          "text": "    inp = 'sp_%s.inp' % cid_"
+        },
+        {
+          "line": 100,
+          "text": "    with open(inp, 'w') as fh:"
+        },
+        {
+          "line": 101,
+          "text": "        fh.write(ORCA_INP.format(xyz=c['file']))"
+        },
+        {
+          "line": 102,
+          "text": "    rec = run_orca(inp, dependencies=[c['file']], request_key='sp_' + cid_, purpose='new_candidate')"
+        },
+        {
+          "line": 103,
+          "text": "    energy = None"
+        },
+        {
+          "line": 104,
+          "text": "    files = rec.get('files') or {}"
+        },
+        {
+          "line": 105,
+          "text": "    p = files.get('stdout.out')"
+        },
+        {
+          "line": 106,
+          "text": "    if p and os.path.exists(p):"
+        },
+        {
+          "line": 107,
+          "text": "        try:"
+        },
+        {
+          "line": 108,
+          "text": "            txt = open(p, 'r', errors='replace').read()"
+        },
+        {
+          "line": 109,
+          "text": "        except Exception:"
+        },
+        {
+          "line": 110,
+          "text": "            txt = ''"
+        },
+        {
+          "line": 111,
+          "text": "        for line in txt.splitlines():"
+        },
+        {
+          "line": 112,
+          "text": "            s = line.strip()"
+        },
+        {
+          "line": 113,
+          "text": "            if s.startswith('FINAL SINGLE POINT ENERGY'):"
+        },
+        {
+          "line": 114,
+          "text": "                try:"
+        },
+        {
+          "line": 115,
+          "text": "                    energy = float(s.split()[-1])"
+        },
+        {
+          "line": 116,
+          "text": "                except Exception:"
+        },
+        {
+          "line": 117,
+          "text": "                    pass"
+        },
+        {
+          "line": 118,
+          "text": "    try:"
+        },
+        {
+          "line": 119,
+          "text": "        src = receipt_source(rec, 'stdout.out', location='FINAL SINGLE POINT ENERGY (last occurrence)')"
+        },
+        {
+          "line": 120,
+          "text": "    except Exception:"
+        },
+        {
+          "line": 121,
+          "text": "        src = {'internal_request_key': rec.get('request_key'), 'filename': 'stdout.out',"
+        },
+        {
+          "line": 122,
+          "text": "               'location': 'FINAL SINGLE POINT ENERGY (last occurrence)'}"
+        },
+        {
+          "line": 123,
+          "text": "    runs.append({'candidate': cid_, 'xyz': c['file'], 'input': inp,"
+        },
+        {
+          "line": 124,
+          "text": "                 'energy_hartree': energy, 'source': src})"
+        },
+        {
+          "line": 125,
+          "text": ""
+        },
+        {
+          "line": 126,
+          "text": "ok = [r for r in runs if r['energy_hartree'] is not None]"
+        },
+        {
+          "line": 127,
+          "text": "low = None"
+        },
+        {
+          "line": 128,
+          "text": "if ok:"
+        },
+        {
+          "line": 129,
+          "text": "    emin = min(r['energy_hartree'] for r in ok)"
+        },
+        {
+          "line": 130,
+          "text": "    for r in ok:"
+        },
+        {
+          "line": 131,
+          "text": "        r['relative_kj_mol'] = round((r['energy_hartree'] - emin) * HKJ, 4)"
+        },
+        {
+          "line": 132,
+          "text": "    low = min(ok, key=lambda r: r['energy_hartree'])['candidate']"
+        },
+        {
+          "line": 133,
+          "text": "for r in runs:"
+        },
+        {
+          "line": 134,
+          "text": "    if r['energy_hartree'] is None:"
+        },
+        {
+          "line": 135,
+          "text": "        r['relative_kj_mol'] = None"
+        },
+        {
+          "line": 136,
+          "text": ""
+        },
+        {
+          "line": 137,
+          "text": "all_xyz = [c['file'] for c in cands]"
+        },
+        {
+          "line": 138,
+          "text": "all_inp = [r['input'] for r in runs]"
+        },
+        {
+          "line": 139,
+          "text": "nconv_true = sum(1 for c in cands if c['ff_converged'])"
+        },
+        {
+          "line": 140,
+          "text": "dups = [{'candidate': c['id'], 'duplicate_of': c['duplicate_of'],"
+        },
+        {
+          "line": 141,
+          "text": "         'min_rmsd_A': c['min_rmsd_A'], 'mmff_energy_kcal_mol': c['mmff_kcal_mol']}"
+        },
+        {
+          "line": 142,
+          "text": "        for c in cands if c['duplicate_of']]"
+        },
+        {
+          "line": 143,
+          "text": ""
+        },
+        {
+          "line": 144,
+          "text": "obs = []"
+        },
+        {
+          "line": 145,
+          "text": "obs.append({"
+        },
+        {
+          "line": 146,
+          "text": "    'name': 'candidate_conformer_search',"
+        },
+        {
+          "line": 147,
+          "text": "    'value': {"
+        },
+        {
+          "line": 148,
+          "text": "        'system': 'n-hexane',"
+        },
+        {
+          "line": 149,
+          "text": "        'smiles': 'CCCCCC',"
+        },
+        {
+          "line": 150,
+          "text": "        'generator': 'RDKit ETKDGv3',"
+        },
+        {
+          "line": 151,
+          "text": "        'random_seed': SEED,"
+        },
+        {
+          "line": 152,
+          "text": "        'num_conformers_requested': N_EMBED,"
+        },
+        {
+          "line": 153,
+          "text": "        'num_conformers_embedded': len(cands),"
+        },
+        {
+          "line": 154,
+          "text": "        'force_field': 'MMFF94',"
+        },
+        {
+          "line": 155,
+          "text": "        'num_ff_converged': nconv_true,"
+        },
+        {
+          "line": 156,
+          "text": "        'duplicate_rmsd_threshold_A': THRESH,"
+        },
+        {
+          "line": 157,
+          "text": "        'rmsd_definition': 'heavy_atom_symmetry_aware_best_rmsd_covering_reversed_chain_equivalence',"
+        },
+        {
+          "line": 158,
+          "text": "        'candidates': [{'candidate': c['id'], 'xyz_file': c['file'],"
+        },
+        {
+          "line": 159,
+          "text": "                        'mmff_energy_kcal_mol': c['mmff_kcal_mol'],"
+        },
+        {
+          "line": 160,
+          "text": "                        'ff_converged': c['ff_converged'],"
+        },
+        {
+          "line": 161,
+          "text": "                        'duplicate_of': c['duplicate_of'],"
+        },
+        {
+          "line": 162,
+          "text": "                        'min_rmsd_to_earlier_kept_A': c['min_rmsd_A']} for c in cands],"
+        },
+        {
+          "line": 163,
+          "text": "        'num_unique_clusters': len(kept)"
+        },
+        {
+          "line": 164,
+          "text": "    },"
+        },
+        {
+          "line": 165,
+          "text": "    'unit': None,"
+        },
+        {
+          "line": 166,
+          "text": "    'sources': [{'filename': f, 'location': None} for f in all_xyz],"
+        },
+        {
+          "line": 167,
+          "text": "    'formula': None,"
+        },
+        {
+          "line": 168,
+          "text": "    'artifacts': list(all_xyz),"
+        },
+        {
+          "line": 169,
+          "text": "    'limitations': ["
+        },
+        {
+          "line": 170,
+          "text": "        'ETKDGv3 embedding is stochastic but was run with fixed randomSeed=1701; MMFF94 minimization is deterministic given coordinates.',"
+        },
+        {
+          "line": 171,
+          "text": "        'Sampling is finite (60 embedded conformers from one SMILES); no systematic torsion scan or solvation was performed.',"
+        },
+        {
+          "line": 172,
+          "text": "        'Force-field convergence indicates MMFF94 minimization convergence only, not global optimality.'"
+        },
+        {
+          "line": 173,
+          "text": "    ]"
+        },
+        {
+          "line": 174,
+          "text": "})"
+        },
+        {
+          "line": 175,
+          "text": "obs.append({"
+        },
+        {
+          "line": 176,
+          "text": "    'name': 'orca_single_point_energy_comparison',"
+        },
+        {
+          "line": 177,
+          "text": "    'value': {"
+        },
+        {
+          "line": 178,
+          "text": "        'program': 'ORCA 6.1',"
+        },
+        {
+          "line": 179,
+          "text": "        'method': METHOD,"
+        },
+        {
+          "line": 180,
+          "text": "        'basis': BASIS,"
+        },
+        {
+          "line": 181,
+          "text": "        'charge': CHARGE,"
+        },
+        {
+          "line": 182,
+          "text": "        'multiplicity': MULT,"
+        },
+        {
+          "line": 183,
+          "text": "        'electronic_state': 'RKS',"
+        },
+        {
+          "line": 184,
+          "text": "        'environment': 'gas_phase',"
+        },
+        {
+          "line": 185,
+          "text": "        'scf_settings': 'MaxIter 256; AutoTRAH false',"
+        },
+        {
+          "line": 186,
+          "text": "        'maxcore_mb_per_process': 192,"
+        },
+        {
+          "line": 187,
+          "text": "        'job_type': 'single_point',"
+        },
+        {
+          "line": 188,
+          "text": "        'energies': [{'candidate': r['candidate'], 'xyz_file': r['xyz'], 'input_file': r['input'],"
+        },
+        {
+          "line": 189,
+          "text": "                      'total_energy_hartree': r['energy_hartree'],"
+        },
+        {
+          "line": 190,
+          "text": "                      'relative_to_lowest_kj_mol': r['relative_kj_mol']} for r in runs],"
+        },
+        {
+          "line": 191,
+          "text": "        'lowest_candidate': low"
+        },
+        {
+          "line": 192,
+          "text": "    },"
+        },
+        {
+          "line": 193,
+          "text": "    'unit': None,"
+        },
+        {
+          "line": 194,
+          "text": "    'sources': [r['source'] for r in runs],"
+        },
+        {
+          "line": 195,
+          "text": "    'formula': 'relative_kj_mol = (E_total_hartree - E_lowest_hartree) * 2625.499639',"
+        },
+        {
+          "line": 196,
+          "text": "    'artifacts': list(all_xyz) + list(all_inp),"
+        },
+        {
+          "line": 197,
+          "text": "    'limitations': ["
+        },
+        {
+          "line": 198,
+          "text": "        'Single-point electronic energies only; no zero-point, thermal or entropy correction, so the ranking is not a free-energy ranking.',"
+        },
+        {
+          "line": 199,
+          "text": "        'Only the finite subset selected for ORCA was computed at B3LYP/def2-SVP; energies are not comparable to other levels of theory.',"
+        },
+        {
+          "line": 200,
+          "text": "        'B3LYP/def2-SVP was chosen as a widely used hybrid functional with a polarized double-zeta basis suitable for organic conformer comparisons within the run budget.'"
+        }
+      ],
+      "returned_bytes": 7497,
+      "status": "observed",
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      }
+    }
+  },
+  "observation_records": [],
+  "diagnostics": [],
+  "artifact_ids": [
+    "artifact_f249ed0648d8496a86bbe8b8c4a3622b"
+  ],
+  "source": {
+    "call_id": "call_7cbedbfa22184964b757d5a1c5ca703b",
+    "role": "python",
+    "name": "hexane_conformer_search_v2.py",
+    "tool": "evidence.text",
+    "consumption": {
+      "_decision_id": "model_5c3be9b530c242eb89b454e5dddc34e5"
+    },
+    "request_version": 3,
+    "plan_version": 5
+  },
+  "created_at": "2026-10-20T06:51:14.235463Z"
+}

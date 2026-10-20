@@ -1,0 +1,81 @@
+{
+  "request_hash": "96598ba3ae10c6260f8db8a3a2bb73c1af45030b701d29257836075da2c45c04",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_identity",
+          "tool": "structure.resolve",
+          "system_id": "system_acetone",
+          "parameters": {}
+        },
+        {
+          "key": "prepare_geometry",
+          "tool": "structure.prepare",
+          "system_id": "system_acetone",
+          "depends_on": [
+            "resolve_identity"
+          ],
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_identity",
+              "port": "resolved_identity"
+            }
+          },
+          "parameters": {}
+        }
+      ],
+      "goal_map": {
+        "goal_acetone_geometry": {
+          "port": "prepared_geometry",
+          "step_key": "prepare_geometry"
+        },
+        "goal_excitation_spectrum": {
+          "port": "vertical_excitations",
+          "gap": "requires prepared geometry and a managed ORCA TDDFT calculation"
+        },
+        "goal_method_rationale": {
+          "port": "method_selection_rationale",
+          "gap": "requires selected method details and actual managed TDDFT input/receipt"
+        },
+        "goal_excitation_analysis": {
+          "port": "excitation_analysis",
+          "gap": "requires computed vertical excitation spectrum"
+        },
+        "goal_delivery_bundle": {
+          "port": "delivery_bundle",
+          "gap": "requires completed calculations, source files, input, and data tables"
+        },
+        "goal_geometry_provenance": {
+          "port": "geometry_provenance",
+          "gap": "requires actual prepared-geometry receipt and documented limitations"
+        },
+        "goal_random_seed_policy": {
+          "port": "random_seed_policy",
+          "gap": "requires recording whether structure preparation/search uses randomness and seed 1701 support"
+        }
+      }
+    },
+    "reason": "Start with the required input-preparation stage: resolve acetone identity, then prepare the charge-0 singlet gas-phase initial XYZ. Remaining scientific Goals depend on the actual prepared-geometry artifact/hash and later managed ORCA output."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_identity\",\"tool\":\"structure.resolve\",\"system_id\":\"system_acetone\",\"parameters\":{}},{\"key\":\"prepare_geometry\",\"tool\":\"structure.prepare\",\"system_id\":\"system_acetone\",\"depends_on\":[\"resolve_identity\"],\"inputs\":{\"identity\":{\"producer_key\":\"resolve_identity\",\"port\":\"resolved_identity\"}},\"parameters\":{}}],\"goal_map\":{\"goal_acetone_geometry\":{\"port\":\"prepared_geometry\",\"step_key\":\"prepare_geometry\"},\"goal_excitation_spectrum\":{\"port\":\"vertical_excitations\",\"gap\":\"requires prepared geometry and a managed ORCA TDDFT calculation\"},\"goal_method_rationale\":{\"port\":\"method_selection_rationale\",\"gap\":\"requires selected method details and actual managed TDDFT input/receipt\"},\"goal_excitation_analysis\":{\"port\":\"excitation_analysis\",\"gap\":\"requires computed vertical excitation spectrum\"},\"goal_delivery_bundle\":{\"port\":\"delivery_bundle\",\"gap\":\"requires completed calculations, source files, input, and data tables\"},\"goal_geometry_provenance\":{\"port\":\"geometry_provenance\",\"gap\":\"requires actual prepared-geometry receipt and documented limitations\"},\"goal_random_seed_policy\":{\"port\":\"random_seed_policy\",\"gap\":\"requires recording whether structure preparation/search uses randomness and seed 1701 support\"}}},\"reason\":\"Start with the required input-preparation stage: resolve acetone identity, then prepare the charge-0 singlet gas-phase initial XYZ. Remaining scientific Goals depend on the actual prepared-geometry artifact/hash and later managed ORCA output.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 16287,
+    "completion_tokens": 1183,
+    "total_tokens": 17470,
+    "prompt_cache_hit_tokens": 1536,
+    "prompt_cache_miss_tokens": 14751
+  },
+  "response_hash": "bfcc879687641a8eccca6488e62cbc707ea5e4b71f0615e92b5d1f9b73d5e79a",
+  "response_bytes": 6235,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "75b7b479-2bcf-4444-9bc3-c1c965c8949c",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 7.73399999999674
+}

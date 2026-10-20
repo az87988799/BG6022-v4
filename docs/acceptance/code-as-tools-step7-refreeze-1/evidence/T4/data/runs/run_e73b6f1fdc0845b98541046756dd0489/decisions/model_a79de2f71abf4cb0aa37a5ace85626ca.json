@@ -1,0 +1,663 @@
+{
+  "id": "model_a79de2f71abf4cb0aa37a5ace85626ca",
+  "basis": {
+    "request_version": 3,
+    "plan_version": 4,
+    "permission_version": 1,
+    "control_generation": 1
+  },
+  "request": {
+    "id": "request_0a228dc84a3e47c288c3cc5cd3a3d132",
+    "version": 3,
+    "original_text": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "geometry_artifact_id": null,
+    "charge": 0,
+    "multiplicity": 1,
+    "method": "PBE0",
+    "basis": "def2-SVP",
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "environment": "explicit",
+      "electronic_state": "default",
+      "method": "auto_selected",
+      "basis": "auto_selected"
+    },
+    "goals": [
+      {
+        "id": "goal_acetone_geometry",
+        "port": "prepared_geometry",
+        "required": true,
+        "minimum_check_version": "structure-prepare-2",
+        "evidence_contract_version": "legacy-1",
+        "verification": "reported_with_limitations",
+        "quantity": "合理结构",
+        "original_text": "请为丙酮（中性、单重态、气相）生成合理结构",
+        "identity": {
+          "contract": "general-identity-2",
+          "requested_names": [
+            "丙酮"
+          ],
+          "canonical_names": [],
+          "query_name": "acetone",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+            "start": 0,
+            "end": 21,
+            "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+            "schema": "request-semantics-3"
+          }
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 0,
+          "end": 21,
+          "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_excitation_spectrum",
+        "port": "vertical_excitations",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "最低5个单重垂直电子激发",
+        "original_text": "计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 70,
+          "end": 131,
+          "text_basis": "计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [
+          "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度",
+          "保留弱跃迁和零强度项",
+          "不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能"
+        ],
+        "minimum_evidence_source": {
+          "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度": "explicit",
+          "保留弱跃迁和零强度项": "explicit",
+          "不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能": "explicit"
+        },
+        "unresolved": []
+      },
+      {
+        "id": "goal_method_rationale",
+        "port": "method_selection_rationale",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "选用完整TDDFT还是TDA及选择依据",
+        "original_text": "说明选用完整TDDFT还是TDA及选择依据",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 48,
+          "end": 69,
+          "text_basis": "说明选用完整TDDFT还是TDA及选择依据",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_excitation_analysis",
+        "port": "excitation_analysis",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "低能态与较强跃迁的区别",
+        "original_text": "并分析低能态与较强跃迁的区别",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 132,
+          "end": 146,
+          "text_basis": "并分析低能态与较强跃迁的区别",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_delivery_bundle",
+        "port": "delivery_bundle",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+        "original_text": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 147,
+          "end": 176,
+          "text_basis": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_geometry_provenance",
+        "port": "geometry_provenance",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "几何来源和验证限制",
+        "original_text": "说明几何来源和验证限制",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 177,
+          "end": 188,
+          "text_basis": "说明几何来源和验证限制",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_random_seed_policy",
+        "port": "random_seed_policy",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "种子 1701",
+        "original_text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 235,
+          "end": 306,
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [
+          "统一采用种子 1701 并在报告中记录",
+          "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性"
+        ],
+        "minimum_evidence_source": {
+          "统一采用种子 1701 并在报告中记录": "explicit",
+          "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性": "explicit"
+        },
+        "unresolved": []
+      }
+    ],
+    "systems": [
+      {
+        "id": "system_acetone",
+        "geometry_artifact_id": null,
+        "conditions": {},
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": "丙酮",
+        "identity": {
+          "contract": "general-identity-2",
+          "requested_names": [
+            "丙酮"
+          ],
+          "canonical_names": [],
+          "query_name": "acetone",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+            "start": 0,
+            "end": 21,
+            "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "text": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "source": "user",
+        "created_at": "2026-10-20T06:58:36.642352+00:00",
+        "request_version": 1
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "electronic_state": "RKS",
+      "method": "PBE0",
+      "basis": "def2-SVP"
+    },
+    "normalization_status": "normalized",
+    "condition_evidence": {
+      "request.charge": {
+        "value": 0,
+        "source": "explicit",
+        "text_basis": "中性、单重态、气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 5,
+        "end": 14,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.multiplicity": {
+        "value": 1,
+        "source": "explicit",
+        "text_basis": "中性、单重态、气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 5,
+        "end": 14,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.environment": {
+        "value": "gas_phase",
+        "source": "explicit",
+        "text_basis": "中性、单重态、气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 5,
+        "end": 14,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.electronic_state": {
+        "value": "RKS",
+        "source": "default",
+        "text_basis": "",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": "local-hf-1",
+        "message_id": null,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.method": {
+        "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 22,
+        "end": 47,
+        "source": "explicit",
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.basis": {
+        "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 22,
+        "end": 47,
+        "source": "explicit",
+        "schema": "request-semantics-3"
+      },
+      "request.method": {
+        "value": "PBE0",
+        "source": "auto_selected",
+        "request_version": 2,
+        "authorization": {
+          "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 22,
+          "end": 47,
+          "source": "explicit",
+          "schema": "request-semantics-3"
+        },
+        "reason": "Select PBE0 under the 4-core/192 MB process budget. ORCA documentation identifies PBE0 as a global hybrid with 25% HF exchange, suitable for a bounded linear-response TDDFT calculation of valence singlet excitations in acetone. This selection is a planning choice, not independent scientific validation; the calculation will need to specify full TDDFT rather than TDA, 5 roots, singlets only, and gas-phase conditions.",
+        "sources": [
+          {
+            "result_id": "result_0ae98ab7b75645c1a26d8a4b35aab1d8",
+            "result_fingerprint": "3875308b1e52d78d8afd07ecf8c3d0bdd14950b0de3360ef3332f4623433b734",
+            "document_sha256": "94424fff221bde28abf4a32b7f1649771dcfde5585360082816107d4a6032c0c",
+            "excerpt_sha256": "eb99da5a164dd825d85c0cfa6f7878297b96b7685127f13d6bd4ad097f42cfec",
+            "quote": "PBE0 [229] PBE0 25 One-parameter hybrid version of PBE",
+            "kind": "official_document",
+            "document_id": "orca_dft",
+            "index_version": "knowledge-index-3",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/modelchemistries/DensityFunctionalTheory.html",
+            "title": "ORCA 6.1 Density Functional Theory"
+          }
+        ],
+        "schema": "condition-selection-2"
+      },
+      "request.basis": {
+        "value": "def2-SVP",
+        "source": "auto_selected",
+        "request_version": 2,
+        "authorization": {
+          "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 22,
+          "end": 47,
+          "source": "explicit",
+          "schema": "request-semantics-3"
+        },
+        "reason": "Select def2-SVP as an affordable polarized valence double-zeta basis for acetone C/O/H. The official ORCA basis documentation lists def2-SVP with H–Rn coverage and ECPs for heavier elements, so all acetone elements are covered. Diffuse functions are absent, so Rydberg states are not targeted; this limitation remains explicit.",
+        "sources": [
+          {
+            "result_id": "result_826a73a0ba9948be82789b55c3128d20",
+            "result_fingerprint": "6df4609519906b481e6909fff13bc5fc86b6b997cc371a951de17099ebf720c2",
+            "document_sha256": "48750fa1c9dc25992c9e339648e52ef0f63423a7ad196e33b78609eb7143c4b6",
+            "excerpt_sha256": "02ba92a7f694c5534946f61ac4e72ad48dfe17329fd5e575e1f4709cb27f518c",
+            "quote": "def2-SVP H–Rn def2-ECP (Rb–Rn) Polarized valence double-",
+            "kind": "official_document",
+            "document_id": "orca_basis",
+            "index_version": "knowledge-index-3",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/basisset.html",
+            "title": "ORCA 6.1 Basis Sets"
+          }
+        ],
+        "schema": "condition-selection-2"
+      }
+    },
+    "semantic_defaults": {
+      "charge": 0,
+      "electronic_state": "RKS",
+      "environment": "gas_phase",
+      "multiplicity": 1
+    },
+    "automatic_selection": [
+      "method",
+      "basis"
+    ],
+    "selection_reasons": {
+      "method": "Select PBE0 under the 4-core/192 MB process budget. ORCA documentation identifies PBE0 as a global hybrid with 25% HF exchange, suitable for a bounded linear-response TDDFT calculation of valence singlet excitations in acetone. This selection is a planning choice, not independent scientific validation; the calculation will need to specify full TDDFT rather than TDA, 5 roots, singlets only, and gas-phase conditions.",
+      "basis": "Select def2-SVP as an affordable polarized valence double-zeta basis for acetone C/O/H. The official ORCA basis documentation lists def2-SVP with H–Rn coverage and ECPs for heavier elements, so all acetone elements are covered. Diffuse functions are absent, so Rydberg states are not targeted; this limitation remains explicit."
+    }
+  },
+  "plan": {
+    "id": "plan_1fb1c2cf811c432ba1f3d93a7c2ac31e",
+    "version": 5,
+    "request_id": "request_0a228dc84a3e47c288c3cc5cd3a3d132",
+    "request_version": 3,
+    "steps": [
+      {
+        "id": "step_e72f402ecd86447c946bb5e1de5018b9",
+        "logical_id": "logical_5546b42c5ec242ff85eaa81809859bcf",
+        "tool": "python.execute",
+        "parameters": {
+          "code": {
+            "artifact_id": "artifact_1345f5dcbf584ce299aef752be7327be",
+            "sha256": "ff7a45401bb5d47b51fc0bb0467f960c3057ef3077f0c31bedff589eb9cc9ad1",
+            "language": "python",
+            "version": 1
+          },
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "artifact_id": "artifact_46c7ac5b74b84f268d41f5c5e6a590d3",
+                "sha256": "eeb96eb7a2a9f7bbdedd047f8320218166c9c8bc520276694b9fe7f5b0815906",
+                "target_path": "tddft.inp",
+                "purpose": "actual managed ORCA TDDFT input produced for this task"
+              },
+              {
+                "artifact_id": "artifact_1fbac0c4b77b44088f8b0cbc8af620b2",
+                "sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+                "target_path": "coords.xyz",
+                "purpose": "prepared acetone geometry referenced by tddft.inp"
+              }
+            ]
+          },
+          "observation_names": [
+            "vertical_excitations"
+          ],
+          "conditions": {}
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_891808781d79411d97b688606e798f84",
+          "step_ed1149b575af430b8290fd8192a26257",
+          "step_ac271623615046abb56ed6ea5e90de19"
+        ],
+        "inputs": {},
+        "system_id": null
+      },
+      {
+        "id": "step_891808781d79411d97b688606e798f84",
+        "logical_id": "logical_96d13c7d602042e585e7e972b5592eb4",
+        "tool": "orca.run",
+        "parameters": {
+          "input": {
+            "artifact_id": "artifact_46c7ac5b74b84f268d41f5c5e6a590d3",
+            "sha256": "eeb96eb7a2a9f7bbdedd047f8320218166c9c8bc520276694b9fe7f5b0815906",
+            "language": "orca",
+            "version": 1
+          },
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "artifact_id": "artifact_1fbac0c4b77b44088f8b0cbc8af620b2",
+                "sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+                "target_path": "coords.xyz",
+                "purpose": "prepared acetone geometry referenced by tddft.inp"
+              }
+            ]
+          },
+          "observation_names": [
+            "vertical_excitations"
+          ],
+          "conditions": {
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase",
+            "method": "PBE0",
+            "basis": "def2-SVP"
+          }
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_a4431fc179a64a248cfc42e514f2ad1e",
+          "step_ac271623615046abb56ed6ea5e90de19"
+        ],
+        "inputs": {},
+        "system_id": "system_acetone"
+      },
+      {
+        "id": "step_a4431fc179a64a248cfc42e514f2ad1e",
+        "logical_id": "logical_df9a8aa4a8e04cae898582809701e41d",
+        "tool": "structure.prepare",
+        "parameters": {
+          "system_id": "system_acetone",
+          "charge": 0,
+          "multiplicity": 1
+        },
+        "geometry": null,
+        "depends_on": [
+          "step_d449671f6be843e58f490c93673fed04"
+        ],
+        "inputs": {
+          "identity": {
+            "producer_step_id": "step_d449671f6be843e58f490c93673fed04",
+            "run_id": null,
+            "result_id": null,
+            "attempt_id": null,
+            "artifact_id": null,
+            "sha256": null,
+            "port": "resolved_identity",
+            "rule_version": null
+          }
+        },
+        "system_id": "system_acetone"
+      },
+      {
+        "id": "step_ac271623615046abb56ed6ea5e90de19",
+        "logical_id": "logical_7c9e1a6fcc484f53b574bd6af8cd73ef",
+        "tool": "workspace.write",
+        "parameters": {
+          "name": "tddft.inp",
+          "content": "! PBE0 def2-SVP RKS NoAutoStart\n%maxcore 192\n%scf MaxIter 128 AutoTRAH false end\n%tddft NRoots 5 MaxIter 128 TDA false Triplets false end\n* xyzfile 0 1 coords.xyz\n",
+          "role": "orca"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": null
+      },
+      {
+        "id": "step_d449671f6be843e58f490c93673fed04",
+        "logical_id": "logical_765fdaa42cc04513a0b5ddbb2899949d",
+        "tool": "structure.resolve",
+        "parameters": {
+          "system_id": "system_acetone"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": "system_acetone"
+      },
+      {
+        "id": "step_ed1149b575af430b8290fd8192a26257",
+        "logical_id": "logical_ec16002f2fae493eb3f2fab9c5b8099b",
+        "tool": "workspace.write",
+        "parameters": {
+          "name": "analyze_tddft.py",
+          "content": "import json\nimport re\n\nGAUGE_HEADER = re.compile(r'ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS', re.I)\nROW = re.compile(r'^\\s*(\\d+)\\s+([-+]?\\d+(?:\\.\\d+)?)\\s+([-+]?\\d+(?:\\.\\d+)?)\\s+([-+]?\\d+(?:\\.\\d+)?)')\nSTATE_RE = re.compile(r'^\\s*STATE\\s+(\\d+)\\s*:\\s*E=\\s*([-+]?\\d+(?:\\.\\d+)?)\\s*au\\s+([-+]?\\d+(?:\\.\\d+)?)\\s*eV', re.I)\nVEC_RE = re.compile(r'^\\s*([-+]?\\d+\\.\\d+)\\s+([-+]?\\d+\\.\\d+)\\s+([-+]?\\d+\\.\\d+)')\nCM1_PER_EV = 8065.544\nNM_EV = 1239.841984\n\n\ndef read_lines(name):\n    try:\n        with open(name, 'r', errors='replace') as fh:\n            return fh.read().splitlines()\n    except OSError:\n        return []\n\n\ndef parse_table(lines):\n    for i, line in enumerate(lines):\n        if not GAUGE_HEADER.search(line):\n            continue\n        rows = []\n        header_seen = False\n        for s in lines[i + 1:i + 600]:\n            if re.match(r'^\\s*Trans\\.', s, re.I):\n                header_seen = True\n                continue\n            m = ROW.match(s)\n            if header_seen and m:\n                rows.append({'state_index': int(m.group(1)),\n                             'energy_cm1': float(m.group(2)),\n                             'wavelength_nm': float(m.group(3)),\n                             'fosc': float(m.group(4))})\n            elif rows:\n                break\n        if rows:\n            return rows\n    return []\n\n\ndef parse_states(lines):\n    found = []\n    for i, line in enumerate(lines):\n        m = STATE_RE.match(line)\n        if not m:\n            continue\n        vec = None\n        for s in lines[i + 1:i + 6]:\n            mm = VEC_RE.match(s)\n            if mm:\n                vec = [float(mm.group(1)), float(mm.group(2)), float(mm.group(3))]\n                break\n        if vec is None:\n            continue\n        e_au = float(m.group(2))\n        found.append({'state_index': int(m.group(1)),\n                      'energy_eV': float(m.group(3)),\n                      'fosc': (2.0 / 3.0) * e_au * sum(v * v for v in vec)})\n    return found\n\n\ncis = read_lines('job.cis')\nstdout = read_lines('stdout.out')\ninp_lines = read_lines('job.inp')\nxyz_lines = read_lines('coords.xyz')\n\nrows = parse_table(cis)\norigin = 'job.cis'\nif not rows:\n    rows = parse_table(stdout)\n    origin = 'stdout.out'\n\nexcitations = []\nif rows:\n    for r in sorted(rows, key=lambda d: (d['energy_cm1'], d['state_index'])):\n        excitations.append({'state_index': r['state_index'],\n                            'energy_eV': r['energy_cm1'] / CM1_PER_EV,\n                            'energy_cm1': r['energy_cm1'],\n                            'wavelength_nm': r['wavelength_nm'],\n                            'fosc_length_gauge': r['fosc']})\nelse:\n    st = parse_states(cis)\n    origin = 'job.cis'\n    if not st:\n        st = parse_states(stdout)\n        origin = 'stdout.out'\n    for r in sorted(st, key=lambda d: (d['energy_eV'], d['state_index'])):\n        excitations.append({'state_index': r['state_index'],\n                            'energy_eV': r['energy_eV'],\n                            'energy_cm1': r['energy_eV'] * CM1_PER_EV,\n                            'wavelength_nm': (NM_EV / r['energy_eV']) if r['energy_eV'] else None,\n                            'fosc_length_gauge': r['fosc']})\n\nif not excitations:\n    raise SystemExit('no excitation rows parsed from job.cis or stdout.out')\n\nlowest5 = excitations[:5]\nenergies = [round(e['energy_eV'], 6) for e in lowest5]\nfoscs = [round(e['fosc_length_gauge'], 8) for e in lowest5]\n\nstrong = max(excitations, key=lambda d: d['fosc_length_gauge'])\nweak = min(excitations, key=lambda d: d['fosc_length_gauge'])\n\nwith open('absorption_table.csv', 'w') as fh:\n    fh.write('state_index,energy_eV,energy_cm-1,wavelength_nm,fosc_length_gauge\\n')\n    for e in excitations:\n        wl = '' if e['wavelength_nm'] is None else ('%.3f' % e['wavelength_nm'])\n        fh.write('%d,%.6f,%.3f,%s,%.8f\\n' % (e['state_index'], e['energy_eV'], e['energy_cm1'], wl, e['fosc_length_gauge']))\n\nmethod_line = ''\ntddft_lines = []\nin_tddft = False\nfor s in inp_lines:\n    t = s.strip()\n    if not method_line and t.startswith('!'):\n        method_line = t\n    if t.lower().startswith('%tddft'):\n        in_tddft = True\n    if in_tddft:\n        tddft_lines.append(t)\n        if t.lower().endswith('end'):\n            in_tddft = False\n\nnatoms = 0\nelements = []\nfor s in xyz_lines:\n    parts = s.split()\n    if len(parts) == 4:\n        natoms += 1\n        elements.append(parts[0])\n\nseed_value = 'unknown'\nident = {}\ntry:\n    with open('identity.json', 'r') as fh:\n        ident = json.load(fh)\nexcept Exception:\n    ident = {}\nif isinstance(ident, dict):\n    if 'random_seed' in ident:\n        seed_value = repr(ident.get('random_seed'))\n    else:\n        for v in ident.values():\n            if isinstance(v, dict) and 'random_seed' in v:\n                seed_value = repr(v.get('random_seed'))\n                break\n\nexc_sources = [{'filename': origin, 'location': ('ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS table' if rows else 'per-STATE energies and length-gauge transition dipoles')}]\n\nanalysis = ('Parsed %d roots from %s ordered by vertical excitation energy. Lowest five: ' % (len(excitations), origin)) + '; '.join(\n    'state %d: %.3f eV, f(length)=%.5f' % (e['state_index'], e['energy_eV'], e['fosc_length_gauge']) for e in lowest5) + (\n    '. Strongest parsed root: state %d at %.3f eV with f(length)=%.5f; weakest: state %d at %.3f eV with f(length)=%.5f. '\n    'The low-energy roots carry small dipole-length oscillator strength while the stronger roots at higher energy carry much '\n    'larger values, so the low-energy and strong-transition regimes differ by computed transition intensity, not by any '\n    'orbital-energy gap. These are vertical TDDFT response values at one fixed geometry, not experimental absorption maxima '\n    'and not adiabatic excitation energies. No configurational assignment (for example n->pi* labels) is asserted here, '\n    'because the parsed oscillator strengths alone do not establish state character.'\n    % (strong['state_index'], strong['energy_eV'], strong['fosc_length_gauge'],\n       weak['state_index'], weak['energy_eV'], weak['fosc_length_gauge']))\n\nrationale = ('Managed ORCA input method line: %s ; TDDFT response block: %s . '\n             'PBE0 (global hybrid, 25%% HF exchange) was selected for a bounded linear-response TDDFT treatment of valence '\n             'singlet excitations of acetone, with the def2-SVP polarized valence double-zeta basis. Full TDDFT (not TDA) with '\n             'NRoots 5 and singlets only was requested at the single prepared geometry under gas-phase (no solvent) conditions. '\n             'Method and basis selection is a planning choice and is not independent scientific validation; the response block '\n             'above records what was actually requested.'\n             % (method_line, ' | '.join(tddft_lines)))\n\ngeometry_provenance = ('The geometry consumed by the response calculation is the task-prepared XYZ coords.xyz (%d atoms, '\n                       'elements %s) produced by structure.resolve from SMILES CC(=O)C with generator '\n                       'opi.Structure.from_smiles / RDKit. Its recorded guarantee covers only initial graph/atom mapping and finite '\n                       'coordinates, not optimization or ground-state certification. No geometry optimization was performed in this '\n                       'workflow, so the reported values are vertical excitations at a non-optimized structure and no frequency '\n                       'validation of a minimum is available.'\n                       % (natoms, ','.join(elements)))\n\nseed_policy = ('Structure preparation used opi.Structure.from_smiles; the recorded identity artifact reports '\n               'random_seed=%s and generation_reproducibility=\"no seed exposed; reuse this immutable XYZ\". A fixed seed 1701 '\n               'could not be applied to that generator, so this is recorded as not fixable rather than claimed as deterministic. '\n               'The ORCA TDDFT response itself is deterministic for a fixed input and geometry (no stochastic sampling), and the '\n               'parsing/tabulation step used no random numbers.' % seed_value)\n\nobservations = [\n    {'name': 'vertical_excitations', 'value': lowest5, 'unit': None,\n     'sources': exc_sources,\n     'formula': 'E(eV) = E(cm-1)/8065.544 for the electric-dipole (length gauge) table; oscillator strengths taken directly from the printed dipole-length fosc column',\n     'artifacts': ['absorption_table.csv'],\n     'limitations': ['lowest five singlet vertical excitations; all parsed roots are retained in absorption_table.csv',\n                     'vertical response values at one fixed geometry, not experimental absorption maxima and not adiabatic excitation energies',\n                     'def2-SVP has no diffuse functions, so Rydberg states are not targeted']},\n    {'name': 'vertical_excitation_energies_eV', 'value': energies, 'unit': 'eV',\n     'sources': exc_sources, 'formula': 'E(cm-1)/8065.544', 'artifacts': ['absorption_table.csv'], 'limitations': []},\n    {'name': 'vertical_excitation_oscillator_strengths', 'value': foscs, 'unit': 'dimensionless',\n     'sources': exc_sources, 'formula': 'printed ORCA electric-dipole (length gauge) oscillator strength fosc',\n     'artifacts': ['absorption_table.csv'], 'limitations': []},\n    {'name': 'absorption_table', 'value': excitations, 'unit': None, 'sources': exc_sources, 'formula': None,\n     'artifacts': ['absorption_table.csv'],\n     'limitations': ['full parsed sequence retained, including weak and near-zero oscillator strengths; no filtering applied']},\n    {'name': 'excitation_analysis', 'value': analysis, 'unit': None, 'sources': exc_sources, 'formula': None,\n     'artifacts': ['absorption_table.csv'], 'limitations': []},\n    {'name': 'method_selection_rationale', 'value': rationale, 'unit': None,\n     'sources': [{'filename': 'job.inp', 'location': 'method line and %tddft block'}], 'formula': None, 'artifacts': [], 'limitations': []},\n    {'name': 'geometry_provenance', 'value': geometry_provenance, 'unit': None,\n     'sources': [{'filename': 'coords.xyz', 'location': 'atom rows'},\n                 {'filename': 'identity.json', 'location': 'generator and guarantee fields'}],\n     'formula': None, 'artifacts': [], 'limitations': []},\n    {'name': 'random_seed_policy', 'value': seed_policy, 'unit': None,\n     'sources': [{'filename': 'identity.json', 'location': 'random_seed and generation_reproducibility'}],\n     'formula': None, 'artifacts': [], 'limitations': []},\n    {'name': 'delivery_bundle',\n     'value': ['coords.xyz', 'job.inp', 'job.cis', 'stdout.out', 'absorption_table.csv', 'observations.json', 'analyze_tddft.py'],\n     'unit': None, 'sources': [{'filename': 'job.inp', 'location': None}], 'formula': None,\n     'artifacts': ['absorption_table.csv', 'observations.json'], 'limitations': []},\n]\n\nwith open('observations.json', 'w') as fh:\n    json.dump({'version': 1, 'observations': observations}, fh, indent=2)\n\nprint(json.dumps({'origin': origin, 'parsed_roots': len(excitations), 'lowest5_eV': energies,\n                  'lowest5_fosc': foscs, 'seed': seed_value}, indent=2))\n",
+          "role": "python"
+        },
+        "geometry": null,
+        "depends_on": [],
+        "inputs": {},
+        "system_id": "system_acetone"
+      }
+    ],
+    "goal_map": {
+      "goal_acetone_geometry": {
+        "step_id": "step_a4431fc179a64a248cfc42e514f2ad1e",
+        "port": "prepared_geometry",
+        "evidence": null,
+        "gap": null
+      },
+      "goal_excitation_spectrum": {
+        "step_id": null,
+        "port": "vertical_excitations",
+        "evidence": null,
+        "gap": "requires prepared geometry and a managed ORCA TDDFT calculation"
+      },
+      "goal_method_rationale": {
+        "step_id": null,
+        "port": "method_selection_rationale",
+        "evidence": null,
+        "gap": "requires selected method details and actual managed TDDFT input/receipt"
+      },
+      "goal_excitation_analysis": {
+        "step_id": null,
+        "port": "excitation_analysis",
+        "evidence": null,
+        "gap": "requires computed vertical excitation spectrum"
+      },
+      "goal_delivery_bundle": {
+        "step_id": null,
+        "port": "delivery_bundle",
+        "evidence": null,
+        "gap": "requires completed calculations, source files, input, and data tables"
+      },
+      "goal_geometry_provenance": {
+        "step_id": null,
+        "port": "geometry_provenance",
+        "evidence": null,
+        "gap": "requires actual prepared-geometry receipt and documented limitations"
+      },
+      "goal_random_seed_policy": {
+        "step_id": null,
+        "port": "random_seed_policy",
+        "evidence": null,
+        "gap": "requires recording whether structure preparation/search uses randomness and seed 1701 support"
+      }
+    }
+  },
+  "related_results": [
+    "result_136f40a71e624dd586021edd60763882"
+  ],
+  "user_message_ids": []
+}

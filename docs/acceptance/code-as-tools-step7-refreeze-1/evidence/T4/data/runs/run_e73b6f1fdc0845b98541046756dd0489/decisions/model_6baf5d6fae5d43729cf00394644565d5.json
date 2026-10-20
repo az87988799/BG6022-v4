@@ -1,0 +1,620 @@
+{
+  "id": "model_6baf5d6fae5d43729cf00394644565d5",
+  "basis": {
+    "request_version": 1,
+    "plan_version": null,
+    "permission_version": 1,
+    "control_generation": 1
+  },
+  "request": {
+    "id": "request_0a228dc84a3e47c288c3cc5cd3a3d132",
+    "version": 2,
+    "original_text": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "geometry_artifact_id": null,
+    "charge": 0,
+    "multiplicity": 1,
+    "method": null,
+    "basis": null,
+    "conditions_source": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "environment": "explicit",
+      "electronic_state": "default"
+    },
+    "goals": [
+      {
+        "id": "goal_acetone_geometry",
+        "port": "prepared_geometry",
+        "required": true,
+        "minimum_check_version": "structure-prepare-2",
+        "evidence_contract_version": "legacy-1",
+        "verification": "reported_with_limitations",
+        "quantity": "合理结构",
+        "original_text": "请为丙酮（中性、单重态、气相）生成合理结构",
+        "identity": {
+          "contract": "general-identity-2",
+          "requested_names": [
+            "丙酮"
+          ],
+          "canonical_names": [],
+          "query_name": "acetone",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+            "start": 0,
+            "end": 21,
+            "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+            "schema": "request-semantics-3"
+          }
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 0,
+          "end": 21,
+          "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_excitation_spectrum",
+        "port": "vertical_excitations",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "最低5个单重垂直电子激发",
+        "original_text": "计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 70,
+          "end": 131,
+          "text_basis": "计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [
+          "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度",
+          "保留弱跃迁和零强度项",
+          "不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能"
+        ],
+        "minimum_evidence_source": {
+          "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度": "explicit",
+          "保留弱跃迁和零强度项": "explicit",
+          "不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能": "explicit"
+        },
+        "unresolved": []
+      },
+      {
+        "id": "goal_method_rationale",
+        "port": "method_selection_rationale",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "选用完整TDDFT还是TDA及选择依据",
+        "original_text": "说明选用完整TDDFT还是TDA及选择依据",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 48,
+          "end": 69,
+          "text_basis": "说明选用完整TDDFT还是TDA及选择依据",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_excitation_analysis",
+        "port": "excitation_analysis",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "低能态与较强跃迁的区别",
+        "original_text": "并分析低能态与较强跃迁的区别",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 132,
+          "end": 146,
+          "text_basis": "并分析低能态与较强跃迁的区别",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_delivery_bundle",
+        "port": "delivery_bundle",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+        "original_text": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 147,
+          "end": 176,
+          "text_basis": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_geometry_provenance",
+        "port": "geometry_provenance",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "几何来源和验证限制",
+        "original_text": "说明几何来源和验证限制",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 177,
+          "end": 188,
+          "text_basis": "说明几何来源和验证限制",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [],
+        "minimum_evidence_source": {},
+        "unresolved": []
+      },
+      {
+        "id": "goal_random_seed_policy",
+        "port": "random_seed_policy",
+        "required": true,
+        "minimum_check_version": "generic-observation-1",
+        "evidence_contract_version": "generic-observation-1",
+        "verification": "reported_with_limitations",
+        "quantity": "种子 1701",
+        "original_text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "identity": {
+          "requested_names": [
+            "丙酮"
+          ]
+        },
+        "text_evidence": {
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "start": 235,
+          "end": 306,
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "schema": "request-semantics-3"
+        },
+        "system_ids": [
+          "system_acetone"
+        ],
+        "conditions": {},
+        "minimum_evidence": [
+          "统一采用种子 1701 并在报告中记录",
+          "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性"
+        ],
+        "minimum_evidence_source": {
+          "统一采用种子 1701 并在报告中记录": "explicit",
+          "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性": "explicit"
+        },
+        "unresolved": []
+      }
+    ],
+    "systems": [
+      {
+        "id": "system_acetone",
+        "geometry_artifact_id": null,
+        "conditions": {},
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": "丙酮",
+        "identity": {
+          "contract": "general-identity-2",
+          "requested_names": [
+            "丙酮"
+          ],
+          "canonical_names": [],
+          "query_name": "acetone",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+            "start": 0,
+            "end": 21,
+            "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "messages": [
+      {
+        "id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "text": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "source": "user",
+        "created_at": "2026-10-20T06:58:36.642352+00:00",
+        "request_version": 1
+      }
+    ],
+    "unresolved": [],
+    "conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "electronic_state": "RKS"
+    },
+    "normalization_status": "normalized",
+    "condition_evidence": {
+      "request.charge": {
+        "value": 0,
+        "source": "explicit",
+        "text_basis": "中性、单重态、气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 5,
+        "end": 14,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.multiplicity": {
+        "value": 1,
+        "source": "explicit",
+        "text_basis": "中性、单重态、气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 5,
+        "end": 14,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.environment": {
+        "value": "gas_phase",
+        "source": "explicit",
+        "text_basis": "中性、单重态、气相",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": null,
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 5,
+        "end": 14,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "request.electronic_state": {
+        "value": "RKS",
+        "source": "default",
+        "text_basis": "",
+        "request_version": null,
+        "system_ref": null,
+        "default_rule": "local-hf-1",
+        "message_id": null,
+        "message_ids": [
+          "message_c7af9383d9074c8a8521a394286bdd8f"
+        ],
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.method": {
+        "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 22,
+        "end": 47,
+        "source": "explicit",
+        "schema": "request-semantics-3"
+      },
+      "automatic_selection.basis": {
+        "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+        "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+        "start": 22,
+        "end": 47,
+        "source": "explicit",
+        "schema": "request-semantics-3"
+      }
+    },
+    "semantic_defaults": {
+      "charge": 0,
+      "electronic_state": "RKS",
+      "environment": "gas_phase",
+      "multiplicity": 1
+    },
+    "automatic_selection": [
+      "method",
+      "basis"
+    ],
+    "selection_reasons": {}
+  },
+  "plan": null,
+  "related_results": [],
+  "user_message_ids": [
+    "message_c7af9383d9074c8a8521a394286bdd8f"
+  ],
+  "semantics": {
+    "schema": "request-semantics-3",
+    "kind": "normalize",
+    "candidate": {
+      "schema_version": "request-semantics-3",
+      "message_ids": [
+        "message_c7af9383d9074c8a8521a394286bdd8f"
+      ],
+      "kind": "normalize",
+      "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "conditions": {
+        "charge": {
+          "value": 0,
+          "source": "explicit",
+          "text_basis": "中性、单重态、气相",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": null,
+          "message_id": null
+        },
+        "multiplicity": {
+          "value": 1,
+          "source": "explicit",
+          "text_basis": "中性、单重态、气相",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": null,
+          "message_id": null
+        },
+        "environment": {
+          "value": "gas_phase",
+          "source": "explicit",
+          "text_basis": "中性、单重态、气相",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": null,
+          "message_id": null
+        },
+        "electronic_state": {
+          "value": "RKS",
+          "source": "default",
+          "text_basis": "",
+          "request_version": null,
+          "system_ref": null,
+          "default_rule": "local-hf-1",
+          "message_id": null
+        }
+      },
+      "system_conditions": {},
+      "goals": [
+        {
+          "key": "acetone_geometry",
+          "port": "prepared_geometry",
+          "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+          "system_refs": [
+            "system_acetone"
+          ],
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": null,
+          "analysis_goal_ref": null,
+          "quantity": "合理结构",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "excitation_spectrum",
+          "port": "vertical_excitations",
+          "text_basis": "计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项",
+          "system_refs": [
+            "system_acetone"
+          ],
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度",
+            "保留弱跃迁和零强度项",
+            "不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能"
+          ],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": null,
+          "analysis_goal_ref": null,
+          "quantity": "最低5个单重垂直电子激发",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "method_rationale",
+          "port": "method_selection_rationale",
+          "text_basis": "说明选用完整TDDFT还是TDA及选择依据",
+          "system_refs": [
+            "system_acetone"
+          ],
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": null,
+          "analysis_goal_ref": null,
+          "quantity": "选用完整TDDFT还是TDA及选择依据",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "excitation_analysis",
+          "port": "excitation_analysis",
+          "text_basis": "并分析低能态与较强跃迁的区别",
+          "system_refs": [
+            "system_acetone"
+          ],
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": null,
+          "analysis_goal_ref": null,
+          "quantity": "低能态与较强跃迁的区别",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "delivery_bundle",
+          "port": "delivery_bundle",
+          "text_basis": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+          "system_refs": [
+            "system_acetone"
+          ],
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": null,
+          "analysis_goal_ref": null,
+          "quantity": "计算几何、实际输入、原始响应及吸收表、生成脚本和数据表",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "geometry_provenance",
+          "port": "geometry_provenance",
+          "text_basis": "说明几何来源和验证限制",
+          "system_refs": [
+            "system_acetone"
+          ],
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": null,
+          "analysis_goal_ref": null,
+          "quantity": "几何来源和验证限制",
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "random_seed_policy",
+          "port": "random_seed_policy",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "system_refs": [
+            "system_acetone"
+          ],
+          "required": true,
+          "geometry_relation": null,
+          "minimum_evidence": [
+            "统一采用种子 1701 并在报告中记录",
+            "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性"
+          ],
+          "conditions": {},
+          "query": null,
+          "unresolved": [],
+          "message_id": null,
+          "analysis_goal_ref": null,
+          "quantity": "种子 1701",
+          "verification": "reported_with_limitations"
+        }
+      ],
+      "replaces": [],
+      "goal_bindings": {},
+      "resolves": [],
+      "unresolved": [],
+      "questions": [],
+      "notices": [],
+      "question_gaps": {},
+      "identities": [
+        {
+          "key": "acetone",
+          "name": "丙酮",
+          "query_name": "acetone",
+          "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f",
+          "ambiguities": []
+        }
+      ],
+      "automatic_selection": {
+        "method": {
+          "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f"
+        },
+        "basis": {
+          "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+          "message_id": "message_c7af9383d9074c8a8521a394286bdd8f"
+        }
+      }
+    },
+    "replaced_goal_ids": [
+      "raw_request"
+    ],
+    "questions": [],
+    "notices": [],
+    "question_gaps": {},
+    "delivery_scope": "science",
+    "awaiting_reply": false,
+    "notice_contract": {
+      "version": "registration-notices-1",
+      "required": {},
+      "selected": []
+    }
+  }
+}

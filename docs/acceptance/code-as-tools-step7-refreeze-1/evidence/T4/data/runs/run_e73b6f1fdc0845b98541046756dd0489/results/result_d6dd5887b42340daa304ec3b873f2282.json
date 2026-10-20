@@ -1,0 +1,748 @@
+{
+  "id": "result_d6dd5887b42340daa304ec3b873f2282",
+  "run_id": "run_e73b6f1fdc0845b98541046756dd0489",
+  "step_id": null,
+  "attempt_id": null,
+  "call_id": "call_cf6dc08ffc0e4c6184e8a789ccd06861",
+  "supersedes_result_id": null,
+  "operation_status": "completed",
+  "checks": {
+    "text_window": [
+      {
+        "name": "bounded_evidence_read",
+        "status": "passed",
+        "detail": "operation only; content and observed values remain scientifically unverified",
+        "source": {
+          "artifact_id": "artifact_1345f5dcbf584ce299aef752be7327be",
+          "sha256": "ff7a45401bb5d47b51fc0bb0467f960c3057ef3077f0c31bedff589eb9cc9ad1",
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 18,
+              "stop": 178
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 18,
+              "stop": 178
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        },
+        "rule_version": "evidence-read-1"
+      }
+    ]
+  },
+  "qualified_outputs": {},
+  "observations": {
+    "text_window": {
+      "artifact_id": "artifact_1345f5dcbf584ce299aef752be7327be",
+      "sha256": "ff7a45401bb5d47b51fc0bb0467f960c3057ef3077f0c31bedff589eb9cc9ad1",
+      "role": "code",
+      "file": "artifacts/artifact_1345f5dcbf584ce299aef752be7327be/files/analyze_tddft.py",
+      "source": {
+        "call_id": "call_1dfe76bd95b344b69e6a16241a268c3d",
+        "role": "python",
+        "name": "analyze_tddft.py"
+      },
+      "view": {
+        "type": "raw_text",
+        "version": "1"
+      },
+      "path": [],
+      "geometry_indices": [],
+      "stage": "unknown",
+      "units": null,
+      "conditions": "unknown",
+      "scientific_status": "unverified",
+      "validation": "unverified observation; not a scientific qualification",
+      "lines": [
+        {
+          "line": 18,
+          "text": ""
+        },
+        {
+          "line": 19,
+          "text": ""
+        },
+        {
+          "line": 20,
+          "text": "def parse_table(lines):"
+        },
+        {
+          "line": 21,
+          "text": "    for i, line in enumerate(lines):"
+        },
+        {
+          "line": 22,
+          "text": "        if not GAUGE_HEADER.search(line):"
+        },
+        {
+          "line": 23,
+          "text": "            continue"
+        },
+        {
+          "line": 24,
+          "text": "        rows = []"
+        },
+        {
+          "line": 25,
+          "text": "        header_seen = False"
+        },
+        {
+          "line": 26,
+          "text": "        for s in lines[i + 1:i + 600]:"
+        },
+        {
+          "line": 27,
+          "text": "            if re.match(r'^\\s*Trans\\.', s, re.I):"
+        },
+        {
+          "line": 28,
+          "text": "                header_seen = True"
+        },
+        {
+          "line": 29,
+          "text": "                continue"
+        },
+        {
+          "line": 30,
+          "text": "            m = ROW.match(s)"
+        },
+        {
+          "line": 31,
+          "text": "            if header_seen and m:"
+        },
+        {
+          "line": 32,
+          "text": "                rows.append({'state_index': int(m.group(1)),"
+        },
+        {
+          "line": 33,
+          "text": "                             'energy_cm1': float(m.group(2)),"
+        },
+        {
+          "line": 34,
+          "text": "                             'wavelength_nm': float(m.group(3)),"
+        },
+        {
+          "line": 35,
+          "text": "                             'fosc': float(m.group(4))})"
+        },
+        {
+          "line": 36,
+          "text": "            elif rows:"
+        },
+        {
+          "line": 37,
+          "text": "                break"
+        },
+        {
+          "line": 38,
+          "text": "        if rows:"
+        },
+        {
+          "line": 39,
+          "text": "            return rows"
+        },
+        {
+          "line": 40,
+          "text": "    return []"
+        },
+        {
+          "line": 41,
+          "text": ""
+        },
+        {
+          "line": 42,
+          "text": ""
+        },
+        {
+          "line": 43,
+          "text": "def parse_states(lines):"
+        },
+        {
+          "line": 44,
+          "text": "    found = []"
+        },
+        {
+          "line": 45,
+          "text": "    for i, line in enumerate(lines):"
+        },
+        {
+          "line": 46,
+          "text": "        m = STATE_RE.match(line)"
+        },
+        {
+          "line": 47,
+          "text": "        if not m:"
+        },
+        {
+          "line": 48,
+          "text": "            continue"
+        },
+        {
+          "line": 49,
+          "text": "        vec = None"
+        },
+        {
+          "line": 50,
+          "text": "        for s in lines[i + 1:i + 6]:"
+        },
+        {
+          "line": 51,
+          "text": "            mm = VEC_RE.match(s)"
+        },
+        {
+          "line": 52,
+          "text": "            if mm:"
+        },
+        {
+          "line": 53,
+          "text": "                vec = [float(mm.group(1)), float(mm.group(2)), float(mm.group(3))]"
+        },
+        {
+          "line": 54,
+          "text": "                break"
+        },
+        {
+          "line": 55,
+          "text": "        if vec is None:"
+        },
+        {
+          "line": 56,
+          "text": "            continue"
+        },
+        {
+          "line": 57,
+          "text": "        e_au = float(m.group(2))"
+        },
+        {
+          "line": 58,
+          "text": "        found.append({'state_index': int(m.group(1)),"
+        },
+        {
+          "line": 59,
+          "text": "                      'energy_eV': float(m.group(3)),"
+        },
+        {
+          "line": 60,
+          "text": "                      'fosc': (2.0 / 3.0) * e_au * sum(v * v for v in vec)})"
+        },
+        {
+          "line": 61,
+          "text": "    return found"
+        },
+        {
+          "line": 62,
+          "text": ""
+        },
+        {
+          "line": 63,
+          "text": ""
+        },
+        {
+          "line": 64,
+          "text": "cis = read_lines('job.cis')"
+        },
+        {
+          "line": 65,
+          "text": "stdout = read_lines('stdout.out')"
+        },
+        {
+          "line": 66,
+          "text": "inp_lines = read_lines('job.inp')"
+        },
+        {
+          "line": 67,
+          "text": "xyz_lines = read_lines('coords.xyz')"
+        },
+        {
+          "line": 68,
+          "text": ""
+        },
+        {
+          "line": 69,
+          "text": "rows = parse_table(cis)"
+        },
+        {
+          "line": 70,
+          "text": "origin = 'job.cis'"
+        },
+        {
+          "line": 71,
+          "text": "if not rows:"
+        },
+        {
+          "line": 72,
+          "text": "    rows = parse_table(stdout)"
+        },
+        {
+          "line": 73,
+          "text": "    origin = 'stdout.out'"
+        },
+        {
+          "line": 74,
+          "text": ""
+        },
+        {
+          "line": 75,
+          "text": "excitations = []"
+        },
+        {
+          "line": 76,
+          "text": "if rows:"
+        },
+        {
+          "line": 77,
+          "text": "    for r in sorted(rows, key=lambda d: (d['energy_cm1'], d['state_index'])):"
+        },
+        {
+          "line": 78,
+          "text": "        excitations.append({'state_index': r['state_index'],"
+        },
+        {
+          "line": 79,
+          "text": "                            'energy_eV': r['energy_cm1'] / CM1_PER_EV,"
+        },
+        {
+          "line": 80,
+          "text": "                            'energy_cm1': r['energy_cm1'],"
+        },
+        {
+          "line": 81,
+          "text": "                            'wavelength_nm': r['wavelength_nm'],"
+        },
+        {
+          "line": 82,
+          "text": "                            'fosc_length_gauge': r['fosc']})"
+        },
+        {
+          "line": 83,
+          "text": "else:"
+        },
+        {
+          "line": 84,
+          "text": "    st = parse_states(cis)"
+        },
+        {
+          "line": 85,
+          "text": "    origin = 'job.cis'"
+        },
+        {
+          "line": 86,
+          "text": "    if not st:"
+        },
+        {
+          "line": 87,
+          "text": "        st = parse_states(stdout)"
+        },
+        {
+          "line": 88,
+          "text": "        origin = 'stdout.out'"
+        },
+        {
+          "line": 89,
+          "text": "    for r in sorted(st, key=lambda d: (d['energy_eV'], d['state_index'])):"
+        },
+        {
+          "line": 90,
+          "text": "        excitations.append({'state_index': r['state_index'],"
+        },
+        {
+          "line": 91,
+          "text": "                            'energy_eV': r['energy_eV'],"
+        },
+        {
+          "line": 92,
+          "text": "                            'energy_cm1': r['energy_eV'] * CM1_PER_EV,"
+        },
+        {
+          "line": 93,
+          "text": "                            'wavelength_nm': (NM_EV / r['energy_eV']) if r['energy_eV'] else None,"
+        },
+        {
+          "line": 94,
+          "text": "                            'fosc_length_gauge': r['fosc']})"
+        },
+        {
+          "line": 95,
+          "text": ""
+        },
+        {
+          "line": 96,
+          "text": "if not excitations:"
+        },
+        {
+          "line": 97,
+          "text": "    raise SystemExit('no excitation rows parsed from job.cis or stdout.out')"
+        },
+        {
+          "line": 98,
+          "text": ""
+        },
+        {
+          "line": 99,
+          "text": "lowest5 = excitations[:5]"
+        },
+        {
+          "line": 100,
+          "text": "energies = [round(e['energy_eV'], 6) for e in lowest5]"
+        },
+        {
+          "line": 101,
+          "text": "foscs = [round(e['fosc_length_gauge'], 8) for e in lowest5]"
+        },
+        {
+          "line": 102,
+          "text": ""
+        },
+        {
+          "line": 103,
+          "text": "strong = max(excitations, key=lambda d: d['fosc_length_gauge'])"
+        },
+        {
+          "line": 104,
+          "text": "weak = min(excitations, key=lambda d: d['fosc_length_gauge'])"
+        },
+        {
+          "line": 105,
+          "text": ""
+        },
+        {
+          "line": 106,
+          "text": "with open('absorption_table.csv', 'w') as fh:"
+        },
+        {
+          "line": 107,
+          "text": "    fh.write('state_index,energy_eV,energy_cm-1,wavelength_nm,fosc_length_gauge\\n')"
+        },
+        {
+          "line": 108,
+          "text": "    for e in excitations:"
+        },
+        {
+          "line": 109,
+          "text": "        wl = '' if e['wavelength_nm'] is None else ('%.3f' % e['wavelength_nm'])"
+        },
+        {
+          "line": 110,
+          "text": "        fh.write('%d,%.6f,%.3f,%s,%.8f\\n' % (e['state_index'], e['energy_eV'], e['energy_cm1'], wl, e['fosc_length_gauge']))"
+        },
+        {
+          "line": 111,
+          "text": ""
+        },
+        {
+          "line": 112,
+          "text": "method_line = ''"
+        },
+        {
+          "line": 113,
+          "text": "tddft_lines = []"
+        },
+        {
+          "line": 114,
+          "text": "in_tddft = False"
+        },
+        {
+          "line": 115,
+          "text": "for s in inp_lines:"
+        },
+        {
+          "line": 116,
+          "text": "    t = s.strip()"
+        },
+        {
+          "line": 117,
+          "text": "    if not method_line and t.startswith('!'):"
+        },
+        {
+          "line": 118,
+          "text": "        method_line = t"
+        },
+        {
+          "line": 119,
+          "text": "    if t.lower().startswith('%tddft'):"
+        },
+        {
+          "line": 120,
+          "text": "        in_tddft = True"
+        },
+        {
+          "line": 121,
+          "text": "    if in_tddft:"
+        },
+        {
+          "line": 122,
+          "text": "        tddft_lines.append(t)"
+        },
+        {
+          "line": 123,
+          "text": "        if t.lower().endswith('end'):"
+        },
+        {
+          "line": 124,
+          "text": "            in_tddft = False"
+        },
+        {
+          "line": 125,
+          "text": ""
+        },
+        {
+          "line": 126,
+          "text": "natoms = 0"
+        },
+        {
+          "line": 127,
+          "text": "elements = []"
+        },
+        {
+          "line": 128,
+          "text": "for s in xyz_lines:"
+        },
+        {
+          "line": 129,
+          "text": "    parts = s.split()"
+        },
+        {
+          "line": 130,
+          "text": "    if len(parts) == 4:"
+        },
+        {
+          "line": 131,
+          "text": "        natoms += 1"
+        },
+        {
+          "line": 132,
+          "text": "        elements.append(parts[0])"
+        },
+        {
+          "line": 133,
+          "text": ""
+        },
+        {
+          "line": 134,
+          "text": "seed_value = 'unknown'"
+        },
+        {
+          "line": 135,
+          "text": "ident = {}"
+        },
+        {
+          "line": 136,
+          "text": "try:"
+        },
+        {
+          "line": 137,
+          "text": "    with open('identity.json', 'r') as fh:"
+        },
+        {
+          "line": 138,
+          "text": "        ident = json.load(fh)"
+        },
+        {
+          "line": 139,
+          "text": "except Exception:"
+        },
+        {
+          "line": 140,
+          "text": "    ident = {}"
+        },
+        {
+          "line": 141,
+          "text": "if isinstance(ident, dict):"
+        },
+        {
+          "line": 142,
+          "text": "    if 'random_seed' in ident:"
+        },
+        {
+          "line": 143,
+          "text": "        seed_value = repr(ident.get('random_seed'))"
+        },
+        {
+          "line": 144,
+          "text": "    else:"
+        },
+        {
+          "line": 145,
+          "text": "        for v in ident.values():"
+        },
+        {
+          "line": 146,
+          "text": "            if isinstance(v, dict) and 'random_seed' in v:"
+        },
+        {
+          "line": 147,
+          "text": "                seed_value = repr(v.get('random_seed'))"
+        },
+        {
+          "line": 148,
+          "text": "                break"
+        },
+        {
+          "line": 149,
+          "text": ""
+        },
+        {
+          "line": 150,
+          "text": "exc_sources = [{'filename': origin, 'location': ('ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS table' if rows else 'per-STATE energies and length-gauge transition dipoles')}]"
+        },
+        {
+          "line": 151,
+          "text": ""
+        },
+        {
+          "line": 152,
+          "text": "analysis = ('Parsed %d roots from %s ordered by vertical excitation energy. Lowest five: ' % (len(excitations), origin)) + '; '.join("
+        },
+        {
+          "line": 153,
+          "text": "    'state %d: %.3f eV, f(length)=%.5f' % (e['state_index'], e['energy_eV'], e['fosc_length_gauge']) for e in lowest5) + ("
+        },
+        {
+          "line": 154,
+          "text": "    '. Strongest parsed root: state %d at %.3f eV with f(length)=%.5f; weakest: state %d at %.3f eV with f(length)=%.5f. '"
+        },
+        {
+          "line": 155,
+          "text": "    'The low-energy roots carry small dipole-length oscillator strength while the stronger roots at higher energy carry much '"
+        },
+        {
+          "line": 156,
+          "text": "    'larger values, so the low-energy and strong-transition regimes differ by computed transition intensity, not by any '"
+        },
+        {
+          "line": 157,
+          "text": "    'orbital-energy gap. These are vertical TDDFT response values at one fixed geometry, not experimental absorption maxima '"
+        },
+        {
+          "line": 158,
+          "text": "    'and not adiabatic excitation energies. No configurational assignment (for example n->pi* labels) is asserted here, '"
+        },
+        {
+          "line": 159,
+          "text": "    'because the parsed oscillator strengths alone do not establish state character.'"
+        },
+        {
+          "line": 160,
+          "text": "    % (strong['state_index'], strong['energy_eV'], strong['fosc_length_gauge'],"
+        },
+        {
+          "line": 161,
+          "text": "       weak['state_index'], weak['energy_eV'], weak['fosc_length_gauge']))"
+        },
+        {
+          "line": 162,
+          "text": ""
+        },
+        {
+          "line": 163,
+          "text": "rationale = ('Managed ORCA input method line: %s ; TDDFT response block: %s . '"
+        },
+        {
+          "line": 164,
+          "text": "             'PBE0 (global hybrid, 25%% HF exchange) was selected for a bounded linear-response TDDFT treatment of valence '"
+        },
+        {
+          "line": 165,
+          "text": "             'singlet excitations of acetone, with the def2-SVP polarized valence double-zeta basis. Full TDDFT (not TDA) with '"
+        },
+        {
+          "line": 166,
+          "text": "             'NRoots 5 and singlets only was requested at the single prepared geometry under gas-phase (no solvent) conditions. '"
+        },
+        {
+          "line": 167,
+          "text": "             'Method and basis selection is a planning choice and is not independent scientific validation; the response block '"
+        },
+        {
+          "line": 168,
+          "text": "             'above records what was actually requested.'"
+        },
+        {
+          "line": 169,
+          "text": "             % (method_line, ' | '.join(tddft_lines)))"
+        },
+        {
+          "line": 170,
+          "text": ""
+        },
+        {
+          "line": 171,
+          "text": "geometry_provenance = ('The geometry consumed by the response calculation is the task-prepared XYZ coords.xyz (%d atoms, '"
+        },
+        {
+          "line": 172,
+          "text": "                       'elements %s) produced by structure.resolve from SMILES CC(=O)C with generator '"
+        },
+        {
+          "line": 173,
+          "text": "                       'opi.Structure.from_smiles / RDKit. Its recorded guarantee covers only initial graph/atom mapping and finite '"
+        },
+        {
+          "line": 174,
+          "text": "                       'coordinates, not optimization or ground-state certification. No geometry optimization was performed in this '"
+        },
+        {
+          "line": 175,
+          "text": "                       'workflow, so the reported values are vertical excitations at a non-optimized structure and no frequency '"
+        },
+        {
+          "line": 176,
+          "text": "                       'validation of a minimum is available.'"
+        },
+        {
+          "line": 177,
+          "text": "                       % (natoms, ','.join(elements)))"
+        }
+      ],
+      "returned_bytes": 7013,
+      "status": "observed",
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 18,
+          "stop": 178
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 18,
+          "stop": 178
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      }
+    }
+  },
+  "observation_records": [],
+  "diagnostics": [],
+  "artifact_ids": [
+    "artifact_1345f5dcbf584ce299aef752be7327be"
+  ],
+  "source": {
+    "call_id": "call_1dfe76bd95b344b69e6a16241a268c3d",
+    "role": "python",
+    "name": "analyze_tddft.py",
+    "tool": "evidence.text",
+    "consumption": {
+      "_decision_id": "model_1dc47c28c9c14bca9fb4025eba080eea"
+    },
+    "request_version": 3,
+    "plan_version": 4
+  },
+  "created_at": "2026-10-20T07:04:31.785489Z"
+}

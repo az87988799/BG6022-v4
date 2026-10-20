@@ -1,0 +1,133 @@
+{
+  "request_hash": "c604164791f602227cda48d670a75ff2a36fb62d4d4b7175b292b55150c76aa5",
+  "proposal": {
+    "action": "normalize_request",
+    "parameters": {
+      "schema_version": "request-semantics-3",
+      "message_ids": [
+        "message_06c8f6300ba54a8d97fcbafd856ce90b"
+      ],
+      "kind": "normalize",
+      "text_basis": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽",
+      "identities": [
+        {
+          "key": "hcn",
+          "name": "氰化氢HCN",
+          "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+          "message_id": "message_06c8f6300ba54a8d97fcbafd856ce90b",
+          "query_name": "hydrogen cyanide"
+        }
+      ],
+      "automatic_selection": {
+        "method": {
+          "text_basis": "方法请从RHF或PBE0中选择",
+          "message_id": "message_06c8f6300ba54a8d97fcbafd856ce90b"
+        },
+        "electronic_state": {
+          "text_basis": "方法请从RHF或PBE0中选择",
+          "message_id": "message_06c8f6300ba54a8d97fcbafd856ce90b"
+        },
+        "basis": {
+          "text_basis": "基组从def2-SVP或def2-TZVP中选择",
+          "message_id": "message_06c8f6300ba54a8d97fcbafd856ce90b"
+        }
+      },
+      "conditions": {
+        "charge": {
+          "source": "explicit",
+          "value": 0,
+          "text_basis": "中性、单重态、气相"
+        },
+        "multiplicity": {
+          "source": "explicit",
+          "value": 1,
+          "text_basis": "中性、单重态、气相"
+        },
+        "environment": {
+          "source": "explicit",
+          "value": "gas_phase",
+          "text_basis": "中性、单重态、气相"
+        }
+      },
+      "goals": [
+        {
+          "key": "identity_hcn",
+          "port": "resolved_identity",
+          "text_basis": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构",
+          "system_refs": [
+            "hcn"
+          ],
+          "required": true
+        },
+        {
+          "key": "prepared_geometry",
+          "port": "prepared_geometry",
+          "text_basis": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构",
+          "system_refs": [
+            "hcn"
+          ],
+          "required": true
+        },
+        {
+          "key": "giao_shielding",
+          "port": "nmr_shielding",
+          "quantity": "GIAO核磁屏蔽",
+          "text_basis": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽",
+          "geometry_relation": "fixed_initial",
+          "system_refs": [
+            "hcn"
+          ],
+          "required": true,
+          "verification": "reported_with_limitations",
+          "minimum_evidence": [
+            "在计算前说明选择与成本依据并记录实际数值设置",
+            "按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数",
+            "核对各向同性值与该核总张量迹的一致性",
+            "未收敛或缺少的核应明确标为未完成，不补造数值",
+            "不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽"
+          ]
+        },
+        {
+          "key": "delivery",
+          "port": "delivery",
+          "quantity": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格",
+          "text_basis": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限",
+          "system_refs": [
+            "hcn"
+          ],
+          "required": true
+        },
+        {
+          "key": "random_seed",
+          "port": "random_seed",
+          "quantity": "种子 1701",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录",
+          "system_refs": [
+            "hcn"
+          ],
+          "required": true
+        }
+      ]
+    },
+    "reason": "HCN is not in legacy qualified scope, so this is a general generated task. Identity bound via identities (query_name hydrogen cyanide). Method (RHF/PBE0) and basis (def2-SVP/def2-TZVP) are delegated, and electronic_state is coupled to the RHF/PBE0 choice, so all go to automatic_selection rather than conditions. Explicit shared conditions: charge 0 (中性), multiplicity 1 (单重态), environment gas_phase (气相). Goals: identity + prepared_geometry input (geometry_source=prepare, no geometry_relation since it is input geometry), GIAO shielding on the fixed provided geometry (geometry_relation=fixed_initial) with contiguous minimum_evidence quotes for settings, tensor/reporting, trace check, incomplete-nucleus marking and shielding-vs-shift/total-not-components constraints; delivery and seed 1701 record goals. explain_results=true is a delivery flag, so no knowledge_answer goal. No unresolved/notices."
+  },
+  "raw_content": "{\"action\":\"normalize_request\",\"parameters\":{\"schema_version\":\"request-semantics-3\",\"message_ids\":[\"message_06c8f6300ba54a8d97fcbafd856ce90b\"],\"kind\":\"normalize\",\"text_basis\":\"请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽\",\"identities\":[{\"key\":\"hcn\",\"name\":\"氰化氢HCN\",\"text_basis\":\"氰化氢HCN（H-C≡N，中性、单重态、气相）\",\"message_id\":\"message_06c8f6300ba54a8d97fcbafd856ce90b\",\"query_name\":\"hydrogen cyanide\"}],\"automatic_selection\":{\"method\":{\"text_basis\":\"方法请从RHF或PBE0中选择\",\"message_id\":\"message_06c8f6300ba54a8d97fcbafd856ce90b\"},\"electronic_state\":{\"text_basis\":\"方法请从RHF或PBE0中选择\",\"message_id\":\"message_06c8f6300ba54a8d97fcbafd856ce90b\"},\"basis\":{\"text_basis\":\"基组从def2-SVP或def2-TZVP中选择\",\"message_id\":\"message_06c8f6300ba54a8d97fcbafd856ce90b\"}},\"conditions\":{\"charge\":{\"source\":\"explicit\",\"value\":0,\"text_basis\":\"中性、单重态、气相\"},\"multiplicity\":{\"source\":\"explicit\",\"value\":1,\"text_basis\":\"中性、单重态、气相\"},\"environment\":{\"source\":\"explicit\",\"value\":\"gas_phase\",\"text_basis\":\"中性、单重态、气相\"}},\"goals\":[{\"key\":\"identity_hcn\",\"port\":\"resolved_identity\",\"text_basis\":\"请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构\",\"system_refs\":[\"hcn\"],\"required\":true},{\"key\":\"prepared_geometry\",\"port\":\"prepared_geometry\",\"text_basis\":\"请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构\",\"system_refs\":[\"hcn\"],\"required\":true},{\"key\":\"giao_shielding\",\"port\":\"nmr_shielding\",\"quantity\":\"GIAO核磁屏蔽\",\"text_basis\":\"在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽\",\"geometry_relation\":\"fixed_initial\",\"system_refs\":[\"hcn\"],\"required\":true,\"verification\":\"reported_with_limitations\",\"minimum_evidence\":[\"在计算前说明选择与成本依据并记录实际数值设置\",\"按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数\",\"核对各向同性值与该核总张量迹的一致性\",\"未收敛或缺少的核应明确标为未完成，不补造数值\",\"不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽\"]},{\"key\":\"delivery\",\"port\":\"delivery\",\"quantity\":\"交付初始及计算几何、实际输入、原始逐核输出、脚本和表格\",\"text_basis\":\"交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限\",\"system_refs\":[\"hcn\"],\"required\":true},{\"key\":\"random_seed\",\"port\":\"random_seed\",\"quantity\":\"种子 1701\",\"text_basis\":\"若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录\",\"system_refs\":[\"hcn\"],\"required\":true}]},\"reason\":\"HCN is not in legacy qualified scope, so this is a general generated task. Identity bound via identities (query_name hydrogen cyanide). Method (RHF/PBE0) and basis (def2-SVP/def2-TZVP) are delegated, and electronic_state is coupled to the RHF/PBE0 choice, so all go to automatic_selection rather than conditions. Explicit shared conditions: charge 0 (中性), multiplicity 1 (单重态), environment gas_phase (气相). Goals: identity + prepared_geometry input (geometry_source=prepare, no geometry_relation since it is input geometry), GIAO shielding on the fixed provided geometry (geometry_relation=fixed_initial) with contiguous minimum_evidence quotes for settings, tensor/reporting, trace check, incomplete-nucleus marking and shielding-vs-shift/total-not-components constraints; delivery and seed 1701 record goals. explain_results=true is a delivery flag, so no knowledge_answer goal. No unresolved/notices.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 5183,
+    "completion_tokens": 11392,
+    "total_tokens": 16575,
+    "prompt_cache_hit_tokens": 3840,
+    "prompt_cache_miss_tokens": 1343
+  },
+  "response_hash": "a6b0477e6e2d3ae396285ec83c525ab74479f93638c6d98a57fee8a24337c270",
+  "response_bytes": 50416,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "04a7308c-b574-4a22-8ac8-bd86b274be4f",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 50.92200000000594
+}

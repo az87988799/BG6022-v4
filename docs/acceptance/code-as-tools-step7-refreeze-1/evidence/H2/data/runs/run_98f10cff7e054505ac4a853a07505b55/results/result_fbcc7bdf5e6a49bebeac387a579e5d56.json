@@ -1,0 +1,440 @@
+{
+  "id": "result_fbcc7bdf5e6a49bebeac387a579e5d56",
+  "run_id": "run_98f10cff7e054505ac4a853a07505b55",
+  "step_id": null,
+  "attempt_id": null,
+  "call_id": "call_450f3bb0923a4864852cc011ea15c2b9",
+  "supersedes_result_id": null,
+  "operation_status": "completed",
+  "checks": {
+    "text_window": [
+      {
+        "name": "bounded_evidence_read",
+        "status": "passed",
+        "detail": "operation only; content and observed values remain scientifically unverified",
+        "source": {
+          "artifact_id": "artifact_2ffc7a4883eb46cb93d646b062a2c409",
+          "sha256": "5f54139d23c56dc638a91ca5a3d590b1892ac500b1d4e4135343a066afced128",
+          "view": {
+            "type": "raw_text",
+            "version": "1"
+          },
+          "path": [],
+          "coverage": {
+            "version": "evidence-coverage-1",
+            "requested": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 201
+            },
+            "returned": {
+              "kind": "lines",
+              "start": 1,
+              "stop": 84
+            },
+            "complete": true,
+            "truncated": false,
+            "reason": null,
+            "next_cursor": null
+          }
+        },
+        "rule_version": "evidence-read-1"
+      }
+    ]
+  },
+  "qualified_outputs": {},
+  "observations": {
+    "text_window": {
+      "artifact_id": "artifact_2ffc7a4883eb46cb93d646b062a2c409",
+      "sha256": "5f54139d23c56dc638a91ca5a3d590b1892ac500b1d4e4135343a066afced128",
+      "role": "code",
+      "file": "artifacts/artifact_2ffc7a4883eb46cb93d646b062a2c409/files/make_ch2o_polarizability.py",
+      "source": {
+        "call_id": "call_fe06b892ec0a46a79de197c422e1b5a3",
+        "role": "python",
+        "name": "make_ch2o_polarizability.py"
+      },
+      "view": {
+        "type": "raw_text",
+        "version": "1"
+      },
+      "path": [],
+      "geometry_indices": [],
+      "stage": "unknown",
+      "units": null,
+      "conditions": "unknown",
+      "scientific_status": "unverified",
+      "validation": "unverified observation; not a scientific qualification",
+      "lines": [
+        {
+          "line": 1,
+          "text": "import json, math"
+        },
+        {
+          "line": 2,
+          "text": "from pathlib import Path"
+        },
+        {
+          "line": 3,
+          "text": ""
+        },
+        {
+          "line": 4,
+          "text": ""
+        },
+        {
+          "line": 5,
+          "text": "def parse_xyz(path):"
+        },
+        {
+          "line": 6,
+          "text": "    lines = Path(path).read_text().splitlines()"
+        },
+        {
+          "line": 7,
+          "text": "    n = int(lines[0].strip())"
+        },
+        {
+          "line": 8,
+          "text": "    atoms = []"
+        },
+        {
+          "line": 9,
+          "text": "    for line in lines[2:2+n]:"
+        },
+        {
+          "line": 10,
+          "text": "        p = line.split()"
+        },
+        {
+          "line": 11,
+          "text": "        atoms.append((p[0], [float(p[1]), float(p[2]), float(p[3])]))"
+        },
+        {
+          "line": 12,
+          "text": "    if len(atoms) != n:"
+        },
+        {
+          "line": 13,
+          "text": "        raise ValueError(f\"expected {n} atoms, found {len(atoms)}\")"
+        },
+        {
+          "line": 14,
+          "text": "    return atoms"
+        },
+        {
+          "line": 15,
+          "text": ""
+        },
+        {
+          "line": 16,
+          "text": ""
+        },
+        {
+          "line": 17,
+          "text": "def write_xyz(path, atoms):"
+        },
+        {
+          "line": 18,
+          "text": "    lines = [str(len(atoms)), \"\"]"
+        },
+        {
+          "line": 19,
+          "text": "    for sym, xyz in atoms:"
+        },
+        {
+          "line": 20,
+          "text": "        lines.append(f\"{sym:2s} {xyz[0]: .15f} {xyz[1]: .15f} {xyz[2]: .15f}\")"
+        },
+        {
+          "line": 21,
+          "text": "    Path(path).write_text(\"\\n\".join(lines) + \"\\n\")"
+        },
+        {
+          "line": 22,
+          "text": ""
+        },
+        {
+          "line": 23,
+          "text": ""
+        },
+        {
+          "line": 24,
+          "text": "def rotation_matrix():"
+        },
+        {
+          "line": 25,
+          "text": "    axis = [1.0, 2.0, 3.0]"
+        },
+        {
+          "line": 26,
+          "text": "    norm = math.sqrt(sum(v*v for v in axis))"
+        },
+        {
+          "line": 27,
+          "text": "    u = [v/norm for v in axis]"
+        },
+        {
+          "line": 28,
+          "text": "    theta = math.radians(37.0)"
+        },
+        {
+          "line": 29,
+          "text": "    c = math.cos(theta)"
+        },
+        {
+          "line": 30,
+          "text": "    s = math.sin(theta)"
+        },
+        {
+          "line": 31,
+          "text": "    ux, uy, uz = u"
+        },
+        {
+          "line": 32,
+          "text": "    R = ["
+        },
+        {
+          "line": 33,
+          "text": "        [c + ux*ux*(1-c), ux*uy*(1-c) - uz*s, ux*uz*(1-c) + uy*s],"
+        },
+        {
+          "line": 34,
+          "text": "        [uy*ux*(1-c) + uz*s, c + uy*uy*(1-c), uy*uz*(1-c) - ux*s],"
+        },
+        {
+          "line": 35,
+          "text": "        [uz*ux*(1-c) - uy*s, uz*uy*(1-c) + ux*s, c + uz*uz*(1-c)],"
+        },
+        {
+          "line": 36,
+          "text": "    ]"
+        },
+        {
+          "line": 37,
+          "text": "    return axis, u, theta, R"
+        },
+        {
+          "line": 38,
+          "text": ""
+        },
+        {
+          "line": 39,
+          "text": ""
+        },
+        {
+          "line": 40,
+          "text": "def rotate_xyz(xyz, R):"
+        },
+        {
+          "line": 41,
+          "text": "    return [sum(R[i][j]*xyz[j] for j in range(3)) for i in range(3)]"
+        },
+        {
+          "line": 42,
+          "text": ""
+        },
+        {
+          "line": 43,
+          "text": ""
+        },
+        {
+          "line": 44,
+          "text": "def make_inp(path, xyz_name):"
+        },
+        {
+          "line": 45,
+          "text": "    content = f\"\"\"%maxcore 192"
+        },
+        {
+          "line": 46,
+          "text": "! RHF def2-SVP NoAutoStart"
+        },
+        {
+          "line": 47,
+          "text": "%scf MaxIter 256 AutoTRAH false end"
+        },
+        {
+          "line": 48,
+          "text": "%elprop Polar true end"
+        },
+        {
+          "line": 49,
+          "text": "* xyzfile 0 1 {xyz_name}"
+        },
+        {
+          "line": 50,
+          "text": "\"\"\""
+        },
+        {
+          "line": 51,
+          "text": "    Path(path).write_text(content)"
+        },
+        {
+          "line": 52,
+          "text": ""
+        },
+        {
+          "line": 53,
+          "text": ""
+        },
+        {
+          "line": 54,
+          "text": "atoms = parse_xyz(\"prepared.xyz\")"
+        },
+        {
+          "line": 55,
+          "text": "write_xyz(\"original.xyz\", atoms)"
+        },
+        {
+          "line": 56,
+          "text": ""
+        },
+        {
+          "line": 57,
+          "text": "axis, u, theta, R = rotation_matrix()"
+        },
+        {
+          "line": 58,
+          "text": "rotated_atoms = [(sym, rotate_xyz(xyz, R)) for sym, xyz in atoms]"
+        },
+        {
+          "line": 59,
+          "text": "write_xyz(\"rotated.xyz\", rotated_atoms)"
+        },
+        {
+          "line": 60,
+          "text": ""
+        },
+        {
+          "line": 61,
+          "text": "make_inp(\"orca_original.inp\", \"original.xyz\")"
+        },
+        {
+          "line": 62,
+          "text": "make_inp(\"orca_rotated.inp\", \"rotated.xyz\")"
+        },
+        {
+          "line": 63,
+          "text": ""
+        },
+        {
+          "line": 64,
+          "text": "record = {"
+        },
+        {
+          "line": 65,
+          "text": "    \"version\": 1,"
+        },
+        {
+          "line": 66,
+          "text": "    \"rotation_convention\": \"active right-handed rotation about an axis through the original coordinate origin; coordinates transformed as r_prime = R r\","
+        },
+        {
+          "line": 67,
+          "text": "    \"axis_direction\": axis,"
+        },
+        {
+          "line": 68,
+          "text": "    \"axis_unit\": u,"
+        },
+        {
+          "line": 69,
+          "text": "    \"angle_degrees\": 37.0,"
+        },
+        {
+          "line": 70,
+          "text": "    \"angle_radians\": theta,"
+        },
+        {
+          "line": 71,
+          "text": "    \"origin\": [0.0, 0.0, 0.0],"
+        },
+        {
+          "line": 72,
+          "text": "    \"rotation_matrix\": R,"
+        },
+        {
+          "line": 73,
+          "text": "    \"formula\": \"R = cos(theta) I + sin(theta) [u]_x + (1-cos(theta)) u u^T\","
+        },
+        {
+          "line": 74,
+          "text": "    \"atom_order_preserved\": True,"
+        },
+        {
+          "line": 75,
+          "text": "    \"internal_geometry_unchanged\": True,"
+        },
+        {
+          "line": 76,
+          "text": "    \"source_geometry\": \"prepared.xyz\","
+        },
+        {
+          "line": 77,
+          "text": "    \"original_xyz\": \"original.xyz\","
+        },
+        {
+          "line": 78,
+          "text": "    \"rotated_xyz\": \"rotated.xyz\","
+        },
+        {
+          "line": 79,
+          "text": "    \"orca_inputs\": {\"original\": \"orca_original.inp\", \"rotated\": \"orca_rotated.inp\"},"
+        },
+        {
+          "line": 80,
+          "text": "    \"original_atoms\": [{\"symbol\": sym, \"xyz\": xyz} for sym, xyz in atoms],"
+        },
+        {
+          "line": 81,
+          "text": "    \"rotated_atoms\": [{\"symbol\": sym, \"xyz\": xyz} for sym, xyz in rotated_atoms],"
+        },
+        {
+          "line": 82,
+          "text": "}"
+        },
+        {
+          "line": 83,
+          "text": "Path(\"rotation_record.json\").write_text(json.dumps(record, indent=2) + \"\\n\")"
+        }
+      ],
+      "returned_bytes": 2625,
+      "status": "observed",
+      "coverage": {
+        "version": "evidence-coverage-1",
+        "requested": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 201
+        },
+        "returned": {
+          "kind": "lines",
+          "start": 1,
+          "stop": 84
+        },
+        "complete": true,
+        "truncated": false,
+        "reason": null,
+        "next_cursor": null
+      }
+    }
+  },
+  "observation_records": [],
+  "diagnostics": [],
+  "artifact_ids": [
+    "artifact_2ffc7a4883eb46cb93d646b062a2c409"
+  ],
+  "source": {
+    "call_id": "call_fe06b892ec0a46a79de197c422e1b5a3",
+    "role": "python",
+    "name": "make_ch2o_polarizability.py",
+    "tool": "evidence.text",
+    "consumption": {
+      "_decision_id": "model_27fe40129a574bd68037f5ff1a2b3f49"
+    },
+    "request_version": 2,
+    "plan_version": 2
+  },
+  "created_at": "2026-10-20T07:25:40.941920Z"
+}

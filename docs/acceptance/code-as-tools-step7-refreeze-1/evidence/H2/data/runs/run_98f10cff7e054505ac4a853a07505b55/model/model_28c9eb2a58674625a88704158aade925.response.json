@@ -1,0 +1,179 @@
+{
+  "request_hash": "ca8e0f999cec3f87b54804fbe2a693876661e35126f78042a3ddb5b522683e2d",
+  "proposal": {
+    "action": "normalize_request",
+    "parameters": {
+      "schema_version": "request-semantics-3",
+      "message_ids": [
+        "message_451da9b98d92445ca2164f01227044ba"
+      ],
+      "kind": "normalize",
+      "text_basis": "请为甲醛CH2O（中性、单重态、气相）生成一份合理结构，用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率。再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数。依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同。保留原始输入输出、生成与分析脚本、数据表及验证限制；不分别优化两个结构，不以永久偶极矩或有限频率动态响应替代静态极化率，不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "identities": [
+        {
+          "key": "ch2o",
+          "name": "甲醛CH2O",
+          "query_name": "formaldehyde",
+          "text_basis": "甲醛CH2O（中性、单重态、气相）",
+          "message_id": "message_451da9b98d92445ca2164f01227044ba"
+        }
+      ],
+      "conditions": {
+        "method": {
+          "source": "explicit",
+          "value": "RHF",
+          "text_basis": "用RHF/def2-SVP"
+        },
+        "basis": {
+          "source": "explicit",
+          "value": "def2-SVP",
+          "text_basis": "用RHF/def2-SVP"
+        },
+        "charge": {
+          "source": "explicit",
+          "value": 0,
+          "text_basis": "中性"
+        },
+        "multiplicity": {
+          "source": "explicit",
+          "value": 1,
+          "text_basis": "单重态"
+        },
+        "environment": {
+          "source": "explicit",
+          "value": "gas_phase",
+          "text_basis": "气相"
+        },
+        "electronic_state": {
+          "source": "inferred",
+          "value": "RHF",
+          "text_basis": "RHF"
+        }
+      },
+      "goals": [
+        {
+          "key": "prepared_geometry",
+          "port": "prepared_geometry",
+          "quantity": "合理结构",
+          "text_basis": "请为甲醛CH2O（中性、单重态、气相）生成一份合理结构",
+          "system_refs": [
+            "ch2o"
+          ],
+          "verification": null
+        },
+        {
+          "key": "rotation_relation",
+          "port": "rotation_relation",
+          "quantity": "旋转关系",
+          "text_basis": "再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。",
+          "system_refs": [
+            "ch2o"
+          ],
+          "minimum_evidence": [
+            "以原坐标原点为中心",
+            "绕方向向量(1,2,3)的轴按右手定则旋转37度",
+            "保持原子顺序和内部几何",
+            "记录旋转约定和实际数值设置"
+          ],
+          "verification": null
+        },
+        {
+          "key": "polarizability_original",
+          "port": "static_polarizability_tensor",
+          "quantity": "静态电偶极-电偶极极化率",
+          "text_basis": "用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率。",
+          "system_refs": [
+            "ch2o"
+          ],
+          "minimum_evidence": [
+            "固定几何",
+            "不分别优化两个结构",
+            "不以永久偶极矩或有限频率动态响应替代静态极化率"
+          ],
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "polarizability_rotated",
+          "port": "static_polarizability_tensor",
+          "quantity": "静态电偶极-电偶极极化率",
+          "text_basis": "再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。",
+          "system_refs": [
+            "ch2o"
+          ],
+          "minimum_evidence": [
+            "保持原子顺序和内部几何",
+            "用完全相同的科学设置",
+            "独立计算该极化率",
+            "不分别优化两个结构",
+            "不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果"
+          ],
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "polarizability_verification",
+          "port": "polarizability_verification",
+          "quantity": "检验张量分量是否按坐标变换一致、各向同性值是否保持",
+          "text_basis": "依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同。",
+          "system_refs": [
+            "ch2o"
+          ],
+          "minimum_evidence": [
+            "依据两次真实结果",
+            "解释为什么坐标分量和各向同性量的比较方式不同"
+          ],
+          "verification": "reported_with_limitations"
+        },
+        {
+          "key": "delivery",
+          "port": "delivery",
+          "quantity": "两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率",
+          "text_basis": "交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数。",
+          "system_refs": [
+            "ch2o"
+          ],
+          "minimum_evidence": [
+            "统一用原子单位",
+            "机器表的张量至少保留7位小数",
+            "各向同性值至少保留5位小数",
+            "保留原始输入输出、生成与分析脚本、数据表及验证限制"
+          ],
+          "verification": null
+        },
+        {
+          "key": "random_seed",
+          "port": "random_seed",
+          "quantity": "种子 1701",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "system_refs": [
+            "ch2o"
+          ],
+          "minimum_evidence": [
+            "统一采用种子 1701",
+            "若某一库或模型不支持固定种子，明确记为不可固定"
+          ],
+          "verification": null
+        }
+      ]
+    },
+    "reason": "Normalizing explicit user request for CH2O polarizability with specified conditions, rotation, deliverables, and seed. All conditions are explicit; no defaults needed. Goals cover geometry preparation, rotation, two independent polarizability calculations, verification, delivery, and seed record."
+  },
+  "raw_content": "{\n  \"action\": \"normalize_request\",\n  \"parameters\": {\n    \"schema_version\": \"request-semantics-3\",\n    \"message_ids\": [\n      \"message_451da9b98d92445ca2164f01227044ba\"\n    ],\n    \"kind\": \"normalize\",\n    \"text_basis\": \"请为甲醛CH2O（中性、单重态、气相）生成一份合理结构，用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率。再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数。依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同。保留原始输入输出、生成与分析脚本、数据表及验证限制；不分别优化两个结构，不以永久偶极矩或有限频率动态响应替代静态极化率，不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果。\\n\\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。\",\n    \"identities\": [\n      {\n        \"key\": \"ch2o\",\n        \"name\": \"甲醛CH2O\",\n        \"query_name\": \"formaldehyde\",\n        \"text_basis\": \"甲醛CH2O（中性、单重态、气相）\",\n        \"message_id\": \"message_451da9b98d92445ca2164f01227044ba\"\n      }\n    ],\n    \"conditions\": {\n      \"method\": {\n        \"source\": \"explicit\",\n        \"value\": \"RHF\",\n        \"text_basis\": \"用RHF/def2-SVP\"\n      },\n      \"basis\": {\n        \"source\": \"explicit\",\n        \"value\": \"def2-SVP\",\n        \"text_basis\": \"用RHF/def2-SVP\"\n      },\n      \"charge\": {\n        \"source\": \"explicit\",\n        \"value\": 0,\n        \"text_basis\": \"中性\"\n      },\n      \"multiplicity\": {\n        \"source\": \"explicit\",\n        \"value\": 1,\n        \"text_basis\": \"单重态\"\n      },\n      \"environment\": {\n        \"source\": \"explicit\",\n        \"value\": \"gas_phase\",\n        \"text_basis\": \"气相\"\n      },\n      \"electronic_state\": {\n        \"source\": \"inferred\",\n        \"value\": \"RHF\",\n        \"text_basis\": \"RHF\"\n      }\n    },\n    \"goals\": [\n      {\n        \"key\": \"prepared_geometry\",\n        \"port\": \"prepared_geometry\",\n        \"quantity\": \"合理结构\",\n        \"text_basis\": \"请为甲醛CH2O（中性、单重态、气相）生成一份合理结构\",\n        \"system_refs\": [\n          \"ch2o\"\n        ],\n        \"verification\": null\n      },\n      {\n        \"key\": \"rotation_relation\",\n        \"port\": \"rotation_relation\",\n        \"quantity\": \"旋转关系\",\n        \"text_basis\": \"再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。\",\n        \"system_refs\": [\n          \"ch2o\"\n        ],\n        \"minimum_evidence\": [\n          \"以原坐标原点为中心\",\n          \"绕方向向量(1,2,3)的轴按右手定则旋转37度\",\n          \"保持原子顺序和内部几何\",\n          \"记录旋转约定和实际数值设置\"\n        ],\n        \"verification\": null\n      },\n      {\n        \"key\": \"polarizability_original\",\n        \"port\": \"static_polarizability_tensor\",\n        \"quantity\": \"静态电偶极-电偶极极化率\",\n        \"text_basis\": \"用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率。\",\n        \"system_refs\": [\n          \"ch2o\"\n        ],\n        \"minimum_evidence\": [\n          \"固定几何\",\n          \"不分别优化两个结构\",\n          \"不以永久偶极矩或有限频率动态响应替代静态极化率\"\n        ],\n        \"verification\": \"reported_with_limitations\"\n      },\n      {\n        \"key\": \"polarizability_rotated\",\n        \"port\": \"static_polarizability_tensor\",\n        \"quantity\": \"静态电偶极-电偶极极化率\",\n        \"text_basis\": \"再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。\",\n        \"system_refs\": [\n          \"ch2o\"\n        ],\n        \"minimum_evidence\": [\n          \"保持原子顺序和内部几何\",\n          \"用完全相同的科学设置\",\n          \"独立计算该极化率\",\n          \"不分别优化两个结构\",\n          \"不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果\"\n        ],\n        \"verification\": \"reported_with_limitations\"\n      },\n      {\n        \"key\": \"polarizability_verification\",\n        \"port\": \"polarizability_verification\",\n        \"quantity\": \"检验张量分量是否按坐标变换一致、各向同性值是否保持\",\n        \"text_basis\": \"依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同。\",\n        \"system_refs\": [\n          \"ch2o\"\n        ],\n        \"minimum_evidence\": [\n          \"依据两次真实结果\",\n          \"解释为什么坐标分量和各向同性量的比较方式不同\"\n        ],\n        \"verification\": \"reported_with_limitations\"\n      },\n      {\n        \"key\": \"delivery\",\n        \"port\": \"delivery\",\n        \"quantity\": \"两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率\",\n        \"text_basis\": \"交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数。\",\n        \"system_refs\": [\n          \"ch2o\"\n        ],\n        \"minimum_evidence\": [\n          \"统一用原子单位\",\n          \"机器表的张量至少保留7位小数\",\n          \"各向同性值至少保留5位小数\",\n          \"保留原始输入输出、生成与分析脚本、数据表及验证限制\"\n        ],\n        \"verification\": null\n      },\n      {\n        \"key\": \"random_seed\",\n        \"port\": \"random_seed\",\n        \"quantity\": \"种子 1701\",\n        \"text_basis\": \"若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。\",\n        \"system_refs\": [\n          \"ch2o\"\n        ],\n        \"minimum_evidence\": [\n          \"统一采用种子 1701\",\n          \"若某一库或模型不支持固定种子，明确记为不可固定\"\n        ],\n        \"verification\": null\n      }\n    ]\n  },\n  \"reason\": \"Normalizing explicit user request for CH2O polarizability with specified conditions, rotation, deliverables, and seed. All conditions are explicit; no defaults needed. Goals cover geometry preparation, rotation, two independent polarizability calculations, verification, delivery, and seed record.\"\n}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 5226,
+    "completion_tokens": 12939,
+    "total_tokens": 18165,
+    "prompt_cache_hit_tokens": 3840,
+    "prompt_cache_miss_tokens": 1386
+  },
+  "response_hash": "207811672c179d78d1344aacdb3b02e740c585238d138988f40e14005612f850",
+  "response_bytes": 57938,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "aade13b7-32a3-41ec-b4fe-85c4c61932ff",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 53.98500000000058
+}

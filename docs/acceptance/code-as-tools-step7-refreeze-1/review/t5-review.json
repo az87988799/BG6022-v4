@@ -1,0 +1,729 @@
+{
+  "schema_version": 1,
+  "reviewed_at_utc": "2026-10-20T07:11:27.393372+00:00",
+  "task": "T5",
+  "formal_repeat": 1,
+  "run_id": "run_431de2af64004528bf9cba835b60bb9b",
+  "product_commit": "46209c0bdba3876031566831170bb64e8585dc97",
+  "overall_verdict": "fail",
+  "independent_reference": "unverified_not_executed",
+  "dimensions": {
+    "normalization": {
+      "status": "fail",
+      "reason": "Three rejected normalize_request proposals; raw Request v1 remains."
+    },
+    "plan": {
+      "status": "fail",
+      "reason": "No approved Plan."
+    },
+    "startup": {
+      "status": "fail",
+      "python_attempts": 0,
+      "orca_starts_actual": 0
+    },
+    "scientific_evidence": {
+      "status": "fail",
+      "reason": "Neither required gas nor CPCM-water ORCA single-point was executed."
+    },
+    "source_consistency": {
+      "status": "unverified",
+      "reason": "No scientific numbers/geometry/inputs exist to compare; all three model request payloads preserve full original text including kJ/mol and later limitations."
+    },
+    "goal_completion": {
+      "status": "fail",
+      "product_goal_status": {
+        "raw_request": "insufficient_evidence"
+      },
+      "user_goal_complete": false
+    },
+    "report_completion": {
+      "status": "pass",
+      "scope": "Fallback partial failure report exists; not target completion.",
+      "normal_terminal_deliveries": 0,
+      "fallback_reports": 1
+    }
+  },
+  "required_item_checks": [
+    {
+      "item": "Confirm ethanol C2H6O, 9 ordered atoms, neutral singlet; gas and C-PCM water must share identical ordered input coordinates and the same method/basis/reference/SCF/grid settings except solvent-required differences.",
+      "status": "fail",
+      "reason": "No executable conditions/input/scientific evidence reached."
+    },
+    {
+      "item": "Retain both actual XYZ/input hashes. Prefer identical XYZ bytes; if comments/format differ, independently compare element order and coordinate values, not approximate heavy-atom RMSD.",
+      "status": "fail",
+      "reason": "No executable conditions/input/scientific evidence reached."
+    },
+    {
+      "item": "Read solvent identity, C-PCM model and visible dielectric/cavity settings from actual inputs/outputs; gas input must not inherit solvent options.",
+      "status": "fail",
+      "reason": "No executable conditions/input/scientific evidence reached."
+    },
+    {
+      "item": "Require two independently started/completed original ORCA SP jobs and their separate electronic energies; no independent geometry optimizations.",
+      "status": "fail",
+      "reason": "No executable conditions/input/scientific evidence reached."
+    },
+    {
+      "item": "Check delta E=(E_water-E_gas)*2625.4996394799 kJ/mol, retaining its measured sign and exact raw energies. This is an electronic model difference, not complete hydration free energy; no invented thermal or standard-state corrections.",
+      "status": "fail",
+      "reason": "No executable conditions/input/scientific evidence reached."
+    }
+  ],
+  "registration_source": {
+    "path": "E:\\BG6022-V4\\docs\\acceptance\\code-as-tools-step7-refreeze-1\\review\\registration-t5.json",
+    "bytes": 1274,
+    "sha256": "3a12e324e0361cd66d74674d99c18d6c59eabe6893ceed410b9735405f503da6"
+  },
+  "complete_rejections": [
+    {
+      "run_decision": {
+        "id": "model_749a0e1f6f09458fb0b287e76f2c72af",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+            "path": [
+              "parameters"
+            ],
+            "corrections": [
+              {
+                "path": [
+                  "parameters",
+                  "conditions",
+                  "electronic_state"
+                ],
+                "reason": "authorized_default_requires_explicit_adoption",
+                "authorized_default": {
+                  "source": "default",
+                  "default_rule": "local-hf-1",
+                  "value": "RKS"
+                },
+                "instruction": "This applicable configured default was omitted; authorized_defaults is only a template and was not applied. Explicitly adopt its exact value/source/default_rule in conditions or the matching system_conditions, or preserve a genuine user uncertainty with its source. Keep user declarations, conflicts, scoped conditions and automatic_selection unchanged; the program will not fill this field."
+              }
+            ]
+          }
+        }
+      },
+      "response_source": {
+        "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-T5-001\\data\\runs\\run_431de2af64004528bf9cba835b60bb9b\\model\\model_749a0e1f6f09458fb0b287e76f2c72af.response.json",
+        "bytes": 12357,
+        "sha256": "19e77b21de3c349d3463fb8d0523fca6018d34545ac81f62a2e29c9c1daf29cc"
+      },
+      "finish_reason": "stop",
+      "proposal": {
+        "action": "normalize_request",
+        "parameters": {
+          "schema_version": "request-semantics-3",
+          "message_ids": [
+            "message_49d08f4f32e44f1dbf6587b0f513d2d0"
+          ],
+          "kind": "normalize",
+          "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "identities": [
+            {
+              "key": "ethanol",
+              "name": "乙醇",
+              "query_name": "ethanol",
+              "text_basis": "乙醇",
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0"
+            }
+          ],
+          "conditions": {
+            "charge": {
+              "source": "explicit",
+              "value": 0,
+              "text_basis": "中性",
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0"
+            },
+            "multiplicity": {
+              "source": "explicit",
+              "value": 1,
+              "text_basis": "单重态",
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0"
+            }
+          },
+          "automatic_selection": {
+            "method": {
+              "text_basis": "自行选择同一方法与基组",
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0"
+            },
+            "basis": {
+              "text_basis": "自行选择同一方法与基组",
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0"
+            }
+          },
+          "goals": [
+            {
+              "key": "ethanol_prepared_geometry",
+              "port": "prepared_geometry",
+              "system_refs": [
+                "ethanol"
+              ],
+              "quantity": "一份结构",
+              "text_basis": "生成一份结构，保持完全相同的原子顺序和坐标",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "gas_phase_sp_energy",
+              "port": "energy",
+              "system_refs": [
+                "ethanol"
+              ],
+              "quantity": "单点电子能量",
+              "text_basis": "保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。",
+              "conditions": {
+                "environment": {
+                  "source": "explicit",
+                  "value": "gas_phase",
+                  "text_basis": "气相",
+                  "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0"
+                }
+              },
+              "geometry_relation": "fixed_initial",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "water_cpcm_sp_energy",
+              "port": "energy",
+              "system_refs": [
+                "ethanol"
+              ],
+              "quantity": "单点电子能量",
+              "text_basis": "保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。",
+              "conditions": {
+                "environment": {
+                  "source": "explicit",
+                  "value": "water_solvent",
+                  "text_basis": "ORCA C-PCM水环境",
+                  "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0"
+                }
+              },
+              "geometry_relation": "fixed_initial",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "delta_e_kjmol",
+              "port": "energy_difference",
+              "system_refs": [
+                "ethanol"
+              ],
+              "quantity": "kJ/mol差值",
+              "text_basis": "并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "delivery_artifacts",
+              "port": "delivery",
+              "system_refs": [
+                "ethanol"
+              ],
+              "quantity": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh）",
+              "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh）",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "report_conditions_limitations",
+              "port": "report",
+              "system_refs": [
+                "ethanol"
+              ],
+              "quantity": "说明溶剂设置、来源和计算限制",
+              "text_basis": "说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "random_seed_1701",
+              "port": "random_seed",
+              "system_refs": [
+                "ethanol"
+              ],
+              "quantity": "种子 1701",
+              "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+              "verification": "reported_with_limitations"
+            }
+          ]
+        },
+        "reason": "Normalize ethanol request: identity 乙醇 (query alias ethanol); explicit neutral/singlet charge and multiplicity; user delegates method/basis, so recorded in automatic_selection; per-goal gas_phase and water_solvent environments; shared prepared geometry with fixed_initial for both single-point energy goals because same atom order/coordinates and no separate optimization; separate goals for ΔE, delivery artifacts, condition/limitation report, and seed 1701 record. Geometry source is prepare, so no missing_geometry gap."
+      }
+    },
+    {
+      "run_decision": {
+        "id": "model_5076347769a84047821c1fbaabad2c14",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "ValidationError",
+          "recovery_kind": "correction",
+          "requirement": [
+            {
+              "type": "string_too_long",
+              "loc": [
+                "reason"
+              ],
+              "constraints": {
+                "max_length": 1000
+              }
+            }
+          ]
+        }
+      },
+      "response_source": {
+        "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-T5-001\\data\\runs\\run_431de2af64004528bf9cba835b60bb9b\\model\\model_5076347769a84047821c1fbaabad2c14.response.json",
+        "bytes": 14058,
+        "sha256": "a0792ddec5879e4b1025050defe20a8d9765740fafd698580fb5aa042418c31e"
+      },
+      "finish_reason": "stop",
+      "proposal": {
+        "action": "normalize_request",
+        "parameters": {
+          "schema_version": "request-semantics-3",
+          "message_ids": [
+            "message_49d08f4f32e44f1dbf6587b0f513d2d0"
+          ],
+          "kind": "normalize",
+          "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "identities": [
+            {
+              "key": "ethanol",
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "name": "乙醇",
+              "query_name": "ethanol",
+              "text_basis": "乙醇"
+            }
+          ],
+          "conditions": {
+            "charge": {
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "source": "explicit",
+              "text_basis": "中性",
+              "value": 0
+            },
+            "multiplicity": {
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "source": "explicit",
+              "text_basis": "单重态",
+              "value": 1
+            },
+            "electronic_state": {
+              "source": "default",
+              "default_rule": "local-hf-1",
+              "value": "RKS",
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "text_basis": ""
+            }
+          },
+          "automatic_selection": {
+            "method": {
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "text_basis": "自行选择同一方法与基组"
+            },
+            "basis": {
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "text_basis": "自行选择同一方法与基组"
+            }
+          },
+          "goals": [
+            {
+              "key": "ethanol_prepared_geometry",
+              "port": "prepared_geometry",
+              "quantity": "一份结构",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "生成一份结构，保持完全相同的原子顺序和坐标",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "gas_phase_sp_energy",
+              "port": "energy",
+              "quantity": "单点电子能量",
+              "system_refs": [
+                "ethanol"
+              ],
+              "conditions": {
+                "environment": {
+                  "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+                  "source": "explicit",
+                  "text_basis": "气相",
+                  "value": "gas_phase"
+                }
+              },
+              "geometry_relation": "fixed_initial",
+              "text_basis": "保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "water_cpcm_sp_energy",
+              "port": "energy",
+              "quantity": "单点电子能量",
+              "system_refs": [
+                "ethanol"
+              ],
+              "conditions": {
+                "environment": {
+                  "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+                  "source": "explicit",
+                  "text_basis": "ORCA C-PCM水环境",
+                  "value": "water_solvent"
+                }
+              },
+              "geometry_relation": "fixed_initial",
+              "text_basis": "保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "delta_e_kjmol",
+              "port": "energy_difference",
+              "quantity": "kJ/mol差值",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "delivery_artifacts",
+              "port": "delivery",
+              "quantity": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh）",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh）",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "report_conditions_limitations",
+              "port": "report",
+              "quantity": "说明溶剂设置、来源和计算限制",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "random_seed_1701",
+              "port": "random_seed",
+              "quantity": "种子 1701",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+              "verification": "reported_with_limitations"
+            }
+          ]
+        },
+        "reason": "Corrects rejection by explicitly adopting the applicable configured default electronic_state=RKS (source=default, default_rule=local-hf-1) in top-level conditions, as required; user did not state it, so it is not attributed to user text. All previously valid fields retained: identity 乙醇/ethanol (alias inferred, source-checked later), explicit neutral charge 0 and singlet multiplicity 1, delegated method/basis via automatic_selection (knowledge.search->select_conditions before structure.prepare/execution), one shared prepared geometry with fixed_initial binding for both single-point energies (same atom order/coordinates, no optimization of either geometry), per-goal gas-phase vs C-PCM water environments, ΔE=E(C-PCM水)-E(气相) in kJ/mol with sign explanation, delivery of both raw inputs/outputs, shared XYZ+hash and absolute energies (Eh), report of solvent settings/source/limitations without claiming hydration free energy or fabricating thermal/standard-state corrections, and seed 1701 recording with non-fixable noted honestly. No missing_geometry gap since geometry_source=prepare; verification reported_with_limitations, no user demand for qualified."
+      }
+    },
+    {
+      "run_decision": {
+        "id": "model_d87c6730ae82416fb6a5c6c2a7474327",
+        "basis": {
+          "request_version": 1,
+          "plan_version": null,
+          "permission_version": 1,
+          "control_generation": 1
+        },
+        "action": "rejected",
+        "related_results": [],
+        "reason": "rejected",
+        "parameters": {
+          "error_category": "StoreError",
+          "recovery_kind": "correction",
+          "requirement": "semantic evidence quote is repeated; supply a unique fuller quote or message ID"
+        }
+      },
+      "response_source": {
+        "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-T5-001\\data\\runs\\run_431de2af64004528bf9cba835b60bb9b\\model\\model_d87c6730ae82416fb6a5c6c2a7474327.response.json",
+        "bytes": 12409,
+        "sha256": "b9ed495e69f42672d1c0138026f0367bda503e2233de38bf0dec1bb1ff975cd8"
+      },
+      "finish_reason": "stop",
+      "proposal": {
+        "action": "normalize_request",
+        "parameters": {
+          "automatic_selection": {
+            "basis": {
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "text_basis": "自行选择同一方法与基组"
+            },
+            "method": {
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "text_basis": "自行选择同一方法与基组"
+            }
+          },
+          "conditions": {
+            "charge": {
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "source": "explicit",
+              "text_basis": "中性",
+              "value": 0
+            },
+            "electronic_state": {
+              "default_rule": "local-hf-1",
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "source": "default",
+              "text_basis": "",
+              "value": "RKS"
+            },
+            "multiplicity": {
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "source": "explicit",
+              "text_basis": "单重态",
+              "value": 1
+            }
+          },
+          "goals": [
+            {
+              "key": "ethanol_prepared_geometry",
+              "port": "prepared_geometry",
+              "quantity": "一份结构",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "生成一份结构，保持完全相同的原子顺序和坐标",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "conditions": {
+                "environment": {
+                  "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+                  "source": "explicit",
+                  "text_basis": "气相",
+                  "value": "gas_phase"
+                }
+              },
+              "geometry_relation": "fixed_initial",
+              "key": "gas_phase_sp_energy",
+              "port": "energy",
+              "quantity": "单点电子能量",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "conditions": {
+                "environment": {
+                  "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+                  "source": "explicit",
+                  "text_basis": "ORCA C-PCM水环境",
+                  "value": "water_solvent"
+                }
+              },
+              "geometry_relation": "fixed_initial",
+              "key": "water_cpcm_sp_energy",
+              "port": "energy",
+              "quantity": "单点电子能量",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "delta_e_kjmol",
+              "port": "energy_difference",
+              "quantity": "kJ/mol差值",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "delivery_artifacts",
+              "port": "delivery",
+              "quantity": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh）",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh）",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "report_conditions_limitations",
+              "port": "report",
+              "quantity": "说明溶剂设置、来源和计算限制",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+              "verification": "reported_with_limitations"
+            },
+            {
+              "key": "random_seed_1701",
+              "port": "random_seed",
+              "quantity": "种子 1701",
+              "system_refs": [
+                "ethanol"
+              ],
+              "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+              "verification": "reported_with_limitations"
+            }
+          ],
+          "identities": [
+            {
+              "key": "ethanol",
+              "message_id": "message_49d08f4f32e44f1dbf6587b0f513d2d0",
+              "name": "乙醇",
+              "query_name": "ethanol",
+              "text_basis": "乙醇"
+            }
+          ],
+          "kind": "normalize",
+          "message_ids": [
+            "message_49d08f4f32e44f1dbf6587b0f513d2d0"
+          ],
+          "schema_version": "request-semantics-3",
+          "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。"
+        },
+        "reason": "Correcting only the rejected reason-length validation error; preserving the valid proposal intent and all submitted fields. Ethanol identity, explicit neutrality/singlet, delegated method and basis selection, per-phase environments, fixed shared geometry for both single points, delta E, delivery, reporting limits, and seed 1701 remain represented."
+      }
+    }
+  ],
+  "rejection_summary": [
+    {
+      "ordinal": 1,
+      "category": "ProposalError",
+      "detail": "Missing explicit adoption of authorized electronic_state=RKS default_rule=local-hf-1."
+    },
+    {
+      "ordinal": 2,
+      "category": "ValidationError",
+      "detail": "reason string exceeds max_length 1000."
+    },
+    {
+      "ordinal": 3,
+      "category": "StoreError",
+      "detail": "semantic evidence quote is repeated; supply a unique fuller quote or message ID"
+    }
+  ],
+  "repeated_quote_analysis": {
+    "scope": "Read-only inference from final proposal text and raw original; no proposal replay performed.",
+    "path": "parameters.goals[1].conditions.environment.text_basis",
+    "text_basis": "气相",
+    "original_occurrences": 2,
+    "message_id_already_present": true,
+    "interpretation": "The same original user message contains 气相 both in the calculation instruction and E(气相). A message ID alone does not disambiguate those two positions. The recorded StoreError does not supply a path; this is the uniquely repeated nonempty text_basis found in the final proposal, consistent with that error."
+  },
+  "stop_classification": {
+    "category": "bounded_proposal_correction_exhausted",
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_749a0e1f6f09458fb0b287e76f2c72af",
+        "error_category": "ProposalError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_5076347769a84047821c1fbaabad2c14",
+        "error_category": "ValidationError"
+      },
+      {
+        "category": "proposal_rejected",
+        "model_id": "model_d87c6730ae82416fb6a5c6c2a7474327",
+        "error_category": "StoreError"
+      },
+      {
+        "category": "StoreError",
+        "message": "bounded proposal correction or transport retry exhausted",
+        "environment_occupied": false
+      }
+    ],
+    "reason": "Three normal model responses were rejected at different validation stages; no total model-call or scientific-start budget exhaustion is claimed."
+  },
+  "usage": {
+    "internal_work_units": 0,
+    "internal_calls_by_purpose": {},
+    "code_retries": 0,
+    "orca_starts_reserved": 0,
+    "orca_starts_actual": 0,
+    "postprocess_starts": 0,
+    "elapsed_seconds": 0.0,
+    "cpu_seconds": 0.0,
+    "resource_usage_complete": true,
+    "logical_attempts": {},
+    "fingerprint_attempts": {},
+    "extra_orca_starts_reserved": 0,
+    "model_calls": 3,
+    "model_tokens_used": 31537,
+    "model_tokens_unknown": 0,
+    "plan_revisions": 0,
+    "decision_rounds": 3,
+    "evidence_reads": 0,
+    "analysis_executions": 0,
+    "logical_steps": [],
+    "identity_queries": 0,
+    "structure_preparations": 0,
+    "knowledge_queries": 0
+  },
+  "settlement": {
+    "known_usage": {
+      "model_calls": 3,
+      "wall_seconds": 59.36000000000058,
+      "model_tokens": 31537,
+      "orca_starts": 0,
+      "internal_work_units": 0
+    },
+    "unknown_fields": {}
+  },
+  "driver_wall_seconds": 59.36000000000058,
+  "sources": [
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\first-repetition-evidence\\T5\\start.json",
+      "bytes": 731,
+      "sha256": "352f282235da01745b86f0a807d153a4b80219ed5c213aab82befaf39bc54d43"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\first-repetition-evidence\\T5\\outcome.json",
+      "bytes": 1278,
+      "sha256": "576bf84586b93396024f48133996e409645bd2e931090d523c411c25f84669ed"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\first-repetition-evidence\\T5\\report.json",
+      "bytes": 20622,
+      "sha256": "50318eca5e0865d16ffc13a3cfac7f28a541171040dc967d0922609e37c47bcd"
+    },
+    {
+      "path": "E:\\BG6022-V4\\data\\code-tools-refreeze-1-batch\\workspaces\\formal-T5-001\\data\\runs\\run_431de2af64004528bf9cba835b60bb9b\\run.json",
+      "bytes": 23838,
+      "sha256": "65ce8bcf5f23fc36ca002d37dd6de8504d2a8781e71cdebf28ed0e4e62aa18f0"
+    },
+    {
+      "path": "E:\\BG6022-V4\\docs\\acceptance\\code-as-tools-step7-refreeze-1\\review\\t5-terminal-source-index.json",
+      "bytes": 7648,
+      "sha256": "f012663249163af6a004952ad742019d3d32db96d8318f3e3f1001da341ac25c"
+    },
+    {
+      "path": "E:\\BG6022-V4\\docs\\acceptance\\code-as-tools-step7-refreeze-1\\review\\t5-model-projection-audit-terminal.json",
+      "bytes": 14090,
+      "sha256": "31043e3eaba39bd62277e883ec52306fe832b94609c12e02780143204b8a90fe"
+    }
+  ],
+  "limitations": [
+    "No scientific numerical comparison or independent reference/control was performed.",
+    "Rejected per-condition energy proposals are not approved actual method choices or run conditions.",
+    "No source/frozen asset/product data changes or reruns by the reviewer."
+  ]
+}

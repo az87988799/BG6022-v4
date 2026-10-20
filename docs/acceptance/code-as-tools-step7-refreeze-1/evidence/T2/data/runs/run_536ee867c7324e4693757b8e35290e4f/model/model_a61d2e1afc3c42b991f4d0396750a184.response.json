@@ -1,0 +1,144 @@
+{
+  "request_hash": "b91ff4c0d20de5fbc86a47c9638b7c488b6817e64f583b1dbb673448fdb1150f",
+  "proposal": {
+    "action": "normalize_request",
+    "parameters": {
+      "schema_version": "request-semantics-3",
+      "message_ids": [
+        "message_4c01971752664645ac4fa086bb2f1f01"
+      ],
+      "kind": "normalize",
+      "text_basis": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "identities": [
+        {
+          "key": "n_hexane",
+          "name": "正己烷",
+          "query_name": "n-hexane",
+          "text_basis": "请搜索正己烷（中性、单重态、气相）的低能构象。",
+          "message_id": "message_4c01971752664645ac4fa086bb2f1f01"
+        }
+      ],
+      "automatic_selection": {
+        "method": {
+          "text_basis": "方法和基组由你选择并说明依据。",
+          "message_id": "message_4c01971752664645ac4fa086bb2f1f01"
+        },
+        "basis": {
+          "text_basis": "方法和基组由你选择并说明依据。",
+          "message_id": "message_4c01971752664645ac4fa086bb2f1f01"
+        }
+      },
+      "conditions": {
+        "charge": {
+          "source": "explicit",
+          "value": 0,
+          "text_basis": "中性"
+        },
+        "multiplicity": {
+          "source": "explicit",
+          "value": 1,
+          "text_basis": "单重态"
+        },
+        "environment": {
+          "source": "explicit",
+          "value": "gas_phase",
+          "text_basis": "气相"
+        },
+        "electronic_state": {
+          "source": "default",
+          "default_rule": "local-hf-1",
+          "value": "RKS"
+        }
+      },
+      "goals": [
+        {
+          "key": "conformer_search",
+          "port": "candidate_conformer_search",
+          "quantity": "低能构象",
+          "text_basis": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。",
+          "system_refs": [
+            "n_hexane"
+          ],
+          "minimum_evidence": [
+            "自行编写本次搜索和筛选程序",
+            "实际保存至少8份候选结构",
+            "选择至少4个不同的构象",
+            "考虑碳链正反向等价映射的重原子对齐RMSD检查重复",
+            "以0.15Å为重复阈值",
+            "至少4个参加比较的构象应两两不同"
+          ]
+        },
+        {
+          "key": "orca_single_point_energy_comparison",
+          "port": "orca_single_point_energy_comparison",
+          "quantity": "真实ORCA单点能量比较",
+          "text_basis": "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。",
+          "system_refs": [
+            "n_hexane"
+          ],
+          "minimum_evidence": [
+            "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+            "方法和基组由你选择并说明依据",
+            "不能把未做ORCA的候选写成已有ORCA能量"
+          ]
+        },
+        {
+          "key": "candidate_delivery",
+          "port": "candidate_delivery_and_energy_ranking",
+          "quantity": "交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛",
+          "text_basis": "交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。",
+          "system_refs": [
+            "n_hexane"
+          ]
+        },
+        {
+          "key": "random_seed_record",
+          "port": "random_seed_record",
+          "quantity": "种子 1701",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "system_refs": [
+            "n_hexane"
+          ],
+          "minimum_evidence": [
+            "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录",
+            "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性"
+          ]
+        },
+        {
+          "key": "search_limitations",
+          "port": "search_limitations_disclosure",
+          "quantity": "有限搜索最低项",
+          "text_basis": "可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。",
+          "system_refs": [
+            "n_hexane"
+          ],
+          "minimum_evidence": [
+            "可以使用力场预筛选",
+            "不能把未做ORCA的候选写成已有ORCA能量",
+            "不能把有限搜索最低项称为全局最低或自由能最低"
+          ]
+        }
+      ]
+    },
+    "reason": "Normalize the n-hexane conformer-search request: identity 正己烷, explicit neutral/singlet/gas conditions, method/basis delegated via automatic_selection, and goals preserving candidate saving, RMSD duplicate check, real ORCA single-point comparison, delivery contents, seed 1701, and limitation disclosures."
+  },
+  "raw_content": "{\"action\":\"normalize_request\",\"parameters\":{\"schema_version\":\"request-semantics-3\",\"message_ids\":[\"message_4c01971752664645ac4fa086bb2f1f01\"],\"kind\":\"normalize\",\"text_basis\":\"请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\\n\\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。\",\"identities\":[{\"key\":\"n_hexane\",\"name\":\"正己烷\",\"query_name\":\"n-hexane\",\"text_basis\":\"请搜索正己烷（中性、单重态、气相）的低能构象。\",\"message_id\":\"message_4c01971752664645ac4fa086bb2f1f01\"}],\"automatic_selection\":{\"method\":{\"text_basis\":\"方法和基组由你选择并说明依据。\",\"message_id\":\"message_4c01971752664645ac4fa086bb2f1f01\"},\"basis\":{\"text_basis\":\"方法和基组由你选择并说明依据。\",\"message_id\":\"message_4c01971752664645ac4fa086bb2f1f01\"}},\"conditions\":{\"charge\":{\"source\":\"explicit\",\"value\":0,\"text_basis\":\"中性\"},\"multiplicity\":{\"source\":\"explicit\",\"value\":1,\"text_basis\":\"单重态\"},\"environment\":{\"source\":\"explicit\",\"value\":\"gas_phase\",\"text_basis\":\"气相\"},\"electronic_state\":{\"source\":\"default\",\"default_rule\":\"local-hf-1\",\"value\":\"RKS\"}},\"goals\":[{\"key\":\"conformer_search\",\"port\":\"candidate_conformer_search\",\"quantity\":\"低能构象\",\"text_basis\":\"请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。\",\"system_refs\":[\"n_hexane\"],\"minimum_evidence\":[\"自行编写本次搜索和筛选程序\",\"实际保存至少8份候选结构\",\"选择至少4个不同的构象\",\"考虑碳链正反向等价映射的重原子对齐RMSD检查重复\",\"以0.15Å为重复阈值\",\"至少4个参加比较的构象应两两不同\"]},{\"key\":\"orca_single_point_energy_comparison\",\"port\":\"orca_single_point_energy_comparison\",\"quantity\":\"真实ORCA单点能量比较\",\"text_basis\":\"在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。\",\"system_refs\":[\"n_hexane\"],\"minimum_evidence\":[\"在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较\",\"方法和基组由你选择并说明依据\",\"不能把未做ORCA的候选写成已有ORCA能量\"]},{\"key\":\"candidate_delivery\",\"port\":\"candidate_delivery_and_energy_ranking\",\"quantity\":\"交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛\",\"text_basis\":\"交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。\",\"system_refs\":[\"n_hexane\"]},{\"key\":\"random_seed_record\",\"port\":\"random_seed_record\",\"quantity\":\"种子 1701\",\"text_basis\":\"若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。\",\"system_refs\":[\"n_hexane\"],\"minimum_evidence\":[\"若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录\",\"若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性\"]},{\"key\":\"search_limitations\",\"port\":\"search_limitations_disclosure\",\"quantity\":\"有限搜索最低项\",\"text_basis\":\"可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\",\"system_refs\":[\"n_hexane\"],\"minimum_evidence\":[\"可以使用力场预筛选\",\"不能把未做ORCA的候选写成已有ORCA能量\",\"不能把有限搜索最低项称为全局最低或自由能最低\"]}]},\"reason\":\"Normalize the n-hexane conformer-search request: identity 正己烷, explicit neutral/singlet/gas conditions, method/basis delegated via automatic_selection, and goals preserving candidate saving, RMSD duplicate check, real ORCA single-point comparison, delivery contents, seed 1701, and limitation disclosures.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 5099,
+    "completion_tokens": 7718,
+    "total_tokens": 12817,
+    "prompt_cache_hit_tokens": 3840,
+    "prompt_cache_miss_tokens": 1259
+  },
+  "response_hash": "2ec24cd9b729b8916a1386f085fea4d8aaf3054b72df38a07877e928fa47768b",
+  "response_bytes": 35261,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "310df6e2-83d6-4618-bb1d-2139de5b55ba",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 33.48399999999674
+}

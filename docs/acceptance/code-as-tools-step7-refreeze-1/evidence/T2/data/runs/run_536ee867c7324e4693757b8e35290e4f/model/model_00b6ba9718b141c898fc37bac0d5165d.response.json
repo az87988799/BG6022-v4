@@ -1,0 +1,73 @@
+{
+  "request_hash": "1097a433a669a77a935d86a2a35f8283a79e47ac06c84026d7a1b481d4d67422",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_n_hexane",
+          "tool": "structure.resolve",
+          "system_id": "system_n_hexane",
+          "parameters": {}
+        },
+        {
+          "key": "prepare_n_hexane",
+          "tool": "structure.prepare",
+          "depends_on": [
+            "resolve_n_hexane"
+          ],
+          "system_id": "system_n_hexane",
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_n_hexane",
+              "port": "resolved_identity"
+            }
+          },
+          "parameters": {}
+        }
+      ],
+      "goal_map": {
+        "goal_conformer_search": {
+          "port": "candidate_conformer_search",
+          "gap": "awaiting input preparation receipt; no candidate search has been executed"
+        },
+        "goal_orca_single_point_energy_comparison": {
+          "port": "orca_single_point_energy_comparison",
+          "gap": "awaiting candidate preparation; no real ORCA single-point comparison has been executed"
+        },
+        "goal_candidate_delivery": {
+          "port": "candidate_delivery_and_energy_ranking",
+          "gap": "awaiting candidate search and ORCA receipts"
+        },
+        "goal_random_seed_record": {
+          "port": "random_seed_record",
+          "gap": "awaiting conformer-search code execution; seed application not yet evidenced"
+        },
+        "goal_search_limitations": {
+          "port": "search_limitations_disclosure",
+          "gap": "awaiting search and ORCA execution; limitations not yet evidenced"
+        }
+      }
+    },
+    "reason": "Prior proposal was invalid. Start with required input preparation: resolve n-hexane identity and prepare the initial XYZ with locked OPI. No consuming Python/ORCA Step is planned before the prepared-geometry receipt exists, per Stage Plan. All request goals remain unmet gaps pending conformer search and real ORCA single-point energies."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_n_hexane\",\"tool\":\"structure.resolve\",\"system_id\":\"system_n_hexane\",\"parameters\":{}},{\"key\":\"prepare_n_hexane\",\"tool\":\"structure.prepare\",\"depends_on\":[\"resolve_n_hexane\"],\"system_id\":\"system_n_hexane\",\"inputs\":{\"identity\":{\"producer_key\":\"resolve_n_hexane\",\"port\":\"resolved_identity\"}},\"parameters\":{}}],\"goal_map\":{\"goal_conformer_search\":{\"port\":\"candidate_conformer_search\",\"gap\":\"awaiting input preparation receipt; no candidate search has been executed\"},\"goal_orca_single_point_energy_comparison\":{\"port\":\"orca_single_point_energy_comparison\",\"gap\":\"awaiting candidate preparation; no real ORCA single-point comparison has been executed\"},\"goal_candidate_delivery\":{\"port\":\"candidate_delivery_and_energy_ranking\",\"gap\":\"awaiting candidate search and ORCA receipts\"},\"goal_random_seed_record\":{\"port\":\"random_seed_record\",\"gap\":\"awaiting conformer-search code execution; seed application not yet evidenced\"},\"goal_search_limitations\":{\"port\":\"search_limitations_disclosure\",\"gap\":\"awaiting search and ORCA execution; limitations not yet evidenced\"}}},\"reason\":\"Prior proposal was invalid. Start with required input preparation: resolve n-hexane identity and prepare the initial XYZ with locked OPI. No consuming Python/ORCA Step is planned before the prepared-geometry receipt exists, per Stage Plan. All request goals remain unmet gaps pending conformer search and real ORCA single-point energies.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 14384,
+    "completion_tokens": 17804,
+    "total_tokens": 32188,
+    "prompt_cache_hit_tokens": 6144,
+    "prompt_cache_miss_tokens": 8240
+  },
+  "response_hash": "087b00b8a271fe5c5a694a345bb7c4b240995db3ef0429d00495937870e5bb0f",
+  "response_bytes": 70895,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "2002a5c7-b726-4b07-8dc4-a99ea41575f5",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 85.32799999999406
+}
