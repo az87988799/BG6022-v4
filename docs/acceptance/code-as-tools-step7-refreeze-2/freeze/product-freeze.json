@@ -1,0 +1,3487 @@
+{
+  "code_commit": "7cc496271909966de41fbadd15d8e24c095f97e1",
+  "configuration": {
+    "data_root": "E:\\BG6022-V4\\data\\code-tools-refreeze-2",
+    "execution": {
+      "backend": "linux-container",
+      "docker_context": "desktop-linux",
+      "docker_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+      "image_id": "sha256:9f94e9441855d81fcfdf694b9330808cfeee12637ef1093532f56ad129000df3",
+      "manifest_sha256": "cfad02c520be38c57130d9e25fc6420874f6248dfa6c762cc4621e4336f0cba4",
+      "native_input_policy": {
+        "allow_task_geometry": true,
+        "max_atoms": 1024,
+        "max_geom_iterations": 128,
+        "max_response_iterations": 128,
+        "max_scf_iterations": 256,
+        "profile": "managed-native-1"
+      }
+    },
+    "mechanical_progression": true,
+    "model": {
+      "input_tokens": 64000,
+      "messages": 64,
+      "model_name": "deepseek-flash",
+      "output_tokens": 32768,
+      "proposal_bytes": 131072,
+      "response_bytes": 524288,
+      "timeout_seconds": 180.0
+    },
+    "model_profile": "thinking_low",
+    "mpi_path": null,
+    "orca_path": null,
+    "resources": {
+      "collection_timeout_seconds": 180.0,
+      "environment_concurrency": 1,
+      "job_timeout_seconds": 900.0,
+      "max_cores": 4,
+      "maxcore_mb": 192,
+      "script_timeout_seconds": 1200.0,
+      "total_memory_mb": 1024
+    },
+    "text": {
+      "budget": {
+        "analysis_executions": 4,
+        "artifact_bytes": 268435456,
+        "artifact_count": 800,
+        "artifact_total_bytes": 268435456,
+        "attempts_per_step": 3,
+        "code_retries": 2,
+        "corrections_per_proposal": 2,
+        "decision_rounds": 40,
+        "evidence_reads": 12,
+        "extra_orca_starts": 11,
+        "file_writes": 32,
+        "identity_queries": 2,
+        "input_tokens": 64000,
+        "internal_work_units": 10000,
+        "knowledge_queries": 4,
+        "logical_steps": 12,
+        "model_calls": 24,
+        "model_tokens": 1200000,
+        "orca_starts": 12,
+        "output_tokens": 32768,
+        "plan_revisions": 12,
+        "postprocess_starts": 0,
+        "run_seconds": 7200.0,
+        "structure_preparations": 1,
+        "transport_retries": 0
+      },
+      "defaults": {
+        "charge": 0,
+        "electronic_state": "RKS",
+        "environment": "gas_phase",
+        "multiplicity": 1
+      },
+      "enabled": true,
+      "permission": {
+        "allow_additional_science": true,
+        "allowed_repairs": {},
+        "allowed_tools": [
+          "structure.resolve",
+          "structure.prepare",
+          "workspace.write",
+          "python.execute",
+          "orca.run",
+          "evidence.list",
+          "evidence.discover",
+          "evidence.search",
+          "evidence.value",
+          "evidence.text",
+          "knowledge.search",
+          "knowledge.answer"
+        ],
+        "artifact_ids": [],
+        "artifact_writes": true,
+        "code_execution": true,
+        "external_identity_queries": true,
+        "geometry_preparation": true,
+        "max_cores": 4,
+        "max_memory_mb": 1024,
+        "model_execution": true,
+        "result_ids": [],
+        "scientific_execution": true,
+        "source_ids": [],
+        "version": 1
+      }
+    }
+  },
+  "contract": {
+    "knowledge": {
+      "documents": {
+        "guide_diagnostics": [
+          "Output diagnosis guide 1",
+          "package://orca_agent/tools/knowledge.py#guide_diagnostics-1"
+        ],
+        "guide_input": [
+          "Task input guide 1",
+          "package://orca_agent/tools/knowledge.py#guide_input-1"
+        ],
+        "guide_method": [
+          "Method selection guide 1",
+          "package://orca_agent/tools/knowledge.py#guide_method-1"
+        ],
+        "opi": [
+          "OPI 2.0 Introduction",
+          "https://www.faccts.de/docs/opi/2.0/docs/contents/notebooks/how_to_opi.html"
+        ],
+        "orca_basis": [
+          "ORCA 6.1 Basis Sets",
+          "https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/basisset.html"
+        ],
+        "orca_dft": [
+          "ORCA 6.1 Density Functional Theory",
+          "https://www.faccts.de/docs/orca/6.1/manual/contents/modelchemistries/DensityFunctionalTheory.html"
+        ],
+        "orca_electric": [
+          "ORCA 6.1 Electrical Properties",
+          "https://www.faccts.de/docs/orca/6.1/manual/contents/spectroscopyproperties/electric.html"
+        ],
+        "orca_frequencies": [
+          "ORCA 6.1 Vibrational Frequencies",
+          "https://www.faccts.de/docs/orca/6.1/manual/contents/structurereactivity/frequencies.html"
+        ],
+        "orca_input": [
+          "ORCA 6.1 Input Structure",
+          "https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/input.html"
+        ],
+        "orca_optimization": [
+          "ORCA 6.1 Geometry Optimization",
+          "https://www.faccts.de/docs/orca/6.1/manual/contents/structurereactivity/optimizations.html"
+        ],
+        "orca_properties": [
+          "ORCA 6.1 Property File",
+          "https://www.faccts.de/docs/orca/6.1/manual/contents/utilitiesvisualization/property_file_list.html"
+        ],
+        "orca_scf": [
+          "ORCA 6.1 SCF",
+          "https://www.faccts.de/docs/orca/6.1/manual/contents/essentialelements/scf.html"
+        ],
+        "rdkit": [
+          "RDKit 2025.09.6 Getting Started",
+          "https://raw.githubusercontent.com/rdkit/rdkit/Release_2025_09_6/Docs/Book/GettingStartedInPython.rst"
+        ]
+      },
+      "guides": {
+        "guide_diagnostics": "Output diagnosis: inspect the original stdout/stderr and declared artifacts. Process exit, SCF convergence, geometry convergence and scientific qualification are separate facts. Bind observed properties to the actual geometry, conditions, unit and source file. For vibrational frequencies consult orca_frequencies; report imaginary modes and numerical limitations explicitly. Without a suitable checker, deliver observations with validation gaps and do not declare a minimum merely because execution ended. Preserve failure evidence; unknown execution requires reconciliation, and a repair cannot reset budgets or alter frozen inputs.",
+        "guide_input": "Input preparation: preserve molecular identity, stereochemistry, charge, multiplicity and coordinate units. Consult orca_input and the frozen OPI/RDKit versions for syntax and supported APIs. Write task files using workspace.write; use its returned Artifact ID/hash, never invent a host path. Declare every dependent file in the input manifest. Python may use the managed SDK within its declared budgets; importing a library does not authorize subprocesses, networking or arbitrary filesystem access. Preserve original geometry. A generated structure is an initial geometry, not evidence of optimization convergence.",
+        "guide_method": "Method selection: preserve all explicit user conditions. Select only fields the user authorized for automatic selection. Read versioned official method and basis documentation, compare applicability to the requested quantity and element coverage, and state cost/accuracy limitations. Record the selected value, rationale, retrieved Result and exact supporting quote with select_conditions before computation. Electron-count parity alone does not determine an electronic state. An unresolved charge, spin or identity that changes the scientific target requires clarification. A cited choice is not scientific validation."
+      },
+      "index_sha256": "c204125e1f3c4d5aca3d2893a6525b0b0219450ca1b4a6a91e69becfe1dcaaf2",
+      "index_version": "knowledge-index-3",
+      "manual_reference": "^orca:(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\\.html$",
+      "manual_root": "https://www.faccts.de/docs/orca/6.1/manual/",
+      "max_manual_reference_length": 240,
+      "metadata": {
+        "guide_diagnostics": {
+          "content_sha256": "e9cc927c9d6c661c1a9357640e89eadabfd5f706b3eb15425ac77bedc6af5843",
+          "document_version": "guide-1",
+          "format": "text",
+          "kind": "project_guide"
+        },
+        "guide_input": {
+          "content_sha256": "8f3a69ed9435d65e7fb71fc150cfa65c8f7d6d123017572d246873a3d0bf024a",
+          "document_version": "guide-1",
+          "format": "text",
+          "kind": "project_guide"
+        },
+        "guide_method": {
+          "content_sha256": "63c605df3b2d6629c734512d5fbfe3ba1612650224f7bc5171ac2e48b3ef952b",
+          "document_version": "guide-1",
+          "format": "text",
+          "kind": "project_guide"
+        },
+        "opi": {
+          "document_version": "2.0",
+          "format": "html",
+          "kind": "official_document"
+        },
+        "orca_basis": {
+          "document_version": "6.1",
+          "format": "html",
+          "kind": "official_document"
+        },
+        "orca_dft": {
+          "document_version": "6.1",
+          "format": "html",
+          "kind": "official_document"
+        },
+        "orca_electric": {
+          "document_version": "6.1",
+          "format": "html",
+          "kind": "official_document"
+        },
+        "orca_frequencies": {
+          "document_version": "6.1",
+          "format": "html",
+          "kind": "official_document"
+        },
+        "orca_input": {
+          "document_version": "6.1",
+          "format": "html",
+          "kind": "official_document"
+        },
+        "orca_optimization": {
+          "document_version": "6.1",
+          "format": "html",
+          "kind": "official_document"
+        },
+        "orca_properties": {
+          "document_version": "6.1",
+          "format": "html",
+          "kind": "official_document"
+        },
+        "orca_scf": {
+          "document_version": "6.1",
+          "format": "html",
+          "kind": "official_document"
+        },
+        "rdkit": {
+          "document_version": "2025.09.6",
+          "format": "text",
+          "kind": "official_document"
+        }
+      },
+      "retrieval_implementation": {
+        "file": "src/orca_agent/tools/knowledge.py",
+        "loaded_code_sha256": "b20ff821a114ca48b394675f556bc0e8d9c960ea9024c974ffadc26891d04b90",
+        "name": "orca_agent.tools.knowledge.retrieve",
+        "signature": "(store, run, call)",
+        "source_sha256": "fe7af2b3c90c4a3d564b9a9ad18a4ed838272eb8809f0cb2563092c27643d7f2"
+      },
+      "retrieved_content": "Each actual response must retain document_sha256 and raw archived content; this static freeze does not assert remote page bytes."
+    },
+    "prompt": {
+      "base_url": "https://api.deepseek.com",
+      "files": [
+        "src/orca_agent/context.py",
+        "src/orca_agent/readable_context.py",
+        "src/orca_agent/context_efficiency.py",
+        "src/orca_agent/semantic.py",
+        "src/orca_agent/tools/registry.py",
+        "src/orca_agent/tools/knowledge.py"
+      ],
+      "model": "deepseek-flash",
+      "token_bound_version": "deepseek-v41-utf8-upper-v2",
+      "version": "agent-json-v76"
+    },
+    "sdk": {
+      "max_exchanges": 1024,
+      "max_request_bytes": 1048576,
+      "max_response_bytes": 1048576,
+      "protocol_version": 2,
+      "public_functions": {
+        "checkpoint": {
+          "file": "src/orca_agent/task_sdk.py",
+          "loaded_code_sha256": "85754b088192df8907bde5b6aa66df708de84c87e3d0a32538435da0ec94b08c",
+          "name": "orca_agent.task_sdk.checkpoint",
+          "signature": "(state, *, request_key='checkpoint', requires_decision=True, reason=None)",
+          "source_sha256": "9a20160c516a410a3ae2dc3ad168a8a075ae1f8840d8714bceabd3d0e8893647"
+        },
+        "receipt_source": {
+          "file": "src/orca_agent/task_sdk.py",
+          "loaded_code_sha256": "a842ba4a3c3cbca29021d0285fef99713aa932f77f85d5020f103a2b488bdaa3",
+          "name": "orca_agent.task_sdk.receipt_source",
+          "signature": "(receipt, filename, *, location=None)",
+          "source_sha256": "a5d57d93ec17b96ab7ad3d004c9dc44cbedab646a7faf6c9df86f7f4774c8f87"
+        },
+        "run_orca": {
+          "file": "src/orca_agent/task_sdk.py",
+          "loaded_code_sha256": "88cce49c5d87b8751b29c009cce4c0b385ab2e69f72cb42e3d9f9a4e0a7a24a5",
+          "name": "orca_agent.task_sdk.run_orca",
+          "signature": "(input_path, *, dependencies=(), request_key='calculation', purpose='new_candidate', retry_of=None)",
+          "source_sha256": "ac20f6e52b54d5b503054a3959068af8bfe0ffd4f54eb0de7560c759c5b19145"
+        }
+      }
+    },
+    "tools": {
+      "analysis.energy_compare": {
+        "definition": {
+          "check_contract": {},
+          "check_version": "energy-compare-1",
+          "description": "Check energy members against immutable requested conditions. Bind each member ID to one energy reference in Step.inputs, beside parameters.",
+          "effects": [
+            "read_registered_artifact",
+            "write_analysis"
+          ],
+          "implementation": "orca_agent.tools.dispatch.compare",
+          "input_roles": [
+            "qualified_energy"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "analysis.energy_compare",
+          "observation_outputs": [
+            "analysis"
+          ],
+          "output_ports": [
+            "energy_difference",
+            "member_table"
+          ],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "goal_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Goal Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "goal_id"
+            ],
+            "title": "AnalysisParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {
+            "energy": "orca-hf-2"
+          },
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/dispatch.py",
+            "loaded_code_sha256": "04961b106b8041bc6341e6d753883a8c9dfec93f1d0f6c88d9ab9564460df404",
+            "name": "orca_agent.tools.dispatch.compare",
+            "signature": "(store, run, call)",
+            "source_sha256": "7fd835a5ddce2e4f4102906ca9c449ebe55824002ae1f2b3452961cdc8759416"
+          }
+        }
+      },
+      "analysis.finite_sampling": {
+        "definition": {
+          "check_contract": {
+            "default_distance_tolerance_angstrom": 1e-08,
+            "rule": "Current samples: interior min; each other sampled E-Emin>energy_threshold_eh; nearest left/right span<=target_width_angstrom+distance_tolerance_angstrom. New samples may change minimum and neighbors."
+          },
+          "check_version": "finite-sampling-1",
+          "description": "Check energy members against immutable requested conditions. Bind each member ID to one energy reference in Step.inputs, beside parameters.",
+          "effects": [
+            "read_registered_artifact",
+            "write_analysis"
+          ],
+          "implementation": "orca_agent.tools.dispatch.sample",
+          "input_roles": [
+            "qualified_energy"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "analysis.finite_sampling",
+          "observation_outputs": [
+            "analysis"
+          ],
+          "output_ports": [
+            "sampling"
+          ],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "goal_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Goal Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "goal_id"
+            ],
+            "title": "AnalysisParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {
+            "energy": "orca-hf-2"
+          },
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/dispatch.py",
+            "loaded_code_sha256": "386bdbce8bf3ca12dc589f719c4b730eeb2b0272a085ce896c7db55f48954205",
+            "name": "orca_agent.tools.dispatch.sample",
+            "signature": "(store, run, call)",
+            "source_sha256": "30dea9aa4dc5869b3b51a6fed493b2ec9e6d1989b7524aee2077f78f339efc11"
+          }
+        }
+      },
+      "analysis.sampling_check": {
+        "definition": {
+          "check_contract": {
+            "default_distance_tolerance_angstrom": 1e-08,
+            "meaning": "Complete predicate check, including a determinate negative; not a sampling guarantee.",
+            "required_checks": {
+              "sampling_check": [
+                "finite_sampling_predicate_determined"
+              ]
+            },
+            "rule": "Current samples: interior min; each other sampled E-Emin>energy_threshold_eh; nearest left/right span<=target_width_angstrom+distance_tolerance_angstrom. New samples may change minimum and neighbors."
+          },
+          "check_version": "finite-sampling-check-1",
+          "description": "Check energy members against immutable requested conditions. Bind each member ID to one energy reference in Step.inputs, beside parameters. This checking task can answer false; it never publishes qualified sampling.",
+          "effects": [
+            "read_registered_artifact",
+            "write_analysis"
+          ],
+          "implementation": "orca_agent.tools.dispatch.sample_check",
+          "input_roles": [
+            "qualified_energy"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "analysis.sampling_check",
+          "observation_outputs": [
+            "analysis"
+          ],
+          "output_ports": [
+            "sampling_check"
+          ],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "goal_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Goal Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "goal_id"
+            ],
+            "title": "AnalysisParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {
+            "energy": "orca-hf-2"
+          },
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/dispatch.py",
+            "loaded_code_sha256": "fff6ede8c9ae744df8a49f6eeb69f0ca2e93fdae29adede3dfcedbff4557ed0b",
+            "name": "orca_agent.tools.dispatch.sample_check",
+            "signature": "(store, run, call)",
+            "source_sha256": "fae4d53e2e97009226bfb90dcbb15ec6366321c61a28324f67b1f0577db46bb5"
+          }
+        }
+      },
+      "evidence.discover": {
+        "definition": {
+          "check_contract": {},
+          "check_version": "evidence-read-1",
+          "description": "Discover bounded existing JSON keys.",
+          "effects": [
+            "read_registered_artifact"
+          ],
+          "implementation": "orca_agent.tools.evidence.discover_content",
+          "input_roles": [
+            "registered_artifact"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "evidence.discover",
+          "observation_outputs": [
+            "content_index"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "$defs": {
+              "EvidenceIndex": {
+                "additionalProperties": false,
+                "properties": {
+                  "index": {
+                    "maximum": 1000000,
+                    "minimum": 0,
+                    "title": "Index",
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "const": "index",
+                    "title": "Kind",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "index"
+                ],
+                "title": "EvidenceIndex",
+                "type": "object"
+              },
+              "EvidenceKey": {
+                "additionalProperties": false,
+                "properties": {
+                  "key": {
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "title": "Key",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "const": "key",
+                    "title": "Kind",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "key"
+                ],
+                "title": "EvidenceKey",
+                "type": "object"
+              },
+              "EvidenceSlice": {
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "slice",
+                    "title": "Kind",
+                    "type": "string"
+                  },
+                  "start": {
+                    "maximum": 1000000,
+                    "minimum": 0,
+                    "title": "Start",
+                    "type": "integer"
+                  },
+                  "stop": {
+                    "maximum": 1000000,
+                    "minimum": 1,
+                    "title": "Stop",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "start",
+                  "stop"
+                ],
+                "title": "EvidenceSlice",
+                "type": "object"
+              }
+            },
+            "additionalProperties": false,
+            "properties": {
+              "artifact_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Artifact Id",
+                "type": "string"
+              },
+              "limit": {
+                "default": 40,
+                "maximum": 200,
+                "minimum": 1,
+                "title": "Limit",
+                "type": "integer"
+              },
+              "offset": {
+                "default": 0,
+                "maximum": 10000,
+                "minimum": 0,
+                "title": "Offset",
+                "type": "integer"
+              },
+              "path": {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "index": "#/$defs/EvidenceIndex",
+                      "key": "#/$defs/EvidenceKey",
+                      "slice": "#/$defs/EvidenceSlice"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceKey"
+                    },
+                    {
+                      "$ref": "#/$defs/EvidenceIndex"
+                    },
+                    {
+                      "$ref": "#/$defs/EvidenceSlice"
+                    }
+                  ]
+                },
+                "maxItems": 12,
+                "title": "Path",
+                "type": "array"
+              },
+              "view": {
+                "const": "raw_json",
+                "default": "raw_json",
+                "title": "View",
+                "type": "string"
+              }
+            },
+            "required": [
+              "artifact_id"
+            ],
+            "title": "EvidenceDiscoverParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/evidence.py",
+            "loaded_code_sha256": "103a95ae009442903108ec6859ea301c1eb020f9d22a654b807d29178079bcda",
+            "name": "orca_agent.tools.evidence.discover_content",
+            "signature": "(store, artifact_id, path=None, offset=0, limit=40, view='raw_json')",
+            "source_sha256": "621d112f76df8e5c4665ee1bbd710741a89300ae56ed3b84d649c6985c5a11ba"
+          }
+        }
+      },
+      "evidence.field": {
+        "definition": {
+          "check_contract": {},
+          "check_version": "evidence-read-1",
+          "description": "Read a bounded existing JSON field as an unverified observation; no conversion.",
+          "effects": [
+            "read_registered_artifact"
+          ],
+          "implementation": "orca_agent.tools.evidence.read_field",
+          "input_roles": [
+            "registered_artifact"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "evidence.field",
+          "observation_outputs": [
+            "field_observation"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "artifact_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Artifact Id",
+                "type": "string"
+              },
+              "field": {
+                "maxLength": 1211,
+                "minLength": 1,
+                "title": "Field",
+                "type": "string"
+              }
+            },
+            "required": [
+              "artifact_id",
+              "field"
+            ],
+            "title": "EvidenceFieldParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/evidence.py",
+            "loaded_code_sha256": "c2656a8099b8bc6a04ec90382ff04ede6b917705b30dd97b692a8724785b01f0",
+            "name": "orca_agent.tools.evidence.read_field",
+            "signature": "(store, artifact_id, field)",
+            "source_sha256": "620745c6c9519b9238bfbd341626881db67a112484b43f064decbbe8744128ba"
+          }
+        }
+      },
+      "evidence.import": {
+        "definition": {
+          "check_contract": {},
+          "check_version": "evidence-read-1",
+          "description": "Copy an authorized immutable source snapshot.",
+          "effects": [
+            "import_artifact"
+          ],
+          "implementation": "orca_agent.tools.dispatch.import_evidence",
+          "input_roles": [
+            "registered_source"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "evidence.import",
+          "observation_outputs": [
+            "imported_evidence"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "source_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Source Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "source_id"
+            ],
+            "title": "ImportParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/dispatch.py",
+            "loaded_code_sha256": "d2ceea44e9112c862e3b95e6c34c500e57b714e6c3f5d499ac49601816fbb6d0",
+            "name": "orca_agent.tools.dispatch.import_evidence",
+            "signature": "(store, run, call)",
+            "source_sha256": "7db24495125ae9f1db86b019d7d5ed784534343dbbf8cce97b06177a4497224d"
+          }
+        }
+      },
+      "evidence.list": {
+        "definition": {
+          "check_contract": {},
+          "check_version": "evidence-read-1",
+          "description": "List a bounded page of registered evidence metadata; no scientific qualification.",
+          "effects": [
+            "read_registered_artifact"
+          ],
+          "implementation": "orca_agent.tools.evidence.list_artifacts",
+          "input_roles": [
+            "run_evidence_index"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "evidence.list",
+          "observation_outputs": [
+            "artifact_metadata"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "default": 40,
+                "maximum": 200,
+                "minimum": 1,
+                "title": "Limit",
+                "type": "integer"
+              },
+              "offset": {
+                "default": 0,
+                "maximum": 10000,
+                "minimum": 0,
+                "title": "Offset",
+                "type": "integer"
+              },
+              "run_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Run Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "run_id"
+            ],
+            "title": "EvidenceListParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/evidence.py",
+            "loaded_code_sha256": "483f34563eb529ed8fe70a05dc84795f100a3f9f838e6e15b6d63433b4407806",
+            "name": "orca_agent.tools.evidence.list_artifacts",
+            "signature": "(store, run_id, offset=0, limit=40)",
+            "source_sha256": "bcd630f3e647cd11fd905cabe5c7623d490d1c58f38238eb720303402dd8e58b"
+          }
+        }
+      },
+      "evidence.search": {
+        "definition": {
+          "check_contract": {},
+          "check_version": "evidence-read-1",
+          "description": "Search a bounded raw text window with LF line numbers.",
+          "effects": [
+            "read_registered_artifact"
+          ],
+          "implementation": "orca_agent.tools.evidence.search_text",
+          "input_roles": [
+            "registered_artifact"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "evidence.search",
+          "observation_outputs": [
+            "search_hits"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "artifact_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Artifact Id",
+                "type": "string"
+              },
+              "case_sensitive": {
+                "default": false,
+                "title": "Case Sensitive",
+                "type": "boolean"
+              },
+              "max_hits": {
+                "default": 40,
+                "maximum": 200,
+                "minimum": 1,
+                "title": "Max Hits",
+                "type": "integer"
+              },
+              "max_lines": {
+                "default": 200,
+                "maximum": 200,
+                "minimum": 1,
+                "title": "Max Lines",
+                "type": "integer"
+              },
+              "query": {
+                "maxLength": 256,
+                "minLength": 1,
+                "title": "Query",
+                "type": "string"
+              },
+              "start_line": {
+                "default": 1,
+                "maximum": 10000,
+                "minimum": 1,
+                "title": "Start Line",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "artifact_id",
+              "query"
+            ],
+            "title": "EvidenceSearchParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/evidence.py",
+            "loaded_code_sha256": "4f33cd8bcba1f45851b8f2eba55597d0ef629cd690bff69a296d52610b6dd55e",
+            "name": "orca_agent.tools.evidence.search_text",
+            "signature": "(store, artifact_id, query, start_line=1, max_lines=200, max_hits=40, case_sensitive=False)",
+            "source_sha256": "5825bc644e94b17380a1f453b46af1ecd0039bb86e288ccb8e8c9a1f948374d3"
+          }
+        }
+      },
+      "evidence.text": {
+        "definition": {
+          "check_contract": {},
+          "check_version": "evidence-read-1",
+          "description": "Read bounded raw text with line numbers and verified source hash; no execution.",
+          "effects": [
+            "read_registered_artifact"
+          ],
+          "implementation": "orca_agent.tools.evidence.inspect_artifact",
+          "input_roles": [
+            "registered_artifact"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "evidence.text",
+          "observation_outputs": [
+            "text_window"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "artifact_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Artifact Id",
+                "type": "string"
+              },
+              "lines": {
+                "default": 40,
+                "maximum": 200,
+                "minimum": 1,
+                "title": "Lines",
+                "type": "integer"
+              },
+              "start_line": {
+                "default": 1,
+                "maximum": 10000,
+                "minimum": 1,
+                "title": "Start Line",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "artifact_id"
+            ],
+            "title": "EvidenceTextParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/evidence.py",
+            "loaded_code_sha256": "f373fc7ae309d67a1a1d5ba8165f7aee2edb0f734d937ca70d0ceec766000a24",
+            "name": "orca_agent.tools.evidence.inspect_artifact",
+            "signature": "(store, artifact_id, start_line=1, lines=40)",
+            "source_sha256": "1ef25608d8d1b88c6a877c4d0b3cde66ce263ebdd7ee6f1d928d2aec50dc0197"
+          }
+        }
+      },
+      "evidence.value": {
+        "definition": {
+          "check_contract": {},
+          "check_version": "evidence-read-1",
+          "description": "Read literal JSON keys, indices or a bounded slice.",
+          "effects": [
+            "read_registered_artifact"
+          ],
+          "implementation": "orca_agent.tools.evidence.read_value",
+          "input_roles": [
+            "registered_artifact"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "evidence.value",
+          "observation_outputs": [
+            "value_observation"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "$defs": {
+              "EvidenceIndex": {
+                "additionalProperties": false,
+                "properties": {
+                  "index": {
+                    "maximum": 1000000,
+                    "minimum": 0,
+                    "title": "Index",
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "const": "index",
+                    "title": "Kind",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "index"
+                ],
+                "title": "EvidenceIndex",
+                "type": "object"
+              },
+              "EvidenceKey": {
+                "additionalProperties": false,
+                "properties": {
+                  "key": {
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "title": "Key",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "const": "key",
+                    "title": "Kind",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "key"
+                ],
+                "title": "EvidenceKey",
+                "type": "object"
+              },
+              "EvidenceSlice": {
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "slice",
+                    "title": "Kind",
+                    "type": "string"
+                  },
+                  "start": {
+                    "maximum": 1000000,
+                    "minimum": 0,
+                    "title": "Start",
+                    "type": "integer"
+                  },
+                  "stop": {
+                    "maximum": 1000000,
+                    "minimum": 1,
+                    "title": "Stop",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "start",
+                  "stop"
+                ],
+                "title": "EvidenceSlice",
+                "type": "object"
+              }
+            },
+            "additionalProperties": false,
+            "properties": {
+              "artifact_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Artifact Id",
+                "type": "string"
+              },
+              "path": {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "index": "#/$defs/EvidenceIndex",
+                      "key": "#/$defs/EvidenceKey",
+                      "slice": "#/$defs/EvidenceSlice"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceKey"
+                    },
+                    {
+                      "$ref": "#/$defs/EvidenceIndex"
+                    },
+                    {
+                      "$ref": "#/$defs/EvidenceSlice"
+                    }
+                  ]
+                },
+                "maxItems": 12,
+                "title": "Path",
+                "type": "array"
+              },
+              "view": {
+                "const": "raw_json",
+                "default": "raw_json",
+                "title": "View",
+                "type": "string"
+              }
+            },
+            "required": [
+              "artifact_id"
+            ],
+            "title": "EvidenceValueParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/evidence.py",
+            "loaded_code_sha256": "adc2338dcc52251eb71397459ebd9f1b1ae6a0875d4b373a82a71ce03af5202e",
+            "name": "orca_agent.tools.evidence.read_value",
+            "signature": "(store, artifact_id, path=None, view='raw_json')",
+            "source_sha256": "e742a44e92b372e56fe624677811504e76cf037def5a5fe568c80a61cd1e0c66"
+          }
+        }
+      },
+      "knowledge.answer": {
+        "definition": {
+          "check_contract": {
+            "context_dependencies": [
+              "knowledge.search",
+              "evidence.list",
+              "evidence.discover",
+              "evidence.value",
+              "evidence.text",
+              "evidence.search"
+            ],
+            "immediate": true,
+            "immediate_only": true,
+            "model_guidance": "Knowledge answers: answer the exact requested quantity in concise Chinese prose. For conceptual questions omit unrequested experimental values, angles and electronegativity numbers. The exact molecular electric dipole includes nuclear point charges AND continuous electron charge density. An atom-partial-charge sum is only a model approximation, not its exact definition. For neutral molecules its vector points from negative to positive charge center. Do not introduce chemical arrow conventions unless the user asks about them; individual bond arrows are not generally parallel to the total molecular vector. Permanent dipole is not polarizability. For document questions support claims with retrieved excerpts; clearly mark missing support instead of substituting a nearby topic. Do not assert units from an excerpt that does not state them. For saved-result questions use available_evidence exactly, including final geometry and unit; do not invent a new calculation or reuse its initial structure as its optimized result. For raw file questions inspect authorized_artifacts with evidence Tools before answering; select by exact basename and producing attempt_id from source facts, not by geometry Artifact ID. preserve returned line numbers, typed paths, hashes and partial coverage. A missing field stays missing. For public documents keep quotations under 25 words per source; paraphrase explanations."
+          },
+          "check_version": "knowledge-answer-1",
+          "description": "Deliver a non-scientific chemistry explanation for goal_id. Use actual source_result_ids after search if references/version details are requested. Electric dipole vector points from negative to positive charge; chemistry crossed bond-polarity arrows use the reverse direction. Distinguish permanent dipole (vector) from polarizability (response tensor). If retrieved excerpts do not answer the requested quantity, say what is missing. Do not introduce unsourced experimental numbers. Answer is not a validated calculation.",
+          "effects": [
+            "record_knowledge_answer"
+          ],
+          "implementation": "orca_agent.tools.knowledge.answer",
+          "input_roles": [],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "knowledge.answer",
+          "observation_outputs": [
+            "knowledge_answer"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "answer": {
+                "maxLength": 2500,
+                "minLength": 1,
+                "title": "Answer",
+                "type": "string"
+              },
+              "goal_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "Goal Id",
+                "type": "string"
+              },
+              "limitations": {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 5,
+                "title": "Limitations",
+                "type": "array"
+              },
+              "source_result_ids": {
+                "items": {
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                  "type": "string"
+                },
+                "maxItems": 8,
+                "title": "Source Result Ids",
+                "type": "array"
+              }
+            },
+            "required": [
+              "goal_id",
+              "answer"
+            ],
+            "title": "AnswerParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/knowledge.py",
+            "loaded_code_sha256": "5991a5cf675ad5d72ddd0b69133f789defcb31a221e292f44b958169225e5c70",
+            "name": "orca_agent.tools.knowledge.answer",
+            "signature": "(store, run, call)",
+            "source_sha256": "b8b4f40d0ea9a1be4e8e969a919c8f1693a0bbad9c47e632df2b5b3e271a5448"
+          }
+        }
+      },
+      "knowledge.search": {
+        "definition": {
+          "check_contract": {
+            "immediate": true
+          },
+          "check_version": "knowledge-answer-1",
+          "description": "Search versioned ORCA/OPI/RDKit documents and three local input/method/diagnosis guides using English terms; retrieves bounded source excerpts and archives the same response bytes within Artifact limits. No conversion or science execution.",
+          "effects": [
+            "query_external_document",
+            "archive_retrieved_evidence"
+          ],
+          "implementation": "orca_agent.tools.knowledge.retrieve",
+          "input_roles": [],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "knowledge.search",
+          "observation_outputs": [
+            "document_excerpt"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "document": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "orca_electric",
+                      "orca_optimization",
+                      "orca_scf",
+                      "orca_properties",
+                      "opi",
+                      "orca_input",
+                      "orca_dft",
+                      "orca_basis",
+                      "orca_frequencies",
+                      "rdkit",
+                      "guide_input",
+                      "guide_method",
+                      "guide_diagnostics"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "description": "Under managed-native-1, orca:index.html or orca:contents/...html reads the frozen official ORCA 6.1 manual.",
+                    "maxLength": 240,
+                    "pattern": "^orca:(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\\.html$",
+                    "type": "string"
+                  }
+                ],
+                "title": "Document"
+              },
+              "query": {
+                "maxLength": 120,
+                "minLength": 1,
+                "title": "Query",
+                "type": "string"
+              }
+            },
+            "required": [
+              "document",
+              "query"
+            ],
+            "title": "SearchParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": "knowledge_queries"
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/knowledge.py",
+            "loaded_code_sha256": "b20ff821a114ca48b394675f556bc0e8d9c960ea9024c974ffadc26891d04b90",
+            "name": "orca_agent.tools.knowledge.retrieve",
+            "signature": "(store, run, call)",
+            "source_sha256": "fe7af2b3c90c4a3d564b9a9ad18a4ed838272eb8809f0cb2563092c27643d7f2"
+          }
+        }
+      },
+      "orca.opt": {
+        "definition": {
+          "check_contract": {
+            "parallel_execution": [
+              "linux-container"
+            ],
+            "parallel_execution_reason": "MPI_Init fails inside network-disabled Windows LPAC; explicit serial input is required"
+          },
+          "check_version": "orca-hf-2",
+          "description": "H2O/CH4 unconstrained HF/STO-3G geometry optimization in angstrom. Convergence does not establish a minimum or its vibrational stability. Also provides final energy and dipole_moment on the qualified optimized structure; no separate SP is needed.",
+          "effects": [
+            "read_geometry",
+            "write_attempt",
+            "execute_orca"
+          ],
+          "implementation": "orca_agent.tools.geometry.execute",
+          "input_roles": [
+            "geometry"
+          ],
+          "max_cores": null,
+          "max_memory_mb": null,
+          "name": "orca.opt",
+          "observation_outputs": [],
+          "output_ports": [
+            "energy",
+            "optimized_geometry",
+            "dipole_moment"
+          ],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "basis": {
+                "default": "STO-3G",
+                "maxLength": 256,
+                "minLength": 1,
+                "pattern": "^[^\\s\\x00-\\x1f\\x7f](?:[^\\x00-\\x1f\\x7f]*[^\\s\\x00-\\x1f\\x7f])?$",
+                "title": "Basis",
+                "type": "string"
+              },
+              "charge": {
+                "default": 0,
+                "title": "Charge",
+                "type": "integer"
+              },
+              "cores": {
+                "default": 4,
+                "minimum": 1,
+                "title": "Cores",
+                "type": "integer"
+              },
+              "maxcore_mb": {
+                "default": 192,
+                "minimum": 1,
+                "title": "Maxcore Mb",
+                "type": "integer"
+              },
+              "memory_mb": {
+                "default": 1024,
+                "minimum": 1,
+                "title": "Memory Mb",
+                "type": "integer"
+              },
+              "method": {
+                "default": "HF",
+                "maxLength": 256,
+                "minLength": 1,
+                "pattern": "^[^\\s\\x00-\\x1f\\x7f](?:[^\\x00-\\x1f\\x7f]*[^\\s\\x00-\\x1f\\x7f])?$",
+                "title": "Method",
+                "type": "string"
+              },
+              "multiplicity": {
+                "default": 1,
+                "ge": 1,
+                "title": "Multiplicity",
+                "type": "integer"
+              },
+              "opt_maxiter": {
+                "default": 100,
+                "minimum": 1,
+                "title": "Opt Maxiter",
+                "type": "integer"
+              },
+              "scf_maxiter": {
+                "default": 100,
+                "minimum": 1,
+                "title": "Scf Maxiter",
+                "type": "integer"
+              },
+              "timeout_seconds": {
+                "default": 300,
+                "exclusiveMinimum": 0,
+                "title": "Timeout Seconds",
+                "type": "number"
+              }
+            },
+            "title": "CalculationParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {
+            "optimized_geometry": "orca-hf-2",
+            "prepared_geometry": "structure-prepare-1"
+          },
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/geometry.py",
+            "loaded_code_sha256": "681ae07c4f6c4dddcb3ec952be576be46bee774508b8f988023845b8c969699e",
+            "name": "orca_agent.tools.geometry.execute",
+            "signature": "(store, run, step, attempt, config, fault=None)",
+            "source_sha256": "0640c52fe339f90cae39ec79ebe081d308cc45e8e90270f5df8d9fe930048806"
+          }
+        }
+      },
+      "orca.run": {
+        "definition": {
+          "check_contract": {
+            "collector": "orca_agent.tools.managed.collect_result",
+            "context_dependencies": [
+              "workspace.write",
+              "knowledge.search",
+              "evidence.list",
+              "evidence.text",
+              "evidence.search"
+            ],
+            "execution_available": true,
+            "generic_observations": true,
+            "parallel_execution": [
+              "linux-container"
+            ],
+            "parallel_execution_reason": "MPI_Init fails inside network-disabled Windows LPAC; explicit serial input is required"
+          },
+          "check_version": "generic-observation-1",
+          "description": "Execute pinned native ORCA input and dependencies in the frozen managed task boundary; raw evidence is unqualified.",
+          "effects": [
+            "read_registered_artifact",
+            "execute_orca",
+            "write_artifact"
+          ],
+          "implementation": "orca_agent.tools.managed.execute",
+          "input_roles": [
+            "native_input",
+            "input_manifest"
+          ],
+          "max_cores": null,
+          "max_memory_mb": null,
+          "name": "orca.run",
+          "observation_outputs": [
+            "observations",
+            "artifacts"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "$defs": {
+              "CodeRef": {
+                "additionalProperties": false,
+                "description": "An immutable code/input Artifact binding; not permission to execute it.",
+                "properties": {
+                  "artifact_id": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "title": "Artifact Id",
+                    "type": "string"
+                  },
+                  "language": {
+                    "default": "python",
+                    "enum": [
+                      "python",
+                      "orca"
+                    ],
+                    "title": "Language",
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "title": "Sha256",
+                    "type": "string"
+                  },
+                  "version": {
+                    "default": 1,
+                    "minimum": 1,
+                    "title": "Version",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "artifact_id",
+                  "sha256"
+                ],
+                "title": "CodeRef",
+                "type": "object"
+              },
+              "InputManifest": {
+                "additionalProperties": false,
+                "description": "Versioned, hash-pinned input copies and their declared use within a Step.",
+                "properties": {
+                  "entries": {
+                    "items": {
+                      "$ref": "#/$defs/InputManifestEntry"
+                    },
+                    "title": "Entries",
+                    "type": "array"
+                  },
+                  "version": {
+                    "const": 1,
+                    "default": 1,
+                    "title": "Version",
+                    "type": "integer"
+                  }
+                },
+                "title": "InputManifest",
+                "type": "object"
+              },
+              "InputManifestEntry": {
+                "additionalProperties": false,
+                "properties": {
+                  "artifact_id": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "title": "Artifact Id",
+                    "type": "string"
+                  },
+                  "purpose": {
+                    "maxLength": 256,
+                    "minLength": 1,
+                    "pattern": "^[^\\s\\x00-\\x1f\\x7f](?:[^\\x00-\\x1f\\x7f]*[^\\s\\x00-\\x1f\\x7f])?$",
+                    "title": "Purpose",
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "title": "Sha256",
+                    "type": "string"
+                  },
+                  "target_path": {
+                    "maxLength": 240,
+                    "minLength": 1,
+                    "title": "Target Path",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "artifact_id",
+                  "sha256",
+                  "target_path",
+                  "purpose"
+                ],
+                "title": "InputManifestEntry",
+                "type": "object"
+              }
+            },
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "additionalProperties": true,
+                "title": "Conditions",
+                "type": "object"
+              },
+              "input": {
+                "$ref": "#/$defs/CodeRef"
+              },
+              "inputs": {
+                "$ref": "#/$defs/InputManifest"
+              },
+              "observation_names": {
+                "items": {
+                  "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$",
+                  "type": "string"
+                },
+                "title": "Observation Names",
+                "type": "array"
+              }
+            },
+            "required": [
+              "input"
+            ],
+            "title": "NativeOrcaParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": null
+        },
+        "functions": {
+          "collector": {
+            "file": "src/orca_agent/tools/managed.py",
+            "loaded_code_sha256": "c26984a39f79af2b3ab7b08d40d379b7079aadd637a02c17d7a3bfb58f1aa749",
+            "name": "orca_agent.tools.managed.collect_result",
+            "signature": "(store, run, step, attempt, outcome)",
+            "source_sha256": "aabfafb3549ed51515c817c046e64a0fc5571ba4f54ae06729f304d0ba5b8712"
+          },
+          "implementation": {
+            "file": "src/orca_agent/tools/managed.py",
+            "loaded_code_sha256": "6c10fcea160098f856633df77c43e73ce2bdd327a2bc0e9bc861f820eb76b42a",
+            "name": "orca_agent.tools.managed.execute",
+            "signature": "(store, run, step, attempt, config, fault=None)",
+            "source_sha256": "b79399cd9c1a10964396bb3e50a083f950baa30a6709920d07e4694b959e59d2"
+          }
+        }
+      },
+      "orca.sp": {
+        "definition": {
+          "check_contract": {
+            "parallel_execution": [
+              "linux-container"
+            ],
+            "parallel_execution_reason": "MPI_Init fails inside network-disabled Windows LPAC; explicit serial input is required"
+          },
+          "check_version": "orca-hf-2",
+          "description": "H2O/CH4 HF/STO-3G neutral singlet single-point electronic energy (Eh) and dipole_moment magnitude (Debye), Cartesian vector in source.",
+          "effects": [
+            "read_geometry",
+            "write_attempt",
+            "execute_orca"
+          ],
+          "implementation": "orca_agent.tools.electronic.execute",
+          "input_roles": [
+            "geometry"
+          ],
+          "max_cores": null,
+          "max_memory_mb": null,
+          "name": "orca.sp",
+          "observation_outputs": [],
+          "output_ports": [
+            "energy",
+            "dipole_moment"
+          ],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "description": "Historical SP type; resource limits come from the Run snapshot.",
+            "properties": {
+              "basis": {
+                "default": "STO-3G",
+                "maxLength": 256,
+                "minLength": 1,
+                "pattern": "^[^\\s\\x00-\\x1f\\x7f](?:[^\\x00-\\x1f\\x7f]*[^\\s\\x00-\\x1f\\x7f])?$",
+                "title": "Basis",
+                "type": "string"
+              },
+              "charge": {
+                "default": 0,
+                "title": "Charge",
+                "type": "integer"
+              },
+              "cores": {
+                "default": 4,
+                "minimum": 1,
+                "title": "Cores",
+                "type": "integer"
+              },
+              "maxcore_mb": {
+                "default": 192,
+                "minimum": 1,
+                "title": "Maxcore Mb",
+                "type": "integer"
+              },
+              "memory_mb": {
+                "default": 1024,
+                "minimum": 1,
+                "title": "Memory Mb",
+                "type": "integer"
+              },
+              "method": {
+                "default": "HF",
+                "maxLength": 256,
+                "minLength": 1,
+                "pattern": "^[^\\s\\x00-\\x1f\\x7f](?:[^\\x00-\\x1f\\x7f]*[^\\s\\x00-\\x1f\\x7f])?$",
+                "title": "Method",
+                "type": "string"
+              },
+              "multiplicity": {
+                "default": 1,
+                "ge": 1,
+                "title": "Multiplicity",
+                "type": "integer"
+              },
+              "opt_maxiter": {
+                "default": 100,
+                "minimum": 1,
+                "title": "Opt Maxiter",
+                "type": "integer"
+              },
+              "scf_maxiter": {
+                "default": 100,
+                "minimum": 1,
+                "title": "Scf Maxiter",
+                "type": "integer"
+              },
+              "timeout_seconds": {
+                "default": 300,
+                "exclusiveMinimum": 0,
+                "title": "Timeout Seconds",
+                "type": "number"
+              }
+            },
+            "title": "SinglePointParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {
+            "optimized_geometry": "orca-hf-2",
+            "prepared_geometry": "structure-prepare-1"
+          },
+          "usage_counter": null
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/electronic.py",
+            "loaded_code_sha256": "681ae07c4f6c4dddcb3ec952be576be46bee774508b8f988023845b8c969699e",
+            "name": "orca_agent.tools.electronic.execute",
+            "signature": "(store, run, step, attempt, config, fault=None)",
+            "source_sha256": "0640c52fe339f90cae39ec79ebe081d308cc45e8e90270f5df8d9fe930048806"
+          }
+        }
+      },
+      "python.execute": {
+        "definition": {
+          "check_contract": {
+            "collector": "orca_agent.tools.managed.collect_result",
+            "context_dependencies": [
+              "workspace.write",
+              "knowledge.search",
+              "evidence.list",
+              "evidence.text",
+              "evidence.search"
+            ],
+            "durable_task_checkpoints": true,
+            "execution_available": true,
+            "generic_observations": true,
+            "parallel_execution": [
+              "linux-container"
+            ],
+            "parallel_execution_reason": "MPI_Init fails inside network-disabled Windows LPAC; explicit serial input is required",
+            "sdk_max_exchanges_per_attempt": 1024,
+            "sdk_orca_declaration": {
+              "false": "Analysis only; SDK ORCA requests are rejected.",
+              "legacy": "Missing historical value retains the original execution checks.",
+              "parameter": "sdk_orca",
+              "required_for_new_code_proposals": true,
+              "true": "Initial prepared/registered geometry and ORCA permission required before execution; Plan approval may use a direct pending same-system prepare_geometry dependency."
+            },
+            "sdk_protocol": 2,
+            "stable_receipt_reuse": true
+          },
+          "check_version": "generic-observation-1",
+          "description": "Execute pinned Python with bounded sequential SDK ORCA calls, stable receipts and durable decision checkpoints in the frozen task boundary.",
+          "effects": [
+            "read_registered_artifact",
+            "execute_python",
+            "write_artifact"
+          ],
+          "implementation": "orca_agent.tools.managed.execute",
+          "input_roles": [
+            "code",
+            "input_manifest"
+          ],
+          "max_cores": null,
+          "max_memory_mb": null,
+          "name": "python.execute",
+          "observation_outputs": [
+            "observations",
+            "artifacts"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "$defs": {
+              "CodeRef": {
+                "additionalProperties": false,
+                "description": "An immutable code/input Artifact binding; not permission to execute it.",
+                "properties": {
+                  "artifact_id": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "title": "Artifact Id",
+                    "type": "string"
+                  },
+                  "language": {
+                    "default": "python",
+                    "enum": [
+                      "python",
+                      "orca"
+                    ],
+                    "title": "Language",
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "title": "Sha256",
+                    "type": "string"
+                  },
+                  "version": {
+                    "default": 1,
+                    "minimum": 1,
+                    "title": "Version",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "artifact_id",
+                  "sha256"
+                ],
+                "title": "CodeRef",
+                "type": "object"
+              },
+              "InputManifest": {
+                "additionalProperties": false,
+                "description": "Versioned, hash-pinned input copies and their declared use within a Step.",
+                "properties": {
+                  "entries": {
+                    "items": {
+                      "$ref": "#/$defs/InputManifestEntry"
+                    },
+                    "title": "Entries",
+                    "type": "array"
+                  },
+                  "version": {
+                    "const": 1,
+                    "default": 1,
+                    "title": "Version",
+                    "type": "integer"
+                  }
+                },
+                "title": "InputManifest",
+                "type": "object"
+              },
+              "InputManifestEntry": {
+                "additionalProperties": false,
+                "properties": {
+                  "artifact_id": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "title": "Artifact Id",
+                    "type": "string"
+                  },
+                  "purpose": {
+                    "maxLength": 256,
+                    "minLength": 1,
+                    "pattern": "^[^\\s\\x00-\\x1f\\x7f](?:[^\\x00-\\x1f\\x7f]*[^\\s\\x00-\\x1f\\x7f])?$",
+                    "title": "Purpose",
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "title": "Sha256",
+                    "type": "string"
+                  },
+                  "target_path": {
+                    "maxLength": 240,
+                    "minLength": 1,
+                    "title": "Target Path",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "artifact_id",
+                  "sha256",
+                  "target_path",
+                  "purpose"
+                ],
+                "title": "InputManifestEntry",
+                "type": "object"
+              }
+            },
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "$ref": "#/$defs/CodeRef"
+              },
+              "conditions": {
+                "additionalProperties": true,
+                "title": "Conditions",
+                "type": "object"
+              },
+              "inputs": {
+                "$ref": "#/$defs/InputManifest"
+              },
+              "observation_names": {
+                "items": {
+                  "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$",
+                  "type": "string"
+                },
+                "title": "Observation Names",
+                "type": "array"
+              },
+              "sdk_orca": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Explicit true permits requesting ORCA through the managed SDK after initial geometry preflight; false is analysis only. Null/missing is historical compatibility, not accepted for newly proposed code Steps.",
+                "title": "Sdk Orca"
+              }
+            },
+            "required": [
+              "code"
+            ],
+            "title": "CodeExecutionParameters",
+            "type": "object"
+          },
+          "preflight": null,
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": null
+        },
+        "functions": {
+          "collector": {
+            "file": "src/orca_agent/tools/managed.py",
+            "loaded_code_sha256": "c26984a39f79af2b3ab7b08d40d379b7079aadd637a02c17d7a3bfb58f1aa749",
+            "name": "orca_agent.tools.managed.collect_result",
+            "signature": "(store, run, step, attempt, outcome)",
+            "source_sha256": "aabfafb3549ed51515c817c046e64a0fc5571ba4f54ae06729f304d0ba5b8712"
+          },
+          "implementation": {
+            "file": "src/orca_agent/tools/managed.py",
+            "loaded_code_sha256": "6c10fcea160098f856633df77c43e73ce2bdd327a2bc0e9bc861f820eb76b42a",
+            "name": "orca_agent.tools.managed.execute",
+            "signature": "(store, run, step, attempt, config, fault=None)",
+            "source_sha256": "b79399cd9c1a10964396bb3e50a083f950baa30a6709920d07e4694b959e59d2"
+          }
+        }
+      },
+      "structure.prepare": {
+        "definition": {
+          "check_contract": {
+            "general_check_version": "structure-prepare-2",
+            "general_input_checks": {
+              "resolved_identity": "structure-identity-2"
+            },
+            "input_ports": {
+              "identity": "resolved_identity"
+            },
+            "max_http_requests": 0,
+            "max_output_bytes": 65536,
+            "max_seconds": 30,
+            "name_query_check_version": "structure-prepare-3",
+            "name_query_input_checks": {
+              "resolved_identity": "structure-identity-3"
+            },
+            "required_checks": {
+              "prepared_geometry": [
+                "initial_geometry_identity"
+              ]
+            }
+          },
+          "check_version": "structure-prepare-1",
+          "description": "Prepare one initial XYZ with locked OPI from identity input; not optimized geometry.",
+          "effects": [
+            "prepare_geometry",
+            "write_input_artifact"
+          ],
+          "implementation": "orca_agent.tools.structure.prepare",
+          "input_roles": [
+            "identity"
+          ],
+          "max_cores": 1,
+          "max_memory_mb": 1024,
+          "name": "structure.prepare",
+          "observation_outputs": [
+            "input_preparation"
+          ],
+          "output_ports": [
+            "prepared_geometry"
+          ],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "charge": {
+                "default": 0,
+                "title": "Charge",
+                "type": "integer"
+              },
+              "multiplicity": {
+                "default": 1,
+                "ge": 1,
+                "title": "Multiplicity",
+                "type": "integer"
+              },
+              "system_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "System Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "system_id"
+            ],
+            "title": "PrepareParameters",
+            "type": "object"
+          },
+          "preflight": "orca_agent.tools.structure.validate_call_inputs",
+          "recovery": "orca_agent.tools.structure.recover_receipt",
+          "required_input_checks": {
+            "resolved_identity": "structure-identity-1"
+          },
+          "usage_counter": "structure_preparations"
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/structure.py",
+            "loaded_code_sha256": "5d07db51bec84518bbe451b8c8531ded6bcd8123a48d402ce979893330a8fd22",
+            "name": "orca_agent.tools.structure.prepare",
+            "signature": "(store, run, call)",
+            "source_sha256": "667ddd9c86eae1f25138694120d4342811a6e309436f28d718df93c8edee5a76"
+          },
+          "preflight": {
+            "file": "src/orca_agent/tools/structure.py",
+            "loaded_code_sha256": "3cfa96fb4b06bbc3ab270fec4cf2c0ec15ba5e8705a57e0872cdd33fb6637422",
+            "name": "orca_agent.tools.structure.validate_call_inputs",
+            "signature": "(store, run, parameters, tool, consumption=None)",
+            "source_sha256": "8771e5316e41b564a0c6cfb2c9253c2b965eb3e20103d4b2e222e3aa06130603"
+          },
+          "recovery": {
+            "file": "src/orca_agent/tools/structure.py",
+            "loaded_code_sha256": "cf6af03cb3bcda44baf32eb333e5b855f4233ce810c66d859b3e424d4d373393",
+            "name": "orca_agent.tools.structure.recover_receipt",
+            "signature": "(store, run, call)",
+            "source_sha256": "a6bd2670752c9438e46598613e81e6860b480662117e5894d808cdc075690dfe"
+          }
+        }
+      },
+      "structure.resolve": {
+        "definition": {
+          "check_contract": {
+            "general_check_version": "structure-identity-2",
+            "general_input_checks": {},
+            "max_http_requests": 4,
+            "max_output_bytes": 3473408,
+            "max_seconds": 120,
+            "name_query_check_version": "structure-identity-3",
+            "name_query_input_checks": {},
+            "name_query_max_http_requests": 1,
+            "required_checks": {
+              "resolved_identity": [
+                "supported_identity_graph"
+              ]
+            }
+          },
+          "check_version": "structure-identity-1",
+          "description": "Resolve the frozen query name using bounded PubChem candidate/graph evidence; v3 uses one property request without independently authenticating inferred translations. Historical v2 retains its independent-name checks; preserve identity ambiguities.",
+          "effects": [
+            "query_external_identity",
+            "write_input_artifact"
+          ],
+          "implementation": "orca_agent.tools.structure.resolve",
+          "input_roles": [
+            "requested_identity"
+          ],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "structure.resolve",
+          "observation_outputs": [
+            "input_preparation"
+          ],
+          "output_ports": [
+            "resolved_identity"
+          ],
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "system_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                "title": "System Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "system_id"
+            ],
+            "title": "ResolveParameters",
+            "type": "object"
+          },
+          "preflight": "orca_agent.tools.structure.validate_call_inputs",
+          "recovery": "orca_agent.tools.structure.recover_receipt",
+          "required_input_checks": {},
+          "usage_counter": "identity_queries"
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/structure.py",
+            "loaded_code_sha256": "617ed4047ace572d13d3510a00dd21eedc8ae58768902dd818b512eb33f05713",
+            "name": "orca_agent.tools.structure.resolve",
+            "signature": "(store, run, call)",
+            "source_sha256": "18260d148827db79c14c1dcbb206cd49b2c1bcedfac976177ae234d3ad9975e3"
+          },
+          "preflight": {
+            "file": "src/orca_agent/tools/structure.py",
+            "loaded_code_sha256": "3cfa96fb4b06bbc3ab270fec4cf2c0ec15ba5e8705a57e0872cdd33fb6637422",
+            "name": "orca_agent.tools.structure.validate_call_inputs",
+            "signature": "(store, run, parameters, tool, consumption=None)",
+            "source_sha256": "8771e5316e41b564a0c6cfb2c9253c2b965eb3e20103d4b2e222e3aa06130603"
+          },
+          "recovery": {
+            "file": "src/orca_agent/tools/structure.py",
+            "loaded_code_sha256": "cf6af03cb3bcda44baf32eb333e5b855f4233ce810c66d859b3e424d4d373393",
+            "name": "orca_agent.tools.structure.recover_receipt",
+            "signature": "(store, run, call)",
+            "source_sha256": "a6bd2670752c9438e46598613e81e6860b480662117e5894d808cdc075690dfe"
+          }
+        }
+      },
+      "workspace.write": {
+        "definition": {
+          "check_contract": {
+            "code_authoring": true,
+            "mechanical_feedback": "immutable-file-write-1"
+          },
+          "check_version": "workspace-write-1",
+          "description": "Save bounded UTF-8 content, or patch a pinned Python base with unique exact edits, as a new immutable Artifact; returned ID/hash binds later Steps. No execution.",
+          "effects": [
+            "read_registered_artifact",
+            "write_artifact"
+          ],
+          "implementation": "orca_agent.tools.workspace.write",
+          "input_roles": [],
+          "max_cores": 0,
+          "max_memory_mb": 0,
+          "name": "workspace.write",
+          "observation_outputs": [
+            "written_artifact"
+          ],
+          "output_ports": [],
+          "parameter_schema": {
+            "$defs": {
+              "CodeRef": {
+                "additionalProperties": false,
+                "description": "An immutable code/input Artifact binding; not permission to execute it.",
+                "properties": {
+                  "artifact_id": {
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$",
+                    "title": "Artifact Id",
+                    "type": "string"
+                  },
+                  "language": {
+                    "default": "python",
+                    "enum": [
+                      "python",
+                      "orca"
+                    ],
+                    "title": "Language",
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "title": "Sha256",
+                    "type": "string"
+                  },
+                  "version": {
+                    "default": 1,
+                    "minimum": 1,
+                    "title": "Version",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "artifact_id",
+                  "sha256"
+                ],
+                "title": "CodeRef",
+                "type": "object"
+              },
+              "ExactReplacement": {
+                "additionalProperties": false,
+                "properties": {
+                  "new": {
+                    "maxLength": 16384,
+                    "title": "New",
+                    "type": "string"
+                  },
+                  "old": {
+                    "maxLength": 16384,
+                    "minLength": 1,
+                    "title": "Old",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "old",
+                  "new"
+                ],
+                "title": "ExactReplacement",
+                "type": "object"
+              }
+            },
+            "additionalProperties": false,
+            "oneOf": [
+              {
+                "properties": {
+                  "base": {
+                    "type": "null"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "edits": {
+                    "maxItems": 0
+                  }
+                },
+                "required": [
+                  "content"
+                ]
+              },
+              {
+                "properties": {
+                  "base": {
+                    "properties": {
+                      "language": {
+                        "const": "python"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "content": {
+                    "type": "null"
+                  },
+                  "edits": {
+                    "minItems": 1
+                  },
+                  "role": {
+                    "const": "python"
+                  }
+                },
+                "required": [
+                  "base",
+                  "edits"
+                ]
+              }
+            ],
+            "properties": {
+              "base": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CodeRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "content": {
+                "anyOf": [
+                  {
+                    "maxLength": 65536,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Content"
+              },
+              "edits": {
+                "items": {
+                  "$ref": "#/$defs/ExactReplacement"
+                },
+                "maxItems": 16,
+                "title": "Edits",
+                "type": "array"
+              },
+              "name": {
+                "maxLength": 120,
+                "minLength": 1,
+                "title": "Name",
+                "type": "string"
+              },
+              "role": {
+                "enum": [
+                  "python",
+                  "orca",
+                  "text"
+                ],
+                "title": "Role",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "role"
+            ],
+            "title": "WriteParameters",
+            "type": "object"
+          },
+          "preflight": "orca_agent.tools.workspace.preflight",
+          "recovery": null,
+          "required_input_checks": {},
+          "usage_counter": "file_writes"
+        },
+        "functions": {
+          "implementation": {
+            "file": "src/orca_agent/tools/workspace.py",
+            "loaded_code_sha256": "b10f507799e7149eeb69644dca286e29b5ef5eee62c752e99e08b34b0360b4aa",
+            "name": "orca_agent.tools.workspace.write",
+            "signature": "(store, run, call)",
+            "source_sha256": "f9cb3fa505195d98df261c971bad1d1a0fc108b9e5432f36036c7698816ae496"
+          },
+          "preflight": {
+            "file": "src/orca_agent/tools/workspace.py",
+            "loaded_code_sha256": "3599c70a0b6bbeac3f1cfadedde8d9f445e39d4ce6b9cf7f2026e2ae34c7fb5c",
+            "name": "orca_agent.tools.workspace.preflight",
+            "signature": "(store, run, parameters, tool, consumption)",
+            "source_sha256": "c5e09d5729af3bfd015232a974c2586017f65ed6020f96ed60717e7d7bce5fb7"
+          }
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "bootstrap_files_without_wheel_provenance": {
+      "E:\\BG6022-V4\\.venv\\Lib\\site-packages": {
+        "_virtualenv.pth": {
+          "bytes": 18,
+          "sha256": "69ac3d8f27e679c81b94ab30b3b56e9cd138219b1ba94a1fa3606d5a76a1433d"
+        },
+        "_virtualenv.py": {
+          "bytes": 5246,
+          "sha256": "cfb3db86aaa53bb62b5ff764970bec2d71c9228590a0ebec57f6ec926cc0bf1a"
+        }
+      }
+    },
+    "coverage": "All non-cache wheel RECORD files verified; complete bounded site-packages scan rejects unregistered files except the explicitly frozen virtualenv bootstrap.",
+    "imports": {
+      "fastapi": {
+        "module": "fastapi",
+        "path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\fastapi\\__init__.py",
+        "sha256": "dbf21a9c76c861ff6d3e091d4a21e7da8cec46165fba86a3bdbf5a51b7d9f414"
+      },
+      "filelock": {
+        "module": "filelock",
+        "path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\filelock\\__init__.py",
+        "sha256": "644857d02a33bd1c45430b26f1861ceae88bbee2187be6a80f6d0009f8f28b38"
+      },
+      "httpx": {
+        "module": "httpx",
+        "path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\httpx\\__init__.py",
+        "sha256": "0ac6997bac998f4ac783adf6d8058a587193315afdb718047c3e4fdff46bcfad"
+      },
+      "numpy": {
+        "module": "numpy",
+        "path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\numpy\\__init__.py",
+        "sha256": "65d5e777b6d662ba19cb80800bef3eb999eda7aee51eea62c308feabf679dba4"
+      },
+      "openai": {
+        "module": "openai",
+        "path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\openai\\__init__.py",
+        "sha256": "7fcfeb79b49b8b9604bc0d2337e8a313a9158e89103feebe488b2bfeb0286bb2"
+      },
+      "orca-pi": {
+        "module": "opi",
+        "path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\opi\\__init__.py",
+        "sha256": "f10077e6db48c37b833cfe0f2d147c0727379e2a13c4ae41297bfbb964a70105"
+      },
+      "psutil": {
+        "module": "psutil",
+        "path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\psutil\\__init__.py",
+        "sha256": "7b6a0675824eb1fa2ff0cb1eb36e358dc454703e51dfa4e9a0e6ccd26a159f0c"
+      },
+      "pydantic": {
+        "module": "pydantic",
+        "path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\pydantic\\__init__.py",
+        "sha256": "e62127278c07bf5384cdd2903f368a69929f3b8a524000bae4e0eb608ebf4bc6"
+      },
+      "rdkit": {
+        "module": "rdkit",
+        "path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\rdkit\\__init__.py",
+        "sha256": "1a4450639d0b9620e2f2c7619a64fba860f6e8fe157e25cc23b1c649625d81ec"
+      },
+      "uvicorn": {
+        "module": "uvicorn",
+        "path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\uvicorn\\__init__.py",
+        "sha256": "f6aa39c6136b4247eaaf0f60d5753e6c644afdd364d6708147351ad160f1e1f9"
+      }
+    },
+    "installed": {
+      "annotated-doc": {
+        "actual_bytes": 9703,
+        "actual_files_sha256": "2de00b671d098a52bf7a32fd6624406acf448c17f2a446b55bbacabde80e8419",
+        "file_count_including_record": 10,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\annotated_doc-0.0.5.dist-info\\RECORD",
+        "record_sha256": "eee5b3b5754ae1cb431e5aba650cdab050673d518473f0fb2b4ad9f48671e2e7",
+        "verified_file_count": 9,
+        "version": "0.0.5"
+      },
+      "annotated-types": {
+        "actual_bytes": 36539,
+        "actual_files_sha256": "cd18578ab6c9a46917178c1d05d5c4da59f26812ce309ba6d8b1488ff3cc619a",
+        "file_count_including_record": 9,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\annotated_types-0.8.0.dist-info\\RECORD",
+        "record_sha256": "8191d3aa1ac93480688819b4db2385606219a3f7a453b85e086646134ded4f96",
+        "verified_file_count": 8,
+        "version": "0.8.0"
+      },
+      "anyio": {
+        "actual_bytes": 539391,
+        "actual_files_sha256": "6fef1ce20bf421717943db0dfcd91b29afc6dce22fd2f98d6cfdcf28e53d9743",
+        "file_count_including_record": 55,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\anyio-4.15.1.dist-info\\RECORD",
+        "record_sha256": "61566393fe741ef449f387182a94956cc11dda629cdea4a5823b89f6eb9dc6b3",
+        "verified_file_count": 54,
+        "version": "4.15.1"
+      },
+      "certifi": {
+        "actual_bytes": 249105,
+        "actual_files_sha256": "19ef00acc42f087b240c90b8523618a146b330f282ee07ba1cdc3a1208372754",
+        "file_count_including_record": 14,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\certifi-2026.7.22.dist-info\\RECORD",
+        "record_sha256": "cff9d243744c96445494c29abee3d592d0a6955d5504f4fbe034dce7aaf38490",
+        "verified_file_count": 13,
+        "version": "2026.7.22"
+      },
+      "click": {
+        "actual_bytes": 447891,
+        "actual_files_sha256": "666816202cbd6c4bf7b7e5d1779c35d8184ece8a11f51efb04f706628097a55b",
+        "file_count_including_record": 24,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\click-8.5.0.dist-info\\RECORD",
+        "record_sha256": "924078ec3a47b97192425dbc0c3693085af7a7b863afcf6b4e110cf0bd97dea4",
+        "verified_file_count": 23,
+        "version": "8.5.0"
+      },
+      "colorama": {
+        "actual_bytes": 77847,
+        "actual_files_sha256": "f8e3b9d25d3d932686e20f75dac0882191f81e06247891d330edc8e7b6d4a171",
+        "file_count_including_record": 19,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\colorama-0.4.6.dist-info\\RECORD",
+        "record_sha256": "88413e126edc8a81419b409279ef89424081f27bccd4aeec0140d6f03f1ade7f",
+        "verified_file_count": 18,
+        "version": "0.4.6"
+      },
+      "distro": {
+        "actual_bytes": 116861,
+        "actual_files_sha256": "1a2cdf551cea3c8730aaa60dd8a81a6ef6dc045530a5df7ebe3b4795e9193ef0",
+        "file_count_including_record": 13,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\distro-1.9.0.dist-info\\RECORD",
+        "record_sha256": "a8c1747996497361df22f18f00226dd7d3f04f635ec02070a4b648ea56a2f6d3",
+        "verified_file_count": 12,
+        "version": "1.9.0"
+      },
+      "fastapi": {
+        "actual_bytes": 799985,
+        "actual_files_sha256": "d47869ce7796db815fe1972faba634676648661d4368ec3b0c5fb58bbbc943f0",
+        "file_count_including_record": 61,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\fastapi-0.135.2.dist-info\\RECORD",
+        "record_sha256": "f30cf6d16a02035258868a1bcb7218c61d09b88a60f4b5ae67c3d601decf6a5b",
+        "verified_file_count": 60,
+        "version": "0.135.2"
+      },
+      "filelock": {
+        "actual_bytes": 355787,
+        "actual_files_sha256": "29e0cf7a0f9827b3bd88c409d7e9865729b27ad6fc87810c1fedb9ebd4b5b14e",
+        "file_count_including_record": 28,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\filelock-3.32.7.dist-info\\RECORD",
+        "record_sha256": "8f0ee1fa6b924397282699a0ab7a5c65f8f4f49a694c4cbbd7df9a0fe78037ba",
+        "verified_file_count": 27,
+        "version": "3.32.7"
+      },
+      "h11": {
+        "actual_bytes": 104105,
+        "actual_files_sha256": "e24d24946da7161dc2c8dd39584facef1d29c303ec1fbe5eb332e28d13946c47",
+        "file_count_including_record": 19,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\h11-0.16.0.dist-info\\RECORD",
+        "record_sha256": "3779e13c17d8e21c769ed9ee8780af123cc3f8656185f5f8d3af258ff5639b3e",
+        "verified_file_count": 18,
+        "version": "0.16.0"
+      },
+      "httpcore": {
+        "actual_bytes": 288194,
+        "actual_files_sha256": "24e721a75e87d5c1df065f6a7691404af734cf467ccd9b81d6eff46895ffee3a",
+        "file_count_including_record": 38,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\httpcore-1.0.9.dist-info\\RECORD",
+        "record_sha256": "67cb4644d84fef1df8c5a0862c57c3380eff058a153bac7a4ba2722779982554",
+        "verified_file_count": 37,
+        "version": "1.0.9"
+      },
+      "httpx": {
+        "actual_bytes": 342662,
+        "actual_files_sha256": "23b6fd5d3f63583fb725e15ae5d8e6695d014f38867cbe25a7057d91c9a8f49f",
+        "file_count_including_record": 32,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\httpx-0.28.1.dist-info\\RECORD",
+        "record_sha256": "169260920dbd02e4d195da1ca126d224f79fd34fc0ce3982d8375e20bebb7092",
+        "verified_file_count": 31,
+        "version": "0.28.1"
+      },
+      "idna": {
+        "actual_bytes": 389427,
+        "actual_files_sha256": "a063a3681e2d21c734765d7bd168b72f47a98f8dec19375adfdba351601f346a",
+        "file_count_including_record": 19,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\idna-3.20.dist-info\\RECORD",
+        "record_sha256": "7e738ab6e174af949b913df37f36ece9a9ca8ccc957b0cc1d1c91bb18d5e686d",
+        "verified_file_count": 18,
+        "version": "3.20"
+      },
+      "iniconfig": {
+        "actual_bytes": 18515,
+        "actual_files_sha256": "66d00c5f0bbbaf6e0e179eee602d5d4ff27f0a4a9b24e196c4dbedba4b26ccd5",
+        "file_count_including_record": 12,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\iniconfig-2.3.0.dist-info\\RECORD",
+        "record_sha256": "4b560f65489a4dc0f32d8403da676d2e6338c371fe844160934b3fe469785185",
+        "verified_file_count": 11,
+        "version": "2.3.0"
+      },
+      "jiter": {
+        "actual_bytes": 527384,
+        "actual_files_sha256": "cde2dad3662d942e43c2e16727cbc57ea003043e1e2c44cfd214d995a16b3a21",
+        "file_count_including_record": 11,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\jiter-0.17.0.dist-info\\RECORD",
+        "record_sha256": "c73ef2074a07cbe9bb9a239e1bba452d0c8fbb0c6f987df86ab6960ddaefe697",
+        "verified_file_count": 10,
+        "version": "0.17.0"
+      },
+      "numpy": {
+        "actual_bytes": 41905877,
+        "actual_files_sha256": "43d0a9f682b55a9201c5c0baadd5250f12acf382428c6e4e9bc4244b2d707b50",
+        "file_count_including_record": 1065,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\numpy-2.4.6.dist-info\\RECORD",
+        "record_sha256": "cd7f03ea1e3e98400f153beaca9b102434da1ffc2f573786fc586dba71e23a0d",
+        "verified_file_count": 1064,
+        "version": "2.4.6"
+      },
+      "openai": {
+        "actual_bytes": 4156649,
+        "actual_files_sha256": "fcb8b4cabb2184419a36a91d120467f94068b4a8651706021ce54514649ff5b8",
+        "file_count_including_record": 1084,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\openai-2.28.0.dist-info\\RECORD",
+        "record_sha256": "55844f467d6cef6433d7d18cc57a523acac45bc939aedeb2b7e3b7e703d2ec1d",
+        "verified_file_count": 1083,
+        "version": "2.28.0"
+      },
+      "orca-agent": {
+        "actual_bytes": 48855,
+        "actual_files_sha256": "dac0654b3db965504579561afa8c86a8f7f8e9cb35ff3cd45459fc1224e9355e",
+        "file_count_including_record": 11,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\orca_agent-0.1.0.dist-info\\RECORD",
+        "record_sha256": "b6813751e21bfcd3064762175b844146ea2fe2120eba8eb67812606ab463fa79",
+        "verified_file_count": 10,
+        "version": "0.1.0"
+      },
+      "orca-pi": {
+        "actual_bytes": 776526,
+        "actual_files_sha256": "f2659b49cc0029504d3e53ca674025507718a9452398e28a052f2b99d2f62650",
+        "file_count_including_record": 179,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\orca_pi-2.0.0.dist-info\\RECORD",
+        "record_sha256": "bc1901a22920043cbecb0d8753b147d87411909ad8aa64df5130e2861ecd394b",
+        "verified_file_count": 178,
+        "version": "2.0.0"
+      },
+      "packaging": {
+        "actual_bytes": 499357,
+        "actual_files_sha256": "da133251b8a045e0595a211f64872f683587d67d84bb94409d3aa63042ccab80",
+        "file_count_including_record": 31,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\packaging-26.3.dist-info\\RECORD",
+        "record_sha256": "1b8655965b0d83e9a067fd7f84b977bd1e117e0fb9f2874b2572781bdc9e2147",
+        "verified_file_count": 30,
+        "version": "26.3"
+      },
+      "pillow": {
+        "actual_bytes": 14757110,
+        "actual_files_sha256": "4d665d2201b381597d2df82402fcf37e41d99d04adc558dbebcff5762370fb0d",
+        "file_count_including_record": 123,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\pillow-12.3.0.dist-info\\RECORD",
+        "record_sha256": "46233d6f1f283d8e32aa3a015fe06505ab916a852fc4731044810374b5fcd87e",
+        "verified_file_count": 122,
+        "version": "12.3.0"
+      },
+      "platformdirs": {
+        "actual_bytes": 151878,
+        "actual_files_sha256": "002740e0b5c3cf6e17393c5f8fb8fa439813725a0a4d699fe1d4d877852ac1bc",
+        "file_count_including_record": 20,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\platformdirs-4.12.3.dist-info\\RECORD",
+        "record_sha256": "961c2d8e786424eee517560864471fe61f63a9b380a3d859f6bcdab8fc9b6abf",
+        "verified_file_count": 19,
+        "version": "4.12.3"
+      },
+      "pluggy": {
+        "actual_bytes": 65997,
+        "actual_files_sha256": "4bae3cab87acba1d461546c5388e3f791c77f976ce6d9d2e58855189fe6d8d30",
+        "file_count_including_record": 16,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\pluggy-1.6.0.dist-info\\RECORD",
+        "record_sha256": "a42a63bcba12ddb7e7db19158c8d05d8fc41d51f48686b411ad3a0213fbd7721",
+        "verified_file_count": 15,
+        "version": "1.6.0"
+      },
+      "psutil": {
+        "actual_bytes": 451228,
+        "actual_files_sha256": "4c35eebd670562a83dbcf8cafc712fe0e4f675ae73c28e19e62d73b604750de0",
+        "file_count_including_record": 18,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\psutil-7.2.2.dist-info\\RECORD",
+        "record_sha256": "0d4c336a396000d4cae7c9225ae020e4ec471be9873d2e3b92fb516fc9d6fff4",
+        "verified_file_count": 17,
+        "version": "7.2.2"
+      },
+      "pydantic": {
+        "actual_bytes": 1894125,
+        "actual_files_sha256": "abbd25c676548ccf5eeaec6eacb2688f25e0531bac738724042256b4beb0836f",
+        "file_count_including_record": 113,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\pydantic-2.13.5.dist-info\\RECORD",
+        "record_sha256": "93253f807bd8a0440d58d159ffeef610528e8a687b948095955114275c16881f",
+        "verified_file_count": 112,
+        "version": "2.13.5"
+      },
+      "pydantic-core": {
+        "actual_bytes": 5495316,
+        "actual_files_sha256": "64b20c006dae6d30a5b6cc0e68326fb2f4f8a07bf981b41fbc32e21536eb8c72",
+        "file_count_including_record": 12,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\pydantic_core-2.46.5.dist-info\\RECORD",
+        "record_sha256": "d383d5855b31f58e23694d82bd0357eb75c06887fb2509ddae9e61a8a7d9f3d9",
+        "verified_file_count": 11,
+        "version": "2.46.5"
+      },
+      "pygments": {
+        "actual_bytes": 4668536,
+        "actual_files_sha256": "a84027a787beac84a2768adc698fecb23e7e71cbaace3a0f97e2adbbffee734e",
+        "file_count_including_record": 352,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\pygments-2.21.0.dist-info\\RECORD",
+        "record_sha256": "a0581d9a60be27efe9203275571d35dfdf7a097e4f6d26e4233977dcaffe3afb",
+        "verified_file_count": 351,
+        "version": "2.21.0"
+      },
+      "pytest": {
+        "actual_bytes": 1457988,
+        "actual_files_sha256": "71d52ad165d87e9bcea2b08a5d7922b9ee0539f1e63154e7966f67cbbaafe5ce",
+        "file_count_including_record": 93,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\pytest-9.1.1.dist-info\\RECORD",
+        "record_sha256": "a782c5a257914e0f5dd31cb8687ad0a13397db84affa270aa21649da91d5bba0",
+        "verified_file_count": 92,
+        "version": "9.1.1"
+      },
+      "rdkit": {
+        "actual_bytes": 55993326,
+        "actual_files_sha256": "47b64a0c9d41c641561d61a69fc4e8fcec9acb10a72e564e55d5ec4a56a85075",
+        "file_count_including_record": 945,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\rdkit-2025.9.6.dist-info\\RECORD",
+        "record_sha256": "07b3809be422fabfdf0e09e164c524772330424110f9002ca1225500937c7a27",
+        "verified_file_count": 944,
+        "version": "2025.9.6"
+      },
+      "ruff": {
+        "actual_bytes": 26796930,
+        "actual_files_sha256": "ab24cdfcfc1d0644f736d9ab3e493042b5d0cfbbdf741e845aca0805388af1cd",
+        "file_count_including_record": 11,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\ruff-0.16.10.dist-info\\RECORD",
+        "record_sha256": "0d3e99444391dd52ed257f2e06965351297652034fd23e63a0a5ec3a2c789ecc",
+        "verified_file_count": 10,
+        "version": "0.16.10"
+      },
+      "semantic-version": {
+        "actual_bytes": 64185,
+        "actual_files_sha256": "7760950241be56b1bb71d3867e4cd172a163174ee37e30e7221abb37a81b1d98",
+        "file_count_including_record": 10,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\semantic_version-2.10.0.dist-info\\RECORD",
+        "record_sha256": "1deeb884c98b50d5617bceb45f89bb5344ad90d3fc2a64a2bf9aa41b1a17e90d",
+        "verified_file_count": 9,
+        "version": "2.10.0"
+      },
+      "sniffio": {
+        "actual_bytes": 23097,
+        "actual_files_sha256": "21b90b4ff5f293bfbfa768fc3d09ea8101831c24b705da5bd06b4a9b85fb230f",
+        "file_count_including_record": 15,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\sniffio-1.3.1.dist-info\\RECORD",
+        "record_sha256": "e6c97953661def7ab6dac78f83c86f31e622bee38ff55ea508cb04e1a604d4ff",
+        "verified_file_count": 14,
+        "version": "1.3.1"
+      },
+      "starlette": {
+        "actual_bytes": 269735,
+        "actual_files_sha256": "c5fbf3268214d941c78bf87ec03b4428cee41ce8b72cf061f25e2afb68f9961f",
+        "file_count_including_record": 43,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\starlette-1.7.0.dist-info\\RECORD",
+        "record_sha256": "cb7896d9aee395b013249bb4015c7a4ccd87e33268f4261148f97ae4c8eda4b3",
+        "verified_file_count": 42,
+        "version": "1.7.0"
+      },
+      "tqdm": {
+        "actual_bytes": 280835,
+        "actual_files_sha256": "a88f02bdecf9662c7117c1ab8c3db5b60b02d6822819849aa91f8569232c6e43",
+        "file_count_including_record": 42,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\tqdm-4.70.1.dist-info\\RECORD",
+        "record_sha256": "e2a5a4c07e877b3ae9a987e29623763f594743edd682b0d7179dd05f2c459e7e",
+        "verified_file_count": 41,
+        "version": "4.70.1"
+      },
+      "typing-extensions": {
+        "actual_bytes": 182965,
+        "actual_files_sha256": "ebe71e4e904493e40cc3baa474abd26760087fb86db7f3573695c56faf9d2a8c",
+        "file_count_including_record": 7,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\typing_extensions-4.16.0.dist-info\\RECORD",
+        "record_sha256": "9e07fea845cac76293d927afa7157a14ecba39b318bc8af236b8de530b7656c1",
+        "verified_file_count": 6,
+        "version": "4.16.0"
+      },
+      "typing-inspection": {
+        "actual_bytes": 54734,
+        "actual_files_sha256": "3026ff3cba3f11a52ab7085aca9c8ce2a16d9d69f846c0bf2e71d41edb358410",
+        "file_count_including_record": 11,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\typing_inspection-0.4.4.dist-info\\RECORD",
+        "record_sha256": "83fc23669db31500d06056b13ecebe4f088f56a81c1ea86e3b68f1de3b8c7d95",
+        "verified_file_count": 10,
+        "version": "0.4.4"
+      },
+      "uvicorn": {
+        "actual_bytes": 271696,
+        "actual_files_sha256": "2d58647ad5e8a03dab8da027f661c9e586768ee2768ca826b33c723a759004df",
+        "file_count_including_record": 49,
+        "record_path": "E:\\BG6022-V4\\.venv\\Lib\\site-packages\\uvicorn-0.42.0.dist-info\\RECORD",
+        "record_sha256": "939f454aa790a70115f63a1567304bf3107f3a6e9bf0069f493554c9ff0abf8b",
+        "verified_file_count": 48,
+        "version": "0.42.0"
+      }
+    },
+    "python": {
+      "executable": "E:\\BG6022-V4\\.venv\\Scripts\\python.exe",
+      "platform": "win32",
+      "sha256": "b5442b36a3855e9a02e5745db3449d8ec91f4ffefd9cf92cc8b0535112f0f0ce",
+      "version": "3.11.4 (tags/v3.11.4:d2340ef, Jun  7 2023, 05:45:37) [MSC v.1934 64 bit (AMD64)]"
+    }
+  },
+  "files": {
+    "pyproject.toml": {
+      "bytes": 1252,
+      "commit_comparison": "exact",
+      "commit_sha256": "f85a5e95bd3d6c822071d5bf77b4eaa1acf2cfd0ae59673638b902b1e927e75e",
+      "sha256": "f85a5e95bd3d6c822071d5bf77b4eaa1acf2cfd0ae59673638b902b1e927e75e"
+    },
+    "scripts/container_runtime/Dockerfile": {
+      "bytes": 1848,
+      "commit_comparison": "exact",
+      "commit_sha256": "b3294f0cb9d57a3ca9d6e2d56fcc3044467e9f749a2efb017877b7c9f7d667e2",
+      "sha256": "b3294f0cb9d57a3ca9d6e2d56fcc3044467e9f749a2efb017877b7c9f7d667e2"
+    },
+    "scripts/container_runtime/README.md": {
+      "bytes": 10737,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "5fdc1431845cd1a7cb900a04918383645b01a79251f2684d26e488c7bf860a32",
+      "sha256": "0b376497c78b1009b111fa46de5cc79c2801ca4b143d9488292bc6c7b06aa921"
+    },
+    "scripts/container_runtime/build_image.py": {
+      "bytes": 8316,
+      "commit_comparison": "exact",
+      "commit_sha256": "85261a9f14b014b31eddc37e8b03ba52916ca279832ceb65c156777c0b5f8877",
+      "sha256": "85261a9f14b014b31eddc37e8b03ba52916ca279832ceb65c156777c0b5f8877"
+    },
+    "scripts/container_runtime/export_acceptance.py": {
+      "bytes": 22157,
+      "commit_comparison": "exact",
+      "commit_sha256": "3cc371b5117e24e1582cf59ace7af69738b88d95ccbdad27a37051ae69eff5e7",
+      "sha256": "3cc371b5117e24e1582cf59ace7af69738b88d95ccbdad27a37051ae69eff5e7"
+    },
+    "scripts/container_runtime/install_runtime.py": {
+      "bytes": 2687,
+      "commit_comparison": "exact",
+      "commit_sha256": "10f41d9f0360ac44e1ecb52eb848d157dbce5dcaf3febdc92f7e5886409e3dea",
+      "sha256": "10f41d9f0360ac44e1ecb52eb848d157dbce5dcaf3febdc92f7e5886409e3dea"
+    },
+    "scripts/container_runtime/license-manifest.json": {
+      "bytes": 57466,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "cdc86ef36eade03d265619441c3131581d01c57df369c4ae0c12ee4f08497736",
+      "sha256": "113ce41bba1a1ccc778ffb0a3f41df1238115c87a3a4e2be37a4b5320b473fdc"
+    },
+    "scripts/container_runtime/prepare_context.py": {
+      "bytes": 7642,
+      "commit_comparison": "exact",
+      "commit_sha256": "effd9a2c1aa260a560be2180fd676c1e11a91624ee2aaa7d6554974b4e15d7df",
+      "sha256": "effd9a2c1aa260a560be2180fd676c1e11a91624ee2aaa7d6554974b4e15d7df"
+    },
+    "scripts/container_runtime/requirements-linux-cp311.lock": {
+      "bytes": 1173,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "9e6153b08e4aa735afbb1da01edd8fc5a699cb1ff1cc8163e279b20efc15ea4f",
+      "sha256": "5353f08679d12172eafff27550733f46493e1ca8108484e505012a2ca2047ff6"
+    },
+    "scripts/container_runtime/wheelhouse-manifest.json": {
+      "bytes": 6363,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "a15af90e81e78c9c45bba3061ea2c7adb21fd14da0236a20bdc46a7368fb6733",
+      "sha256": "adb5d91b65df1494928af3e285eafedbc40e4af81d09aa829d238d9a21e4eb81"
+    },
+    "scripts/container_runtime/write_runtime_manifest.py": {
+      "bytes": 4389,
+      "commit_comparison": "exact",
+      "commit_sha256": "38dff2db829f615f94933ca15b1366225707ae2e139c162fa28bc64f505e279b",
+      "sha256": "38dff2db829f615f94933ca15b1366225707ae2e139c162fa28bc64f505e279b"
+    },
+    "src/orca_agent/__init__.py": {
+      "bytes": 91,
+      "commit_comparison": "exact",
+      "commit_sha256": "f6fb8f836fa1fb349bede92a71a35ec56577a041abea6e74f3ff6ecf33fbec18",
+      "sha256": "f6fb8f836fa1fb349bede92a71a35ec56577a041abea6e74f3ff6ecf33fbec18"
+    },
+    "src/orca_agent/_atomic.py": {
+      "bytes": 729,
+      "commit_comparison": "exact",
+      "commit_sha256": "a31b93020b2bc5257a17c1f3e4596baa87f6ab2ad695f226fd0118c1a40f8046",
+      "sha256": "a31b93020b2bc5257a17c1f3e4596baa87f6ab2ad695f226fd0118c1a40f8046"
+    },
+    "src/orca_agent/agent.py": {
+      "bytes": 59404,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "0edd42eb3ff56a73d5f1a4a9efa35079b9d89ae7665df9af39be9990d3a17a31",
+      "sha256": "ccd8f0d47855a36652bc9953204f867a28f2fe856e84a171d318f02ca2114804"
+    },
+    "src/orca_agent/applicability.py": {
+      "bytes": 28322,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "26d0752db9823d515d80803cc50b3208034d899968d89a6cd4a95f225c212f94",
+      "sha256": "d892e01a97836c01ea1cd9a29a95698c4e31ef65976b28e6d860fdbc83a722aa"
+    },
+    "src/orca_agent/artifact_index.py": {
+      "bytes": 5961,
+      "commit_comparison": "exact",
+      "commit_sha256": "bc0f277cce5124beb0bf2dbf7dbbfba23825647bd0caf7a3938a2cf038bb93ec",
+      "sha256": "bc0f277cce5124beb0bf2dbf7dbbfba23825647bd0caf7a3938a2cf038bb93ec"
+    },
+    "src/orca_agent/backends/__init__.py": {
+      "bytes": 59,
+      "commit_comparison": "exact",
+      "commit_sha256": "ce008a8dddddef86c1922c4939805f6414bccab2f6ac567ffb041b8864b99d2c",
+      "sha256": "ce008a8dddddef86c1922c4939805f6414bccab2f6ac567ffb041b8864b99d2c"
+    },
+    "src/orca_agent/backends/_windows.py": {
+      "bytes": 7511,
+      "commit_comparison": "exact",
+      "commit_sha256": "9f67ed4ff9a6dcf5e83cb71f696571b15d1d6908a94564e036a648557fa7c810",
+      "sha256": "9f67ed4ff9a6dcf5e83cb71f696571b15d1d6908a94564e036a648557fa7c810"
+    },
+    "src/orca_agent/backends/container.py": {
+      "bytes": 45174,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "2e15e63a02f8ce273dcb2b04f626723d9145f669a2699f0b14b3a44eb58bf73a",
+      "sha256": "85bf94a092b9222c3709e8175a4c0d73d1bf39419c2910f329f0d934acef44e9"
+    },
+    "src/orca_agent/backends/container_runtime/.gitattributes": {
+      "bytes": 111,
+      "commit_comparison": "exact",
+      "commit_sha256": "2ee95851a80a593799a70fcda65f482283b3232ea9ec144dfa1a0c4fdb72e1de",
+      "sha256": "2ee95851a80a593799a70fcda65f482283b3232ea9ec144dfa1a0c4fdb72e1de"
+    },
+    "src/orca_agent/backends/container_runtime/helper.py": {
+      "bytes": 17171,
+      "commit_comparison": "exact",
+      "commit_sha256": "8401090ff2c7a96135938a34260eb9d2bb3b5ae0d00c4c92b713866c83940dde",
+      "sha256": "8401090ff2c7a96135938a34260eb9d2bb3b5ae0d00c4c92b713866c83940dde"
+    },
+    "src/orca_agent/backends/container_runtime/python_task.py": {
+      "bytes": 946,
+      "commit_comparison": "exact",
+      "commit_sha256": "42e6bbc88aa0f84d658ea8c9c4baadfc9acd8b403457ba5a647ca0dfe30a3f95",
+      "sha256": "42e6bbc88aa0f84d658ea8c9c4baadfc9acd8b403457ba5a647ca0dfe30a3f95"
+    },
+    "src/orca_agent/backends/container_runtime/sandbox.c": {
+      "bytes": 3435,
+      "commit_comparison": "exact",
+      "commit_sha256": "4865041d288487795e8ec9a26200b2af9a3a7051eb2ecf2caf6e3809038bbcbd",
+      "sha256": "4865041d288487795e8ec9a26200b2af9a3a7051eb2ecf2caf6e3809038bbcbd"
+    },
+    "src/orca_agent/backends/isolation.py": {
+      "bytes": 17513,
+      "commit_comparison": "exact",
+      "commit_sha256": "30bfc461c8751f052993ff72a7efedf343f76b0b339f7f7f27cdfd7d336543f0",
+      "sha256": "30bfc461c8751f052993ff72a7efedf343f76b0b339f7f7f27cdfd7d336543f0"
+    },
+    "src/orca_agent/backends/local.py": {
+      "bytes": 26342,
+      "commit_comparison": "exact",
+      "commit_sha256": "b540eea41b2098462c519423943cd4cdf5cc659e663d849cc5f7951ad044e180",
+      "sha256": "b540eea41b2098462c519423943cd4cdf5cc659e663d849cc5f7951ad044e180"
+    },
+    "src/orca_agent/backends/runtime_files.py": {
+      "bytes": 10077,
+      "commit_comparison": "exact",
+      "commit_sha256": "272acb46957161e3031c7db8aa158c184d6cc69d5be244cfb68ecaae3414e89a",
+      "sha256": "272acb46957161e3031c7db8aa158c184d6cc69d5be244cfb68ecaae3414e89a"
+    },
+    "src/orca_agent/backends/task_files.py": {
+      "bytes": 4166,
+      "commit_comparison": "exact",
+      "commit_sha256": "6dadfca92fd975ee877d092a8de595c1609f035208699652afa021a32d504d19",
+      "sha256": "6dadfca92fd975ee877d092a8de595c1609f035208699652afa021a32d504d19"
+    },
+    "src/orca_agent/cli.py": {
+      "bytes": 11503,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "5e964f1fc1330ce43a1914edee73eeb98f975859268495b19cd9dee04dd1bb4b",
+      "sha256": "ee2bebbda8194badae53ac667d1f5769188eed3fd53ef5b98d6f4f7732e3970b"
+    },
+    "src/orca_agent/condition_selection.py": {
+      "bytes": 13127,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "df21b6d0e2c4c8da40e22910845cad0b5dd000cfa9c58bf2694181232fac07a0",
+      "sha256": "5c2d3e1fc33b4496505846acc7a3060983aacea017b1347122468a237099ba79"
+    },
+    "src/orca_agent/config.py": {
+      "bytes": 2448,
+      "commit_comparison": "exact",
+      "commit_sha256": "099ce1cd0d3dfa667bffc90539c3bfb104a78d5b060ffb100923a316b46a1f62",
+      "sha256": "099ce1cd0d3dfa667bffc90539c3bfb104a78d5b060ffb100923a316b46a1f62"
+    },
+    "src/orca_agent/context.py": {
+      "bytes": 219794,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "70a87afbd143292b4f1f09f8f5f1dbd4ee586d95050be3bcb21d0344115dd888",
+      "sha256": "8e9748cdf36200803e9866bcd2c8dfe295b5a891e083ed1446855e5059827c63"
+    },
+    "src/orca_agent/context_efficiency.py": {
+      "bytes": 7727,
+      "commit_comparison": "exact",
+      "commit_sha256": "ad29cf3b130a7e8f160dbfce3255da7a8f76c59bdaea1d5f46db5536c5b5e659",
+      "sha256": "ad29cf3b130a7e8f160dbfce3255da7a8f76c59bdaea1d5f46db5536c5b5e659"
+    },
+    "src/orca_agent/decision_purpose.py": {
+      "bytes": 10965,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "9fd14c6a42c34b502591b9b2f21e8318731ebe42d8e8c83fba8f95625d3ef04a",
+      "sha256": "f8b8a1d5be21e0cbf0be74714c9395a6dabac95774ad1b70a8b9b81ce8747717"
+    },
+    "src/orca_agent/delivery.py": {
+      "bytes": 32568,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "6c1543071cf7ec20bb0e7efea35017d945837b6cdc2a52b653685272e1efc1b9",
+      "sha256": "0d9bcbc9a61b13f32d5a099f2f862fa4d4088d2fbbf9a5c19f4baf0e19d0bdc9"
+    },
+    "src/orca_agent/delivery_bundle.py": {
+      "bytes": 14398,
+      "commit_comparison": "exact",
+      "commit_sha256": "920d7235b4c139a4bf43b73c4025357c693ff738827f5fa26ecdebb08a55e365",
+      "sha256": "920d7235b4c139a4bf43b73c4025357c693ff738827f5fa26ecdebb08a55e365"
+    },
+    "src/orca_agent/doctor.py": {
+      "bytes": 13231,
+      "commit_comparison": "exact",
+      "commit_sha256": "0a8f3b2c9ab52cd8351e50e75249153ee97b2b706d9de2d7cde8f14943602b7f",
+      "sha256": "0a8f3b2c9ab52cd8351e50e75249153ee97b2b706d9de2d7cde8f14943602b7f"
+    },
+    "src/orca_agent/entrypoints.py": {
+      "bytes": 15124,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "ee1f8ac4596ae400a16a02ed845b0fd4e59714101ac7639bd6e084cfff4cd4c9",
+      "sha256": "f849cffec837f33e4cb46d948143ee91068e1f077ee86bbf1f7b22e85de03a2c"
+    },
+    "src/orca_agent/goals.py": {
+      "bytes": 14230,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "1dac87af87d46d62cf3a2ef6c902766126839fd165648578adf0e2c1f4d5e3da",
+      "sha256": "0c705d9755018afc56f11177f5263c64ba7c57d945c8e5b01ebd7047108ca6cb"
+    },
+    "src/orca_agent/input_bindings.py": {
+      "bytes": 10857,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "f2095223bec205be0ecab9f94f5aa6fd2906428d40232d3e5a326442be3afbe2",
+      "sha256": "a98e43fd0f0a62d50974aec369b817629b3fedc01ec33cef8727edde89e2b779"
+    },
+    "src/orca_agent/llm.py": {
+      "bytes": 27719,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "a208f2821fdea5293fdab1046b68ed0ce4c938cc92429b77f032843eec2f5e59",
+      "sha256": "9c27109be5d3c9b1fb09f2f6e9d10f14d8de981fdb48636e26aff72823143fb0"
+    },
+    "src/orca_agent/mechanical_progression.py": {
+      "bytes": 5062,
+      "commit_comparison": "exact",
+      "commit_sha256": "c1f4b2698647f4415844992d2d73aed2232b9f9574ab6d2ecaabfc59f4551231",
+      "sha256": "c1f4b2698647f4415844992d2d73aed2232b9f9574ab6d2ecaabfc59f4551231"
+    },
+    "src/orca_agent/minimum_evidence.py": {
+      "bytes": 4458,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "a6c7cfaa853280bda0963283517187fea1e5bc35d5e6f7ecdb2562749a4fe7d8",
+      "sha256": "9c0085de443bfb2c2f3b0e22bd230b68770078f7fe951e060bf42775d8768c37"
+    },
+    "src/orca_agent/model_output_policy.py": {
+      "bytes": 3801,
+      "commit_comparison": "exact",
+      "commit_sha256": "fcd63950e6ed87d649d5bfe0d97a7f5e9cdd0467bb9cb5e015acae767e8b20c4",
+      "sha256": "fcd63950e6ed87d649d5bfe0d97a7f5e9cdd0467bb9cb5e015acae767e8b20c4"
+    },
+    "src/orca_agent/model_usage.py": {
+      "bytes": 30250,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "255532d0e17e7ae7c4a576c82e58f6af5b8f2d1dc58e1c90314567d00959b5c2",
+      "sha256": "df66a0aeb92f3dd66fb9166106b7dc0ba43955d844bde438b288ba5488467c22"
+    },
+    "src/orca_agent/models.py": {
+      "bytes": 46931,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "032983cae485cdcc9c2d15e64c23880416e316ee35944994c3e79ac19a78ed65",
+      "sha256": "3df62d7b8c60b71286ee0487292ebe96da1d78584786c2867f785b6c494fc32c"
+    },
+    "src/orca_agent/natural.py": {
+      "bytes": 28426,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "d06482fa57955cefafb239e118e4985549f1c60333f19bcd63ab4dc8c0c5510c",
+      "sha256": "f753866bd7c107e85ebaa8abc5573e211a8f0aab0886fb38b6132a18e3220b85"
+    },
+    "src/orca_agent/orca/adapter.py": {
+      "bytes": 30973,
+      "commit_comparison": "exact",
+      "commit_sha256": "32f27599d500ea944c0152bc9359aaaa5b40796ff965a9342237857d2f758a08",
+      "sha256": "32f27599d500ea944c0152bc9359aaaa5b40796ff965a9342237857d2f758a08"
+    },
+    "src/orca_agent/orca/checks.py": {
+      "bytes": 2344,
+      "commit_comparison": "exact",
+      "commit_sha256": "0daa243fcfbf871051c487fd0917880fa06a1525d61c7c9f32f150d5b28361cf",
+      "sha256": "0daa243fcfbf871051c487fd0917880fa06a1525d61c7c9f32f150d5b28361cf"
+    },
+    "src/orca_agent/orca/diagnostics.py": {
+      "bytes": 1345,
+      "commit_comparison": "exact",
+      "commit_sha256": "f66f95c5cde5b7cd4a2ad04069dcb2564c2bb109a0129b09aff1295c8008e9ad",
+      "sha256": "f66f95c5cde5b7cd4a2ad04069dcb2564c2bb109a0129b09aff1295c8008e9ad"
+    },
+    "src/orca_agent/orca/dipole.py": {
+      "bytes": 4737,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "5b8cb9600be28f5d67f5d462f7ae9c59522a24d0ccc088ee8b9873f203852e8a",
+      "sha256": "9a885d121a04ac5450563bb12e4ec817f3c100a7c688886700a7698f598ed2e3"
+    },
+    "src/orca_agent/orca/native.py": {
+      "bytes": 18909,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "106ba1ea5af3ceaf16e2433a197ea9db8c4c85a66724e85d87e4911e8795334a",
+      "sha256": "5cfb5ac9beef68d360d6cd89607516dc9d8c1c07ebb03f5218cbed668243eeb8"
+    },
+    "src/orca_agent/orca/native_managed.py": {
+      "bytes": 30861,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "b6837af335c34e44fe5e02d6e3ffc0903676646907b7d1e65aa556ca30d2b844",
+      "sha256": "9be7a119482a5cf930931d7b0ae04a8956f3abdcd76f21d403d2dc6b744903f6"
+    },
+    "src/orca_agent/orca/native_profile.py": {
+      "bytes": 14357,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "cceab24d801e40aba2305dd124c3530705d5b82cb61d35d8a3563f7b46058829",
+      "sha256": "8551e256c53df52c21cefa72c81b4454b2e31ecb10f9dcb98a8d534be4bad040"
+    },
+    "src/orca_agent/planning.py": {
+      "bytes": 34704,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "4d9e86bed5017f6d504fa6e032a6faab3794dd5127ae8ebbc30f3ddda0ff30f5",
+      "sha256": "2fb13e2a8231330258280e6248ef403c0ecdb7d89e4d51fb02573504bc04d049"
+    },
+    "src/orca_agent/proposals.py": {
+      "bytes": 43470,
+      "commit_comparison": "exact",
+      "commit_sha256": "4c848fa3e2c362b4fa685a821b81b34ef4a1f250e36576b939ec96c8ce009d3d",
+      "sha256": "4c848fa3e2c362b4fa685a821b81b34ef4a1f250e36576b939ec96c8ce009d3d"
+    },
+    "src/orca_agent/readable_context.py": {
+      "bytes": 17973,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "610004159a4c44850f0f365719fe77f7b3e711cfece7c68563dbb1f416aa76b2",
+      "sha256": "ddfc374ff16204413fcde7c5d7f34b48cef10ce331f15bf4c2146bcc312b90c6"
+    },
+    "src/orca_agent/report.py": {
+      "bytes": 41345,
+      "commit_comparison": "exact",
+      "commit_sha256": "2f03a0facd946de721acdcd3299a0cb386667c03f339d75699665450151282c1",
+      "sha256": "2f03a0facd946de721acdcd3299a0cb386667c03f339d75699665450151282c1"
+    },
+    "src/orca_agent/runner.py": {
+      "bytes": 24062,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "921c3b789703b27072c31db2d4e5445edaab2fe3b469c5217cdc4abebc1df77d",
+      "sha256": "ead17ac8ac47e3f0400c6ff0e605446fde17aca3152efd7e687a2c42d88c8263"
+    },
+    "src/orca_agent/schema_projection.py": {
+      "bytes": 1553,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "11fe22b162bb91b70fac9f4e2056f30348b8b5514abe4c08391ef8e931bf9213",
+      "sha256": "73e450e17c182cd44beddff253b63bbfeac6f0b96ac5a48b3f2e0fda24693d2e"
+    },
+    "src/orca_agent/semantic.py": {
+      "bytes": 137686,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "de8230ee523dbfd5b44263bac6458bc5405161741571f24557fc5280ab8f5d45",
+      "sha256": "21a916e68b2aee273f12194e8677d1ea28f3125eafd756dfa935cf539bd52a17"
+    },
+    "src/orca_agent/semantic_notices.py": {
+      "bytes": 6630,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "a95c5b3aaf0996ae5ebf97b399473be39f3f0e55a1c681f328d5c50db5183609",
+      "sha256": "c844c707085d2841879e59b9adfadf46d5b84729d96ad3fcab5423fb70fa7983"
+    },
+    "src/orca_agent/static/app.css": {
+      "bytes": 8090,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "a858fb24c87f2077bf401f766fe7c855deccce55cba30eada85f6a4913238f22",
+      "sha256": "5bf8e0cb28268350e9701cd8921fafa5d9fef063bf3d9aa6630871f2e3d22e0e"
+    },
+    "src/orca_agent/static/app.js": {
+      "bytes": 23608,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "0b0232fda890c80429549d97ca05b62b17533828e99dc45d230615d57f6a3264",
+      "sha256": "773b3177e567575872040693cd13bbc24ef7ddd2102da9c73096bb47839f8ceb"
+    },
+    "src/orca_agent/static/index.html": {
+      "bytes": 5304,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "2f5c653dac244820b2139282aa39ade7ab971d453994d39328c8ff585fe41539",
+      "sha256": "fe3b9b5ed40715674aa85336f5badc62f9dfd9de9cbdd04b1d269c0084437080"
+    },
+    "src/orca_agent/store.py": {
+      "bytes": 124866,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "6b1543b93650a9b941c7f12471817025b4af28ec3d219fccf2541b5d2bb08187",
+      "sha256": "c7af1960034ce8ece323c24e269bd80fec64c7c52df2b2810d3dfea8cafa795a"
+    },
+    "src/orca_agent/structured.py": {
+      "bytes": 4438,
+      "commit_comparison": "exact",
+      "commit_sha256": "c246299857c7f3626871444f8e8046764665bf21a707a852ed718d9034d8b703",
+      "sha256": "c246299857c7f3626871444f8e8046764665bf21a707a852ed718d9034d8b703"
+    },
+    "src/orca_agent/task_observations.py": {
+      "bytes": 39914,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "5c88d716c40fe048165c42855411d3f26d50a8255de9c5bafc499aaf93bce911",
+      "sha256": "ee0f868b7919670b5b624345a16ce756309acecbdec03955ebd8559a5e8cea40"
+    },
+    "src/orca_agent/task_sdk.py": {
+      "bytes": 6086,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "f881a22f7c5fa35045dfe10bde1b59805b6150459107460e32ee0f6047126f44",
+      "sha256": "d72f98316409d86369916b9875d16363d32f63cba7a59e5548b4b8fe469cbc66"
+    },
+    "src/orca_agent/terminal.py": {
+      "bytes": 11891,
+      "commit_comparison": "exact",
+      "commit_sha256": "091c8377cd6b4beec642cfd0567f61667b9c8dae3c9aeae46826ef4ee576acbc",
+      "sha256": "091c8377cd6b4beec642cfd0567f61667b9c8dae3c9aeae46826ef4ee576acbc"
+    },
+    "src/orca_agent/tools/analysis.py": {
+      "bytes": 23984,
+      "commit_comparison": "exact",
+      "commit_sha256": "9e900abbf8208821d7ad99b0cc22ab1ead535f872da7f1e9e66d5398454d69d2",
+      "sha256": "9e900abbf8208821d7ad99b0cc22ab1ead535f872da7f1e9e66d5398454d69d2"
+    },
+    "src/orca_agent/tools/calculation.py": {
+      "bytes": 12412,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "b09affbbe4ed4b4476276ba34a12df24ee5d9e6d27c4184aa7e464fb024f9e3c",
+      "sha256": "2fe85d21a19eeaa6417726ee75ea7fcc50b8f1f4cc4284a0af5e7abbc887229a"
+    },
+    "src/orca_agent/tools/dispatch.py": {
+      "bytes": 22929,
+      "commit_comparison": "exact",
+      "commit_sha256": "4f1b46497f8a3f906e7961d7f259a124916826f6dfd6da76fa028e264fb5263d",
+      "sha256": "4f1b46497f8a3f906e7961d7f259a124916826f6dfd6da76fa028e264fb5263d"
+    },
+    "src/orca_agent/tools/electronic.py": {
+      "bytes": 283,
+      "commit_comparison": "exact",
+      "commit_sha256": "fa0e1872804f46d1271b790d9e095f524d0a48ce932e0a5f3437fdd65488867b",
+      "sha256": "fa0e1872804f46d1271b790d9e095f524d0a48ce932e0a5f3437fdd65488867b"
+    },
+    "src/orca_agent/tools/evidence.py": {
+      "bytes": 28414,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "83774557979c10221ab707a38bc272039d3bafc456c734fa4ea00d877fb9995f",
+      "sha256": "3d4fb8f97d52aeda41f0b04b7614079e1b9dff9c2d7eb1381397bc91b6a14bda"
+    },
+    "src/orca_agent/tools/geometry.py": {
+      "bytes": 254,
+      "commit_comparison": "exact",
+      "commit_sha256": "62826a427b2714b4ac13cdeeb5bd226963056884bc7651dba3ad5242474fdeed",
+      "sha256": "62826a427b2714b4ac13cdeeb5bd226963056884bc7651dba3ad5242474fdeed"
+    },
+    "src/orca_agent/tools/knowledge.py": {
+      "bytes": 20170,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "18f81b5ac7e36be21aa256e5dff65acbd9c1ffab12aeba4409c4c33500462bf2",
+      "sha256": "80798c204fcbdb0a700975df26ec130a982212fff3aa2d7d9f64e3f59169e9bf"
+    },
+    "src/orca_agent/tools/managed.py": {
+      "bytes": 54753,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "7594f05af3de2b2ed761af04830c9403fd208f49a0871a05c87864a2b505038e",
+      "sha256": "f81a59f8d4eb65f87b1141cad08aa57544d441ad660509749197d786c8ef5311"
+    },
+    "src/orca_agent/tools/registry.py": {
+      "bytes": 24379,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "1c15345d028232f82f506dea0b6142e174a9b12035524a23c93827a2bd94eae4",
+      "sha256": "0680b69612be1179f5e0d0fd07145a07b7a16a2a29d777d2793cf2a7afbee108"
+    },
+    "src/orca_agent/tools/structure.py": {
+      "bytes": 58842,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "aa415d3a8b5e8739206a946e7c2545af4998ad561344dad9bcf705f33c625d1a",
+      "sha256": "b1aa926dcd97da53e241f901ce2388fee6da91ae0acc7cc8f50b3ee10fd69693"
+    },
+    "src/orca_agent/tools/workspace.py": {
+      "bytes": 5983,
+      "commit_comparison": "exact",
+      "commit_sha256": "7934c40d5b34ea097951471c4ffe3a048ef2633aa648ea5213e27ac9489f65c9",
+      "sha256": "7934c40d5b34ea097951471c4ffe3a048ef2633aa648ea5213e27ac9489f65c9"
+    },
+    "src/orca_agent/versions.py": {
+      "bytes": 885,
+      "commit_comparison": "exact",
+      "commit_sha256": "5ebf4dd2391c8ef78ba4e41d63b477549b21c315c17cb31769dae5b34a67eb9c",
+      "sha256": "5ebf4dd2391c8ef78ba4e41d63b477549b21c315c17cb31769dae5b34a67eb9c"
+    },
+    "src/orca_agent/web.py": {
+      "bytes": 18127,
+      "commit_comparison": "utf8-crlf-to-lf",
+      "commit_sha256": "004cf2aed94a1f0bf990ad621d65b67cd44cd2bc7aa0657f06d3c13feecd47b7",
+      "sha256": "4b6cef02db7e149c6cd7e292898c63231979e05216c5f3dabb236351bf7c4dee"
+    },
+    "uv.lock": {
+      "bytes": 110336,
+      "commit_comparison": "exact",
+      "commit_sha256": "135014bdd0672f77746b027e8c006626378752b12620c0964a52f14237cf8998",
+      "sha256": "135014bdd0672f77746b027e8c006626378752b12620c0964a52f14237cf8998"
+    }
+  },
+  "runtime": {
+    "backend": "linux-container",
+    "coverage": "explicit read-only image/daemon inspection; not workload or isolation validation",
+    "daemon_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+    "docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+    "engine_id": "46903a8b-396a-4aad-af59-2fd9ff20cf2c",
+    "image_id": "sha256:9f94e9441855d81fcfdf694b9330808cfeee12637ef1093532f56ad129000df3",
+    "issues": [],
+    "manifest": {
+      "base_image": {
+        "image_id": "sha256:2f49f3f0441697f75ec792f6a0cdbdff814e9ffc7a3eff9b4684a440c7639c88",
+        "tag": "orca-dev-orca-probe:6.1.1-openmpi-4.1.8"
+      },
+      "compiler_image": {
+        "image_id": "sha256:e7abde46665dfd13844f0f68a4ccb5b44b6e69899787cf1d3805b9f160b0ba97",
+        "tag": "orca-dev-compiler:openmpi-4.1.8"
+      },
+      "distributions": {
+        "annotated-types": "0.8.0",
+        "numpy": "2.4.6",
+        "orca-pi": "2.0.0",
+        "pillow": "12.3.0",
+        "platformdirs": "4.12.3",
+        "pydantic": "2.13.5",
+        "pydantic-core": "2.46.5",
+        "rdkit": "2025.9.6",
+        "semantic-version": "2.10.0",
+        "typing-extensions": "4.16.0",
+        "typing-inspection": "0.4.4"
+      },
+      "files": {
+        "/opt/openmpi/bin/mpirun": {
+          "bytes": 17152,
+          "resolved_path": "/opt/openmpi/bin/orterun",
+          "sha256": "9d2dd92f88b63fbca70458a04f798138e5d874f0485e08e23fd15672bc78eefa"
+        },
+        "/opt/openmpi/bin/ompi_info": {
+          "bytes": 30600,
+          "resolved_path": "/opt/openmpi/bin/ompi_info",
+          "sha256": "23637571644311276a69a2a4285a2deee8d9226f3ee117786a3a3063c14eaa85"
+        },
+        "/opt/openmpi/bin/orted": {
+          "bytes": 16168,
+          "resolved_path": "/opt/openmpi/bin/orted",
+          "sha256": "5ac41bf0f7e3e243088ef4ff57e55a71f2c213d4cf4537d46ae69a697a3f62aa"
+        },
+        "/opt/openmpi/lib/libmpi.so.40": {
+          "bytes": 1399152,
+          "resolved_path": "/opt/openmpi/lib/libmpi.so.40.30.8",
+          "sha256": "5e21981628d4df5f8a17bdce29ae30dfc7b3967719b0598f2d433d85dcfb92af"
+        },
+        "/opt/openmpi/lib/libopen-pal.so.40": {
+          "bytes": 1427240,
+          "resolved_path": "/opt/openmpi/lib/libopen-pal.so.40.30.4",
+          "sha256": "10eb9958cc0cf867af416422d76b514f82b9d9ced48374bce651ad1a7c2668c3"
+        },
+        "/opt/openmpi/lib/libopen-rte.so.40": {
+          "bytes": 827560,
+          "resolved_path": "/opt/openmpi/lib/libopen-rte.so.40.30.4",
+          "sha256": "1e2dc28fd88109d82551bcbf896c6a7ae551ed2285c0cc5e3e96554e8feeea79"
+        },
+        "/opt/orca-agent-runtime/helper.py": {
+          "bytes": 17171,
+          "resolved_path": "/opt/orca-agent-runtime/helper.py",
+          "sha256": "8401090ff2c7a96135938a34260eb9d2bb3b5ae0d00c4c92b713866c83940dde"
+        },
+        "/opt/orca-agent-runtime/provenance/debian-packages.txt": {
+          "bytes": 3293,
+          "resolved_path": "/opt/orca-agent-runtime/provenance/debian-packages.txt",
+          "sha256": "4a0fa124755f20dd7050eaecdcb9285f645b3ac0344abc80c5d6a7a08fb45d0f"
+        },
+        "/opt/orca-agent-runtime/provenance/license-manifest.json": {
+          "bytes": 57466,
+          "resolved_path": "/opt/orca-agent-runtime/provenance/license-manifest.json",
+          "sha256": "113ce41bba1a1ccc778ffb0a3f41df1238115c87a3a4e2be37a4b5320b473fdc"
+        },
+        "/opt/orca-agent-runtime/provenance/wheel-license-evidence.json": {
+          "bytes": 49291,
+          "resolved_path": "/opt/orca-agent-runtime/provenance/wheel-license-evidence.json",
+          "sha256": "bca3bec303d44a399072be3296196f84bfd9d7eaa7ce2cd0c0b0ef9879f9a617"
+        },
+        "/opt/orca-agent-runtime/python_task.py": {
+          "bytes": 946,
+          "resolved_path": "/opt/orca-agent-runtime/python_task.py",
+          "sha256": "42e6bbc88aa0f84d658ea8c9c4baadfc9acd8b403457ba5a647ca0dfe30a3f95"
+        },
+        "/opt/orca-agent-runtime/sandbox.so": {
+          "bytes": 15456,
+          "resolved_path": "/opt/orca-agent-runtime/sandbox.so",
+          "sha256": "efb3d8dba27e2c480c69285c25114b7297f694b4c7faba166b112c2af6266037"
+        },
+        "/opt/orca-agent-runtime/venv/bin/python": {
+          "bytes": 6809944,
+          "resolved_path": "/usr/bin/python3.11",
+          "sha256": "9bee109da0dce17a7c9eeaca9f420cc6770a9fe143b9382d73bd22fe59b21a5f"
+        },
+        "/opt/orca-agent-runtime/venv/lib/python3.11/site-packages/orca_task_sdk.py": {
+          "bytes": 6086,
+          "resolved_path": "/opt/orca-agent-runtime/venv/lib/python3.11/site-packages/orca_task_sdk.py",
+          "sha256": "d72f98316409d86369916b9875d16363d32f63cba7a59e5548b4b8fe469cbc66"
+        },
+        "/opt/orca/lib/liborca_tools_6_1_1.so.6": {
+          "bytes": 352669016,
+          "resolved_path": "/opt/orca/lib/liborca_tools_6_1_1.so.6",
+          "sha256": "4dd78298371c0cbceb36ec53b1c2993be8a0b6b73173130982474ff530f51861"
+        },
+        "/opt/orca/lib/liborca_tools_6_1_1_mpi.so.6": {
+          "bytes": 353149832,
+          "resolved_path": "/opt/orca/lib/liborca_tools_6_1_1_mpi.so.6",
+          "sha256": "64bb4156a3e34fa1bc445f8aa3b260ced1ff8a5395df3ddd695786acf383cad8"
+        },
+        "/opt/orca/orca": {
+          "bytes": 43498672,
+          "resolved_path": "/opt/orca/orca",
+          "sha256": "335aef8bacd939620522d757016dcdb3107a9f0f4e71faad9e7764aa95bdc4ea"
+        },
+        "/opt/orca/orca_leanscf": {
+          "bytes": 31541216,
+          "resolved_path": "/opt/orca/orca_leanscf",
+          "sha256": "950a9cd28a8211c35d8a136a104685e0d25b1d2e6e1b7288177c5ba00d21f49f"
+        },
+        "/opt/orca/orca_leanscf_mpi": {
+          "bytes": 32500576,
+          "resolved_path": "/opt/orca/orca_leanscf_mpi",
+          "sha256": "b2d69eeb4b9a8be37338f82e366d0edaa3042ef40c1fbccc061fe2fafd57af30"
+        },
+        "/opt/orca/orca_prop": {
+          "bytes": 31458880,
+          "resolved_path": "/opt/orca/orca_prop",
+          "sha256": "fd57fce49875faba8a0ff46b67c9ce933675b7ac22e9384d5ce6d44281f81b1a"
+        },
+        "/opt/orca/orca_prop_mpi": {
+          "bytes": 32385024,
+          "resolved_path": "/opt/orca/orca_prop_mpi",
+          "sha256": "0c361ce1376509dddf7d4a0319a7adf20ef4a1b43d81ddca75e3b47aae712b4f"
+        },
+        "/opt/orca/orca_scfgrad": {
+          "bytes": 30939264,
+          "resolved_path": "/opt/orca/orca_scfgrad",
+          "sha256": "efaef974ac507aa81d17f350b6261e66cf3aec99a3e299bce30915411ed912a0"
+        },
+        "/opt/orca/orca_scfgrad_mpi": {
+          "bytes": 31832544,
+          "resolved_path": "/opt/orca/orca_scfgrad_mpi",
+          "sha256": "4b7c4ab523c07fa566b878b7c5e032f93114d5f9b711395ee357e486b129a3a5"
+        },
+        "/opt/orca/orca_startup": {
+          "bytes": 30815712,
+          "resolved_path": "/opt/orca/orca_startup",
+          "sha256": "0c7b900008a56e5418c1802f357b5be2e8c225c6cf0c07def0bc9a198763f038"
+        },
+        "/opt/orca/orca_startup_mpi": {
+          "bytes": 31741760,
+          "resolved_path": "/opt/orca/orca_startup_mpi",
+          "sha256": "f372b56262efbb98c53684b3ac5b9fe4eb8c4d84e052ef0dfccd9af526a2d09e"
+        },
+        "/usr/bin/python3.11": {
+          "bytes": 6809944,
+          "resolved_path": "/usr/bin/python3.11",
+          "sha256": "9bee109da0dce17a7c9eeaca9f420cc6770a9fe143b9382d73bd22fe59b21a5f"
+        }
+      },
+      "isolation_policy": "linux-container-v1",
+      "limitations": [
+        "ORCA and MPI version strings come from the frozen base image provenance; manifest creation does not start ORCA or MPI.",
+        "Selected key files are listed; the image ID freezes all other image bytes."
+      ],
+      "mpi": {
+        "path": "/opt/openmpi/bin/mpirun",
+        "sha256": "9d2dd92f88b63fbca70458a04f798138e5d874f0485e08e23fd15672bc78eefa",
+        "version": "4.1.8"
+      },
+      "openmpi_source": {
+        "sha256": "fb41086bbed9300baa2f3d7572491facfe5257412fa524ec5a396aa9101d5c62",
+        "url": "https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.8.tar.gz"
+      },
+      "orca": {
+        "path": "/opt/orca/orca",
+        "sha256": "335aef8bacd939620522d757016dcdb3107a9f0f4e71faad9e7764aa95bdc4ea",
+        "source_package_sha256": "a0bc1d6d2c3c00620367bbc5dbf2b3a7018abc92d1ff65f06cec46f75350b9be",
+        "version": "6.1.1"
+      },
+      "platform": "linux/amd64",
+      "python": {
+        "build": "3.11.2 (main, Oct  7 2026, 12:35:07) [GCC 12.2.0]",
+        "path": "/opt/orca-agent-runtime/venv/bin/python",
+        "sha256": "9bee109da0dce17a7c9eeaca9f420cc6770a9fe143b9382d73bd22fe59b21a5f",
+        "version": "3.11.2"
+      },
+      "sandbox_source_sha256": "4865041d288487795e8ec9a26200b2af9a3a7051eb2ecf2caf6e3809038bbcbd",
+      "schema_version": 1,
+      "sdk": {
+        "path": "/opt/orca-agent-runtime/venv/lib/python3.11/site-packages/orca_task_sdk.py",
+        "sha256": "d72f98316409d86369916b9875d16363d32f63cba7a59e5548b4b8fe469cbc66"
+      },
+      "source_lock": {
+        "path": "uv.lock",
+        "sha256": "135014bdd0672f77746b027e8c006626378752b12620c0964a52f14237cf8998"
+      },
+      "version": "local-linux-runtime-1",
+      "wheels": [
+        {
+          "filename": "annotated_types-0.8.0-py3-none-any.whl",
+          "name": "annotated-types",
+          "role": "runtime",
+          "sha256": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0",
+          "version": "0.8.0"
+        },
+        {
+          "filename": "numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+          "name": "numpy",
+          "role": "runtime",
+          "sha256": "89cd468399cfd2504718f0ba50e410dca55a170b61a02ad92bb18c8a65186e93",
+          "version": "2.4.6"
+        },
+        {
+          "filename": "orca_pi-2.0.0-py3-none-any.whl",
+          "name": "orca-pi",
+          "role": "runtime",
+          "sha256": "ff402a9d78812d231b86344445f5896fa757622d050c02a1ea1d4c418258b48b",
+          "version": "2.0.0"
+        },
+        {
+          "filename": "pillow-12.3.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+          "name": "pillow",
+          "role": "runtime",
+          "sha256": "23d27a3e0307ec2244cc51e7287b919aa68d097504ebe19df4e76a98a3eea5bd",
+          "version": "12.3.0"
+        },
+        {
+          "filename": "platformdirs-4.12.3-py3-none-any.whl",
+          "name": "platformdirs",
+          "role": "runtime",
+          "sha256": "080f3b39423b5abfca9a23d84c4e9795f54d395cd8459867a8ded44084fcd5f8",
+          "version": "4.12.3"
+        },
+        {
+          "filename": "pydantic-2.13.5-py3-none-any.whl",
+          "name": "pydantic",
+          "role": "runtime",
+          "sha256": "346a034f080da3755d8e9cb5e00e8b07de1d39e4f6e2c87d8ab7cafa0b269a73",
+          "version": "2.13.5"
+        },
+        {
+          "filename": "pydantic_core-2.46.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+          "name": "pydantic-core",
+          "role": "runtime",
+          "sha256": "49776eab08766a08dfff7012f8b422dcd7e25e43b316eedf0477c24fcfa84b7c",
+          "version": "2.46.5"
+        },
+        {
+          "filename": "rdkit-2025.9.6-cp311-cp311-manylinux_2_28_x86_64.whl",
+          "name": "rdkit",
+          "role": "runtime",
+          "sha256": "3f4fc084890efb29b51ea4679bb07d28b276b6e73e3381e678a5ba057b4c4222",
+          "version": "2025.9.6"
+        },
+        {
+          "filename": "semantic_version-2.10.0-py2.py3-none-any.whl",
+          "name": "semantic-version",
+          "role": "runtime",
+          "sha256": "de78a3b8e0feda74cabc54aab2da702113e33ac9d9eb9d2389bcf1f58b7d9177",
+          "version": "2.10.0"
+        },
+        {
+          "filename": "typing_extensions-4.16.0-py3-none-any.whl",
+          "name": "typing-extensions",
+          "role": "runtime",
+          "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+          "version": "4.16.0"
+        },
+        {
+          "filename": "typing_inspection-0.4.4-py3-none-any.whl",
+          "name": "typing-inspection",
+          "role": "runtime",
+          "sha256": "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147",
+          "version": "0.4.4"
+        },
+        {
+          "filename": "pip-26.2.1-py3-none-any.whl",
+          "name": "pip",
+          "role": "build-only",
+          "sha256": "71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e",
+          "version": "26.2.1"
+        }
+      ]
+    },
+    "manifest_sha256": "cfad02c520be38c57130d9e25fc6420874f6248dfa6c762cc4621e4336f0cba4",
+    "verified": true
+  },
+  "schema_version": 1
+}
