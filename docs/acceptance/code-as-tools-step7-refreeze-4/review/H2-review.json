@@ -1,0 +1,694 @@
+{
+  "reviewed_at_utc": "2026-10-20T19:26:07.869576+00:00",
+  "task": "H2",
+  "run_id": "run_c570f932acb447b7b3ad79bc4c73d92d",
+  "scope": "Read-only settled receipts, original model requests/responses, and frozen product source inspection. Only this review file was written; no product replay, tests, model/ORCA/network calls, or source/test/freeze/runtime-state edits.",
+  "initial_live_snapshot": {
+    "run_sha256": "dd3a99d8b774c3305f8ff1576fb6c2e9b4f790d23bbe34c713df1dec80d0b036",
+    "state": "waiting_user",
+    "model_calls": 7,
+    "completed_model_calls": 6,
+    "known_tokens": 151929,
+    "in_flight_reserved_tokens": 82603,
+    "interpretation": "The seventh request was reserved and had no response at that snapshot. The reservation was not a final unknown-cost settlement. No completed model action requested clarification; the outstanding purpose remained planning."
+  },
+  "settled_outcome": {
+    "state": "failed",
+    "request_version": 2,
+    "plan_id": null,
+    "plan_version": null,
+    "delivery_status": "partial",
+    "user_goal_complete": false,
+    "model_calls": 7,
+    "model_tokens": 181326,
+    "model_tokens_unknown": 0,
+    "orca_starts": 0,
+    "identity_queries": 0,
+    "structure_preparations": 0,
+    "analysis_executions": 0,
+    "knowledge_queries": 1,
+    "plan_revisions": 0,
+    "driver_wall_seconds": 421.4060000000027,
+    "driver_error": null,
+    "settlement_unknown_fields": {},
+    "slot_overruns": {},
+    "goal_status": {
+      "goal_prepared_geometry_original": "insufficient_evidence",
+      "goal_rotated_geometry": "insufficient_evidence",
+      "goal_rotation_relation": "insufficient_evidence",
+      "goal_rotation_convention_record": "insufficient_evidence",
+      "goal_polarizability_original": "insufficient_evidence",
+      "goal_polarizability_rotated": "insufficient_evidence",
+      "goal_polarizability_verification": "insufficient_evidence",
+      "goal_random_seed": "insufficient_evidence"
+    }
+  },
+  "successful_progress": [
+    "Request normalization succeeded on the second submission and activated Request v2, with all eight Goals retained and unresolved=[] in the report.",
+    "One knowledge.search completed for the static-polarizability input syntax.",
+    "No initial Plan was admitted. No identity lookup, structure preparation, Python execution or ORCA calculation occurred."
+  ],
+  "transport_json_assessment": {
+    "all_seven_raw_contents_parse_as_json": true,
+    "all_response_error_categories_null": true,
+    "conclusion": "All observed rejections are proposal/Plan validation, not malformed JSON or HTTP transport errors."
+  },
+  "earlier_rejections": [
+    {
+      "ordinal": 1,
+      "model_id": "model_2c0f3f09071243fe902597c5c4a483e0",
+      "error": "ProposalError",
+      "cause": "goals[5].quantity did not occur as an exact user phrase inside that Goal's own quoted text_basis.",
+      "feedback": "general_quantity_requires_exact_user_phrase at parameters.goals[5].quantity",
+      "recovered": true
+    },
+    {
+      "ordinal": 3,
+      "model_id": "model_09b5c81527d243669fdd2d962347c8b9",
+      "error": "ProposalError",
+      "cause": "python.execute.parameters.code contained inline Python source instead of an Artifact or future producer reference.",
+      "feedback": "explicit_file_reference_required at parameters.steps[2].parameters.code",
+      "response_to_feedback": "The model chose knowledge.search, then proposed workspace.write producers and code references."
+    }
+  ],
+  "final_three_rounds": [
+    {
+      "ordinal": 5,
+      "model_id": "model_340d87b4cee3454d95406cf48408c4ef",
+      "persisted_error_category": "ValidationError",
+      "static_visible_errors": [
+        {
+          "path": "parameters.steps[1].inputs.resolved_identity",
+          "actual": {
+            "producer_key": "resolve_formaldehyde",
+            "port": "requested_identity"
+          },
+          "issue": "The required input role is identity and structure.resolve declares resolved_identity; requested_identity is its input role, not an output port. The wrong producer port is a Plan.valid_graph rejection condition."
+        },
+        {
+          "path": "parameters.goal_map.goal_rotation_convention_record",
+          "actual": {
+            "port": "rotation_convention_record",
+            "step_key": "record_rotation_convention"
+          },
+          "issue": "That Step is workspace.write, which declares written_artifact, not rotation_convention_record."
+        }
+      ],
+      "next_request_feedback": {
+        "category": "ValidationError",
+        "requirement": [
+          {
+            "loc": [],
+            "type": "value_error"
+          }
+        ]
+      },
+      "next_request_rejected_candidate": {
+        "fully_omitted": true,
+        "original_bytes": 16932
+      }
+    },
+    {
+      "ordinal": 6,
+      "model_id": "model_3cd8e8896e9a4c0f9322f04111418126",
+      "persisted_error_category": "ValidationError",
+      "static_visible_errors": [
+        {
+          "path": "parameters.steps[1].inputs.identity",
+          "actual": {
+            "producer_key": "resolve_identity",
+            "port": "requested_identity"
+          },
+          "issue": "The input role was corrected, but the same nonexistent requested_identity output port remained."
+        }
+      ],
+      "next_request_feedback": {
+        "category": "ValidationError",
+        "requirement": [
+          {
+            "loc": [],
+            "type": "value_error"
+          }
+        ]
+      },
+      "next_request_rejected_candidate": {
+        "fully_omitted": true,
+        "original_bytes": 14792
+      }
+    },
+    {
+      "ordinal": 7,
+      "model_id": "model_cb81b8044c3f46efba43ef326f6d8271",
+      "persisted_error_category": "ValidationError",
+      "persisted_requirement": [
+        {
+          "type": "value_error",
+          "loc": []
+        }
+      ],
+      "actual_final_plan_steps": 10,
+      "static_visible_errors": [
+        {
+          "path": "parameters.steps[1].inputs.resolved_identity",
+          "actual": {
+            "producer_step_id": "structure-resolve-1",
+            "port": "requested_identity"
+          },
+          "issue": "The input role regressed to resolved_identity and the wrong port requested_identity remained. Additionally producer_step_id now contains the new proposal key structure-resolve-1. materialize_plan resolves producer_key in Step.inputs, but does not resolve a new proposal key supplied as producer_step_id there; it appends the unconverted key to dependencies. Plan.valid_graph rejects dependencies not present among materialized Step IDs.",
+          "source_locations": [
+            "src/orca_agent/proposals.py:901",
+            "src/orca_agent/proposals.py:907",
+            "src/orca_agent/models.py:478",
+            "src/orca_agent/tools/registry.py:247",
+            "src/orca_agent/tools/registry.py:259",
+            "src/orca_agent/tools/registry.py:276"
+          ],
+          "evidence_level": "Static consequence of the submitted object and frozen code; no replay was run. The original exception message is not preserved."
+        },
+        {
+          "path": "parameters.steps[2].parameters.content",
+          "issue": "make_rotation.py contains undefined lowercase Python names false/true at script lines 72, 73 and 76, without definitions. If executed unchanged it would fail while building metadata. This is a downstream latent code error, not an observed execution failure or the terminal Plan rejection.",
+          "script_sha256": "525d1e3b52565658e0e6e7e4902bac395b44817bd43aa543887e1c252fd9eb04",
+          "script_line_numbers": [
+            72,
+            73,
+            76
+          ],
+          "evidence_level": "Literal script inspection and stdlib AST parsing only; never executed."
+        }
+      ],
+      "model_reason_characterization": "The final reason describes replacing an oversized rejected proposal with a smaller plan. The prior candidate was omitted from correction context, not rejected by a persisted proposal-size diagnostic.",
+      "next_model_request": "None: bounded correction exhaustion terminated this decision."
+    }
+  ],
+  "feedback_and_context_obstacle": {
+    "persisted_for_all_three_rejections": {
+      "error_category": "ValidationError",
+      "requirement": [
+        {
+          "type": "value_error",
+          "loc": []
+        }
+      ]
+    },
+    "lost_information": "No validator message, concrete field path, producer identity, allowed output port or input-role correction is persisted in those requirements. The exact runtime exception message therefore cannot be recovered from these receipts.",
+    "source_cause": {
+      "path": "src/orca_agent/proposals.py",
+      "line": 232,
+      "behavior": "validation_error_details retains type and loc plus numeric constraints, but drops msg and nonnumeric context. Root model validators consequently become loc=[]/value_error."
+    },
+    "storage_and_delivery": {
+      "path": "src/orca_agent/agent.py",
+      "line": 475,
+      "behavior": "The same reduced detail is stored in rejected decision parameters and supplied as CONTROL.validation_error on the next correction."
+    },
+    "rejected_candidate_visibility": {
+      "request_ordinals": [
+        6,
+        7
+      ],
+      "bytes": [
+        16932,
+        14792
+      ],
+      "projection_complete": false,
+      "whole_proposal_omitted": true,
+      "source": "src/orca_agent/context.py:467",
+      "behavior": "The correction context contains only candidate omission metadata and a hash; no Step/input map from the rejected Plan survives in DATA.rejected_proposal."
+    },
+    "assessment": "The bounded feedback loses the actionable graph error while also omitting the candidate that contains it. This is a material repair obstacle. It does not excuse the visible invalid producer/port references and does not establish that a later scientific run would have succeeded."
+  },
+  "direct_terminal_cause": {
+    "persisted": "StoreError: bounded proposal correction or transport retry exhausted",
+    "logical_decision": "decision_d0d76753c3f80e5db4cf6e82",
+    "three_attempts": "One initial submission and two allowed corrections were all rejected as ValidationError.",
+    "not_a_global_budget_exhaustion": "Only 7 of 24 permitted model calls were used and no slot overrun or unknown settlement field is recorded.",
+    "exact_last_graph_error": "Not persisted. Static inspection identifies an unconverted Step key in dependencies plus the retained wrong role/port; no product replay was performed to manufacture missing runtime evidence."
+  },
+  "scientific_status": {
+    "operation_success": "Only knowledge.search completed; its document excerpt is not scientific result evidence.",
+    "goal_completion": "All eight Goals remain insufficient_evidence and user_goal_complete=false.",
+    "missing": [
+      "Qualified initial formaldehyde geometry and original XYZ",
+      "Rotated XYZ and verified preservation of atom order/internal geometry",
+      "Executed rotation-convention and numerical-setting record",
+      "Two independently computed static polarizability tensors and isotropic values",
+      "Tensor transformation/isotropic invariance verification from two real ORCA outputs",
+      "Executed analysis, machine-readable result tables, and observed seed behavior"
+    ],
+    "generated_script_status": "Scripts and ORCA input text exist only inside rejected proposals; they were not written/executed by workspace/Python/ORCA Tools.",
+    "qualification": "No ORCA output or successful scientific check exists in this Run. Plan intent and knowledge retrieval do not complete any scientific Goal."
+  },
+  "hash_verification": {
+    "all_28_request_response_delivery_link_checks_passed": true,
+    "recorded_post_verify_returncode": 0,
+    "recorded_post_verify_status": "matched",
+    "recorded_product_commit": "2e872a181ff98212a93ffce8cab4bb48648b7508",
+    "post_verify_stdout_sha_matches": true,
+    "method": "Direct SHA-256 of stored bytes; read-only use of the existing post-verify receipt, not a new product verify command."
+  },
+  "evidence": [
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/run.json",
+      "sha256": "c56b5dc08b9b5c4ac563efdaeb1e2ae8402a9bc637e52d25a73bb6dd0879626d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H2/outcome.json",
+      "sha256": "e738075dd76127c98937989ce1a49b01a3c56e36d020e3b4d6a09966c35db028"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H2/report.json",
+      "sha256": "bbef9fc4e4b99286f150016ef716d418f47271f55da58ff8bdc0d4549fbaeb73"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H2/budget-check.json",
+      "sha256": "2ac6c420c26e5b6998e45669412e6d2120be2167444889e992dd376091d3db9c"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H2/post-verify.json",
+      "sha256": "6086303bbb578c163319633a92479549dfce1d97ccf74f9a450d9deaba599111"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/results/result_5d0fd0b9c29f4de698448f88e1ebd83c.json",
+      "sha256": "22267d843e5edc96b6e81885e5e6e76d2ed8074b7a2cd238dd1691a65e1d6700"
+    }
+  ],
+  "source_evidence": [
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078"
+    },
+    {
+      "path": "src/orca_agent/models.py",
+      "sha256": "21eac4849d184275d91f62912854e54ef962b4d1911ddce464fe1c12f3d12583"
+    },
+    {
+      "path": "src/orca_agent/tools/registry.py",
+      "sha256": "0fcc54ec6e1f73ac559f054b7ccabde60e4ab3d31bcf1b63cb8268eb4da471b4"
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff"
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6"
+    }
+  ],
+  "model_history": [
+    {
+      "ordinal": 1,
+      "model_id": "model_2c0f3f09071243fe902597c5c4a483e0",
+      "logical_id": "decision_300450ef7079ea3c22b470e9_1",
+      "action": "normalize_request",
+      "response_error_category": null,
+      "raw_content_valid_json": true,
+      "total_tokens": 16885,
+      "recorded_outcome": "rejected",
+      "persisted_rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": {
+          "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+          "path": [
+            "parameters"
+          ],
+          "corrections": [
+            {
+              "path": [
+                "parameters",
+                "goals",
+                5,
+                "quantity"
+              ],
+              "reason": "general_quantity_requires_exact_user_phrase",
+              "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity."
+            }
+          ]
+        }
+      },
+      "received_validation_feedback": null,
+      "rejected_candidate_projection": null,
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_2c0f3f09071243fe902597c5c4a483e0.request.json",
+        "sha256": "79e10e70cda4ed2d6017bba8b088a0cbb860bcdb9517d6f46032b0372cfe9ba0"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_2c0f3f09071243fe902597c5c4a483e0.response.json",
+        "sha256": "433c5d318ca75923b79663a033a39034e81b43bf1127bf4c2aed1c76bd286d8f"
+      },
+      "delivery": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_2c0f3f09071243fe902597c5c4a483e0.delivery.json",
+        "sha256": "0ce76f6c13f0349fb56b4bb3206a11f36895804e40366a8aaf6488ee8cc6ecbd"
+      },
+      "hash_checks": {
+        "request_matches_run_record": true,
+        "response_matches_run_record": true,
+        "response_request_link_matches": true,
+        "delivery_matches_run_record": true
+      }
+    },
+    {
+      "ordinal": 2,
+      "model_id": "model_887301fd7d0442a990b321b244fe3fe1",
+      "logical_id": "decision_300450ef7079ea3c22b470e9_2",
+      "action": "normalize_request",
+      "response_error_category": null,
+      "raw_content_valid_json": true,
+      "total_tokens": 11837,
+      "recorded_outcome": "accepted_normalization",
+      "persisted_rejection": null,
+      "received_validation_feedback": {
+        "category": "ProposalError",
+        "requirement": {
+          "corrections": [
+            {
+              "instruction": "Set this quantity to an exact phrase in this Goal's authenticated text_basis that names the requested physical quantity. Preserve every requested Goal; do not translate, invent, or drop a quantity.",
+              "path": [
+                "parameters",
+                "goals",
+                5,
+                "quantity"
+              ],
+              "reason": "general_quantity_requires_exact_user_phrase"
+            }
+          ],
+          "path": [
+            "parameters"
+          ],
+          "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in."
+        }
+      },
+      "rejected_candidate_projection": {
+        "bytes": 5253,
+        "complete": true,
+        "omitted": false,
+        "redacted": false,
+        "sha256": "ed4226e9ea9b6389631e39b82a4aaafdcd17503bfdca8c94a9ce29d30cf68085"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_887301fd7d0442a990b321b244fe3fe1.request.json",
+        "sha256": "0287bc7e39b00a2e144fe5cddc9af5909ea34fc12d9303dde24f7d0308c4d791"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_887301fd7d0442a990b321b244fe3fe1.response.json",
+        "sha256": "a61ec7e3b07512e88b32908ef78b111538df9850ebed95cf722e3a0d3abc3d03"
+      },
+      "delivery": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_887301fd7d0442a990b321b244fe3fe1.delivery.json",
+        "sha256": "0ce76f6c13f0349fb56b4bb3206a11f36895804e40366a8aaf6488ee8cc6ecbd"
+      },
+      "hash_checks": {
+        "request_matches_run_record": true,
+        "response_matches_run_record": true,
+        "response_request_link_matches": true,
+        "delivery_matches_run_record": true
+      }
+    },
+    {
+      "ordinal": 3,
+      "model_id": "model_09b5c81527d243669fdd2d962347c8b9",
+      "logical_id": "decision_341e74899b5526463d94505e_1",
+      "action": "initial_plan",
+      "response_error_category": null,
+      "raw_content_valid_json": true,
+      "total_tokens": 34675,
+      "recorded_outcome": "rejected",
+      "persisted_rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": {
+          "requirement": "Use the declared parameter schema at each listed path.",
+          "tool": "python.execute",
+          "corrections": [
+            {
+              "path": [
+                "parameters",
+                "steps",
+                2,
+                "parameters",
+                "code"
+              ],
+              "reason": "explicit_file_reference_required",
+              "instruction": "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known hash/language may be omitted, or use an explicit producer_step_id/producer_key with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries also require target_path and purpose. The program validates dependencies, permissions and qualifications and freezes actual hashes before execution. Choose one reference form; union alternatives are not cumulative. Historical policies still require concrete ID/hash references. Never guess hashes or weaken Goals."
+            }
+          ],
+          "errors": [
+            {
+              "type": "model_type",
+              "loc": [
+                "parameters",
+                "steps",
+                2,
+                "parameters",
+                "code"
+              ]
+            }
+          ]
+        }
+      },
+      "received_validation_feedback": null,
+      "rejected_candidate_projection": null,
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_09b5c81527d243669fdd2d962347c8b9.request.json",
+        "sha256": "f1e2fe11f95ae20ebf707e92aaf657149812143bf418995f7674a802c8c5d5ef"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_09b5c81527d243669fdd2d962347c8b9.response.json",
+        "sha256": "71ec7356104fb99dc22c3e8c740ad8ad54cd6f93c61025c98a87406b8aa1f1b8"
+      },
+      "delivery": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_09b5c81527d243669fdd2d962347c8b9.delivery.json",
+        "sha256": "b260ff952571694b367bedfc2f9edd7a314ab9dbf955d6f79dd979a384d1cfc5"
+      },
+      "hash_checks": {
+        "request_matches_run_record": true,
+        "response_matches_run_record": true,
+        "response_request_link_matches": true,
+        "delivery_matches_run_record": true
+      }
+    },
+    {
+      "ordinal": 4,
+      "model_id": "model_aed650a3c70540e8b9bdccede6a34c37",
+      "logical_id": "decision_341e74899b5526463d94505e_2",
+      "action": "knowledge.search",
+      "response_error_category": null,
+      "raw_content_valid_json": true,
+      "total_tokens": 17534,
+      "recorded_outcome": "call_tool",
+      "persisted_rejection": null,
+      "received_validation_feedback": {
+        "category": "ProposalError",
+        "requirement": {
+          "corrections": [
+            {
+              "instruction": "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known hash/language may be omitted, or use an explicit producer_step_id/producer_key with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries also require target_path and purpose. The program validates dependencies, permissions and qualifications and freezes actual hashes before execution. Choose one reference form; union alternatives are not cumulative. Historical policies still require concrete ID/hash references. Never guess hashes or weaken Goals.",
+              "path": [
+                "parameters",
+                "steps",
+                2,
+                "parameters",
+                "code"
+              ],
+              "reason": "explicit_file_reference_required"
+            }
+          ],
+          "errors": [
+            {
+              "loc": [
+                "parameters",
+                "steps",
+                2,
+                "parameters",
+                "code"
+              ],
+              "type": "model_type"
+            }
+          ],
+          "requirement": "Use the declared parameter schema at each listed path.",
+          "tool": "python.execute"
+        }
+      },
+      "rejected_candidate_projection": {
+        "bytes": 16823,
+        "complete": false,
+        "omitted": true,
+        "redacted": true,
+        "sha256": "d021ebffb038100e4df2b5ec6409ba315fc931b95f91523105ea9f08b0dbf228"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_aed650a3c70540e8b9bdccede6a34c37.request.json",
+        "sha256": "8eef6810423e7f7140deccec911a3910352e225af29cc3d4b232abcc8e500f10"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_aed650a3c70540e8b9bdccede6a34c37.response.json",
+        "sha256": "68f0f59a4ca18602bba4667fa90ca8ac7f84c93a9694d1a4202a42150444e3f8"
+      },
+      "delivery": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_aed650a3c70540e8b9bdccede6a34c37.delivery.json",
+        "sha256": "b260ff952571694b367bedfc2f9edd7a314ab9dbf955d6f79dd979a384d1cfc5"
+      },
+      "hash_checks": {
+        "request_matches_run_record": true,
+        "response_matches_run_record": true,
+        "response_request_link_matches": true,
+        "delivery_matches_run_record": true
+      }
+    },
+    {
+      "ordinal": 5,
+      "model_id": "model_340d87b4cee3454d95406cf48408c4ef",
+      "logical_id": "decision_d0d76753c3f80e5db4cf6e82_1",
+      "action": "initial_plan",
+      "response_error_category": null,
+      "raw_content_valid_json": true,
+      "total_tokens": 31598,
+      "recorded_outcome": "rejected",
+      "persisted_rejection": {
+        "error_category": "ValidationError",
+        "recovery_kind": "correction",
+        "requirement": [
+          {
+            "type": "value_error",
+            "loc": []
+          }
+        ]
+      },
+      "received_validation_feedback": null,
+      "rejected_candidate_projection": null,
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_340d87b4cee3454d95406cf48408c4ef.request.json",
+        "sha256": "98bd1df465c351af37fa3040f736ff60444c0ecfa53b06d7ff4389f48a11c0d1"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_340d87b4cee3454d95406cf48408c4ef.response.json",
+        "sha256": "2941db8b537e5cfbe5c202e7aa3f54d8b3127a5b55a0b6932f84278f99b9c35b"
+      },
+      "delivery": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_340d87b4cee3454d95406cf48408c4ef.delivery.json",
+        "sha256": "29e25d2c698009e572160cd598481baeca39b61a8299a11a01d5bb1e881fd608"
+      },
+      "hash_checks": {
+        "request_matches_run_record": true,
+        "response_matches_run_record": true,
+        "response_request_link_matches": true,
+        "delivery_matches_run_record": true
+      }
+    },
+    {
+      "ordinal": 6,
+      "model_id": "model_3cd8e8896e9a4c0f9322f04111418126",
+      "logical_id": "decision_d0d76753c3f80e5db4cf6e82_2",
+      "action": "initial_plan",
+      "response_error_category": null,
+      "raw_content_valid_json": true,
+      "total_tokens": 39400,
+      "recorded_outcome": "rejected",
+      "persisted_rejection": {
+        "error_category": "ValidationError",
+        "recovery_kind": "correction",
+        "requirement": [
+          {
+            "type": "value_error",
+            "loc": []
+          }
+        ]
+      },
+      "received_validation_feedback": {
+        "category": "ValidationError",
+        "requirement": [
+          {
+            "loc": [],
+            "type": "value_error"
+          }
+        ]
+      },
+      "rejected_candidate_projection": {
+        "bytes": 16932,
+        "complete": false,
+        "omitted": true,
+        "redacted": true,
+        "sha256": "79d400d267a431270c4cd7609a6a3841f04e838a525c544b9eb83fb6efc1520d"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_3cd8e8896e9a4c0f9322f04111418126.request.json",
+        "sha256": "a82a58209e46c15519e991c2f0d2142a64d724ffa934a513b78ecf9542fdf7ad"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_3cd8e8896e9a4c0f9322f04111418126.response.json",
+        "sha256": "774b9448645301010dfcf7aab16d56b0beb3eadec380e848706a8eec21d74394"
+      },
+      "delivery": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_3cd8e8896e9a4c0f9322f04111418126.delivery.json",
+        "sha256": "29e25d2c698009e572160cd598481baeca39b61a8299a11a01d5bb1e881fd608"
+      },
+      "hash_checks": {
+        "request_matches_run_record": true,
+        "response_matches_run_record": true,
+        "response_request_link_matches": true,
+        "delivery_matches_run_record": true
+      }
+    },
+    {
+      "ordinal": 7,
+      "model_id": "model_cb81b8044c3f46efba43ef326f6d8271",
+      "logical_id": "decision_d0d76753c3f80e5db4cf6e82_3",
+      "action": "initial_plan",
+      "response_error_category": null,
+      "raw_content_valid_json": true,
+      "total_tokens": 29397,
+      "recorded_outcome": "rejected",
+      "persisted_rejection": {
+        "error_category": "ValidationError",
+        "recovery_kind": "correction",
+        "requirement": [
+          {
+            "type": "value_error",
+            "loc": []
+          }
+        ]
+      },
+      "received_validation_feedback": {
+        "category": "ValidationError",
+        "requirement": [
+          {
+            "loc": [],
+            "type": "value_error"
+          }
+        ]
+      },
+      "rejected_candidate_projection": {
+        "bytes": 14792,
+        "complete": false,
+        "omitted": true,
+        "redacted": true,
+        "sha256": "106a80812d36a4f99e02672dfe1eda10ee310e21202d85995d63e87ca7cefe37"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_cb81b8044c3f46efba43ef326f6d8271.request.json",
+        "sha256": "5f9e5935fecd02150d8475d2c7550b0d322ad8c91b58dec344eefffb3298aae1"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_cb81b8044c3f46efba43ef326f6d8271.response.json",
+        "sha256": "a00485a94c2364a79ad0f6ab4276109589b9d90f978e639ee72440c4036339ad"
+      },
+      "delivery": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data/runs/run_c570f932acb447b7b3ad79bc4c73d92d/model/model_cb81b8044c3f46efba43ef326f6d8271.delivery.json",
+        "sha256": "29e25d2c698009e572160cd598481baeca39b61a8299a11a01d5bb1e881fd608"
+      },
+      "hash_checks": {
+        "request_matches_run_record": true,
+        "response_matches_run_record": true,
+        "response_request_link_matches": true,
+        "delivery_matches_run_record": true
+      }
+    }
+  ],
+  "limits": [
+    "No new live execution, model call, product validation/replay, tests or scientific calculation was performed for this review.",
+    "Original inputs, model records, Run state, frozen assets and product source were not modified.",
+    "Static downstream script errors are separate from the observed admission failure.",
+    "The terminal graph validator message was discarded by production feedback; only its category and root location survive."
+  ]
+}

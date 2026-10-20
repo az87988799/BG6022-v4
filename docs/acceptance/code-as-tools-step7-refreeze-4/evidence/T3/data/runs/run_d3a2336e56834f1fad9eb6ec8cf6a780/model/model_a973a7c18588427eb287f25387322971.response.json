@@ -1,0 +1,95 @@
+{
+  "request_hash": "1c3343acee0138e0a5dbf5f05e87a766111806b9d5a2516af20edd4e860fea76",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "goal_map": {
+        "goal_prepared_geometry": {
+          "port": "prepared_geometry",
+          "step_key": "prepare_butane"
+        },
+        "goal_refinement_criterion": {
+          "gap": "Criterion pre-registered in refinement criterion document; will be reported after coarse-scan observations are returned.",
+          "port": "refinement_criterion"
+        },
+        "goal_random_seed": {
+          "gap": "Seed policy recorded in criterion document; determinism statement for actual algorithms pending execution.",
+          "port": "random_seed"
+        },
+        "goal_dihedral_scan": {
+          "gap": "Constrained optimizations at the seven requested angles not yet executed; method/basis must be selected first.",
+          "port": "dihedral_scan"
+        },
+        "goal_electronic_energy": {
+          "gap": "Electronic energies require the constrained optimizations, which follow method/basis selection.",
+          "port": "electronic_energy"
+        },
+        "goal_relative_energy_curve": {
+          "gap": "Relative energy curve requires coarse-scan electronic energies.",
+          "port": "relative_energy_curve"
+        },
+        "goal_refinement_decision": {
+          "gap": "Refinement decision must follow coarse-scan observations in the main decision loop.",
+          "port": "refinement_decision"
+        },
+        "goal_deliverables": {
+          "gap": "Structures, data, curve, initial structure, raw evidence and failure list not yet produced.",
+          "port": "deliverables"
+        }
+      },
+      "steps": [
+        {
+          "key": "resolve_butane",
+          "parameters": {
+            "system_id": "system_butane"
+          },
+          "tool": "structure.resolve",
+          "system_id": "system_butane"
+        },
+        {
+          "depends_on": [
+            "resolve_butane"
+          ],
+          "inputs": {
+            "resolved_identity": {
+              "port": "requested_identity",
+              "producer_key": "resolve_butane"
+            }
+          },
+          "key": "prepare_butane",
+          "system_id": "system_butane",
+          "tool": "structure.prepare"
+        },
+        {
+          "key": "criterion_doc",
+          "parameters": {
+            "name": "refinement_criterion.md",
+            "role": "text",
+            "content": "# Pre-registered refinement criterion for n-butane central C-C-C-C dihedral scan\n\nSystem: neutral singlet n-butane, gas phase. Coarse scan angles: -180, -120, -60, 0, 60, 120, 180 degrees, each with a constrained optimization holding the central C-C-C-C dihedral.\n\nAcceptance rule: only converged constrained optimizations count as successful scan points; non-converged points are retained and flagged, never presented as successful minima or extrema.\n\nRefinement rule applied after the coarse scan: plot relative electronic energy against the actual optimized dihedral. Refinement is indicated only if a suspected local extremum is bracketed by adjacent coarse points showing a sign change in the finite-difference slope and the energy difference across at least one adjacent interval exceeds 1.0 kcal/mol, or if one converged point lies more than 1.5 kcal/mol above both immediate neighbours. If indicated, add at most two previously uncomputed angles, placed at midpoints of the steepest bracketing intervals around the suspected extremum. If the curve is smooth or monotonic within numerical noise, or all adjacent energy changes are at most 1.0 kcal/mol, do not refine. The refinement decision is made only after coarse observations return to the main decision loop.\n\nRandom seed policy: any stochastic structure generation, search or other algorithm uses seed 1701 and records it; if a library or model cannot fix a seed, that is explicitly recorded as not fixable rather than fabricating determinism. The planned ORCA constrained optimizations are deterministic in this workflow.\n"
+          },
+          "tool": "workspace.write"
+        }
+      ]
+    },
+    "reason": "Correction: goal bindings now preserve each requested port. refinement_criterion and random_seed are recorded as gaps with their correct ports (the criterion document is a written artifact, not the criterion port), as are the scan/energy/curve/decision/deliverable goals. Identity resolution (system_id in its parameters as required by the contract) and geometry preparation are retained, with preparation bound to goal_prepared_geometry. Method/basis are still unselected, so no ORCA/Python science step is proposed yet."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"goal_map\":{\"goal_prepared_geometry\":{\"port\":\"prepared_geometry\",\"step_key\":\"prepare_butane\"},\"goal_refinement_criterion\":{\"gap\":\"Criterion pre-registered in refinement criterion document; will be reported after coarse-scan observations are returned.\",\"port\":\"refinement_criterion\"},\"goal_random_seed\":{\"gap\":\"Seed policy recorded in criterion document; determinism statement for actual algorithms pending execution.\",\"port\":\"random_seed\"},\"goal_dihedral_scan\":{\"gap\":\"Constrained optimizations at the seven requested angles not yet executed; method/basis must be selected first.\",\"port\":\"dihedral_scan\"},\"goal_electronic_energy\":{\"gap\":\"Electronic energies require the constrained optimizations, which follow method/basis selection.\",\"port\":\"electronic_energy\"},\"goal_relative_energy_curve\":{\"gap\":\"Relative energy curve requires coarse-scan electronic energies.\",\"port\":\"relative_energy_curve\"},\"goal_refinement_decision\":{\"gap\":\"Refinement decision must follow coarse-scan observations in the main decision loop.\",\"port\":\"refinement_decision\"},\"goal_deliverables\":{\"gap\":\"Structures, data, curve, initial structure, raw evidence and failure list not yet produced.\",\"port\":\"deliverables\"}},\"steps\":[{\"key\":\"resolve_butane\",\"parameters\":{\"system_id\":\"system_butane\"},\"tool\":\"structure.resolve\",\"system_id\":\"system_butane\"},{\"depends_on\":[\"resolve_butane\"],\"inputs\":{\"resolved_identity\":{\"port\":\"requested_identity\",\"producer_key\":\"resolve_butane\"}},\"key\":\"prepare_butane\",\"system_id\":\"system_butane\",\"tool\":\"structure.prepare\"},{\"key\":\"criterion_doc\",\"parameters\":{\"name\":\"refinement_criterion.md\",\"role\":\"text\",\"content\":\"# Pre-registered refinement criterion for n-butane central C-C-C-C dihedral scan\\n\\nSystem: neutral singlet n-butane, gas phase. Coarse scan angles: -180, -120, -60, 0, 60, 120, 180 degrees, each with a constrained optimization holding the central C-C-C-C dihedral.\\n\\nAcceptance rule: only converged constrained optimizations count as successful scan points; non-converged points are retained and flagged, never presented as successful minima or extrema.\\n\\nRefinement rule applied after the coarse scan: plot relative electronic energy against the actual optimized dihedral. Refinement is indicated only if a suspected local extremum is bracketed by adjacent coarse points showing a sign change in the finite-difference slope and the energy difference across at least one adjacent interval exceeds 1.0 kcal/mol, or if one converged point lies more than 1.5 kcal/mol above both immediate neighbours. If indicated, add at most two previously uncomputed angles, placed at midpoints of the steepest bracketing intervals around the suspected extremum. If the curve is smooth or monotonic within numerical noise, or all adjacent energy changes are at most 1.0 kcal/mol, do not refine. The refinement decision is made only after coarse observations return to the main decision loop.\\n\\nRandom seed policy: any stochastic structure generation, search or other algorithm uses seed 1701 and records it; if a library or model cannot fix a seed, that is explicitly recorded as not fixable rather than fabricating determinism. The planned ORCA constrained optimizations are deterministic in this workflow.\\n\"},\"tool\":\"workspace.write\"}]},\"reason\":\"Correction: goal bindings now preserve each requested port. refinement_criterion and random_seed are recorded as gaps with their correct ports (the criterion document is a written artifact, not the criterion port), as are the scan/energy/curve/decision/deliverable goals. Identity resolution (system_id in its parameters as required by the contract) and geometry preparation are retained, with preparation bound to goal_prepared_geometry. Method/basis are still unselected, so no ORCA/Python science step is proposed yet.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 14236,
+    "completion_tokens": 1171,
+    "total_tokens": 15407,
+    "prompt_cache_hit_tokens": 8064,
+    "prompt_cache_miss_tokens": 6172
+  },
+  "response_hash": "9f52fc7ca8fc4c525c65f643cc5de4cb4baa5d25f067fa0dcff51ffa8349187c",
+  "response_bytes": 6063,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "00bfce7a-dfc8-4966-93f1-d71c643b6a44",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 5.375
+}

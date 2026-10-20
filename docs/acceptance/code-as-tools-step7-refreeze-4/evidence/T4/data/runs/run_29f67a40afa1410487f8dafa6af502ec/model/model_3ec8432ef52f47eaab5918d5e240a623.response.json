@@ -1,0 +1,177 @@
+{
+  "request_hash": "9cf17ee595e5bb74f43c328761999f0a3c7fc95cc98a5f92d4efda1721867550",
+  "proposal": {
+    "schema_version": "request-semantics-3",
+    "message_ids": [
+      "message_949df58502184edca7e50ca3e6bbce6a"
+    ],
+    "kind": "normalize",
+    "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。",
+    "identities": [
+      {
+        "key": "acetone",
+        "name": "丙酮",
+        "query_name": "acetone",
+        "text_basis": "丙酮",
+        "message_id": "message_949df58502184edca7e50ca3e6bbce6a"
+      }
+    ],
+    "conditions": {
+      "charge": {
+        "source": "explicit",
+        "value": 0,
+        "text_basis": "中性",
+        "message_id": "message_949df58502184edca7e50ca3e6bbce6a"
+      },
+      "multiplicity": {
+        "source": "explicit",
+        "value": 1,
+        "text_basis": "单重态",
+        "message_id": "message_949df58502184edca7e50ca3e6bbce6a"
+      },
+      "environment": {
+        "source": "explicit",
+        "value": "gas_phase",
+        "text_basis": "气相",
+        "message_id": "message_949df58502184edca7e50ca3e6bbce6a"
+      }
+    },
+    "automatic_selection": {
+      "method": {
+        "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+        "message_id": "message_949df58502184edca7e50ca3e6bbce6a"
+      },
+      "basis": {
+        "text_basis": "自行选择适合当前预算的线性响应TDDFT方法和基组",
+        "message_id": "message_949df58502184edca7e50ca3e6bbce6a"
+      }
+    },
+    "goals": [
+      {
+        "key": "identity",
+        "port": "resolved_identity",
+        "system_refs": [
+          "acetone"
+        ],
+        "verification": "reported_with_limitations",
+        "text_basis": "丙酮",
+        "source_refs": [
+          "source_026948de90fc80ca"
+        ]
+      },
+      {
+        "key": "geometry",
+        "port": "prepared_geometry",
+        "system_refs": [
+          "acetone"
+        ],
+        "verification": "reported_with_limitations",
+        "text_basis": "请为丙酮（中性、单重态、气相）生成合理结构",
+        "source_refs": [
+          "source_026948de90fc80ca"
+        ]
+      },
+      {
+        "key": "excitations",
+        "port": "excitation_energies",
+        "quantity": "激发能（eV）",
+        "geometry_relation": "fixed_initial",
+        "system_refs": [
+          "acetone"
+        ],
+        "verification": "reported_with_limitations",
+        "text_basis": "计算该几何上最低5个单重垂直电子激发",
+        "source_refs": [
+          "source_026948de90fc80ca",
+          "source_d076e5fc4a546ef5"
+        ]
+      },
+      {
+        "key": "oscillator_strengths",
+        "port": "oscillator_strengths",
+        "quantity": "电偶极长度规范的无量纲振子强度",
+        "geometry_relation": "fixed_initial",
+        "system_refs": [
+          "acetone"
+        ],
+        "verification": "reported_with_limitations",
+        "text_basis": "电偶极长度规范的无量纲振子强度",
+        "source_refs": [
+          "source_d076e5fc4a546ef5"
+        ]
+      },
+      {
+        "key": "transition_analysis",
+        "port": "transition_analysis",
+        "quantity": "分析低能态与较强跃迁的区别",
+        "system_refs": [
+          "acetone"
+        ],
+        "verification": "reported_with_limitations",
+        "text_basis": "并分析低能态与较强跃迁的区别",
+        "source_refs": [
+          "source_d076e5fc4a546ef5"
+        ]
+      },
+      {
+        "key": "method_choice",
+        "port": "knowledge_answer",
+        "quantity": "说明选用完整TDDFT还是TDA及选择依据",
+        "system_refs": [
+          "acetone"
+        ],
+        "verification": "reported_with_limitations",
+        "text_basis": "说明选用完整TDDFT还是TDA及选择依据",
+        "source_refs": [
+          "source_026948de90fc80ca"
+        ]
+      },
+      {
+        "key": "seed",
+        "port": "random_seed",
+        "quantity": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录",
+        "system_refs": [
+          "acetone"
+        ],
+        "verification": "reported_with_limitations",
+        "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "source_refs": [
+          "source_984961f22c2a8a8a"
+        ]
+      },
+      {
+        "key": "delivery",
+        "port": "delivery_report",
+        "quantity": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制",
+        "system_refs": [
+          "acetone"
+        ],
+        "verification": "reported_with_limitations",
+        "text_basis": "交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。",
+        "source_refs": [
+          "source_0676c48cb79dd20a"
+        ]
+      }
+    ],
+    "reason": "Normalize acetone TDDFT excited-state request: identity 丙酮→acetone; explicit charge 0, multiplicity 1, gas_phase; method/basis delegated to automatic_selection per exact authorization. Goals cover input identity/geometry, lowest-5 vertical singlet excitation energies and length-gauge oscillator strengths on the prepared geometry (fixed_initial), low-vs-strong transition analysis, TDDFT-vs-TDA rationale, seed-1701 recording, and delivery contents; verification reported_with_limitations per default."
+  },
+  "raw_content": "{\"schema_version\":\"request-semantics-3\",\"message_ids\":[\"message_949df58502184edca7e50ca3e6bbce6a\"],\"kind\":\"normalize\",\"text_basis\":\"请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。\",\"identities\":[{\"key\":\"acetone\",\"name\":\"丙酮\",\"query_name\":\"acetone\",\"text_basis\":\"丙酮\",\"message_id\":\"message_949df58502184edca7e50ca3e6bbce6a\"}],\"conditions\":{\"charge\":{\"source\":\"explicit\",\"value\":0,\"text_basis\":\"中性\",\"message_id\":\"message_949df58502184edca7e50ca3e6bbce6a\"},\"multiplicity\":{\"source\":\"explicit\",\"value\":1,\"text_basis\":\"单重态\",\"message_id\":\"message_949df58502184edca7e50ca3e6bbce6a\"},\"environment\":{\"source\":\"explicit\",\"value\":\"gas_phase\",\"text_basis\":\"气相\",\"message_id\":\"message_949df58502184edca7e50ca3e6bbce6a\"}},\"automatic_selection\":{\"method\":{\"text_basis\":\"自行选择适合当前预算的线性响应TDDFT方法和基组\",\"message_id\":\"message_949df58502184edca7e50ca3e6bbce6a\"},\"basis\":{\"text_basis\":\"自行选择适合当前预算的线性响应TDDFT方法和基组\",\"message_id\":\"message_949df58502184edca7e50ca3e6bbce6a\"}},\"goals\":[{\"key\":\"identity\",\"port\":\"resolved_identity\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\",\"text_basis\":\"丙酮\",\"source_refs\":[\"source_026948de90fc80ca\"]},{\"key\":\"geometry\",\"port\":\"prepared_geometry\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\",\"text_basis\":\"请为丙酮（中性、单重态、气相）生成合理结构\",\"source_refs\":[\"source_026948de90fc80ca\"]},{\"key\":\"excitations\",\"port\":\"excitation_energies\",\"quantity\":\"激发能（eV）\",\"geometry_relation\":\"fixed_initial\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\",\"text_basis\":\"计算该几何上最低5个单重垂直电子激发\",\"source_refs\":[\"source_026948de90fc80ca\",\"source_d076e5fc4a546ef5\"]},{\"key\":\"oscillator_strengths\",\"port\":\"oscillator_strengths\",\"quantity\":\"电偶极长度规范的无量纲振子强度\",\"geometry_relation\":\"fixed_initial\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\",\"text_basis\":\"电偶极长度规范的无量纲振子强度\",\"source_refs\":[\"source_d076e5fc4a546ef5\"]},{\"key\":\"transition_analysis\",\"port\":\"transition_analysis\",\"quantity\":\"分析低能态与较强跃迁的区别\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\",\"text_basis\":\"并分析低能态与较强跃迁的区别\",\"source_refs\":[\"source_d076e5fc4a546ef5\"]},{\"key\":\"method_choice\",\"port\":\"knowledge_answer\",\"quantity\":\"说明选用完整TDDFT还是TDA及选择依据\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\",\"text_basis\":\"说明选用完整TDDFT还是TDA及选择依据\",\"source_refs\":[\"source_026948de90fc80ca\"]},{\"key\":\"seed\",\"port\":\"random_seed\",\"quantity\":\"若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\",\"text_basis\":\"若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。\",\"source_refs\":[\"source_984961f22c2a8a8a\"]},{\"key\":\"delivery\",\"port\":\"delivery_report\",\"quantity\":\"交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制\",\"system_refs\":[\"acetone\"],\"verification\":\"reported_with_limitations\",\"text_basis\":\"交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。\",\"source_refs\":[\"source_0676c48cb79dd20a\"]}],\"reason\":\"Normalize acetone TDDFT excited-state request: identity 丙酮→acetone; explicit charge 0, multiplicity 1, gas_phase; method/basis delegated to automatic_selection per exact authorization. Goals cover input identity/geometry, lowest-5 vertical singlet excitation energies and length-gauge oscillator strengths on the prepared geometry (fixed_initial), low-vs-strong transition analysis, TDDFT-vs-TDA rationale, seed-1701 recording, and delivery contents; verification reported_with_limitations per default.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 5722,
+    "completion_tokens": 3193,
+    "total_tokens": 8915,
+    "prompt_cache_hit_tokens": 2048,
+    "prompt_cache_miss_tokens": 3674
+  },
+  "response_hash": "a5037c09f7ac382da1d83d6803dc7e0d1031c4a0f39656945e86e663d769708a",
+  "response_bytes": 14590,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "b7358718-bb6d-4f45-9fb3-d7fd206db51c",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 13.561999999990803
+}

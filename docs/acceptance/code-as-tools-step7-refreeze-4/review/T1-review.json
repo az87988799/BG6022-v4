@@ -1,0 +1,384 @@
+{
+  "reviewed_at_utc": "2026-10-20T18:46:22.362137+00:00",
+  "task": "T1",
+  "run_id": "run_434d7dd084ee49139a0b37668df6608c",
+  "scope": "Settled original evidence only; no product execution, test, model, ORCA, network, credentials, state mutation or source changes.",
+  "outcome": {
+    "state": "failed",
+    "delivery_status": "partial",
+    "model_calls": 9,
+    "model_tokens_used": 151310,
+    "model_tokens_unknown": 0,
+    "orca_starts_actual": 0,
+    "attempts": 0,
+    "goal_status": {
+      "goal_ethanol_initial_geometry": "insufficient_evidence",
+      "goal_ethanol_optimized_geometry": "insufficient_evidence",
+      "goal_ethanol_frequencies": "insufficient_evidence",
+      "goal_ethanol_local_minimum": "insufficient_evidence",
+      "goal_artifact_retention": "insufficient_evidence",
+      "goal_qa_gap_report": "insufficient_evidence",
+      "goal_completion_caveat": "insufficient_evidence",
+      "goal_random_seed_record": "insufficient_evidence"
+    },
+    "settlement_unknown_fields": {},
+    "driver_exception": null
+  },
+  "successful_progress": [
+    "Request normalized on first response to eight requested Goals with neutral/singlet/gas conditions.",
+    "First Plan admitted; ethanol identity resolution and structure preparation completed.",
+    "Prepared XYZ contains nine atoms and passed initial_geometry_identity (structure-prepare-3), a limited initial-geometry check.",
+    "B3LYP/def2-SVP selected and activated as Request v3 after two malformed-JSON responses; prepared binding was revalidated and retained.",
+    "A later corrected one-step identity-only Plan was admitted and a second identity query completed."
+  ],
+  "direct_stop": {
+    "kind": "model_explicit_stop",
+    "model_id": "model_358139dd552c49749bed54f9724f6df3",
+    "reason": "No pending Step is ready. The only completed Step resolved the ethanol identity, but no qualified prepared/registered initial geometry exists and structure.prepare budget is exhausted (1/1 used). Therefore no managed ORCA optimization/frequency calculation can be launched; delivery must report partial results, explicit gaps, and non-completion without claiming optimization or frequency evidence.",
+    "not_cause": [
+      "No driver exception or unsettled costs",
+      "Not exhausted model/ORCA allowance: 15 model calls and 12 ORCA starts remain",
+      "The earlier malformed JSON was corrected successfully; it did not itself terminate the Run"
+    ]
+  },
+  "material_finding": {
+    "severity": "high",
+    "summary": "Retained current qualified prepared geometry disappeared from planning context after method selection; the model replanned preparation, hit its already-consumed quota, then stopped under an incorrect missing-geometry premise.",
+    "persisted_prepared_binding": {
+      "request_version": 3,
+      "system_id": "system_ethanol",
+      "source_request_version": 2,
+      "purpose_fingerprint": "25453d8e01528816b69109222b241d665068696ced6a4d73775f63fbcc6fad95",
+      "call_id": "call_af0995c60d654ae99650753112255c6d",
+      "result_id": "result_46664065606b49579e3087d742f85c0e",
+      "artifact_id": "artifact_4e3023a7bac24298853f05d1473d3de5",
+      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+      "rule_version": "structure-prepare-3",
+      "port": "prepared_geometry"
+    },
+    "context_evidence": {
+      "rejected_plan": {
+        "model_id": "model_31e1f47a81b14cdda6117353929c6fbd",
+        "visible_result_ids": [],
+        "prepared_artifact_id_present": false,
+        "prepared_result_in_other_result_ids": true,
+        "input_bindings_present": false,
+        "request_geometry_artifact_id": null,
+        "validation_error": null,
+        "related_results": [],
+        "decision_purpose": {
+          "allowed_actions": [
+            "call_tool",
+            "clarify",
+            "initial_plan",
+            "stop"
+          ],
+          "kind": "planning"
+        }
+      },
+      "corrected_plan": {
+        "model_id": "model_b8816620cc25424cb6be4d6e9bd1d891",
+        "visible_result_ids": [],
+        "prepared_artifact_id_present": false,
+        "prepared_result_in_other_result_ids": true,
+        "input_bindings_present": false,
+        "request_geometry_artifact_id": null,
+        "validation_error": {
+          "category": "PlanningError",
+          "requirement": "proposed Plan exceeds remaining structure_preparations budget: 1 unreserved Tool calls require 1 units; 0 remain"
+        },
+        "related_results": [],
+        "decision_purpose": {
+          "allowed_actions": [
+            "call_tool",
+            "clarify",
+            "initial_plan",
+            "stop"
+          ],
+          "kind": "planning"
+        }
+      },
+      "stop": {
+        "model_id": "model_358139dd552c49749bed54f9724f6df3",
+        "visible_result_ids": [
+          "result_6fd0dbb2621e40089f193c05aa452ece"
+        ],
+        "prepared_artifact_id_present": false,
+        "prepared_result_in_other_result_ids": true,
+        "input_bindings_present": false,
+        "request_geometry_artifact_id": null,
+        "validation_error": null,
+        "related_results": [
+          "result_6fd0dbb2621e40089f193c05aa452ece"
+        ],
+        "decision_purpose": {
+          "allowed_actions": [
+            "call_tool",
+            "clarify",
+            "revise_plan",
+            "stop"
+          ],
+          "kind": "planning"
+        }
+      }
+    },
+    "plan_rejection_assessment": "The budget rejection itself correctly rejects a new second structure.prepare call against 1/1 consumed. The blocker is failure to expose the reusable existing input and its exact artifact/hash, followed by the model not querying the retained result ID before stopping.",
+    "causal_scope": "Archived actions demonstrate this failure sequence. Code inspection shows a missing input-binding retention path. This is a newly observed later-stage obstacle; the prior batch did not reach this path, so this review does not claim when the bug was introduced.",
+    "source_locations": [
+      {
+        "path": "src/orca_agent/store.py",
+        "line": 1791,
+        "sha256": "958e01e20fae789c9ede6912add1aefcb4e2134b9f979c7702efcbb6ea3cb1e6",
+        "meaning": "condition-selection-3 revalidates and carries current acquired-input bindings"
+      },
+      {
+        "path": "src/orca_agent/input_bindings.py",
+        "line": 144,
+        "sha256": "71a3e50bcbaa440d0817e25feec46d5cc62a579e8a723d6239445710749913d5",
+        "meaning": "carry_selected_identity_inputs preserves qualified prepared_geometry under simplified workflow"
+      },
+      {
+        "path": "src/orca_agent/decision_purpose.py",
+        "line": 174,
+        "sha256": "fa136548ceab6acfa55d8293fd4b540fd8b0904f230a9ba370708c911d161b8a",
+        "meaning": "relevant_result_ids selects feedback, goal bindings, snapshots and Plan dependencies but does not select Run.input_bindings"
+      },
+      {
+        "path": "src/orca_agent/agent.py",
+        "line": 242,
+        "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+        "meaning": "caller loads only selected Result IDs into the decision request"
+      },
+      {
+        "path": "src/orca_agent/context.py",
+        "line": 2952,
+        "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6",
+        "meaning": "context applies the same relevant_result_ids filter"
+      },
+      {
+        "path": "src/orca_agent/context.py",
+        "line": 3148,
+        "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6",
+        "meaning": "excluded Results become only other_result_ids"
+      }
+    ]
+  },
+  "comparison_refreeze3": {
+    "same_direct_failure": false,
+    "prior_state": "failed",
+    "prior_model_calls": 3,
+    "prior_tokens": 39588,
+    "prior_orca": 0,
+    "prior_completed_tool_calls": 0,
+    "prior_direct_cause": "Three normalize_request proposals rejected for source-reference/value_basis contracts; bounded proposal corrections exhausted before any identity or geometry work.",
+    "current_difference": "Current first normalization succeeds and actual geometry is prepared; stop occurs later after condition selection and loss of input visibility."
+  },
+  "scientific_and_goal_status": {
+    "initial_geometry_check": "passed for initial graph/atom mapping and finite geometry only",
+    "optimized_geometry": "not computed",
+    "frequencies": "not computed",
+    "local_minimum": "unsupported/no frequency evidence",
+    "required_goals_complete": false,
+    "all_eight_recorded_goal_status": "insufficient_evidence",
+    "independent_reference": "not run",
+    "delivery_issue": "The terminal gap says no qualified initial geometry and no seed-using procedure occurred, although the retained prepared-geometry evidence exists and records random_seed=null/no seed exposed. Historical evidence appendix retains the actual preparation; this inconsistency is not a successful scientific result."
+  },
+  "timeline": [
+    {
+      "model_id": "model_55d5c23c755c4090874abc617eaad17b",
+      "created_at": "2026-10-20T18:38:31.064010+00:00",
+      "request_version": 1,
+      "plan_version": null,
+      "action": "normalize_request",
+      "transport_error_category": null,
+      "total_tokens": 13239,
+      "response_file_sha256": "a6feed604277571e18dae94db7fcf8be2b7ae29d5cd0355faf93c97e1d59e302"
+    },
+    {
+      "model_id": "model_92e70a8cc332474c9e44ef56beefd641",
+      "created_at": "2026-10-20T18:39:04.858016+00:00",
+      "request_version": 2,
+      "plan_version": null,
+      "action": "initial_plan",
+      "transport_error_category": null,
+      "total_tokens": 15665,
+      "response_file_sha256": "0c818d3670de71834d52831e8f0c6ffeb1513e2e6405eacc475427ee93aea7e3"
+    },
+    {
+      "model_id": "model_e40d00566015434585c3588b2831b83d",
+      "created_at": "2026-10-20T18:39:13.329930+00:00",
+      "request_version": 2,
+      "plan_version": 1,
+      "action": "call_tool",
+      "transport_error_category": null,
+      "total_tokens": 16345,
+      "response_file_sha256": "4ec3b88feedd6e2354da74f2fade0feb13d7feb73e87081db8f3e8487387be2f"
+    },
+    {
+      "model_id": "model_35ae0325322b419199db2199beb3e8b5",
+      "created_at": "2026-10-20T18:39:20.015077+00:00",
+      "request_version": 2,
+      "plan_version": 1,
+      "action": null,
+      "transport_error_category": "invalid_proposal_json",
+      "total_tokens": 17348,
+      "response_file_sha256": "e5ffb8345522596dece29738ed23c2303c4a1a4675caa81979786a305e237f10",
+      "independent_json_parse_error": {
+        "message": "Expecting ',' delimiter",
+        "character": 1132,
+        "length": 1132
+      }
+    },
+    {
+      "model_id": "model_780ac74586464c66b4e6841d81345b18",
+      "created_at": "2026-10-20T18:39:41.740365+00:00",
+      "request_version": 2,
+      "plan_version": 1,
+      "action": null,
+      "transport_error_category": "invalid_proposal_json",
+      "total_tokens": 14884,
+      "response_file_sha256": "b9f92cd825dfecce0dacad8561b6caa1feb9c4a8712f8b5479fa0bdb3f6095a4",
+      "independent_json_parse_error": {
+        "message": "Expecting ',' delimiter",
+        "character": 1369,
+        "length": 1369
+      }
+    },
+    {
+      "model_id": "model_92d717aea90841dd96f0d919a752ac69",
+      "created_at": "2026-10-20T18:39:50.090183+00:00",
+      "request_version": 2,
+      "plan_version": 1,
+      "action": "select_conditions",
+      "transport_error_category": null,
+      "total_tokens": 15601,
+      "response_file_sha256": "3fb7af12aee535c0ad263c3f7765fce0711dbf4c4606b1db9782a2fb0437ee5c"
+    },
+    {
+      "model_id": "model_31e1f47a81b14cdda6117353929c6fbd",
+      "created_at": "2026-10-20T18:40:02.213192+00:00",
+      "request_version": 3,
+      "plan_version": null,
+      "action": "initial_plan",
+      "transport_error_category": null,
+      "total_tokens": 25305,
+      "response_file_sha256": "76e368410cee090ac6ca97a8f471b406c887e250ec9b4e9304ab32e6073b5f28",
+      "application_rejection": "PlanningError: proposed Plan exceeds remaining structure_preparations budget: 1 unreserved Tool calls require 1 units; 0 remain"
+    },
+    {
+      "model_id": "model_b8816620cc25424cb6be4d6e9bd1d891",
+      "created_at": "2026-10-20T18:40:52.043057+00:00",
+      "request_version": 3,
+      "plan_version": null,
+      "action": "initial_plan",
+      "transport_error_category": null,
+      "total_tokens": 16825,
+      "response_file_sha256": "0105230aae4686e32db41d3251f44f875a29b88d8401c826d858da60683379e7"
+    },
+    {
+      "model_id": "model_358139dd552c49749bed54f9724f6df3",
+      "created_at": "2026-10-20T18:41:20.620872+00:00",
+      "request_version": 3,
+      "plan_version": 2,
+      "action": "stop",
+      "transport_error_category": null,
+      "total_tokens": 16098,
+      "response_file_sha256": "4130fce5f3a11bbe3b79a87c4ff435022013f83672780e470e5a0186ea0dc422"
+    }
+  ],
+  "evidence": {
+    "settled_outcome": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T1/outcome.json",
+      "sha256": "573a2d6291012a3e1c8dc2217013bdf32709a7ab977001da6be3af14f3a8da56",
+      "fields": [
+        "state",
+        "usage",
+        "goal_status",
+        "delivery_status",
+        "settlement",
+        "error"
+      ]
+    },
+    "current_run": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/runs/run_434d7dd084ee49139a0b37668df6608c/run.json",
+      "sha256": "de129e981a122b0917e4515336838fdd709deaf6e665e5030f8e7698fe7d1e2f",
+      "fields": [
+        "input_bindings.system_ethanol.prepared_geometry",
+        "selected_results",
+        "model_records",
+        "decisions",
+        "goal_evidence",
+        "attempts"
+      ]
+    },
+    "prepared_result": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/runs/run_434d7dd084ee49139a0b37668df6608c/results/result_46664065606b49579e3087d742f85c0e.json",
+      "sha256": "4cb8ade8e1457fae5851110cde1a5f3ede917a95e4b95903883d4fbd3bae20ec",
+      "fields": [
+        "operation_status",
+        "qualified_outputs.prepared_geometry",
+        "checks"
+      ]
+    },
+    "prepared_xyz": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/artifacts/artifact_4e3023a7bac24298853f05d1473d3de5/files/prepared.xyz",
+      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+    },
+    "condition_selection_decision": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/runs/run_434d7dd084ee49139a0b37668df6608c/decisions/model_92d717aea90841dd96f0d919a752ac69.json",
+      "sha256": "37ff6b1ecff27433c705c12e39ac5ead9854ac19b608c2ea4889eb31812f54fa",
+      "fields": [
+        "request.version",
+        "request.method",
+        "request.basis",
+        "plan",
+        "condition_selection"
+      ]
+    },
+    "prior_T1_outcome": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/evidence/T1/outcome.json",
+      "sha256": "a3996057ac535d07128b0a8cfba034878666345a1292a707870e36b84f61bf4a"
+    },
+    "prior_T1_run": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/evidence/T1/data/runs/run_31a30e2bdebd419eb5ea2c78d917a22b/run.json",
+      "sha256": "0924a763f8aacfc4bd3d6358de351bdaa4ed101f0dcec8a867a25d9af901be13",
+      "fields": [
+        "diagnostics",
+        "calls",
+        "request_version"
+      ]
+    },
+    "final_delivery": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/runs/run_434d7dd084ee49139a0b37668df6608c/deliveries/model_358139dd552c49749bed54f9724f6df3.md",
+      "sha256": "3fd516e8a9763aa02af42e6d5aacb4386ea4cf0cb025e311e91b051e08bb2b54"
+    },
+    "rejected_plan_request": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/runs/run_434d7dd084ee49139a0b37668df6608c/model/model_31e1f47a81b14cdda6117353929c6fbd.request.json",
+      "sha256": "0c1034e39fba6dfedd8c7c03d00b8b95dbd3a8628720ccad295e097f0f69b3f8"
+    },
+    "rejected_plan_response": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/runs/run_434d7dd084ee49139a0b37668df6608c/model/model_31e1f47a81b14cdda6117353929c6fbd.response.json",
+      "sha256": "76e368410cee090ac6ca97a8f471b406c887e250ec9b4e9304ab32e6073b5f28"
+    },
+    "corrected_plan_request": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/runs/run_434d7dd084ee49139a0b37668df6608c/model/model_b8816620cc25424cb6be4d6e9bd1d891.request.json",
+      "sha256": "1a65ef0691f2640377dc9712edf58d22dc7fbb58c746ba5d4ca88d6f357e4d08"
+    },
+    "corrected_plan_response": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/runs/run_434d7dd084ee49139a0b37668df6608c/model/model_b8816620cc25424cb6be4d6e9bd1d891.response.json",
+      "sha256": "0105230aae4686e32db41d3251f44f875a29b88d8401c826d858da60683379e7"
+    },
+    "stop_request": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/runs/run_434d7dd084ee49139a0b37668df6608c/model/model_358139dd552c49749bed54f9724f6df3.request.json",
+      "sha256": "dd11925c9a9095b4ffb5a53884c362eebada4ccd29cdbcea10aa9566482ee00a"
+    },
+    "stop_response": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T1-001/data/runs/run_434d7dd084ee49139a0b37668df6608c/model/model_358139dd552c49749bed54f9724f6df3.response.json",
+      "sha256": "4130fce5f3a11bbe3b79a87c4ff435022013f83672780e470e5a0186ea0dc422"
+    }
+  },
+  "limitations": [
+    "Read-only inspection and file hashes; no actual execution or replay performed.",
+    "No inference of optimization, vibrational or overall target completion from the initial geometry check."
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "request_hash": "3d8eae77853d8edd9da914f97dbf3ba90e60418d0a04a2822819f6e99d5fb2d8",
+  "proposal": {
+    "action": "normalize_request",
+    "parameters": {
+      "schema_version": "request-semantics-3",
+      "message_ids": [
+        "message_16f4cb2fe8df4bd7a9d5714f4c7a6516"
+      ],
+      "kind": "normalize",
+      "text_basis": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "identities": [
+        {
+          "key": "hcn",
+          "name": "氰化氢HCN",
+          "query_name": "hydrogen cyanide",
+          "text_basis": "氰化氢HCN",
+          "message_id": "message_16f4cb2fe8df4bd7a9d5714f4c7a6516"
+        }
+      ],
+      "conditions": {
+        "charge": {
+          "source": "explicit",
+          "value": 0,
+          "text_basis": "中性",
+          "message_id": "message_16f4cb2fe8df4bd7a9d5714f4c7a6516"
+        },
+        "multiplicity": {
+          "source": "explicit",
+          "value": 1,
+          "text_basis": "单重态",
+          "message_id": "message_16f4cb2fe8df4bd7a9d5714f4c7a6516"
+        },
+        "environment": {
+          "source": "explicit",
+          "value": "gas_phase",
+          "text_basis": "气相",
+          "message_id": "message_16f4cb2fe8df4bd7a9d5714f4c7a6516"
+        }
+      },
+      "automatic_selection": {
+        "method": {
+          "text_basis": "方法请从RHF或PBE0中选择",
+          "message_id": "message_16f4cb2fe8df4bd7a9d5714f4c7a6516"
+        },
+        "basis": {
+          "text_basis": "基组从def2-SVP或def2-TZVP中选择",
+          "message_id": "message_16f4cb2fe8df4bd7a9d5714f4c7a6516"
+        }
+      },
+      "goals": [
+        {
+          "key": "prep_geom",
+          "port": "prepared_geometry",
+          "quantity": "合理结构",
+          "text_basis": "生成并保存一份合理结构",
+          "system_refs": [
+            "hcn"
+          ],
+          "required": true
+        },
+        {
+          "key": "giao_shielding",
+          "port": "giao_nmr_shielding",
+          "quantity": "全部3个原子核的GIAO核磁屏蔽",
+          "text_basis": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽",
+          "system_refs": [
+            "hcn"
+          ],
+          "geometry_relation": "fixed_initial",
+          "verification": "reported_with_limitations",
+          "source_refs": [
+            "source_2886f80ad6e3af42",
+            "source_08a007f28d1e121e",
+            "source_968c456d880658ec"
+          ],
+          "required": true
+        },
+        {
+          "key": "tensor_table",
+          "port": "nmr_tensor_table",
+          "quantity": "完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数",
+          "text_basis": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数",
+          "system_refs": [
+            "hcn"
+          ],
+          "verification": "reported_with_limitations",
+          "source_refs": [
+            "source_3cb6945e382f5176"
+          ],
+          "required": true
+        },
+        {
+          "key": "deliverables",
+          "port": "artifact_metadata",
+          "quantity": "初始及计算几何、实际输入、原始逐核输出、脚本和表格",
+          "text_basis": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格",
+          "system_refs": [
+            "hcn"
+          ],
+          "verification": "reported_with_limitations",
+          "source_refs": [
+            "source_c8d164a2c922f55f"
+          ],
+          "required": true
+        },
+        {
+          "key": "random_seed",
+          "port": "sampling",
+          "quantity": "种子 1701",
+          "text_basis": "请统一采用种子 1701 并在报告中记录",
+          "system_refs": [
+            "hcn"
+          ],
+          "verification": "reported_with_limitations",
+          "source_refs": [
+            "source_67361a2f4f0d343c"
+          ],
+          "required": true
+        }
+      ],
+      "unresolved": [],
+      "notices": [],
+      "questions": [],
+      "question_gaps": {}
+    },
+    "reason": "Normalize HCN request: identity HCN, explicit gas-phase neutral singlet, delegated method/basis choices, prepared geometry goal, fixed-initial GIAO shielding goal, tensor/deliverable/seed reporting goals."
+  },
+  "raw_content": "{\"action\":\"normalize_request\",\"parameters\":{\"schema_version\":\"request-semantics-3\",\"message_ids\":[\"message_16f4cb2fe8df4bd7a9d5714f4c7a6516\"],\"kind\":\"normalize\",\"text_basis\":\"请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\\n\\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。\",\"identities\":[{\"key\":\"hcn\",\"name\":\"氰化氢HCN\",\"query_name\":\"hydrogen cyanide\",\"text_basis\":\"氰化氢HCN\",\"message_id\":\"message_16f4cb2fe8df4bd7a9d5714f4c7a6516\"}],\"conditions\":{\"charge\":{\"source\":\"explicit\",\"value\":0,\"text_basis\":\"中性\",\"message_id\":\"message_16f4cb2fe8df4bd7a9d5714f4c7a6516\"},\"multiplicity\":{\"source\":\"explicit\",\"value\":1,\"text_basis\":\"单重态\",\"message_id\":\"message_16f4cb2fe8df4bd7a9d5714f4c7a6516\"},\"environment\":{\"source\":\"explicit\",\"value\":\"gas_phase\",\"text_basis\":\"气相\",\"message_id\":\"message_16f4cb2fe8df4bd7a9d5714f4c7a6516\"}},\"automatic_selection\":{\"method\":{\"text_basis\":\"方法请从RHF或PBE0中选择\",\"message_id\":\"message_16f4cb2fe8df4bd7a9d5714f4c7a6516\"},\"basis\":{\"text_basis\":\"基组从def2-SVP或def2-TZVP中选择\",\"message_id\":\"message_16f4cb2fe8df4bd7a9d5714f4c7a6516\"}},\"goals\":[{\"key\":\"prep_geom\",\"port\":\"prepared_geometry\",\"quantity\":\"合理结构\",\"text_basis\":\"生成并保存一份合理结构\",\"system_refs\":[\"hcn\"],\"required\":true},{\"key\":\"giao_shielding\",\"port\":\"giao_nmr_shielding\",\"quantity\":\"全部3个原子核的GIAO核磁屏蔽\",\"text_basis\":\"在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽\",\"system_refs\":[\"hcn\"],\"geometry_relation\":\"fixed_initial\",\"verification\":\"reported_with_limitations\",\"source_refs\":[\"source_2886f80ad6e3af42\",\"source_08a007f28d1e121e\",\"source_968c456d880658ec\"],\"required\":true},{\"key\":\"tensor_table\",\"port\":\"nmr_tensor_table\",\"quantity\":\"完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数\",\"text_basis\":\"请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数\",\"system_refs\":[\"hcn\"],\"verification\":\"reported_with_limitations\",\"source_refs\":[\"source_3cb6945e382f5176\"],\"required\":true},{\"key\":\"deliverables\",\"port\":\"artifact_metadata\",\"quantity\":\"初始及计算几何、实际输入、原始逐核输出、脚本和表格\",\"text_basis\":\"交付初始及计算几何、实际输入、原始逐核输出、脚本和表格\",\"system_refs\":[\"hcn\"],\"verification\":\"reported_with_limitations\",\"source_refs\":[\"source_c8d164a2c922f55f\"],\"required\":true},{\"key\":\"random_seed\",\"port\":\"sampling\",\"quantity\":\"种子 1701\",\"text_basis\":\"请统一采用种子 1701 并在报告中记录\",\"system_refs\":[\"hcn\"],\"verification\":\"reported_with_limitations\",\"source_refs\":[\"source_67361a2f4f0d343c\"],\"required\":true}],\"unresolved\":[],\"notices\":[],\"questions\":[],\"question_gaps\":{}},\"reason\":\"Normalize HCN request: identity HCN, explicit gas-phase neutral singlet, delegated method/basis choices, prepared geometry goal, fixed-initial GIAO shielding goal, tensor/deliverable/seed reporting goals.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 6074,
+    "completion_tokens": 9062,
+    "total_tokens": 15136,
+    "prompt_cache_hit_tokens": 2048,
+    "prompt_cache_miss_tokens": 4026
+  },
+  "response_hash": "ff2b15a872161e41d087de5591c07aa9ff54ef2bd0a9f7f1075d88680c0f8db1",
+  "response_bytes": 39402,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "0d989d6a-5bda-4e34-b0eb-d7c7ed5b32e9",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 37.937000000005355
+}

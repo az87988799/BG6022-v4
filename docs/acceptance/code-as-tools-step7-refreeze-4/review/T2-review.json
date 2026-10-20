@@ -1,0 +1,2135 @@
+{
+  "reviewed_at_utc": "2026-10-20T18:59:44.105239+00:00",
+  "task": "T2",
+  "run_id": "run_42acda94c6034af1b73af6b91a501ecd",
+  "scope": "Read-only audit of settled original evidence and source text. No product import/execution, model, ORCA, test, network, credential access, runtime-state mutation or source changes. This JSON is the only public output.",
+  "outcome": {
+    "state": "failed",
+    "delivery_status": "partial",
+    "model_calls": 11,
+    "model_tokens_used": 257825,
+    "model_tokens_unknown": 0,
+    "orca_starts_actual": 0,
+    "orca_starts_reserved": 0,
+    "python_attempts": 1,
+    "completed_tool_calls": 6,
+    "driver_wall_seconds": 519.2189999999973,
+    "settlement_unknown_fields": {},
+    "driver_exception": null,
+    "resource_usage_complete": false,
+    "goal_status": {
+      "goal_conformer_search": "insufficient_evidence",
+      "goal_rmsd_duplicate_check": "insufficient_evidence",
+      "goal_candidate_members": "insufficient_evidence",
+      "goal_orca_single_point_energy": "insufficient_evidence",
+      "goal_energy_ranking": "insufficient_evidence",
+      "goal_lowest_candidate_structure": "insufficient_evidence",
+      "goal_delivery_report": "insufficient_evidence"
+    },
+    "pre_and_post_frozen_runtime_verification": "matched",
+    "budget_overruns": {}
+  },
+  "direct_stop": {
+    "kind": "unhandled_repairable_prelaunch_file_reference_error",
+    "diagnostic": {
+      "category": "ValueError",
+      "message": "selected producer file does not exist in its archived Result",
+      "environment_occupied": false
+    },
+    "consumer_step_id": "step_e80e68bc0a5b420b99bcceea61838a2a",
+    "consumer_tool": "python.execute",
+    "sdk_orca": true,
+    "reference_location": "parameters.inputs.entries[1]",
+    "requested_reference": {
+      "producer_step_id": "step_3df66490e9c34695889434602fa1c991",
+      "file_key": "selected.json",
+      "target_path": "selected.json",
+      "purpose": "selected conformer coordinates for ORCA single points"
+    },
+    "actual_archived_file": {
+      "file_key": "task/selected.json",
+      "artifact_id": "artifact_b8437323c7104cccb99cb9df76a43c64",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_b8437323c7104cccb99cb9df76a43c64/files/selected.json",
+      "bytes": 25707,
+      "sha256": "a0505c3a894d23bc4cad91c7c98b4ab588da625b40beab9527d1062b46972841",
+      "registered_hash_matches_bytes": true
+    },
+    "cause": "The approved Plan names selected.json as an archived producer file_key, but the producer's actual registered key is task/selected.json. The file exists and matches its immutable hash; the error is an address mismatch.",
+    "why_write_orca_did_not_start_orca": [
+      "workspace.write completed and registered orca_single_points.py (5198 bytes); this operation writes code only.",
+      "mechanical_b8c4fc5c4c1f598cd2f6bfce selected the pending python.execute Step step_e80e68bc0a5b420b99bcceea61838a2a.",
+      "Before reserving an Attempt, resolve_step_files resolved code successfully but could not find the literal selected.json key in the generation Result.",
+      "The ValueError escaped to the outer Agent exception handler, which marked the Run failed and rendered the terminal report.",
+      "No second Python Attempt exists, no internal SDK call exists, and both actual and reserved ORCA starts remain zero."
+    ],
+    "mechanical_decision": {
+      "id": "mechanical_b8c4fc5c4c1f598cd2f6bfce",
+      "basis": {
+        "request_version": 3,
+        "plan_version": 2,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "call_tool",
+      "related_results": [
+        "result_729a1b5de5b849f7b8a1cf76bcd42677"
+      ],
+      "parameters": {
+        "step_id": "step_e80e68bc0a5b420b99bcceea61838a2a"
+      },
+      "reason": "Verified mechanical completion; continue the unchanged approved Plan.",
+      "selection": "mechanical-feedback-1",
+      "feedback_checks": [
+        {
+          "result_id": "result_729a1b5de5b849f7b8a1cf76bcd42677",
+          "fingerprint": "fa64e13a7f05c6582814c9521ba4e02dd1c7eb46464ffbb4399eb5632c37585e",
+          "tool": "workspace.write"
+        }
+      ]
+    },
+    "writer_receipt": {
+      "result_id": "result_729a1b5de5b849f7b8a1cf76bcd42677",
+      "operation_status": "completed",
+      "written_artifact": {
+        "artifact_id": "artifact_815506389f3540e9b5d07eee88771a7b",
+        "sha256": "cc597aefeacdac335499678ecf015b05a38bd655c992931b145ae6799f04ee25",
+        "name": "orca_single_points.py",
+        "bytes": 5198,
+        "role": "python",
+        "artifact_ids": [
+          "artifact_815506389f3540e9b5d07eee88771a7b"
+        ]
+      }
+    },
+    "feedback_sufficiency": "Insufficient for autonomous recovery: no following model turn; the terminal error contains neither producer Step/Result, requested file_key, parameter location nor available matching key. This was a known, unstarted, repairable dependency error, not an unknown execution.",
+    "not_direct_causes": [
+      "No model or ORCA budget exhaustion: 13 model calls and 12 ORCA starts remained.",
+      "No ORCA, container workload or scientific calculation failed at this final point.",
+      "The earlier malformed proposals were corrected and admitted.",
+      "The observations size rejection created a separate unresolved goal-evidence gap but is not the final exception."
+    ],
+    "additional_unexecuted_references": [
+      {
+        "step_id": "step_0a53fbda1aa14a8c82e59b81bde524dd",
+        "reference": {
+          "producer_step_id": "step_3df66490e9c34695889434602fa1c991",
+          "file_key": "members.json",
+          "target_path": "members.json",
+          "purpose": "full candidate member table"
+        }
+      },
+      {
+        "step_id": "step_0a53fbda1aa14a8c82e59b81bde524dd",
+        "reference": {
+          "producer_step_id": "step_3df66490e9c34695889434602fa1c991",
+          "file_key": "selected.json",
+          "target_path": "selected.json",
+          "purpose": "selection metadata"
+        }
+      },
+      {
+        "step_id": "step_0a53fbda1aa14a8c82e59b81bde524dd",
+        "reference": {
+          "producer_step_id": "step_e80e68bc0a5b420b99bcceea61838a2a",
+          "file_key": "energies.json",
+          "target_path": "energies.json",
+          "purpose": "ORCA energies and ranking"
+        }
+      },
+      {
+        "step_id": "step_0a53fbda1aa14a8c82e59b81bde524dd",
+        "reference": {
+          "producer_step_id": "step_e80e68bc0a5b420b99bcceea61838a2a",
+          "file_key": "lowest_candidate.xyz",
+          "target_path": "lowest_candidate.xyz",
+          "purpose": "lowest candidate structure"
+        }
+      }
+    ]
+  },
+  "failure_feedback_review": [
+    {
+      "event": "First malformed proposal",
+      "model_id": "model_9abaebddc04e48b9a6a06fa770d5f3e9",
+      "cause": {
+        "model_id": "model_9abaebddc04e48b9a6a06fa770d5f3e9",
+        "finish_reason": "stop",
+        "error_category": "invalid_proposal_json",
+        "raw_content_characters": 846,
+        "decoder_message": "Expecting ',' delimiter",
+        "offset_zero_based": 846,
+        "line_one_based": 1,
+        "column_one_based": 847,
+        "bounded_excerpt": "any ORCA execution so the planned conformer single-point comparisons use one fixed, dispersion-aware method and basis.\"}",
+        "usage": {
+          "prompt_tokens": 13024,
+          "completion_tokens": 7566,
+          "total_tokens": 20590,
+          "prompt_cache_hit_tokens": 1920,
+          "prompt_cache_miss_tokens": 11104
+        }
+      },
+      "feedback": {
+        "model_id": "model_23d592c245e741f487e9e5498c21e9e4",
+        "validation_error": {
+          "category": "invalid_proposal_json",
+          "requirement": "invalid_proposal_json"
+        }
+      },
+      "sufficient": false,
+      "assessment": "The category identifies malformed JSON, but omits parser position and structural cause. Diagnostic lexical inspection showed the root object remains open; appending one brace only in memory also reveals reason under parameters. Neither a safe patch nor a product repair was performed.",
+      "actual_recovery": "The next model proposal selected conditions successfully."
+    },
+    {
+      "event": "Second malformed proposal",
+      "model_id": "model_3636e802c8f748159d8a5d51a78397b7",
+      "cause": {
+        "model_id": "model_3636e802c8f748159d8a5d51a78397b7",
+        "finish_reason": "stop",
+        "error_category": "invalid_proposal_json",
+        "raw_content_characters": 19397,
+        "decoder_message": "Expecting property name enclosed in double quotes",
+        "offset_zero_based": 7797,
+        "line_one_based": 1,
+        "column_one_based": 7798,
+        "bounded_excerpt": ", len(candidates), 'candidates; unique', len(unique), 'selected', len(selected), 'min selected RMSD', min_selected)\\n\"},{\"key\":\"orca_1\",\"tool\":\"orca.run\",\"system_id\":\"system_hexane\",\"depends_on\":[\"generate_candidates\"],\"parameters\":{\"input\"",
+        "usage": {
+          "prompt_tokens": 14230,
+          "completion_tokens": 24263,
+          "total_tokens": 38493,
+          "prompt_cache_hit_tokens": 128,
+          "prompt_cache_miss_tokens": 14102
+        }
+      },
+      "feedback": {
+        "model_id": "model_d70bf50f4df143179c803272fed4f386",
+        "validation_error": {
+          "category": "invalid_proposal_json",
+          "requirement": "invalid_proposal_json"
+        }
+      },
+      "sufficient": false,
+      "assessment": "The next Step begins before the preceding Python Step object is closed. Feedback again says only invalid_proposal_json. Both invalid responses have finish_reason=stop, so output-limit truncation is not established.",
+      "actual_recovery": "The following initial_plan proposal was admitted as Plan version 2."
+    },
+    {
+      "event": "Generated observation manifest rejected",
+      "result_id": "result_6051c074703d4257a7a0d6fb6b9b9a3d",
+      "diagnostics": [
+        {
+          "category": "observation_manifest_rejected",
+          "detail": "observations.json exceeds 64 KiB"
+        }
+      ],
+      "manifest_bytes": 239268,
+      "limit_bytes": 65536,
+      "observation_records_admitted": 0,
+      "sufficient": "Adequate to identify the file and size limit; insufficient to imply repaired or goal-complete.",
+      "assessment": "The full manifest embeds all member coordinates in member_table and is 239268 bytes. All three observations were rejected together, although the task process completed and all raw artifacts were retained. The model saw the precise rejection and explicitly planned a later revise_plan, but chose to write the ORCA driver first.",
+      "subsequent_model_statement": "Resubmitting the rejected candidate with the schema violation fixed: the only error was extra_forbidden at loc [\"step_id\"], i.e. a stray top-level step_id beside action/parameters/reason. Intent is unchanged and valid: step_e1069dd98b61474abd57fe35ae7f314f is one of CONTROL's two ready pending Steps and is a workspace.write of the authored orca_single_points.py driver (wB97X-D3/def2-TZVP, RKS, charge 0, multiplicity 1, gas phase, %pal nprocs 4, %maxcore 192, NoAutoStart) that runs run_orca on the selected conformers under task geometry derived from the prepared.xyz anchor. Writing this deterministic file is a prerequisite for the dependent execute Step and fabricates no evidence. After inspecting the write result I will address the noted qualification gap from the earlier search Step (observations manifest rejected) via revise_plan before any terminal delivery.",
+      "actual_recovery": "No repair was executed before final failure."
+    },
+    {
+      "event": "Extra top-level step_id",
+      "model_id": "model_eadb73efe9cb44309a4cda8c69c44faf",
+      "feedback": {
+        "category": "ValidationError",
+        "requirement": [
+          {
+            "loc": [
+              "step_id"
+            ],
+            "type": "extra_forbidden"
+          }
+        ]
+      },
+      "sufficient": true,
+      "assessment": "The extra_forbidden type and [step_id] location identify the exact envelope defect. The next model removed the stray top-level key and successfully called the same writer.",
+      "actual_recovery": "workspace.write completed."
+    },
+    {
+      "event": "Missing producer file_key during mechanical progression",
+      "sufficient": false,
+      "assessment": "The existing file is referenced under the wrong archived key; the terminal ValueError bypasses the correction loop and omits the repairable address details.",
+      "actual_recovery": "None; Run ended failed."
+    }
+  ],
+  "context_findings": {
+    "prepared_geometry_omission": {
+      "model_id": "model_e01668f5381a457b8be1b83a52c4fa49",
+      "request_version": 3,
+      "plan": null,
+      "related_results": [],
+      "other_result_ids": [
+        "result_9285d161de59403a85d679b0f9c65aa9",
+        "result_72527e5738f44f3a8f78a9a57f758d49"
+      ],
+      "system_geometry": [
+        {
+          "id": "system_hexane",
+          "geometry_artifact_id": null,
+          "geometry_source": "prepare"
+        }
+      ],
+      "visible_result_ids": [],
+      "prepared_result_in_other_ids": true,
+      "prepared_artifact_id_in_any_sent_content": false,
+      "input_bindings_projected": false,
+      "model_action": "evidence.list",
+      "model_reason": "No plan exists and system_hexane has geometry_artifact_id null while one structure preparation is recorded as used. Inspecting registered evidence metadata first avoids proposing a duplicate preparation or an ORCA/Python step without a valid geometry anchor.",
+      "persisted_binding": {
+        "request_version": 3,
+        "system_id": "system_hexane",
+        "source_request_version": 2,
+        "purpose_fingerprint": "edee4c93b7324be0a6d2bd8863f7e55d8ab084015a7d1f095b72c1f994f4adb4",
+        "call_id": "call_526813998e15420183f86d6de2fecb50",
+        "result_id": "result_72527e5738f44f3a8f78a9a57f758d49",
+        "artifact_id": "artifact_6a73508d6ac94f88855bb0eb053ee98c",
+        "sha256": "20dc1df32623e6655629a28aa0d7d8560ceec17995030b521f0fed7cd66ff605",
+        "rule_version": "structure-prepare-3",
+        "port": "prepared_geometry"
+      },
+      "effect": "This repeats the T1 retained-input visibility defect. T2 recovered by evidence.list followed by evidence.text, adding two model calls and two evidence reads. It was not T2's final stop cause."
+    },
+    "pending_input_file_omission": {
+      "contexts": [
+        {
+          "model_id": "model_eadb73efe9cb44309a4cda8c69c44faf",
+          "visible_search_result_diagnostics": [
+            {
+              "category": "observation_manifest_rejected",
+              "detail": "observations.json exceeds 64 KiB"
+            }
+          ],
+          "visible_file_index": {
+            "attempt_id": "attempt_8c7fb2334ffd4634a24517c47250b85d",
+            "files": [
+              {
+                "artifact_id": "artifact_d9ad17a3d895416fbbb951fc8bf342b6",
+                "file_key": "task/observations.json",
+                "sha256": "bd51da8e85abe91c317fc684d96471001a6be0072f3c3dba34472ae5ce931673"
+              }
+            ],
+            "omission_reasons": [
+              "byte_limit"
+            ],
+            "omitted": 61,
+            "result_id": "result_6051c074703d4257a7a0d6fb6b9b9a3d",
+            "source": "Result.source.files",
+            "total": 62,
+            "validation": "Metadata only; consumption still checks producer, permission and hash."
+          },
+          "selected_json_identity_visible_in_index": false
+        },
+        {
+          "model_id": "model_73b6f39aaed84911a8c74a514f8e0ba5",
+          "visible_search_result_diagnostics": [
+            {
+              "category": "observation_manifest_rejected",
+              "detail": "observations.json exceeds 64 KiB"
+            }
+          ],
+          "visible_file_index": {
+            "attempt_id": "attempt_8c7fb2334ffd4634a24517c47250b85d",
+            "files": [
+              {
+                "artifact_id": "artifact_d9ad17a3d895416fbbb951fc8bf342b6",
+                "file_key": "task/observations.json",
+                "sha256": "bd51da8e85abe91c317fc684d96471001a6be0072f3c3dba34472ae5ce931673"
+              }
+            ],
+            "omission_reasons": [
+              "byte_limit"
+            ],
+            "omitted": 61,
+            "result_id": "result_6051c074703d4257a7a0d6fb6b9b9a3d",
+            "source": "Result.source.files",
+            "total": 62,
+            "validation": "Metadata only; consumption still checks producer, permission and hash."
+          },
+          "selected_json_identity_visible_in_index": false
+        }
+      ],
+      "effect": "The after-generation contexts retained the size warning but exposed only task/observations.json among 62 archived files. task/selected.json, required by a pending consumer, was omitted by the byte limit. The full immutable Result and Artifact still retained it.",
+      "causal_scope": "This prevented direct visibility of the needed exact key in those contexts. The original Plan already had the wrong key, so the omission is a missed correction opportunity rather than proof that compaction created the wrong reference."
+    }
+  },
+  "successful_progress": [
+    "The Request normalized, n-hexane identity resolved and initial geometry prepared.",
+    "wB97X-D3/def2-TZVP was selected for neutral, singlet, RKS, gas-phase single-point comparison.",
+    "The generated search_conformers.py ran once in the managed Python environment and completed.",
+    "48 candidate XYZ files, members.json, selected.json and the rejected observations.json were retained.",
+    "The task's own records report 48 generated / 15 unique / 8 selected with seed 1701, MMFF94 handling, a 0.15 angstrom heavy-atom RMSD threshold and identity/reversed-carbon-chain mapping.",
+    "orca_single_points.py was written and hash-registered; no ORCA computation followed."
+  ],
+  "scientific_and_goal_status": {
+    "execution_result": {
+      "operation_status": "completed",
+      "observations": {
+        "execution_completed": true,
+        "evidence_collection_complete": true,
+        "scientific_validation": "unverified"
+      },
+      "qualified_output_names": [],
+      "accepted_observation_count": 0,
+      "candidate_xyz_count": 48,
+      "member_record_count": 48,
+      "selection_counts_as_authored": {
+        "seed": 1701,
+        "n_generated": 48,
+        "n_unique": 15,
+        "n_selected": 8
+      },
+      "sampling_metadata_as_authored": {
+        "method": "RDKit ETKDGv3/MMFF94 conformer generation",
+        "smiles": "CCCCCC",
+        "seed": 1701,
+        "n_generated": 48,
+        "n_unique": 15,
+        "n_selected": 8,
+        "force_field_converged_count": 48,
+        "search_scope": "48 ETKDGv3 conformers, MMFF94 optimization, finite search",
+        "geometry_source": "RDKit from SMILES; prepared.xyz used as initial identity/geometry anchor",
+        "prepared_anchor_elements": [
+          "C",
+          "C",
+          "C",
+          "C",
+          "C",
+          "C",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H",
+          "H"
+        ]
+      },
+      "rmsd_metadata_as_authored": {
+        "rmsd_threshold_angstrom": 0.15,
+        "atom_set": "six carbon heavy atoms",
+        "symmetry_mapping": "identity and carbon-chain reversal"
+      }
+    },
+    "interpretation": "Saved files and successful Python execution are established facts. Sampling counts, MMFF convergence flags and RMSD calculations are generated-task observations, not independent scientific validation; this audit did not recompute or confer qualification.",
+    "missing": [
+      "Accepted evidence bindings for conformer search, duplicate checking and the candidate member table, because the whole observation manifest was rejected.",
+      "Actual ORCA single-point results for at least four distinct conformers.",
+      "ORCA absolute energies, relative kJ/mol ranking and an ORCA-supported lowest candidate structure.",
+      "The planned authored final report and complete goal evidence."
+    ],
+    "goal_status": {
+      "goal_conformer_search": "insufficient_evidence",
+      "goal_rmsd_duplicate_check": "insufficient_evidence",
+      "goal_candidate_members": "insufficient_evidence",
+      "goal_orca_single_point_energy": "insufficient_evidence",
+      "goal_energy_ranking": "insufficient_evidence",
+      "goal_lowest_candidate_structure": "insufficient_evidence",
+      "goal_delivery_report": "insufficient_evidence"
+    },
+    "no_global_minimum_or_free_energy_claim": true
+  },
+  "minimal_followup_candidates_not_applied": [
+    "Keep current Run input bindings and their exact Artifact identities visible after condition selection invalidates a Plan.",
+    "Use one documented producer file-reference naming contract; show the exact archived task/... keys needed by pending consumers before unrelated file-index entries.",
+    "Return a structured, bounded, repairable prelaunch dependency error to the decision loop, including producer, Result, location, requested key and available exact alternatives; do not guess or silently select another file.",
+    "Give syntax errors bounded parser coordinates/structural context while preserving raw model output and finite correction budgets.",
+    "Avoid embedding the full candidate coordinate table again in observations.json; retain complete raw member/structure files and use compact observations with explicit sources, while preserving minimum evidence and the manifest boundary."
+  ],
+  "model_timeline": [
+    {
+      "number": 1,
+      "model_id": "model_1672df4a7946413b8051d8343c204835",
+      "created_at": "2026-10-20T18:42:53.143251+00:00",
+      "action": null,
+      "decision_action": null,
+      "tool": null,
+      "step_id": null,
+      "error_category": null,
+      "rejection": null,
+      "finish_reason": "stop",
+      "tokens": 14130
+    },
+    {
+      "number": 2,
+      "model_id": "model_ea3700764dc4495eac921998ae3949ba",
+      "created_at": "2026-10-20T18:43:28.682650+00:00",
+      "action": "initial_plan",
+      "decision_action": null,
+      "tool": null,
+      "step_id": null,
+      "error_category": null,
+      "rejection": null,
+      "finish_reason": "stop",
+      "tokens": 19075
+    },
+    {
+      "number": 3,
+      "model_id": "model_7578506c446c4e22a8dabde8c4616585",
+      "created_at": "2026-10-20T18:43:50.044151+00:00",
+      "action": "call_tool",
+      "decision_action": "call_tool",
+      "tool": null,
+      "step_id": "step_7bc9bfced47d4417870a196f5780da99",
+      "error_category": null,
+      "rejection": null,
+      "finish_reason": "stop",
+      "tokens": 13375
+    },
+    {
+      "number": 4,
+      "model_id": "model_9abaebddc04e48b9a6a06fa770d5f3e9",
+      "created_at": "2026-10-20T18:43:55.574535+00:00",
+      "action": null,
+      "decision_action": "rejected",
+      "tool": null,
+      "step_id": null,
+      "error_category": "invalid_proposal_json",
+      "rejection": {
+        "error_category": "invalid_proposal_json",
+        "recovery_kind": "correction",
+        "requirement": "invalid_proposal_json"
+      },
+      "finish_reason": "stop",
+      "tokens": 20590
+    },
+    {
+      "number": 5,
+      "model_id": "model_23d592c245e741f487e9e5498c21e9e4",
+      "created_at": "2026-10-20T18:44:35.357051+00:00",
+      "action": "select_conditions",
+      "decision_action": null,
+      "tool": null,
+      "step_id": null,
+      "error_category": null,
+      "rejection": null,
+      "finish_reason": "stop",
+      "tokens": 15174
+    },
+    {
+      "number": 6,
+      "model_id": "model_e01668f5381a457b8be1b83a52c4fa49",
+      "created_at": "2026-10-20T18:44:49.019210+00:00",
+      "action": "evidence.list",
+      "decision_action": "call_tool",
+      "tool": null,
+      "step_id": null,
+      "error_category": null,
+      "rejection": null,
+      "finish_reason": "stop",
+      "tokens": 20293
+    },
+    {
+      "number": 7,
+      "model_id": "model_c998b5fabf394db2808b8d1c2a1ebab2",
+      "created_at": "2026-10-20T18:45:16.624309+00:00",
+      "action": "evidence.text",
+      "decision_action": "call_tool",
+      "tool": null,
+      "step_id": null,
+      "error_category": null,
+      "rejection": null,
+      "finish_reason": "stop",
+      "tokens": 16601
+    },
+    {
+      "number": 8,
+      "model_id": "model_3636e802c8f748159d8a5d51a78397b7",
+      "created_at": "2026-10-20T18:45:20.884052+00:00",
+      "action": null,
+      "decision_action": "rejected",
+      "tool": null,
+      "step_id": null,
+      "error_category": "invalid_proposal_json",
+      "rejection": {
+        "error_category": "invalid_proposal_json",
+        "recovery_kind": "correction",
+        "requirement": "invalid_proposal_json"
+      },
+      "finish_reason": "stop",
+      "tokens": 38493
+    },
+    {
+      "number": 9,
+      "model_id": "model_d70bf50f4df143179c803272fed4f386",
+      "created_at": "2026-10-20T18:47:02.617887+00:00",
+      "action": "initial_plan",
+      "decision_action": null,
+      "tool": null,
+      "step_id": null,
+      "error_category": null,
+      "rejection": null,
+      "finish_reason": "stop",
+      "tokens": 45186
+    },
+    {
+      "number": 10,
+      "model_id": "model_eadb73efe9cb44309a4cda8c69c44faf",
+      "created_at": "2026-10-20T18:49:38.705618+00:00",
+      "action": "call_tool",
+      "decision_action": "rejected",
+      "tool": null,
+      "step_id": "step_e1069dd98b61474abd57fe35ae7f314f",
+      "error_category": null,
+      "rejection": {
+        "error_category": "ValidationError",
+        "recovery_kind": "correction",
+        "requirement": [
+          {
+            "type": "extra_forbidden",
+            "loc": [
+              "step_id"
+            ]
+          }
+        ]
+      },
+      "finish_reason": "stop",
+      "tokens": 35695
+    },
+    {
+      "number": 11,
+      "model_id": "model_73b6f39aaed84911a8c74a514f8e0ba5",
+      "created_at": "2026-10-20T18:51:11.776695+00:00",
+      "action": "call_tool",
+      "decision_action": "call_tool",
+      "tool": null,
+      "step_id": "step_e1069dd98b61474abd57fe35ae7f314f",
+      "error_category": null,
+      "rejection": null,
+      "finish_reason": "stop",
+      "tokens": 19213
+    }
+  ],
+  "source_locations": [
+    {
+      "path": "src/orca_agent/file_references.py",
+      "line": 120,
+      "sha256": "0c0c8d4719b4be5f2c16b52fec1661af24d2a84dcb8a1dff545703ef940c847b",
+      "meaning": "Producer file_key is looked up literally in Result.source.files; an absent binding raises the generic ValueError at line 123."
+    },
+    {
+      "path": "src/orca_agent/store.py",
+      "line": 865,
+      "sha256": "958e01e20fae789c9ede6912add1aefcb4e2134b9f979c7702efcbb6ea3cb1e6",
+      "meaning": "File-reference resolution happens during reserve_attempt before creation/publication of the new Attempt."
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "line": 833,
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+      "meaning": "A verified writer may select the next approved Step without another model turn."
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "line": 919,
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+      "meaning": "The outer ValueError/OSError/RuntimeError handler terminates the Run and publishes a report; this path provides no proposal correction."
+    },
+    {
+      "path": "src/orca_agent/mechanical_progression.py",
+      "line": 63,
+      "sha256": "c1f4b2698647f4415844992d2d73aed2232b9f9574ab6d2ecaabfc59f4551231",
+      "meaning": "Selection checks completed dependencies and writer feedback, but does not resolve the chosen consumer's archived file keys before persisting its decision."
+    },
+    {
+      "path": "src/orca_agent/task_observations.py",
+      "line": 275,
+      "sha256": "f61450e1d9a767468ee9b50f5ecc9f5e1c7aee19a3faa31d2d0b4ec1bfa48387",
+      "meaning": "The observation manifest is rejected above 64 KiB."
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "line": 1203,
+      "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6",
+      "meaning": "The file-index byte allowance can be reduced to a small multiple of observation_bytes."
+    },
+    {
+      "path": "src/orca_agent/artifact_index.py",
+      "line": 106,
+      "sha256": "f087a273273b15adc60e40e503908a984821ffe1b920638282d30f74b7ff8236",
+      "meaning": "File display prioritizes logs/observations before other task outputs and stops at the byte limit; it is not aware of pending Plan dependencies."
+    },
+    {
+      "path": "src/orca_agent/llm.py",
+      "line": 407,
+      "sha256": "a406561ff07dcacf2ecaef57b464c7cd6ad9891fc0e13bdc518d0d978b50752a",
+      "meaning": "JSON parsing failures become invalid_proposal_json."
+    },
+    {
+      "path": "src/orca_agent/decision_purpose.py",
+      "line": 174,
+      "sha256": "fa136548ceab6acfa55d8293fd4b540fd8b0904f230a9ba370708c911d161b8a",
+      "meaning": "Relevant Result selection omits the persisted Run.input_bindings path after the Plan is invalidated."
+    }
+  ],
+  "generation_artifact_hashes": [
+    {
+      "file_key": "sealed/inputs.json",
+      "artifact_id": "artifact_13966690cd5246daa643fcab0b0b346d",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_13966690cd5246daa643fcab0b0b346d/files/inputs.json",
+      "bytes": 678,
+      "sha256": "afbe4c62ade24df8d8ae71bc5cf5eba5b73562a2e45ce7b74b209844a06025d2",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "sealed/task.py",
+      "artifact_id": "artifact_7dacd18e68cc4d0da65c747f5535b7a8",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_7dacd18e68cc4d0da65c747f5535b7a8/files/task.py",
+      "bytes": 5660,
+      "sha256": "9b57d2ea35edc48acb23e8ad0288dede7dfb740cb7732af3dee1233910cda5fc",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_00.xyz",
+      "artifact_id": "artifact_d4b59934317644f9b13f08abccaf454b",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_d4b59934317644f9b13f08abccaf454b/files/candidate_00.xyz",
+      "bytes": 804,
+      "sha256": "ac5c0ce967d021cc39916fcbb1727ea1afec5304e7c22c7e695e4427c82ffef4",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_01.xyz",
+      "artifact_id": "artifact_9ebf596d28984cf789f76de1c8b4bceb",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_9ebf596d28984cf789f76de1c8b4bceb/files/candidate_01.xyz",
+      "bytes": 804,
+      "sha256": "49894302716e12bbb170a9b1419dc8fde2ba59cad68dd76a587f266f463ddb1c",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_02.xyz",
+      "artifact_id": "artifact_c2308212ddae4b28b7519813e34a4abb",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_c2308212ddae4b28b7519813e34a4abb/files/candidate_02.xyz",
+      "bytes": 804,
+      "sha256": "d868e1f6aa684a246201a692993d65fbd8181480fbf0fb1efff7152fe89c428d",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_03.xyz",
+      "artifact_id": "artifact_db741da8abf94d3ba43ef21902180ebf",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_db741da8abf94d3ba43ef21902180ebf/files/candidate_03.xyz",
+      "bytes": 804,
+      "sha256": "f08ca2be24e859c17a01b2bff90dae409f7a6c3a4c7346da78572badbcfa2f4d",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_04.xyz",
+      "artifact_id": "artifact_a79d25da43a54076a1c3cfb5ebf1c788",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_a79d25da43a54076a1c3cfb5ebf1c788/files/candidate_04.xyz",
+      "bytes": 804,
+      "sha256": "d655d3681b4029b36fd702ecbdd5de6181b7dd61aa34f63cb21542258f79a58d",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_05.xyz",
+      "artifact_id": "artifact_a19b7c3640824f558e21306101ff968a",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_a19b7c3640824f558e21306101ff968a/files/candidate_05.xyz",
+      "bytes": 804,
+      "sha256": "70346f44a3b6a8c91ed8a03164bc05205bd9d3beb2bd2cbe74835d68b2361cc1",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_06.xyz",
+      "artifact_id": "artifact_1fa8052fa72e4b20a086a0836ec1d8ca",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_1fa8052fa72e4b20a086a0836ec1d8ca/files/candidate_06.xyz",
+      "bytes": 804,
+      "sha256": "1d8db838ebc8df83be5aa677917c701a8323559d4591f420785ae2902dacf91d",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_07.xyz",
+      "artifact_id": "artifact_02f62b6a45774570a51056bc9c9ac929",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_02f62b6a45774570a51056bc9c9ac929/files/candidate_07.xyz",
+      "bytes": 804,
+      "sha256": "437e1ba46b8d395f568e4c23fd4ca157cac01accc52f6c4cc9d9363b7c77ace5",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_08.xyz",
+      "artifact_id": "artifact_d6ccccd3a4574afc9abf75c054ba242f",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_d6ccccd3a4574afc9abf75c054ba242f/files/candidate_08.xyz",
+      "bytes": 804,
+      "sha256": "0db8944cc5c6d7e268b32d47a13bc6c2331532f302c112d80f80323c82792d17",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_09.xyz",
+      "artifact_id": "artifact_ad5943c858db4942aaafdafdc0331449",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_ad5943c858db4942aaafdafdc0331449/files/candidate_09.xyz",
+      "bytes": 804,
+      "sha256": "ff696a9ac412f2e763d66f63ad46682442ac44ddc69d2f89cf5e66f1829ae667",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_10.xyz",
+      "artifact_id": "artifact_772041d784d44dda91b64b70f20d7617",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_772041d784d44dda91b64b70f20d7617/files/candidate_10.xyz",
+      "bytes": 804,
+      "sha256": "6599cf09d6f19b1e24027ef1c7cb464715b1fdf21175a32d9828fac7b52d95ef",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_11.xyz",
+      "artifact_id": "artifact_89b7f45a811e41a18bca8f0c4b00ff29",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_89b7f45a811e41a18bca8f0c4b00ff29/files/candidate_11.xyz",
+      "bytes": 804,
+      "sha256": "55b7abb39862f3a686efb1cfaca70bc70595af90d4eeed902517652d3ab1448b",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_12.xyz",
+      "artifact_id": "artifact_88db8debc55c4729b1e91602c1f7da51",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_88db8debc55c4729b1e91602c1f7da51/files/candidate_12.xyz",
+      "bytes": 804,
+      "sha256": "90834d7025d6eaae1f35a2627db5b53a7ab94bc239109235099c64f8e69f0341",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_13.xyz",
+      "artifact_id": "artifact_56e8a48401224c3c8cf99a630e47d9f2",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_56e8a48401224c3c8cf99a630e47d9f2/files/candidate_13.xyz",
+      "bytes": 804,
+      "sha256": "0ac0830e724ef257aac2fe6fa569cb244b791695dd274833a0a3b914d2beb3d8",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_14.xyz",
+      "artifact_id": "artifact_81645491034c4e0b9e425e955670ec4e",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_81645491034c4e0b9e425e955670ec4e/files/candidate_14.xyz",
+      "bytes": 804,
+      "sha256": "e8399edbd7f9d3e8fa8c50f25952b49bcdac797fd657baae1e660d7fb19c1f77",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_15.xyz",
+      "artifact_id": "artifact_9ee0ed73ed324bed850168032b3e0cf0",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_9ee0ed73ed324bed850168032b3e0cf0/files/candidate_15.xyz",
+      "bytes": 804,
+      "sha256": "eff6ee124ffcfad4aa4a27396afa3cdfca65a801ea9b450e3269830b42fbeabd",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_16.xyz",
+      "artifact_id": "artifact_ce0b0daa304246178044e14e9b879dc5",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_ce0b0daa304246178044e14e9b879dc5/files/candidate_16.xyz",
+      "bytes": 804,
+      "sha256": "3bf913f4177925920f49a5f1a12ea520b7832d4e109ead52d5ee9b34e6ab7587",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_17.xyz",
+      "artifact_id": "artifact_e7b246ef5cda4fe8a62c4009f9b76258",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e7b246ef5cda4fe8a62c4009f9b76258/files/candidate_17.xyz",
+      "bytes": 804,
+      "sha256": "4a6ca3dd1c918e5cd07a2aa8855b91b2be04feb0660f0e940b7c2922701081c4",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_18.xyz",
+      "artifact_id": "artifact_68dd8ce486774734b77dd6cc796b060b",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_68dd8ce486774734b77dd6cc796b060b/files/candidate_18.xyz",
+      "bytes": 804,
+      "sha256": "30333a05d9c5f5f232195dbc9622f763ceb8318983707792001d4b6a6161f1a4",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_19.xyz",
+      "artifact_id": "artifact_88d4a61b122a4de29f5303d5380c270a",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_88d4a61b122a4de29f5303d5380c270a/files/candidate_19.xyz",
+      "bytes": 804,
+      "sha256": "bf8617616067d49cca0a1db3d20c307ce8a027aebcdc7258cc545af237b43356",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_20.xyz",
+      "artifact_id": "artifact_efef586d5bfe48d7a67bd4ffcb1f095f",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_efef586d5bfe48d7a67bd4ffcb1f095f/files/candidate_20.xyz",
+      "bytes": 804,
+      "sha256": "4993cd5149b87adb22dc6a1ce24ea30719125482dd8cef7e643f20050beb312a",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_21.xyz",
+      "artifact_id": "artifact_8afcd30a89a34ca88cd6487466557186",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_8afcd30a89a34ca88cd6487466557186/files/candidate_21.xyz",
+      "bytes": 804,
+      "sha256": "f335ede77e4e5d467fd2ab999ec2a542b446f11f5c345ec046b71869bd4ce9e4",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_22.xyz",
+      "artifact_id": "artifact_44791a1c6a4b426aadae665c4c1eb5a6",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_44791a1c6a4b426aadae665c4c1eb5a6/files/candidate_22.xyz",
+      "bytes": 804,
+      "sha256": "fae336a1383c17170253bc915e8d24a87c100dae4fd49ac93ce9cd2b70abec39",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_23.xyz",
+      "artifact_id": "artifact_9bdf17ad35f0477791f66a4df278c90c",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_9bdf17ad35f0477791f66a4df278c90c/files/candidate_23.xyz",
+      "bytes": 804,
+      "sha256": "3f41ef5e687fad4b5b23a13e2ad022095006f53d191036d2966a0a3888d4e323",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_24.xyz",
+      "artifact_id": "artifact_4deb07f57dec4b978da6d031509264c7",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_4deb07f57dec4b978da6d031509264c7/files/candidate_24.xyz",
+      "bytes": 804,
+      "sha256": "129fe9f0639412c56b221106e9c741b1239214fd5cd0ed91fcf0b184826ebc29",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_25.xyz",
+      "artifact_id": "artifact_fecc5e9febaa4304bd9736bbbea5dac5",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_fecc5e9febaa4304bd9736bbbea5dac5/files/candidate_25.xyz",
+      "bytes": 804,
+      "sha256": "fad5a46634eca590f705627aff88d3b6a393fdcfefd8264da172411c1ab7e916",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_26.xyz",
+      "artifact_id": "artifact_47d5a11e1ab44d2eae7ce50a5784fbec",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_47d5a11e1ab44d2eae7ce50a5784fbec/files/candidate_26.xyz",
+      "bytes": 804,
+      "sha256": "61b659d415933b4a5bd0f87339c3efe8fe522353c32d331c812a71972fb90db8",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_27.xyz",
+      "artifact_id": "artifact_63e0f4dd1edd4faaa3e1364cfef9ff4d",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_63e0f4dd1edd4faaa3e1364cfef9ff4d/files/candidate_27.xyz",
+      "bytes": 804,
+      "sha256": "594c8bff4c3c1c9975251ac0c825a684f77784a023fa337357ca0eb42831b2d2",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_28.xyz",
+      "artifact_id": "artifact_f9f08829382e47d6a875f4211b018c85",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_f9f08829382e47d6a875f4211b018c85/files/candidate_28.xyz",
+      "bytes": 804,
+      "sha256": "753d0c1ad0515cdf09afcbb79868aceaebe2f3b2038aed8eba837e5865a39100",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_29.xyz",
+      "artifact_id": "artifact_39c5fc51239f4fe6972f7aabfcc78032",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_39c5fc51239f4fe6972f7aabfcc78032/files/candidate_29.xyz",
+      "bytes": 804,
+      "sha256": "89cb931c190b08ad3bacf324c04aef29dfa5a92b4a14428900a3e6649d98e4c1",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_30.xyz",
+      "artifact_id": "artifact_1fa5b4dc47744ab3985f8b0596870e7c",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_1fa5b4dc47744ab3985f8b0596870e7c/files/candidate_30.xyz",
+      "bytes": 804,
+      "sha256": "962df16e07b074f01855f36e7c2f79e8590cb92b7dcb86c25b2dd534df37159d",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_31.xyz",
+      "artifact_id": "artifact_c86e206cd1a0499eb1b463c494942f01",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_c86e206cd1a0499eb1b463c494942f01/files/candidate_31.xyz",
+      "bytes": 804,
+      "sha256": "8be9f47f93ff293b8084117c0d07edf9ce8e60bc554d04f39437b86e0d3646c0",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_32.xyz",
+      "artifact_id": "artifact_42561128f4de4a179b6b2deb094ccd6d",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_42561128f4de4a179b6b2deb094ccd6d/files/candidate_32.xyz",
+      "bytes": 804,
+      "sha256": "0097d241f590605cdcb078fcb31d87da44fbccb8be18e961f8898414eae3577e",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_33.xyz",
+      "artifact_id": "artifact_5a19f19aae884101a3939b7e66791763",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5a19f19aae884101a3939b7e66791763/files/candidate_33.xyz",
+      "bytes": 804,
+      "sha256": "14bd9684e25c01cd3b2beca71dfeab6547ad4041c289ef739a6b1ddab4be5465",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_34.xyz",
+      "artifact_id": "artifact_5a66fe401d6143fcbce659a29c002098",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5a66fe401d6143fcbce659a29c002098/files/candidate_34.xyz",
+      "bytes": 804,
+      "sha256": "89d4df92e5a3c6c6145abf4998b478a047878a04cbb6172229a26d116080ba6b",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_35.xyz",
+      "artifact_id": "artifact_1a088733cd13427ebf5500d44fc718e9",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_1a088733cd13427ebf5500d44fc718e9/files/candidate_35.xyz",
+      "bytes": 804,
+      "sha256": "ada6dc863652d0a8d8473248fd021613a2d0c72ea5972068715d0f8a43fdc098",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_36.xyz",
+      "artifact_id": "artifact_2eaffc0fafcf47c69720fba27bd315ba",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_2eaffc0fafcf47c69720fba27bd315ba/files/candidate_36.xyz",
+      "bytes": 804,
+      "sha256": "1dc0531f8a8378d5bc5ba6c1de2cfa36d66a30242802096b8970c99f4912dad2",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_37.xyz",
+      "artifact_id": "artifact_dd6118563c1949e391731ef641eb0455",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_dd6118563c1949e391731ef641eb0455/files/candidate_37.xyz",
+      "bytes": 804,
+      "sha256": "f8d748bf6af85edc9a3a05cb4c00affd54e952dd4b860eded1f655eb749816e7",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_38.xyz",
+      "artifact_id": "artifact_8f7b0de42930450282f74aa1bbfd7799",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_8f7b0de42930450282f74aa1bbfd7799/files/candidate_38.xyz",
+      "bytes": 804,
+      "sha256": "447eba81a7c7bde77ef938bb1c1a208737a9e69da93f63becb22bc2514f9eb7f",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_39.xyz",
+      "artifact_id": "artifact_49c533c225da473fb5075f4ddda59e1d",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_49c533c225da473fb5075f4ddda59e1d/files/candidate_39.xyz",
+      "bytes": 804,
+      "sha256": "af3df448d1637e7651c2aaf451e34c762fef2dd9c84c40b6a0e79a0ecd73b557",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_40.xyz",
+      "artifact_id": "artifact_e597a8af4cee4242b83142e88e5738f3",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e597a8af4cee4242b83142e88e5738f3/files/candidate_40.xyz",
+      "bytes": 804,
+      "sha256": "b9d0c2fa7125abb3a4f9d916a14c14308af017da14e33ee16474cc766575f6fd",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_41.xyz",
+      "artifact_id": "artifact_a07bd7554b1b4e2fa1303bab54aef5ed",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_a07bd7554b1b4e2fa1303bab54aef5ed/files/candidate_41.xyz",
+      "bytes": 804,
+      "sha256": "7a718d417690d7aa7a17934b507371db7c9901412445f7ca9337367a708d1c40",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_42.xyz",
+      "artifact_id": "artifact_841c18e1e2424e66a44f9c09cf31cd94",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_841c18e1e2424e66a44f9c09cf31cd94/files/candidate_42.xyz",
+      "bytes": 804,
+      "sha256": "9966c7a116e2ef880b84bd218166130ff001b41fb0393adbd9595e0cbf68ec84",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_43.xyz",
+      "artifact_id": "artifact_f892c3c5a2f24fd1af6b55294e1ecc41",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_f892c3c5a2f24fd1af6b55294e1ecc41/files/candidate_43.xyz",
+      "bytes": 804,
+      "sha256": "bd55c4344e7cfa1f5e63a7c20dd03dc43bfe5018e0039522a3898e2703093134",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_44.xyz",
+      "artifact_id": "artifact_5adc593fe18540b184e7747e922d93ad",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5adc593fe18540b184e7747e922d93ad/files/candidate_44.xyz",
+      "bytes": 804,
+      "sha256": "527739ab76806de1502936a49b93d732d774a61cbb3a664f4c3777b4954aa490",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_45.xyz",
+      "artifact_id": "artifact_e0c2d210b605455d8667acc39306102b",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e0c2d210b605455d8667acc39306102b/files/candidate_45.xyz",
+      "bytes": 804,
+      "sha256": "b905effba37d3f0c91709ae50496ab84daea20612688c1a8cd406c81b4b68bbb",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_46.xyz",
+      "artifact_id": "artifact_6f2726f03b8045be9092ef368ad2c1d0",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_6f2726f03b8045be9092ef368ad2c1d0/files/candidate_46.xyz",
+      "bytes": 804,
+      "sha256": "7595117308ffc9aeddf74a8d6e553784f5a961eca4bddae7879f8c263bea6453",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/candidate_47.xyz",
+      "artifact_id": "artifact_8cb60e35455148508df9f3c3acb683b8",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_8cb60e35455148508df9f3c3acb683b8/files/candidate_47.xyz",
+      "bytes": 804,
+      "sha256": "200af582f94f346f4b4fa269f31d9b5f46fe93a3dcbdfca2b97c6716bb4919a6",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/members.json",
+      "artifact_id": "artifact_05a9e064ddab4ec69b163ee73b3e426b",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_05a9e064ddab4ec69b163ee73b3e426b/files/members.json",
+      "bytes": 183293,
+      "sha256": "12531a381ccea655948a07fb03bd2ff43c09e708c4ad0fd58f0de182a7a6ee5a",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/observations.json",
+      "artifact_id": "artifact_d9ad17a3d895416fbbb951fc8bf342b6",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_d9ad17a3d895416fbbb951fc8bf342b6/files/observations.json",
+      "bytes": 239268,
+      "sha256": "bd51da8e85abe91c317fc684d96471001a6be0072f3c3dba34472ae5ce931673",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/prepared.xyz",
+      "artifact_id": "artifact_aa111bdc07fe4a8a9db76655aebbf8da",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_aa111bdc07fe4a8a9db76655aebbf8da/files/prepared.xyz",
+      "bytes": 1905,
+      "sha256": "20dc1df32623e6655629a28aa0d7d8560ceec17995030b521f0fed7cd66ff605",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/selected.json",
+      "artifact_id": "artifact_b8437323c7104cccb99cb9df76a43c64",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_b8437323c7104cccb99cb9df76a43c64/files/selected.json",
+      "bytes": 25707,
+      "sha256": "a0505c3a894d23bc4cad91c7c98b4ab588da625b40beab9527d1062b46972841",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/stderr.txt",
+      "artifact_id": "artifact_5c6b10713c3f40879773e575ee4a8692",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5c6b10713c3f40879773e575ee4a8692/files/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "task/stdout.out",
+      "artifact_id": "artifact_e72fd7f8ecfe49b6835c5d7c057b079e",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e72fd7f8ecfe49b6835c5d7c057b079e/files/stdout.out",
+      "bytes": 20,
+      "sha256": "dcabb9421e16f0213012134779f8aacb85915de939e602ce2261c6649b856cdf",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "boundary.json",
+      "artifact_id": "artifact_62ac851393b148b798f545fa66a43219",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_62ac851393b148b798f545fa66a43219/files/boundary.json",
+      "bytes": 1450,
+      "sha256": "eabae06ec6d07555b8cd5872f66a5d20449b3da1ee7a3ac3defb52e648a3fdb1",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "execution.json",
+      "artifact_id": "artifact_5406edc3afee4de3b9695a3bec74b83e",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5406edc3afee4de3b9695a3bec74b83e/files/execution.json",
+      "bytes": 5763,
+      "sha256": "9120ff111f1915aef10e8db208ff144a110a7cc3d999d0e520ca6c318aaf9066",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "intent.json",
+      "artifact_id": "artifact_e803679aec594c6892c7e7101ab4cb4d",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e803679aec594c6892c7e7101ab4cb4d/files/intent.json",
+      "bytes": 5494,
+      "sha256": "3a5107be154a1a5279847966f9d5320ad53ca597236a6e7e2a1e37ad9f23887b",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "orca-collector-e59903420a91437d83cf8700f0055cfd.intent.json",
+      "artifact_id": "artifact_7ff78092b2d94edabba507cab214673f",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_7ff78092b2d94edabba507cab214673f/files/orca-collector-e59903420a91437d83cf8700f0055cfd.intent.json",
+      "bytes": 311,
+      "sha256": "680fff264509d49f8951ed092fe71c171dfb908f3f29371ed2d9fb2e22eeef1c",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "orca-collector-e59903420a91437d83cf8700f0055cfd.started.json",
+      "artifact_id": "artifact_0f3a9e234e784a058b4dd430df45d6e7",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_0f3a9e234e784a058b4dd430df45d6e7/files/orca-collector-e59903420a91437d83cf8700f0055cfd.started.json",
+      "bytes": 395,
+      "sha256": "5563a03215af2c108cda7e52771bf144897e28e77014b9c940b0b86f2391b022",
+      "registered_hash_matches_bytes": true
+    },
+    {
+      "file_key": "started.json",
+      "artifact_id": "artifact_464269b7d465454a88ee861b62c11d53",
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_464269b7d465454a88ee861b62c11d53/files/started.json",
+      "bytes": 1965,
+      "sha256": "0430c0eea617269944cfae0e245761bbbef3085b5891d8dc7364d67886429174",
+      "registered_hash_matches_bytes": true
+    }
+  ],
+  "prior_partial_review": {
+    "path": "data/workflow-root-repair/T2-live-readonly-observation.json",
+    "bytes": 6623,
+    "sha256": "b39e0dc9c928d95b155a82dfa59f2b90878b3aaa691349d2b2465dda67290825"
+  },
+  "limitations": [
+    "Read-only diagnosis of this one settled repetition; no product fix or retry was made.",
+    "No independent reference calculation or numerical RMSD/energy revalidation was performed.",
+    "Batch model/ORCA settlement reports no unknown fields; Run.resource_usage_complete remains false and is not upgraded by this audit.",
+    "Original local evidence remains in place. Only this bounded review is newly published; credentials and mutable unrelated batch state were not read."
+  ],
+  "evidence": [
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T2/budget-check.json",
+      "bytes": 26,
+      "sha256": "2ac6c420c26e5b6998e45669412e6d2120be2167444889e992dd376091d3db9c"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T2/outcome.json",
+      "bytes": 2222,
+      "sha256": "a8a042672078bd67ccfcb9310fcc3ee1459e24ae93ae4c8d35e07c3283b915ab"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T2/post-verify.json",
+      "bytes": 1160,
+      "sha256": "a56ad3cc6fc810b6482b0ad2b7229537bf614c1f889614205ad52f2d63fac7ab"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T2/pre-verify.json",
+      "bytes": 1160,
+      "sha256": "55a35bbab533bdc8028898476078c9a5af01de2acc17a1d4d287b551452f37bd"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T2/report.json",
+      "bytes": 397572,
+      "sha256": "51a3b77228a768af095806bc45de90ab7bc9588feb7f54ac3e94459718eb66c4"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T2/report.txt",
+      "bytes": 94772,
+      "sha256": "21c48c641b64b37c323522697edd5e01fb47aaf1b88b30f8a5cc8bfd3ad289d7"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_02f62b6a45774570a51056bc9c9ac929/artifact.json",
+      "bytes": 484,
+      "sha256": "fbb1dce52aa3ab61ce8a5ce6745751d40bddc2744d3e7cfff5e8693e7a9ca3e3"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_02f62b6a45774570a51056bc9c9ac929/files/candidate_07.xyz",
+      "bytes": 804,
+      "sha256": "437e1ba46b8d395f568e4c23fd4ca157cac01accc52f6c4cc9d9363b7c77ace5"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_05a9e064ddab4ec69b163ee73b3e426b/artifact.json",
+      "bytes": 479,
+      "sha256": "abe6ec76433593679778ed6110649ff403c5a9f0c1306d90ad8fe4ec378bbd0c"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_05a9e064ddab4ec69b163ee73b3e426b/files/members.json",
+      "bytes": 183293,
+      "sha256": "12531a381ccea655948a07fb03bd2ff43c09e708c4ad0fd58f0de182a7a6ee5a"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_0f3a9e234e784a058b4dd430df45d6e7/artifact.json",
+      "bytes": 761,
+      "sha256": "8f14c76e9e38f0d165eef0a84ed68ae0c419efdf59694532a040e44f11ddd7eb"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_0f3a9e234e784a058b4dd430df45d6e7/files/orca-collector-e59903420a91437d83cf8700f0055cfd.started.json",
+      "bytes": 395,
+      "sha256": "5563a03215af2c108cda7e52771bf144897e28e77014b9c940b0b86f2391b022"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_13966690cd5246daa643fcab0b0b346d/artifact.json",
+      "bytes": 476,
+      "sha256": "2626178ba654d2e7a7c4baf9faeec448c2cc110043d873ec2db24fecac6125da"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_13966690cd5246daa643fcab0b0b346d/files/inputs.json",
+      "bytes": 678,
+      "sha256": "afbe4c62ade24df8d8ae71bc5cf5eba5b73562a2e45ce7b74b209844a06025d2"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_1a088733cd13427ebf5500d44fc718e9/artifact.json",
+      "bytes": 484,
+      "sha256": "25e6789b846f729d66a18a17c05292a390f4a2aa02d61068d1e0b7b7a64a4abf"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_1a088733cd13427ebf5500d44fc718e9/files/candidate_35.xyz",
+      "bytes": 804,
+      "sha256": "ada6dc863652d0a8d8473248fd021613a2d0c72ea5972068715d0f8a43fdc098"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_1fa5b4dc47744ab3985f8b0596870e7c/artifact.json",
+      "bytes": 484,
+      "sha256": "dd1ea376e33637acac607cc8dff47461aba58c73f0f7a2fd760bbc243884eaff"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_1fa5b4dc47744ab3985f8b0596870e7c/files/candidate_30.xyz",
+      "bytes": 804,
+      "sha256": "962df16e07b074f01855f36e7c2f79e8590cb92b7dcb86c25b2dd534df37159d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_1fa8052fa72e4b20a086a0836ec1d8ca/artifact.json",
+      "bytes": 484,
+      "sha256": "a6e4d0ecad851865736ad754c7b2f4229230a2bc36e52dbfec7ef7706ce5803d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_1fa8052fa72e4b20a086a0836ec1d8ca/files/candidate_06.xyz",
+      "bytes": 804,
+      "sha256": "1d8db838ebc8df83be5aa677917c701a8323559d4591f420785ae2902dacf91d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_2eaffc0fafcf47c69720fba27bd315ba/artifact.json",
+      "bytes": 484,
+      "sha256": "135b146f1e6b40ec612ddcbb421b3b62b837f50d7be1195a9edcae58b888147f"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_2eaffc0fafcf47c69720fba27bd315ba/files/candidate_36.xyz",
+      "bytes": 804,
+      "sha256": "1dc0531f8a8378d5bc5ba6c1de2cfa36d66a30242802096b8970c99f4912dad2"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_39c5fc51239f4fe6972f7aabfcc78032/artifact.json",
+      "bytes": 484,
+      "sha256": "c6e457d3524924c1f118e509d439e3effb6c3c75455920a995b5540b048f2dab"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_39c5fc51239f4fe6972f7aabfcc78032/files/candidate_29.xyz",
+      "bytes": 804,
+      "sha256": "89cb931c190b08ad3bacf324c04aef29dfa5a92b4a14428900a3e6649d98e4c1"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_42561128f4de4a179b6b2deb094ccd6d/artifact.json",
+      "bytes": 484,
+      "sha256": "512aedd69732e3a90149a0b72936430f1ae3db823a7e97a820f3dd2301b9df8c"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_42561128f4de4a179b6b2deb094ccd6d/files/candidate_32.xyz",
+      "bytes": 804,
+      "sha256": "0097d241f590605cdcb078fcb31d87da44fbccb8be18e961f8898414eae3577e"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_44791a1c6a4b426aadae665c4c1eb5a6/artifact.json",
+      "bytes": 484,
+      "sha256": "05b1defbe49d683a328280863ee5a167ff7877b920fc9ab2e36232bd0303c73f"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_44791a1c6a4b426aadae665c4c1eb5a6/files/candidate_22.xyz",
+      "bytes": 804,
+      "sha256": "fae336a1383c17170253bc915e8d24a87c100dae4fd49ac93ce9cd2b70abec39"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_464269b7d465454a88ee861b62c11d53/artifact.json",
+      "bytes": 666,
+      "sha256": "a8a427895857ea2df6f24d7f28efbe7f14eda05c99c882a666676c99c9bdcac6"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_464269b7d465454a88ee861b62c11d53/files/started.json",
+      "bytes": 1965,
+      "sha256": "0430c0eea617269944cfae0e245761bbbef3085b5891d8dc7364d67886429174"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_47d5a11e1ab44d2eae7ce50a5784fbec/artifact.json",
+      "bytes": 484,
+      "sha256": "acd266bbc78f068aacf79556d5da4b42bf5a0cdad333bd87b6ad857b13f6ad26"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_47d5a11e1ab44d2eae7ce50a5784fbec/files/candidate_26.xyz",
+      "bytes": 804,
+      "sha256": "61b659d415933b4a5bd0f87339c3efe8fe522353c32d331c812a71972fb90db8"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_49c533c225da473fb5075f4ddda59e1d/artifact.json",
+      "bytes": 484,
+      "sha256": "a7cd19cd7d8822d1fffcb289675c2f6de8601d699c6b459efb0affaf9b4012f8"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_49c533c225da473fb5075f4ddda59e1d/files/candidate_39.xyz",
+      "bytes": 804,
+      "sha256": "af3df448d1637e7651c2aaf451e34c762fef2dd9c84c40b6a0e79a0ecd73b557"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_4deb07f57dec4b978da6d031509264c7/artifact.json",
+      "bytes": 484,
+      "sha256": "31f79ba868cd28c3bd3fa00c8ef65f0b1daa136799ba9665ac8b2249c172e375"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_4deb07f57dec4b978da6d031509264c7/files/candidate_24.xyz",
+      "bytes": 804,
+      "sha256": "129fe9f0639412c56b221106e9c741b1239214fd5cd0ed91fcf0b184826ebc29"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5406edc3afee4de3b9695a3bec74b83e/artifact.json",
+      "bytes": 670,
+      "sha256": "dfe1edc920799885ef2196d45372a182c8de4c148acd767b1d5e2f17382654bb"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5406edc3afee4de3b9695a3bec74b83e/files/execution.json",
+      "bytes": 5763,
+      "sha256": "9120ff111f1915aef10e8db208ff144a110a7cc3d999d0e520ca6c318aaf9066"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_56e8a48401224c3c8cf99a630e47d9f2/artifact.json",
+      "bytes": 484,
+      "sha256": "752715be80ea8f3870f0adcbc1c9706296802b57e7685bc5cd37cfced0ed095d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_56e8a48401224c3c8cf99a630e47d9f2/files/candidate_13.xyz",
+      "bytes": 804,
+      "sha256": "0ac0830e724ef257aac2fe6fa569cb244b791695dd274833a0a3b914d2beb3d8"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5a19f19aae884101a3939b7e66791763/artifact.json",
+      "bytes": 484,
+      "sha256": "2a710bdbd56ff7620dcd37128c38520016c05f6cce9f601970d8d2ca62b1cd9a"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5a19f19aae884101a3939b7e66791763/files/candidate_33.xyz",
+      "bytes": 804,
+      "sha256": "14bd9684e25c01cd3b2beca71dfeab6547ad4041c289ef739a6b1ddab4be5465"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5a66fe401d6143fcbce659a29c002098/artifact.json",
+      "bytes": 484,
+      "sha256": "ad760497d0546ce9d5072b89dfb648092fce3c813dade21b8de342b3fcaa8565"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5a66fe401d6143fcbce659a29c002098/files/candidate_34.xyz",
+      "bytes": 804,
+      "sha256": "89d4df92e5a3c6c6145abf4998b478a047878a04cbb6172229a26d116080ba6b"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5adc593fe18540b184e7747e922d93ad/artifact.json",
+      "bytes": 484,
+      "sha256": "5924dd7bdc21db510f2ef17abd7e7ec4f6c65307924cc2ceb18ba7513a09f644"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5adc593fe18540b184e7747e922d93ad/files/candidate_44.xyz",
+      "bytes": 804,
+      "sha256": "527739ab76806de1502936a49b93d732d774a61cbb3a664f4c3777b4954aa490"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5c6b10713c3f40879773e575ee4a8692/artifact.json",
+      "bytes": 470,
+      "sha256": "08909ee1594dadf475ffe2895594948b8c24f0eaad819876e2ccfd38062f41a0"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_5c6b10713c3f40879773e575ee4a8692/files/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_62ac851393b148b798f545fa66a43219/artifact.json",
+      "bytes": 668,
+      "sha256": "3297983415a044e40dfdec6d9093f049602c51750b962171392f45aade28114a"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_62ac851393b148b798f545fa66a43219/files/boundary.json",
+      "bytes": 1450,
+      "sha256": "eabae06ec6d07555b8cd5872f66a5d20449b3da1ee7a3ac3defb52e648a3fdb1"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_63e0f4dd1edd4faaa3e1364cfef9ff4d/artifact.json",
+      "bytes": 484,
+      "sha256": "238102841168abee100eebb0f9623a8826da5567b75449e1350e3ffe2cea8714"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_63e0f4dd1edd4faaa3e1364cfef9ff4d/files/candidate_27.xyz",
+      "bytes": 804,
+      "sha256": "594c8bff4c3c1c9975251ac0c825a684f77784a023fa337357ca0eb42831b2d2"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_68dd8ce486774734b77dd6cc796b060b/artifact.json",
+      "bytes": 484,
+      "sha256": "03927bb3604d1b7fd0f11d6926e1d9dceb070f41ec0e191b8bc9dfb8cee6a2c6"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_68dd8ce486774734b77dd6cc796b060b/files/candidate_18.xyz",
+      "bytes": 804,
+      "sha256": "30333a05d9c5f5f232195dbc9622f763ceb8318983707792001d4b6a6161f1a4"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_6a73508d6ac94f88855bb0eb053ee98c/artifact.json",
+      "bytes": 608,
+      "sha256": "e803de9829553660d54695245e110715f7a5a919308d0ffbaf4d4e0499084c30"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_6a73508d6ac94f88855bb0eb053ee98c/files/prepared.xyz",
+      "bytes": 1905,
+      "sha256": "20dc1df32623e6655629a28aa0d7d8560ceec17995030b521f0fed7cd66ff605"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_6f2726f03b8045be9092ef368ad2c1d0/artifact.json",
+      "bytes": 484,
+      "sha256": "7887b3fff088b56d7d7468e97d8e9cb64121eedb4242a65ee57718ab7b765925"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_6f2726f03b8045be9092ef368ad2c1d0/files/candidate_46.xyz",
+      "bytes": 804,
+      "sha256": "7595117308ffc9aeddf74a8d6e553784f5a961eca4bddae7879f8c263bea6453"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_772041d784d44dda91b64b70f20d7617/artifact.json",
+      "bytes": 484,
+      "sha256": "7ea997938a23de55ee2e454c6c0474efd922facc7f7e90549b00ac55a734bf66"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_772041d784d44dda91b64b70f20d7617/files/candidate_10.xyz",
+      "bytes": 804,
+      "sha256": "6599cf09d6f19b1e24027ef1c7cb464715b1fdf21175a32d9828fac7b52d95ef"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_7dacd18e68cc4d0da65c747f5535b7a8/artifact.json",
+      "bytes": 469,
+      "sha256": "fd7d8cd599722edf52db3f3216e34ba7b3024b5d62dd1ca57cf083292dc7a7de"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_7dacd18e68cc4d0da65c747f5535b7a8/files/task.py",
+      "bytes": 5660,
+      "sha256": "9b57d2ea35edc48acb23e8ad0288dede7dfb740cb7732af3dee1233910cda5fc"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_7ff78092b2d94edabba507cab214673f/artifact.json",
+      "bytes": 759,
+      "sha256": "583b9aa670a18d6a4cbe27589bb7828a192778e31631dc6a41892019a84ccc64"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_7ff78092b2d94edabba507cab214673f/files/orca-collector-e59903420a91437d83cf8700f0055cfd.intent.json",
+      "bytes": 311,
+      "sha256": "680fff264509d49f8951ed092fe71c171dfb908f3f29371ed2d9fb2e22eeef1c"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_815506389f3540e9b5d07eee88771a7b/artifact.json",
+      "bytes": 517,
+      "sha256": "22cb46490c8804a14d4b20239589b05a2b282f8c976247be8654df39121766c9"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_815506389f3540e9b5d07eee88771a7b/files/orca_single_points.py",
+      "bytes": 5198,
+      "sha256": "cc597aefeacdac335499678ecf015b05a38bd655c992931b145ae6799f04ee25"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_81645491034c4e0b9e425e955670ec4e/artifact.json",
+      "bytes": 484,
+      "sha256": "28baece4daba7beb1d5a28d2885e2f8ad49795a2c0a6bccc9d99dbe39e31060c"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_81645491034c4e0b9e425e955670ec4e/files/candidate_14.xyz",
+      "bytes": 804,
+      "sha256": "e8399edbd7f9d3e8fa8c50f25952b49bcdac797fd657baae1e660d7fb19c1f77"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_841c18e1e2424e66a44f9c09cf31cd94/artifact.json",
+      "bytes": 484,
+      "sha256": "62006d5b14de717c5aec4bedde349c8980587052522612f1052155f4663263a6"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_841c18e1e2424e66a44f9c09cf31cd94/files/candidate_42.xyz",
+      "bytes": 804,
+      "sha256": "9966c7a116e2ef880b84bd218166130ff001b41fb0393adbd9595e0cbf68ec84"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_88d4a61b122a4de29f5303d5380c270a/artifact.json",
+      "bytes": 484,
+      "sha256": "5c6b81202c512ce4ece5d62a3f7c8c861faa3d315b855e4daa5f890f08d6ab38"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_88d4a61b122a4de29f5303d5380c270a/files/candidate_19.xyz",
+      "bytes": 804,
+      "sha256": "bf8617616067d49cca0a1db3d20c307ce8a027aebcdc7258cc545af237b43356"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_88db8debc55c4729b1e91602c1f7da51/artifact.json",
+      "bytes": 484,
+      "sha256": "a4d2abdcceeea2ccf3c364e8620ae8f51f351bcc855e52857015d91387f54ba7"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_88db8debc55c4729b1e91602c1f7da51/files/candidate_12.xyz",
+      "bytes": 804,
+      "sha256": "90834d7025d6eaae1f35a2627db5b53a7ab94bc239109235099c64f8e69f0341"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_89b7f45a811e41a18bca8f0c4b00ff29/artifact.json",
+      "bytes": 484,
+      "sha256": "fee8f1eb09171fc41cff2a4d539843d1a5dcbf2fafae7a2df7c73570c428699b"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_89b7f45a811e41a18bca8f0c4b00ff29/files/candidate_11.xyz",
+      "bytes": 804,
+      "sha256": "55b7abb39862f3a686efb1cfaca70bc70595af90d4eeed902517652d3ab1448b"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_8afcd30a89a34ca88cd6487466557186/artifact.json",
+      "bytes": 484,
+      "sha256": "685b8bf4f3be2c58e1b1c1d61a7278a215289ca3b8308731b304eabb930d0e3c"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_8afcd30a89a34ca88cd6487466557186/files/candidate_21.xyz",
+      "bytes": 804,
+      "sha256": "f335ede77e4e5d467fd2ab999ec2a542b446f11f5c345ec046b71869bd4ce9e4"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_8cb60e35455148508df9f3c3acb683b8/artifact.json",
+      "bytes": 484,
+      "sha256": "d26f50faef94d4380fb33b8dd316b8565c73f0b50b6aff351b972ebc28351371"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_8cb60e35455148508df9f3c3acb683b8/files/candidate_47.xyz",
+      "bytes": 804,
+      "sha256": "200af582f94f346f4b4fa269f31d9b5f46fe93a3dcbdfca2b97c6716bb4919a6"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_8f7b0de42930450282f74aa1bbfd7799/artifact.json",
+      "bytes": 484,
+      "sha256": "925cee63487a49bcf8157442971b3813b39cee352e361fda360c2c1feaeb1344"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_8f7b0de42930450282f74aa1bbfd7799/files/candidate_38.xyz",
+      "bytes": 804,
+      "sha256": "447eba81a7c7bde77ef938bb1c1a208737a9e69da93f63becb22bc2514f9eb7f"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_9bdf17ad35f0477791f66a4df278c90c/artifact.json",
+      "bytes": 484,
+      "sha256": "8183112d94f8a7f817479aba8c9ab70270ae8558a45dada36e44fcfc1be2a7da"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_9bdf17ad35f0477791f66a4df278c90c/files/candidate_23.xyz",
+      "bytes": 804,
+      "sha256": "3f41ef5e687fad4b5b23a13e2ad022095006f53d191036d2966a0a3888d4e323"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_9ebf596d28984cf789f76de1c8b4bceb/artifact.json",
+      "bytes": 484,
+      "sha256": "64a338a90ee7c08df30c59d5f9b166a2c1f360fc15e5a04339ea0a3ae147e7d0"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_9ebf596d28984cf789f76de1c8b4bceb/files/candidate_01.xyz",
+      "bytes": 804,
+      "sha256": "49894302716e12bbb170a9b1419dc8fde2ba59cad68dd76a587f266f463ddb1c"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_9ee0ed73ed324bed850168032b3e0cf0/artifact.json",
+      "bytes": 484,
+      "sha256": "236ea1ba598024201361d198454bb97e9c6f7b4466dfbafd6644e64415c87293"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_9ee0ed73ed324bed850168032b3e0cf0/files/candidate_15.xyz",
+      "bytes": 804,
+      "sha256": "eff6ee124ffcfad4aa4a27396afa3cdfca65a801ea9b450e3269830b42fbeabd"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_a07bd7554b1b4e2fa1303bab54aef5ed/artifact.json",
+      "bytes": 484,
+      "sha256": "2876eef685b2ecfadd7e5408087e5f17e41c7c26ae98783d44e80a1594fa857f"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_a07bd7554b1b4e2fa1303bab54aef5ed/files/candidate_41.xyz",
+      "bytes": 804,
+      "sha256": "7a718d417690d7aa7a17934b507371db7c9901412445f7ca9337367a708d1c40"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_a19b7c3640824f558e21306101ff968a/artifact.json",
+      "bytes": 484,
+      "sha256": "1bc31f24c949a6ac2b817379a44a27845c059efc61e7c7130d67b9b1cf6908d6"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_a19b7c3640824f558e21306101ff968a/files/candidate_05.xyz",
+      "bytes": 804,
+      "sha256": "70346f44a3b6a8c91ed8a03164bc05205bd9d3beb2bd2cbe74835d68b2361cc1"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_a79d25da43a54076a1c3cfb5ebf1c788/artifact.json",
+      "bytes": 484,
+      "sha256": "0aee414797890cac0f009a85d3f14411dcb63c43460f1fd275a45a67285e871d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_a79d25da43a54076a1c3cfb5ebf1c788/files/candidate_04.xyz",
+      "bytes": 804,
+      "sha256": "d655d3681b4029b36fd702ecbdd5de6181b7dd61aa34f63cb21542258f79a58d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_aa111bdc07fe4a8a9db76655aebbf8da/artifact.json",
+      "bytes": 477,
+      "sha256": "661f174d3afb6facd060f2951b99c2f59cbd96fd46a5b3d2a8bdef58d6e2ccc5"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_aa111bdc07fe4a8a9db76655aebbf8da/files/prepared.xyz",
+      "bytes": 1905,
+      "sha256": "20dc1df32623e6655629a28aa0d7d8560ceec17995030b521f0fed7cd66ff605"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_ad5943c858db4942aaafdafdc0331449/artifact.json",
+      "bytes": 484,
+      "sha256": "3e88455023a650d4dd34352935d93f9c6f9ee184128a1167118fb12489607a5f"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_ad5943c858db4942aaafdafdc0331449/files/candidate_09.xyz",
+      "bytes": 804,
+      "sha256": "ff696a9ac412f2e763d66f63ad46682442ac44ddc69d2f89cf5e66f1829ae667"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_b8437323c7104cccb99cb9df76a43c64/artifact.json",
+      "bytes": 480,
+      "sha256": "0a6ec771e19a89bfcbb2dfc9e078c2bebf699754e978f417f4b3f9ea414ba4d1"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_b8437323c7104cccb99cb9df76a43c64/files/selected.json",
+      "bytes": 25707,
+      "sha256": "a0505c3a894d23bc4cad91c7c98b4ab588da625b40beab9527d1062b46972841"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_c2308212ddae4b28b7519813e34a4abb/artifact.json",
+      "bytes": 484,
+      "sha256": "79293840eb8c3ce185ff1b044a2b23e42ae8d94d13baec80cf9a324aaa50412e"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_c2308212ddae4b28b7519813e34a4abb/files/candidate_02.xyz",
+      "bytes": 804,
+      "sha256": "d868e1f6aa684a246201a692993d65fbd8181480fbf0fb1efff7152fe89c428d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_c86e206cd1a0499eb1b463c494942f01/artifact.json",
+      "bytes": 484,
+      "sha256": "442d6b7f988c90c898fce822cc3d1cb888493e1bea3086910b4ed3f2af01429e"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_c86e206cd1a0499eb1b463c494942f01/files/candidate_31.xyz",
+      "bytes": 804,
+      "sha256": "8be9f47f93ff293b8084117c0d07edf9ce8e60bc554d04f39437b86e0d3646c0"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_ce0b0daa304246178044e14e9b879dc5/artifact.json",
+      "bytes": 484,
+      "sha256": "33e62430cf8a717a70e9f0a678da9540f8c97653fdfd03ba01340d73cbf3a454"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_ce0b0daa304246178044e14e9b879dc5/files/candidate_16.xyz",
+      "bytes": 804,
+      "sha256": "3bf913f4177925920f49a5f1a12ea520b7832d4e109ead52d5ee9b34e6ab7587"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_d4b59934317644f9b13f08abccaf454b/artifact.json",
+      "bytes": 484,
+      "sha256": "ce7428d7c1316becb8da7f101dd09f69a76c538664a1b1e6cbab8478b3b3bb1f"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_d4b59934317644f9b13f08abccaf454b/files/candidate_00.xyz",
+      "bytes": 804,
+      "sha256": "ac5c0ce967d021cc39916fcbb1727ea1afec5304e7c22c7e695e4427c82ffef4"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_d6ccccd3a4574afc9abf75c054ba242f/artifact.json",
+      "bytes": 484,
+      "sha256": "59646489f3383f0499dba3cdf9863feca42ea586a3a2cefb0434a5ad2ea40856"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_d6ccccd3a4574afc9abf75c054ba242f/files/candidate_08.xyz",
+      "bytes": 804,
+      "sha256": "0db8944cc5c6d7e268b32d47a13bc6c2331532f302c112d80f80323c82792d17"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_d9ad17a3d895416fbbb951fc8bf342b6/artifact.json",
+      "bytes": 489,
+      "sha256": "81e976cb2ea13b4a90afc5e219c2557d193affab9a706f60df1e2c3f3b09ff02"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_d9ad17a3d895416fbbb951fc8bf342b6/files/observations.json",
+      "bytes": 239268,
+      "sha256": "bd51da8e85abe91c317fc684d96471001a6be0072f3c3dba34472ae5ce931673"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_db741da8abf94d3ba43ef21902180ebf/artifact.json",
+      "bytes": 484,
+      "sha256": "a3ca75e32c5123d33cf3981b4710d344329a8259938e2785d9a874fc83b26e7a"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_db741da8abf94d3ba43ef21902180ebf/files/candidate_03.xyz",
+      "bytes": 804,
+      "sha256": "f08ca2be24e859c17a01b2bff90dae409f7a6c3a4c7346da78572badbcfa2f4d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_dd6118563c1949e391731ef641eb0455/artifact.json",
+      "bytes": 484,
+      "sha256": "32c2f8898033452fd7fd10d46c2f589b792c1c1e885c3e785557147be6767145"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_dd6118563c1949e391731ef641eb0455/files/candidate_37.xyz",
+      "bytes": 804,
+      "sha256": "f8d748bf6af85edc9a3a05cb4c00affd54e952dd4b860eded1f655eb749816e7"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e0c2d210b605455d8667acc39306102b/artifact.json",
+      "bytes": 484,
+      "sha256": "a77af3d5b68e11565b1fad42ac36d5d2b049e03521ccaf1b82da0ec15289af30"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e0c2d210b605455d8667acc39306102b/files/candidate_45.xyz",
+      "bytes": 804,
+      "sha256": "b905effba37d3f0c91709ae50496ab84daea20612688c1a8cd406c81b4b68bbb"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e597a8af4cee4242b83142e88e5738f3/artifact.json",
+      "bytes": 484,
+      "sha256": "0bad05e7eb16451d6e499abfdc05e6f7132e56c5b16e97af021cdfbc983986ff"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e597a8af4cee4242b83142e88e5738f3/files/candidate_40.xyz",
+      "bytes": 804,
+      "sha256": "b9d0c2fa7125abb3a4f9d916a14c14308af017da14e33ee16474cc766575f6fd"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e72fd7f8ecfe49b6835c5d7c057b079e/artifact.json",
+      "bytes": 471,
+      "sha256": "9375e93f7010487f52b6ae3a8a4a730c68b0eec1f613fe81c0db2eceee6342ac"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e72fd7f8ecfe49b6835c5d7c057b079e/files/stdout.out",
+      "bytes": 20,
+      "sha256": "dcabb9421e16f0213012134779f8aacb85915de939e602ce2261c6649b856cdf"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e7b246ef5cda4fe8a62c4009f9b76258/artifact.json",
+      "bytes": 484,
+      "sha256": "902f044faed32450d544c6b51351d195ed01cc7d71d2b7a8a8708873a76337ac"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e7b246ef5cda4fe8a62c4009f9b76258/files/candidate_17.xyz",
+      "bytes": 804,
+      "sha256": "4a6ca3dd1c918e5cd07a2aa8855b91b2be04feb0660f0e940b7c2922701081c4"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e803679aec594c6892c7e7101ab4cb4d/artifact.json",
+      "bytes": 664,
+      "sha256": "ffc9e39886b8949437a66749a31e945a8a62d6eb2e7dae9d7a6f3bb2450c52b0"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_e803679aec594c6892c7e7101ab4cb4d/files/intent.json",
+      "bytes": 5494,
+      "sha256": "3a5107be154a1a5279847966f9d5320ad53ca597236a6e7e2a1e37ad9f23887b"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_efef586d5bfe48d7a67bd4ffcb1f095f/artifact.json",
+      "bytes": 484,
+      "sha256": "ab6ccafb5946d04d9fa298b3c485a7b05f1979a43603a59ec7ea9290f3760bd8"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_efef586d5bfe48d7a67bd4ffcb1f095f/files/candidate_20.xyz",
+      "bytes": 804,
+      "sha256": "4993cd5149b87adb22dc6a1ce24ea30719125482dd8cef7e643f20050beb312a"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_f892c3c5a2f24fd1af6b55294e1ecc41/artifact.json",
+      "bytes": 484,
+      "sha256": "b3ef3eabf9fbd2f1760b3e8dc75c07fc4c7f706153eb28130470a565e3a0d6e3"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_f892c3c5a2f24fd1af6b55294e1ecc41/files/candidate_43.xyz",
+      "bytes": 804,
+      "sha256": "bd55c4344e7cfa1f5e63a7c20dd03dc43bfe5018e0039522a3898e2703093134"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_f9f08829382e47d6a875f4211b018c85/artifact.json",
+      "bytes": 484,
+      "sha256": "349dfb7a77c921405b4a35766ec7393b7daf397417a9d671953d3dc0a3ef2053"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_f9f08829382e47d6a875f4211b018c85/files/candidate_28.xyz",
+      "bytes": 804,
+      "sha256": "753d0c1ad0515cdf09afcbb79868aceaebe2f3b2038aed8eba837e5865a39100"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_fecc5e9febaa4304bd9736bbbea5dac5/artifact.json",
+      "bytes": 484,
+      "sha256": "69b87f7d472c5b6898cb18dea31bf6dc81a5858e5d2fc3c9ca0bcea9a119a46b"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/artifacts/artifact_fecc5e9febaa4304bd9736bbbea5dac5/files/candidate_25.xyz",
+      "bytes": 804,
+      "sha256": "fad5a46634eca590f705627aff88d3b6a393fdcfefd8264da172411c1ab7e916"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/calls/call_526813998e15420183f86d6de2fecb50/intent.json",
+      "bytes": 2252,
+      "sha256": "5d38e8fa9fd56e9762e2a2122c45fc5a7f718ff3292d67423edf69d2f3d59e7d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/calls/call_526813998e15420183f86d6de2fecb50/receipt.json",
+      "bytes": 22172,
+      "sha256": "69f969e119a05baad46cfe934c317419e463661bd9f1ce669df9eb58f8a6959b"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/calls/call_526813998e15420183f86d6de2fecb50/worker-handle.json",
+      "bytes": 1044,
+      "sha256": "539afc766860c5acaafe28d5381a0d1cbe149eb0128af41bd492067ca0bb354f"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/calls/call_526813998e15420183f86d6de2fecb50/worker-input.json",
+      "bytes": 165,
+      "sha256": "63a3ac34049653a8dc6f2d6e1f35a10e5510123603b8da3168d9e5acfb7beb4e"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/calls/call_526813998e15420183f86d6de2fecb50/worker-outcome.json",
+      "bytes": 2726,
+      "sha256": "f26d964eaeaa3ea89178d5471549caefe046186b30f4cbdf2c937879d3a936f7"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/calls/call_526813998e15420183f86d6de2fecb50/worker-result.json",
+      "bytes": 176,
+      "sha256": "17661ecf1180926e96e47b5b6856d15a7f189cea1b5a36d0693c30d95320e2c2"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/calls/call_54d9c0f2a4b5443384324d9257fcd29d/identity.json",
+      "bytes": 3721,
+      "sha256": "3243dd4e71d69f265ca2414e5fadb9c34067c937171d5d98bfc2d90588438552"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/calls/call_54d9c0f2a4b5443384324d9257fcd29d/intent.json",
+      "bytes": 1431,
+      "sha256": "b3680b629ec9fad4ac700729491e7d62a1b06182ac3f200d10254848a2cadf4f"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/calls/call_54d9c0f2a4b5443384324d9257fcd29d/pubchem-response.json",
+      "bytes": 300,
+      "sha256": "b3cdd931d4ce768e2eb37c0f3047583a76405006e7feb34d683945db06422d82"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/calls/call_54d9c0f2a4b5443384324d9257fcd29d/receipt.json",
+      "bytes": 12258,
+      "sha256": "d324274639a3e6c41604e98f351893b25f918f586cd08e75c8b9ce8b9ccca415"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/decisions/model_1672df4a7946413b8051d8343c204835.json",
+      "bytes": 47233,
+      "sha256": "80aa4d8826956217ef4252fe85efd69b0faf26cf823cee494f8575df235b2174"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/decisions/model_23d592c245e741f487e9e5498c21e9e4.json",
+      "bytes": 26468,
+      "sha256": "9bbddd7e8097354465266be0568a9a421ad3df202c38988af877ab77f23370d6"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/decisions/model_d70bf50f4df143179c803272fed4f386.json",
+      "bytes": 48579,
+      "sha256": "a9a5d13bdd9131ad64775c29eaf54f9a4b1918637bf398580c9c9010d112919f"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/decisions/model_ea3700764dc4495eac921998ae3949ba.json",
+      "bytes": 26494,
+      "sha256": "88686be254cab36a726c2b5ccc16bc8879eb8acfaf0bb6aff3deebb4f7ed9bd5"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/deliveries/report_634c8a24e2cc221357fdc625.md",
+      "bytes": 94772,
+      "sha256": "21c48c641b64b37c323522697edd5e01fb47aaf1b88b30f8a5cc8bfd3ad289d7"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_1672df4a7946413b8051d8343c204835.request.json",
+      "bytes": 24422,
+      "sha256": "d08fe3bbe1481c2223a2ee2617ca466aa652f8ed7e7e9bffc2b9b119eed3b630"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_1672df4a7946413b8051d8343c204835.response.json",
+      "bytes": 9730,
+      "sha256": "fbf4012702bde0ede85796588b7f67607cd170aa857d97bc0cde4a44f8429eee"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_23d592c245e741f487e9e5498c21e9e4.request.json",
+      "bytes": 51344,
+      "sha256": "ab23354a641a0d770956892180075832469518d08a730672f81d925e0d408bb6"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_23d592c245e741f487e9e5498c21e9e4.response.json",
+      "bytes": 2338,
+      "sha256": "21765984a69890724ad7fcb13179b1ca5e9a756f221bfe377dbb75770ce2e537"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_3636e802c8f748159d8a5d51a78397b7.request.json",
+      "bytes": 54590,
+      "sha256": "e3a841673b27ab49508087423c5035f07ca24adf37f3462d46ab92ce7015e596"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_3636e802c8f748159d8a5d51a78397b7.response.json",
+      "bytes": 20990,
+      "sha256": "36240af334f611dd31daddd2684057aec496aa10e65e4bf1c60fb231fbebc9d9"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_73b6f39aaed84911a8c74a514f8e0ba5.request.json",
+      "bytes": 60438,
+      "sha256": "35a46b0dac1828b66c3ecf3b9e6594746354a9fb31ebc502b02e327067afe304"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_73b6f39aaed84911a8c74a514f8e0ba5.response.json",
+      "bytes": 2699,
+      "sha256": "844d4304ea0c197948d5d01befc6645c8f88ee8a0c0ed6fe59c237cd668b35aa"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_7578506c446c4e22a8dabde8c4616585.request.json",
+      "bytes": 51882,
+      "sha256": "18feea28890e784b22633d77c127adc625e57296d926851c55e133e8feb87650"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_7578506c446c4e22a8dabde8c4616585.response.json",
+      "bytes": 1357,
+      "sha256": "379de9e35b0189bf59c4c13fbbd5203235b11e78488258ebf7c744332fc6e246"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_9abaebddc04e48b9a6a06fa770d5f3e9.request.json",
+      "bytes": 51240,
+      "sha256": "5bd37b6e8f1d972e0047c6a3eca86da080cdc7d0da809074e8e83d61a9efc8be"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_9abaebddc04e48b9a6a06fa770d5f3e9.response.json",
+      "bytes": 1618,
+      "sha256": "b860dd00d2c5163cba6d49acf08860a17338a193f58ca80dc045a0d827d5e098"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_c998b5fabf394db2808b8d1c2a1ebab2.request.json",
+      "bytes": 66721,
+      "sha256": "ed994f4a1036aa84db2a34f39c5ff657e0b669c9198fd3698a4372ac0142e403"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_c998b5fabf394db2808b8d1c2a1ebab2.response.json",
+      "bytes": 1310,
+      "sha256": "86ad3110584710ff8bcfeb38048ac243abb228d9330bae2877c3fb5285ca8e3a"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_d70bf50f4df143179c803272fed4f386.request.json",
+      "bytes": 54694,
+      "sha256": "fba18d4746fdf7b0a20955a8167fc0e72069a7608a6c8bdcbef34f5b5cf50c9d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_d70bf50f4df143179c803272fed4f386.response.json",
+      "bytes": 42335,
+      "sha256": "98308665cf55f033554f477487557a0dad66c648731fdcfe75a59f17d5519479"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_e01668f5381a457b8be1b83a52c4fa49.request.json",
+      "bytes": 63329,
+      "sha256": "e0a326a57407e25084d510b5f80de25dd64dda4f7521d93b082ecb7c51b16026"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_e01668f5381a457b8be1b83a52c4fa49.response.json",
+      "bytes": 1544,
+      "sha256": "8f1f105082158b3586583a25791de30076a0180863db82179051df2bdd965ffd"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_ea3700764dc4495eac921998ae3949ba.request.json",
+      "bytes": 65854,
+      "sha256": "2d88741ee2aa292df579990a24e5caf418c4681a3839f976b90e4049ced55765"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_ea3700764dc4495eac921998ae3949ba.response.json",
+      "bytes": 3216,
+      "sha256": "85b92f8e37c02f0f356388d5ab8c01ec4910b191dfa3a4ca65c8f8f1f156b7d1"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_eadb73efe9cb44309a4cda8c69c44faf.request.json",
+      "bytes": 58424,
+      "sha256": "9cfe0beb2391b5ef3ec3d2832a170e36ec82894748446b23ced5eea9bfa5067d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/model/model_eadb73efe9cb44309a4cda8c69c44faf.response.json",
+      "bytes": 2319,
+      "sha256": "253f482a15556f9b5a329eb6eb1c44662b175575acd49e346a1d87900e19c915"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/results/result_6051c074703d4257a7a0d6fb6b9b9a3d.json",
+      "bytes": 22549,
+      "sha256": "0cb3836e4bcb6b4bb123735a5066a06c7e7f0012919df0f373baeba5b34b0d5f"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/results/result_72527e5738f44f3a8f78a9a57f758d49.json",
+      "bytes": 47524,
+      "sha256": "00bb58eff66c9dc45245a6afae51d20f9d3cf9b5f8527b48e71ea897db326da2"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/results/result_729a1b5de5b849f7b8a1cf76bcd42677.json",
+      "bytes": 1534,
+      "sha256": "ffa755b51c1290bcc615facca070703d2a41414af52881f85e8803faf45a1d69"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/results/result_9285d161de59403a85d679b0f9c65aa9.json",
+      "bytes": 20474,
+      "sha256": "22ded54718ac58df260ff4a6a9037f486ad846343152da7c06bac0af67e800bb"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/results/result_a9d1654941f240da96b271ed0ff673d4.json",
+      "bytes": 10574,
+      "sha256": "28fb708003c2ba1535e67e70c33dc1bb94c615ac24fb5d64e98e2aa7b5e706b5"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/results/result_b402808c06374b5a995cc64e0ceff729.json",
+      "bytes": 7518,
+      "sha256": "b37137a3d678aaa5df2278b33284f0003578af8083d970f3b9b59912ea660a22"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/results/result_cb0f62593c5a4aaeb1cae74ddc535611.json",
+      "bytes": 1465,
+      "sha256": "844d544db3714903d6773728e3fc9901f2890c0a94e2346a37b89538ca195ea7"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/data/runs/run_42acda94c6034af1b73af6b91a501ecd/run.json",
+      "bytes": 230459,
+      "sha256": "f6102681e7c35e10dad0c8de163395809238859cee547dbed16978f3e82bce09"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T2-001/original.txt",
+      "bytes": 1032,
+      "sha256": "32eb055aa4531cf533a5ea5a81012436841c14109b7217180b8da1de099769f7"
+    },
+    {
+      "path": "data/workflow-root-repair/T2-live-readonly-observation.json",
+      "bytes": 6623,
+      "sha256": "b39e0dc9c928d95b155a82dfa59f2b90878b3aaa691349d2b2465dda67290825"
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "bytes": 61193,
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff"
+    },
+    {
+      "path": "src/orca_agent/artifact_index.py",
+      "bytes": 6436,
+      "sha256": "f087a273273b15adc60e40e503908a984821ffe1b920638282d30f74b7ff8236"
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "bytes": 248913,
+      "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6"
+    },
+    {
+      "path": "src/orca_agent/decision_purpose.py",
+      "bytes": 12737,
+      "sha256": "fa136548ceab6acfa55d8293fd4b540fd8b0904f230a9ba370708c911d161b8a"
+    },
+    {
+      "path": "src/orca_agent/file_references.py",
+      "bytes": 11035,
+      "sha256": "0c0c8d4719b4be5f2c16b52fec1661af24d2a84dcb8a1dff545703ef940c847b"
+    },
+    {
+      "path": "src/orca_agent/llm.py",
+      "bytes": 27870,
+      "sha256": "a406561ff07dcacf2ecaef57b464c7cd6ad9891fc0e13bdc518d0d978b50752a"
+    },
+    {
+      "path": "src/orca_agent/mechanical_progression.py",
+      "bytes": 5062,
+      "sha256": "c1f4b2698647f4415844992d2d73aed2232b9f9574ab6d2ecaabfc59f4551231"
+    },
+    {
+      "path": "src/orca_agent/store.py",
+      "bytes": 126289,
+      "sha256": "958e01e20fae789c9ede6912add1aefcb4e2134b9f979c7702efcbb6ea3cb1e6"
+    },
+    {
+      "path": "src/orca_agent/task_observations.py",
+      "bytes": 44274,
+      "sha256": "f61450e1d9a767468ee9b50f5ecc9f5e1c7aee19a3faa31d2d0b4ec1bfa48387"
+    }
+  ],
+  "evidence_hashes_rechecked_after_review": true
+}

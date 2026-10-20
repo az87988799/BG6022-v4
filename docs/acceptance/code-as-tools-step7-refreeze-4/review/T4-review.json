@@ -1,0 +1,719 @@
+{
+  "reviewed_at_utc": "2026-10-20T19:06:18.285978+00:00",
+  "task": "T4",
+  "run_id": "run_29f67a40afa1410487f8dafa6af502ec",
+  "scope": "Read-only completed receipts and settled outcome. No replay, tests, model/ORCA/network calls or state/source/freeze changes.",
+  "initial_live_snapshot": {
+    "run_sha256": "75ac908562cc22a43e3edd9aa8bd9ef6256dfacb7a4516b2f170b353f10029c9",
+    "state": "ready",
+    "reserved_model_calls": 14,
+    "known_tokens": 240021,
+    "in_flight_reserved_unknown_tokens": 93209,
+    "interpretation": "This was an active call reservation, not a final unknown-cost settlement."
+  },
+  "settled_outcome": {
+    "state": "failed",
+    "delivery_status": "partial",
+    "model_calls": 14,
+    "model_tokens": 272994,
+    "model_tokens_unknown": 0,
+    "orca_starts": 0,
+    "structure_preparations": 1,
+    "knowledge_queries": 3,
+    "driver_error": null,
+    "settlement_unknown_fields": {},
+    "goal_status": {
+      "goal_identity": "insufficient_evidence",
+      "goal_geometry": "insufficient_evidence",
+      "goal_excitations": "insufficient_evidence",
+      "goal_oscillator_strengths": "insufficient_evidence",
+      "goal_transition_analysis": "insufficient_evidence",
+      "goal_method_rationale": "insufficient_evidence",
+      "goal_seed": "insufficient_evidence",
+      "goal_delivery": "insufficient_evidence"
+    }
+  },
+  "successful_progress": [
+    "Request normalization succeeded on its third submission.",
+    "Identity/preparation Plan admitted after two targeted shape corrections; both identity and initial geometry checks completed.",
+    "Three knowledge searches completed.",
+    "select_conditions succeeded for CAM-B3LYP/def2-TZVP and activated Request v3; no select_conditions rejection is recorded.",
+    "The prepared geometry binding was retained with current request_version=3 and source_request_version=2."
+  ],
+  "transport_json_assessment": {
+    "all_14_raw_contents_parse_as_json": true,
+    "all_response_error_category_null": true,
+    "conclusion": "The recorded failures are proposal/schema/planning validation, not malformed JSON transport responses."
+  },
+  "earlier_rejections": [
+    {
+      "model_id": "model_3ec8432ef52f47eaab5918d5e240a623",
+      "phase": "normalization",
+      "cause": "Bare normalization object included reason; envelope normalization put it in parameters, whose schema forbids that key.",
+      "feedback": "parameters.reason extra_forbidden",
+      "recovered": true
+    },
+    {
+      "model_id": "model_1067a424883642daa8628a3f505bcffc",
+      "phase": "normalization",
+      "cause": "fixed_initial geometry_relation on excitation and oscillator Goals was not accepted as a uniquely grounded scalar geometry relation.",
+      "feedback": "Explicit paths goals[2].geometry_relation and goals[3].geometry_relation, with omit/null correction instructions.",
+      "recovered": true
+    },
+    {
+      "model_id": "model_218d3aa4fe454fcc964c1a06be3d0bba",
+      "phase": "initial input Plan",
+      "cause": "goal_map keyed by resolved_identity/prepared_geometry ports instead of current Goal IDs.",
+      "feedback": "unknown_goal_id and exact allowed Goal IDs",
+      "recovered": true
+    },
+    {
+      "model_id": "model_aa900ebbf77f40fe85ea2dd89631d6fc",
+      "phase": "initial input Plan",
+      "cause": "structure.prepare Step.inputs used resolved_identity as the input role instead of identity.",
+      "feedback": "Exact role identity and explanation that output port belongs in reference.port",
+      "recovered": true
+    }
+  ],
+  "final_three_rounds": [
+    {
+      "ordinal": 12,
+      "model_id": "model_181cc984a4e44975bf9f08149a89cbbf",
+      "error": "ProposalError",
+      "cause_proven": "Inline Python source string supplied to python.execute.parameters.code; this field requires a registered Artifact or producer reference.",
+      "feedback_effectiveness": "Actionable: exact steps[4].parameters.code path and explicit_file_reference_required guidance preserved.",
+      "result": "Next proposal added workspace.write Python script and used producer reference."
+    },
+    {
+      "ordinal": 13,
+      "model_id": "model_5b0fe72f3cd340fdbf0c48d1f5015d74",
+      "error": "ValidationError",
+      "exact_feedback_sent_to_next_call": {
+        "category": "ValidationError",
+        "requirement": [
+          {
+            "loc": [],
+            "type": "value_error"
+          }
+        ]
+      },
+      "cause_proven": "The original exception message/validator identity is absent from the retained correction feedback. No specific validation cause can be established from this sanitized receipt without replay.",
+      "feedback_effectiveness": "Not actionable: root location, no field, reason, numeric bounds, validator or corrective instruction.",
+      "false_inference_to_avoid": "The script content was actually a complete 10665-character string. The next model guessed it had been omitted/object-valued; the retained proposal contradicts that guess.",
+      "source": {
+        "path": "src/orca_agent/proposals.py",
+        "line": 232,
+        "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+        "behavior": "validation_error_details retains type/loc and numeric bounds, omits value-error message/context"
+      }
+    },
+    {
+      "ordinal": 14,
+      "model_id": "model_e7ef5b91195b48a2b48e49b1f7959ccf",
+      "error": "PlanningError",
+      "result": "The final allowed correction was rejected; StoreError reports bounded proposal correction or transport retry exhausted.",
+      "exact_message_status": "Persisted in run.decisions[id=model_e7ef5b91195b48a2b48e49b1f7959ccf].parameters.requirement. No subsequent model request exists to deliver this final rejection as correction feedback.",
+      "persisted_requirement": "proposed Plan exceeds remaining structure_preparations budget: 1 unreserved Tool calls require 1 units; 0 remain",
+      "cause_proven": "The final Plan repeats structure.prepare after the only preparation allowance was consumed: one additional Tool call requires one unit and zero remain."
+    }
+  ],
+  "material_context_obstacle": {
+    "summary": "Same acquired-input visibility failure observed in T1: current prepared binding persists, while all final three model contexts omit its artifact and expose only its Result ID under other_result_ids; all three proposals redundantly schedule identity and preparation.",
+    "persisted_binding": {
+      "request_version": 3,
+      "system_id": "system_acetone",
+      "source_request_version": 2,
+      "purpose_fingerprint": "9f80a5db4acd05228f268e0eb43afce992097612bf3f2f93c83ca4fed7b2b1b9",
+      "call_id": "call_1251c00a2e494cc4a72609e36b08a514",
+      "result_id": "result_9b4b6be08e5e4c20b482c9d25787d1ff",
+      "artifact_id": "artifact_519300046f6a426ea50acd9b4950803f",
+      "sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9",
+      "rule_version": "structure-prepare-3",
+      "port": "prepared_geometry"
+    },
+    "contexts": [
+      {
+        "model_id": "model_181cc984a4e44975bf9f08149a89cbbf",
+        "prepared_artifact_id_visible": false,
+        "prepared_result_in_other_ids": true,
+        "plan_tools": [
+          "structure.resolve",
+          "structure.prepare",
+          "workspace.write",
+          "orca.run",
+          "python.execute"
+        ],
+        "input_bindings_visible": false,
+        "feedback_received": null
+      },
+      {
+        "model_id": "model_5b0fe72f3cd340fdbf0c48d1f5015d74",
+        "prepared_artifact_id_visible": false,
+        "prepared_result_in_other_ids": true,
+        "plan_tools": [
+          "structure.resolve",
+          "structure.prepare",
+          "workspace.write",
+          "workspace.write",
+          "orca.run",
+          "python.execute"
+        ],
+        "input_bindings_visible": false,
+        "feedback_received": {
+          "category": "ProposalError",
+          "requirement": {
+            "corrections": [
+              {
+                "instruction": "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known hash/language may be omitted, or use an explicit producer_step_id/producer_key with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries also require target_path and purpose. The program validates dependencies, permissions and qualifications and freezes actual hashes before execution. Choose one reference form; union alternatives are not cumulative. Historical policies still require concrete ID/hash references. Never guess hashes or weaken Goals.",
+                "path": [
+                  "parameters",
+                  "steps",
+                  4,
+                  "parameters",
+                  "code"
+                ],
+                "reason": "explicit_file_reference_required"
+              }
+            ],
+            "errors": [
+              {
+                "loc": [
+                  "parameters",
+                  "steps",
+                  4,
+                  "parameters",
+                  "code"
+                ],
+                "type": "model_type"
+              }
+            ],
+            "requirement": "Use the declared parameter schema at each listed path.",
+            "tool": "python.execute"
+          }
+        }
+      },
+      {
+        "model_id": "model_e7ef5b91195b48a2b48e49b1f7959ccf",
+        "prepared_artifact_id_visible": false,
+        "prepared_result_in_other_ids": true,
+        "plan_tools": [
+          "structure.resolve",
+          "structure.prepare",
+          "workspace.write",
+          "workspace.write",
+          "orca.run",
+          "python.execute"
+        ],
+        "input_bindings_visible": false,
+        "feedback_received": {
+          "category": "ValidationError",
+          "requirement": [
+            {
+              "loc": [],
+              "type": "value_error"
+            }
+          ]
+        }
+      }
+    ],
+    "result": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/results/result_9b4b6be08e5e4c20b482c9d25787d1ff.json",
+      "sha256": "429828c0f91118075497c9daf5aa899ae78f9a506b6096830358ceb159382bce"
+    },
+    "xyz": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/artifacts/artifact_519300046f6a426ea50acd9b4950803f/files/prepared.xyz",
+      "sha256": "16c4f1085f2805bc5eb44849cd74f2a26ed74c598538f50ef66f6bbefcaa6ee9"
+    },
+    "source": {
+      "path": "src/orca_agent/decision_purpose.py",
+      "line": 174,
+      "sha256": "fa136548ceab6acfa55d8293fd4b540fd8b0904f230a9ba370708c911d161b8a",
+      "behavior": "Result selection does not include Run.input_bindings; current Plan was suspended by condition selection."
+    }
+  },
+  "direct_terminal_cause": {
+    "category": "StoreError",
+    "message": "bounded proposal correction or transport retry exhausted",
+    "model_explicit_stop": false,
+    "environment_occupied": false,
+    "total_model_budget_not_exhausted": true,
+    "orca_budget_not_exhausted": true,
+    "preceding_rejection": {
+      "category": "PlanningError",
+      "requirement": "proposed Plan exceeds remaining structure_preparations budget: 1 unreserved Tool calls require 1 units; 0 remain"
+    }
+  },
+  "scientific_status": {
+    "initial_geometry": "completed with qualified initial geometry only",
+    "tddft_execution": "not started",
+    "excitation_energies": "not computed",
+    "oscillator_strengths": "not computed",
+    "all_required_goals_complete": false,
+    "independent_reference": "not run"
+  },
+  "evidence": {
+    "outcome": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T4/outcome.json",
+      "sha256": "54e6e099b590602f8ba8cf64dc2ebdcbc618874c25a0f894fdad322aba6c6971"
+    },
+    "run": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/run.json",
+      "sha256": "ea2b14751f5fe3959edd046b4a0c55d4a67ed67a85c204cabcedb049fcfe64e0"
+    },
+    "report": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T4/report.json",
+      "sha256": "f144d960dd4cf4ce66119e5d8bef039d0c7140945f8206f22e55a28970e4df4d"
+    },
+    "selected_conditions": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/decisions/model_4566b5affe5f43f78d85c63ab3d30510.json",
+      "sha256": "b45f20188c00dc6df3843bf0c1b1ec3d6d30a356964c9a0f9058adef32dcd89f"
+    },
+    "final_opaque_feedback": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_e7ef5b91195b48a2b48e49b1f7959ccf.request.json",
+      "sha256": "6d7e0647f13881bc0c9338e4763dd6c3ffd3cf00c7f78b274ba6d986b0fe85ab"
+    }
+  },
+  "model_history": [
+    {
+      "ordinal": 1,
+      "model_id": "model_3ec8432ef52f47eaab5918d5e240a623",
+      "logical_id": "decision_300450ef7079ea3c22b470e9_1",
+      "basis": {
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "bare_normalize_candidate",
+      "response_error_category": null,
+      "application_error_category": "ProposalError",
+      "feedback_received": null,
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_3ec8432ef52f47eaab5918d5e240a623.response.json",
+        "sha256": "baa986ae3a18ed6673f351cd4317cfc9f559e60725ecbfbc1cfa1cec705d06ef"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_3ec8432ef52f47eaab5918d5e240a623.request.json",
+        "sha256": "9cf17ee595e5bb74f43c328761999f0a3c7fc95cc98a5f92d4efda1721867550"
+      }
+    },
+    {
+      "ordinal": 2,
+      "model_id": "model_1067a424883642daa8628a3f505bcffc",
+      "logical_id": "decision_300450ef7079ea3c22b470e9_2",
+      "basis": {
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "normalize_request",
+      "response_error_category": null,
+      "application_error_category": "ProposalError",
+      "feedback_received": {
+        "category": "ProposalError",
+        "requirement": {
+          "errors": [
+            {
+              "loc": [
+                "parameters",
+                "reason"
+              ],
+              "type": "extra_forbidden"
+            }
+          ],
+          "requirement": "Use the declared parameter schema at each listed path."
+        }
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_1067a424883642daa8628a3f505bcffc.response.json",
+        "sha256": "8fdaea42d4f6f7a8b0faf85f6e51288ae366e50c008a2e78723e45511336767e"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_1067a424883642daa8628a3f505bcffc.request.json",
+        "sha256": "563e169df41a9a066a91682c8990fe0dff1d5dca44752543fb83a4915836dd3d"
+      }
+    },
+    {
+      "ordinal": 3,
+      "model_id": "model_a1a3fc222fbd4312bd9d4f4ea6b97382",
+      "logical_id": "decision_300450ef7079ea3c22b470e9_3",
+      "basis": {
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "normalize_request",
+      "response_error_category": null,
+      "application_error_category": null,
+      "feedback_received": {
+        "category": "ProposalError",
+        "requirement": {
+          "corrections": [
+            {
+              "instruction": "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification.",
+              "path": [
+                "parameters",
+                "goals",
+                2,
+                "geometry_relation"
+              ],
+              "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text"
+            },
+            {
+              "instruction": "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification.",
+              "path": [
+                "parameters",
+                "goals",
+                3,
+                "geometry_relation"
+              ],
+              "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text"
+            }
+          ],
+          "path": [
+            "parameters"
+          ],
+          "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in."
+        }
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_a1a3fc222fbd4312bd9d4f4ea6b97382.response.json",
+        "sha256": "5780993d59d7fac42f92a3897aac28fe8fa0c83fbdd2870bb69cda31a99bd541"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_a1a3fc222fbd4312bd9d4f4ea6b97382.request.json",
+        "sha256": "570275e124d65ed90c7a040054ba34f710795643b454393232500927be3a9f38"
+      }
+    },
+    {
+      "ordinal": 4,
+      "model_id": "model_0fc4306e699c4e4f9c6253684ba4f166",
+      "logical_id": "decision_341e74899b5526463d94505e_1",
+      "basis": {
+        "request_version": 2,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "knowledge.search",
+      "response_error_category": null,
+      "application_error_category": null,
+      "feedback_received": null,
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_0fc4306e699c4e4f9c6253684ba4f166.response.json",
+        "sha256": "82c816a7a3bd868cefadb3ee23f8e2593496655b35148b461a99ad592d9f2dc9"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_0fc4306e699c4e4f9c6253684ba4f166.request.json",
+        "sha256": "f71bfea9467c9e89c56ba7d7e0070262f2388ec4686fe2799f58e104620fa7f9"
+      }
+    },
+    {
+      "ordinal": 5,
+      "model_id": "model_218d3aa4fe454fcc964c1a06be3d0bba",
+      "logical_id": "decision_8050ef1efba2348b6da4df39_1",
+      "basis": {
+        "request_version": 2,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "initial_plan",
+      "response_error_category": null,
+      "application_error_category": "ProposalError",
+      "feedback_received": null,
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_218d3aa4fe454fcc964c1a06be3d0bba.response.json",
+        "sha256": "2a1c9adaaea0d2d09cf9e26e7161a5569b03cceb0e91e5939ac7024290777376"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_218d3aa4fe454fcc964c1a06be3d0bba.request.json",
+        "sha256": "e211f19bf10add8c135b6b870ddb9c24dc29333e21373959068602df494750ae"
+      }
+    },
+    {
+      "ordinal": 6,
+      "model_id": "model_aa900ebbf77f40fe85ea2dd89631d6fc",
+      "logical_id": "decision_8050ef1efba2348b6da4df39_2",
+      "basis": {
+        "request_version": 2,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "initial_plan",
+      "response_error_category": null,
+      "application_error_category": "PlanningError",
+      "feedback_received": {
+        "category": "ProposalError",
+        "requirement": {
+          "allowed_goal_ids": [
+            "goal_identity",
+            "goal_geometry",
+            "goal_excitations",
+            "goal_oscillator_strengths",
+            "goal_transition_analysis",
+            "goal_method_rationale",
+            "goal_seed",
+            "goal_delivery"
+          ],
+          "code": "unknown_goal_id",
+          "path": [
+            "parameters",
+            "goal_map"
+          ],
+          "requirement": "Use only current Request Goal IDs; a Plan cannot introduce a Goal."
+        }
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_aa900ebbf77f40fe85ea2dd89631d6fc.response.json",
+        "sha256": "52adebc367bfc15bc0d56568400c43bc3297aa18ba3d767c6044dcbf277362c7"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_aa900ebbf77f40fe85ea2dd89631d6fc.request.json",
+        "sha256": "f4f0cb6364e57629baca38d9677b273814c7760fb36531c90ff8f37167a8df26"
+      }
+    },
+    {
+      "ordinal": 7,
+      "model_id": "model_1dd68755291a4899b143ad280710ec4e",
+      "logical_id": "decision_8050ef1efba2348b6da4df39_3",
+      "basis": {
+        "request_version": 2,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "initial_plan",
+      "response_error_category": null,
+      "application_error_category": null,
+      "feedback_received": {
+        "category": "PlanningError",
+        "requirement": "structure.prepare Step.inputs requires the declared roles ['identity']; output port names are reference.port values, not input role aliases"
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_1dd68755291a4899b143ad280710ec4e.response.json",
+        "sha256": "eec03c1a01626bbe512261124119b76bbed3de7c836eeebfa968cee6ce078efa"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_1dd68755291a4899b143ad280710ec4e.request.json",
+        "sha256": "1f57d582c50379bd355e9ed594ef9b0d2c2cea9f69ae2388c8a6c56a0d7e93c4"
+      }
+    },
+    {
+      "ordinal": 8,
+      "model_id": "model_ffdddd8dc03049d58dcf3988125d6f3f",
+      "logical_id": "decision_3dbc131950209ccccee00259_1",
+      "basis": {
+        "request_version": 2,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "call_tool",
+      "response_error_category": null,
+      "application_error_category": null,
+      "feedback_received": null,
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_ffdddd8dc03049d58dcf3988125d6f3f.response.json",
+        "sha256": "13cf6d67ee6cbad49c5f934556580944c8aff0787dd3ccf15cd1adcc7c4a10f5"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_ffdddd8dc03049d58dcf3988125d6f3f.request.json",
+        "sha256": "9cf434859bc7cc2f93d4ccbcee2979bc92709e0137560b8fd28bb0881069d53c"
+      }
+    },
+    {
+      "ordinal": 9,
+      "model_id": "model_4057f8d8bec44285b21e841e2fc69a5e",
+      "logical_id": "decision_7fe8ad614c3c574505c07608_1",
+      "basis": {
+        "request_version": 2,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "knowledge.search",
+      "response_error_category": null,
+      "application_error_category": null,
+      "feedback_received": null,
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_4057f8d8bec44285b21e841e2fc69a5e.response.json",
+        "sha256": "5d5fa6702ae269708b8d54b7df43b4aa9af8d819013014bbbbc1030f0da19aa4"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_4057f8d8bec44285b21e841e2fc69a5e.request.json",
+        "sha256": "3aeaf59e29a42e59e66dfde913b0714f024bf3fac38ac9ff48f41142d3d4fac3"
+      }
+    },
+    {
+      "ordinal": 10,
+      "model_id": "model_4566b5affe5f43f78d85c63ab3d30510",
+      "logical_id": "decision_453c61d578719f217e8acb04_1",
+      "basis": {
+        "request_version": 2,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "select_conditions",
+      "response_error_category": null,
+      "application_error_category": null,
+      "feedback_received": null,
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_4566b5affe5f43f78d85c63ab3d30510.response.json",
+        "sha256": "06999d39481c41e4b430501151249b7d8daf2c5921b74ab871b58356c22bc737"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_4566b5affe5f43f78d85c63ab3d30510.request.json",
+        "sha256": "32d8ed02550a0581156a1ad01cbd0c902656a526d7fd5fcae7bab28cc4d33450"
+      }
+    },
+    {
+      "ordinal": 11,
+      "model_id": "model_2ff239168972424ea27c97f8915da721",
+      "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_1",
+      "basis": {
+        "request_version": 3,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "knowledge.search",
+      "response_error_category": null,
+      "application_error_category": null,
+      "feedback_received": null,
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_2ff239168972424ea27c97f8915da721.response.json",
+        "sha256": "ad4e289359c37000f0d0706dfb813d733ff178891a252602e4285ac28297bbfd"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_2ff239168972424ea27c97f8915da721.request.json",
+        "sha256": "eb2dca8759fd1cec256e42e6adccd6334c6d1424deee52b83e0bf7d0127c64b0"
+      }
+    },
+    {
+      "ordinal": 12,
+      "model_id": "model_181cc984a4e44975bf9f08149a89cbbf",
+      "logical_id": "decision_edea8a5e2a283859c0eb7335_1",
+      "basis": {
+        "request_version": 3,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "initial_plan",
+      "response_error_category": null,
+      "application_error_category": "ProposalError",
+      "feedback_received": null,
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_181cc984a4e44975bf9f08149a89cbbf.response.json",
+        "sha256": "5a19306648dec782edaad3e3dbf0219511d33a6e38c3f8cbcfa8c55bf02c2c6e"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_181cc984a4e44975bf9f08149a89cbbf.request.json",
+        "sha256": "d3ab19e643f055bb2d03719be156a4a690f93f6783c71444d01eb46492353d0f"
+      }
+    },
+    {
+      "ordinal": 13,
+      "model_id": "model_5b0fe72f3cd340fdbf0c48d1f5015d74",
+      "logical_id": "decision_edea8a5e2a283859c0eb7335_2",
+      "basis": {
+        "request_version": 3,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "initial_plan",
+      "response_error_category": null,
+      "application_error_category": "ValidationError",
+      "feedback_received": {
+        "category": "ProposalError",
+        "requirement": {
+          "corrections": [
+            {
+              "instruction": "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known hash/language may be omitted, or use an explicit producer_step_id/producer_key with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries also require target_path and purpose. The program validates dependencies, permissions and qualifications and freezes actual hashes before execution. Choose one reference form; union alternatives are not cumulative. Historical policies still require concrete ID/hash references. Never guess hashes or weaken Goals.",
+              "path": [
+                "parameters",
+                "steps",
+                4,
+                "parameters",
+                "code"
+              ],
+              "reason": "explicit_file_reference_required"
+            }
+          ],
+          "errors": [
+            {
+              "loc": [
+                "parameters",
+                "steps",
+                4,
+                "parameters",
+                "code"
+              ],
+              "type": "model_type"
+            }
+          ],
+          "requirement": "Use the declared parameter schema at each listed path.",
+          "tool": "python.execute"
+        }
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_5b0fe72f3cd340fdbf0c48d1f5015d74.response.json",
+        "sha256": "18ca9628d758ff5064274c71c9e6617c208a23ac34c78cba86037b2b9fe70530"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_5b0fe72f3cd340fdbf0c48d1f5015d74.request.json",
+        "sha256": "c4262d294b964409a29561eaac0a38bae2a7c91dc7ece8d2e00e7287605cc8db"
+      }
+    },
+    {
+      "ordinal": 14,
+      "model_id": "model_e7ef5b91195b48a2b48e49b1f7959ccf",
+      "logical_id": "decision_edea8a5e2a283859c0eb7335_3",
+      "basis": {
+        "request_version": 3,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "action": "initial_plan",
+      "response_error_category": null,
+      "application_error_category": "PlanningError",
+      "feedback_received": {
+        "category": "ValidationError",
+        "requirement": [
+          {
+            "loc": [],
+            "type": "value_error"
+          }
+        ]
+      },
+      "response": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_e7ef5b91195b48a2b48e49b1f7959ccf.response.json",
+        "sha256": "8cff3d24d19dc67e1b0f07ff25dbdecdb0d55a9a15bc903fc5d2161c48170e54"
+      },
+      "request": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/model/model_e7ef5b91195b48a2b48e49b1f7959ccf.request.json",
+        "sha256": "6d7e0647f13881bc0c9338e4763dd6c3ffd3cf00c7f78b274ba6d986b0fe85ab"
+      }
+    }
+  ],
+  "limits": [
+    "No production validation replay was performed. The preceding root ValidationError message remains an evidence gap; the final PlanningError budget message is preserved in the rejected decision parameters.",
+    "This review establishes incomplete T4 and does not claim scientific task completion or fixes to the new obstacles."
+  ],
+  "review_correction": {
+    "corrected_at_utc": "2026-10-20T19:27:05.846006+00:00",
+    "reason": "Final cross-check included run.decisions parameters in addition to diagnostics/report; the prior review incorrectly called the final PlanningError message unpersisted.",
+    "source": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T4-001/data/runs/run_29f67a40afa1410487f8dafa6af502ec/run.json",
+      "sha256": "ea2b14751f5fe3959edd046b4a0c55d4a67ed67a85c204cabcedb049fcfe64e0",
+      "json_path": "decisions[id=model_e7ef5b91195b48a2b48e49b1f7959ccf].parameters.requirement"
+    }
+  }
+}

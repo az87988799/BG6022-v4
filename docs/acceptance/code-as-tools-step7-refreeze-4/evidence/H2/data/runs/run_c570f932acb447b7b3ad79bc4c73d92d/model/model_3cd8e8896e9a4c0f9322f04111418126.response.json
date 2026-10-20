@@ -1,0 +1,356 @@
+{
+  "request_hash": "a82a58209e46c15519e991c2f0d2142a64d724ffa934a513b78ecf9542fdf7ad",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_identity",
+          "tool": "structure.resolve",
+          "system_id": "system_formaldehyde",
+          "parameters": {}
+        },
+        {
+          "key": "prepare_geometry",
+          "tool": "structure.prepare",
+          "system_id": "system_formaldehyde",
+          "depends_on": [
+            "resolve_identity"
+          ],
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_identity",
+              "port": "requested_identity"
+            }
+          },
+          "parameters": {}
+        },
+        {
+          "key": "write_rotation_script",
+          "tool": "workspace.write",
+          "system_id": "system_formaldehyde",
+          "parameters": {
+            "name": "rotate_geometry.py",
+            "role": "python",
+            "content": "import json, math\nfrom pathlib import Path\n\ndef read_xyz(path):\n    lines = Path(path).read_text().splitlines()\n    n = int(lines[0].split()[0])\n    atoms = []\n    for line in lines[2:2+n]:\n        p = line.split()\n        atoms.append((p[0], float(p[1]), float(p[2]), float(p[3])))\n    return n, atoms\n\ndef rotation_matrix(axis=(1.0,2.0,3.0), angle_deg=37.0):\n    a = [float(x) for x in axis]\n    norm = math.sqrt(sum(x*x for x in a))\n    a = [x/norm for x in a]\n    th = math.radians(angle_deg)\n    c = math.cos(th)\n    s = math.sin(th)\n    x, y, z = a\n    R = [\n        [c+x*x*(1-c), x*y*(1-c)-z*s, x*z*(1-c)+y*s],\n        [y*x*(1-c)+z*s, c+y*y*(1-c), y*z*(1-c)-x*s],\n        [z*x*(1-c)-y*s, z*y*(1-c)+x*s, c+z*z*(1-c)]\n    ]\n    return R, a\n\ndef matvec(A, v):\n    return [sum(A[i][j]*v[j] for j in range(3)) for i in range(3)]\n\nn, atoms = read_xyz('prepared.xyz')\nR, axis_unit = rotation_matrix()\nrotated = []\nfor el, x, y, z in atoms:\n    v = matvec(R, [x, y, z])\n    rotated.append((el, v[0], v[1], v[2]))\nPath('rotated.xyz').write_text(\n    str(n) + '\\nrotated from prepared.xyz by active right-hand rotation about origin, axis=(1,2,3), angle=37 deg\\n' +\n    '\\n'.join(f'{el} {x:.12f} {y:.12f} {z:.12f}' for el, x, y, z in rotated) + '\\n'\n)\nobs = [\n    {'name':'rotated_geometry','value':{'file':'rotated.xyz','atom_count':n,'atom_order_preserved':True},'unit':None,'sources':[{'filename':'prepared.xyz','location':'input geometry used for rotation'}],'formula':None,'artifacts':['rotated.xyz'],'limitations':['rotated.xyz is a task-local generated copy; the prepared original geometry remains the identity anchor.']},\n    {'name':'rotation_relation','value':{'source_geometry':'prepared.xyz','rotated_geometry':'rotated.xyz','center':[0.0,0.0,0.0],'axis':[1.0,2.0,3.0],'axis_unit':axis_unit,'angle_deg':37.0,'convention':'active right-hand rotation','rotation_matrix':R,'atom_order':'preserved','formula':'r_rot = R r_orig'},'unit':None,'sources':[{'filename':'prepared.xyz','location':'input geometry used for rotation'}],'formula':'r_rot = R r_orig','artifacts':['rotated.xyz'],'limitations':[]},\n    {'name':'rotation_convention_record','value':{'center':'origin (0,0,0)','axis':[1.0,2.0,3.0],'axis_unit':axis_unit,'angle_deg':37.0,'handedness':'right-hand','rotation_type':'active rigid-body rotation','atom_order':'preserved','internal_geometry':'preserved','coordinate_precision':'12 decimal places'},'unit':None,'sources':[{'filename':'prepared.xyz','location':'input geometry used for rotation'}],'formula':None,'artifacts':['rotated.xyz'],'limitations':[]},\n    {'name':'random_seed','value':{'seed':1701,'random_numbers_used':False,'note':'The rotation and analyses are deterministic; no random-number library or stochastic search is used. Seed 1701 is recorded as the requested default.'},'unit':None,'sources':[],'formula':None,'artifacts':[],'limitations':['No RNG is used, so the seed has no numerical effect.']}\n]\nPath('observations.json').write_text(json.dumps({'version':1,'observations':obs}, indent=2))\n"
+          }
+        },
+        {
+          "key": "rotate_geometry",
+          "tool": "python.execute",
+          "system_id": "system_formaldehyde",
+          "depends_on": [
+            "prepare_geometry",
+            "write_rotation_script"
+          ],
+          "parameters": {
+            "code": {
+              "producer_key": "write_rotation_script",
+              "port": "written_artifact"
+            },
+            "sdk_orca": false,
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "producer_key": "prepare_geometry",
+                  "port": "prepared_geometry",
+                  "target_path": "prepared.xyz",
+                  "purpose": "fixed prepared geometry to rotate"
+                }
+              ]
+            },
+            "observation_names": [
+              "rotated_geometry",
+              "rotation_relation",
+              "rotation_convention_record",
+              "random_seed"
+            ],
+            "conditions": {
+              "axis": [
+                1,
+                2,
+                3
+              ],
+              "angle_deg": 37,
+              "rotation": "active right-hand about origin",
+              "seed": 1701
+            }
+          }
+        },
+        {
+          "key": "write_original_input",
+          "tool": "workspace.write",
+          "system_id": "system_formaldehyde",
+          "parameters": {
+            "name": "polar_original.inp",
+            "role": "orca",
+            "content": "! RHF def2-SVP TightSCF NoAutoStart\n%maxcore 192\n%scf MaxIter 200 AutoTRAH false end\n%elprop Polar true end\n* xyzfile 0 1 original.xyz\n"
+          }
+        },
+        {
+          "key": "write_rotated_input",
+          "tool": "workspace.write",
+          "system_id": "system_formaldehyde",
+          "parameters": {
+            "name": "polar_rotated.inp",
+            "role": "orca",
+            "content": "! RHF def2-SVP TightSCF NoAutoStart\n%maxcore 192\n%scf MaxIter 200 AutoTRAH false end\n%elprop Polar true end\n* xyzfile 0 1 rotated.xyz\n"
+          }
+        },
+        {
+          "key": "orca_original",
+          "tool": "orca.run",
+          "system_id": "system_formaldehyde",
+          "depends_on": [
+            "write_original_input",
+            "prepare_geometry"
+          ],
+          "parameters": {
+            "input": {
+              "producer_key": "write_original_input",
+              "port": "written_artifact"
+            },
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "producer_key": "prepare_geometry",
+                  "port": "prepared_geometry",
+                  "target_path": "original.xyz",
+                  "purpose": "fixed original geometry"
+                }
+              ]
+            },
+            "conditions": {
+              "method": "RHF",
+              "basis": "def2-SVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "environment": "gas_phase",
+              "job": "static polarizability"
+            }
+          }
+        },
+        {
+          "key": "orca_rotated",
+          "tool": "orca.run",
+          "system_id": "system_formaldehyde",
+          "depends_on": [
+            "write_rotated_input",
+            "rotate_geometry"
+          ],
+          "parameters": {
+            "input": {
+              "producer_key": "write_rotated_input",
+              "port": "written_artifact"
+            },
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "producer_key": "rotate_geometry",
+                  "file_key": "rotated.xyz",
+                  "target_path": "rotated.xyz",
+                  "purpose": "fixed rotated geometry"
+                }
+              ]
+            },
+            "conditions": {
+              "method": "RHF",
+              "basis": "def2-SVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "environment": "gas_phase",
+              "job": "static polarizability"
+            }
+          }
+        },
+        {
+          "key": "write_analysis_script",
+          "tool": "workspace.write",
+          "system_id": "system_formaldehyde",
+          "parameters": {
+            "name": "analyze_polarizability.py",
+            "role": "python",
+            "content": "import json, math, re\nfrom pathlib import Path\n\nNUM = r'[-+]?[0-9]+(?:[.][0-9]*)?(?:[EeDd][-+]?[0-9]+)?'\n\ndef read_xyz(path):\n    lines = Path(path).read_text().splitlines()\n    n = int(lines[0].split()[0])\n    atoms = []\n    for line in lines[2:2+n]:\n        p = line.split()\n        atoms.append((p[0], float(p[1]), float(p[2]), float(p[3])))\n    return n, atoms\n\ndef rotation_matrix(axis=(1.0,2.0,3.0), angle_deg=37.0):\n    a = [float(x) for x in axis]\n    norm = math.sqrt(sum(x*x for x in a))\n    a = [x/norm for x in a]\n    th = math.radians(angle_deg)\n    c = math.cos(th)\n    s = math.sin(th)\n    x, y, z = a\n    R = [\n        [c+x*x*(1-c), x*y*(1-c)-z*s, x*z*(1-c)+y*s],\n        [y*x*(1-c)+z*s, c+y*y*(1-c), y*z*(1-c)-x*s],\n        [z*x*(1-c)-y*s, z*y*(1-c)+x*s, c+z*z*(1-c)]\n    ]\n    return R, a\n\ndef matvec(A, v):\n    return [sum(A[i][j]*v[j] for j in range(3)) for i in range(3)]\n\ndef matmul(A, B):\n    return [[sum(A[i][k]*B[k][j] for k in range(3)) for j in range(3)] for i in range(3)]\n\ndef transpose(A):\n    return [[A[j][i] for j in range(3)] for i in range(3)]\n\ndef parse_polar(path):\n    lines = Path(path).read_text().splitlines()\n    tensor = None\n    iso = None\n    start = None\n    end = None\n    for i, line in enumerate(lines):\n        if 'The raw cartesian tensor' in line:\n            vals = []\n            for j in range(i+1, min(i+6, len(lines))):\n                nums = re.findall(NUM, lines[j])\n                if len(nums) >= 3:\n                    vals.append([float(x.replace('D','E').replace('d','e')) for x in nums[:3]])\n                if len(vals) == 3:\n                    start = i + 2\n                    end = j + 1\n                    break\n            if len(vals) == 3:\n                tensor = vals\n                for k in range(i, min(i+120, len(lines))):\n                    if 'Isotropic polarizability' in lines[k]:\n                        m = re.search(r'Isotropic polarizability[ ]*:[ ]*(' + NUM + r')', lines[k])\n                        if m:\n                            iso = float(m.group(1).replace('D','E').replace('d','e'))\n                        break\n                break\n    if tensor is None or iso is None:\n        raise ValueError('Could not parse static polarizability from ' + str(path))\n    return tensor, iso, start, end\n\ndef main():\n    if Path('original_stdout.out').exists() and Path('rotated_stdout.out').exists():\n        t0, i0, s0, e0 = parse_polar('original_stdout.out')\n        t1, i1, s1, e1 = parse_polar('rotated_stdout.out')\n        n0, a0 = read_xyz('original.xyz')\n        n1, a1 = read_xyz('rotated.xyz')\n        if [a[0] for a in a0] != [a[0] for a in a1]:\n            raise ValueError('Atom order/elements differ between original and rotated XYZ')\n        R, axis_unit = rotation_matrix()\n        coord_res = 0.0\n        for (el0, x0, y0, z0), (el1, x1, y1, z1) in zip(a0, a1):\n            e = matvec(R, [x0, y0, z0])\n            coord_res = max(coord_res, abs(e[0]-x1), abs(e[1]-y1), abs(e[2]-z1))\n        expected = matmul(matmul(R, t0), transpose(R))\n        tensor_res = max(abs(expected[i][j]-t1[i][j]) for i in range(3) for j in range(3))\n        iso0 = sum(t0[i][i] for i in range(3)) / 3.0\n        iso1 = sum(t1[i][i] for i in range(3)) / 3.0\n        iso_diff = abs(iso0 - iso1)\n        value = {\n            'rotation_matrix': R,\n            'axis_unit': axis_unit,\n            'angle_deg': 37.0,\n            'original_tensor_au': t0,\n            'rotated_tensor_au': t1,\n            'expected_rotated_tensor_au': expected,\n            'tensor_component_max_abs_residual_au': tensor_res,\n            'coordinate_max_abs_residual_angstrom': coord_res,\n            'isotropic_original_au': iso0,\n            'isotropic_rotated_au': iso1,\n            'isotropic_abs_difference_au': iso_diff,\n            'formula': 'T_rot_expected = R T_orig R^T; isotropic = Tr(T)/3',\n            'interpretation': 'Cartesian tensor components are basis-dependent and therefore change under rotation as R T R^T. The isotropic value is the trace/3, invariant under orthonormal rotations, so the two independently computed isotropic values should agree within numerical error.'\n        }\n        obs = [{'name':'polarizability_verification','value':value,'unit':'atomic units for tensor components and isotropic values; Angstrom for coordinate residual','sources':[{'filename':'stdout.out','location':f'original ORCA run, lines {s0}-{e0}'},{'filename':'stdout.out','location':f'rotated ORCA run, lines {s1}-{e1}'},{'filename':'original.xyz','location':'prepared original geometry'},{'filename':'rotated.xyz','location':'generated rotated geometry'}],'formula':'T_rot_expected = R T_orig R^T; isotropic = Tr(T)/3','artifacts':['verification.json'],'limitations':['Finite numerical comparison only; residuals are not a proof of experimental accuracy.','Coordinate residual is in Angstrom; tensor residual is in atomic units.']}]\n        Path('verification.json').write_text(json.dumps(value, indent=2))\n    else:\n        tensor, iso, start, end = parse_polar('stdout.out')\n        value = {'tensor_au': tensor, 'isotropic_au': iso}\n        obs = [{'name':'static_polarizability','value':value,'unit':'atomic units','sources':[{'filename':'stdout.out','location':f'lines {start}-{end}'}],'formula':None,'artifacts':['polarizability.json'],'limitations':[]}]\n        Path('polarizability.json').write_text(json.dumps(value, indent=2))\n    Path('observations.json').write_text(json.dumps({'version':1,'observations':obs}, indent=2))\n\nif __name__ == '__main__':\n    main()\n"
+          }
+        },
+        {
+          "key": "parse_original",
+          "tool": "python.execute",
+          "system_id": "system_formaldehyde",
+          "depends_on": [
+            "write_analysis_script",
+            "orca_original"
+          ],
+          "parameters": {
+            "code": {
+              "producer_key": "write_analysis_script",
+              "port": "written_artifact"
+            },
+            "sdk_orca": false,
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "producer_key": "orca_original",
+                  "file_key": "stdout.out",
+                  "target_path": "stdout.out",
+                  "purpose": "ORCA original stdout to parse"
+                }
+              ]
+            },
+            "observation_names": [
+              "static_polarizability"
+            ]
+          }
+        },
+        {
+          "key": "parse_rotated",
+          "tool": "python.execute",
+          "system_id": "system_formaldehyde",
+          "depends_on": [
+            "write_analysis_script",
+            "orca_rotated"
+          ],
+          "parameters": {
+            "code": {
+              "producer_key": "write_analysis_script",
+              "port": "written_artifact"
+            },
+            "sdk_orca": false,
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "producer_key": "orca_rotated",
+                  "file_key": "stdout.out",
+                  "target_path": "stdout.out",
+                  "purpose": "ORCA rotated stdout to parse"
+                }
+              ]
+            },
+            "observation_names": [
+              "static_polarizability"
+            ]
+          }
+        },
+        {
+          "key": "verify_polarizability",
+          "tool": "python.execute",
+          "system_id": "system_formaldehyde",
+          "depends_on": [
+            "write_analysis_script",
+            "orca_original",
+            "orca_rotated",
+            "prepare_geometry",
+            "rotate_geometry"
+          ],
+          "parameters": {
+            "code": {
+              "producer_key": "write_analysis_script",
+              "port": "written_artifact"
+            },
+            "sdk_orca": false,
+            "inputs": {
+              "version": 1,
+              "entries": [
+                {
+                  "producer_key": "orca_original",
+                  "file_key": "stdout.out",
+                  "target_path": "original_stdout.out",
+                  "purpose": "original ORCA stdout"
+                },
+                {
+                  "producer_key": "orca_rotated",
+                  "file_key": "stdout.out",
+                  "target_path": "rotated_stdout.out",
+                  "purpose": "rotated ORCA stdout"
+                },
+                {
+                  "producer_key": "prepare_geometry",
+                  "port": "prepared_geometry",
+                  "target_path": "original.xyz",
+                  "purpose": "prepared original geometry"
+                },
+                {
+                  "producer_key": "rotate_geometry",
+                  "file_key": "rotated.xyz",
+                  "target_path": "rotated.xyz",
+                  "purpose": "generated rotated geometry"
+                }
+              ]
+            },
+            "observation_names": [
+              "polarizability_verification"
+            ],
+            "conditions": {
+              "axis": [
+                1,
+                2,
+                3
+              ],
+              "angle_deg": 37,
+              "rotation": "active right-hand about origin"
+            }
+          }
+        }
+      ],
+      "goal_map": {
+        "goal_prepared_geometry_original": {
+          "port": "prepared_geometry",
+          "step_key": "prepare_geometry"
+        },
+        "goal_rotated_geometry": {
+          "port": "rotated_geometry",
+          "step_key": "rotate_geometry"
+        },
+        "goal_rotation_relation": {
+          "port": "rotation_relation",
+          "step_key": "rotate_geometry"
+        },
+        "goal_rotation_convention_record": {
+          "port": "rotation_convention_record",
+          "step_key": "rotate_geometry"
+        },
+        "goal_polarizability_original": {
+          "port": "static_polarizability",
+          "step_key": "parse_original"
+        },
+        "goal_polarizability_rotated": {
+          "port": "static_polarizability",
+          "step_key": "parse_rotated"
+        },
+        "goal_polarizability_verification": {
+          "port": "polarizability_verification",
+          "step_key": "verify_polarizability"
+        },
+        "goal_random_seed": {
+          "port": "random_seed",
+          "step_key": "rotate_geometry"
+        }
+      }
+    },
+    "reason": "Plan resolves and prepares the formaldehyde identity/geometry, generates the specified deterministic active 37-degree rotation about axis (1,2,3), runs two independent RHF/def2-SVP static polarizability ORCA jobs on the original and rotated fixed geometries, parses both 3x3 tensors and isotropic values, and verifies component transformation and isotropic invariance using the actual rotation matrix and generated XYZ files. Seed 1701 is recorded; no RNG is used."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_identity\",\"tool\":\"structure.resolve\",\"system_id\":\"system_formaldehyde\",\"parameters\":{}},{\"key\":\"prepare_geometry\",\"tool\":\"structure.prepare\",\"system_id\":\"system_formaldehyde\",\"depends_on\":[\"resolve_identity\"],\"inputs\":{\"identity\":{\"producer_key\":\"resolve_identity\",\"port\":\"requested_identity\"}},\"parameters\":{}},{\"key\":\"write_rotation_script\",\"tool\":\"workspace.write\",\"system_id\":\"system_formaldehyde\",\"parameters\":{\"name\":\"rotate_geometry.py\",\"role\":\"python\",\"content\":\"import json, math\\nfrom pathlib import Path\\n\\ndef read_xyz(path):\\n    lines = Path(path).read_text().splitlines()\\n    n = int(lines[0].split()[0])\\n    atoms = []\\n    for line in lines[2:2+n]:\\n        p = line.split()\\n        atoms.append((p[0], float(p[1]), float(p[2]), float(p[3])))\\n    return n, atoms\\n\\ndef rotation_matrix(axis=(1.0,2.0,3.0), angle_deg=37.0):\\n    a = [float(x) for x in axis]\\n    norm = math.sqrt(sum(x*x for x in a))\\n    a = [x/norm for x in a]\\n    th = math.radians(angle_deg)\\n    c = math.cos(th)\\n    s = math.sin(th)\\n    x, y, z = a\\n    R = [\\n        [c+x*x*(1-c), x*y*(1-c)-z*s, x*z*(1-c)+y*s],\\n        [y*x*(1-c)+z*s, c+y*y*(1-c), y*z*(1-c)-x*s],\\n        [z*x*(1-c)-y*s, z*y*(1-c)+x*s, c+z*z*(1-c)]\\n    ]\\n    return R, a\\n\\ndef matvec(A, v):\\n    return [sum(A[i][j]*v[j] for j in range(3)) for i in range(3)]\\n\\nn, atoms = read_xyz('prepared.xyz')\\nR, axis_unit = rotation_matrix()\\nrotated = []\\nfor el, x, y, z in atoms:\\n    v = matvec(R, [x, y, z])\\n    rotated.append((el, v[0], v[1], v[2]))\\nPath('rotated.xyz').write_text(\\n    str(n) + '\\\\nrotated from prepared.xyz by active right-hand rotation about origin, axis=(1,2,3), angle=37 deg\\\\n' +\\n    '\\\\n'.join(f'{el} {x:.12f} {y:.12f} {z:.12f}' for el, x, y, z in rotated) + '\\\\n'\\n)\\nobs = [\\n    {'name':'rotated_geometry','value':{'file':'rotated.xyz','atom_count':n,'atom_order_preserved':True},'unit':None,'sources':[{'filename':'prepared.xyz','location':'input geometry used for rotation'}],'formula':None,'artifacts':['rotated.xyz'],'limitations':['rotated.xyz is a task-local generated copy; the prepared original geometry remains the identity anchor.']},\\n    {'name':'rotation_relation','value':{'source_geometry':'prepared.xyz','rotated_geometry':'rotated.xyz','center':[0.0,0.0,0.0],'axis':[1.0,2.0,3.0],'axis_unit':axis_unit,'angle_deg':37.0,'convention':'active right-hand rotation','rotation_matrix':R,'atom_order':'preserved','formula':'r_rot = R r_orig'},'unit':None,'sources':[{'filename':'prepared.xyz','location':'input geometry used for rotation'}],'formula':'r_rot = R r_orig','artifacts':['rotated.xyz'],'limitations':[]},\\n    {'name':'rotation_convention_record','value':{'center':'origin (0,0,0)','axis':[1.0,2.0,3.0],'axis_unit':axis_unit,'angle_deg':37.0,'handedness':'right-hand','rotation_type':'active rigid-body rotation','atom_order':'preserved','internal_geometry':'preserved','coordinate_precision':'12 decimal places'},'unit':None,'sources':[{'filename':'prepared.xyz','location':'input geometry used for rotation'}],'formula':None,'artifacts':['rotated.xyz'],'limitations':[]},\\n    {'name':'random_seed','value':{'seed':1701,'random_numbers_used':False,'note':'The rotation and analyses are deterministic; no random-number library or stochastic search is used. Seed 1701 is recorded as the requested default.'},'unit':None,'sources':[],'formula':None,'artifacts':[],'limitations':['No RNG is used, so the seed has no numerical effect.']}\\n]\\nPath('observations.json').write_text(json.dumps({'version':1,'observations':obs}, indent=2))\\n\"}},{\"key\":\"rotate_geometry\",\"tool\":\"python.execute\",\"system_id\":\"system_formaldehyde\",\"depends_on\":[\"prepare_geometry\",\"write_rotation_script\"],\"parameters\":{\"code\":{\"producer_key\":\"write_rotation_script\",\"port\":\"written_artifact\"},\"sdk_orca\":false,\"inputs\":{\"version\":1,\"entries\":[{\"producer_key\":\"prepare_geometry\",\"port\":\"prepared_geometry\",\"target_path\":\"prepared.xyz\",\"purpose\":\"fixed prepared geometry to rotate\"}]},\"observation_names\":[\"rotated_geometry\",\"rotation_relation\",\"rotation_convention_record\",\"random_seed\"],\"conditions\":{\"axis\":[1,2,3],\"angle_deg\":37,\"rotation\":\"active right-hand about origin\",\"seed\":1701}}},{\"key\":\"write_original_input\",\"tool\":\"workspace.write\",\"system_id\":\"system_formaldehyde\",\"parameters\":{\"name\":\"polar_original.inp\",\"role\":\"orca\",\"content\":\"! RHF def2-SVP TightSCF NoAutoStart\\n%maxcore 192\\n%scf MaxIter 200 AutoTRAH false end\\n%elprop Polar true end\\n* xyzfile 0 1 original.xyz\\n\"}},{\"key\":\"write_rotated_input\",\"tool\":\"workspace.write\",\"system_id\":\"system_formaldehyde\",\"parameters\":{\"name\":\"polar_rotated.inp\",\"role\":\"orca\",\"content\":\"! RHF def2-SVP TightSCF NoAutoStart\\n%maxcore 192\\n%scf MaxIter 200 AutoTRAH false end\\n%elprop Polar true end\\n* xyzfile 0 1 rotated.xyz\\n\"}},{\"key\":\"orca_original\",\"tool\":\"orca.run\",\"system_id\":\"system_formaldehyde\",\"depends_on\":[\"write_original_input\",\"prepare_geometry\"],\"parameters\":{\"input\":{\"producer_key\":\"write_original_input\",\"port\":\"written_artifact\"},\"inputs\":{\"version\":1,\"entries\":[{\"producer_key\":\"prepare_geometry\",\"port\":\"prepared_geometry\",\"target_path\":\"original.xyz\",\"purpose\":\"fixed original geometry\"}]},\"conditions\":{\"method\":\"RHF\",\"basis\":\"def2-SVP\",\"charge\":0,\"multiplicity\":1,\"environment\":\"gas_phase\",\"job\":\"static polarizability\"}}},{\"key\":\"orca_rotated\",\"tool\":\"orca.run\",\"system_id\":\"system_formaldehyde\",\"depends_on\":[\"write_rotated_input\",\"rotate_geometry\"],\"parameters\":{\"input\":{\"producer_key\":\"write_rotated_input\",\"port\":\"written_artifact\"},\"inputs\":{\"version\":1,\"entries\":[{\"producer_key\":\"rotate_geometry\",\"file_key\":\"rotated.xyz\",\"target_path\":\"rotated.xyz\",\"purpose\":\"fixed rotated geometry\"}]},\"conditions\":{\"method\":\"RHF\",\"basis\":\"def2-SVP\",\"charge\":0,\"multiplicity\":1,\"environment\":\"gas_phase\",\"job\":\"static polarizability\"}}},{\"key\":\"write_analysis_script\",\"tool\":\"workspace.write\",\"system_id\":\"system_formaldehyde\",\"parameters\":{\"name\":\"analyze_polarizability.py\",\"role\":\"python\",\"content\":\"import json, math, re\\nfrom pathlib import Path\\n\\nNUM = r'[-+]?[0-9]+(?:[.][0-9]*)?(?:[EeDd][-+]?[0-9]+)?'\\n\\ndef read_xyz(path):\\n    lines = Path(path).read_text().splitlines()\\n    n = int(lines[0].split()[0])\\n    atoms = []\\n    for line in lines[2:2+n]:\\n        p = line.split()\\n        atoms.append((p[0], float(p[1]), float(p[2]), float(p[3])))\\n    return n, atoms\\n\\ndef rotation_matrix(axis=(1.0,2.0,3.0), angle_deg=37.0):\\n    a = [float(x) for x in axis]\\n    norm = math.sqrt(sum(x*x for x in a))\\n    a = [x/norm for x in a]\\n    th = math.radians(angle_deg)\\n    c = math.cos(th)\\n    s = math.sin(th)\\n    x, y, z = a\\n    R = [\\n        [c+x*x*(1-c), x*y*(1-c)-z*s, x*z*(1-c)+y*s],\\n        [y*x*(1-c)+z*s, c+y*y*(1-c), y*z*(1-c)-x*s],\\n        [z*x*(1-c)-y*s, z*y*(1-c)+x*s, c+z*z*(1-c)]\\n    ]\\n    return R, a\\n\\ndef matvec(A, v):\\n    return [sum(A[i][j]*v[j] for j in range(3)) for i in range(3)]\\n\\ndef matmul(A, B):\\n    return [[sum(A[i][k]*B[k][j] for k in range(3)) for j in range(3)] for i in range(3)]\\n\\ndef transpose(A):\\n    return [[A[j][i] for j in range(3)] for i in range(3)]\\n\\ndef parse_polar(path):\\n    lines = Path(path).read_text().splitlines()\\n    tensor = None\\n    iso = None\\n    start = None\\n    end = None\\n    for i, line in enumerate(lines):\\n        if 'The raw cartesian tensor' in line:\\n            vals = []\\n            for j in range(i+1, min(i+6, len(lines))):\\n                nums = re.findall(NUM, lines[j])\\n                if len(nums) >= 3:\\n                    vals.append([float(x.replace('D','E').replace('d','e')) for x in nums[:3]])\\n                if len(vals) == 3:\\n                    start = i + 2\\n                    end = j + 1\\n                    break\\n            if len(vals) == 3:\\n                tensor = vals\\n                for k in range(i, min(i+120, len(lines))):\\n                    if 'Isotropic polarizability' in lines[k]:\\n                        m = re.search(r'Isotropic polarizability[ ]*:[ ]*(' + NUM + r')', lines[k])\\n                        if m:\\n                            iso = float(m.group(1).replace('D','E').replace('d','e'))\\n                        break\\n                break\\n    if tensor is None or iso is None:\\n        raise ValueError('Could not parse static polarizability from ' + str(path))\\n    return tensor, iso, start, end\\n\\ndef main():\\n    if Path('original_stdout.out').exists() and Path('rotated_stdout.out').exists():\\n        t0, i0, s0, e0 = parse_polar('original_stdout.out')\\n        t1, i1, s1, e1 = parse_polar('rotated_stdout.out')\\n        n0, a0 = read_xyz('original.xyz')\\n        n1, a1 = read_xyz('rotated.xyz')\\n        if [a[0] for a in a0] != [a[0] for a in a1]:\\n            raise ValueError('Atom order/elements differ between original and rotated XYZ')\\n        R, axis_unit = rotation_matrix()\\n        coord_res = 0.0\\n        for (el0, x0, y0, z0), (el1, x1, y1, z1) in zip(a0, a1):\\n            e = matvec(R, [x0, y0, z0])\\n            coord_res = max(coord_res, abs(e[0]-x1), abs(e[1]-y1), abs(e[2]-z1))\\n        expected = matmul(matmul(R, t0), transpose(R))\\n        tensor_res = max(abs(expected[i][j]-t1[i][j]) for i in range(3) for j in range(3))\\n        iso0 = sum(t0[i][i] for i in range(3)) / 3.0\\n        iso1 = sum(t1[i][i] for i in range(3)) / 3.0\\n        iso_diff = abs(iso0 - iso1)\\n        value = {\\n            'rotation_matrix': R,\\n            'axis_unit': axis_unit,\\n            'angle_deg': 37.0,\\n            'original_tensor_au': t0,\\n            'rotated_tensor_au': t1,\\n            'expected_rotated_tensor_au': expected,\\n            'tensor_component_max_abs_residual_au': tensor_res,\\n            'coordinate_max_abs_residual_angstrom': coord_res,\\n            'isotropic_original_au': iso0,\\n            'isotropic_rotated_au': iso1,\\n            'isotropic_abs_difference_au': iso_diff,\\n            'formula': 'T_rot_expected = R T_orig R^T; isotropic = Tr(T)/3',\\n            'interpretation': 'Cartesian tensor components are basis-dependent and therefore change under rotation as R T R^T. The isotropic value is the trace/3, invariant under orthonormal rotations, so the two independently computed isotropic values should agree within numerical error.'\\n        }\\n        obs = [{'name':'polarizability_verification','value':value,'unit':'atomic units for tensor components and isotropic values; Angstrom for coordinate residual','sources':[{'filename':'stdout.out','location':f'original ORCA run, lines {s0}-{e0}'},{'filename':'stdout.out','location':f'rotated ORCA run, lines {s1}-{e1}'},{'filename':'original.xyz','location':'prepared original geometry'},{'filename':'rotated.xyz','location':'generated rotated geometry'}],'formula':'T_rot_expected = R T_orig R^T; isotropic = Tr(T)/3','artifacts':['verification.json'],'limitations':['Finite numerical comparison only; residuals are not a proof of experimental accuracy.','Coordinate residual is in Angstrom; tensor residual is in atomic units.']}]\\n        Path('verification.json').write_text(json.dumps(value, indent=2))\\n    else:\\n        tensor, iso, start, end = parse_polar('stdout.out')\\n        value = {'tensor_au': tensor, 'isotropic_au': iso}\\n        obs = [{'name':'static_polarizability','value':value,'unit':'atomic units','sources':[{'filename':'stdout.out','location':f'lines {start}-{end}'}],'formula':None,'artifacts':['polarizability.json'],'limitations':[]}]\\n        Path('polarizability.json').write_text(json.dumps(value, indent=2))\\n    Path('observations.json').write_text(json.dumps({'version':1,'observations':obs}, indent=2))\\n\\nif __name__ == '__main__':\\n    main()\\n\"}},{\"key\":\"parse_original\",\"tool\":\"python.execute\",\"system_id\":\"system_formaldehyde\",\"depends_on\":[\"write_analysis_script\",\"orca_original\"],\"parameters\":{\"code\":{\"producer_key\":\"write_analysis_script\",\"port\":\"written_artifact\"},\"sdk_orca\":false,\"inputs\":{\"version\":1,\"entries\":[{\"producer_key\":\"orca_original\",\"file_key\":\"stdout.out\",\"target_path\":\"stdout.out\",\"purpose\":\"ORCA original stdout to parse\"}]},\"observation_names\":[\"static_polarizability\"]}},{\"key\":\"parse_rotated\",\"tool\":\"python.execute\",\"system_id\":\"system_formaldehyde\",\"depends_on\":[\"write_analysis_script\",\"orca_rotated\"],\"parameters\":{\"code\":{\"producer_key\":\"write_analysis_script\",\"port\":\"written_artifact\"},\"sdk_orca\":false,\"inputs\":{\"version\":1,\"entries\":[{\"producer_key\":\"orca_rotated\",\"file_key\":\"stdout.out\",\"target_path\":\"stdout.out\",\"purpose\":\"ORCA rotated stdout to parse\"}]},\"observation_names\":[\"static_polarizability\"]}},{\"key\":\"verify_polarizability\",\"tool\":\"python.execute\",\"system_id\":\"system_formaldehyde\",\"depends_on\":[\"write_analysis_script\",\"orca_original\",\"orca_rotated\",\"prepare_geometry\",\"rotate_geometry\"],\"parameters\":{\"code\":{\"producer_key\":\"write_analysis_script\",\"port\":\"written_artifact\"},\"sdk_orca\":false,\"inputs\":{\"version\":1,\"entries\":[{\"producer_key\":\"orca_original\",\"file_key\":\"stdout.out\",\"target_path\":\"original_stdout.out\",\"purpose\":\"original ORCA stdout\"},{\"producer_key\":\"orca_rotated\",\"file_key\":\"stdout.out\",\"target_path\":\"rotated_stdout.out\",\"purpose\":\"rotated ORCA stdout\"},{\"producer_key\":\"prepare_geometry\",\"port\":\"prepared_geometry\",\"target_path\":\"original.xyz\",\"purpose\":\"prepared original geometry\"},{\"producer_key\":\"rotate_geometry\",\"file_key\":\"rotated.xyz\",\"target_path\":\"rotated.xyz\",\"purpose\":\"generated rotated geometry\"}]},\"observation_names\":[\"polarizability_verification\"],\"conditions\":{\"axis\":[1,2,3],\"angle_deg\":37,\"rotation\":\"active right-hand about origin\"}}}],\"goal_map\":{\"goal_prepared_geometry_original\":{\"port\":\"prepared_geometry\",\"step_key\":\"prepare_geometry\"},\"goal_rotated_geometry\":{\"port\":\"rotated_geometry\",\"step_key\":\"rotate_geometry\"},\"goal_rotation_relation\":{\"port\":\"rotation_relation\",\"step_key\":\"rotate_geometry\"},\"goal_rotation_convention_record\":{\"port\":\"rotation_convention_record\",\"step_key\":\"rotate_geometry\"},\"goal_polarizability_original\":{\"port\":\"static_polarizability\",\"step_key\":\"parse_original\"},\"goal_polarizability_rotated\":{\"port\":\"static_polarizability\",\"step_key\":\"parse_rotated\"},\"goal_polarizability_verification\":{\"port\":\"polarizability_verification\",\"step_key\":\"verify_polarizability\"},\"goal_random_seed\":{\"port\":\"random_seed\",\"step_key\":\"rotate_geometry\"}}},\"reason\":\"Plan resolves and prepares the formaldehyde identity/geometry, generates the specified deterministic active 37-degree rotation about axis (1,2,3), runs two independent RHF/def2-SVP static polarizability ORCA jobs on the original and rotated fixed geometries, parses both 3x3 tensors and isotropic values, and verifies component transformation and isotropic invariance using the actual rotation matrix and generated XYZ files. Seed 1701 is recorded; no RNG is used.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 14106,
+    "completion_tokens": 25294,
+    "total_tokens": 39400,
+    "prompt_cache_hit_tokens": 3456,
+    "prompt_cache_miss_tokens": 10650
+  },
+  "response_hash": "976cd4dd349365c08a0d073efbdc2c2ddcc73b20708dbb525b01a4ab369a246c",
+  "response_bytes": 102915,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "cc17afe1-3768-4d21-a2c7-7fa2d2a2ee55",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 96.76499999999942
+}

@@ -1,0 +1,694 @@
+{
+  "reviewed_at_utc": "2026-10-20T19:01:31.661099+00:00",
+  "task": "T3",
+  "run_id": "run_d3a2336e56834f1fad9eb6ec8cf6a780",
+  "scope": "Settled original evidence and static source inspection only. No product replay, tests, model/ORCA/network calls, runtime/config/frozen-asset edits or product-source edits. This review JSON is the only created file.",
+  "outcome": {
+    "state": "failed",
+    "delivery_status": "partial",
+    "model_calls": 6,
+    "model_tokens_used": 99571,
+    "model_tokens_unknown": 0,
+    "orca_starts_actual": 0,
+    "attempts": 0,
+    "completed_tool_calls": 1,
+    "knowledge_queries": 1,
+    "identity_queries": 0,
+    "structure_preparations": 0,
+    "plan_revisions": 0,
+    "driver_wall_seconds": 138.67199999999139,
+    "estimated_known_token_cost_upper_usd": "0.0555618",
+    "actual_provider_charge": "not queried",
+    "driver_exception": null,
+    "settlement_unknown_fields": {},
+    "goal_status": {
+      "goal_dihedral_scan": "insufficient_evidence",
+      "goal_electronic_energy": "insufficient_evidence",
+      "goal_relative_energy_curve": "insufficient_evidence",
+      "goal_refinement_criterion": "insufficient_evidence",
+      "goal_refinement_decision": "insufficient_evidence",
+      "goal_deliverables": "insufficient_evidence",
+      "goal_prepared_geometry": "insufficient_evidence",
+      "goal_random_seed": "insufficient_evidence"
+    }
+  },
+  "direct_stop": {
+    "kind": "bounded_initial_plan_corrections_exhausted",
+    "category": "StoreError",
+    "message": "bounded proposal correction or transport retry exhausted",
+    "logical_id_prefix": "decision_a96eb67f9503d58c3fb878e7",
+    "corrections_per_proposal": 2,
+    "consecutive_rejected_plan_responses": 3,
+    "last_model_id": "model_a973a7c18588427eb287f25387322971",
+    "last_persisted_error": {
+      "error_category": "ValidationError",
+      "requirement": [
+        {
+          "type": "value_error",
+          "loc": []
+        }
+      ]
+    },
+    "static_underlying_violation": "The final preparation Step references requested_identity from structure.resolve, whose declared output is resolved_identity. Plan.valid_graph rejects this undeclared producer output.",
+    "certainty": "The underlying violation follows directly from the saved final proposal and current frozen source; no exception traceback containing its message was persisted, and this audit did not replay validation.",
+    "remaining_global_budget": {
+      "model_calls": 18,
+      "model_tokens": 1100429,
+      "orca_starts": 12
+    },
+    "not_observed": [
+      "No context-capacity or transport failure: all six replies have HTTP 200, finish_reason stop and no transport error.",
+      "No ORCA failure, geometry-preparation failure, or selected-method conflict: none of these actions ran.",
+      "No exhausted total model/token/ORCA allowance and no unsettled usage."
+    ]
+  },
+  "normalization_and_conditions": {
+    "request_version": 2,
+    "normalization_status": "normalized",
+    "required_goal_count": 8,
+    "conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "environment": "gas_phase",
+      "multiplicity": 1,
+      "electronic_state": "RKS"
+    },
+    "method": null,
+    "basis": null,
+    "unresolved": [],
+    "system_id": "system_butane",
+    "identity": [
+      "正丁烷"
+    ],
+    "automatic_selection_authorized": [
+      "method",
+      "basis"
+    ],
+    "select_conditions_actions": 0,
+    "program_fields": [
+      {
+        "path": [
+          "goals",
+          0,
+          "text_basis"
+        ],
+        "value": "扫描四个相连碳原子定义的中心C-C-C-C二面角",
+        "source": "authenticated_quantity_quote"
+      },
+      {
+        "path": [
+          "goals",
+          1,
+          "text_basis"
+        ],
+        "value": "电子能量",
+        "source": "authenticated_quantity_quote"
+      },
+      {
+        "path": [
+          "goals",
+          2,
+          "text_basis"
+        ],
+        "value": "相对能量曲线",
+        "source": "authenticated_quantity_quote"
+      },
+      {
+        "path": [
+          "goals",
+          3,
+          "text_basis"
+        ],
+        "value": "如何根据数值结果判断是否需要局部加密",
+        "source": "authenticated_quantity_quote"
+      },
+      {
+        "path": [
+          "goals",
+          4,
+          "text_basis"
+        ],
+        "value": "粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定",
+        "source": "authenticated_quantity_quote"
+      },
+      {
+        "path": [
+          "goals",
+          5,
+          "text_basis"
+        ],
+        "value": "交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单",
+        "source": "authenticated_quantity_quote"
+      },
+      {
+        "path": [
+          "goals",
+          6,
+          "text_basis"
+        ],
+        "value": "初始结构",
+        "source": "authenticated_quantity_quote"
+      },
+      {
+        "path": [
+          "goals",
+          7,
+          "text_basis"
+        ],
+        "value": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性",
+        "source": "authenticated_quantity_quote"
+      }
+    ],
+    "program_applied_defaults": [
+      {
+        "path": [
+          "conditions",
+          "electronic_state"
+        ],
+        "reason": "authorized_default_applied",
+        "authorized_default": {
+          "source": "default",
+          "default_rule": "local-hf-1",
+          "value": "RKS"
+        }
+      }
+    ],
+    "constraint_retention": "Seven explicit angles, per-point constrained optimization, actual angle/convergence/electronic energy, pre-scan numeric refinement rule, main-loop decision, at most two new angles, failure reporting and seed policy remain in Request Goals/minimum evidence.",
+    "new_fix_effect": "The exact-quantity source path accepted eight Goals without duplicate text_basis. One optimized scalar label still required a model correction; removing it did not erase the constrained-optimization requirement.",
+    "condition_selection_assessment": "The model was allowed select_conditions and knew method/basis were unselected. It deliberately staged identity, preparation and criterion writing first. This ordering is allowed by the delivered contract; no condition-selection rejection occurred."
+  },
+  "material_findings": [
+    {
+      "severity": "high",
+      "kind": "model_schema_runtime_inheritance_mismatch",
+      "summary": "A single confirmed system_id is advertised as inherited, but materialize_plan requires an explicit Step/parameter system_id. A schema-conforming empty parameter object consumed the first plan correction.",
+      "delivered_schema": {
+        "parameters": {
+          "additionalProperties": false,
+          "properties": {},
+          "required": [],
+          "type": "object"
+        },
+        "inherited_parameters": [
+          "system_id"
+        ]
+      },
+      "actual_first_step": {
+        "key": "resolve_butane",
+        "tool": "structure.resolve",
+        "parameters": {}
+      },
+      "source_lines": [
+        "src/orca_agent/context.py:3661",
+        "src/orca_agent/readable_context.py:231",
+        "src/orca_agent/proposals.py:830",
+        "src/orca_agent/proposals.py:855"
+      ],
+      "regression_assessment": "The mismatch already exists in the refreeze-3 source commit. It is newly observed in this real response sequence, not established as introduced by the current repair."
+    },
+    {
+      "severity": "high",
+      "kind": "sequential_plan_rejections_and_opaque_graph_feedback",
+      "summary": "The plan has real wrong-port proposals, but independent errors surface in different calls and the last graph failure loses its static explanation and location. The run stops without a usable final correction.",
+      "model_errors": [
+        "Criterion/seed Goals were bound to written_artifact instead of their unchanged Goal ports.",
+        "Preparation referenced requested_identity rather than the resolver output resolved_identity."
+      ],
+      "program_behavior": "Wrong physical/query ports and undeclared producer outputs are correctly refused; the feedback transport fails to expose the latter clearly and the initial schema mismatch uses one bounded correction first.",
+      "source_lines": [
+        "src/orca_agent/proposals.py:923",
+        "src/orca_agent/proposals.py:950",
+        "src/orca_agent/models.py:490",
+        "src/orca_agent/proposals.py:232",
+        "src/orca_agent/agent.py:188"
+      ],
+      "regression_assessment": "The exact Goal-port check, graph validator and stripped ValidationError projection are pre-existing in refreeze-3. This audit does not establish a new scientific/energy-coverage regression."
+    },
+    {
+      "severity": "medium",
+      "kind": "residual_scalar_normalization_round",
+      "summary": "A meaningful per-angle optimized label still incurs a correction because the general Goal scalar cannot represent multiple constrained geometries. All explicit physical constraints survive the corrected activation.",
+      "direct_terminal_cause": false,
+      "source_lines": [
+        "src/orca_agent/semantic.py:443",
+        "src/orca_agent/semantic.py:758",
+        "src/orca_agent/semantic.py:1403"
+      ]
+    }
+  ],
+  "scientific_and_goal_status": {
+    "initial_geometry": "not produced",
+    "scan_points": "0 of 7 computed",
+    "electronic_energies": "none",
+    "relative_energy_curve": "not produced",
+    "convergence_or_angle_checks": "not run",
+    "refinement_criterion": "only present inside rejected workspace.write proposals; no file-write Tool ran",
+    "refinement_decision": "not reached",
+    "seeded_execution": "not run",
+    "required_goals_complete": false,
+    "knowledge_result": "One verified-source document excerpt completed; its scientific qualification is false.",
+    "independent_reference": "not run",
+    "terminal_delivery": "Program-generated partial report; all eight required Goals insufficient_evidence. No scientific success is established."
+  },
+  "comparison_refreeze3": {
+    "same_direct_failure": false,
+    "previous_code_commit": "89d55708d9d879ea7c7d28860199056185df2795",
+    "current_code_commit": "2e872a181ff98212a93ffce8cab4bb48648b7508",
+    "previous_model_calls": 14,
+    "previous_tokens": 338495,
+    "previous_orca_starts": 6,
+    "previous_direct_failure": "Previous T3 reached six internal ORCA calculations after one Python repair, then exhausted input capacity; the complete scan/refinement/curve remained unfinished.",
+    "current_difference": "This T3 stops earlier during initial Plan admission. No current evidence tests the repaired code-retry Goal inheritance, result-feedback compaction, or real ORCA workflow.",
+    "source_comparison": "Read-only git diff between the two verified code commits: no change to models.py or tools/registry.py; readable_context inherited-parameter removal and proposals.validation_error_details/unique-system requirement are unchanged. No runtime replay was performed."
+  },
+  "timeline": [
+    {
+      "round": 1,
+      "model_id": "model_1c7ed002bb3a467d90f1e63be3e21d83",
+      "created_at": "2026-10-20T18:53:09.600619+00:00",
+      "logical_id": "decision_300450ef7079ea3c22b470e9_1",
+      "request_version": 1,
+      "action": "normalize_request",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 14671,
+      "incoming_validation_feedback": null,
+      "application_rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": {
+          "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in.",
+          "path": [
+            "parameters"
+          ],
+          "corrections": [
+            {
+              "path": [
+                "parameters",
+                "goals",
+                1,
+                "geometry_relation"
+              ],
+              "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text",
+              "instruction": "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification."
+            }
+          ]
+        }
+      },
+      "assessment": "Rejected: general electronic-energy Goal supplied optimized scalar relation for a per-angle constrained scan; asked to omit the scalar while retaining all constraints.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_1c7ed002bb3a467d90f1e63be3e21d83.request.json",
+        "sha256": "31dcd5489c2879ef437c53ce1d459be0b103ade4d43cc90f046b8ed5df893c26"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_1c7ed002bb3a467d90f1e63be3e21d83.response.json",
+        "sha256": "00f7f6730dae477787e4b981450b247c44ab508cdf97f722ad5d26fc0db49443"
+      }
+    },
+    {
+      "round": 2,
+      "model_id": "model_d534787d977143ca9ff42857593ca01d",
+      "created_at": "2026-10-20T18:53:46.918930+00:00",
+      "logical_id": "decision_300450ef7079ea3c22b470e9_2",
+      "request_version": 1,
+      "action": "normalize_request",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 9602,
+      "incoming_validation_feedback": {
+        "category": "ProposalError",
+        "requirement": {
+          "corrections": [
+            {
+              "instruction": "Omit this geometry_relation or set it to null when the user text does not select one scalar initial-XYZ/optimized relation. Per-candidate single points or fixed internal geometry with authorized coordinate transformations do not mean fixed_initial. Preserve all geometry and independent-calculation constraints verbatim; a genuine user ambiguity still needs clarification.",
+              "path": [
+                "parameters",
+                "goals",
+                1,
+                "geometry_relation"
+              ],
+              "reason": "geometry_relation_is_unknown_or_ambiguous_in_user_text"
+            }
+          ],
+          "path": [
+            "parameters"
+          ],
+          "requirement": "Apply all listed corrections together, retaining already valid fields. Preserve the user's quantities and minimum evidence; no values were filled in."
+        }
+      },
+      "application_rejection": null,
+      "assessment": "Accepted: removed the scalar relation; eight Goals activated as Request v2. Omitted Goal text_basis was derived from each authenticated exact quantity phrase.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_d534787d977143ca9ff42857593ca01d.request.json",
+        "sha256": "d2426449849f0b0955145f19704677eae87ad4fdf68c2db792433d91959a93a9"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_d534787d977143ca9ff42857593ca01d.response.json",
+        "sha256": "1dc18e28e70a8c015615c3f8dcf3003526166e3564eaa0c90548a31e9d78e54c"
+      }
+    },
+    {
+      "round": 3,
+      "model_id": "model_28a3220df1b34e1e975bd5f798bb22f9",
+      "created_at": "2026-10-20T18:53:53.382344+00:00",
+      "logical_id": "decision_341e74899b5526463d94505e_1",
+      "request_version": 2,
+      "action": "knowledge.search",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 23128,
+      "incoming_validation_feedback": null,
+      "application_rejection": null,
+      "assessment": "Accepted: one knowledge.search for ORCA dihedral-constraint syntax completed; this is document retrieval, not scientific execution.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_28a3220df1b34e1e975bd5f798bb22f9.request.json",
+        "sha256": "8dd409efe519aed24332e9ebf17db389ad0aaf176e178e3340319c58fd8a88e9"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_28a3220df1b34e1e975bd5f798bb22f9.response.json",
+        "sha256": "964e633647c88df2bd85a827767b7b8e1cce42faa46fc601b9b25ce80a762f06"
+      }
+    },
+    {
+      "round": 4,
+      "model_id": "model_1d3608f743c2427c8d0c26e096870723",
+      "created_at": "2026-10-20T18:54:34.339598+00:00",
+      "logical_id": "decision_a96eb67f9503d58c3fb878e7_1",
+      "request_version": 2,
+      "action": "initial_plan",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 20474,
+      "incoming_validation_feedback": null,
+      "application_rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": {
+          "requirement": "Use the declared parameter schema at each listed path.",
+          "tool": "structure.resolve",
+          "errors": [
+            {
+              "type": "missing",
+              "loc": [
+                "parameters",
+                "steps",
+                0,
+                "parameters",
+                "system_id"
+              ]
+            }
+          ]
+        }
+      },
+      "assessment": "Rejected: structure.resolve lacked system_id in both Step and parameters. The delivered Tool schema declared system_id inherited and showed an empty required parameter object.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_1d3608f743c2427c8d0c26e096870723.request.json",
+        "sha256": "d1d43556defcb473152ec3e84f103a972c4f590f0ea987c38c1abc3f20c3fb13"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_1d3608f743c2427c8d0c26e096870723.response.json",
+        "sha256": "d1c11cbed82281219761f42d9ad3217dff6617d7a0f2dd3a6f1e95cf86dbe6f6"
+      }
+    },
+    {
+      "round": 5,
+      "model_id": "model_dd41bac9571c45299be6e70f9fa64206",
+      "created_at": "2026-10-20T18:55:10.525562+00:00",
+      "logical_id": "decision_a96eb67f9503d58c3fb878e7_2",
+      "request_version": 2,
+      "action": "initial_plan",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 16289,
+      "incoming_validation_feedback": {
+        "category": "ProposalError",
+        "requirement": {
+          "errors": [
+            {
+              "loc": [
+                "parameters",
+                "steps",
+                0,
+                "parameters",
+                "system_id"
+              ],
+              "type": "missing"
+            }
+          ],
+          "requirement": "Use the declared parameter schema at each listed path.",
+          "tool": "structure.resolve"
+        }
+      },
+      "application_rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": {
+          "requirement": "A goal binding must preserve its requested physical quantity or query port. If that output is not yet available, use {gap,port} with the same port.",
+          "path": [
+            "parameters",
+            "goal_map",
+            "goal_refinement_criterion",
+            "port"
+          ],
+          "expected": "refinement_criterion"
+        }
+      },
+      "assessment": "Rejected: corrected system_id, then mapped refinement_criterion and random_seed to written_artifact, contrary to their Request ports. The first wrong Goal port was returned as correction.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_dd41bac9571c45299be6e70f9fa64206.request.json",
+        "sha256": "66acd7bc6e9877f639ffdd165a7c48b1760fa9f60123c7a077b85857fa044d54"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_dd41bac9571c45299be6e70f9fa64206.response.json",
+        "sha256": "971b86c4449cc3fca1b5d22d417a284e9834657896793f0f3e12d8b6ea65458b"
+      }
+    },
+    {
+      "round": 6,
+      "model_id": "model_a973a7c18588427eb287f25387322971",
+      "created_at": "2026-10-20T18:55:20.942554+00:00",
+      "logical_id": "decision_a96eb67f9503d58c3fb878e7_3",
+      "request_version": 2,
+      "action": "initial_plan",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 15407,
+      "incoming_validation_feedback": {
+        "category": "ProposalError",
+        "requirement": {
+          "expected": "refinement_criterion",
+          "path": [
+            "parameters",
+            "goal_map",
+            "goal_refinement_criterion",
+            "port"
+          ],
+          "requirement": "A goal binding must preserve its requested physical quantity or query port. If that output is not yet available, use {gap,port} with the same port."
+        }
+      },
+      "application_rejection": {
+        "error_category": "ValidationError",
+        "recovery_kind": "correction",
+        "requirement": [
+          {
+            "type": "value_error",
+            "loc": []
+          }
+        ]
+      },
+      "assessment": "Rejected: corrected Goal mappings to unchanged-port gaps, but retained future identity input port requested_identity. That name is the resolver input role; its output port is resolved_identity. Persisted feedback is only ValidationError value_error at root. Three consecutive initial-plan rejections exhaust the two-correction limit.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_a973a7c18588427eb287f25387322971.request.json",
+        "sha256": "1c3343acee0138e0a5dbf5f05e87a766111806b9d5a2516af20edd4e860fea76"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/model/model_a973a7c18588427eb287f25387322971.response.json",
+        "sha256": "ae4f8b582dd83c57bd3d617d23c1b414a17d34b98c54927c214144ad789a0c2c"
+      }
+    }
+  ],
+  "source_locations": [
+    {
+      "path": "src/orca_agent/agent.py",
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+      "line": 188,
+      "meaning": "Per-logical-decision correction counts exceeding corrections_per_proposal raise the observed StoreError; the guard is invoked after each rejection at line 497."
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+      "line": 394,
+      "meaning": "initial_plan materializes the Plan before commit_revision; no Plan was committed in this Run."
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+      "line": 476,
+      "meaning": "ValidationError is routed through validation_error_details, unlike program-authored ProposalError details."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "line": 232,
+      "meaning": "ValidationError projection keeps type/location and numeric bounds, but drops the static Plan validator message."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "line": 830,
+      "meaning": "system_id is copied between an explicit Step value and an explicit parameter value; no unique-Request-system fallback occurs."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "line": 853,
+      "meaning": "Only actual condition values and non-null item.system_id are inherited into parameters before Tool validation."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "line": 923,
+      "meaning": "Goal bindings must keep their exact requested port; wrong written_artifact is correctly rejected."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "line": 950,
+      "meaning": "Plan constructor runs the graph validator after parameters and Goal bindings have been materialized."
+    },
+    {
+      "path": "src/orca_agent/models.py",
+      "sha256": "21eac4849d184275d91f62912854e54ef962b4d1911ddce464fe1c12f3d12583",
+      "line": 486,
+      "meaning": "Every future input reference must name a declared producer output. The recorded requested_identity port violates line 490 and raises the static ValueError at line 491."
+    },
+    {
+      "path": "src/orca_agent/tools/registry.py",
+      "sha256": "0fcc54ec6e1f73ac559f054b7ccabde60e4ab3d31bcf1b63cb8268eb4da471b4",
+      "line": 247,
+      "meaning": "structure.resolve declares resolved_identity as output; requested_identity is only an input role at line 259; structure.prepare consumes role identity with port resolved_identity at line 276."
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6",
+      "line": 3661,
+      "meaning": "For one requested System, context marks its system_id as known/confirmed."
+    },
+    {
+      "path": "src/orca_agent/readable_context.py",
+      "sha256": "9380ce6b126e65f635c7b5a99268905730122e12196593b1d42712297e53aea9",
+      "line": 231,
+      "meaning": "Confirmed parameters are removed from the displayed required/property schema and listed as inherited_parameters."
+    },
+    {
+      "path": "src/orca_agent/readable_context.py",
+      "sha256": "9380ce6b126e65f635c7b5a99268905730122e12196593b1d42712297e53aea9",
+      "line": 281,
+      "meaning": "Prompt instructs omitting known parameters and inheriting confirmed Request fields/Step.system_id."
+    },
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "7262f32758bda030b75e1c41b2e99a3d400133e281d08e42cd7a122ba0eb0886",
+      "line": 417,
+      "meaning": "Exact authenticated Goal quantity supplies omitted text_basis; activation records eight such additions."
+    },
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "7262f32758bda030b75e1c41b2e99a3d400133e281d08e42cd7a122ba0eb0886",
+      "line": 443,
+      "meaning": "Canonicalization handles fixed_initial scalar labels for task-derived geometries, but does not normalize the supplied optimized label in this case."
+    },
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "7262f32758bda030b75e1c41b2e99a3d400133e281d08e42cd7a122ba0eb0886",
+      "line": 758,
+      "meaning": "A supplied scalar geometry_relation with no single grounded relation is still rejected."
+    },
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "7262f32758bda030b75e1c41b2e99a3d400133e281d08e42cd7a122ba0eb0886",
+      "line": 1403,
+      "meaning": "Per-candidate/transformed geometry obligations have no single initial-hash/optimized-result scalar relation."
+    }
+  ],
+  "freeze_verification": {
+    "status": "matched",
+    "code_commit": "2e872a181ff98212a93ffce8cab4bb48648b7508",
+    "manifest_sha256": "761a02df6634e9bf983317ad24dee079f97ca378ecd88c325d3c277d2e93d309",
+    "runtime_metadata_verified": true,
+    "slot_overruns": {}
+  },
+  "evidence": {
+    "original_user_text": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/original.txt",
+      "sha256": "fecf7957bafc9286b529063d3271f8750bffba3e91b19730f6f5410e0ee24248"
+    },
+    "settled_outcome": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T3/outcome.json",
+      "sha256": "8deba81d3e315b721e5dec4c6e317586815c390392dbd7c5b6afd9a2a400ca54"
+    },
+    "current_run": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/run.json",
+      "sha256": "ef14d4a6de30d506fb454484a5a99d496455c9cc112ea09802196654b25d3ab8"
+    },
+    "control": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/control.json",
+      "sha256": "a2cbc5eece3fbcde683732fe322301a9f25949984119a1ed29d207fdfa3ccdb2"
+    },
+    "activation_decision": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/decisions/model_d534787d977143ca9ff42857593ca01d.json",
+      "sha256": "c16629232f8ee7c96b271984c513b4accae026ac274bd5d6ce9f2117c84a514e"
+    },
+    "knowledge_result": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/results/result_0f8145d6267443b4a37d135028481b85.json",
+      "sha256": "0e56acca3bdce7d3e6babf8f6b6f4b7c684aa1ccc7b2ca85eed1825ed3606bf0"
+    },
+    "knowledge_document": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/artifacts/artifact_a4c66ae79ecc4ce3926a0a17f4632a5a/files/document.html",
+      "sha256": "cbbce1c3a59d701bf86849953133e130e79db01ba6fa62efe41b5c08ac0699b8"
+    },
+    "settlement": {
+      "path": "data/code-tools-refreeze-4-batch/receipts/formal-T3-001/settlement.json",
+      "sha256": "b6a2eb7c02e62e843cf91913a1db868820107da8d58076bcdbc095a9593d8365"
+    },
+    "post_verify": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T3/post-verify.json",
+      "sha256": "fa4a782d8ce6c25632bf102ae69a0cbde3ad9c1a0e87f850204dfb2680aec9d0"
+    },
+    "budget_check": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T3/budget-check.json",
+      "sha256": "2ac6c420c26e5b6998e45669412e6d2120be2167444889e992dd376091d3db9c"
+    },
+    "knowledge_audit": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T3/knowledge-audit.json",
+      "sha256": "534d19d4841d5e7db0a4f0ee82a268ca5515fa4f7b35100adf87f11f8c9b32e2"
+    },
+    "report": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T3/report.json",
+      "sha256": "4a5c7dd36adc8e0215901e0a16751add415398da73525346bc7738a84635036f"
+    },
+    "final_delivery": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T3-001/data/runs/run_d3a2336e56834f1fad9eb6ec8cf6a780/deliveries/report_0db19c64067d540181bd8ff8.md",
+      "sha256": "e3fc5dd68e1c43ba74b266619d80525357163a95d22851ec6eb35022598ccbdb"
+    },
+    "prior_outcome": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/evidence/T3/outcome.json",
+      "sha256": "69f851dd5c445ccbdeb18d78bf48793878249f72d05f832db88e049b7337b1e6"
+    },
+    "prior_post_verify": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/evidence/T3/post-verify.json",
+      "sha256": "210aa3f1558e9870c54fe970780138e431655d9ac9d17f8e913aa28abcafc34f"
+    }
+  },
+  "limitations": [
+    "Static evidence inspection only; no hidden traceback was reconstructed by executing product code.",
+    "No language fuzzing, new test, model call, ORCA execution or request/runtime alteration.",
+    "Earlier success/failure from another batch does not establish success of the current scientific task."
+  ]
+}

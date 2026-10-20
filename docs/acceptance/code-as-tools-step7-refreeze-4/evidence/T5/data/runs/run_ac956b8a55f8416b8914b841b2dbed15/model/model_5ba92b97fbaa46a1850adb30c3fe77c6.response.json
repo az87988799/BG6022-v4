@@ -1,0 +1,239 @@
+{
+  "request_hash": "fcd825bab5ea44d618d4168e1e4047054a48b910d309c84c9c8eaaab66776685",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "goal_map": {
+        "goal_identity_ethanol": {
+          "port": "resolved_identity",
+          "step_key": "resolve_ethanol"
+        },
+        "goal_prepare_geometry": {
+          "port": "prepared_geometry",
+          "step_key": "prepare_ethanol"
+        },
+        "goal_energy_gas": {
+          "port": "energy",
+          "step_key": "orca_gas"
+        },
+        "goal_energy_cpcm_water": {
+          "port": "energy",
+          "step_key": "orca_cpcm"
+        },
+        "goal_delta_energy": {
+          "port": "energy_difference",
+          "step_key": "analyze_results"
+        },
+        "goal_delivery_outputs": {
+          "port": "raw_input_output",
+          "step_key": "analyze_results"
+        },
+        "goal_report_conditions_limits": {
+          "port": "report",
+          "step_key": "analyze_results"
+        },
+        "goal_random_seed_1701": {
+          "port": "random_seed",
+          "step_key": "analyze_results"
+        }
+      },
+      "steps": [
+        {
+          "key": "resolve_ethanol",
+          "parameters": {},
+          "system_id": "system_ethanol",
+          "tool": "structure.resolve"
+        },
+        {
+          "depends_on": [
+            "resolve_ethanol"
+          ],
+          "inputs": {
+            "resolved_identity": {
+              "port": "resolved_identity",
+              "producer_key": "resolve_ethanol"
+            }
+          },
+          "key": "prepare_ethanol",
+          "parameters": {},
+          "system_id": "system_ethanol",
+          "tool": "structure.prepare"
+        },
+        {
+          "key": "write_gas_input",
+          "parameters": {
+            "content": "! RKS B3LYP def2-TZVP NoAutoStart\n%maxcore 192\n%scf\n  MaxIter 256\n  AutoTRAH false\nend\n* xyzfile 0 1 ethanol.xyz\n",
+            "name": "ethanol_gas.inp",
+            "role": "orca"
+          },
+          "tool": "workspace.write"
+        },
+        {
+          "key": "write_cpcm_input",
+          "parameters": {
+            "content": "! RKS B3LYP def2-TZVP CPCM(water) NoAutoStart\n%maxcore 192\n%scf\n  MaxIter 256\n  AutoTRAH false\nend\n* xyzfile 0 1 ethanol.xyz\n",
+            "name": "ethanol_cpcm_water.inp",
+            "role": "orca"
+          },
+          "tool": "workspace.write"
+        },
+        {
+          "key": "write_analysis",
+          "parameters": {
+            "content": "import hashlib\nimport json\nimport re\nfrom pathlib import Path\n\nSEED = 1701\nHARTREE_TO_KJ_MOL = 2625.4996394799\n\ndef sha256_file(path):\n    h = hashlib.sha256()\n    with open(path, 'rb') as f:\n        for chunk in iter(lambda: f.read(1024 * 1024), b''):\n            h.update(chunk)\n    return h.hexdigest()\n\ndef final_energy(path):\n    text = Path(path).read_text(errors='replace')\n    vals = re.findall(r'FINAL SINGLE POINT ENERGY\\s+(-?\\d+(?:\\.\\d*)?(?:[Ee][+-]?\\d+)?)', text)\n    if not vals:\n        raise RuntimeError(f'No FINAL SINGLE POINT ENERGY in {path}')\n    return float(vals[-1])\n\nxyz_hash = sha256_file('ethanol.xyz')\ngas_e = final_energy('gas_stdout.out')\ncpcm_e = final_energy('cpcm_stdout.out')\ndelta_kj = (cpcm_e - gas_e) * HARTREE_TO_KJ_MOL\n\ncommon_artifacts = ['ethanol.xyz', 'gas_job.inp', 'gas_stdout.out', 'cpcm_job.inp', 'cpcm_stdout.out', 'observations.json', 'report.md']\n\nreport = (\n    'Ethanol neutral singlet; shared initial geometry used for both single-point calculations; no geometry optimization was performed. '\n    'Method: B3LYP; basis: def2-TZVP; wavefunction: RKS; charge 0; multiplicity 1. '\n    'Gas phase: no solvent declaration. Aqueous model: ORCA C-PCM water. '\n    'The reported quantity is the single-point electronic energy difference '\n    'Delta E = E(C-PCM water) - E(gas), converted with 1 Eh = 2625.4996394799 kJ/mol. '\n    f'Computed Delta E = {delta_kj:.12f} kJ/mol. Positive means the C-PCM water electronic energy is higher than the gas-phase electronic energy. '\n    'This is not a full hydration free energy and contains no thermal, zero-point, entropy, or standard-state corrections. '\n    'Seed 1701 is recorded for any random-number use in this analysis. The managed structure preparation interface did not expose an explicit seed parameter, so determinism of that external preparation is not independently established. '\n    f'Shared XYZ SHA-256: {xyz_hash}.'\n)\n\nsources_common = [\n    {'filename': 'gas_job.inp', 'location': 'input file'},\n    {'filename': 'gas_stdout.out', 'location': 'FINAL SINGLE POINT ENERGY'},\n    {'filename': 'cpcm_job.inp', 'location': 'input file'},\n    {'filename': 'cpcm_stdout.out', 'location': 'FINAL SINGLE POINT ENERGY'},\n    {'filename': 'ethanol.xyz', 'location': 'shared Cartesian coordinates'},\n]\n\nobservations = [\n    {\n        'name': 'energy_gas',\n        'value': gas_e,\n        'unit': 'Eh',\n        'sources': [{'filename': 'gas_stdout.out', 'location': 'last FINAL SINGLE POINT ENERGY'}],\n        'formula': None,\n        'artifacts': ['gas_stdout.out'],\n        'limitations': ['Single-point electronic energy only; no thermal or standard-state correction.'],\n    },\n    {\n        'name': 'energy_cpcm_water',\n        'value': cpcm_e,\n        'unit': 'Eh',\n        'sources': [{'filename': 'cpcm_stdout.out', 'location': 'last FINAL SINGLE POINT ENERGY'}],\n        'formula': None,\n        'artifacts': ['cpcm_stdout.out'],\n        'limitations': ['Single-point electronic energy in ORCA C-PCM water only; not a full hydration free energy.'],\n    },\n    {\n        'name': 'energy_difference',\n        'value': delta_kj,\n        'unit': 'kJ/mol',\n        'sources': [\n            {'filename': 'gas_stdout.out', 'location': 'last FINAL SINGLE POINT ENERGY'},\n            {'filename': 'cpcm_stdout.out', 'location': 'last FINAL SINGLE POINT ENERGY'},\n        ],\n        'formula': 'Delta E = (E(C-PCM water) - E(gas)) * 2625.4996394799 kJ/mol per Eh',\n        'artifacts': ['gas_stdout.out', 'cpcm_stdout.out'],\n        'limitations': ['Electronic energy difference only; no thermal, entropy, zero-point, or standard-state correction.'],\n    },\n    {\n        'name': 'raw_input_output',\n        'value': {\n            'gas_input': 'gas_job.inp',\n            'gas_output': 'gas_stdout.out',\n            'cpcm_input': 'cpcm_job.inp',\n            'cpcm_output': 'cpcm_stdout.out',\n            'shared_xyz': 'ethanol.xyz',\n            'shared_xyz_sha256': xyz_hash,\n        },\n        'unit': None,\n        'sources': sources_common,\n        'formula': None,\n        'artifacts': ['gas_job.inp', 'gas_stdout.out', 'cpcm_job.inp', 'cpcm_stdout.out', 'ethanol.xyz'],\n        'limitations': [],\n    },\n    {\n        'name': 'report',\n        'value': report,\n        'unit': None,\n        'sources': sources_common,\n        'formula': 'Delta E = (E(C-PCM water) - E(gas)) * 2625.4996394799 kJ/mol per Eh',\n        'artifacts': common_artifacts,\n        'limitations': ['Conditions and limitations are reported from the frozen inputs and ORCA outputs; unknown conditions remain unknown.'],\n    },\n    {\n        'name': 'random_seed',\n        'value': SEED,\n        'unit': None,\n        'sources': [{'filename': 'analyze.py', 'location': 'SEED = 1701'}],\n        'formula': None,\n        'artifacts': ['analyze.py'],\n        'limitations': ['Recorded for analysis; the managed structure preparation tool interface did not expose a seed parameter.'],\n    },\n]\n\nPath('observations.json').write_text(json.dumps({'version': 1, 'observations': observations}, indent=2, ensure_ascii=False))\nPath('report.md').write_text(report + '\\n')\nprint(json.dumps({'observations': observations}, indent=2, ensure_ascii=False))\n",
+            "name": "analyze.py",
+            "role": "python"
+          },
+          "tool": "workspace.write"
+        },
+        {
+          "depends_on": [
+            "write_gas_input",
+            "prepare_ethanol"
+          ],
+          "key": "orca_gas",
+          "parameters": {
+            "conditions": {
+              "environment": "gas_phase",
+              "geometry_relation": "fixed_initial"
+            },
+            "input": {
+              "port": "written_artifact",
+              "producer_step_id": "write_gas_input"
+            },
+            "inputs": {
+              "entries": [
+                {
+                  "port": "prepared_geometry",
+                  "producer_step_id": "prepare_ethanol",
+                  "purpose": "shared initial geometry; identical coordinates for both single-point calculations",
+                  "target_path": "ethanol.xyz"
+                }
+              ],
+              "version": 1
+            },
+            "observation_names": [
+              "energy"
+            ]
+          },
+          "system_id": "system_ethanol",
+          "tool": "orca.run"
+        },
+        {
+          "depends_on": [
+            "write_cpcm_input",
+            "prepare_ethanol"
+          ],
+          "key": "orca_cpcm",
+          "parameters": {
+            "conditions": {
+              "environment": "CPCM(water)",
+              "geometry_relation": "fixed_initial"
+            },
+            "input": {
+              "port": "written_artifact",
+              "producer_step_id": "write_cpcm_input"
+            },
+            "inputs": {
+              "entries": [
+                {
+                  "port": "prepared_geometry",
+                  "producer_step_id": "prepare_ethanol",
+                  "purpose": "shared initial geometry; identical coordinates for both single-point calculations",
+                  "target_path": "ethanol.xyz"
+                }
+              ],
+              "version": 1
+            },
+            "observation_names": [
+              "energy"
+            ]
+          },
+          "system_id": "system_ethanol",
+          "tool": "orca.run"
+        },
+        {
+          "depends_on": [
+            "prepare_ethanol",
+            "orca_gas",
+            "orca_cpcm",
+            "write_analysis"
+          ],
+          "key": "analyze_results",
+          "parameters": {
+            "code": {
+              "file_key": "analyze.py",
+              "producer_step_id": "write_analysis"
+            },
+            "inputs": {
+              "entries": [
+                {
+                  "port": "prepared_geometry",
+                  "producer_step_id": "prepare_ethanol",
+                  "purpose": "shared XYZ for hash and record",
+                  "target_path": "ethanol.xyz"
+                },
+                {
+                  "file_key": "job.inp",
+                  "producer_step_id": "orca_gas",
+                  "purpose": "raw gas-phase ORCA input",
+                  "target_path": "gas_job.inp"
+                },
+                {
+                  "file_key": "stdout.out",
+                  "producer_step_id": "orca_gas",
+                  "purpose": "raw gas-phase ORCA output",
+                  "target_path": "gas_stdout.out"
+                },
+                {
+                  "file_key": "job.inp",
+                  "producer_step_id": "orca_cpcm",
+                  "purpose": "raw C-PCM water ORCA input",
+                  "target_path": "cpcm_job.inp"
+                },
+                {
+                  "file_key": "stdout.out",
+                  "producer_step_id": "orca_cpcm",
+                  "purpose": "raw C-PCM water ORCA output",
+                  "target_path": "cpcm_stdout.out"
+                }
+              ],
+              "version": 1
+            },
+            "observation_names": [
+              "energy_gas",
+              "energy_cpcm_water",
+              "energy_difference",
+              "raw_input_output",
+              "report",
+              "random_seed"
+            ],
+            "sdk_orca": false
+          },
+          "system_id": "system_ethanol",
+          "tool": "python.execute"
+        }
+      ]
+    },
+    "reason": "Corrected the rejected plan by replacing the incomplete inline Python artifact reference with a complete workspace.write-produced analyze.py and an explicit producer_step_id/file_key reference. The plan resolves ethanol, prepares one shared geometry, runs matching B3LYP/def2-TZVP RKS single-point ORCA calculations in gas phase and C-PCM water, then parses raw outputs, computes the kJ/mol electronic energy difference, and records hashes, seed 1701, sources, and limitations."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"goal_map\":{\"goal_identity_ethanol\":{\"port\":\"resolved_identity\",\"step_key\":\"resolve_ethanol\"},\"goal_prepare_geometry\":{\"port\":\"prepared_geometry\",\"step_key\":\"prepare_ethanol\"},\"goal_energy_gas\":{\"port\":\"energy\",\"step_key\":\"orca_gas\"},\"goal_energy_cpcm_water\":{\"port\":\"energy\",\"step_key\":\"orca_cpcm\"},\"goal_delta_energy\":{\"port\":\"energy_difference\",\"step_key\":\"analyze_results\"},\"goal_delivery_outputs\":{\"port\":\"raw_input_output\",\"step_key\":\"analyze_results\"},\"goal_report_conditions_limits\":{\"port\":\"report\",\"step_key\":\"analyze_results\"},\"goal_random_seed_1701\":{\"port\":\"random_seed\",\"step_key\":\"analyze_results\"}},\"steps\":[{\"key\":\"resolve_ethanol\",\"parameters\":{},\"system_id\":\"system_ethanol\",\"tool\":\"structure.resolve\"},{\"depends_on\":[\"resolve_ethanol\"],\"inputs\":{\"resolved_identity\":{\"port\":\"resolved_identity\",\"producer_key\":\"resolve_ethanol\"}},\"key\":\"prepare_ethanol\",\"parameters\":{},\"system_id\":\"system_ethanol\",\"tool\":\"structure.prepare\"},{\"key\":\"write_gas_input\",\"parameters\":{\"content\":\"! RKS B3LYP def2-TZVP NoAutoStart\\n%maxcore 192\\n%scf\\n  MaxIter 256\\n  AutoTRAH false\\nend\\n* xyzfile 0 1 ethanol.xyz\\n\",\"name\":\"ethanol_gas.inp\",\"role\":\"orca\"},\"tool\":\"workspace.write\"},{\"key\":\"write_cpcm_input\",\"parameters\":{\"content\":\"! RKS B3LYP def2-TZVP CPCM(water) NoAutoStart\\n%maxcore 192\\n%scf\\n  MaxIter 256\\n  AutoTRAH false\\nend\\n* xyzfile 0 1 ethanol.xyz\\n\",\"name\":\"ethanol_cpcm_water.inp\",\"role\":\"orca\"},\"tool\":\"workspace.write\"},{\"key\":\"write_analysis\",\"parameters\":{\"content\":\"import hashlib\\nimport json\\nimport re\\nfrom pathlib import Path\\n\\nSEED = 1701\\nHARTREE_TO_KJ_MOL = 2625.4996394799\\n\\ndef sha256_file(path):\\n    h = hashlib.sha256()\\n    with open(path, 'rb') as f:\\n        for chunk in iter(lambda: f.read(1024 * 1024), b''):\\n            h.update(chunk)\\n    return h.hexdigest()\\n\\ndef final_energy(path):\\n    text = Path(path).read_text(errors='replace')\\n    vals = re.findall(r'FINAL SINGLE POINT ENERGY\\\\s+(-?\\\\d+(?:\\\\.\\\\d*)?(?:[Ee][+-]?\\\\d+)?)', text)\\n    if not vals:\\n        raise RuntimeError(f'No FINAL SINGLE POINT ENERGY in {path}')\\n    return float(vals[-1])\\n\\nxyz_hash = sha256_file('ethanol.xyz')\\ngas_e = final_energy('gas_stdout.out')\\ncpcm_e = final_energy('cpcm_stdout.out')\\ndelta_kj = (cpcm_e - gas_e) * HARTREE_TO_KJ_MOL\\n\\ncommon_artifacts = ['ethanol.xyz', 'gas_job.inp', 'gas_stdout.out', 'cpcm_job.inp', 'cpcm_stdout.out', 'observations.json', 'report.md']\\n\\nreport = (\\n    'Ethanol neutral singlet; shared initial geometry used for both single-point calculations; no geometry optimization was performed. '\\n    'Method: B3LYP; basis: def2-TZVP; wavefunction: RKS; charge 0; multiplicity 1. '\\n    'Gas phase: no solvent declaration. Aqueous model: ORCA C-PCM water. '\\n    'The reported quantity is the single-point electronic energy difference '\\n    'Delta E = E(C-PCM water) - E(gas), converted with 1 Eh = 2625.4996394799 kJ/mol. '\\n    f'Computed Delta E = {delta_kj:.12f} kJ/mol. Positive means the C-PCM water electronic energy is higher than the gas-phase electronic energy. '\\n    'This is not a full hydration free energy and contains no thermal, zero-point, entropy, or standard-state corrections. '\\n    'Seed 1701 is recorded for any random-number use in this analysis. The managed structure preparation interface did not expose an explicit seed parameter, so determinism of that external preparation is not independently established. '\\n    f'Shared XYZ SHA-256: {xyz_hash}.'\\n)\\n\\nsources_common = [\\n    {'filename': 'gas_job.inp', 'location': 'input file'},\\n    {'filename': 'gas_stdout.out', 'location': 'FINAL SINGLE POINT ENERGY'},\\n    {'filename': 'cpcm_job.inp', 'location': 'input file'},\\n    {'filename': 'cpcm_stdout.out', 'location': 'FINAL SINGLE POINT ENERGY'},\\n    {'filename': 'ethanol.xyz', 'location': 'shared Cartesian coordinates'},\\n]\\n\\nobservations = [\\n    {\\n        'name': 'energy_gas',\\n        'value': gas_e,\\n        'unit': 'Eh',\\n        'sources': [{'filename': 'gas_stdout.out', 'location': 'last FINAL SINGLE POINT ENERGY'}],\\n        'formula': None,\\n        'artifacts': ['gas_stdout.out'],\\n        'limitations': ['Single-point electronic energy only; no thermal or standard-state correction.'],\\n    },\\n    {\\n        'name': 'energy_cpcm_water',\\n        'value': cpcm_e,\\n        'unit': 'Eh',\\n        'sources': [{'filename': 'cpcm_stdout.out', 'location': 'last FINAL SINGLE POINT ENERGY'}],\\n        'formula': None,\\n        'artifacts': ['cpcm_stdout.out'],\\n        'limitations': ['Single-point electronic energy in ORCA C-PCM water only; not a full hydration free energy.'],\\n    },\\n    {\\n        'name': 'energy_difference',\\n        'value': delta_kj,\\n        'unit': 'kJ/mol',\\n        'sources': [\\n            {'filename': 'gas_stdout.out', 'location': 'last FINAL SINGLE POINT ENERGY'},\\n            {'filename': 'cpcm_stdout.out', 'location': 'last FINAL SINGLE POINT ENERGY'},\\n        ],\\n        'formula': 'Delta E = (E(C-PCM water) - E(gas)) * 2625.4996394799 kJ/mol per Eh',\\n        'artifacts': ['gas_stdout.out', 'cpcm_stdout.out'],\\n        'limitations': ['Electronic energy difference only; no thermal, entropy, zero-point, or standard-state correction.'],\\n    },\\n    {\\n        'name': 'raw_input_output',\\n        'value': {\\n            'gas_input': 'gas_job.inp',\\n            'gas_output': 'gas_stdout.out',\\n            'cpcm_input': 'cpcm_job.inp',\\n            'cpcm_output': 'cpcm_stdout.out',\\n            'shared_xyz': 'ethanol.xyz',\\n            'shared_xyz_sha256': xyz_hash,\\n        },\\n        'unit': None,\\n        'sources': sources_common,\\n        'formula': None,\\n        'artifacts': ['gas_job.inp', 'gas_stdout.out', 'cpcm_job.inp', 'cpcm_stdout.out', 'ethanol.xyz'],\\n        'limitations': [],\\n    },\\n    {\\n        'name': 'report',\\n        'value': report,\\n        'unit': None,\\n        'sources': sources_common,\\n        'formula': 'Delta E = (E(C-PCM water) - E(gas)) * 2625.4996394799 kJ/mol per Eh',\\n        'artifacts': common_artifacts,\\n        'limitations': ['Conditions and limitations are reported from the frozen inputs and ORCA outputs; unknown conditions remain unknown.'],\\n    },\\n    {\\n        'name': 'random_seed',\\n        'value': SEED,\\n        'unit': None,\\n        'sources': [{'filename': 'analyze.py', 'location': 'SEED = 1701'}],\\n        'formula': None,\\n        'artifacts': ['analyze.py'],\\n        'limitations': ['Recorded for analysis; the managed structure preparation tool interface did not expose a seed parameter.'],\\n    },\\n]\\n\\nPath('observations.json').write_text(json.dumps({'version': 1, 'observations': observations}, indent=2, ensure_ascii=False))\\nPath('report.md').write_text(report + '\\\\n')\\nprint(json.dumps({'observations': observations}, indent=2, ensure_ascii=False))\\n\",\"name\":\"analyze.py\",\"role\":\"python\"},\"tool\":\"workspace.write\"},{\"depends_on\":[\"write_gas_input\",\"prepare_ethanol\"],\"key\":\"orca_gas\",\"parameters\":{\"conditions\":{\"environment\":\"gas_phase\",\"geometry_relation\":\"fixed_initial\"},\"input\":{\"port\":\"written_artifact\",\"producer_step_id\":\"write_gas_input\"},\"inputs\":{\"entries\":[{\"port\":\"prepared_geometry\",\"producer_step_id\":\"prepare_ethanol\",\"purpose\":\"shared initial geometry; identical coordinates for both single-point calculations\",\"target_path\":\"ethanol.xyz\"}],\"version\":1},\"observation_names\":[\"energy\"]},\"system_id\":\"system_ethanol\",\"tool\":\"orca.run\"},{\"depends_on\":[\"write_cpcm_input\",\"prepare_ethanol\"],\"key\":\"orca_cpcm\",\"parameters\":{\"conditions\":{\"environment\":\"CPCM(water)\",\"geometry_relation\":\"fixed_initial\"},\"input\":{\"port\":\"written_artifact\",\"producer_step_id\":\"write_cpcm_input\"},\"inputs\":{\"entries\":[{\"port\":\"prepared_geometry\",\"producer_step_id\":\"prepare_ethanol\",\"purpose\":\"shared initial geometry; identical coordinates for both single-point calculations\",\"target_path\":\"ethanol.xyz\"}],\"version\":1},\"observation_names\":[\"energy\"]},\"system_id\":\"system_ethanol\",\"tool\":\"orca.run\"},{\"depends_on\":[\"prepare_ethanol\",\"orca_gas\",\"orca_cpcm\",\"write_analysis\"],\"key\":\"analyze_results\",\"parameters\":{\"code\":{\"file_key\":\"analyze.py\",\"producer_step_id\":\"write_analysis\"},\"inputs\":{\"entries\":[{\"port\":\"prepared_geometry\",\"producer_step_id\":\"prepare_ethanol\",\"purpose\":\"shared XYZ for hash and record\",\"target_path\":\"ethanol.xyz\"},{\"file_key\":\"job.inp\",\"producer_step_id\":\"orca_gas\",\"purpose\":\"raw gas-phase ORCA input\",\"target_path\":\"gas_job.inp\"},{\"file_key\":\"stdout.out\",\"producer_step_id\":\"orca_gas\",\"purpose\":\"raw gas-phase ORCA output\",\"target_path\":\"gas_stdout.out\"},{\"file_key\":\"job.inp\",\"producer_step_id\":\"orca_cpcm\",\"purpose\":\"raw C-PCM water ORCA input\",\"target_path\":\"cpcm_job.inp\"},{\"file_key\":\"stdout.out\",\"producer_step_id\":\"orca_cpcm\",\"purpose\":\"raw C-PCM water ORCA output\",\"target_path\":\"cpcm_stdout.out\"}],\"version\":1},\"observation_names\":[\"energy_gas\",\"energy_cpcm_water\",\"energy_difference\",\"raw_input_output\",\"report\",\"random_seed\"],\"sdk_orca\":false},\"system_id\":\"system_ethanol\",\"tool\":\"python.execute\"}]},\"reason\":\"Corrected the rejected plan by replacing the incomplete inline Python artifact reference with a complete workspace.write-produced analyze.py and an explicit producer_step_id/file_key reference. The plan resolves ethanol, prepares one shared geometry, runs matching B3LYP/def2-TZVP RKS single-point ORCA calculations in gas phase and C-PCM water, then parses raw outputs, computes the kJ/mol electronic energy difference, and records hashes, seed 1701, sources, and limitations.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 13441,
+    "completion_tokens": 7814,
+    "total_tokens": 21255,
+    "prompt_cache_hit_tokens": 1792,
+    "prompt_cache_miss_tokens": 11649
+  },
+  "response_hash": "df04fd9a39d2fd2d41f5d67c555d7925f22512c68e9b95d9fef533134b7c39c7",
+  "response_bytes": 32745,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "2e2d5e06-dd1b-4e14-ad40-d0ca5f8a7dce",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 31.577999999994063
+}

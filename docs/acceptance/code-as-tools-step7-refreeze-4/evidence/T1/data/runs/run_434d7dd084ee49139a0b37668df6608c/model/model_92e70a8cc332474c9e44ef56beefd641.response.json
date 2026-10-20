@@ -1,0 +1,57 @@
+{
+  "request_hash": "224ea969db760c3c4f57f66727ad7d1029351e9cf27d3d886e50e3fe57ec6dce",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_ethanol",
+          "tool": "structure.resolve",
+          "system_id": "system_ethanol",
+          "parameters": {}
+        },
+        {
+          "key": "prepare_ethanol",
+          "tool": "structure.prepare",
+          "system_id": "system_ethanol",
+          "depends_on": [
+            "resolve_ethanol"
+          ],
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_ethanol",
+              "port": "resolved_identity"
+            }
+          },
+          "parameters": {}
+        }
+      ],
+      "goal_map": {
+        "goal_ethanol_initial_geometry": {
+          "step_key": "prepare_ethanol",
+          "port": "prepared_geometry"
+        }
+      }
+    },
+    "reason": "Start with the required identity resolution and managed initial-geometry preparation for ethanol. Method/basis selection and ORCA optimization/frequency work will follow after the prepared geometry is available."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_ethanol\",\"tool\":\"structure.resolve\",\"system_id\":\"system_ethanol\",\"parameters\":{}},{\"key\":\"prepare_ethanol\",\"tool\":\"structure.prepare\",\"system_id\":\"system_ethanol\",\"depends_on\":[\"resolve_ethanol\"],\"inputs\":{\"identity\":{\"producer_key\":\"resolve_ethanol\",\"port\":\"resolved_identity\"}},\"parameters\":{}}],\"goal_map\":{\"goal_ethanol_initial_geometry\":{\"step_key\":\"prepare_ethanol\",\"port\":\"prepared_geometry\"}}},\"reason\":\"Start with the required identity resolution and managed initial-geometry preparation for ethanol. Method/basis selection and ORCA optimization/frequency work will follow after the prepared geometry is available.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 14705,
+    "completion_tokens": 960,
+    "total_tokens": 15665,
+    "prompt_cache_hit_tokens": 7808,
+    "prompt_cache_miss_tokens": 6897
+  },
+  "response_hash": "3b0a03d09d4ea36c1e84d7c4a63688555b4913c42660f1287cd4f07d2f9e31fd",
+  "response_bytes": 5189,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "c9019b4f-cbec-4acc-b5b4-c70f37494fb1",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 5.89100000000326
+}

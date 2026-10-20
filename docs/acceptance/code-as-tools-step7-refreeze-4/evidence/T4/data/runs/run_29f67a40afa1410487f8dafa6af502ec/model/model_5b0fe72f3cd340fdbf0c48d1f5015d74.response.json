@@ -1,0 +1,178 @@
+{
+  "request_hash": "c4262d294b964409a29561eaac0a38bae2a7c91dc7ece8d2e00e7287605cc8db",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "goal_map": {
+        "goal_delivery": {
+          "port": "delivery_report",
+          "step_key": "analyze_tddft"
+        },
+        "goal_excitations": {
+          "port": "excitation_energies",
+          "step_key": "analyze_tddft"
+        },
+        "goal_geometry": {
+          "port": "prepared_geometry",
+          "step_key": "prepare_geometry"
+        },
+        "goal_identity": {
+          "port": "resolved_identity",
+          "step_key": "resolve_identity"
+        },
+        "goal_method_rationale": {
+          "port": "method_selection_rationale",
+          "step_key": "analyze_tddft"
+        },
+        "goal_oscillator_strengths": {
+          "port": "oscillator_strengths",
+          "step_key": "analyze_tddft"
+        },
+        "goal_seed": {
+          "port": "random_seed",
+          "step_key": "analyze_tddft"
+        },
+        "goal_transition_analysis": {
+          "port": "transition_analysis",
+          "step_key": "analyze_tddft"
+        }
+      },
+      "steps": [
+        {
+          "key": "resolve_identity",
+          "parameters": {},
+          "system_id": "system_acetone",
+          "tool": "structure.resolve"
+        },
+        {
+          "depends_on": [
+            "resolve_identity"
+          ],
+          "inputs": {
+            "identity": {
+              "port": "resolved_identity",
+              "producer_step_id": "resolve_identity"
+            }
+          },
+          "key": "prepare_geometry",
+          "parameters": {},
+          "system_id": "system_acetone",
+          "tool": "structure.prepare"
+        },
+        {
+          "key": "write_orca_input",
+          "parameters": {
+            "content": "! RKS CAM-B3LYP def2-TZVP NoAutoStart\n%maxcore 192\n%pal nprocs 4 end\n%scf MaxIter 256 AutoTRAH false end\n%tddft NRoots 5 TDA false Triplets false MaxIter 128 end\n* xyzfile 0 1 geom.xyz\n",
+            "name": "acetone_tddft.inp",
+            "role": "orca"
+          },
+          "tool": "workspace.write"
+        },
+        {
+          "key": "write_analysis_script",
+          "parameters": {
+            "content": "import csv, json, math, re\nfrom pathlib import Path\nAU_TO_EV=27.211386245988\nHARTREE_TO_CM=219474.6313705\ndef rd(p):\n q=Path(p)\n if not q.exists(): raise SystemExit('required file missing: '+p)\n return q.read_text(encoding='utf-8', errors='replace')\ndef num(x): return float(x.replace('D','E').replace('d','e'))\ndef src(f,loc=None):\n d={'filename':f}\n if loc is not None: d['location']=loc\n return d\nout=rd('stdout.out'); inp=rd('job.inp'); geom=rd('geometry_used.xyz'); lines=out.splitlines(); states={}\npat_ev=re.compile(r'^[ \t]*STATE[ \t]+([0-9]+)[ \t]*:[ \t]*E[ \t]*=[ \t]*([-+]?(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)(?:[EeDd][-+]?[0-9]+)?)[ \t]+au[ \t]+([-+]?(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)(?:[EeDd][-+]?[0-9]+)?)[ \t]+eV', re.I)\npat_au=re.compile(r'^[ \t]*STATE[ \t]+([0-9]+)[ \t]*:[ \t]*E[ \t]*=[ \t]*([-+]?(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)(?:[EeDd][-+]?[0-9]+)?)[ \t]+au(?:[ \t]|$)', re.I)\nfor i,line in enumerate(lines,1):\n m=pat_ev.match(line)\n if m:\n  n=int(m.group(1)); au=num(m.group(2)); ev=num(m.group(3))\n  if n not in states: states[n]={'state':n,'energy_au':au,'energy_ev':ev,'energy_line':i,'fosc':None,'fosc_line':None}\n  continue\n m=pat_au.match(line)\n if m:\n  n=int(m.group(1)); au=num(m.group(2))\n  if n not in states: states[n]={'state':n,'energy_au':au,'energy_ev':au*AU_TO_EV,'energy_line':i,'fosc':None,'fosc_line':None}\npat_osc=re.compile(r'Oscillator[ \t]+Strength[ \t]+for[ \t]+transition[ \t]+([0-9]+)[ \t]*:[ \t]*([-+]?(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)(?:[EeDd][-+]?[0-9]+)?)', re.I)\nfor i,line in enumerate(lines,1):\n m=pat_osc.search(line)\n if m:\n  n=int(m.group(1)); f=num(m.group(2))\n  if n in states: states[n]['fosc']=f; states[n]['fosc_line']=i\nabs_start=None\nfor i,line in enumerate(lines):\n u=line.upper()\n if 'ABSORPTION SPECTRUM' in u and 'ELECTRIC DIPOLE' in u:\n  abs_start=i; break\nif abs_start is not None:\n header_idx=None; fosc_idx=None\n for j in range(abs_start,min(abs_start+50,len(lines))):\n  toks=lines[j].split(); low=[t.lower() for t in toks]\n  if any('state' in t for t in low) and any(('fosc' in t or 'oscillator' in t) for t in low):\n   header_idx=j\n   for k,t in enumerate(low):\n    if 'fosc' in t or 'oscillator' in t:\n     fosc_idx=k; break\n   break\n start=header_idx+1 if header_idx is not None else abs_start+1\n for j in range(start,min(start+120,len(lines))):\n  parts=lines[j].strip().split()\n  if not parts or not parts[0].isdigit(): continue\n  n=int(parts[0])\n  if n not in states: continue\n  f=None\n  if fosc_idx is not None and fosc_idx < len(parts):\n   try: f=num(parts[fosc_idx])\n   except ValueError: f=None\n  if f is None:\n   nums=[]\n   for tok in parts[1:]:\n    try: nums.append(num(tok))\n    except ValueError: pass\n   if len(nums)>=3: f=nums[2]\n  if f is not None:\n   states[n]['fosc']=f; states[n]['fosc_line']=j+1\nif len(states)<5: raise SystemExit('fewer than five STATE records parsed: '+repr(sorted(states)))\nreported=[]\nfor n in sorted(states)[:5]:\n s=states[n]\n if s['fosc'] is None: raise SystemExit('no oscillator strength parsed for state '+str(n)+'; parsed='+repr(sorted(states)))\n for k in ('energy_au','energy_ev','fosc'):\n  if not math.isfinite(s[k]): raise SystemExit('non-finite '+k+' for state '+str(n))\n reported.append(s)\nlowest=min(reported,key=lambda s:s['energy_ev']); strongest=max(reported,key=lambda s:s['fosc']); span=max(s['energy_ev'] for s in reported)-min(s['energy_ev'] for s in reported)\nweak=[s for s in reported if abs(s['fosc'])<1e-6]\ntable_lines=chr(10).join('state '+str(s['state'])+': E='+format(s['energy_ev'],'.8f')+' eV, f='+format(s['fosc'],'.10g') for s in reported)\nweak_text='none below 1e-6' if not weak else ', '.join('state '+str(s['state'])+' (f='+format(s['fosc'],'.6g')+')' for s in weak)\nanalysis_text='The lowest-energy root is state '+str(lowest['state'])+' at '+format(lowest['energy_ev'],'.6f')+' eV with f='+format(lowest['fosc'],'.8g')+'. The strongest electric-dipole transition is state '+str(strongest['state'])+' at '+format(strongest['energy_ev'],'.6f')+' eV with f='+format(strongest['fosc'],'.8g')+'. The five requested roots span '+format(span,'.6f')+' eV from '+format(min(s['energy_ev'] for s in reported),'.6f')+' to '+format(max(s['energy_ev'] for s in reported),'.6f')+' eV. Weak/near-zero roots (|f|<1e-6): '+weak_text+'. The low-energy states are distinguished from the stronger transition primarily by much smaller electric-dipole length-form oscillator strength; no configurational assignment is inferred beyond the response energies and f values. This is a vertical single-point TDDFT result, not an experimental absorption maximum or an adiabatic excitation energy.'\nfirst_line=inp.splitlines()[0].strip() if inp.splitlines() else ''\nmethod_text='Full linear-response TDDFT (TDA false) with CAM-B3LYP/def2-TZVP was selected. Full TDDFT avoids the TDA approximation and is affordable for this 10-atom system under the 4-core, 192 MB/process and 900 s limits. CAM-B3LYP is a range-separated hybrid appropriate for low-lying valence and weak transitions of acetone, while def2-TZVP gives a balanced triple-zeta polarized description. The managed actual input first line is: '+first_line\nwith open('absorption.csv','w',newline='',encoding='utf-8') as fh:\n w=csv.writer(fh); w.writerow(['state','energy_ev','oscillator_strength_length_form','energy_au','energy_cm-1'])\n for s in reported: w.writerow([s['state'],format(s['energy_ev'],'.12g'),format(s['fosc'],'.12g'),format(s['energy_au'],'.12g'),format(s['energy_au']*HARTREE_TO_CM,'.12g')])\nexcited_payload={'method':'CAM-B3LYP','basis':'def2-TZVP','response':'full linear-response TDDFT (TDA false)','charge':0,'multiplicity':1,'input_file':'job.inp','geometry_file':'geometry_used.xyz','raw_output':'stdout.out','states':reported,'all_parsed_states':[states[k] for k in sorted(states)]}\nPath('excited_states.json').write_text(json.dumps(excited_payload,indent=2),encoding='utf-8')\nPath('method_selection.md').write_text('# Method selection'+chr(10)+chr(10)+method_text+chr(10),encoding='utf-8')\nPath('analysis_summary.md').write_text('# Vertical TDDFT analysis'+chr(10)+chr(10)+analysis_text+chr(10)+chr(10)+'Absorption table:'+chr(10)+chr(10)+table_lines+chr(10),encoding='utf-8')\nobs=[]\nobs.append({'name':'excitation_energies','value':[{'state':s['state'],'energy_ev':s['energy_ev']} for s in reported],'unit':'eV','sources':[src('stdout.out','line '+str(s['energy_line'])+' (STATE ... E= ... eV)') for s in reported]+[src('job.inp','managed actual input')],'formula':'Vertical TDDFT excitation energy; eV values taken from ORCA STATE records (or converted from au with 1 Eh = 27.211386245988 eV).','artifacts':['absorption.csv','excited_states.json'],'limitations':['Single-point vertical excitation at the prepared geometry; not an experimental absorption maximum or adiabatic excitation energy.','No geometry optimization was performed before this TDDFT response calculation.']})\nobs.append({'name':'oscillator_strengths','value':[{'state':s['state'],'oscillator_strength_length_form':s['fosc']} for s in reported],'unit':'dimensionless','sources':[src('stdout.out','line '+str(s['fosc_line'])+' (electric-dipole length-form oscillator strength)') for s in reported]+[src('job.inp','managed actual input'),src('absorption.csv','length-form oscillator-strength table')],'formula':'ORCA electric-dipole length-form oscillator strength, reported dimensionless; all five requested roots retained including weak/near-zero values.','artifacts':['absorption.csv','excited_states.json'],'limitations':['Length-form oscillator strengths from the vertical TDDFT response; no experimental intensity calibration.','No vibrational broadening or solvent shift is applied.']})\nobs.append({'name':'transition_analysis','value':analysis_text,'unit':None,'sources':[src('absorption.csv','all five length-form oscillator strengths'),src('stdout.out','energy and oscillator-strength records')],'formula':None,'artifacts':['analysis_summary.md','absorption.csv'],'limitations':['Analysis is limited to the calculated vertical energies and length-form oscillator strengths; no configurational assignment is inferred beyond those quantities.','This is not an experimental absorption spectrum.']})\nobs.append({'name':'method_selection_rationale','value':method_text,'unit':None,'sources':[src('job.inp','actual managed input: '+first_line),src('stdout.out','ORCA response output')],'formula':None,'artifacts':['method_selection.md'],'limitations':['Method choice is a budget-aware scientific selection, not a benchmark against experimental spectra.']})\nobs.append({'name':'random_seed','value':1701,'unit':None,'sources':[src('tddft_analysis.py','deterministic analysis script'),src('job.inp','deterministic ORCA input')],'formula':None,'artifacts':['tddft_analysis.py'],'limitations':['ORCA SCF/TDDFT and this Python analysis use no random sampling.','The structure.prepare tool exposes no seed parameter; if it uses randomness internally, seed 1701 cannot be enforced there and no seed-control claim is made for that step.']})\ndelivery_value={'geometry':'geometry_used.xyz (prepared initial geometry; single-point vertical TDDFT, no optimization)','actual_input':'job.inp','raw_response':'stdout.out','absorption_table':'absorption.csv','analysis_data':'excited_states.json','analysis_summary':'analysis_summary.md','method_selection':'method_selection.md','script':'tddft_analysis.py','states_reported':len(reported),'limitations':['Vertical single-point TDDFT energies and length-form oscillator strengths only.','No experimental peak assignment, adiabatic excitation energy, or HOMO-LUMO gap substitution.','No geometry optimization or frequency validation of the prepared geometry.']}\nobs.append({'name':'delivery_report','value':delivery_value,'unit':None,'sources':[src('job.inp','actual managed input'),src('stdout.out','raw ORCA response'),src('geometry_used.xyz','prepared geometry used'),src('absorption.csv','absorption table'),src('excited_states.json','parsed response data'),src('analysis_summary.md','analysis narrative'),src('method_selection.md','method rationale'),src('tddft_analysis.py','generation/analysis script')],'formula':None,'artifacts':['geometry_used.xyz','job.inp','stdout.out','absorption.csv','excited_states.json','analysis_summary.md','method_selection.md','tddft_analysis.py'],'limitations':['Delivery is limited to the computed vertical response and its archived sources.']})\nPath('observations.json').write_text(json.dumps({'version':1,'observations':obs},indent=2),encoding='utf-8')\nprint(json.dumps({'status':'ok','states_reported':len(reported),'files':['absorption.csv','excited_states.json','analysis_summary.md','method_selection.md','observations.json']}))\n",
+            "name": "tddft_analysis.py",
+            "role": "python"
+          },
+          "tool": "workspace.write"
+        },
+        {
+          "depends_on": [
+            "write_orca_input",
+            "prepare_geometry"
+          ],
+          "key": "run_tddft",
+          "parameters": {
+            "input": {
+              "port": "written_artifact",
+              "producer_step_id": "write_orca_input"
+            },
+            "inputs": {
+              "entries": [
+                {
+                  "port": "prepared_geometry",
+                  "producer_step_id": "prepare_geometry",
+                  "purpose": "initial prepared acetone geometry for vertical TDDFT",
+                  "target_path": "geom.xyz"
+                }
+              ],
+              "version": 1
+            }
+          },
+          "system_id": "system_acetone",
+          "tool": "orca.run"
+        },
+        {
+          "depends_on": [
+            "run_tddft",
+            "write_analysis_script",
+            "prepare_geometry"
+          ],
+          "key": "analyze_tddft",
+          "parameters": {
+            "code": {
+              "language": "python",
+              "port": "written_artifact",
+              "producer_step_id": "write_analysis_script"
+            },
+            "inputs": {
+              "entries": [
+                {
+                  "file_key": "stdout.out",
+                  "producer_step_id": "run_tddft",
+                  "purpose": "ORCA TDDFT response output to parse",
+                  "target_path": "stdout.out"
+                },
+                {
+                  "file_key": "job.inp",
+                  "producer_step_id": "run_tddft",
+                  "purpose": "actual ORCA input used",
+                  "target_path": "job.inp"
+                },
+                {
+                  "port": "prepared_geometry",
+                  "producer_step_id": "prepare_geometry",
+                  "purpose": "initial prepared geometry used for the single-point vertical TDDFT",
+                  "target_path": "geometry_used.xyz"
+                }
+              ],
+              "version": 1
+            },
+            "observation_names": [
+              "excitation_energies",
+              "oscillator_strengths",
+              "transition_analysis",
+              "method_selection_rationale",
+              "random_seed",
+              "delivery_report"
+            ],
+            "sdk_orca": false
+          },
+          "system_id": "system_acetone",
+          "tool": "python.execute"
+        }
+      ]
+    },
+    "reason": "Resolve and prepare the acetone system, write an explicit full linear-response TDDFT input (CAM-B3LYP/def2-TZVP, TDA false, NRoots 5), run ORCA, then parse the archived response into complete five-root energies and length-form oscillator strengths plus delivery artifacts. The analysis script is written as a workspace artifact and referenced by producer port, avoiding the rejected omitted-hash reference."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"goal_map\":{\"goal_delivery\":{\"port\":\"delivery_report\",\"step_key\":\"analyze_tddft\"},\"goal_excitations\":{\"port\":\"excitation_energies\",\"step_key\":\"analyze_tddft\"},\"goal_geometry\":{\"port\":\"prepared_geometry\",\"step_key\":\"prepare_geometry\"},\"goal_identity\":{\"port\":\"resolved_identity\",\"step_key\":\"resolve_identity\"},\"goal_method_rationale\":{\"port\":\"method_selection_rationale\",\"step_key\":\"analyze_tddft\"},\"goal_oscillator_strengths\":{\"port\":\"oscillator_strengths\",\"step_key\":\"analyze_tddft\"},\"goal_seed\":{\"port\":\"random_seed\",\"step_key\":\"analyze_tddft\"},\"goal_transition_analysis\":{\"port\":\"transition_analysis\",\"step_key\":\"analyze_tddft\"}},\"steps\":[{\"key\":\"resolve_identity\",\"parameters\":{},\"system_id\":\"system_acetone\",\"tool\":\"structure.resolve\"},{\"depends_on\":[\"resolve_identity\"],\"inputs\":{\"identity\":{\"port\":\"resolved_identity\",\"producer_step_id\":\"resolve_identity\"}},\"key\":\"prepare_geometry\",\"parameters\":{},\"system_id\":\"system_acetone\",\"tool\":\"structure.prepare\"},{\"key\":\"write_orca_input\",\"parameters\":{\"content\":\"! RKS CAM-B3LYP def2-TZVP NoAutoStart\\n%maxcore 192\\n%pal nprocs 4 end\\n%scf MaxIter 256 AutoTRAH false end\\n%tddft NRoots 5 TDA false Triplets false MaxIter 128 end\\n* xyzfile 0 1 geom.xyz\\n\",\"name\":\"acetone_tddft.inp\",\"role\":\"orca\"},\"tool\":\"workspace.write\"},{\"key\":\"write_analysis_script\",\"parameters\":{\"content\":\"import csv, json, math, re\\nfrom pathlib import Path\\nAU_TO_EV=27.211386245988\\nHARTREE_TO_CM=219474.6313705\\ndef rd(p):\\n q=Path(p)\\n if not q.exists(): raise SystemExit('required file missing: '+p)\\n return q.read_text(encoding='utf-8', errors='replace')\\ndef num(x): return float(x.replace('D','E').replace('d','e'))\\ndef src(f,loc=None):\\n d={'filename':f}\\n if loc is not None: d['location']=loc\\n return d\\nout=rd('stdout.out'); inp=rd('job.inp'); geom=rd('geometry_used.xyz'); lines=out.splitlines(); states={}\\npat_ev=re.compile(r'^[ \\t]*STATE[ \\t]+([0-9]+)[ \\t]*:[ \\t]*E[ \\t]*=[ \\t]*([-+]?(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)(?:[EeDd][-+]?[0-9]+)?)[ \\t]+au[ \\t]+([-+]?(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)(?:[EeDd][-+]?[0-9]+)?)[ \\t]+eV', re.I)\\npat_au=re.compile(r'^[ \\t]*STATE[ \\t]+([0-9]+)[ \\t]*:[ \\t]*E[ \\t]*=[ \\t]*([-+]?(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)(?:[EeDd][-+]?[0-9]+)?)[ \\t]+au(?:[ \\t]|$)', re.I)\\nfor i,line in enumerate(lines,1):\\n m=pat_ev.match(line)\\n if m:\\n  n=int(m.group(1)); au=num(m.group(2)); ev=num(m.group(3))\\n  if n not in states: states[n]={'state':n,'energy_au':au,'energy_ev':ev,'energy_line':i,'fosc':None,'fosc_line':None}\\n  continue\\n m=pat_au.match(line)\\n if m:\\n  n=int(m.group(1)); au=num(m.group(2))\\n  if n not in states: states[n]={'state':n,'energy_au':au,'energy_ev':au*AU_TO_EV,'energy_line':i,'fosc':None,'fosc_line':None}\\npat_osc=re.compile(r'Oscillator[ \\t]+Strength[ \\t]+for[ \\t]+transition[ \\t]+([0-9]+)[ \\t]*:[ \\t]*([-+]?(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)(?:[EeDd][-+]?[0-9]+)?)', re.I)\\nfor i,line in enumerate(lines,1):\\n m=pat_osc.search(line)\\n if m:\\n  n=int(m.group(1)); f=num(m.group(2))\\n  if n in states: states[n]['fosc']=f; states[n]['fosc_line']=i\\nabs_start=None\\nfor i,line in enumerate(lines):\\n u=line.upper()\\n if 'ABSORPTION SPECTRUM' in u and 'ELECTRIC DIPOLE' in u:\\n  abs_start=i; break\\nif abs_start is not None:\\n header_idx=None; fosc_idx=None\\n for j in range(abs_start,min(abs_start+50,len(lines))):\\n  toks=lines[j].split(); low=[t.lower() for t in toks]\\n  if any('state' in t for t in low) and any(('fosc' in t or 'oscillator' in t) for t in low):\\n   header_idx=j\\n   for k,t in enumerate(low):\\n    if 'fosc' in t or 'oscillator' in t:\\n     fosc_idx=k; break\\n   break\\n start=header_idx+1 if header_idx is not None else abs_start+1\\n for j in range(start,min(start+120,len(lines))):\\n  parts=lines[j].strip().split()\\n  if not parts or not parts[0].isdigit(): continue\\n  n=int(parts[0])\\n  if n not in states: continue\\n  f=None\\n  if fosc_idx is not None and fosc_idx < len(parts):\\n   try: f=num(parts[fosc_idx])\\n   except ValueError: f=None\\n  if f is None:\\n   nums=[]\\n   for tok in parts[1:]:\\n    try: nums.append(num(tok))\\n    except ValueError: pass\\n   if len(nums)>=3: f=nums[2]\\n  if f is not None:\\n   states[n]['fosc']=f; states[n]['fosc_line']=j+1\\nif len(states)<5: raise SystemExit('fewer than five STATE records parsed: '+repr(sorted(states)))\\nreported=[]\\nfor n in sorted(states)[:5]:\\n s=states[n]\\n if s['fosc'] is None: raise SystemExit('no oscillator strength parsed for state '+str(n)+'; parsed='+repr(sorted(states)))\\n for k in ('energy_au','energy_ev','fosc'):\\n  if not math.isfinite(s[k]): raise SystemExit('non-finite '+k+' for state '+str(n))\\n reported.append(s)\\nlowest=min(reported,key=lambda s:s['energy_ev']); strongest=max(reported,key=lambda s:s['fosc']); span=max(s['energy_ev'] for s in reported)-min(s['energy_ev'] for s in reported)\\nweak=[s for s in reported if abs(s['fosc'])<1e-6]\\ntable_lines=chr(10).join('state '+str(s['state'])+': E='+format(s['energy_ev'],'.8f')+' eV, f='+format(s['fosc'],'.10g') for s in reported)\\nweak_text='none below 1e-6' if not weak else ', '.join('state '+str(s['state'])+' (f='+format(s['fosc'],'.6g')+')' for s in weak)\\nanalysis_text='The lowest-energy root is state '+str(lowest['state'])+' at '+format(lowest['energy_ev'],'.6f')+' eV with f='+format(lowest['fosc'],'.8g')+'. The strongest electric-dipole transition is state '+str(strongest['state'])+' at '+format(strongest['energy_ev'],'.6f')+' eV with f='+format(strongest['fosc'],'.8g')+'. The five requested roots span '+format(span,'.6f')+' eV from '+format(min(s['energy_ev'] for s in reported),'.6f')+' to '+format(max(s['energy_ev'] for s in reported),'.6f')+' eV. Weak/near-zero roots (|f|<1e-6): '+weak_text+'. The low-energy states are distinguished from the stronger transition primarily by much smaller electric-dipole length-form oscillator strength; no configurational assignment is inferred beyond the response energies and f values. This is a vertical single-point TDDFT result, not an experimental absorption maximum or an adiabatic excitation energy.'\\nfirst_line=inp.splitlines()[0].strip() if inp.splitlines() else ''\\nmethod_text='Full linear-response TDDFT (TDA false) with CAM-B3LYP/def2-TZVP was selected. Full TDDFT avoids the TDA approximation and is affordable for this 10-atom system under the 4-core, 192 MB/process and 900 s limits. CAM-B3LYP is a range-separated hybrid appropriate for low-lying valence and weak transitions of acetone, while def2-TZVP gives a balanced triple-zeta polarized description. The managed actual input first line is: '+first_line\\nwith open('absorption.csv','w',newline='',encoding='utf-8') as fh:\\n w=csv.writer(fh); w.writerow(['state','energy_ev','oscillator_strength_length_form','energy_au','energy_cm-1'])\\n for s in reported: w.writerow([s['state'],format(s['energy_ev'],'.12g'),format(s['fosc'],'.12g'),format(s['energy_au'],'.12g'),format(s['energy_au']*HARTREE_TO_CM,'.12g')])\\nexcited_payload={'method':'CAM-B3LYP','basis':'def2-TZVP','response':'full linear-response TDDFT (TDA false)','charge':0,'multiplicity':1,'input_file':'job.inp','geometry_file':'geometry_used.xyz','raw_output':'stdout.out','states':reported,'all_parsed_states':[states[k] for k in sorted(states)]}\\nPath('excited_states.json').write_text(json.dumps(excited_payload,indent=2),encoding='utf-8')\\nPath('method_selection.md').write_text('# Method selection'+chr(10)+chr(10)+method_text+chr(10),encoding='utf-8')\\nPath('analysis_summary.md').write_text('# Vertical TDDFT analysis'+chr(10)+chr(10)+analysis_text+chr(10)+chr(10)+'Absorption table:'+chr(10)+chr(10)+table_lines+chr(10),encoding='utf-8')\\nobs=[]\\nobs.append({'name':'excitation_energies','value':[{'state':s['state'],'energy_ev':s['energy_ev']} for s in reported],'unit':'eV','sources':[src('stdout.out','line '+str(s['energy_line'])+' (STATE ... E= ... eV)') for s in reported]+[src('job.inp','managed actual input')],'formula':'Vertical TDDFT excitation energy; eV values taken from ORCA STATE records (or converted from au with 1 Eh = 27.211386245988 eV).','artifacts':['absorption.csv','excited_states.json'],'limitations':['Single-point vertical excitation at the prepared geometry; not an experimental absorption maximum or adiabatic excitation energy.','No geometry optimization was performed before this TDDFT response calculation.']})\\nobs.append({'name':'oscillator_strengths','value':[{'state':s['state'],'oscillator_strength_length_form':s['fosc']} for s in reported],'unit':'dimensionless','sources':[src('stdout.out','line '+str(s['fosc_line'])+' (electric-dipole length-form oscillator strength)') for s in reported]+[src('job.inp','managed actual input'),src('absorption.csv','length-form oscillator-strength table')],'formula':'ORCA electric-dipole length-form oscillator strength, reported dimensionless; all five requested roots retained including weak/near-zero values.','artifacts':['absorption.csv','excited_states.json'],'limitations':['Length-form oscillator strengths from the vertical TDDFT response; no experimental intensity calibration.','No vibrational broadening or solvent shift is applied.']})\\nobs.append({'name':'transition_analysis','value':analysis_text,'unit':None,'sources':[src('absorption.csv','all five length-form oscillator strengths'),src('stdout.out','energy and oscillator-strength records')],'formula':None,'artifacts':['analysis_summary.md','absorption.csv'],'limitations':['Analysis is limited to the calculated vertical energies and length-form oscillator strengths; no configurational assignment is inferred beyond those quantities.','This is not an experimental absorption spectrum.']})\\nobs.append({'name':'method_selection_rationale','value':method_text,'unit':None,'sources':[src('job.inp','actual managed input: '+first_line),src('stdout.out','ORCA response output')],'formula':None,'artifacts':['method_selection.md'],'limitations':['Method choice is a budget-aware scientific selection, not a benchmark against experimental spectra.']})\\nobs.append({'name':'random_seed','value':1701,'unit':None,'sources':[src('tddft_analysis.py','deterministic analysis script'),src('job.inp','deterministic ORCA input')],'formula':None,'artifacts':['tddft_analysis.py'],'limitations':['ORCA SCF/TDDFT and this Python analysis use no random sampling.','The structure.prepare tool exposes no seed parameter; if it uses randomness internally, seed 1701 cannot be enforced there and no seed-control claim is made for that step.']})\\ndelivery_value={'geometry':'geometry_used.xyz (prepared initial geometry; single-point vertical TDDFT, no optimization)','actual_input':'job.inp','raw_response':'stdout.out','absorption_table':'absorption.csv','analysis_data':'excited_states.json','analysis_summary':'analysis_summary.md','method_selection':'method_selection.md','script':'tddft_analysis.py','states_reported':len(reported),'limitations':['Vertical single-point TDDFT energies and length-form oscillator strengths only.','No experimental peak assignment, adiabatic excitation energy, or HOMO-LUMO gap substitution.','No geometry optimization or frequency validation of the prepared geometry.']}\\nobs.append({'name':'delivery_report','value':delivery_value,'unit':None,'sources':[src('job.inp','actual managed input'),src('stdout.out','raw ORCA response'),src('geometry_used.xyz','prepared geometry used'),src('absorption.csv','absorption table'),src('excited_states.json','parsed response data'),src('analysis_summary.md','analysis narrative'),src('method_selection.md','method rationale'),src('tddft_analysis.py','generation/analysis script')],'formula':None,'artifacts':['geometry_used.xyz','job.inp','stdout.out','absorption.csv','excited_states.json','analysis_summary.md','method_selection.md','tddft_analysis.py'],'limitations':['Delivery is limited to the computed vertical response and its archived sources.']})\\nPath('observations.json').write_text(json.dumps({'version':1,'observations':obs},indent=2),encoding='utf-8')\\nprint(json.dumps({'status':'ok','states_reported':len(reported),'files':['absorption.csv','excited_states.json','analysis_summary.md','method_selection.md','observations.json']}))\\n\",\"name\":\"tddft_analysis.py\",\"role\":\"python\"},\"tool\":\"workspace.write\"},{\"depends_on\":[\"write_orca_input\",\"prepare_geometry\"],\"key\":\"run_tddft\",\"parameters\":{\"input\":{\"port\":\"written_artifact\",\"producer_step_id\":\"write_orca_input\"},\"inputs\":{\"entries\":[{\"port\":\"prepared_geometry\",\"producer_step_id\":\"prepare_geometry\",\"purpose\":\"initial prepared acetone geometry for vertical TDDFT\",\"target_path\":\"geom.xyz\"}],\"version\":1}},\"system_id\":\"system_acetone\",\"tool\":\"orca.run\"},{\"depends_on\":[\"run_tddft\",\"write_analysis_script\",\"prepare_geometry\"],\"key\":\"analyze_tddft\",\"parameters\":{\"code\":{\"language\":\"python\",\"port\":\"written_artifact\",\"producer_step_id\":\"write_analysis_script\"},\"inputs\":{\"entries\":[{\"file_key\":\"stdout.out\",\"producer_step_id\":\"run_tddft\",\"purpose\":\"ORCA TDDFT response output to parse\",\"target_path\":\"stdout.out\"},{\"file_key\":\"job.inp\",\"producer_step_id\":\"run_tddft\",\"purpose\":\"actual ORCA input used\",\"target_path\":\"job.inp\"},{\"port\":\"prepared_geometry\",\"producer_step_id\":\"prepare_geometry\",\"purpose\":\"initial prepared geometry used for the single-point vertical TDDFT\",\"target_path\":\"geometry_used.xyz\"}],\"version\":1},\"observation_names\":[\"excitation_energies\",\"oscillator_strengths\",\"transition_analysis\",\"method_selection_rationale\",\"random_seed\",\"delivery_report\"],\"sdk_orca\":false},\"system_id\":\"system_acetone\",\"tool\":\"python.execute\"}]},\"reason\":\"Resolve and prepare the acetone system, write an explicit full linear-response TDDFT input (CAM-B3LYP/def2-TZVP, TDA false, NRoots 5), run ORCA, then parse the archived response into complete five-root energies and length-form oscillator strengths plus delivery artifacts. The analysis script is written as a workspace artifact and referenced by producer port, avoiding the rejected omitted-hash reference.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 17442,
+    "completion_tokens": 27392,
+    "total_tokens": 44834,
+    "prompt_cache_hit_tokens": 3456,
+    "prompt_cache_miss_tokens": 13986
+  },
+  "response_hash": "4f37fd257858102660df283225c5431e2cc3760fb107b06ac8641a9e63992bfc",
+  "response_bytes": 102119,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "c42af024-c632-4603-9484-0307fcfabc59",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 108.20299999999406
+}

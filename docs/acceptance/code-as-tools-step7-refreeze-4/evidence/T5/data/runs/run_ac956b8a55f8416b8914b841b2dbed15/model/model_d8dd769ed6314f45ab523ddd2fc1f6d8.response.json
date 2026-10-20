@@ -1,0 +1,85 @@
+{
+  "request_hash": "1e8c93e4713a13504c0df57fe700997643fbffc351b2c68885cc3d00d9fba738",
+  "proposal": {
+    "action": "initial_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "resolve_ethanol",
+          "tool": "structure.resolve",
+          "system_id": "system_ethanol",
+          "parameters": {}
+        },
+        {
+          "key": "prepare_ethanol",
+          "tool": "structure.prepare",
+          "system_id": "system_ethanol",
+          "inputs": {
+            "identity": {
+              "producer_key": "resolve_ethanol",
+              "port": "resolved_identity"
+            }
+          },
+          "depends_on": [
+            "resolve_ethanol"
+          ],
+          "parameters": {}
+        }
+      ],
+      "goal_map": {
+        "goal_identity_ethanol": {
+          "step_key": "resolve_ethanol",
+          "port": "resolved_identity"
+        },
+        "goal_prepare_geometry": {
+          "step_key": "prepare_ethanol",
+          "port": "prepared_geometry"
+        },
+        "goal_energy_gas": {
+          "port": "energy",
+          "gap": "awaits qualified geometry and method/basis selection before planning the gas-phase single point"
+        },
+        "goal_energy_cpcm_water": {
+          "port": "energy",
+          "gap": "awaits qualified geometry and method/basis selection before planning the C-PCM water single point"
+        },
+        "goal_delta_energy": {
+          "port": "energy_difference",
+          "gap": "depends on both single-point energies and an analysis step"
+        },
+        "goal_delivery_outputs": {
+          "port": "raw_input_output",
+          "gap": "depends on generated ORCA inputs/outputs and shared XYZ"
+        },
+        "goal_report_conditions_limits": {
+          "port": "report",
+          "gap": "depends on completed calculations and archived evidence"
+        },
+        "goal_random_seed_1701": {
+          "port": "random_seed",
+          "gap": "to be recorded with actual algorithm behavior; no fabricated determinism"
+        }
+      }
+    },
+    "reason": "No plan or pending Step exists. Start with the required identity resolution and initial geometry preparation for neutral singlet ethanol in system_ethanol. These are the gating managed-native prerequisites before method/basis selection and before any ORCA single-point inputs can be approved; remaining Goals are left as explicit gaps rather than invented producers."
+  },
+  "raw_content": "{\"action\":\"initial_plan\",\"parameters\":{\"steps\":[{\"key\":\"resolve_ethanol\",\"tool\":\"structure.resolve\",\"system_id\":\"system_ethanol\",\"parameters\":{}},{\"key\":\"prepare_ethanol\",\"tool\":\"structure.prepare\",\"system_id\":\"system_ethanol\",\"inputs\":{\"identity\":{\"producer_key\":\"resolve_ethanol\",\"port\":\"resolved_identity\"}},\"depends_on\":[\"resolve_ethanol\"],\"parameters\":{}}],\"goal_map\":{\"goal_identity_ethanol\":{\"step_key\":\"resolve_ethanol\",\"port\":\"resolved_identity\"},\"goal_prepare_geometry\":{\"step_key\":\"prepare_ethanol\",\"port\":\"prepared_geometry\"},\"goal_energy_gas\":{\"port\":\"energy\",\"gap\":\"awaits qualified geometry and method/basis selection before planning the gas-phase single point\"},\"goal_energy_cpcm_water\":{\"port\":\"energy\",\"gap\":\"awaits qualified geometry and method/basis selection before planning the C-PCM water single point\"},\"goal_delta_energy\":{\"port\":\"energy_difference\",\"gap\":\"depends on both single-point energies and an analysis step\"},\"goal_delivery_outputs\":{\"port\":\"raw_input_output\",\"gap\":\"depends on generated ORCA inputs/outputs and shared XYZ\"},\"goal_report_conditions_limits\":{\"port\":\"report\",\"gap\":\"depends on completed calculations and archived evidence\"},\"goal_random_seed_1701\":{\"port\":\"random_seed\",\"gap\":\"to be recorded with actual algorithm behavior; no fabricated determinism\"}}},\"reason\":\"No plan or pending Step exists. Start with the required identity resolution and initial geometry preparation for neutral singlet ethanol in system_ethanol. These are the gating managed-native prerequisites before method/basis selection and before any ORCA single-point inputs can be approved; remaining Goals are left as explicit gaps rather than invented producers.\"}",
+  "error_category": null,
+  "retryable": false,
+  "usage": {
+    "prompt_tokens": 14972,
+    "completion_tokens": 1696,
+    "total_tokens": 16668,
+    "prompt_cache_hit_tokens": 7808,
+    "prompt_cache_miss_tokens": 7164
+  },
+  "response_hash": "354b16caab67fa715ecca35fe0739e901791e04e0af5570f448cb88d3af786da",
+  "response_bytes": 8372,
+  "response_model": "deepseek-flash",
+  "provider_request_id": null,
+  "completion_id": "15415956-3616-4395-860f-8c494920bd5b",
+  "finish_reason": "stop",
+  "http_status": 200,
+  "retry_after_seconds": null,
+  "elapsed_seconds": 8.952999999994063
+}

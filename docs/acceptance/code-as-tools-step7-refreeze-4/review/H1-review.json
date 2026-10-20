@@ -1,0 +1,920 @@
+{
+  "reviewed_at_utc": "2026-10-20T19:16:43.921073+00:00",
+  "task": "H1",
+  "run_id": "run_13f4664ad76841969477f0dafdb921aa",
+  "scope": "Read-only audit of settled original JSON/text evidence and frozen source. No product imports, validation replay, test, model, ORCA, network, credential access, source change, freeze change or runtime-state mutation. Only this review is written.",
+  "outcome": {
+    "state": "failed",
+    "delivery_status": "partial",
+    "model_calls": 5,
+    "model_tokens_used": 107259,
+    "model_tokens_unknown": 0,
+    "orca_starts_actual": 0,
+    "orca_starts_reserved": 0,
+    "identity_queries": 0,
+    "structure_preparations": 0,
+    "python_attempts": 0,
+    "tool_calls": 0,
+    "results": 0,
+    "plan_id": null,
+    "plan_version": null,
+    "goal_status": {
+      "goal_prep_geom": "insufficient_evidence",
+      "goal_giao_shielding": "insufficient_evidence",
+      "goal_tensor_table": "insufficient_evidence",
+      "goal_deliverables": "insufficient_evidence",
+      "goal_random_seed": "insufficient_evidence"
+    },
+    "driver_wall_seconds": 194.11000000000058,
+    "settlement_unknown_fields": {},
+    "driver_exception": null,
+    "resource_usage_complete": true,
+    "frozen_runtime_verification": {
+      "pre": {
+        "returncode": 0,
+        "status": "matched",
+        "code_commit": "2e872a181ff98212a93ffce8cab4bb48648b7508",
+        "manifest_sha256": "761a02df6634e9bf983317ad24dee079f97ca378ecd88c325d3c277d2e93d309"
+      },
+      "post": {
+        "returncode": 0,
+        "status": "matched",
+        "code_commit": "2e872a181ff98212a93ffce8cab4bb48648b7508",
+        "manifest_sha256": "761a02df6634e9bf983317ad24dee079f97ca378ecd88c325d3c277d2e93d309"
+      }
+    },
+    "slot_overruns": {}
+  },
+  "successful_progress": {
+    "normalization": "First response accepted; HCN identity is normalized, with five requested Goals. Identity resolution itself did not run.",
+    "normalized_conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "electronic_state": "RKS"
+    },
+    "selected_conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "electronic_state": "RKS",
+      "method": "PBE0",
+      "basis": "def2-TZVP"
+    },
+    "condition_selection_proposal": {
+      "request_version": 2,
+      "choices": {
+        "method": {
+          "value": "PBE0",
+          "reason": "For the fixed-geometry GIAO shielding of the 3-atom HCN system, PBE0 is a hybrid DFT choice permitted by the request; it generally provides a balanced description for shielding tensors while remaining affordable for one small molecule. Cost is modest: 3 atoms, no optimization, one gas-phase NMR calculation; def2-TZVP keeps the basis compact enough for the 4-core/192 MB-per-process execution envelope. RHF would be cheaper but is a lower-level treatment for correlation-sensitive shielding; PBE0 is selected with cost and accuracy in mind. Actual ORCA input keywords and numerical settings will be recorded."
+        },
+        "basis": {
+          "value": "def2-TZVP",
+          "reason": "def2-TZVP is explicitly permitted and is a triple-zeta all-electron basis suitable for a small molecule; for HCN it is tractable in a single fixed-geometry GIAO NMR job under the available 4-core/192 MB-per-process resources. def2-SVP would be cheaper but less flexible for the shielding tensor. The choice is paired with PBE0 and will be recorded in the actual ORCA input; no basis-set extrapolation or chemical-shift referencing is implied."
+        }
+      }
+    },
+    "qualified_goal": "prepared_geometry",
+    "reported_with_limitations_goals": [
+      "giao_nmr_shielding",
+      "nmr_tensor_table",
+      "artifact_metadata",
+      "sampling"
+    ],
+    "preserved_user_requirements": "All three nuclei; fixed prepared geometry; full total Cartesian 3x3 tensors and isotropic shielding in ppm; trace/3 check; original geometry/input/output/scripts/table; method/geometry limitations and seed policy. These remain requirements, not completed results."
+  },
+  "direct_stop": {
+    "kind": "bounded_initial_plan_corrections_exhausted",
+    "diagnostic": {
+      "category": "StoreError",
+      "message": "bounded proposal correction or transport retry exhausted",
+      "environment_occupied": false
+    },
+    "logical_id_prefix": "decision_8b5904ecdbb7ced3c66a1b27",
+    "corrections_per_proposal": 2,
+    "consecutive_rejected_plan_responses": 3,
+    "last_model_id": "model_7b1cd237caa8419abd783c8d8f570b1d",
+    "last_persisted_error": {
+      "error_category": "ValidationError",
+      "recovery_kind": "correction",
+      "requirement": [
+        {
+          "type": "value_error",
+          "loc": []
+        }
+      ]
+    },
+    "static_underlying_violation": "The final two python.execute Steps explicitly set Step.geometry={producer_key:prepare_hcn,port:prepared_geometry}. python.execute has execute_python effects, so Step.registered_parameters rejects the scientific geometry binding before Plan construction. The correct task geometry reference already exists in parameters.inputs.entries; sdk_orca=true does not change the Step Tool effects.",
+    "static_validator_message": "non-scientific tool cannot claim a scientific geometry binding",
+    "proposal_location": [
+      "parameters",
+      "steps",
+      3,
+      "geometry"
+    ],
+    "certainty": "This earliest violated guard follows directly from the saved proposals and frozen source. The original traceback/message was not persisted, and this audit did not replay product validation. It does not claim that removing this field would make all later scientific checks pass.",
+    "remaining_total_budget": {
+      "model_calls": 19,
+      "model_tokens": 1092741,
+      "orca_starts": 12
+    },
+    "not_observed": [
+      "No total model/token/ORCA budget exhaustion.",
+      "No transport, malformed JSON or context-capacity failure: five valid JSON responses have HTTP 200/finish_reason stop.",
+      "No missing prepared-input visibility defect: no geometry was generated and input_bindings is empty.",
+      "No ORCA calculation, parser, geometry-preparation or scientific-check failure occurred; none executed."
+    ]
+  },
+  "feedback_completeness": {
+    "first_plan_error": {
+      "complete_for_observed_failure": true,
+      "received_by_model": "model_97ccfd0afbe14f1d9a3a04b6c9679d99",
+      "feedback": {
+        "category": "ProposalError",
+        "requirement": {
+          "corrections": [
+            {
+              "instruction": "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known hash/language may be omitted, or use an explicit producer_step_id/producer_key with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries also require target_path and purpose. The program validates dependencies, permissions and qualifications and freezes actual hashes before execution. Choose one reference form; union alternatives are not cumulative. Historical policies still require concrete ID/hash references. Never guess hashes or weaken Goals.",
+              "path": [
+                "parameters",
+                "steps",
+                3,
+                "parameters",
+                "code"
+              ],
+              "reason": "explicit_file_reference_required"
+            }
+          ],
+          "errors": [
+            {
+              "loc": [
+                "parameters",
+                "steps",
+                3,
+                "parameters",
+                "code"
+              ],
+              "type": "missing"
+            }
+          ],
+          "requirement": "Use the declared parameter schema at each listed path.",
+          "tool": "python.execute"
+        }
+      },
+      "effect": "The model added parameters.code on its next response."
+    },
+    "second_plan_error": {
+      "complete_for_observed_failure": false,
+      "received_by_model": "model_7b1cd237caa8419abd783c8d8f570b1d",
+      "feedback": {
+        "category": "ValidationError",
+        "requirement": [
+          {
+            "loc": [],
+            "type": "value_error"
+          }
+        ]
+      },
+      "missing": [
+        "Static validator reason",
+        "Step key/index",
+        "The geometry field location",
+        "Instruction to keep geometry in the input manifest and remove the incompatible top-level field"
+      ],
+      "effect": "The model kept geometry and focused its correction on script regeneration and reference spelling."
+    },
+    "last_plan_error": {
+      "persisted": {
+        "error_category": "ValidationError",
+        "recovery_kind": "correction",
+        "requirement": [
+          {
+            "type": "value_error",
+            "loc": []
+          }
+        ]
+      },
+      "another_model_correction_received": false,
+      "reason": "The third rejected response exceeded the two-correction allowance."
+    },
+    "original_script_and_redaction": {
+      "contexts": [
+        {
+          "received_round": 4,
+          "source_model_id": "model_04407f31f09f4f5abafaa4f5e4c5157c",
+          "projection": {
+            "bytes": 6608,
+            "complete": false,
+            "omitted": false,
+            "redacted": true,
+            "sha256": "3104c58bb967351a2dfc57eefa6784b707bf031766d565de35b2b60c4b125f99"
+          },
+          "writer_content_projection": {
+            "bytes": 4848,
+            "omitted": "sensitive/path-bearing text; not original value",
+            "sha256": "6422905ab78f0ca1de6fcad2d1c7028a0695f16b41fc5caa9918dc131460da7d"
+          },
+          "full_response_preserved": true
+        },
+        {
+          "received_round": 5,
+          "source_model_id": "model_97ccfd0afbe14f1d9a3a04b6c9679d99",
+          "projection": {
+            "bytes": 7946,
+            "complete": false,
+            "omitted": false,
+            "redacted": true,
+            "sha256": "0955ed1ea39ffae6e49c28fa2351f2808891087d61f1375e3ac133f948c823b6"
+          },
+          "writer_content_projection": {
+            "bytes": 5824,
+            "omitted": "sensitive/path-bearing text; not original value",
+            "sha256": "869c233d318923ccd54517c1f776e7018a4ac8c8a6eef4f6d8c3ee17731cb941"
+          },
+          "full_response_preserved": true
+        }
+      ],
+      "assessment": "The raw model responses contain real scripts (not omission markers), while the correction-context projection redacts the writer content. The final model says the earlier content was an omission marker and rewrites the script. This is a secondary context confounder, not the direct validator cause. Projection redaction is explicitly marked incomplete, and original full content remains preserved."
+    },
+    "existing_prompt_guidance": "All three planning contexts explicitly state Geometry belongs in parameters.inputs=manifest. The top-level duplicate geometry is a model proposal defect; the later failure is prolonged by loss of the precise program-authored validator message."
+  },
+  "comparison_to_known_failures": {
+    "T3": {
+      "same_failure_class": "A root ValidationError is reduced to value_error/loc=[] without the static message, so bounded correction is poorly informed.",
+      "different_specific_violation": "T3 had a requested_identity/resolved_identity producer-port mismatch; H1 instead has an incompatible top-level geometry on python.execute.",
+      "system_id_issue_not_triggered": "H1 consistently declares system_hcn on resolve, prepare and run_nmr in all three Plan candidates; there is no missing inherited system_id error."
+    },
+    "T1_T4_T5": {
+      "prepared_binding_omission_not_triggered": "H1 has no Tool calls, Results or Run input_bindings. Its failure occurs during initial planning before geometry preparation."
+    },
+    "review_evidence": {
+      "T1": {
+        "review": {
+          "path": "docs/acceptance/code-as-tools-step7-refreeze-4/review/T1-review.json",
+          "bytes": 18095,
+          "sha256": "cefe1bd95b10ce5fa79ccc094836ffe548d4d034e2fe424bc7e75d9ee71ecb46"
+        },
+        "direct_stop_kind": "model_explicit_stop"
+      },
+      "T3": {
+        "review": {
+          "path": "docs/acceptance/code-as-tools-step7-refreeze-4/review/T3-review.json",
+          "bytes": 33079,
+          "sha256": "ea23384a768e913a09da20080fe044998550ba350afd160162b8510094265125"
+        },
+        "direct_stop_kind": "bounded_initial_plan_corrections_exhausted"
+      },
+      "T4": {
+        "review": {
+          "path": "docs/acceptance/code-as-tools-step7-refreeze-4/review/T4-review.json",
+          "bytes": 32514,
+          "sha256": "beef4b9155a8db5caba867dcd0550c8baf10d5183de495878affe5c344095868"
+        },
+        "direct_stop_kind": null
+      },
+      "T5": {
+        "review": {
+          "path": "docs/acceptance/code-as-tools-step7-refreeze-4/review/T5-review.json",
+          "bytes": 48284,
+          "sha256": "c180893036d299efd4691c20c3ce8f28ca45985ea0bda24483dc5f35068a6511"
+        },
+        "direct_stop_kind": "bounded_plan_corrections_exhausted_after_condition_selection"
+      }
+    }
+  },
+  "plan_proposal_evidence": [
+    {
+      "round": 3,
+      "model_id": "model_04407f31f09f4f5abafaa4f5e4c5157c",
+      "run_nmr_step": {
+        "key": "run_nmr",
+        "tool": "python.execute",
+        "system_id": "system_hcn",
+        "depends_on": [
+          "prepare_hcn",
+          "write_nmr_code"
+        ],
+        "geometry": {
+          "producer_key": "prepare_hcn",
+          "port": "prepared_geometry"
+        },
+        "inputs": {
+          "code": {
+            "producer_key": "write_nmr_code",
+            "port": "written_artifact"
+          }
+        },
+        "parameters": {
+          "sdk_orca": true,
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "producer_key": "prepare_hcn",
+                "port": "prepared_geometry",
+                "target_path": "hcn.xyz",
+                "purpose": "fixed initial HCN geometry for GIAO shielding"
+              }
+            ]
+          },
+          "observation_names": [
+            "giao_nmr_shielding",
+            "nmr_tensor_table",
+            "artifact_metadata",
+            "sampling"
+          ]
+        }
+      },
+      "writer_content_type": "string",
+      "writer_content_characters": 4726,
+      "writer_content_utf8_bytes": 4726,
+      "writer_content_sha256": "76fe792c567a18beb5360f610922009e5d3fe5d60f1f4c2ee59d26c8c444cc52",
+      "writer_content_is_executed_artifact": false
+    },
+    {
+      "round": 4,
+      "model_id": "model_97ccfd0afbe14f1d9a3a04b6c9679d99",
+      "run_nmr_step": {
+        "key": "run_nmr",
+        "system_id": "system_hcn",
+        "tool": "python.execute",
+        "depends_on": [
+          "prepare_hcn",
+          "write_nmr_code"
+        ],
+        "geometry": {
+          "producer_key": "prepare_hcn",
+          "port": "prepared_geometry"
+        },
+        "inputs": {
+          "code": {
+            "producer_key": "write_nmr_code",
+            "port": "written_artifact"
+          }
+        },
+        "parameters": {
+          "code": {
+            "producer_step_id": "write_nmr_code",
+            "port": "written_artifact",
+            "language": "python"
+          },
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "producer_step_id": "prepare_hcn",
+                "port": "prepared_geometry",
+                "target_path": "hcn.xyz",
+                "purpose": "fixed initial HCN geometry for GIAO shielding"
+              }
+            ]
+          },
+          "observation_names": [
+            "giao_nmr_shielding",
+            "nmr_tensor_table",
+            "artifact_metadata",
+            "sampling"
+          ],
+          "sdk_orca": true
+        }
+      },
+      "writer_content_type": "string",
+      "writer_content_characters": 5365,
+      "writer_content_utf8_bytes": 5365,
+      "writer_content_sha256": "05218d56829350a149641359fe4b0749ffc8c831698941981ca3e8adc5dea811",
+      "writer_content_is_executed_artifact": false
+    },
+    {
+      "round": 5,
+      "model_id": "model_7b1cd237caa8419abd783c8d8f570b1d",
+      "run_nmr_step": {
+        "key": "run_nmr",
+        "tool": "python.execute",
+        "system_id": "system_hcn",
+        "depends_on": [
+          "prepare_hcn",
+          "write_nmr_code"
+        ],
+        "geometry": {
+          "producer_key": "prepare_hcn",
+          "port": "prepared_geometry"
+        },
+        "inputs": {
+          "code": {
+            "producer_key": "write_nmr_code",
+            "port": "written_artifact"
+          }
+        },
+        "parameters": {
+          "sdk_orca": true,
+          "code": {
+            "producer_key": "write_nmr_code",
+            "port": "written_artifact"
+          },
+          "observation_names": [
+            "giao_nmr_shielding",
+            "nmr_tensor_table",
+            "artifact_metadata",
+            "sampling"
+          ],
+          "inputs": {
+            "version": 1,
+            "entries": [
+              {
+                "producer_key": "prepare_hcn",
+                "port": "prepared_geometry",
+                "target_path": "hcn.xyz",
+                "purpose": "fixed initial HCN geometry for GIAO shielding"
+              }
+            ]
+          }
+        }
+      },
+      "writer_content_type": "string",
+      "writer_content_characters": 10142,
+      "writer_content_utf8_bytes": 10142,
+      "writer_content_sha256": "e4f3d8fcb80f1a44020c465df0915a926ca62a0a75eb5ce1c7f5c3070a4b9a5d",
+      "writer_content_is_executed_artifact": false
+    }
+  ],
+  "timeline": [
+    {
+      "round": 1,
+      "model_id": "model_1d38a3d0313d4aecab9ed5d509b78eb2",
+      "logical_id": "decision_300450ef7079ea3c22b470e9_1",
+      "created_at": "2026-10-20T19:09:36.815441+00:00",
+      "action": "normalize_request",
+      "reason": "Normalize HCN request: identity HCN, explicit gas-phase neutral singlet, delegated method/basis choices, prepared geometry goal, fixed-initial GIAO shielding goal, tensor/deliverable/seed reporting goals.",
+      "tokens": 15136,
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "received_feedback": null,
+      "decision": {
+        "plan_version": null,
+        "request_version": 2
+      },
+      "assessment": "Accepted normalization on the first response; five Goals and explicit neutral/singlet/gas conditions were activated as Request v2."
+    },
+    {
+      "round": 2,
+      "model_id": "model_32dcc7e271ba46f2af955af14de21241",
+      "logical_id": "decision_341e74899b5526463d94505e_1",
+      "created_at": "2026-10-20T19:10:15.251979+00:00",
+      "action": "select_conditions",
+      "reason": "Select the permitted method/basis before scientific execution. PBE0/def2-TZVP is a reasonable cost-accuracy compromise for one small fixed-geometry GIAO shielding calculation; actual numerical settings will be recorded in the generated input.",
+      "tokens": 15134,
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "received_feedback": null,
+      "decision": {
+        "plan_version": null,
+        "request_version": 3
+      },
+      "assessment": "Accepted choice PBE0/def2-TZVP with pre-execution cost/method rationale; Request v3 activated. No scientific execution accompanied selection."
+    },
+    {
+      "round": 3,
+      "model_id": "model_04407f31f09f4f5abafaa4f5e4c5157c",
+      "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_1",
+      "created_at": "2026-10-20T19:10:27.126255+00:00",
+      "action": "initial_plan",
+      "reason": "Resolve HCN identity and prepare one fixed initial geometry. Then a pinned Python step writes the gas-phase PBE0/def2-TZVP GIAO NMR input, runs ORCA through the SDK against the prepared geometry, and parses total shielding tensors, isotropic values, trace consistency, deliverables, and deterministic seed status. Goal map binds prepared_geometry and the analysis observations.",
+      "tokens": 26860,
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "received_feedback": null,
+      "decision": {
+        "action": "rejected",
+        "parameters": {
+          "error_category": "ProposalError",
+          "recovery_kind": "correction",
+          "requirement": {
+            "requirement": "Use the declared parameter schema at each listed path.",
+            "tool": "python.execute",
+            "corrections": [
+              {
+                "path": [
+                  "parameters",
+                  "steps",
+                  3,
+                  "parameters",
+                  "code"
+                ],
+                "reason": "explicit_file_reference_required",
+                "instruction": "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known hash/language may be omitted, or use an explicit producer_step_id/producer_key with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries also require target_path and purpose. The program validates dependencies, permissions and qualifications and freezes actual hashes before execution. Choose one reference form; union alternatives are not cumulative. Historical policies still require concrete ID/hash references. Never guess hashes or weaken Goals."
+              }
+            ],
+            "errors": [
+              {
+                "type": "missing",
+                "loc": [
+                  "parameters",
+                  "steps",
+                  3,
+                  "parameters",
+                  "code"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "assessment": "Rejected initial_plan: executable code was supplied only as Step.inputs.code; the required parameters.code was absent. The next request contains the exact parameter path and a structured explicit-file-reference correction."
+    },
+    {
+      "round": 4,
+      "model_id": "model_97ccfd0afbe14f1d9a3a04b6c9679d99",
+      "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_2",
+      "created_at": "2026-10-20T19:11:28.572727+00:00",
+      "action": "initial_plan",
+      "reason": "Corrected proposal: the python.execute Step now carries an explicit written_artifact producer reference in parameters.code (producer_step_id=write_nmr_code, port=written_artifact) and a fresh, complete pinned script (the earlier content was redacted and is not reused). Plan: resolve HCN identity, prepare one fixed initial geometry, write the PBE0/def2-TZVP gas-phase GIAO script, then run one managed ORCA NMR job through the SDK against the prepared XYZ, parse total 3x3 Cartesian shielding tensors and isotropic values, check trace/3 consistency, save initial geometry, input, script, tensor CSV and raw stdout, and record seed 1701 status.",
+      "tokens": 22298,
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "received_feedback": {
+        "category": "ProposalError",
+        "requirement": {
+          "corrections": [
+            {
+              "instruction": "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known hash/language may be omitted, or use an explicit producer_step_id/producer_key with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries also require target_path and purpose. The program validates dependencies, permissions and qualifications and freezes actual hashes before execution. Choose one reference form; union alternatives are not cumulative. Historical policies still require concrete ID/hash references. Never guess hashes or weaken Goals.",
+              "path": [
+                "parameters",
+                "steps",
+                3,
+                "parameters",
+                "code"
+              ],
+              "reason": "explicit_file_reference_required"
+            }
+          ],
+          "errors": [
+            {
+              "loc": [
+                "parameters",
+                "steps",
+                3,
+                "parameters",
+                "code"
+              ],
+              "type": "missing"
+            }
+          ],
+          "requirement": "Use the declared parameter schema at each listed path.",
+          "tool": "python.execute"
+        }
+      },
+      "decision": {
+        "action": "rejected",
+        "parameters": {
+          "error_category": "ValidationError",
+          "recovery_kind": "correction",
+          "requirement": [
+            {
+              "type": "value_error",
+              "loc": []
+            }
+          ]
+        }
+      },
+      "assessment": "Rejected correction: parameters.code was added, but the Python Step retained top-level geometry. Static source analysis identifies Step.registered_parameters as the earliest remaining violation; only value_error at root was persisted and passed to the next model."
+    },
+    {
+      "round": 5,
+      "model_id": "model_7b1cd237caa8419abd783c8d8f570b1d",
+      "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_3",
+      "created_at": "2026-10-20T19:12:00.156460+00:00",
+      "action": "initial_plan",
+      "reason": "Replace the rejected candidate with a complete, non-redacted proposal: the earlier workspace.write content was an omission marker, not a script. This plan: (1) resolve HCN identity, (2) prepare one archived initial XYZ (fixed geometry anchor), (3) write a fresh pinned PBE0/def2-TZVP gas-phase GIAO script with %maxcore 192, %scf MaxIter 256, AutoTRAH false, NoAutoStart and *xyzfile 0 1 hcn.xyz, (4) run one managed ORCA NMR job via the SDK on that fixed geometry, parse total 3x3 Cartesian shielding tensors + isotropic values, verify trace/3 vs printed isotropic, and save initial geometry, actual input, raw stdout, tensor CSV and observations; seed 1701 is recorded and no random numbers are used.",
+      "tokens": 27831,
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "received_feedback": {
+        "category": "ValidationError",
+        "requirement": [
+          {
+            "loc": [],
+            "type": "value_error"
+          }
+        ]
+      },
+      "decision": {
+        "action": "rejected",
+        "parameters": {
+          "error_category": "ValidationError",
+          "recovery_kind": "correction",
+          "requirement": [
+            {
+              "type": "value_error",
+              "loc": []
+            }
+          ]
+        }
+      },
+      "assessment": "Rejected second correction: it rewrote the script and changed producer_step_id aliases to producer_key, but retained the same invalid top-level geometry. Three initial-plan failures exhausted the original attempt plus two corrections; no Plan activated."
+    }
+  ],
+  "scientific_and_goal_status": {
+    "all_goal_statuses": {
+      "goal_prep_geom": "insufficient_evidence",
+      "goal_giao_shielding": "insufficient_evidence",
+      "goal_tensor_table": "insufficient_evidence",
+      "goal_deliverables": "insufficient_evidence",
+      "goal_random_seed": "insufficient_evidence"
+    },
+    "actually_performed": [
+      "Request normalization",
+      "Method/basis condition selection",
+      "Three rejected Plan proposals with unexecuted script text"
+    ],
+    "missing": [
+      "Resolved molecular identity receipt and saved qualified initial HCN XYZ.",
+      "Actual fixed-geometry GIAO ORCA calculation for all three nuclei.",
+      "Per-nucleus complete total 3x3 Cartesian shielding tensors and isotropic values with ppm/coordinate-frame annotations.",
+      "Trace/3 consistency checks and machine table precision evidence.",
+      "Actual executed ORCA input/raw per-nucleus output/task scripts/table artifacts and source-linked report.",
+      "Evidence of actual geometry generation seed behavior; no such algorithm ran."
+    ],
+    "no_values_inferred_or_fabricated": true,
+    "script_status": "Only raw proposal content exists; no workspace.write receipt or task execution artifact was created.",
+    "method_rationale_status": "The selected values and model-authored rationale are recorded choices, not independently validated scientific accuracy claims."
+  },
+  "minimal_followup_not_applied": "Provide a bounded program-authored correction for the incompatible Step.geometry with the exact Step/field location, preserving the existing input-manifest geometry requirement and sdk_orca/qualification checks. Preserve the specific static validator reason through the correction context. No additional execution permission or scientific relaxation is implied.",
+  "source_locations": [
+    {
+      "path": "src/orca_agent/proposals.py",
+      "line": 872,
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "meaning": "Tool parameter validation identifies the missing parameters.code before Step construction; _schema_error supplies a bounded specific path."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "line": 914,
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "meaning": "Step construction receives the explicit geometry after parameter materialization; the Step model error is not wrapped with the proposal Step path."
+    },
+    {
+      "path": "src/orca_agent/models.py",
+      "line": 454,
+      "sha256": "21eac4849d184275d91f62912854e54ef962b4d1911ddce464fe1c12f3d12583",
+      "meaning": "Step.registered_parameters rejects a geometry binding when the Tool does not declare execute_orca (or declares native_input); line 455 emits the static geometry-binding message."
+    },
+    {
+      "path": "src/orca_agent/tools/registry.py",
+      "line": 111,
+      "sha256": "0fcc54ec6e1f73ac559f054b7ccabde60e4ab3d31bcf1b63cb8268eb4da471b4",
+      "meaning": "python.execute declares execute_python, not execute_orca, with code/input_manifest roles. sdk_orca=true separately declares allowed internal managed calls; it does not change the Step Tool effects."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "line": 232,
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "meaning": "validation_error_details retains type/location and numeric bounds but discards the static validator message."
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "line": 476,
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+      "meaning": "The rejection handler routes raw ValidationError through validation_error_details."
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "line": 188,
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+      "meaning": "Three rejected proposals exceed corrections_per_proposal=2 and produce the recorded StoreError."
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "line": 380,
+      "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6",
+      "meaning": "Rejected-proposal projection warns that redacted/omitted values are not original content or valid replacements."
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "line": 425,
+      "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6",
+      "meaning": "String projection replaces sensitive/path-bearing content with an omission object; this happened to prior candidate scripts in H1."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "line": 855,
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "meaning": "An explicit Step.system_id is inherited into parameters; H1 supplied this on every resolve/prepare/execute Step."
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "line": 394,
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+      "meaning": "Plan materialization precedes commit_revision; all H1 Plan candidates were rejected before activation."
+    }
+  ],
+  "limitations": [
+    "Static read-only evidence review; no product replay or numerical calculation was used to infer success.",
+    "Only the earliest provable remaining proposal defect is identified; later code/parser/ORCA behavior remains untested.",
+    "No changes to source/tests/configuration/frozen assets/runtime state; original evidence remains in place."
+  ],
+  "evidence": [
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H1/budget-check.json",
+      "bytes": 26,
+      "sha256": "2ac6c420c26e5b6998e45669412e6d2120be2167444889e992dd376091d3db9c"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H1/outcome.json",
+      "bytes": 1486,
+      "sha256": "95fa2243d8024e1db855087dcb5c68b00e84bfa065cfbe2d1055a8887bf71145"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H1/post-verify.json",
+      "bytes": 1160,
+      "sha256": "4850d9af19d2c8f33afb7cb147cdcc8e6705464bb910fda8cb52ed4046f7cd98"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H1/pre-verify.json",
+      "bytes": 1160,
+      "sha256": "f898854277c914e38e2f510e8fc0a830365d49ac5176fa96de99675df494e562"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H1/report.json",
+      "bytes": 52795,
+      "sha256": "47c55ee3d41fd0a960993d6946e92470cef7920859298ca472c71c23cf8b1d4b"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H1/report.txt",
+      "bytes": 6380,
+      "sha256": "0a3b2328ab79936832764b39ef409761ec1112bc2ecea7700c53bd2f24306f96"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/budget.json",
+      "bytes": 660,
+      "sha256": "bb5653774fca40d7a7cc8fd43140722cf4b745246ccd2538014d2a3bdf5c46aa"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/control.json",
+      "bytes": 1379,
+      "sha256": "f23dfcb199c52de73caef2deebfb2a4e062a840250272ec442c8a097a46bada4"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/decisions/model_1d38a3d0313d4aecab9ed5d509b78eb2.json",
+      "bytes": 33093,
+      "sha256": "4b590a04894f3b984c289f19de10616fcb6446e26f2d8f3f098fc0f321bedfd1"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/decisions/model_32dcc7e271ba46f2af955af14de21241.json",
+      "bytes": 19918,
+      "sha256": "c0caeef04e34b2e39deef5da91759bf7b6d424b09b2e249694ac4d314825b867"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/deliveries/report_3a3d293f153f1661e41d8fdf.md",
+      "bytes": 6380,
+      "sha256": "0a3b2328ab79936832764b39ef409761ec1112bc2ecea7700c53bd2f24306f96"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_04407f31f09f4f5abafaa4f5e4c5157c.delivery.json",
+      "bytes": 27236,
+      "sha256": "46c15a0cccd30f158fbf79b7f36e081a3092f69cbb43970bbfb38ccac4eb6478"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_04407f31f09f4f5abafaa4f5e4c5157c.request.json",
+      "bytes": 55897,
+      "sha256": "811b907ac537d4c5bdad86ee257abcde65542f1514c6e61da16c8a75954ec5af"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_04407f31f09f4f5abafaa4f5e4c5157c.response.json",
+      "bytes": 15420,
+      "sha256": "9de2b6f1e7f8e89055e450e22fcc7e6a3e7d8c6925d429e55e1b09d6fb337584"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_1d38a3d0313d4aecab9ed5d509b78eb2.delivery.json",
+      "bytes": 9071,
+      "sha256": "9a1fd89359a2b6543375e2eca293c65e13ff1085f0fba8d326eb65622ff7fe17"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_1d38a3d0313d4aecab9ed5d509b78eb2.request.json",
+      "bytes": 24831,
+      "sha256": "3d8eae77853d8edd9da914f97dbf3ba90e60418d0a04a2822819f6e99d5fb2d8"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_1d38a3d0313d4aecab9ed5d509b78eb2.response.json",
+      "bytes": 10253,
+      "sha256": "0f8bce207936c69312ed8b85808e820c6ef226b60e34be3a689f6f427ad13090"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_32dcc7e271ba46f2af955af14de21241.delivery.json",
+      "bytes": 27086,
+      "sha256": "fc3860e837a26715e5f748a48380b7ebc0adccffc4af447d0df40c3c28fa1a1a"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_32dcc7e271ba46f2af955af14de21241.request.json",
+      "bytes": 57671,
+      "sha256": "119275f233cc9c2ada41bfcbef6e71a84a29cc4527aa5c488d7dd3a209cf6c9d"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_32dcc7e271ba46f2af955af14de21241.response.json",
+      "bytes": 3793,
+      "sha256": "f5b074d7934b7afd1a25e6f5bf9238ffc743194c10a5aa84e233c88ba08ebbbd"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_7b1cd237caa8419abd783c8d8f570b1d.delivery.json",
+      "bytes": 27236,
+      "sha256": "46c15a0cccd30f158fbf79b7f36e081a3092f69cbb43970bbfb38ccac4eb6478"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_7b1cd237caa8419abd783c8d8f570b1d.request.json",
+      "bytes": 59570,
+      "sha256": "f13c43346406c9e72187fb26951d77158bcbf5d66f9704baa3dbdb493c3e2000"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_7b1cd237caa8419abd783c8d8f570b1d.response.json",
+      "bytes": 27636,
+      "sha256": "40e72a0f769534cea70a394118454bd1e674316b186d1304a3f3156a3fc0fb1e"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_97ccfd0afbe14f1d9a3a04b6c9679d99.delivery.json",
+      "bytes": 27236,
+      "sha256": "46c15a0cccd30f158fbf79b7f36e081a3092f69cbb43970bbfb38ccac4eb6478"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_97ccfd0afbe14f1d9a3a04b6c9679d99.request.json",
+      "bytes": 60067,
+      "sha256": "847bac60736204c6130960811702ab1923363b756d567b0c6d2d78c4c3ac0c4b"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/model/model_97ccfd0afbe14f1d9a3a04b6c9679d99.response.json",
+      "bytes": 18863,
+      "sha256": "2a9c74594cc8b0a11d370098af519226538569242bc5b6de014e6077eb0e3bb4"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/request-revisions/1.json",
+      "bytes": 3459,
+      "sha256": "39982c84f13e9b0a833d0ef2127de7311c2b1dc321a421936e23d7c5d8e7a09a"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/run.json",
+      "bytes": 73007,
+      "sha256": "66aecd125219d4b4c39e78b002211348a767091713bc75d39763a9dc2e27cd1b"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/data/runs/run_13f4664ad76841969477f0dafdb921aa/sources.json",
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-H1-001/original.txt",
+      "bytes": 1123,
+      "sha256": "ab07874b8c8ffd387c63496ed8f2ba29ab9d21530551b50c455309a342697820"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-4/review/T1-review.json",
+      "bytes": 18095,
+      "sha256": "cefe1bd95b10ce5fa79ccc094836ffe548d4d034e2fe424bc7e75d9ee71ecb46"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-4/review/T3-review.json",
+      "bytes": 33079,
+      "sha256": "ea23384a768e913a09da20080fe044998550ba350afd160162b8510094265125"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-4/review/T4-review.json",
+      "bytes": 32514,
+      "sha256": "beef4b9155a8db5caba867dcd0550c8baf10d5183de495878affe5c344095868"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-4/review/T5-review.json",
+      "bytes": 48284,
+      "sha256": "c180893036d299efd4691c20c3ce8f28ca45985ea0bda24483dc5f35068a6511"
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "bytes": 61193,
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff"
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "bytes": 248913,
+      "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6"
+    },
+    {
+      "path": "src/orca_agent/models.py",
+      "bytes": 49695,
+      "sha256": "21eac4849d184275d91f62912854e54ef962b4d1911ddce464fe1c12f3d12583"
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "bytes": 53740,
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078"
+    },
+    {
+      "path": "src/orca_agent/tools/registry.py",
+      "bytes": 24410,
+      "sha256": "0fcc54ec6e1f73ac559f054b7ccabde60e4ab3d31bcf1b63cb8268eb4da471b4"
+    }
+  ],
+  "evidence_hashes_rechecked_after_review": true
+}

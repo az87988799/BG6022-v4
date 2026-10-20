@@ -1,0 +1,995 @@
+{
+  "reviewed_at_utc": "2026-10-20T19:13:47.161335+00:00",
+  "task": "T5",
+  "run_id": "run_ac956b8a55f8416b8914b841b2dbed15",
+  "scope": "Read-only inspection of settled original records and frozen product source. No product replay/test/model/ORCA/network execution, no source/tests/config/freeze/runtime edits. Only this requested review JSON is created.",
+  "outcome": {
+    "state": "failed",
+    "delivery_status": "partial",
+    "model_calls": 9,
+    "model_tokens_used": 156892,
+    "model_tokens_unknown": 0,
+    "orca_starts_actual": 0,
+    "managed_science_attempts": 0,
+    "completed_identity_queries": 1,
+    "completed_structure_preparations": 1,
+    "analysis_executions": 0,
+    "knowledge_queries": 0,
+    "active_request_version": 3,
+    "active_plan_version": null,
+    "historical_accepted_plan_versions": [
+      1
+    ],
+    "reported_plan_revisions_counter": 0,
+    "driver_wall_seconds": 193.125,
+    "estimated_known_token_cost_upper_usd": "0.083667",
+    "actual_provider_charge": "not queried",
+    "driver_exception": null,
+    "settlement_unknown_fields": {},
+    "final_goal_status": {
+      "goal_identity_ethanol": "insufficient_evidence",
+      "goal_prepare_geometry": "insufficient_evidence",
+      "goal_energy_gas": "insufficient_evidence",
+      "goal_energy_cpcm_water": "insufficient_evidence",
+      "goal_delta_energy": "insufficient_evidence",
+      "goal_delivery_outputs": "insufficient_evidence",
+      "goal_report_conditions_limits": "insufficient_evidence",
+      "goal_random_seed_1701": "insufficient_evidence"
+    }
+  },
+  "direct_stop": {
+    "kind": "bounded_plan_corrections_exhausted_after_condition_selection",
+    "category": "StoreError",
+    "message": "bounded proposal correction or transport retry exhausted",
+    "last_model_id": "model_ac2e09ccd4284abea0f226a44a4455b8",
+    "last_application_rejection": {
+      "error_category": "PlanningError",
+      "recovery_kind": "correction",
+      "requirement": "proposed Plan exceeds remaining structure_preparations budget: 1 unreserved Tool calls require 1 units; 0 remain"
+    },
+    "corrections_per_proposal": 2,
+    "consecutive_rejected_plan_responses": 3,
+    "budget_assessment": "The last proposal contains a genuinely new preparation Step, not a retained completed Step. Refusing its second preparation against a cumulative limit of one is correct. The earlier qualified geometry still exists and could be reused.",
+    "global_allowance_remaining": {
+      "model_calls": 15,
+      "model_tokens": 1043108,
+      "orca_starts": 12,
+      "identity_queries": 1,
+      "structure_preparations": 0
+    },
+    "not_cause": [
+      "No model transport/context-capacity failure: all nine responses are HTTP 200, finish_reason stop, no transport error.",
+      "No ORCA/native-input execution failure: no ORCA was started and no final science Plan was admitted.",
+      "No recorded gas/water condition-conflict rejection. These environments survive Request v2 and v3."
+    ]
+  },
+  "condition_repair_effect": {
+    "normalization_attempts": 2,
+    "accepted_request_version": 2,
+    "shared_conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "electronic_state": "RKS",
+      "basis": "def2-TZVP",
+      "method": "B3LYP"
+    },
+    "no_shared_environment": true,
+    "energy_goals": [
+      {
+        "id": "goal_energy_gas",
+        "quantity": "单点电子能量",
+        "port": "energy",
+        "conditions": {
+          "environment": "gas_phase",
+          "geometry_relation": "fixed_initial"
+        },
+        "condition_evidence": {
+          "environment": {
+            "value": "gas_phase",
+            "source": "explicit",
+            "text_basis": "气相",
+            "request_version": null,
+            "system_ref": "system_ethanol",
+            "default_rule": null,
+            "message_id": "message_f4cf3b2cfc3c44f7baaec3aebff13167",
+            "source_refs": [
+              "source_533971be3609a669"
+            ],
+            "value_basis": null,
+            "start": 50,
+            "end": 52,
+            "schema": "request-semantics-3",
+            "occurrences": [
+              {
+                "message_id": "message_f4cf3b2cfc3c44f7baaec3aebff13167",
+                "start": 50,
+                "end": 52
+              },
+              {
+                "message_id": "message_f4cf3b2cfc3c44f7baaec3aebff13167",
+                "start": 159,
+                "end": 161
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "goal_energy_cpcm_water",
+        "quantity": "单点电子能量",
+        "port": "energy",
+        "conditions": {
+          "environment": "CPCM(water)",
+          "geometry_relation": "fixed_initial"
+        },
+        "condition_evidence": {
+          "environment": {
+            "value": "CPCM(water)",
+            "source": "explicit",
+            "text_basis": "ORCA C-PCM水环境",
+            "request_version": null,
+            "system_ref": "system_ethanol",
+            "default_rule": null,
+            "message_id": "message_f4cf3b2cfc3c44f7baaec3aebff13167",
+            "source_refs": [
+              "source_533971be3609a669"
+            ],
+            "value_basis": null,
+            "normalization": {
+              "model": "cpcm",
+              "solvent": "water",
+              "source": "program_checked_component_mapping",
+              "raw_phrase": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+              "proposed_value": "CPCM(water)",
+              "model_basis": "C-PCM",
+              "solvent_basis": "水"
+            },
+            "start": 53,
+            "end": 66,
+            "schema": "request-semantics-3"
+          }
+        }
+      }
+    ],
+    "method_selection": {
+      "method": "B3LYP",
+      "basis": "def2-TZVP",
+      "schema": "condition-selection-3",
+      "source": "auto_selected",
+      "basis_kind": "model_reason",
+      "literature_sources": [],
+      "scientific_validation": "not_established_by_selection"
+    },
+    "observed_successes": [
+      "Same-source short quotes plus longer fragment references activate without the former whole-fragment-equality failure.",
+      "Both separate gas and CPCM(water) energy Goals survive the shared physical-quantity sentence.",
+      "Absence of a shared environment no longer forces clarification/stop before identity or geometry preparation.",
+      "Initial preparation runs before method/basis selection using charge/multiplicity only.",
+      "Method/basis selection succeeds without forced documentation retrieval, with its model rationale labeled separately from evidence."
+    ],
+    "validation_boundary": "These records establish intake, preparation and condition-selection progress. They do not establish native ORCA admission/execution, shared-coordinate use by two actual calculations, energy values, difference sign, or scientific completion.",
+    "first_rejection": {
+      "exact_feedback": "semantic evidence must quote a supplied user message",
+      "checked_cause": "First bare semantic payload text_basis equals the original only after deleting its two newline characters before the seed paragraph; it is not an exact contiguous quote.",
+      "feedback_limit": "The recorded error gives no field path or exact mismatch span. The model repaired it correctly on the next call."
+    }
+  },
+  "input_preparation": {
+    "identity_result": "result_2f7e0c9da4344e538ed1bac2050758d7",
+    "identity_check": "supported_identity_graph passed / structure-identity-3",
+    "prepared_result": "result_a00cc4812cc348a7b763caf68af9245b",
+    "prepared_artifact": "artifact_e6df0d84ba6c48a39bd5f2e1884a6e7c",
+    "prepared_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+    "atoms": 9,
+    "prepared_check": "initial_geometry_identity passed / structure-prepare-3; finite coordinates and identity/atom mapping only, not optimized or ground-state certified",
+    "seed_record": {
+      "random_seed": null,
+      "generation_reproducibility": "no seed exposed; reuse this immutable XYZ"
+    },
+    "input_goals_status_before_selection": {
+      "goal_identity_ethanol": "satisfied",
+      "goal_prepare_geometry": "satisfied"
+    },
+    "retained_current_input_bindings": {
+      "resolved_identity": {
+        "request_version": 3,
+        "system_id": "system_ethanol",
+        "source_request_version": 2,
+        "purpose_fingerprint": "a9b848ed0916e62d0d2faf8d4fb2a8aec6cb8dadfbb36b704e9805003dcb1601",
+        "call_id": "call_dbc505cef3a7402eabf34f3faa2450d3",
+        "result_id": "result_2f7e0c9da4344e538ed1bac2050758d7",
+        "artifact_id": "artifact_7416ed7cce014dbaaed4e2430cdc42f4",
+        "sha256": "b7a8261338ec2d76b2645eb09e632267a220b9b245923addec7df6bf630cb3de",
+        "rule_version": "structure-identity-3",
+        "port": "resolved_identity"
+      },
+      "prepared_geometry": {
+        "request_version": 3,
+        "system_id": "system_ethanol",
+        "source_request_version": 2,
+        "purpose_fingerprint": "a9b848ed0916e62d0d2faf8d4fb2a8aec6cb8dadfbb36b704e9805003dcb1601",
+        "call_id": "call_2586e7d54a384fcf9c86f1ddb868ffcf",
+        "result_id": "result_a00cc4812cc348a7b763caf68af9245b",
+        "artifact_id": "artifact_e6df0d84ba6c48a39bd5f2e1884a6e7c",
+        "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+        "rule_version": "structure-prepare-3",
+        "port": "prepared_geometry"
+      }
+    },
+    "worker_execution": "OPI preparation worker actually ran and completed. Zero ORCA/analysis attempts does not mean that no input-preparation process ran."
+  },
+  "material_finding": {
+    "severity": "high",
+    "summary": "Validated acquired inputs survive method selection in Run.input_bindings but disappear from planning output details and current Goal bindings; the model replans already-completed preparation and eventually hits its consumed quota.",
+    "facts": [
+      "Before selection, identity and geometry Goals are satisfied and the prepared Artifact/hash is visible in model requests.",
+      "After accepted selection, Run.input_bindings retains current Request v3 identity and geometry with source_request_version=2.",
+      "The active Plan is cleared; subsequent contexts show no visible Results, no prepared Artifact/hash and insufficient_evidence for both input Goals.",
+      "The two actual Result IDs remain in other_result_ids, so they are discoverable by query but their reusable bindings are not directly supplied.",
+      "All three following proposals recreate resolve_ethanol and prepare_ethanol rather than reuse the preserved artifacts; no evidence query is requested."
+    ],
+    "context_transition": [
+      {
+        "round": 5,
+        "model_id": "model_3b00af1ca50943b69f428b37532c2765",
+        "request_version": 2,
+        "goal_identity_status": "satisfied",
+        "goal_preparation_status": "satisfied",
+        "visible_results_empty": false,
+        "prepared_artifact_id_present": true,
+        "prepared_hash_present": true,
+        "input_bindings_key_present": false,
+        "prepared_result_in_other_result_ids": false,
+        "related_results": [
+          "result_a00cc4812cc348a7b763caf68af9245b"
+        ],
+        "decision_purpose": {
+          "allowed_actions": [
+            "call_tool",
+            "clarify",
+            "revise_plan",
+            "select_conditions",
+            "stop"
+          ],
+          "kind": "planning"
+        }
+      },
+      {
+        "round": 6,
+        "model_id": "model_ca9940cd4fc84f48b7b1afccceebc981",
+        "request_version": 2,
+        "goal_identity_status": "satisfied",
+        "goal_preparation_status": "satisfied",
+        "visible_results_empty": false,
+        "prepared_artifact_id_present": true,
+        "prepared_hash_present": true,
+        "input_bindings_key_present": false,
+        "prepared_result_in_other_result_ids": false,
+        "related_results": [
+          "result_a00cc4812cc348a7b763caf68af9245b"
+        ],
+        "decision_purpose": {
+          "allowed_actions": [
+            "call_tool",
+            "clarify",
+            "revise_plan",
+            "select_conditions",
+            "stop"
+          ],
+          "kind": "planning"
+        }
+      },
+      {
+        "round": 7,
+        "model_id": "model_e18844da4e6d4b8cb516b59df13ef8f8",
+        "request_version": 3,
+        "goal_identity_status": "insufficient_evidence",
+        "goal_preparation_status": "insufficient_evidence",
+        "visible_results_empty": true,
+        "prepared_artifact_id_present": false,
+        "prepared_hash_present": false,
+        "input_bindings_key_present": false,
+        "prepared_result_in_other_result_ids": true,
+        "related_results": [],
+        "decision_purpose": {
+          "allowed_actions": [
+            "call_tool",
+            "clarify",
+            "initial_plan",
+            "stop"
+          ],
+          "kind": "planning"
+        }
+      },
+      {
+        "round": 8,
+        "model_id": "model_5ba92b97fbaa46a1850adb30c3fe77c6",
+        "request_version": 3,
+        "goal_identity_status": "insufficient_evidence",
+        "goal_preparation_status": "insufficient_evidence",
+        "visible_results_empty": true,
+        "prepared_artifact_id_present": false,
+        "prepared_hash_present": false,
+        "input_bindings_key_present": false,
+        "prepared_result_in_other_result_ids": true,
+        "related_results": [],
+        "decision_purpose": {
+          "allowed_actions": [
+            "call_tool",
+            "clarify",
+            "initial_plan",
+            "stop"
+          ],
+          "kind": "planning"
+        }
+      },
+      {
+        "round": 9,
+        "model_id": "model_ac2e09ccd4284abea0f226a44a4455b8",
+        "request_version": 3,
+        "goal_identity_status": "insufficient_evidence",
+        "goal_preparation_status": "insufficient_evidence",
+        "visible_results_empty": true,
+        "prepared_artifact_id_present": false,
+        "prepared_hash_present": false,
+        "input_bindings_key_present": false,
+        "prepared_result_in_other_result_ids": true,
+        "related_results": [],
+        "decision_purpose": {
+          "allowed_actions": [
+            "call_tool",
+            "clarify",
+            "initial_plan",
+            "stop"
+          ],
+          "kind": "planning"
+        }
+      }
+    ],
+    "causal_limit": "The archived sequence and source omission support the visibility/selection integration gap. The model also made real file-reference mistakes; this review does not claim context loss deterministically forces every model to repeat preparation.",
+    "relation_to_current_repair": "The new preparation/condition paths progress beyond refreeze-3, and current input carry-forward works. Retention is not yet integrated consistently into Goal evidence and planning context. No temporal claim is made that every underlying omission was introduced by this repair."
+  },
+  "plan_shapes_and_feedback_boundary": {
+    "round_7": {
+      "actual": "python.execute.parameters.code is raw Python source text",
+      "reported": "Located explicit_file_reference_required / model_type error at parameters.steps[6].parameters.code",
+      "assessment": "Correct Artifact/producer boundary rejection; raw text was not executed."
+    },
+    "round_8": {
+      "actual": {
+        "producer_step_id": "write_analysis",
+        "file_key": "analyze.py"
+      },
+      "reported": "file_key requires an explicit managed execution producer",
+      "assessment": "Correct distinction between workspace.write written_artifact and an execution-produced file; feedback lacks exact Step/path but the model identifies and repairs the reference."
+    },
+    "round_9": {
+      "actual": {
+        "producer_step_id": "write_analysis",
+        "port": "written_artifact"
+      },
+      "reported": "proposed Plan exceeds remaining structure_preparations budget: 1 unreserved Tool calls require 1 units; 0 remain",
+      "assessment": "Code reference progressed past the earlier failure, but budget rejection ends the correction cycle before later checks."
+    },
+    "physical_goal_ports": "The three final plans preserve energy, energy_difference, raw_input_output, report and random_seed Goal ports. No changed-physical-quantity Goal-port rejection was recorded.",
+    "native_condition_shape": "The proposed gas and water orca.run Steps each use parameters.conditions with their own environment and fixed_initial; no actual condition-shape rejection is recorded. Full native execution checks were not reached.",
+    "visible_unreported_defect": {
+      "path": "parameters.steps[1].inputs",
+      "actual_role": "resolved_identity",
+      "declared_role": "identity",
+      "reference_port": "resolved_identity",
+      "status": "Static difference in all three final proposals; not the recorded last rejection. validate_revision checks budgets before declared input roles, so this audit does not count it as a surfaced runtime failure."
+    },
+    "not_validated": [
+      "Native input syntax and actual scientific settings for either ORCA calculation.",
+      "Generated analysis observation schema, numeric parsing, source attribution, delta sign/unit output or seed statements.",
+      "Final Plan admissibility after changing any rejected field; no altered-proposal replay was performed."
+    ],
+    "terminal_feedback_limit": "The final PlanningError is persisted in run.decisions and terminal report, but no later model request receives it because bounded corrections are already exhausted."
+  },
+  "scientific_and_goal_status": {
+    "prepared_geometry": "Exists with limited initial-geometry qualification; historical input success remains real despite final Goal-binding gaps.",
+    "gas_energy": "not computed",
+    "water_energy": "not computed",
+    "delta_energy": "not computed",
+    "raw_ORCA_pair": "not produced",
+    "same_geometry_two_calculations": "not exercised",
+    "hydration_free_energy": "not supported/not computed",
+    "required_goals_complete": false,
+    "final_recorded_input_goal_status": "insufficient_evidence after selection; no claim the existing input artifacts were deleted",
+    "independent_reference": "not run"
+  },
+  "comparison_refreeze3": {
+    "previous_model_calls": 3,
+    "previous_model_tokens": 34966,
+    "previous_orca_starts": 0,
+    "same_direct_failure": false,
+    "previous_failure": "Normalized Goal-specific environments were not consumed by subsequent condition routing, which forced clarify/stop before molecular identity work.",
+    "current_progress": "Separate conditions activate, identity and geometry complete, and method/basis selection succeeds. Failure occurs later while rebuilding the Plan after selection."
+  },
+  "timeline": [
+    {
+      "round": 1,
+      "model_id": "model_cc3a34bf1b5a456c81d0c30749a9e7d5",
+      "created_at": "2026-10-20T19:05:01.023699+00:00",
+      "logical_id": "decision_300450ef7079ea3c22b470e9_1",
+      "basis": {
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "raw_action": null,
+      "raw_semantic_kind": "normalize",
+      "normalized_action": "normalize_request",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 10529,
+      "incoming_validation_feedback": null,
+      "application_rejection": {
+        "error_category": "StoreError",
+        "recovery_kind": "correction",
+        "requirement": "semantic evidence must quote a supplied user message"
+      },
+      "assessment": "Bare request-semantics-3 envelope was normalized, but the proposed top-level quote removed the original blank line and failed exact-source checking. This is a concrete altered quote, not the former short quote plus source-fragment conflict.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_cc3a34bf1b5a456c81d0c30749a9e7d5.request.json",
+        "sha256": "4d481baa9e153426c883845021ea4211cdbee88fdfb988928f07fc84ed1ff430"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_cc3a34bf1b5a456c81d0c30749a9e7d5.response.json",
+        "sha256": "11e83c0dcc0246fc6e7b3bd4b67ee7fcc3145109145d09087ed9b8fda5e8d151"
+      }
+    },
+    {
+      "round": 2,
+      "model_id": "model_61eb5d9adb40488aa0a2a75d417cb1ad",
+      "created_at": "2026-10-20T19:05:23.353271+00:00",
+      "logical_id": "decision_300450ef7079ea3c22b470e9_2",
+      "basis": {
+        "request_version": 1,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "raw_action": "normalize_request",
+      "raw_semantic_kind": null,
+      "normalized_action": "normalize_request",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 12281,
+      "incoming_validation_feedback": {
+        "category": "StoreError",
+        "requirement": "semantic evidence must quote a supplied user message"
+      },
+      "application_rejection": null,
+      "assessment": "Accepted corrected Request v2. Short charge/multiplicity/environment quotes with the same longer source_ref were accepted. Gas and CPCM(water) remain separate explicit energy Goal conditions and fixed_initial geometry obligations.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_61eb5d9adb40488aa0a2a75d417cb1ad.request.json",
+        "sha256": "07c78372f5aa449fdc8742ae0729b6aea299f851841443fd82750ea5409a4a4f"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_61eb5d9adb40488aa0a2a75d417cb1ad.response.json",
+        "sha256": "35af3b3308002aff2b05d0f86cac6ad28bfd4db3e1f1eb89ebb650f91e83e15a"
+      }
+    },
+    {
+      "round": 3,
+      "model_id": "model_d8dd769ed6314f45ab523ddd2fc1f6d8",
+      "created_at": "2026-10-20T19:05:44.681533+00:00",
+      "logical_id": "decision_341e74899b5526463d94505e_1",
+      "basis": {
+        "request_version": 2,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "raw_action": "initial_plan",
+      "raw_semantic_kind": null,
+      "normalized_action": "initial_plan",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 16668,
+      "incoming_validation_feedback": null,
+      "application_rejection": null,
+      "assessment": "Accepted a two-Step identity/preparation Plan. The first identity call completed and its Goal became satisfied.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_d8dd769ed6314f45ab523ddd2fc1f6d8.request.json",
+        "sha256": "1e8c93e4713a13504c0df57fe700997643fbffc351b2c68885cc3d00d9fba738"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_d8dd769ed6314f45ab523ddd2fc1f6d8.response.json",
+        "sha256": "9509dd673f6240cd2ca88c949a567c5067014be8447876055c6f39dd13d40dc3"
+      }
+    },
+    {
+      "round": 4,
+      "model_id": "model_cba5d720466c4064a01c2fff975190db",
+      "created_at": "2026-10-20T19:05:57.383268+00:00",
+      "logical_id": "decision_28828bc505e19250a3b0fda1_1",
+      "basis": {
+        "request_version": 2,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "raw_action": "call_tool",
+      "raw_semantic_kind": null,
+      "normalized_action": "call_tool",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 17135,
+      "incoming_validation_feedback": null,
+      "application_rejection": null,
+      "assessment": "Executed the ready structure.prepare Step; it produced checked initial XYZ. By the next request both input Goals were satisfied.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_cba5d720466c4064a01c2fff975190db.request.json",
+        "sha256": "f3b6741309b6fbc534ce01e4ea449f65e8cba6beec3d84f7f10fbc68b32cd3ae"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_cba5d720466c4064a01c2fff975190db.response.json",
+        "sha256": "8b33f3519ab4a693fc4ef7ce21b1add618a5e254a641cfd88c4a78d1227d4487"
+      }
+    },
+    {
+      "round": 5,
+      "model_id": "model_3b00af1ca50943b69f428b37532c2765",
+      "created_at": "2026-10-20T19:06:03.807952+00:00",
+      "logical_id": "decision_e43f44eaa71e3f30b676a7bc_1",
+      "basis": {
+        "request_version": 2,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "raw_action": "select_conditions",
+      "raw_semantic_kind": null,
+      "normalized_action": "select_conditions",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 15328,
+      "incoming_validation_feedback": null,
+      "application_rejection": {
+        "error_category": "ValidationError",
+        "recovery_kind": "correction",
+        "requirement": [
+          {
+            "type": "missing",
+            "loc": [
+              "reason"
+            ]
+          }
+        ]
+      },
+      "assessment": "Rejected select_conditions because required response-root reason was missing; the explanatory reason was placed in parameters instead. No condition choice was applied.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_3b00af1ca50943b69f428b37532c2765.request.json",
+        "sha256": "ffd228993c797c4828e06a5d82871183e1df910422ea15eeb1f5a86f1b7a72a7"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_3b00af1ca50943b69f428b37532c2765.response.json",
+        "sha256": "4f926212114e223462ee0645e1513efc423a89609c50a7ddc01b0fb540e9bc83"
+      }
+    },
+    {
+      "round": 6,
+      "model_id": "model_ca9940cd4fc84f48b7b1afccceebc981",
+      "created_at": "2026-10-20T19:06:13.750184+00:00",
+      "logical_id": "decision_e43f44eaa71e3f30b676a7bc_2",
+      "basis": {
+        "request_version": 2,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "raw_action": "select_conditions",
+      "raw_semantic_kind": null,
+      "normalized_action": "select_conditions",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 15378,
+      "incoming_validation_feedback": {
+        "category": "ValidationError",
+        "requirement": [
+          {
+            "loc": [
+              "reason"
+            ],
+            "type": "missing"
+          }
+        ]
+      },
+      "application_rejection": null,
+      "assessment": "Accepted corrected condition selection. B3LYP/def2-TZVP recorded as model_reason, no literature support claimed; Request v3 retains both explicit environments and both acquired input bindings, but clears the active Plan.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_ca9940cd4fc84f48b7b1afccceebc981.request.json",
+        "sha256": "448ef1f6b632d594060711643085f82c31b92b781dc974f5171c7fed2a38613c"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_ca9940cd4fc84f48b7b1afccceebc981.response.json",
+        "sha256": "71ec030b3274cdbef35141eebb9df5d4bdb09a50b8d950655b37ca523948b859"
+      }
+    },
+    {
+      "round": 7,
+      "model_id": "model_e18844da4e6d4b8cb516b59df13ef8f8",
+      "created_at": "2026-10-20T19:06:17.977524+00:00",
+      "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_1",
+      "basis": {
+        "request_version": 3,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "raw_action": "initial_plan",
+      "raw_semantic_kind": null,
+      "normalized_action": "initial_plan",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 28420,
+      "incoming_validation_feedback": null,
+      "application_rejection": {
+        "error_category": "ProposalError",
+        "recovery_kind": "correction",
+        "requirement": {
+          "requirement": "Use the declared parameter schema at each listed path.",
+          "tool": "python.execute",
+          "corrections": [
+            {
+              "path": [
+                "parameters",
+                "steps",
+                6,
+                "parameters",
+                "code"
+              ],
+              "reason": "explicit_file_reference_required",
+              "instruction": "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known hash/language may be omitted, or use an explicit producer_step_id/producer_key with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries also require target_path and purpose. The program validates dependencies, permissions and qualifications and freezes actual hashes before execution. Choose one reference form; union alternatives are not cumulative. Historical policies still require concrete ID/hash references. Never guess hashes or weaken Goals."
+            }
+          ],
+          "errors": [
+            {
+              "type": "model_type",
+              "loc": [
+                "parameters",
+                "steps",
+                6,
+                "parameters",
+                "code"
+              ]
+            }
+          ]
+        }
+      },
+      "assessment": "New initial Plan unnecessarily resolves/prepares ethanol again. Rejected first for inline source text in python.execute.parameters.code rather than a pinned Artifact or producer reference.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_e18844da4e6d4b8cb516b59df13ef8f8.request.json",
+        "sha256": "1c72d787d0105b010e9c3cd3b4d2ab7942c39170f95c0affbdf01ac22241b3bb"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_e18844da4e6d4b8cb516b59df13ef8f8.response.json",
+        "sha256": "1a40b43883ab54be30af7be02c7990ee7a89467820f1a9991a0b507048f8bb9e"
+      }
+    },
+    {
+      "round": 8,
+      "model_id": "model_5ba92b97fbaa46a1850adb30c3fe77c6",
+      "created_at": "2026-10-20T19:07:14.474348+00:00",
+      "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_2",
+      "basis": {
+        "request_version": 3,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "raw_action": "initial_plan",
+      "raw_semantic_kind": null,
+      "normalized_action": "initial_plan",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 21255,
+      "incoming_validation_feedback": {
+        "category": "ProposalError",
+        "requirement": {
+          "corrections": [
+            {
+              "instruction": "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known hash/language may be omitted, or use an explicit producer_step_id/producer_key with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries also require target_path and purpose. The program validates dependencies, permissions and qualifications and freezes actual hashes before execution. Choose one reference form; union alternatives are not cumulative. Historical policies still require concrete ID/hash references. Never guess hashes or weaken Goals.",
+              "path": [
+                "parameters",
+                "steps",
+                6,
+                "parameters",
+                "code"
+              ],
+              "reason": "explicit_file_reference_required"
+            }
+          ],
+          "errors": [
+            {
+              "loc": [
+                "parameters",
+                "steps",
+                6,
+                "parameters",
+                "code"
+              ],
+              "type": "model_type"
+            }
+          ],
+          "requirement": "Use the declared parameter schema at each listed path.",
+          "tool": "python.execute"
+        }
+      },
+      "application_rejection": {
+        "error_category": "ValueError",
+        "recovery_kind": "correction",
+        "requirement": "file_key requires an explicit managed execution producer"
+      },
+      "assessment": "Moved code into workspace.write but selected it using file_key=analyze.py. Rejected because workspace.write is not a managed execution file_key producer.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_5ba92b97fbaa46a1850adb30c3fe77c6.request.json",
+        "sha256": "fcd825bab5ea44d618d4168e1e4047054a48b910d309c84c9c8eaaab66776685"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_5ba92b97fbaa46a1850adb30c3fe77c6.response.json",
+        "sha256": "c0fb9e90176b721f385b52526d20537e94135ac93556fe539616abfb3b64ab0e"
+      }
+    },
+    {
+      "round": 9,
+      "model_id": "model_ac2e09ccd4284abea0f226a44a4455b8",
+      "created_at": "2026-10-20T19:07:46.903449+00:00",
+      "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_3",
+      "basis": {
+        "request_version": 3,
+        "plan_version": null,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "raw_action": "initial_plan",
+      "raw_semantic_kind": null,
+      "normalized_action": "initial_plan",
+      "http_status": 200,
+      "finish_reason": "stop",
+      "transport_error_category": null,
+      "total_tokens": 19898,
+      "incoming_validation_feedback": {
+        "category": "ValueError",
+        "requirement": "file_key requires an explicit managed execution producer"
+      },
+      "application_rejection": {
+        "error_category": "PlanningError",
+        "recovery_kind": "correction",
+        "requirement": "proposed Plan exceeds remaining structure_preparations budget: 1 unreserved Tool calls require 1 units; 0 remain"
+      },
+      "assessment": "Changed script reference to written_artifact. The next surfaced rejection is a second structure.prepare call against 1/1 already consumed. The third consecutive initial-plan rejection exhausts two correction calls; no tenth model request receives this final budget error.",
+      "request_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_ac2e09ccd4284abea0f226a44a4455b8.request.json",
+        "sha256": "11de008627dfcdf1643886ee155c5d76f64ae1c1b174b316e96380ff29f4d29e"
+      },
+      "response_file": {
+        "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/model/model_ac2e09ccd4284abea0f226a44a4455b8.response.json",
+        "sha256": "60dc8ae8ccd6d07cf3b61817e2a6b8b9f5eab86a16e26a3fced09db369ac72f6"
+      }
+    }
+  ],
+  "source_locations": [
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "7262f32758bda030b75e1c41b2e99a3d400133e281d08e42cd7a122ba0eb0886",
+      "line": 456,
+      "meaning": "Top-level semantic text_basis must be an exact substring; line 2329 applies it to the candidate before activation."
+    },
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "7262f32758bda030b75e1c41b2e99a3d400133e281d08e42cd7a122ba0eb0886",
+      "line": 1783,
+      "meaning": "Common source-condition check covers literal and classified energy obligations against authenticated effective conditions."
+    },
+    {
+      "path": "src/orca_agent/semantic.py",
+      "sha256": "7262f32758bda030b75e1c41b2e99a3d400133e281d08e42cd7a122ba0eb0886",
+      "line": 2440,
+      "meaning": "Energy coverage consumes the new already-authenticated Request conditions before activation."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "line": 80,
+      "meaning": "Unambiguous bare request-semantics-3 responses are wrapped as normalize_request, explaining why round 1 reaches source validation."
+    },
+    {
+      "path": "src/orca_agent/applicability.py",
+      "sha256": "16161327d81e700533def634578af13431061e06d08b3c0711931ce8f6a5efe1",
+      "line": 74,
+      "meaning": "A Goal may supply an otherwise absent condition without inventing a shared environment."
+    },
+    {
+      "path": "src/orca_agent/applicability.py",
+      "sha256": "16161327d81e700533def634578af13431061e06d08b3c0711931ce8f6a5efe1",
+      "line": 104,
+      "meaning": "Geometry preparation consumes charge/multiplicity, not every environment/method setting."
+    },
+    {
+      "path": "src/orca_agent/store.py",
+      "sha256": "958e01e20fae789c9ede6912add1aefcb4e2134b9f979c7702efcbb6ea3cb1e6",
+      "line": 1788,
+      "meaning": "Request change resets current Goal evidence/status, re-evaluates Goal bindings, and separately carries selected input bindings for condition selection."
+    },
+    {
+      "path": "src/orca_agent/input_bindings.py",
+      "sha256": "71a3e50bcbaa440d0817e25feec46d5cc62a579e8a723d6239445710749913d5",
+      "line": 144,
+      "meaning": "Both identity and prepared_geometry are revalidated and carried for simplified workflow, preserving original Result/Call revisions."
+    },
+    {
+      "path": "src/orca_agent/decision_purpose.py",
+      "sha256": "fa136548ceab6acfa55d8293fd4b540fd8b0904f230a9ba370708c911d161b8a",
+      "line": 174,
+      "meaning": "Result selection includes feedback, Goal evidence, snapshots and Plan references, but not Run.input_bindings."
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+      "line": 242,
+      "meaning": "Only selected Result IDs are loaded for the next decision context."
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6",
+      "line": 2953,
+      "meaning": "Context also filters Results using relevant_result_ids."
+    },
+    {
+      "path": "src/orca_agent/context.py",
+      "sha256": "c53824812c3d92e9ce41aae1b2af9484a6c71029a0ac166aa7831b864f2bc7f6",
+      "line": 3148,
+      "meaning": "Unselected retained Results appear as other_result_ids without their output bindings."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "line": 858,
+      "meaning": "File parameters are materialized before the Tool schema and complete Plan admission."
+    },
+    {
+      "path": "src/orca_agent/proposals.py",
+      "sha256": "2e67360a9303a793d5a1daf520bb442b33829296afd378ac2b8b7ddd7dbb2078",
+      "line": 871,
+      "meaning": "Tool parameter validation converts the inline code type violation into a located ProposalError."
+    },
+    {
+      "path": "src/orca_agent/file_references.py",
+      "sha256": "0c0c8d4719b4be5f2c16b52fec1661af24d2a84dcb8a1dff545703ef940c847b",
+      "line": 39,
+      "meaning": "written_artifact denotes a file-writing producer; arbitrary file_key is allowed only for managed execution producers at lines 49-51."
+    },
+    {
+      "path": "src/orca_agent/planning.py",
+      "sha256": "c57649cb1aecad904db4339bc8c1454620a9e2251fde89dba7b66e95f37966f4",
+      "line": 177,
+      "meaning": "New unreserved Tool calls count against cumulative remaining budgets, so a fresh preparation cannot reuse a spent allowance."
+    },
+    {
+      "path": "src/orca_agent/planning.py",
+      "sha256": "c57649cb1aecad904db4339bc8c1454620a9e2251fde89dba7b66e95f37966f4",
+      "line": 563,
+      "meaning": "Tool-call budget validation precedes per-Step permissions, roles and subsequent execution checks."
+    },
+    {
+      "path": "src/orca_agent/planning.py",
+      "sha256": "c57649cb1aecad904db4339bc8c1454620a9e2251fde89dba7b66e95f37966f4",
+      "line": 203,
+      "meaning": "structure.prepare must use its declared input role identity; resolved_identity is an output-port value, not a role alias."
+    },
+    {
+      "path": "src/orca_agent/agent.py",
+      "sha256": "41aecb0e9a7741bbc0822537a393853ef81356c1cd9ca93977c4dd221cbe27ff",
+      "line": 188,
+      "meaning": "Third consecutive correction rejection exceeds corrections_per_proposal=2 and raises the observed StoreError."
+    }
+  ],
+  "freeze_verification": {
+    "status": "matched",
+    "code_commit": "2e872a181ff98212a93ffce8cab4bb48648b7508",
+    "manifest_sha256": "761a02df6634e9bf983317ad24dee079f97ca378ecd88c325d3c277d2e93d309",
+    "runtime_metadata_verified": true,
+    "slot_overruns": {}
+  },
+  "evidence": {
+    "original_user_text": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/original.txt",
+      "sha256": "f6676760c0f751d4e84ec6b0c814362e51d9e8089194f53102c8fbf0ad042a59"
+    },
+    "control": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/control.json",
+      "sha256": "ccb594cbf8332aed236c89752af20fb1e4e2024be460fef1b7d1d30f7fe7cd49"
+    },
+    "settled_outcome": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T5/outcome.json",
+      "sha256": "b7896b5e4619a6d1c2d77e414de20245652471c58b6483b4f0e3c5d3e86ef216"
+    },
+    "run": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/run.json",
+      "sha256": "6ffeb069f435744e05cdcdf02295372102a142a57728413bc11f537dc8810acb"
+    },
+    "normalization_decision": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/decisions/model_61eb5d9adb40488aa0a2a75d417cb1ad.json",
+      "sha256": "f8be5e18ffddd14e28af047df547b71c3449246e5cc629cca33c3bfe077e3d4c"
+    },
+    "accepted_initial_plan": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/decisions/model_d8dd769ed6314f45ab523ddd2fc1f6d8.json",
+      "sha256": "492b8427aff8617609d3d1411d9761ec67764c4283b653ab3631d20f221ea19f"
+    },
+    "condition_selection_decision": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/decisions/model_ca9940cd4fc84f48b7b1afccceebc981.json",
+      "sha256": "501753e85664fe86bb63ccbd90da13e180ed801fde088b18dae2e7317f0c6ad7"
+    },
+    "identity_result": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/results/result_2f7e0c9da4344e538ed1bac2050758d7.json",
+      "sha256": "aad61e392ba417a176de895ef1e8209c03be40fbf3dd9f41e1e435194bc1f182"
+    },
+    "prepared_result": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/results/result_a00cc4812cc348a7b763caf68af9245b.json",
+      "sha256": "239e74399fdb70f2372791124faa1f029f4a13aac75c96e219890f7d2e4300d3"
+    },
+    "prepared_xyz": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/artifacts/artifact_e6df0d84ba6c48a39bd5f2e1884a6e7c/files/prepared.xyz",
+      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+    },
+    "identity_artifact": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/artifacts/artifact_7416ed7cce014dbaaed4e2430cdc42f4/files/identity.json",
+      "sha256": "b7a8261338ec2d76b2645eb09e632267a220b9b245923addec7df6bf630cb3de"
+    },
+    "original_identity_response": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/artifacts/artifact_0c5feac477f8422e9c09bc73aabe30a1/files/pubchem-response.json",
+      "sha256": "a7691d1bcb6767607a7aa1a3398ae1d5de1448beb9b62368261ad5e84dfec09d"
+    },
+    "preparation_worker_outcome": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/artifacts/artifact_dd333d48826643818e0639383d252595/files/worker-outcome.json",
+      "sha256": "9ee8ffe4fb0d8f884156081d35c50bea89d17e924d5051e304a21fa009940d0e"
+    },
+    "settlement": {
+      "path": "data/code-tools-refreeze-4-batch/receipts/formal-T5-001/settlement.json",
+      "sha256": "5e2f4e2d4b54213bdb6fb6f56eafb1b35294551af52c47ec77cd53d961546b56"
+    },
+    "post_verify": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T5/post-verify.json",
+      "sha256": "2901505a83f8cf081420831821d48f029852b0a90b398c049b50b07580ba8ec4"
+    },
+    "budget_check": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T5/budget-check.json",
+      "sha256": "2ac6c420c26e5b6998e45669412e6d2120be2167444889e992dd376091d3db9c"
+    },
+    "report": {
+      "path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/T5/report.json",
+      "sha256": "9404ba948dd813de450d4bedc225c0352a5d96d08c6fa5448c2f1e4107c3888e"
+    },
+    "final_delivery": {
+      "path": "data/code-tools-refreeze-4-batch/workspaces/formal-T5-001/data/runs/run_ac956b8a55f8416b8914b841b2dbed15/deliveries/report_8166b3a5dbb3a1f2a54743bd.md",
+      "sha256": "f8997a08bbdbc45b7bcdb78bee0afbbf908fcbe4691d339cac968b7574d5d860"
+    },
+    "prior_outcome": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/evidence/T5/outcome.json",
+      "sha256": "13429888d0654a4b567819f05cabb04615145c09e401f5b91962e00aafd281c6"
+    },
+    "prior_report": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-3/report.md",
+      "sha256": "7a5cde36953328a1fbdc9a7e73fe4305f41a5be746c4f5002af46c062e974593"
+    }
+  },
+  "limitations": [
+    "Only immutable/settled file inspection and source/hash checks; no production code imported or replayed.",
+    "No new model/ORCA invocation, test case, fuzzing, runtime mutation or speculative numeric calculation.",
+    "Static later-check defects are labeled separately from actual recorded rejections."
+  ]
+}
