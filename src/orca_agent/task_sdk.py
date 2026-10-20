@@ -4,6 +4,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import threading
 import time
 from pathlib import Path
@@ -79,6 +80,37 @@ def run_orca(input_path, *, dependencies=(), request_key="calculation",
              "content_base64": base64.b64encode(Path(path).read_bytes()).decode("ascii")}
             for path in dependencies],
     })
+
+
+def receipt_source(receipt, filename, *, location=None):
+    """Declare one explicitly selected original receipt file as an observation source.
+
+    This helper does not read files or certify a receipt, its conditions or its
+    scientific output. Collection independently resolves the declaration against
+    archived current-Run evidence. Failed settled receipts may describe failures.
+    """
+    if not isinstance(receipt, dict):
+        raise ValueError("receipt must be a run_orca response object")
+    key = receipt.get("request_key")
+    if not isinstance(key, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,95}", key) is None:
+        raise ValueError("receipt request_key is invalid")
+    status = receipt.get("operation_status")
+    if not isinstance(status, str) or status not in {"completed", "failed", "timed_out", "cancelled"}:
+        raise ValueError("observation source requires a settled receipt")
+    if (not isinstance(filename, str) or not 1 <= len(filename) <= 240
+            or "\\" in filename or ":" in filename
+            or any(part in {"", ".", ".."} for part in filename.split("/"))):
+        raise ValueError("filename must be an original task-relative files key")
+    files = receipt.get("files")
+    if (not isinstance(files, dict) or filename not in files
+            or not isinstance(files[filename], str) or not files[filename]):
+        raise ValueError("filename is not an original receipt files key")
+    if location is not None and (not isinstance(location, str) or len(location) > 1000):
+        raise ValueError("location must be a string of at most 1000 characters or None")
+    source = {"internal_request_key": key, "filename": filename}
+    if location is not None:
+        source["location"] = location
+    return source
 
 
 def checkpoint(state, *, request_key="checkpoint", requires_decision=True, reason=None):

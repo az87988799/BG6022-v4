@@ -107,6 +107,8 @@ Copy-Item config.text.example.toml config.local.toml
 
 `status` 和 `inspect` 不推进计算、不转换文件。`pause` 让当前作业在原期限内完成并收集，然后停止后续步骤；`cancel` 请求终止整个受管进程树。新 CLI 启动不自动续算，只有 `resume` 才先对账再推进。失败输入不会自动重试，执行身份不足的崩溃窗口保留未知状态与额度，不能据没有句柄就重算。
 
+`export RUN_ID --output E:\exports\delivery.zip` 显式导出已有报告、验证说明和获授权的原始文件，不调用模型或 ORCA。目标目录须已存在，文件不能覆盖历史；hash 损坏、越权或超限会拒绝整个导出。文件和字节上限及包内清单见[交付导出说明](docs/delivery-export.md)。
+
 固定 Plan 可引用一个具体生产 Step 的 `optimized_geometry` 端口；消费前解析到具体尝试、Result、Artifact 和检查版本。未通过优化的最后一帧不能用作此端口。
 
 ## 资源、预算与保存

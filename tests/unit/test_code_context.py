@@ -15,6 +15,7 @@ from orca_agent.models import Goal, Observation, ObservationSource, Request, Res
 from orca_agent.orca.native_profile import profile_contract
 from orca_agent.semantic import selection_action_parameters
 from orca_agent.store import Store
+from scripts.measure_context_efficiency import normalized_schema
 from tests.unit.test_context import objects
 from tests.unit.test_decision_purpose_capacity import decoded
 from tests.unit.test_python_repair_budget import case, settle
@@ -229,7 +230,7 @@ def test_authorized_selection_exposes_sources_code_tools_and_exact_frozen_native
     assert "select_conditions" in wire["AUTHORITY"]["decision_purpose"]["allowed_actions"]
     selection = wire["ACTION_SCHEMAS"]["select_conditions"]
     from orca_agent.readable_context import native_schema
-    assert selection == native_schema(selection_action_parameters(request))
+    assert normalized_schema(selection) == normalized_schema(native_schema(selection_action_parameters(request)))
     assert selection["properties"]["request_version"]["const"] == request.version
     assert selection["properties"]["choices"]["propertyNames"]["enum"] == ["method", "basis"]
     tools = {tool["name"]: tool for tool in wire["TOOLS"]}
@@ -237,7 +238,7 @@ def test_authorized_selection_exposes_sources_code_tools_and_exact_frozen_native
             "structure.resolve", "structure.prepare", "evidence.text", "evidence.search"} <= tools.keys()
     assert set(tools["python.execute"]["parameters"]["properties"]) == {
         "code", "inputs", "observation_names", "conditions"}
-    assert set(tools["workspace.write"]["parameters"]["properties"]) == {"name", "content", "role"}
+    assert set(tools["workspace.write"]["parameters"]["properties"]) == {"name", "content", "role", "base", "edits"}
     assert wire["AUTHORITY"]["native_input_contract"] == profile_contract(run.configuration.execution.native_input_policy)
     assert wire["AUTHORITY"]["native_input_contract"]["scientific_validation"] == "unverified"
     native = wire["AUTHORITY"]["native_input_contract"]
@@ -331,7 +332,7 @@ def test_native_only_permission_keeps_authoring_and_bounded_read_schemas_without
     assert wire["AUTHORITY"]["permission"]["code_execution"] is False
     assert {"orca.run", "workspace.write", "knowledge.search", "evidence.text", "evidence.search"} <= tools.keys()
     assert set(tools["orca.run"]["parameters"]["properties"]) == {"input", "inputs", "observation_names", "conditions"}
-    assert set(tools["workspace.write"]["parameters"]["properties"]) == {"name", "content", "role"}
+    assert set(tools["workspace.write"]["parameters"]["properties"]) == {"name", "content", "role", "base", "edits"}
     for name in ("knowledge.search", "evidence.text", "evidence.search"):
         assert isinstance(wire["ACTION_SCHEMAS"][name], dict)
         assert wire["ACTION_SCHEMAS"][name]["properties"]
@@ -426,7 +427,7 @@ def test_legacy_context_does_not_gain_task_code_or_native_policy_and_prompt_hist
     request, run = objects()
     prepared = context.build_context(request, run)
     wire = decoded(prepared)
-    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v69"
+    assert prepared.prompt_version == context.PROMPT_VERSION == "agent-json-v70"
     assert {"agent-json-v22", "agent-json-v34", "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41", "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47"} <= DECISION_CONTRACT_PROMPT_VERSIONS
     assert "TASK_CODE_RULES" not in wire and "native_input_contract" not in wire["AUTHORITY"]
     assert run.permission.code_execution is False
@@ -493,8 +494,8 @@ def test_current_generated_intake_uses_single_source_scope_and_v3_schema(tmp_pat
         action_parameters=contract,
         user_messages=[{"id": "new_message", "text": "Preserve the original quantity and source requirements."}])
     wire = decoded(prepared)
-    schema = wire["ACTION_SCHEMAS"]["normalize_request"]
-    expected = native_schema(semantic.SemanticCandidate.model_json_schema())
+    schema = normalized_schema(wire["ACTION_SCHEMAS"]["normalize_request"])
+    expected = normalized_schema(native_schema(semantic.SemanticCandidate.model_json_schema()))
     assert schema["properties"]["schema_version"] == {"const": semantic.VERSION}
     for field in ("identities", "automatic_selection"):
         assert schema["properties"][field] == expected["properties"][field]

@@ -17,6 +17,7 @@ from typing import Any
 
 from orca_agent.applicability import effective_conditions
 from orca_agent.config import ModelProfile
+from orca_agent.context_efficiency import REFERENCE_GUIDANCE, context_json, optimize_context_wire
 from orca_agent.decision_purpose import (
     classify_decision_purpose,
     relevant_result_ids,
@@ -25,6 +26,7 @@ from orca_agent.decision_purpose import (
     terminal_actions,
 )
 from orca_agent.llm import PreparedRequest, _has_credential, prepare_request
+from orca_agent.model_output_policy import select_output_tokens
 from orca_agent.model_usage import final_explanation_budget
 from orca_agent.models import (
     ModelLimits,
@@ -47,7 +49,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v69"
+PROMPT_VERSION = "agent-json-v70"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -118,6 +120,9 @@ _CODE_GUIDANCE = (
     "Scientific Goals need a completed SDK native receipt with verified original provenance; pure file tasks need no ORCA.")
 
 _CODE_REPAIR_GUIDANCE = (
+    "Small Python edits may use workspace.write with base:old CodeRef, "
+    "edits:[{old:unique exact fragment,new:replacement}] instead of content. "
+    "Nonoverlapping edits match the original file and produce a new Artifact. "
     "AUTHORITY.failed_python_attempts preserves failure history outside the current Plan; not ready/permission. "
     "After workspace.write completes, prefer a repair Step with key:new_key, "
     "repair_of:failed frozen_step.id, code:new CodeRef, inputs:optional replacement InputManifest. "
@@ -133,6 +138,9 @@ _CODE_REPAIR_GUIDANCE = (
     "The full new-Step form remains accepted with the same logical_key; only code and explicitly declared input manifest may change.")
 
 _CODE_NATIVE_GUIDANCE = (
+    "For explicitly used SDK files, from orca_task_sdk import receipt_source; "
+    "sources=[receipt_source(receipt,'stdout.out',location='lines ...')]. "
+    "Use exact original files keys; this declares sources, not science qualification. Artifacts stay explicit. "
     "orca.run.input needs an ORCA program, never XYZ. Geometry belongs in parameters.inputs=manifest. "
     "Before run_orca, satisfy every applicable required block in AUTHORITY.native_input_contract, "
     "using its frozen numeric bounds; missing controls are rejected, never filled in. "
@@ -359,6 +367,71 @@ def _compose_semantic_parameters(proposal_schema, candidate_schema):
         if set(names.values()) & target.keys():
             raise ValueError("semantic schema definition namespace collides")
         target.update({names[name]: relocate(value) for name, value in definitions.items()})
+
+
+def optimize_model_messages(messages, max_output_tokens, *, source_references=None):
+    """Pure outbound projection, also used by offline archived-JSON measurement.
+
+    Source snapshots and canonical hashes are untouched. Encoded fallback
+    contracts keep their existing decoder and full output allowance.
+    """
+    if (len(messages) != 2 or messages[0].get("role") != "system"
+            or messages[1].get("role") != "user"):
+        return deepcopy(messages), max_output_tokens
+    wire = json.loads(messages[1]["content"])
+    optimized = optimize_context_wire(wire, simplify_schema=_compact_planning_schema,
+                                      source_references=source_references)
+    output = deepcopy(messages)
+    output[1]["content"] = context_json(optimized)
+    native = (not any(key in optimized for key in ("KEYS", "SCHEMA_COLUMNS", "SHARED_STRINGS", "STRING_ENCODING"))
+              and isinstance(optimized.get("ACTION_SCHEMAS"), dict)
+              and optimized.get("AUTHORITY", {}).get("response_contract") == "decision-intent-2")
+    if not native:
+        return output, max_output_tokens
+    data = optimized.get("DATA", {})
+    if any(isinstance(item, dict) and "delivery_fact_ref" in item
+           for result in data.get("results", [])
+           for item in result.get("unqualified_observation_records", [])):
+        if REFERENCE_GUIDANCE not in output[0]["content"]:
+            output[0]["content"] += REFERENCE_GUIDANCE
+    actions = set(optimized["ACTION_SCHEMAS"])
+    allowed = set(optimized["AUTHORITY"].get("decision_purpose", {}).get("allowed_actions", []))
+    if not actions or not allowed:
+        return output, max_output_tokens
+    # The native schema replaces the generic immediate call with its Tool name.
+    # Include both views so no possible authoring action is accidentally capped.
+    actions |= allowed
+    short = set()
+    if optimized.get("CONTROL", {}).get("pending_step_ids"):
+        short.add("call_tool")
+    for tool in optimized.get("TOOLS", []):
+        if tool.get("immediate"):
+            definition = get_tool(tool["name"])
+            if set(definition.effects) <= {"read_registered_artifact", "query_external_document", "query_external_identity"}:
+                short.add(tool["name"])
+    minimum = None
+    if actions <= {"stop", "clarify"} and "stop" in actions:
+        delivery = data.get("delivery", {})
+        try:
+            example = {"action": "stop", "parameters": _terminal_example(delivery),
+                       "reason": "Audit only; delivery selects program facts."}
+            minimum = len(_json(example).encode("utf-8"))
+        except (KeyError, IndexError, TypeError):
+            # Reduced/unknown snapshot shapes retain the full output ceiling.
+            pass
+    return output, select_output_tokens(allowed_actions=actions, configured_limit=max_output_tokens,
+        short_actions=short, terminal_minimum_bytes=minimum, feedback=optimized.get("CONTROL"))
+
+
+def _prepare_context_request(messages, **kwargs):
+    source_references = kwargs.pop("source_references", None)
+    limit = kwargs.get("max_output_tokens")
+    limits = kwargs.get("limits") or ModelLimits()
+    # Preserve the transport boundary's rejection of invalid frozen settings.
+    if type(limit) is int and 1 <= limit <= limits.output_tokens:
+        messages, kwargs["max_output_tokens"] = optimize_model_messages(messages, limit,
+            source_references=source_references)
+    return prepare_request(messages, **kwargs)
 
 
 def _compact_planning_schema(schema):
@@ -764,6 +837,8 @@ def _check_summary(checks) -> dict[str, Any]:
 
 
 def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
+    from orca_agent.artifact_index import result_file_index
+
     # Revalidation prevents unchecked model_copy/mutation from laundering a
     # failed Check into a supposedly qualified output in the model context.
     try:
@@ -844,6 +919,9 @@ def _result(result: Result, observation_bytes: int) -> dict[str, Any]:
                    if key in written}
         if len(_json(receipt).encode("utf-8")) <= 2048:
             summary["unqualified_observations"] = {"written_artifact": _safe(receipt)}
+    file_index = result_file_index(result, max_bytes=min(4096, max(512, observation_bytes * 2)))
+    if file_index is not None:
+        summary["file_index"] = file_index
     return {key: value for key, value in summary.items() if value not in (None, {}, [], 0)}
 
 
@@ -947,8 +1025,17 @@ def _compact_result_facts(results):
     return {key: value for key, value in shared.items() if key in used_profiles}, defaults
 
 
+def _file_index_literal_paths(wire, literal_paths):
+    data = wire.get("DATA")
+    results = data.get("results") if isinstance(data, dict) else None
+    if isinstance(results, list) and any(isinstance(row, dict) and "file_index" in row for row in results):
+        return {*literal_paths, ("DATA", "results", "[]", "file_index")}
+    return literal_paths
+
+
 def _share_strings(value, *, share_lists=False, short_references=False, _compare_children=True, literal_paths=()):
     """Lossless sharing of strings and repeated scientific fact objects."""
+    literal_paths = _file_index_literal_paths(value, literal_paths)
     counts = {}
     object_counts = {}
     native_paths = {("CONTROL",), ("AUTHORITY", "basis"), ("AUTHORITY", "related_results"),
@@ -1967,6 +2054,7 @@ def _terminal_key_encoding(wire, *, literal_paths=()):
     authority and literal string pool stay untouched; generated aliases cannot
     collide with any existing key. This changes no contract constraints.
     """
+    literal_paths = _file_index_literal_paths(wire, literal_paths)
     counts = {}
     occupied = set()
     native = {("SHARED_STRINGS",), ("ACTION_PARAMETERS", "call_tool"), *(('AUTHORITY', key) for key in (
@@ -2031,6 +2119,7 @@ def _short_pool_references(wire, *, literal_paths=()):
     ambiguous, so retain the existing object encoding for the entire message.
     The literal reservation fields remain native and keep their trust boundary.
     """
+    literal_paths = _file_index_literal_paths(wire, literal_paths)
     if "SHARED_STRINGS" not in wire:
         return wire
     native = {("SHARED_STRINGS",), ("KEYS",), ("CONTROL",),
@@ -2218,7 +2307,7 @@ def _terminal_context(request, run, snapshot, purpose, feedback, user_messages, 
     candidates = []
     budget_rejected = []
     try:
-        prepared = prepare_request([{"role": "system", "content": native_prompt},
+        prepared = _prepare_context_request([{"role": "system", "content": native_prompt},
             {"role": "user", "content": _json(native)}], prompt_version=PROMPT_VERSION,
             max_output_tokens=run.budget.output_tokens,
             timeout_seconds=min((run.configuration.model if run.configuration else ModelLimits()).timeout_seconds, seconds * 0.9),
@@ -2256,7 +2345,7 @@ def _terminal_context(request, run, snapshot, purpose, feedback, user_messages, 
             wire = _terminal_key_encoding(pooled, literal_paths=literal_paths)
             request_prompt = prompt + (_RAW_REFERENCE_PROMPT if reference_arrays else "")
         try:
-            prepared = prepare_request([
+            prepared = _prepare_context_request([
                 {"role": "system", "content": request_prompt},
                 {"role": "user", "content": json.dumps(wire, ensure_ascii=False, separators=(",", ":"), allow_nan=False)}],
                 prompt_version=PROMPT_VERSION, max_output_tokens=run.budget.output_tokens,
@@ -2931,7 +3020,7 @@ def build_context(
         projected_results = [_result(result, observation_bytes if result.id in retained_reads
             and _call_execution(run, result).get("effects") == ["read_registered_artifact"]
             else min(1024, observation_bytes)) for result in visible_results]
-        if compact and delivery_snapshot:
+        if compact and delivery_snapshot and "stop" in examples:
             projected_results = [_reference_delivery_facts(projected, original, delivery_snapshot)
                                  for projected, original in zip(projected_results, visible_results, strict=True)]
         if compact:
@@ -3020,9 +3109,10 @@ def build_context(
             if '"current_request_fields"' in _json(native_fallback["DATA"]):
                 native_fallback_prompt += " current_request_fields=Request.conditions keys;sources=request.conditions."
             try:
-                prepared = prepare_request(
+                prepared = _prepare_context_request(
                     [{"role": "system", "content": native_prompt},
                      {"role": "user", "content": _json(native)}],
+                    source_references=delivery_snapshot["references"],
                     prompt_version=PROMPT_VERSION, max_output_tokens=run.budget.output_tokens,
                     timeout_seconds=min((run.configuration.model if run.configuration else ModelLimits()).timeout_seconds, remaining_seconds),
                     model_profile=model_profile, limits=run.configuration.model if run.configuration else None)
@@ -3090,7 +3180,7 @@ def build_context(
                 # Try lossless metadata compression before shortening any
                 # explicitly requested read. All original token gates apply.
                 try:
-                    prepared = prepare_request([
+                    prepared = _prepare_context_request([
                         {"role": "system", "content": native_fallback_prompt},
                         {"role": "user", "content": _json(_compact_native_wire(native_fallback,
                             schema_columns=observation_bytes == 256, legacy=not run.permission.code_execution))}],
@@ -3221,7 +3311,7 @@ def build_context(
                 "write_analysis" in tool["effects"] for tool in catalog):
             request_prompt += " Snapshot=current, not final. Science limit0 still permits allowed analysis; join members by ID, not order."
         try:
-            prepared = prepare_request(
+            prepared = _prepare_context_request(
                 [{"role": "system", "content": request_prompt},
                  {"role": "user", "content": json.dumps(wire, ensure_ascii=False, separators=(",", ":"), allow_nan=False)}],
                 prompt_version=PROMPT_VERSION,
@@ -3250,7 +3340,7 @@ def build_context(
         # intent fallback, with the scope declared beside its decoding rule.
         wire = _compact_native_wire(native_fallback, schema_columns=True, legacy=not run.permission.code_execution)
         try:
-            prepared = prepare_request([
+            prepared = _prepare_context_request([
                 {"role": "system", "content": native_fallback_prompt}, {"role": "user", "content": _json(wire)}],
                 prompt_version=PROMPT_VERSION, max_output_tokens=run.budget.output_tokens,
                 timeout_seconds=min((run.configuration.model if run.configuration else ModelLimits()).timeout_seconds, remaining_seconds),

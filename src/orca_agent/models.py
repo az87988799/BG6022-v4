@@ -658,6 +658,8 @@ class RunConfiguration(Record):
     model: ModelLimits = Field(default_factory=ModelLimits)
     model_profile: Literal["disabled", "thinking_low"] = "disabled"
     execution: ExecutionConfiguration = Field(default_factory=ExecutionConfiguration)
+    # Missing in historical snapshots means the original model feedback path.
+    mechanical_progression: bool = Field(default=False, strict=True)
 
     @model_validator(mode="before")
     @classmethod

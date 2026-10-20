@@ -1,5 +1,15 @@
 # 能力与证据
 
+## 上下文与机械往返优化（2026-10-20，离线验证，等待用户验收）
+
+已补足五项有限能力：当前 Result 的精确文件索引可直接用于既有 CodeRef/InputManifest；新 Run 可冻结纯文件写入后的机械推进；SDK `receipt_source` 辅助显式声明来源；`workspace.write` 支持基于旧 Artifact/hash 的唯一精确局部替换并生成新 Artifact；CLI `export RUN_ID --output PATH.zip` 显式生成有界报告与原文件包。文件发现不增加正文读取，不引入未来文件 selector 或新批量工具；修复、科学检查、授权和目标完成继续经过原生产边界，失败和 unverified 标签保留。
+
+三个已批准文件写入的脚本化对照中，模型入口调用 **3 → 1**，仍有 3 次写入、3 个决策轮，交付仍 partial；8 文件索引为 **1622 字节、0 次 evidence_reads**。局部修复的合成示例参数从 **50,468 → 249 UTF-8 字节**，不是 token。SDK、patch、导出与既有报告/Web 的有限测试及重叠口径见[本轮报告](acceptance/model-context-efficiency/report.md)。新增 SDK 已完成离线镜像构建及一次真实容器内纯 Python 烟测；这不证明 ORCA/MPI 或完整隔离通过。
+
+0048 的等价 schema、重复观察引用、稳定前缀和按动作输出预约继续保留。原 90 请求 **0.918% 输入消息字节减量**与公共前缀增长记录是其独立历史源码快照，不是本轮五项功能的当前效果测量；该批输出上限均未改变，不代表实际 token、缓存或费用收益。机械策略对缺字段的历史 Run 默认关闭，SDK 新镜像仅用于匹配的新环境，旧 Run 的配置、资格和预算不迁移。
+
+本轮真实项目模型 API、ORCA、MPI 均为 **0**，开发助手 tokens 未计量；实际账单、回答质量和端到端成功率未实测。最终 498 项定向批次为 481 通过、17 失败，其中新增的旧参数断言已适配并单项复测通过；另有最终上下文守卫批次 107 通过。当前所选回归仅保留原 16 项已确认基线失败，批次有重叠；详见[验证记录](acceptance/model-context-efficiency/validation.json)。未运行全量回归，未进入步骤 6/7。
+
 ## 步骤 5 授权续作（2026-10-20，等待用户验收）
 
 输入manifest修复已在原Run执行模型生成的搜索/筛选代码，保存12个己烷候选并完成4次真实ORCA单点；另外8个候选因预算未评估而保留。实际条件为气相B3LYP/6-31G、RKS、电荷0、多重度1。独立原始证据、完整交付与累计成本见[续作报告](acceptance/code-as-tools-step5-completion/report.md)。原六次失败记录继续保留，下节是其历史交付时点。 最终同一 Run 为 completed/complete、8/8 Goal 满足，最终真实模型调用 HTTP 200 且解释合同通过。

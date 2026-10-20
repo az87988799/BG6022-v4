@@ -94,6 +94,11 @@ def main(argv=None) -> int:
     message_parser.add_argument("--update-file", type=Path, help="Explicit user Request fields to apply after queuing")
     report_parser = commands.add_parser("report", help="Render existing evidence and gaps without model or execution")
     report_parser.add_argument("run_id")
+    export_parser = commands.add_parser(
+        "export", help="Explicitly write a bounded delivery ZIP without model or computation")
+    export_parser.add_argument("run_id")
+    export_parser.add_argument("--output", type=Path, required=True,
+                               help="New .zip path outside data/environment storage; never overwritten")
     for command in ("status", "pause", "cancel", "resume"):
         command_parser = commands.add_parser(command)
         command_parser.add_argument("run_id")
@@ -148,6 +153,9 @@ def main(argv=None) -> int:
             from orca_agent.entrypoints import report
             from orca_agent.report import render_report
             print(render_report(report(store, args.run_id)))
+        elif args.command == "export":
+            from orca_agent.delivery_bundle import export_bundle
+            emit(export_bundle(store, args.run_id, args.output))
         elif args.command == "message":
             from orca_agent.semantic import CANCEL, PAUSE, STATUS
             command = args.text.strip().casefold()

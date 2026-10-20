@@ -17,6 +17,7 @@ from orca_agent.models import EvidenceRef, Result
 from orca_agent.proposals import ProposedPlan
 from orca_agent.readable_context import native_schema
 from orca_agent.store import Store
+from scripts.measure_context_efficiency import normalized_schema
 
 
 def input_context(tmp_path, monkeypatch, *, ready=(), evidence_reads=24, code=True):
@@ -57,9 +58,11 @@ def test_omitted_identity_result_still_has_completed_receipt_and_empty_ready_fac
 
 def test_completed_input_context_retains_reference_contract_for_plan_revision(tmp_path, monkeypatch):
     _, plan, _, result, wire = input_context(tmp_path, monkeypatch)
-    schema = wire["ACTION_SCHEMAS"]["revise_plan"]
-    reference = schema["$defs"]["EvidenceRef"]
-    assert reference == native_schema(EvidenceRef.model_json_schema())
+    schema = normalized_schema(wire["ACTION_SCHEMAS"]["revise_plan"])
+    targets = schema["properties"]["goal_map"]["additionalProperties"]["anyOf"]
+    reference = next(branch["properties"]["evidence"] for branch in targets
+                     if "evidence" in branch["properties"])
+    assert reference == normalized_schema(native_schema(EvidenceRef.model_json_schema()))
     reference = _schema(reference)  # Annotation defaults do not affect validity.
     fixture = Path(__file__).parents[1] / "fixtures/code_contracts/live012-file-only-evidence.json"
     rejected = json.loads(fixture.read_text(encoding="utf-8"))["proposal"]["parameters"]
@@ -86,15 +89,16 @@ def test_native_revision_exposes_complete_plan_schema_and_rejects_live013_runtim
 
     monkeypatch.setattr(context, "prepare_request", capture)
     _, plan, _, _, wire = input_context(tmp_path, monkeypatch)
-    schema = wire["ACTION_SCHEMAS"]["revise_plan"]
-    assert schema == native_schema(ProposedPlan.model_json_schema())
+    schema = normalized_schema(wire["ACTION_SCHEMAS"]["revise_plan"])
+    assert schema == normalized_schema(native_schema(ProposedPlan.model_json_schema()))
     schema = _schema(schema)
     fixture = Path(__file__).parents[1] / "fixtures/code_contracts/live013-runtime-plan-fields.json"
     replies = json.loads(fixture.read_text(encoding="utf-8"))["replies"]
     assert len(replies) == 3
     for reply in replies:
         assert not matches(schema, reply["proposal"]["parameters"], schema)
-    step_rule = schema["$defs"]["ProposedStep"]
+    step_rule = next(branch for branch in schema["properties"]["steps"]["items"]["anyOf"]
+                     if "tool" in branch["properties"])
     assert step_rule["required"] == ["key"]
     assert step_rule["additionalProperties"] is False
     assert not {"id", "logical_id", "immutable_frozen"} & step_rule["properties"].keys()

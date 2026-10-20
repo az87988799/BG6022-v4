@@ -100,11 +100,12 @@ def _register(parameters: type[Record], **metadata: Any) -> _Registration:
 TOOLS: dict[str, _Registration] = {
     "workspace.write": _register(
         WriteParameters, name="workspace.write",
-        description="Save one bounded UTF-8 task file as an immutable Artifact; returned ID/hash can bind a later code/input Step. No execution.",
+        description="Save bounded UTF-8 content, or patch a pinned Python base with unique exact edits, as a new immutable Artifact; returned ID/hash binds later Steps. No execution.",
         input_roles=[], output_ports=[], observation_outputs=["written_artifact"],
-        effects=["write_artifact"], max_cores=0, max_memory_mb=0,
+        effects=["read_registered_artifact", "write_artifact"], max_cores=0, max_memory_mb=0,
         check_version="workspace-write-1", usage_counter="analysis_executions",
-        check_contract={"code_authoring": True},
+        check_contract={"code_authoring": True, "mechanical_feedback": "immutable-file-write-1"},
+        preflight="orca_agent.tools.workspace.preflight",
         implementation="orca_agent.tools.workspace.write",
     ),
     "python.execute": _register(

@@ -40,10 +40,12 @@ class Config(BaseModel):
     model: ModelLimits = Field(default_factory=ModelLimits)
     text: TextProfile = Field(default_factory=TextProfile)
     execution: ExecutionConfiguration = Field(default_factory=ExecutionConfiguration)
+    mechanical_progression: bool = Field(default=True, strict=True)
 
     def run_configuration(self) -> RunConfiguration:
         return RunConfiguration(resources=self.resources, model=self.model,
-                                model_profile=self.model_profile, execution=self.execution)
+                                model_profile=self.model_profile, execution=self.execution,
+                                mechanical_progression=self.mechanical_progression)
 
 
 def load_config(path: Path | None = None) -> Config:

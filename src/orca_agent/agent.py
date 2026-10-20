@@ -697,7 +697,9 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                 feedback = set(run.result_ids) - set(run.processed_feedback)
                 explanation_pending = (run.agent_enabled and feedback
                     and store.load_request(run).conditions.get("explain_results") is True)
-                if (runner._goals(store, run, plan, results) and not pending_messages
+                prior_goals = dict(run.goal_status)
+                goals_satisfied = runner._goals(store, run, plan, results)
+                if (goals_satisfied and not pending_messages
                         and not explanation_pending):
                     run.state = "completed"
                     break
@@ -743,9 +745,18 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                     if recovered_action:
                         action, value = recovered_action
                     else:
-                        run, action, value = _decision(store, run, plan, results,
-                                                      transport or DeepSeekTransport(), batch, fault,
-                                                      model_profile=config.model_profile)
+                        from orca_agent.mechanical_progression import select_mechanical_step
+                        automatic = (select_mechanical_step(store, run, plan, results, _ready(plan, results),
+                            goals_changed=prior_goals != run.goal_status)
+                            if not pending_messages and not force_redecision and not goals_satisfied else None)
+                        if automatic:
+                            action, value = "step", automatic
+                            if fault:
+                                fault("after_mechanical_decision")
+                        else:
+                            run, action, value = _decision(store, run, plan, results,
+                                                          transport or DeepSeekTransport(), batch, fault,
+                                                          model_profile=config.model_profile)
                         force_redecision = False
                     if action == "stale":
                         signal = store.read_signal(run.id)
