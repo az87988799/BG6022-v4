@@ -237,6 +237,13 @@ def validation_error_details(exc):
     for error in exc.errors(include_input=False, include_url=False):
         item = {"type": error["type"], "loc": list(error["loc"])}
         context = error.get("ctx", {})
+        expected = context.get("expected")
+        if error["type"] in {"literal_error", "enum"} and isinstance(expected, str):
+            # Pydantic's declared alternatives, not the submitted value or an
+            # arbitrary validator message, make a literal rejection correctable.
+            item["expected"] = expected[:1024]
+            if len(expected) > 1024:
+                item["expected_truncated"] = True
         contract = context.get("error")
         if isinstance(contract, ContractValidationError):
             item["loc"].extend(contract.path)
@@ -292,7 +299,11 @@ def _schema_error(exc, *, path, tool=None, errors_details=None):
                     "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known "
                     "hash/language may be omitted, or use an explicit producer_step_id/producer_key "
                     "with port (written_artifact or prepared_geometry) or exact file_key. For a file-writing "
-                    "producer, file_key must equal its declared name. Manifest entries "
+                    "producer, file_key must equal its declared name. For raw execution files use file_key "
+                    "with the exact archived filename; artifacts/observations are output collections, not file ports. Manifest entries "
+                    "cannot turn an execution output collection into written_artifact. If the exact filename is unknown, "
+                    "plan and execute the producer first, inspect Result.source.files, then add analysis; pending Goals "
+                    "may remain gaps. Never guess a filename from a port. Manifest entries "
                     "also require target_path and purpose. The program validates dependencies, permissions "
                     "and qualifications and freezes actual hashes before execution. Choose one reference form; "
                     "union alternatives are not cumulative. Historical policies "

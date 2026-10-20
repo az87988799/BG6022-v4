@@ -315,6 +315,8 @@ Plan 是当前可执行 Step 的有向无环图，绑定 Request 版本，并记
 
 开发任务可按 [0067](decisions/0067-workflow-budget-within-existing-total-limits.md) 在既有总 tokens、实际计算、时间和 campaign 上限内明确选择足够的有限工作流额度，父候选须完整继承其配置；不改变旧 Run、清零累计用量或重复启动相同失败输入。
 
+模型名称与执行模式均由新 Run 显式冻结；[0068](decisions/0068-explicit-pro-model-development-candidate.md) 的 Pro 开发候选与历史 Flash 分列，不自动切换、注入科学解法或混称为原模型正式验收，未知费用及真实 tokens 分别报告。
+
 ## 7. ORCA、OPI 与执行后端
 
 ### 7.1 主适配选择

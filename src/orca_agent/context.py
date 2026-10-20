@@ -66,7 +66,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v85"
+PROMPT_VERSION = "agent-json-v86"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -220,7 +220,10 @@ def _simplified_code_rules(rules):
             "(matching python/orca language and role), ",
         "Stage Plan:workspace.write/input-preparation first; consuming Steps need real artifact_id/sha256. ":
             "Plan writers and consumers together. code/input accepts {producer_key,port:'written_artifact'}; "
-            "manifest entries accept {producer_key,port} or {producer_key,file_key}, plus target_path/purpose. "
+            "manifest entries use producer_key with port:'written_artifact'/'prepared_geometry' or file_key:<exact filename>, "
+            "plus target_path/purpose. Raw execution files use file_key; artifacts/observations are collections, not file ports. "
+            "Unknown filename: execute producer first, inspect Result.source.files, then add analysis; pending Goals may be gaps. "
+            "Never guess filenames from ports or relabel execution collections as written_artifact. "
             "The program adds dependencies and binds actual Artifact identity/hash before execution. ",
         "Unmet Goals use goal_map[Goal.id]={gap,port:Goal.port}. Execute writers, then revise_plan from file receipts. ":
             "Bind chosen Goal producers; the program preserves unbound required Goals as unresolved gaps. ",
@@ -1964,7 +1967,10 @@ def _capacity_code_rules(native):
     """Concise authoring contract; schemas and frozen execution limits stay full."""
     rules = (
         "Plan writers+consumers: code/input={producer_key,port:'written_artifact'}; "
-        "manifest={producer_key,port|file_key,target_path,purpose}; program binds dependencies/IDs/hashes. "
+        "manifest={producer_key,port|file_key,target_path,purpose}; port only written_artifact/prepared_geometry. "
+        "Raw execution files use exact file_key, not port:artifacts/observations (collections). Program binds dependencies/IDs/hashes. "
+        "Unknown filename: execute producer, inspect Result.source.files, then add analysis; pending Goals may be gaps. "
+        "Never guess filenames from ports or relabel execution collections as written_artifact. "
         "parameters.inputs=InputManifest; Step.inputs=evidence ports. No invented IDs/shell/subprocess/network/host paths. "
         "Keep Goals/conditions/minima/routes. Python:analysis budget; same-logical retries also code_retries. "
         "Save completed members; SDK waits count in deadline. "
@@ -3610,9 +3616,16 @@ def build_context(
                     "Bind pending outputs or use verified settled evidence. Example emits no observations or scientific result.")
                 template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
                     "Plan writers and consumers together. code/input accepts {producer_key,port:'written_artifact'}; "
-                    "manifest entries accept {producer_key,port} or {producer_key,file_key}, plus target_path/purpose. "
+                    "manifest entries use producer_key with port:'written_artifact'/'prepared_geometry' or file_key:<exact filename>, "
+                    "plus target_path/purpose. Raw execution files use file_key; artifacts/observations are collections, not file ports. "
+                    "Unknown filename: execute producer first, inspect Result.source.files, then add analysis; pending Goals may be gaps. "
+                    "Never guess filenames from ports or relabel execution collections as written_artifact. "
                     "The program adds dependencies and binds actual Artifact identity/hash before execution. ",
-                    "Use PLAN_REFERENCES.code_authoring_example. Manifest entries additionally require target_path/purpose. "
+                    "Use PLAN_REFERENCES.code_authoring_example. Manifest entries require target_path/purpose; "
+                    "port only written_artifact/prepared_geometry. Raw execution files use exact file_key, "
+                    "not port:artifacts/observations (collections). "
+                    "Unknown filename: execute producer, inspect Result.source.files, then add analysis; pending Goals may be gaps. "
+                    "Never guess filenames from ports or relabel execution collections as written_artifact. "
                     "Producer dependencies and real file identity/hash are program-bound. ")
             settled_bindings = (feedback or {}).get("settled_goal_bindings", {})
             if settled_bindings:

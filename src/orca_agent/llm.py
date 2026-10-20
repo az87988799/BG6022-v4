@@ -65,7 +65,7 @@ _PROFILE_PARAMETERS: dict[ModelProfile, dict[str, Any]] = {
     "disabled": {"thinking": {"type": "disabled"}},
     "thinking_low": {"thinking": {"type": "enabled"}, "reasoning_effort": "low"},
 }
-JSON_NORMALIZATION_PROMPT_VERSIONS = frozenset({"agent-json-v85"})
+JSON_NORMALIZATION_PROMPT_VERSIONS = frozenset({"agent-json-v85", "agent-json-v86"})
 
 
 def model_profile_parameters(profile: ModelProfile) -> dict[str, Any]:
