@@ -302,7 +302,7 @@ def test_identity_json_cannot_supply_a_qualified_prepared_geometry_port(tmp_path
 
 
 def _managed_result_case(tmp_path, *, file_key="report.json", foreign_attempt=False,
-                         collection_complete=True):
+                          collection_complete=True, archived_key="report.json"):
     """Persist synthetic managed evidence through Store; never start its reserved task."""
     store, run, _, _ = _case(tmp_path)
     proposal = _proposal()
@@ -327,7 +327,7 @@ def _managed_result_case(tmp_path, *, file_key="report.json", foreign_attempt=Fa
         run_id=run.id, attempt_id=attempt.id, step_id=producer.id, operation_status="completed",
         artifact_ids=[artifact.id], observations={"evidence_collection_complete": collection_complete},
         source={"synthetic_fixture": True, "files": {
-            "report.json": {"artifact_id": artifact.id, "sha256": artifact.sha256},
+            archived_key: {"artifact_id": artifact.id, "sha256": artifact.sha256},
         }},
     )
     store.save_result(result)
@@ -363,6 +363,70 @@ def test_exact_managed_file_key_freezes_manifest_with_archived_result_provenance
     }
     assert all(not item.started for item in run.attempts)
     assert run.usage.orca_starts_actual == run.usage.model_calls == 0
+
+
+def test_t2_task_relative_selected_file_freezes_the_original_archived_artifact(tmp_path):
+    store, run, plan, result, artifact = _managed_result_case(
+        tmp_path, file_key="selected.json", archived_key="task/selected.json")
+    attempt = store.reserve_attempt(run, plan.steps[-1])
+    entry = attempt.frozen_step.parameters.inputs.entries[0]
+    assert (entry.artifact_id, entry.sha256) == (artifact.id, artifact.sha256)
+    source = attempt.consumption["_file_sources"]["inputs/0"]
+    assert source["declaration"]["file_key"] == "selected.json"
+    assert source["resolved_file_key"] == "task/selected.json"
+    assert source["result_id"] == result.id
+    assert run.usage.orca_starts_actual == run.usage.model_calls == 0
+
+
+@pytest.mark.parametrize("key", ["../selected.json", "/selected.json", "task/../selected.json", "C:/selected.json"])
+def test_producer_file_path_rejection_is_correctable_without_echoing_host_paths(key):
+    from orca_agent.file_references import FileReferenceError, _selected_file
+
+    result = Result(run_id="run", operation_status="completed", source={"files": {}})
+    reference = ProducerFileRef(producer_step_id="producer", file_key=key)
+    with pytest.raises(FileReferenceError) as raised:
+        _selected_file(result, reference)
+    assert raised.value.detail["code"] == "invalid_producer_file_key"
+    assert "requested_file_key" not in raised.value.detail
+
+
+def test_alias_ambiguity_does_not_pick_a_different_artifact_and_exact_key_resolves():
+    from orca_agent.file_references import FileReferenceError, _selected_file
+
+    result = Result(run_id="run", operation_status="completed", source={"files": {
+        "selected.json": {"artifact_id": "first", "sha256": "a" * 64},
+        "task/selected.json": {"artifact_id": "second", "sha256": "b" * 64},
+        "internal/child/task/selected.json": {"artifact_id": "third", "sha256": "c" * 64},
+    }})
+    with pytest.raises(FileReferenceError) as raised:
+        _selected_file(result, ProducerFileRef(producer_step_id="producer", file_key="selected.json"))
+    assert raised.value.detail["code"] == "producer_file_ambiguous"
+    key, value = _selected_file(result, ProducerFileRef(producer_step_id="producer", file_key="task/selected.json"))
+    assert key == "task/selected.json" and value["artifact_id"] == "second"
+
+
+def test_missing_alias_does_not_search_nested_or_internal_basenames():
+    from orca_agent.file_references import FileReferenceError, _selected_file
+
+    result = Result(run_id="run", operation_status="completed", source={"files": {
+        "task/nested/selected.json": {"artifact_id": "nested", "sha256": "a" * 64},
+        "internal/child/task/selected.json": {"artifact_id": "internal", "sha256": "b" * 64},
+    }})
+    with pytest.raises(FileReferenceError) as raised:
+        _selected_file(result, ProducerFileRef(producer_step_id="producer", file_key="selected.json"))
+    assert raised.value.detail["code"] == "producer_file_missing"
+
+
+def test_task_relative_alias_keeps_hash_failures_hard(tmp_path):
+    from orca_agent.file_references import FileReferenceError
+
+    store, run, plan, _, artifact = _managed_result_case(
+        tmp_path, file_key="selected.json", archived_key="task/selected.json")
+    store.artifact_path(artifact.id).write_bytes(b"changed")
+    with pytest.raises((ValueError, StoreError)) as raised:
+        store.reserve_attempt(run, plan.steps[-1])
+    assert not isinstance(raised.value, FileReferenceError)
+    assert len(run.attempts) == 1 and store.environment_lease() is None
 
 
 @pytest.mark.parametrize("problem,message", [

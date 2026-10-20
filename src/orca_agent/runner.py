@@ -276,8 +276,34 @@ def _recover(store, config, run, plan):
             actual_path = store.path(f"{attempt.directory}/actual-start.json")
             handle = (json.loads(handle_path.read_text(encoding="utf-8")) if handle_path.exists()
                       else attempt.execution_handle or {})
-            if actual_path.exists():
-                actual = json.loads(actual_path.read_text(encoding="utf-8"))
+            recovered_actual = None
+            if (not actual_path.exists() and handle_path.exists()
+                    and attempt.execution_kind == "orca" and handle.get("backend") == "linux-container"):
+                import hashlib
+
+                # Only the original launch transport under the Attempt root is
+                # trusted. A task output with the same name cannot supply proof.
+                transport_path = store.path(f"{attempt.directory}/orca-launch-transport.json")
+                raw = b""
+                if transport_path.exists():
+                    with transport_path.open("rb") as source:
+                        raw = source.read(8193)
+                if raw.endswith(b"\n") and len(raw) <= 8192:
+                    receipt = json.loads(raw)
+                    if isinstance(receipt, dict) and receipt.get("status") == "confirmed":
+                        previous = attempt.execution_handle or {}
+                        if (handle.get("run_id") != run.id or handle.get("attempt_id") != attempt.id
+                                or any(handle.get(key) != previous.get(key) for key in (
+                                    "container_id", "launch_id", "image_id", "manifest_sha256",
+                                    "engine_id", "execution", "kind", "orca_scope", "parent_container_id",
+                                    "workload_identity"))):
+                            raise ValueError("actual-start receipt differs from its persisted gated ORCA identity")
+                        recovered_actual = {**handle, "launch_phase": "executed",
+                            "actual_start_evidence": receipt.get("actual_start_evidence"),
+                            "launch_receipt_sha256": hashlib.sha256(raw).hexdigest()}
+            if actual_path.exists() or recovered_actual is not None:
+                actual = (recovered_actual if recovered_actual is not None
+                          else json.loads(actual_path.read_text(encoding="utf-8")))
                 proof = actual.get("actual_start_evidence", {}) if isinstance(actual, dict) else {}
                 identity = handle.get("workload_identity", {})
                 actual_identity = actual.get("workload_identity", {}) if isinstance(actual, dict) else {}
@@ -287,14 +313,48 @@ def _recover(store, config, run, plan):
                         or actual.get("launch_phase") != "executed"
                         or not isinstance(proof, dict) or not isinstance(actual_identity, dict)
                         or proof.get("executable") != "/opt/orca/orca"
-                        or proof.get("method") != "proc_exe_inode_and_pid_start_ticks"
+                        or proof.get("method") not in {"proc_exe_inode_and_pid_start_ticks",
+                            "trusted_subprocess_exec_error_pipe"}
+                        or type(proof.get("device")) is not int or proof["device"] < 0
+                        or type(proof.get("inode")) is not int or proof["inode"] <= 0
+                        or (proof.get("method") == "trusted_subprocess_exec_error_pipe" and (
+                            proof.get("exec_error_pipe") != "closed_without_error"
+                            or type(proof.get("child_exit_code")) is not int
+                            or not 0 <= proof["child_exit_code"] <= 255
+                            or not actual.get("launch_receipt_sha256")))
                         or any(not handle.get(key) or handle.get(key) != actual.get(key) for key in (
                             "container_id", "launch_id", "image_id", "manifest_sha256",
                             "engine_id", "run_id", "attempt_id"))
                         or actual.get("execution") != handle.get("execution")
+                        or any(actual.get(key) != handle.get(key)
+                               for key in ("kind", "orca_scope", "parent_container_id"))
                         or any(identity.get(key) is None or identity.get(key) != actual_identity.get(key)
                                or identity.get(key) != proof.get(key) for key in ("pid", "start_ticks"))):
                     raise ValueError("actual-start receipt differs from its persisted gated ORCA identity")
+                if actual.get("launch_receipt_sha256"):
+                    import hashlib
+
+                    transport_path = store.path(f"{attempt.directory}/orca-launch-transport.json")
+                    raw = b""
+                    if transport_path.exists():
+                        with transport_path.open("rb") as source:
+                            raw = source.read(8193)
+                    if (not 0 < len(raw) <= 8192 or not raw.endswith(b"\n")
+                            or hashlib.sha256(raw).hexdigest() != actual["launch_receipt_sha256"]):
+                        raise ValueError("actual-start receipt differs from its launcher transport")
+                    receipt = json.loads(raw)
+                    receipt_identity = receipt.get("identity", {})
+                    if (receipt.get("version") != 1 or receipt.get("kind") != "orca"
+                            or receipt.get("status") != "confirmed"
+                            or receipt.get("actual_start_evidence") != proof
+                            or not isinstance(receipt_identity, dict)
+                            or any(receipt_identity.get(key) != identity.get(key)
+                                   for key in ("pid", "start_ticks"))):
+                        raise ValueError("actual-start receipt differs from its launcher transport")
+                if recovered_actual is not None:
+                    # Close the original crash window before reconciliation or
+                    # collecting any new evidence; the next restart reuses it.
+                    atomic_write(actual_path, (json.dumps(actual, indent=2) + "\n").encode(), immutable=True)
                 handle = actual
             if handle.get("backend") == "linux-container":
                 from orca_agent.backends import container

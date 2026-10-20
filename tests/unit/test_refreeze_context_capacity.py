@@ -100,6 +100,25 @@ def test_repaired_t3_goal_routes_keep_actual_goal_feedback_within_frozen_capacit
     # the context deliberately avoids repeating these assessments a second time.
     assert {row["request_goal_id"] for row in wire["DATA"]["delivery"]["goals"]} == {
         row["goal_id"] for row in kwargs["feedback"]["current_goal_use"]}
+    bindings = wire["AUTHORITY"]["current_input_bindings"]
+    references = [row for row in wire["DATA"]["results"] if row.get("input_binding_refs")]
+    assert len(references) == 2
+    for row in references:
+        for index in row["input_binding_refs"]:
+            binding = bindings[index]
+            original = next(result for result in kwargs["results"] if result.id == row["result_id"])
+            output = original.qualified_outputs[binding["port"]]
+            assert binding["result_id"] == original.id
+            assert (binding["artifact_id"], binding["sha256"]) == (output.artifact_id, output.source["sha256"])
+            assert all(check.status == "passed" and check.rule_version == binding["rule_version"]
+                       for check in output.checks)
+    # Current feedback keeps its body even if the same input was already seen.
+    rows = [context._result(result, 256) for result in kwargs["results"]]
+    context._compact_result_facts(rows)
+    before = deepcopy(rows)
+    assert not context._reference_current_input_facts(rows, kwargs["results"], run, bindings,
+                                                     [result.id for result in kwargs["results"]])
+    assert rows == before
 
 
 def test_capacity_failure_reports_each_complete_request_without_prompt_contents():

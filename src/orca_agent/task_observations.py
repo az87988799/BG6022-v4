@@ -1,12 +1,18 @@
 """Read a bounded task declaration and bind it to archived evidence, never qualify it."""
 
 import json
+import re
 from pathlib import PurePosixPath
 from types import SimpleNamespace
 
 from pydantic import Field
 
 from orca_agent.models import Check, Observation, ObservationSource, Record
+
+_ADMISSION_VERSION = "bounded-observation-admission-3"
+_MANIFEST_BYTES = 8 * 1024 * 1024
+_RECORD_BYTES = 256 * 1024
+_RECORDS_BYTES = 1024 * 1024
 
 
 class _Source(Record):
@@ -21,7 +27,7 @@ class _Declared(Record):
     unit: str | None = Field(default=None, max_length=128)
     sources: list[_Source] = Field(min_length=1, max_length=16)
     formula: str | None = Field(default=None, max_length=4000)
-    artifacts: list[str] = Field(default_factory=list, max_length=64)
+    artifacts: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list, max_length=16)
 
 
@@ -166,10 +172,31 @@ def _internal_source_artifact(store, receipt, name, *, general):
     return artifact
 
 
-def _record(store, run, step, attempt, files, item):
+def _task_artifact(store, run, attempt, files, name, *, role):
+    """One exact archive binding for ordinary sources and declared products."""
+    selected = files.get("task/" + _task_relative(name))
+    if selected is None:
+        raise ValueError(f"observation {role} was not archived")
+    artifact = store.load_artifact(selected["artifact_id"])
+    store.artifact_path(artifact.id)
+    if artifact.sha256 != selected.get("sha256"):
+        raise ValueError(f"observation {role} archive hash differs")
+    if (artifact.run_id, artifact.attempt_id) != (run.id, attempt.id):
+        raise ValueError(f"observation {role} belongs to a different Attempt")
+    return artifact
+
+
+def _record(store, run, step, attempt, files, item, *, simplified=False, normalizations=None):
     sources, native_conditions = [], []
     general = _general_admission(store, run)
-    for declaration in item.sources:
+    if not simplified and len(item.artifacts) > 64:
+        raise ValueError("legacy observation artifacts exceed 64 items")
+    artifact_names = list(dict.fromkeys(_task_relative(name) for name in item.artifacts))
+    if simplified and len(artifact_names) > run.budget.artifact_count:
+        raise ValueError("observation artifacts exceed the frozen Run artifact_count allowance")
+    declared_artifacts = {name: _task_artifact(store, run, attempt, files, name,
+                                             role="analysis artifact") for name in artifact_names}
+    for source_index, declaration in enumerate(item.sources):
         name = _task_relative(declaration.filename)
         admitted = {}
         registered_input = None
@@ -215,24 +242,32 @@ def _record(store, run, step, attempt, files, item):
             else:
                 selected = files.get("task/" + name)
                 if selected is None:
-                    raise ValueError("observation task source was not archived")
-                artifact = store.load_artifact(selected["artifact_id"])
+                    # A directory label can only summarize files this very
+                    # record explicitly declared. No filesystem search, basename
+                    # inference or SDK-source expansion is permitted.
+                    expanded = [(key, artifact) for key, artifact in declared_artifacts.items()
+                                if simplified and key.startswith(name + "/")]
+                    if not expanded:
+                        raise ValueError("observation task source was not archived")
+                    sources.extend(ObservationSource(artifact_id=artifact.id, sha256=artifact.sha256,
+                        location=declaration.location, attempt_id=attempt.id)
+                        for _, artifact in expanded)
+                    if normalizations is not None:
+                        normalizations.append({"source_index": source_index,
+                            "original_source": declaration.model_dump(mode="json", exclude_none=True),
+                            "basis": "exact_prefix_within_this_record_declared_artifacts",
+                            "expanded_count": len(expanded), "expanded_preview_complete": len(expanded) <= 8,
+                            "expanded_preview": [{"filename": key, "artifact_id": artifact.id,
+                                "sha256": artifact.sha256} for key, artifact in expanded[:8]]})
+                    continue
+                artifact = _task_artifact(store, run, attempt, files, name, role="task source")
         store.artifact_path(artifact.id)
         if registered_input is None and (artifact.run_id != run.id or artifact.attempt_id != parent.id):
             raise ValueError("observation source does not belong to its original Attempt")
         sources.append(ObservationSource(artifact_id=artifact.id, sha256=artifact.sha256,
             location=declaration.location, attempt_id=artifact.attempt_id if registered_input is not None else parent.id,
             internal_request_key=request_key, actual_conditions=admitted))
-    artifacts = []
-    for name in item.artifacts:
-        selected = files.get("task/" + _task_relative(name))
-        if selected is None:
-            raise ValueError("observation analysis artifact was not archived")
-        artifact = store.load_artifact(selected["artifact_id"])
-        store.artifact_path(artifact.id)
-        if (artifact.run_id, artifact.attempt_id) != (run.id, attempt.id):
-            raise ValueError("observation analysis artifact belongs to a different Attempt")
-        artifacts.append(artifact.id)
+    artifacts = [artifact.id for artifact in declared_artifacts.values()]
     # Different candidate geometries are expected in a comparison. Preserve
     # every actual input binding; the summary contains only shared conditions.
     conditions = dict(native_conditions[0]) if native_conditions else {}
@@ -270,35 +305,94 @@ def collect(store, run, step, attempt, files, *, diagnostics=None):
     entry = files.get("task/observations.json")
     if entry is None:
         return []
+    simplified = store.run_configuration(run).workflow_policy == "simplified-1"
     path = store.artifact_path(entry["artifact_id"])
-    if path.stat().st_size > 65536:
-        raise ValueError("observations.json exceeds 64 KiB")
+    manifest_ref = {"artifact_id": entry["artifact_id"], "sha256": entry.get("sha256")}
+    limit = min(_MANIFEST_BYTES, run.budget.artifact_bytes, run.budget.artifact_total_bytes) if simplified else 65536
+    if simplified:
+        artifact = store.load_artifact(entry["artifact_id"])
+        if ((artifact.run_id, artifact.attempt_id) != (run.id, attempt.id)
+                or artifact.sha256 != entry.get("sha256")):
+            raise ValueError("observation manifest archive binding differs from its original Attempt or hash")
+    if path.stat().st_size > limit:
+        if simplified and diagnostics is not None:
+            diagnostics.append({"category": "observation_manifest_rejected",
+                "rule_version": _ADMISSION_VERSION, "manifest": manifest_ref,
+                "detail": "observation manifest exceeds the frozen bounded read allowance",
+                "manifest_bytes": path.stat().st_size, "manifest_bytes_limit": limit})
+        raise ValueError(f"observations.json exceeds bounded read allowance ({limit} bytes)" if simplified
+                         else "observations.json exceeds 64 KiB")
     from orca_agent.llm import _strict_json
 
-    raw = _strict_json(path.read_bytes())
+    with path.open("rb") as stream:
+        payload = stream.read(limit + 1)
+    if len(payload) > limit:
+        raise ValueError("observation manifest changed beyond its bounded read allowance")
+    raw = _strict_json(payload)
     if not isinstance(raw, dict) or type(raw.get("version")) is not int or raw["version"] != 1:
         raise ValueError("unsupported task observation manifest")
     manifest = _Manifest.model_validate(raw)
     records = []
+    accepted_indices, accepted_bytes = [], 0
     names = set()
     duplicates = {item.get("name") for item in manifest.observations if isinstance(item, dict)
                   and isinstance(item.get("name"), str)
                   and sum(isinstance(other, dict) and other.get("name") == item.get("name")
                           for other in manifest.observations) > 1}
     for index, declaration in enumerate(manifest.observations):
+        item_bytes = None
         try:
+            if simplified:
+                item_bytes = len(json.dumps(declaration, ensure_ascii=False, allow_nan=False,
+                                            separators=(",", ":")).encode("utf-8"))
+                if item_bytes > _RECORD_BYTES:
+                    raise ValueError("observation declaration exceeds the per-record byte allowance; use a bounded summary with archived sources")
             item = _Declared.model_validate(declaration)
             if (item.name not in step.parameters.observation_names or item.name in names
                     or item.name in duplicates):
                 raise ValueError("observation name is duplicate or outside the frozen Step")
             names.add(item.name)
             json.dumps(item.value, allow_nan=False)
-            records.append(_record(store, run, step, attempt, files, item))
+            normalizations = []
+            record = _record(store, run, step, attempt, files, item, simplified=simplified,
+                             normalizations=normalizations)
+            if simplified:
+                item_bytes = len(record.model_dump_json().encode("utf-8"))
+                if item_bytes > _RECORD_BYTES:
+                    raise ValueError("bound observation exceeds the per-record byte allowance; use a bounded summary with archived sources")
+                if accepted_bytes + item_bytes > _RECORDS_BYTES:
+                    raise ValueError("observation exceeds the remaining total record byte allowance; full declaration remains in the archived manifest")
+                accepted_bytes += item_bytes
+                accepted_indices.append(index)
+            records.append(record)
+            if normalizations and diagnostics is not None:
+                diagnostics.append({"category": "observation_sources_normalized", "index": index,
+                    "name": item.name, "rule_version": _ADMISSION_VERSION,
+                    "manifest": {**manifest_ref, "path": [
+                        {"kind": "key", "key": "observations"}, {"kind": "index", "index": index}]},
+                    "normalizations": normalizations,
+                    "full_expansion": "bound Observation.sources and this manifest record's explicit artifacts",
+                    "scientific_validation": "unverified"})
         except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
             if diagnostics is None:
                 raise
-            diagnostics.append({"category": "observation_manifest_rejected", "index": index,
-                "name": declaration.get("name") if isinstance(declaration, dict) else None, "detail": str(exc)})
+            diagnostic = {"category": "observation_manifest_rejected", "index": index,
+                "name": declaration.get("name") if isinstance(declaration, dict) else None, "detail": str(exc)}
+            if simplified:
+                diagnostic.update(rule_version=_ADMISSION_VERSION, manifest={**manifest_ref,
+                    "path": [{"kind": "key", "key": "observations"}, {"kind": "index", "index": index}]},
+                    record_bytes=item_bytes, record_bytes_limit=_RECORD_BYTES,
+                    remaining_record_bytes=_RECORDS_BYTES - accepted_bytes)
+            diagnostics.append(diagnostic)
+    if simplified and diagnostics is not None:
+        diagnostics.append({"category": "observation_admission", "rule_version": _ADMISSION_VERSION,
+            "manifest": manifest_ref, "manifest_bytes": len(payload), "manifest_bytes_limit": limit,
+            "record_bytes_limit": _RECORD_BYTES, "total_record_bytes_limit": _RECORDS_BYTES,
+            "record_count_limit": 32, "accepted_indices": accepted_indices,
+            "artifact_count_limit": run.budget.artifact_count,
+            "accepted_record_bytes": accepted_bytes,
+            "rejected_count": len(manifest.observations) - len(records),
+            "scientific_validation": "unverified"})
     return records
 
 
@@ -333,7 +427,7 @@ def _native_current_conditions(request, goal, system_id, *, policy=None):
     return effective_conditions(projected, constraint, system_id)
 
 
-def _additional_conditions(request, goal, system_id, *, actual=None):
+def _additional_conditions(request, goal, system_id, *, actual=None, goal_only=False):
     """No unimplemented physical condition becomes true by being unqualified."""
     from orca_agent.applicability import CONDITION_FIELDS
 
@@ -341,7 +435,7 @@ def _additional_conditions(request, goal, system_id, *, actual=None):
     metadata = {"explain_results", "requires_sources"}
     system = next((item for item in request.systems if item.id == system_id), None)
     values, sources, reasons = {}, {}, []
-    for scope in (request, system):
+    for scope in (() if goal_only else (request, system)):
         if scope is None:
             continue
         for name, value in scope.conditions.items():
@@ -522,7 +616,63 @@ def _comparison_environment_goals(run, request, goal, requested):
     return alternatives if len(alternatives) > 1 else {}
 
 
-def _assess_general_sources(store, run, request, goal, step, attempt, observation):
+def _reported_delivery(run, goal):
+    return (run.configuration is not None
+            and run.configuration.observation_delivery_policy == "reported-observation-1"
+            and goal.evidence_contract_version == "generic-observation-1"
+            and goal.verification == "reported_with_limitations")
+
+
+def _requires_native_execution(goal):
+    """Read the frozen Goal contract, never infer execution from task-authored data.
+
+    Normalization authenticates the quantity and minimum requirements. The
+    retained original quote can span several outputs when source_refs were used;
+    its other execution requirements do not transfer to this Goal. Use that
+    quote only when the Goal has no local quantity or requirement text. This
+    guard verifies execution provenance, not numerical scientific correctness.
+    """
+    execution = re.compile(
+        r"(?:真实|实际|完成|运行|执行)\s*ORCA|"
+        r"ORCA\s*(?:单点|计算|能量|频率|优化|原生输出|输出结果)|"
+        r"\b(?:run|execute|perform|compute|calculate)\b[^。；;\n]{0,80}\bORCA\b|"
+        r"\b(?:actual|real)\s+ORCA\b|"
+        r"\bORCA\s+(?:calculations?|energies|energy|single[- ]point|results?|outputs?)\b", re.I)
+    waived = re.compile(r"(?:无需|不必|不要|不需要)\s*(?:运行|执行|使用|进行)?\s*ORCA|"
+                        r"\b(?:do not|don't|need not|no need to)\s+(?:run|execute|use)\s+ORCA\b", re.I)
+    local = [text for text in (goal.quantity, *goal.minimum_evidence) if text]
+    for text in local or [goal.original_text]:
+        for clause in re.split(r"[。；;，,\n]|\b(?:but|however)\b|但是|但|然而", text or "", flags=re.I):
+            if execution.search(clause) and not waived.search(clause):
+                return True
+    return False
+
+
+def _assess_task_sources(run, request, goal, step, requested):
+    """Task output identity is established by collect(), not by ORCA conditions."""
+    from orca_agent.applicability import CONDITION_FIELDS
+
+    system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
+    if requested and requested != [system_id]:
+        raise ValueError("generic_observation_system_binding_mismatch")
+    reasons = []
+    if (not run.permission.code_execution or not run.permission.artifact_writes
+            or "python.execute" not in run.permission.allowed_tools):
+        reasons.append("task_observation_execution_not_authorized")
+    if _requires_native_execution(goal):
+        reasons.append("explicit_native_execution_requires_native_source")
+    # A task report does not acquire global quantum conditions. Conditions
+    # explicitly attached to this Goal still require their real native source.
+    reasons.extend("scientific_condition_requires_native_evidence:" + name
+                   for name in sorted(set(goal.conditions).intersection(CONDITION_FIELDS)))
+    relation, extra = _additional_conditions(request, goal, system_id, goal_only=True)
+    reasons.extend(extra)
+    if relation is not None:
+        reasons.append("geometry_relation_requires_native_evidence")
+    return reasons
+
+
+def _assess_general_sources(store, run, request, goal, step, attempt, observation, *, reported_delivery=False):
     """Compare each admitted source with its requested scope, not with its peers."""
     from orca_agent.orca.native_profile import canonical_native_condition
 
@@ -604,6 +754,9 @@ def _assess_general_sources(store, run, request, goal, step, attempt, observatio
             reasons.append("mixed_input_source_conditions_unverified")
         return reasons
 
+    if reported_delivery:
+        return _assess_task_sources(run, request, goal, step, requested)
+
     # Explicit analysis of registered input files is an execution in its own
     # right. File identity does not establish ORCA conditions or qualification.
     inputs = [source for source in observation.sources
@@ -631,6 +784,7 @@ def assess(store, run, request, goal, result):
     from orca_agent.minimum_evidence import assess_minimum_evidence
 
     reasons, conditions = [], {}
+    reported_delivery = _reported_delivery(run, goal)
     try:
         if goal.verification != "reported_with_limitations":
             raise ValueError("generic_observation_cannot_satisfy_qualified_evidence")
@@ -647,7 +801,8 @@ def assess(store, run, request, goal, result):
         general = _general_admission(store, run)
         system_ids = goal.system_ids or [s.id for s in request.systems]
         system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
-        if not general and system_ids and (len(system_ids) != 1 or system_id != system_ids[0]):
+        if not general and not reported_delivery and system_ids and (
+                len(system_ids) != 1 or system_id != system_ids[0]):
             raise ValueError("generic_observation_system_binding_mismatch")
         if result.observations.get("evidence_collection_complete") is not True:
             raise ValueError("generic_observation_collection_incomplete")
@@ -667,18 +822,21 @@ def assess(store, run, request, goal, result):
         if observation.validation_status == "failed" or any(check.status == "failed" for check in observation.checks):
             raise ValueError("requested_observation_has_failed_consistency_checks")
         conditions = observation.actual_conditions
-        if general:
-            reasons.extend(_assess_general_sources(store, run, request, goal, step, attempt, observation))
+        if general or reported_delivery:
+            reasons.extend(_assess_general_sources(store, run, request, goal, step, attempt, observation,
+                                                   reported_delivery=reported_delivery))
         else:
             reasons.extend(_assess_legacy_sources(store, run, request, goal, step, attempt,
                                                  observation, system_id, conditions))
     except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
         reasons.append(str(exc))
-    requirements = assess_minimum_evidence(goal, result, purpose_passed=not reasons)
+    requirements = assess_minimum_evidence(goal, result, purpose_passed=not reasons,
+                                           reported_delivery=reported_delivery)
     reasons.extend(item["reason"] + ":" + item["requested"] for item in requirements
-                   if item["status"] != "passed")
+                   if item["status"] != "passed" and item.get("blocking", True))
     return {"status": "unresolved" if reasons else "passed", "reasons": list(dict.fromkeys(reasons)),
             "minimum_evidence": requirements, "scientific_qualification": False,
+            **({"verification_basis": "reported_delivery"} if reported_delivery else {}),
             "current_use": {"source_conditions": conditions,
                 "source_condition_evidence": {"origin": "admitted_native_input" if conditions else "unknown",
                     "scientific_output_verification": "unverified"}}}

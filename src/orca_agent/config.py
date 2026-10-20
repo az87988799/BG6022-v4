@@ -5,7 +5,7 @@ import tomllib
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_serializer
 
 from orca_agent.models import (
     BudgetLimits,
@@ -42,12 +42,21 @@ class Config(BaseModel):
     execution: ExecutionConfiguration = Field(default_factory=ExecutionConfiguration)
     mechanical_progression: bool = Field(default=True, strict=True)
     workflow_policy: Literal["simplified-1"] | None = "simplified-1"
+    observation_delivery_policy: Literal["reported-observation-1"] | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_observation_policy(self, handler):
+        value = handler(self)
+        if self.observation_delivery_policy is None:
+            value.pop("observation_delivery_policy", None)
+        return value
 
     def run_configuration(self) -> RunConfiguration:
         return RunConfiguration(resources=self.resources, model=self.model,
                                 model_profile=self.model_profile, execution=self.execution,
                                 mechanical_progression=self.mechanical_progression,
-                                workflow_policy=self.workflow_policy)
+                                workflow_policy=self.workflow_policy,
+                                observation_delivery_policy=self.observation_delivery_policy)
 
 
 def load_config(path: Path | None = None) -> Config:

@@ -1794,8 +1794,9 @@ class Store:
                     updated.input_bindings = carry_selected_identity_inputs(
                         self, updated, next_request, run.input_bindings)
                 updated.goal_status = {goal.id: "insufficient_evidence" for goal in next_request.goals}
+                evidence_view = updated.model_copy(update={"goal_evidence": run.goal_evidence})
                 for goal in next_request.goals:
-                    selection = current_goal_evidence(self, run, next_request, goal, prior_plan)
+                    selection = current_goal_evidence(self, evidence_view, next_request, goal, prior_plan)
                     if (selection["gaps"] or not selection["assessment"]
                             or selection["assessment"]["status"] != "passed"):
                         continue

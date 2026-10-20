@@ -16,14 +16,16 @@ def call(document, query):
     return SimpleNamespace(parameters=knowledge.SearchParameters(document=document, query=query).model_dump())
 
 
-@pytest.mark.parametrize("document", knowledge.GUIDES)
-def test_guides_are_versioned_bounded_sources_without_network(monkeypatch, document):
+@pytest.mark.parametrize("document,version", [
+    ("guide_input", "guide-1"), ("guide_method", "guide-2"), ("guide_diagnostics", "guide-1"),
+])
+def test_guides_are_versioned_bounded_sources_without_network(monkeypatch, document, version):
     monkeypatch.setattr(knowledge.httpx, "Client", lambda **kwargs: pytest.fail("packaged guide opened network"))
     original = dict(knowledge.GUIDES)
     result, raw, _ = knowledge._retrieve(None, None, call(document, "input" if document == "guide_input" else "method" if document == "guide_method" else "output"))
     assert raw == knowledge.GUIDES[document].encode()
     assert result["status"] == "found" and result["kind"] == "project_guide"
-    assert result["document_id"] == document and result["document_version"] == "guide-1"
+    assert result["document_id"] == document and result["document_version"] == version
     assert result["rendering_version"] == "text-1"
     assert result["index_version"] == knowledge.INDEX_VERSION and result["index_sha256"] == knowledge.INDEX_SHA256
     assert result["document_sha256"] == hashlib.sha256(knowledge.GUIDES[document].encode()).hexdigest()

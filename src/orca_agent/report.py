@@ -348,8 +348,14 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                       "binding": _safe(binding), "result_id": selected.get("result_id") if selected else None,
                       "run_id": selected.get("run_id") if selected else None,
                       "gaps": _safe(goal_gaps)})
+        if row.get("verification_basis") == "reported_delivery":
+            goals[-1].update(verification_basis="reported_delivery", scientific_qualification=False,
+                unverified_user_obligations=_safe([entry for entry in row.get("minimum_evidence", [])
+                    if entry.get("status") == "unverified"]))
     complete = bool(goals and not gaps and request and not request.unresolved
                     and all(g["report_status"] == "satisfied" for g in goals if g["required"]))
+    unverified_obligations = any(goal.get("unverified_user_obligations")
+                                for goal in goals if goal["required"])
     attempts = []
     previous = {}
     for attempt in run.attempts:
@@ -375,7 +381,7 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
         "plan_id": run.plan_id, "plan_version": run.plan_version,
         "recorded_delivery_status": run.delivery_status,
         "report_delivery_status": "complete" if complete else "partial",
-        "user_goal_complete": complete,
+        "user_goal_complete": complete and not unverified_obligations,
         "request": {"original_text": _safe(request.original_text),
                     "conditions": {key: getattr(request, key) for key in (
                         "method", "basis", "charge", "multiplicity")},
@@ -398,6 +404,9 @@ def build_report(store, run: Run | str) -> dict[str, Any]:
                         "Finite sampling describes only the sampled discrete geometries.",
                         "An optimized geometry alone does not establish vibrational stability or a global minimum."],
     }
+    if any(goal.get("verification_basis") == "reported_delivery" for goal in goals):
+        report.update(reported_delivery_complete=complete,
+            user_obligations_verification="unverified" if unverified_obligations else "checked")
     report["artifact_index"] = _delivery_index(store, run, request, report["results"])
     report["generated_scripts"] = [item for item in report["artifact_index"] if "generated_script" in item["purposes"]]
     snapshot = delivery_snapshot(request, run, selections,
@@ -459,7 +468,8 @@ def render_report(report: dict[str, Any]) -> str:
     """Render a compact standalone Markdown report without model interpretation."""
     lines = [f"Run `{_cell(report['run_id'])}` — {_cell(report['run_state'])}", "",
              f"交付：{_cell(report['report_delivery_status'])}；用户目标完成："
-             + ("是。" if report["user_goal_complete"] else "否。"), "",
+             + ("是。" if report["user_goal_complete"] else "尚未验证。"
+                if report.get("user_obligations_verification") == "unverified" else "否。"), "",
              "| 目标 | 物理量/查询 | 必需 | 记录状态 | 当前证据 |",
              "| --- | --- | --- | --- | --- |"]
     stop = report.get("stop_reason", {})
@@ -473,6 +483,12 @@ def render_report(report: dict[str, Any]) -> str:
     for goal in report["goals"]:
         if goal["gaps"]:
             lines.append(f"\n目标 `{_cell(goal['goal_id'])}` 缺口：{_cell('; '.join(goal['gaps']))}。\n")
+        if goal.get("verification_basis") == "reported_delivery":
+            state = "仅完成有来源观察的交付" if goal["report_status"] == "satisfied" else "尚未完成观察交付"
+            lines.append(f"\n目标 `{_cell(goal['goal_id'])}` {state}，不授予科学资格。")
+            for entry in goal.get("unverified_user_obligations", []):
+                lines.append("- 原文义务尚未由程序验证：" + _cell(entry["requested"], bounded=False)
+                             + "；来源：" + _cell(entry.get("source", "unknown")) + "。")
     for row in report.get("goal_facts", []):
         lines.append(f"\n目标 `{_cell(row['goal_id'])}` 当前条件：{_cell(row['current_conditions'])}。")
         if row["source_conditions"]:

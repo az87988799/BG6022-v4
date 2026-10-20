@@ -145,7 +145,8 @@ def test_actual_start_requires_loaded_executable_proof_before_poll(monkeypatch, 
     """Exercise callback accounting only; fake transport is not isolation evidence."""
     events = []
     identity = {"pid": 42, "start_ticks": "123"}
-    proof = {**identity, "executable": "/opt/orca/orca", "method": "test_fixture"}
+    proof = {**identity, "executable": "/opt/orca/orca",
+             "method": "proc_exe_inode_and_pid_start_ticks", "device": 25, "inode": 321}
     boundary = {"handle": {"launch_id": "accounting", "container_id": "container"},
                 "execution": {}, "deadline": time.monotonic() + 60, "running": True,
                 "observed_processes": {}}
@@ -163,14 +164,22 @@ def test_actual_start_requires_loaded_executable_proof_before_poll(monkeypatch, 
             return self.returncode
 
     process = Process()
+    transport = None
+
+    def popen(*args, **kwargs):
+        nonlocal transport
+        transport = kwargs["stdout"]
+        return process
 
     def helper(_boundary, _uid, args, **kwargs):
         if args[0] == "identity":
             return 0, json.dumps(identity).encode(), ""
         if args[0] == "exec-identity":
-            process.returncode = 0
-            return (0 if observed else 1,
-                    json.dumps({**identity, "actual_start_evidence": proof}).encode(), "")
+            pytest.fail("native start no longer polls host /proc")
+        if args[0] == "gate" and observed:
+            transport.write(json.dumps({"version": 1, "kind": "orca", "identity": identity,
+                "status": "confirmed", "actual_start_evidence": proof}).encode() + b"\n")
+            transport.flush()
         events.append(args[0])
         return 0, b"{}", ""
 
@@ -178,7 +187,7 @@ def test_actual_start_requires_loaded_executable_proof_before_poll(monkeypatch, 
         value["running"] = False
         return True
 
-    monkeypatch.setattr(container.subprocess, "Popen", lambda *a, **k: process)
+    monkeypatch.setattr(container.subprocess, "Popen", popen)
     monkeypatch.setattr(container, "_argv", lambda *a: [])
     monkeypatch.setattr(container, "_helper", helper)
     monkeypatch.setattr(container, "_heartbeat", lambda *a: None)
@@ -195,10 +204,14 @@ def test_actual_start_requires_loaded_executable_proof_before_poll(monkeypatch, 
         handles.append(handle)
         events.append("actual")
 
-    result = container.run_managed(boundary, kind="orca", local_workdir=tmp_path, timeout_s=30,
+    def poll(_handle):
+        events.append("poll")
+        process.returncode = 0
+
+    result = container.run_managed(boundary, kind="orca", local_workdir=tmp_path / "task", timeout_s=30,
                                    on_started=gated, on_actual_started=actual,
                                    cancel_requested=lambda: False,
-                                   on_poll=lambda h: events.append("poll"))
+                                   on_poll=poll)
     assert handles[0]["launch_phase"] == "gated_launcher"
     assert "actual_start_evidence" not in handles[0]
     assert events.index("gated") < events.index("gate")

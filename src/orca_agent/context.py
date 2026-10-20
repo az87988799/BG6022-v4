@@ -28,6 +28,9 @@ from orca_agent.context_efficiency import (
 )
 from orca_agent.decision_purpose import (
     classify_decision_purpose,
+    current_input_bindings,
+    current_step_execution_records,
+    decision_identity,
     relevant_result_ids,
     retained_read_result_ids,
     settled_failed_native_attempts,
@@ -63,7 +66,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import call_usage_counter, get_tool
 
-PROMPT_VERSION = "agent-json-v78"
+PROMPT_VERSION = "agent-json-v81"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -393,9 +396,7 @@ def _rejected_proposal_view(feedback, run, basis, *, limit):
     value = feedback.get("rejected_proposal")
     if not feedback.get("validation_error") or not isinstance(value, dict):
         return None
-    identity = {"basis": basis, "feedback": feedback.get("new_result_ids", [])}
-    if run.reopened_terminal_ids:
-        identity["reopened_terminal_ids"] = list(run.reopened_terminal_ids)
+    identity = decision_identity(run, basis, feedback.get("new_result_ids", []))
     logical = "decision_" + fingerprint(identity)[:24]
     record = next((item for item in run.model_records if item["id"] == value.get("model_id")), None)
     decision = next((item for item in run.decisions if item["id"] == value.get("model_id")), None)
@@ -414,13 +415,14 @@ def _rejected_proposal_view(feedback, run, basis, *, limit):
     original = value["proposal"]
     raw = _json(original).encode("utf-8")
     redacted = False
+    shortened = False
 
     def omitted(item, reason):
         encoded = _json(item).encode("utf-8")
         return {"omitted": reason, "bytes": len(encoded), "sha256": hashlib.sha256(encoded).hexdigest()}
 
-    def sanitize(item, depth=0):
-        nonlocal redacted
+    def sanitize(item, depth=0, field=None):
+        nonlocal redacted, shortened
         if depth > 20:
             redacted = True
             return omitted(item, "nesting bound; not original value")
@@ -429,6 +431,11 @@ def _rejected_proposal_view(feedback, run, basis, *, limit):
                 # In particular, never rewrite a script then label it original.
                 redacted = True
                 return omitted(item, "sensitive/path-bearing text; not original value")
+            if field in {"content", "code"} and len(item.encode("utf-8")) > 2048:
+                shortened = True
+                return {**omitted(item, "source text retained in rejected response; not original value"),
+                        "text_bytes": len(item.encode("utf-8")),
+                        "text_sha256": hashlib.sha256(item.encode("utf-8")).hexdigest()}
             return item
         if isinstance(item, dict):
             safe = {}
@@ -436,14 +443,13 @@ def _rejected_proposal_view(feedback, run, basis, *, limit):
                 if key.lower() in _PRIVATE_KEYS - {"filename"}:
                     redacted = True
                     continue
-                safe[key] = sanitize(child, depth + 1)
+                safe[key] = sanitize(child, depth + 1, key)
             return safe
         if isinstance(item, list):
             return [sanitize(child, depth + 1) for child in item]
         return item
 
     candidate = sanitize(original)
-    shortened = False
     # Prefer full JSON. If it does not fit, omit large text leaves (usually
     # task code) explicitly, retaining surrounding Steps/goal_map/CodeRefs.
     for _ in range(32):
@@ -465,8 +471,9 @@ def _rejected_proposal_view(feedback, run, basis, *, limit):
         parent[key] = omitted(parent[key], "context bound; not original value")
         shortened = True
     if len(_json(candidate).encode("utf-8")) > limit:
-        candidate = omitted(original, "candidate exceeds context bound; no replacement supplied")
-        shortened = True
+        # An opaque hash cannot be corrected. Refuse an unrepresentable repair
+        # state rather than spend another call asking for a blind rewrite.
+        raise ContextLimitError("rejected proposal structure exceeds correction context bound")
     return {"trust": "untrusted", "status": "rejected_not_accepted",
         "source": {key: value[key] for key in (
             "model_id", "logical_request_id", "request_hash", "response_record_sha256", "basis")},
@@ -1306,6 +1313,35 @@ def _compact_result_facts(results):
     return {key: value for key, value in shared.items() if key in used_profiles}, defaults
 
 
+def _reference_current_input_facts(rows, results, run, bindings, feedback_ids):
+    """Reference already displayed input qualifications, never fresh feedback.
+
+    The binding projection has verified the complete Result output/checks. An
+    old input's hash-only metadata preview adds no file locator beyond that
+    exact current binding. Its immutable Result still retains the full record.
+    """
+    by_result = {}
+    for index, binding in enumerate(bindings):
+        by_result.setdefault(binding["result_id"], []).append((index, binding))
+    originals = {result.id: result for result in results}
+    changed = False
+    for row in rows:
+        identifier = row["result_id"]
+        selected = by_result.get(identifier)
+        original = originals[identifier]
+        if (not selected or identifier not in run.processed_feedback or identifier in feedback_ids
+                or original.operation_status != "completed" or row.get("checks")
+                or row.get("untrusted_diagnostics") or row.get("unqualified_observation_records")
+                or row.get("unqualified_observations") or not row.get("observations_omitted")
+                or set(original.qualified_outputs) != {binding["port"] for _, binding in selected}):
+            continue
+        row["input_binding_refs"] = [index for index, _ in selected]
+        for key in ("qualified_outputs", "source_sha256", "source_record_sha256", "observations_omitted"):
+            row.pop(key, None)
+        changed = True
+    return changed
+
+
 def _decision_result_references(run, plan, results, projected, feedback):
     """Keep current decision bodies; reference other immutable Results explicitly.
 
@@ -1343,6 +1379,7 @@ def _decision_result_references(run, plan, results, projected, feedback):
         reference = {key: row[key] for key in (
             "result_id", "step_id", "operation_status",
             "qualified_outputs", "checks", "untrusted_diagnostics", "artifact_ids", "artifact_count", "source",
+            "attempt_id", "file_index", "diagnostic_artifacts",
         ) if row.get(key) not in (None, {}, [])}
         if original.run_id != run.id:
             reference["run_id"] = original.run_id
@@ -1629,12 +1666,10 @@ def _frozen_completed(plan, run, results):
     if not plan:
         return {}
     selected = {result.id: result for result in results}
-    steps = {step.id: step for step in plan.steps}
     frozen = {}
-    for item in [*run.attempts, *run.calls]:
+    for step, item in current_step_execution_records(run, plan):
         result = selected.get(item.result_id)
-        step = steps.get(item.step_id)
-        if (result is None or step is None or item.frozen_step != step or result.step_id != step.id
+        if (result is None or result.step_id != step.id
                 or result.run_id != run.id or item.state != "completed"
                 or result.operation_status != "completed"):
             continue
@@ -1653,14 +1688,8 @@ def _recorded_step_execution(plan, run):
     """
     if plan is None:
         return {}
-    steps = {step.id: step for step in plan.steps}
     recorded = {}
-    for item in [*run.attempts, *run.calls]:
-        step = steps.get(item.step_id)
-        if (step is None or item.frozen_step != step or item.tool != step.tool
-                or getattr(item, "number", None) is None
-                and item.parameters != step.parameters.model_dump(mode="json")):
-            continue
+    for step, item in current_step_execution_records(run, plan):
         row = {"record_id": item.id, "state": item.state}
         if item.result_id in run.result_ids:
             row["result_id"] = item.result_id
@@ -2790,8 +2819,7 @@ def _terminal_context(request, run, snapshot, purpose, feedback, user_messages, 
             raise
     for reference_arrays in (False, True):
         if rejected_view is not None:
-            template["DATA"]["rejected_proposal"] = _rejected_proposal_view(
-                feedback, run, basis, limit=1024 if reference_arrays else 4096)
+            template["DATA"]["rejected_proposal"] = rejected_view
         template["DATA"]["delivery"] = _public_delivery(snapshot, reference_arrays=reference_arrays)
         if run.permission.code_execution:
             # Ending an authorized code task keeps the same readable intent
@@ -3150,6 +3178,48 @@ def build_context(
         "related_results": (feedback.get("new_result_ids", []) if feedback is not None
                             and "new_result_ids" in feedback else [result.id for result in results]),
     }
+    if (run.configuration and getattr(run.configuration, "observation_delivery_policy", None)
+            == "reported-observation-1"):
+        authority["observation_delivery_contract"] = {
+            "version": "reported-observation-1",
+            "scope": "generic-observation-1 / reported_with_limitations only",
+            "minimum_evidence": "Keep original obligations. An unregistered evaluator leaves an obligation unverified; it is not an unsupported user gap or a passed check.",
+            "delivery": "Report sourced observations and mandatory verification limits. This grants no scientific qualification. Registered checks, explicit conditions and authenticated execution requirements remain binding.",
+        }
+    input_provenance = {}
+    if not semantic_intake:
+        by_result = {result.id: result for result in results}
+        inputs = []
+        for binding in current_input_bindings(run):
+            result = by_result.get(binding["result_id"])
+            if result is None:
+                raise ContextLimitError("current input Result must remain in model context")
+            output = result.qualified_outputs.get(binding["port"])
+            if (result.run_id != run.id or result.call_id != binding["call_id"]
+                    or not output or output.artifact_id != binding.get("artifact_id")
+                    or output.source.get("sha256") != binding.get("sha256")
+                    or output.artifact_id not in result.artifact_ids
+                    or output.checks != result.checks.get(binding["port"])
+                    or not output.checks or any(check.status != "passed"
+                        or check.rule_version != binding.get("rule_version") for check in output.checks)):
+                raise ValueError("current input binding differs from its qualified Result")
+            inputs.append({key: binding[key] for key in (
+                "system_id", "port", "result_id", "artifact_id", "sha256", "rule_version",
+                "request_version", "source_request_version") if key in binding})
+            if output.unit is not None:
+                inputs[-1]["unit"] = output.unit
+            # Current input qualifications do not imply reproducible generation
+            # or an optimized structure. Keep these recorded limits in DATA,
+            # including an explicit unknown seed, even when Result bodies later
+            # become compact binding references. Never copy execution metadata.
+            provenance = {key: _bounded_data(_safe(result.source[key]), 512)
+                          for key in ("generator", "random_seed",
+                                      "generation_reproducibility", "guarantee")
+                          if key in result.source}
+            if provenance:
+                input_provenance[result.id] = provenance
+        if inputs:
+            authority["current_input_bindings"] = inputs
     if delivery_snapshot:
         authority["decision_purpose"] = purpose.as_dict()
     if delivery_snapshot and purpose.kind == "planning" and not semantic_intake:
@@ -3580,9 +3650,11 @@ def build_context(
                     template["SCHEMA_SHA256"] = _hash(proposal_schema)
         snapshot_results = {ref.get("result_id") for ref in (delivery_snapshot or {}).get("references", {}).values()
                             if ref.get("run_id") == run.id}
+        current_input_ids = {binding["result_id"] for binding in current_input_bindings(run)}
         visible_results = [result for result in results if not (
             result.id in run.processed_feedback and result.id in snapshot_results
-            and result.id not in retained_reads and result.id not in retained_failures)] if delivery_snapshot else results
+            and result.id not in retained_reads and result.id not in retained_failures
+            and result.id not in current_input_ids)] if delivery_snapshot else results
         projected_results = [_result(result, observation_bytes if result.id in retained_reads
             and _call_execution(run, result).get("effects") == ["read_registered_artifact"]
             else min(1024, observation_bytes)) for result in visible_results]
@@ -3618,6 +3690,8 @@ def build_context(
             "results": projected_results,
             "feedback": _bounded_data(data_feedback, min(1024, observation_bytes)),
         }
+        if input_provenance:
+            template["DATA"]["input_provenance"] = input_provenance
         if result_references:
             template["DATA"]["result_references"] = result_references
             template["DATA"]["result_reference_rules"] = (
@@ -3627,19 +3701,18 @@ def build_context(
             template["DATA"].update(_task_progress(run, min(1024, observation_bytes)))
         if retained_reads:
             template["DATA"]["read_window_rules"] = (
-                "Previously requested reads only. coverage describes Tool return; context_page describes visible preview. "
-                "consumed_read omits prior body/checks/query parameters; immutable Result/Call retains them. "
-                "Different windows remain separate; no automatic file reads. "
-                "Do not repeat the same window: use continuation.parameters, next_offset or context_page.next_line. "
-                "A successful workspace.write preserves your authored bytes; rereading your entire script is not "
-                "a prerequisite to execution. Read specific missing external formats or failure locations.")
+                "Prior reads only; coverage=Tool return, context_page=visible preview. "
+                "consumed_read body/checks/query stay in Result/Call. Distinct windows; no automatic reads. "
+                "Continue via continuation.parameters/next_offset/context_page.next_line, never repeat a window. "
+                "workspace.write bytes persist: no script reread prerequisite; read missing formats/failure locations.")
             if reused_windows:
                 template["DATA"]["read_window_rules"] += (
                     " lines_ref/artifacts_ref points to the named field of DATA.results[result_id].unqualified_observations[observation]; "
                     "the referenced preview and its omissions apply, not unseen original lines.")
         if rejected_view is not None:
-            template["DATA"]["rejected_proposal"] = (rejected_view if not compact else
-                _rejected_proposal_view(feedback, run, basis, limit=min(16384, max(1024, observation_bytes * 4))))
+            # Repair structure is mandatory feedback, independent of optional
+            # observation preview sizes. Large source leaves are already hashed.
+            template["DATA"]["rejected_proposal"] = rejected_view
         if delivery_snapshot and "stop" in examples:
             template["DATA"]["delivery"] = _public_delivery(delivery_snapshot,
                 resources_in_authority=True, reference_arrays=compact and observation_bytes == 256)
@@ -3730,6 +3803,12 @@ def build_context(
             template["TOOL_CATALOG"] = [{key: value for key, value in tool.items() if key != "description"}
                                         for tool in template["TOOL_CATALOG"]]
             profiles, defaults = _compact_result_facts([*projected_results, *result_references])
+            if observation_bytes == 256 and _reference_current_input_facts(
+                    projected_results, visible_results, run, authority.get("current_input_bindings", []),
+                    (feedback or {}).get("new_result_ids", [])):
+                template["DATA"]["input_binding_rules"] = (
+                    "input_binding_refs indexes AUTHORITY.current_input_bindings: passed input checks, not science. "
+                    "Other metadata stays in the immutable Result.")
             for reference in result_references:
                 reference["operation_status"] = "completed"
             if profiles:

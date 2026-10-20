@@ -81,6 +81,24 @@ def current_goal_evidence(store, run, request, goal, plan=None, results=None):
     binding = plan.goal_map.get(goal.id) if plan else None
     if binding:
         bindings.append(binding)
+    # Input acquisition is independent of a later calculation Plan. A method
+    # choice may suspend that Plan while retaining its authenticated initial
+    # geometry; do not turn that still-current input into an unexplained gap.
+    if goal.port in {"resolved_identity", "prepared_geometry"} and len(goal.system_ids) == 1:
+        from orca_agent.input_bindings import validate_input_result
+        from orca_agent.models import EvidenceRef
+
+        selected_input = run.input_bindings.get(goal.system_ids[0], {}).get(goal.port)
+        if selected_input:
+            try:
+                result = store.load_result(run.id, selected_input["result_id"])
+                if validate_input_result(store, run, request, result, goal.port) == selected_input:
+                    bindings.append(OutputBinding(port=goal.port, evidence=EvidenceRef(
+                        run_id=run.id, result_id=result.id, port=goal.port,
+                        artifact_id=selected_input["artifact_id"], sha256=selected_input["sha256"],
+                        rule_version=selected_input["rule_version"])))
+            except (KeyError, ValueError, OSError, RuntimeError, TypeError):
+                pass  # Invalid selections cannot create new evidence routes.
     candidates = []
     for binding in bindings:
         selected = _bound_goal_evidence(store, run, request, goal, binding, results)
@@ -206,7 +224,11 @@ def goal_evidence_assessment(store, run, request, goal, result):
         return assess(store, run, request, goal, result)
     try:
         from orca_agent.input_bindings import resolved_request
-        request = resolved_request(store, run, request)
+        # Input receipts validate against the activated Request itself. A
+        # derived geometry view is for scientific consumption, not a revision
+        # of the original acquisition intent or its authentication chain.
+        if goal.port not in {"resolved_identity", "prepared_geometry"}:
+            request = resolved_request(store, run, request)
         if goal.port in {"energy", "optimized_geometry", "dipole_moment"}:
             output = result.qualified_outputs.get(goal.port)
             if request.unresolved or goal.unresolved or result.operation_status != "completed":

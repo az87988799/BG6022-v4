@@ -110,7 +110,9 @@ def profile_contract(policy):
         "block_syntax": "Open scalar scientific key/value pairs, including comma-separated values; "
             "managed %geom Constraints {...} end and Scan B/A/D indices = start,end,count end. "
             "Unknown control blocks, file paths, external programs, restarts and unaccounted nesting are refused.",
-        "geometry": "* xyzfile <charge> <multiplicity> <basename.xyz>; pin and declare that XYZ dependency.",
+        "geometry": "* xyzfile <charge> <multiplicity> <basename.xyz>; pin and declare that XYZ dependency. "
+            "Place coordinates before a nuclear-property %eprnmr block: NMR true or any Nuclei selector "
+            "(including atom index 0). Blocks are not automatically reordered.",
         "task_geometry": {"enabled": policy.allow_task_geometry,
             "scope": "Must preserve initial atom count and ordered elements when task geometry is authorized."},
         "request_binding": "Explicit method/basis/state/charge/multiplicity/environment compared with Request; "
@@ -457,10 +459,11 @@ def validate_managed_input(text, dependencies, resources, policy, binding):
                 if end != len(tokens):
                     raise ValueError("trailing input after a native control block")
                 if (name == "eprnmr" and geometry is None
-                        and value.get("nmr", "false").casefold() not in _FALSE
+                        and ("nuclei" in value or value.get("nmr", "false").casefold() not in _FALSE)
                         and (binding or {}).get("workflow_policy") == "simplified-1"):
                     raise ValueError("%eprnmr must follow the xyzfile coordinate declaration "
-                                     "when NMR is requested; move this block after the coordinates")
+                                     "when NMR or Nuclei requests nuclear properties; "
+                                     "move this block after the coordinates")
                 blocks[name] = value
         elif line.startswith("*"):
             match = re.fullmatch(r"\*\s*xyzfile\s+(-?\d+)\s+([1-9][0-9]*)\s+(.+)", line, re.I)

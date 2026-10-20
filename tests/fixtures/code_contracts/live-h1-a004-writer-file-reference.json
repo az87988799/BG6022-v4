@@ -1,0 +1,32 @@
+{
+  "note": "Exact proposal from the real failed H1 a004 repair response. Tests rebind only repair_of to an offline failed Step; no source payload or scientific setting is altered. This fixture is not an executed repair or scientific evidence.",
+  "source_file": {
+    "path": "data/live-repair/attempts/a004/data/runs/run_72843d356e6f47e7a65d074af0cf7421/model/model_76668d490eb14525a9d2f06335f0426f.response.json",
+    "sha256": "b7aaa28be6f3265df0c99a99e52a3335fff0b375840bdc2073cb692b68a7dd06"
+  },
+  "proposal": {
+    "action": "revise_plan",
+    "parameters": {
+      "steps": [
+        {
+          "key": "step_input_reorder",
+          "tool": "workspace.write",
+          "parameters": {
+            "name": "hcn_nmr.inp",
+            "role": "orca",
+            "content": "! PBE0 def2-TZVP RKS NMR NoAutoStart\n%maxcore 192\n%scf MaxIter 256 AutoTRAH false end\n* xyzfile 0 1 hcn.xyz\n%eprnmr\n  Nuclei = all\nend\n"
+          }
+        },
+        {
+          "key": "step_orca_giao_repair",
+          "repair_of": "step_ed3720508cc5466eb0e31389de3639a3",
+          "input": {
+            "producer_step_id": "step_input_reorder",
+            "file_key": "hcn_nmr.inp"
+          }
+        }
+      ]
+    },
+    "reason": "The failed native run step_ed3720508cc5466eb0e31389de3639a3 failed inside ORCA with its own explicit instruction (task/stderr.txt, lines 1-2): '[EPRNMR] block: nuclear properties are requested but no coordinates have been read! Please put the coordinates input before the [EPRNMR] block'. The archived input showing %eprnmr before '* xyzfile 0 1 hcn.xyz' confirms the cause. Fix: write a corrected hcn_nmr.inp where the *xyzfile line precedes %eprnmr (keeping explicit Nuclei = all, NoAutoStart, %maxcore 192, and %scf MaxIter 256 AutoTRAH false), then repair the native run with that producer input. Scientific settings (PBE0, def2-TZVP, RKS 0 1 gas, NMR) and the existing prepared-geometry manifest are retained unchanged; no new ORCA call is started by this planning action."
+  }
+}

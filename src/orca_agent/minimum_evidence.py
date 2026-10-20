@@ -42,12 +42,17 @@ def describe_evidence_contract(goal):
             "requirements": requirements}
 
 
-def assess_minimum_evidence(goal, result, *, purpose_passed):
-    """Retain each requested string and its mapping; unsupported never means pass."""
+def assess_minimum_evidence(goal, result, *, purpose_passed, reported_delivery=False):
+    """Retain every obligation; report-only unknowns never become scientific passes.
+
+    The opt-in is frozen by the caller's Run policy. Its absence preserves the
+    historical assessment shape and strict behavior, including evidence hashes.
+    """
     entries = []
     for text in goal.minimum_evidence:
         canonical = LEGACY_NAMES.get(text, text)
         reason = None
+        unverified_report = False
         checks = result.checks.get(goal.port, [])
         if canonical == goal.port:
             passed = goal.port in result.qualified_outputs
@@ -73,7 +78,17 @@ def assess_minimum_evidence(goal, result, *, purpose_passed):
                 passed = bool(required) and all(row.get("status") == "qualified" for row in required)
         else:
             passed, reason = False, "unsupported_minimum_evidence"
-        entries.append({"requested": text, "canonical": canonical, "mapping_version": RULE_VERSION,
-                        "status": "passed" if passed else "unresolved",
-                        "reason": None if passed else reason or "minimum_evidence_missing_failed_or_wrong_version"})
+            unverified_report = (reported_delivery
+                and goal.evidence_contract_version == "generic-observation-1"
+                and goal.verification == "reported_with_limitations")
+            if unverified_report:
+                reason = "no_registered_evaluator"
+        entry = {"requested": text, "canonical": canonical, "mapping_version": RULE_VERSION,
+                 "status": "passed" if passed else "unverified" if unverified_report else "unresolved",
+                 "reason": None if passed else reason or "minimum_evidence_missing_failed_or_wrong_version"}
+        if reported_delivery:
+            entry.update(blocking=not passed and not unverified_report,
+                         source=goal.minimum_evidence_source.get(text, "unknown"),
+                         text_evidence_ref={"goal_id": goal.id, "field": "text_evidence"})
+        entries.append(entry)
     return entries

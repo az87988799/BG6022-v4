@@ -464,7 +464,6 @@ def publish_response(boundary, response, files, *, sequence=None):
 
 def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_requested,
                 on_poll=None, parent_handle=None, fault=None, on_actual_started=None):
-    del local_workdir  # Host path is used only by explicit staging/collection.
     if kind not in {"python", "orca"}:
         raise ValueError("invalid fixed workload kind")
     nested = parent_handle is not None
@@ -479,7 +478,11 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
     area = kind
     scoped_area = _scoped_area(boundary, area)
     process = None
-    transport = tempfile.TemporaryFile()
+    # This FD belongs only to the image-owned launcher. Native stdout/stderr use
+    # different FDs, and task files can never supply this management receipt.
+    transport_path = (Path(local_workdir).parent / "orca-launch-transport.json"
+                      if kind == "orca" and local_workdir is not None else None)
+    transport = transport_path.open("xb") if transport_path else tempfile.TemporaryFile()
     previous = _ACTIVE.get(boundary["handle"]["launch_id"])
 
     def controls():
@@ -548,18 +551,56 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
 
         def observe_actual_start():
             nonlocal handle
-            if kind == "orca" and result["actual_start_status"] != "confirmed":
-                code, data, _ = _helper(boundary, _UID[area], ["exec-identity", scoped_area], check=False)
-                if code == 0:
-                    observed = json.loads(data)
+            if kind == "orca" and result["actual_start_status"] == "unconfirmed":
+                if transport_path is None:
+                    raise ValueError("native launch requires a durable management transport")
+                with transport_path.open("rb") as source:
+                    data = source.read(8193)
+                if len(data) > 8192:
+                    raise ValueError("native launch receipt exceeds bound")
+                if data.endswith(b"\n"):
+                    receipt = json.loads(data)
+                    observed = receipt.get("identity", {})
+                    if (receipt.get("version") != 1 or receipt.get("kind") != "orca"
+                            or not isinstance(observed, dict)
+                            or any(observed.get(key) != identity.get(key)
+                                   for key in ("pid", "start_ticks"))):
+                        raise ValueError("native launch receipt differs from gated identity")
+                    result["launch_receipt"] = receipt
+                    if receipt.get("status") == "not_started":
+                        error = receipt.get("error", {})
+                        if (receipt.get("reason") != "native_exec_rejected"
+                                or not isinstance(error, dict)
+                                or error.get("source") != "subprocess_child_exec_error_pipe"
+                                or error.get("type") not in {"OSError", "PermissionError",
+                                    "FileNotFoundError", "SubprocessError"}):
+                            raise ValueError("invalid native exec rejection receipt")
+                        result.update(actual_start_status="not_started", not_started=True,
+                                      reason="orca_exec_failed")
+                        return
+                    if receipt.get("status") == "unconfirmed":
+                        return
+                    if receipt.get("status") != "confirmed":
+                        raise ValueError("invalid native launch receipt status")
+                    observed = {**observed, "actual_start_evidence": receipt.get("actual_start_evidence")}
                     proof = observed.get("actual_start_evidence", {})
                     if (observed.get("pid") != identity["pid"]
                             or observed.get("start_ticks") != identity["start_ticks"]
+                            or not isinstance(proof, dict)
                             or proof.get("executable") != "/opt/orca/orca"
                             or proof.get("pid") != identity["pid"]
-                            or proof.get("start_ticks") != identity["start_ticks"]):
+                            or proof.get("start_ticks") != identity["start_ticks"]
+                            or proof.get("method") not in {"proc_exe_inode_and_pid_start_ticks",
+                                "trusted_subprocess_exec_error_pipe"}
+                            or type(proof.get("device")) is not int or proof["device"] < 0
+                            or type(proof.get("inode")) is not int or proof["inode"] <= 0
+                            or (proof.get("method") == "trusted_subprocess_exec_error_pipe" and (
+                                proof.get("exec_error_pipe") != "closed_without_error"
+                                or type(proof.get("child_exit_code")) is not int
+                                or not 0 <= proof["child_exit_code"] <= 255))):
                         raise ValueError("actual executable proof differs from gated identity")
-                    handle = {**handle, "launch_phase": "executed", "actual_start_evidence": proof}
+                    handle = {**handle, "launch_phase": "executed", "actual_start_evidence": proof,
+                              "launch_receipt_sha256": hashlib.sha256(data).hexdigest()}
                     result.update(handle=handle, actual_start_status="confirmed")
                     if on_actual_started:
                         on_actual_started(handle)
@@ -567,9 +608,7 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
                         fault("after_actual_start_saved")
 
         while process.poll() is None:
-            # The executable may be short lived. Observe the fixed /proc/exe
-            # inode before cgroup sampling/heartbeat or a parent control callback
-            # consumes that window. A process-name sample is never this proof.
+            # Read a durable trusted launcher receipt, not a live /proc race.
             observe_actual_start()
             controls()
             if transport.tell() > 65536:
@@ -577,15 +616,16 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
             if on_poll:
                 on_poll(handle)
             time.sleep(0.1)
-        # Docker transport can finish between its poll and the observation.
-        # Keep the same strong proof requirement on this final opportunity.
+        # A short native process can finish before the first host observation.
         observe_actual_start()
         controls()
         _helper(boundary, _UID[area], ["quiesce", scoped_area], timeout=5)
         result.update(exit_code=process.returncode,
                       state="completed" if process.returncode == 0 else "failed",
                       reason="workload_tree_exited" if process.returncode == 0 else "nonzero_exit_code")
-        if kind == "orca" and result["actual_start_status"] != "confirmed":
+        if kind == "orca" and result["actual_start_status"] == "not_started":
+            result.update(state="failed", reason="orca_exec_failed")
+        elif kind == "orca" and result["actual_start_status"] != "confirmed":
             result.update(state="failed", reason="orca_actual_start_unconfirmed")
     except Exception as exc:
         control = boundary.get("control_outcome")
@@ -616,8 +656,14 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
         result["resource_usage"]["oom_killed"] = bool(final.get("OOMKilled"))
         if nested:
             result["resource_usage"]["aggregate_charged_to_parent"] = True
-        transport.seek(0)
-        result["transport_stderr"] = transport.read(65536).decode("utf-8", "replace")
+        if transport_path:
+            with transport_path.open("rb") as source:
+                raw = source.read(65536)
+        else:
+            transport.seek(0)
+            raw = transport.read(65536)
+        result["transport_stderr"] = ("" if result.get("launch_receipt")
+                                      else raw.decode("utf-8", "replace"))
         transport.close()
     return result
 

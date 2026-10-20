@@ -9,7 +9,11 @@ import psutil
 from orca_agent import runner
 from orca_agent.backends import local
 from orca_agent.context import ContextLimitError, build_context
-from orca_agent.decision_purpose import DECISION_CONTRACT_PROMPT_VERSIONS
+from orca_agent.decision_purpose import (
+    DECISION_CONTRACT_PROMPT_VERSIONS,
+    decision_identity,
+    pending_admission_error,
+)
 from orca_agent.llm import DeepSeekTransport, proposal_recovery_kind
 from orca_agent.model_usage import current_basis, send_model
 from orca_agent.models import EvidenceRef, Proposal, fingerprint, utc_now
@@ -27,6 +31,106 @@ from orca_agent.tools.registry import get_tool, require_execution_available
 def _ready(plan, results):
     return [s for s in plan.steps if s.id not in results
             and all(dep in results for dep in s.depends_on)] if plan else []
+
+
+def _missing_container_hint(raw, position):
+    """Diagnose a strict EOF-only closure; never return a repaired proposal."""
+    from orca_agent.llm import _has_credential, _strict_json
+
+    if position != len(raw) or raw.rstrip()[-1:] in {"", "{", "[", ",", ":"}:
+        return {}
+    stack, in_string, escaped = [], False, False
+    for character in raw:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+        elif character == '"':
+            in_string = True
+        elif character in "{[":
+            stack.append("}" if character == "{" else "]")
+            if len(stack) > 24:
+                return {}
+        elif character in "}]":
+            if not stack or stack.pop() != character:
+                return {}
+    if in_string or not stack:
+        return {}
+    suffix = "".join(reversed(stack))
+    try:
+        completed = _strict_json(raw + suffix)
+    except (ValueError, UnicodeError, RecursionError):
+        return {}
+    if not isinstance(completed, dict) or _has_credential(json.dumps(completed, ensure_ascii=False)):
+        return {}
+
+    def keys(value):
+        return [key if len(key) <= 64 else key[:61] + "..." for key in list(value)[:16]]
+
+    hint = {"missing_closing_containers": suffix,
+            "syntax_completion_notice": "Syntax completion is not schema approval; verify top-level required fields.",
+            "top_level_keys": keys(completed)}
+    if isinstance(completed.get("parameters"), dict):
+        hint["parameter_keys"] = keys(completed["parameters"])
+    return hint
+
+
+def _proposal_json_error(reply):
+    """Report parser positions with a bounded, credential-checked source window."""
+    from orca_agent.llm import _has_credential, _strict_json
+
+    raw = reply.get("raw_content")
+    if not isinstance(raw, str) or _has_credential(raw):
+        return "Return one complete JSON object; the prior response could not be parsed."
+    try:
+        _strict_json(raw)
+    except json.JSONDecodeError as exc:
+        start, end = max(0, exc.pos - 160), min(len(raw), exc.pos + 160)
+        return {"requirement": "Correct the JSON syntax at the reported position; return the complete object.",
+                "parser_message": exc.msg, "line": exc.lineno, "column": exc.colno,
+                "character": exc.pos,
+                "rejected_data_window": {"start": start, "end": end, "text": raw[start:end],
+                                         "total_characters": len(raw), "truncated": start > 0 or end < len(raw)},
+                **(_missing_container_hint(raw, exc.pos) if reply.get("finish_reason") == "stop" else {})}
+    except (ValueError, UnicodeError, RecursionError) as exc:
+        known = {"duplicate JSON key", "non-finite JSON constant", "non-finite JSON number",
+                 "JSON nesting exceeds bound"}
+        return {"requirement": str(exc) if str(exc) in known else "Return a valid bounded JSON object."}
+    return "Return one complete JSON object."
+
+
+def _record_admission_error(store, run, step, decision_id, exc, before):
+    """Only a known rejection before any new execution can return to planning."""
+    from orca_agent.llm import _has_credential
+
+    after = ([item.id for item in run.attempts], [item.id for item in run.calls],
+             [item.request_key for item in run.internal_calls])
+    active = any(item.state in {"intent", "reserved", "running", "unknown"}
+                 for item in [*run.attempts, *run.calls, *run.internal_calls])
+    if after != before or active or not run.agent_enabled:
+        raise exc
+    detail = exc.detail
+    if _has_credential(json.dumps(detail, ensure_ascii=False)):
+        raise StoreError("Credential-bearing admission diagnostic withheld") from exc
+    basis = current_basis(store, run)
+    same = [row for row in run.diagnostics if row.get("category") == "step_admission_rejected"
+            and row.get("basis") == basis and row.get("step_id") == step.id
+            and row.get("requirement") == detail]
+    if len(same) >= 1 + run.budget.corrections_per_proposal:
+        raise StoreError("bounded prelaunch reference correction exhausted") from exc
+    if decision_id and decision_id not in run.applied_decisions:
+        run.applied_decisions.append(decision_id)
+    run.diagnostics.append({"category": "step_admission_rejected", "basis": basis,
+        "step_id": step.id, "logical_id": step.logical_id, "tool": step.tool,
+        "decision_id": decision_id, "requirement": detail, "execution_started": False,
+        "decision_count": len(run.decisions),
+        "admission_id": fingerprint({"basis": basis, "step": step.model_dump(mode="json"),
+                                     "decision_id": decision_id, "occurrence": len(same)})})
+    run.state = "ready"
+    store.save_run(run)
 
 
 def _delivery_preflight(store, run, tool_name, parameters, plan, results, *, model_profile):
@@ -149,11 +253,11 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
 
     basis = current_basis(store, run)
     feedback = [rid for rid in run.result_ids if rid not in run.processed_feedback]
-    identity = {"basis": basis, "feedback": feedback}
-    if run.reopened_terminal_ids:
-        identity["reopened_terminal_ids"] = list(run.reopened_terminal_ids)
+    admission = pending_admission_error(run, basis)
+    identity = decision_identity(run, basis, feedback)
     logical_id = "decision_" + fingerprint(identity)[:24]
-    rejection = None
+    rejection = ({"category": "step_admission_rejected", "requirement": admission["requirement"],
+                  "step_id": admission["step_id"]} if admission else None)
     records = [r for r in run.model_records if r.get("logical_id", "").startswith(logical_id + "_")]
     max_requests = 1 + run.budget.corrections_per_proposal + run.budget.transport_retries
 
@@ -473,7 +577,8 @@ def _decision(store, run, plan, results, transport, batch, fault, *, model_profi
 
             from orca_agent.planning import PlanningError
             from orca_agent.proposals import ProposalError, validation_error_details
-            detail = (exc.detail if isinstance(exc, ProposalError) or (
+            detail = (_proposal_json_error(reply) if category == "invalid_proposal_json" else
+                      exc.detail if isinstance(exc, ProposalError) or (
                           isinstance(exc, PlanningError) and exc.detail is not None) else
                       validation_error_details(exc)
                       if isinstance(exc, ValidationError) else
@@ -793,6 +898,11 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                 if utc_now() >= run.deadline:
                     raise BudgetExceeded("run deadline exhausted")
                 feedback = set(run.result_ids) - set(run.processed_feedback)
+                # A saved prelaunch rejection survives a coordinator restart.
+                # It must reach the model before mechanical selection can
+                # choose the same unchanged Step again.
+                force_redecision = force_redecision or bool(
+                    pending_admission_error(run, current_basis(store, run)))
                 need_model = run.agent_enabled and (plan is None or feedback or pending_messages or force_redecision)
                 step = None
                 decision_id = None
@@ -883,7 +993,15 @@ def execute(store, config, run_id, *, resume=False, fault=None, transport=None, 
                 _delivery_preflight(store, run, step.tool, step.parameters, plan, results,
                                     model_profile=config.model_profile)
                 if set(get_tool(step.tool).effects) & {"execute_orca", "execute_python"}:
-                    result, outcome = _science(store, config, run, step, results, batch, fault)
+                    before = ([item.id for item in run.attempts], [item.id for item in run.calls],
+                              [item.request_key for item in run.internal_calls])
+                    from orca_agent.file_references import FileReferenceError
+                    try:
+                        result, outcome = _science(store, config, run, step, results, batch, fault)
+                    except FileReferenceError as exc:
+                        _record_admission_error(store, run, step, decision_id, exc, before)
+                        force_redecision = True
+                        continue
                     # A known prelaunch failure is a settled Result, even when
                     # no process started. Rebuild exactly as resume/send-time
                     # validation do; only a control-paused not_started Attempt

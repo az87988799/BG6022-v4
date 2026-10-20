@@ -116,10 +116,15 @@ TOML file and `pytest --live-container`; scientific tests also require
 `--live-orca`. Use a fresh `--basetemp` directory for each evidence batch. These
 tests are developer-authored and do not enable a model or subsequent plan steps.
 
-The host records the gated launcher before opening its gate. An ORCA start is
-counted only after the fixed helper observes the same PID/start ticks executing
-the installed ORCA inode. A lost or too-short observation remains unconfirmed,
-retains its reservation and cannot establish a completed scientific operation.
+The host records the gated native child before opening its gate. The fixed
+supervisor observes the same PID/start ticks executing the installed ORCA inode.
+For a child that exits normally before that observation, its private CPython
+exec-error pipe and real non-signal exit provide a separately named proof.
+The supervisor alone owns the Docker management output; native stdout/stderr
+are separate task files. The host preserves that management receipt and hash,
+including recovery before `actual-start.json` was saved. Missing, interrupted,
+signaled or invalid proof remains unconfirmed and retains its reservation.
+See [0059](../../docs/decisions/0059-durable-orca-exec-confirmation.md).
 CPU accounting is a lower bound from the last cgroup observation; collector
 CPU and end-to-end costs are incomplete. Artifact byte budgets do not impose
 a hard disk quota on the persistent evidence volume.

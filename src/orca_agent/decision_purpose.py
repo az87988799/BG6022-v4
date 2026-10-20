@@ -15,7 +15,7 @@ DECISION_CONTRACT_PROMPT_VERSIONS = frozenset({
     "agent-json-v22", "agent-json-v23", "agent-json-v24", "agent-json-v25", "agent-json-v26", "agent-json-v27",
     "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32", "agent-json-v33", "agent-json-v34",
     "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41",
-    "agent-json-v74", "agent-json-v75", "agent-json-v76", "agent-json-v77", "agent-json-v78",
+    "agent-json-v74", "agent-json-v75", "agent-json-v76", "agent-json-v77", "agent-json-v78", "agent-json-v79", "agent-json-v80", "agent-json-v81",
     "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47",
     "agent-json-v48", "agent-json-v49", "agent-json-v50", "agent-json-v51", "agent-json-v52", "agent-json-v53", "agent-json-v54", "agent-json-v55", "agent-json-v56", "agent-json-v57", "agent-json-v58", "agent-json-v59", "agent-json-v60", "agent-json-v61", "agent-json-v62", "agent-json-v63", "agent-json-v64", "agent-json-v65", "agent-json-v66", "agent-json-v67", "agent-json-v68", "agent-json-v69", "agent-json-v70", "agent-json-v71", "agent-json-v73"})
 
@@ -27,6 +27,32 @@ class DecisionPurpose:
 
     def as_dict(self):
         return {"kind": self.kind, "allowed_actions": list(self.allowed_actions)}
+
+
+def pending_admission_error(run, basis):
+    """Return only a persisted prelaunch rejection of the current Run basis."""
+    rejection = next((row for row in reversed(run.diagnostics)
+                      if row.get("category") == "step_admission_rejected" and row.get("basis") == basis), None)
+    if rejection is None or "decision_count" not in rejection:
+        return rejection
+    count = rejection["decision_count"]
+    if type(count) is not int or not 0 <= count <= len(run.decisions):
+        raise ValueError("invalid persisted admission decision count")
+    if any(row.get("basis") == basis and row.get("action") != "rejected"
+           for row in run.decisions[count:]):
+        return None
+    return rejection
+
+
+def decision_identity(run, basis, feedback_ids):
+    """Share logical correction identity without trusting model feedback fields."""
+    identity = {"basis": basis, "feedback": list(feedback_ids)}
+    if run.reopened_terminal_ids:
+        identity["reopened_terminal_ids"] = list(run.reopened_terminal_ids)
+    admission = pending_admission_error(run, basis)
+    if admission:
+        identity["admission_id"] = admission["admission_id"]
+    return identity
 
 
 def classify_decision_purpose(actions, *, pending_messages=False, clarification=False):
@@ -171,6 +197,69 @@ def terminal_results_only(request, snapshot, *, pending_messages=False):
                for goal in request.goals if goal.required)
 
 
+def current_input_bindings(run):
+    """Select current persisted input receipts, not arbitrary historical outputs.
+
+    Store authenticates these bindings and execution rechecks their files. This
+    pure projection also requires the exact completed, selected local Call.
+    """
+    calls = {call.id: call for call in run.calls}
+    selected = []
+    for system_id, ports in run.input_bindings.items():
+        for port, binding in ports.items():
+            if not isinstance(binding, dict):
+                continue
+            call = calls.get(binding.get("call_id"))
+            if (binding.get("request_version") != run.request_version
+                    or binding.get("system_id") != system_id or binding.get("port") != port
+                    or binding.get("result_id") not in run.result_ids
+                    or not call or call.state != "completed"
+                    or call.result_id != binding.get("result_id")
+                    or call.parameters.get("system_id") != system_id
+                    or run.selected_results.get(call.step_id) != call.result_id):
+                continue
+            selected.append(binding)
+    return selected
+
+
+def current_step_execution_records(run, plan):
+    """Match receipts to the approved declaration, not its resolved file copy."""
+    from orca_agent.file_references import declared_attempt_step
+
+    steps = {step.id: step for step in plan.steps} if plan else {}
+    for item in [*run.attempts, *run.calls]:
+        step = steps.get(item.step_id)
+        if step is None or item.tool != step.tool or item.frozen_step is None:
+            continue
+        if getattr(item, "number", None) is not None:
+            if (item.frozen_step.id, item.frozen_step.logical_id, item.frozen_step.tool) != (
+                    item.step_id, item.logical_id, item.tool):
+                continue
+            try:
+                declared = declared_attempt_step(item)
+            except ValueError:
+                continue
+            if declared != step:
+                continue
+        elif item.frozen_step != step or item.parameters != step.parameters.model_dump(mode="json"):
+            continue
+        yield step, item
+
+
+def current_execution_result_ids(run, plan):
+    """Completed execution files remain authoring inputs until their Plan retires.
+
+    A gap says that goal evidence is still missing, not that a calculation never
+    happened. This exposes receipts and source handles without qualifying values.
+    """
+    from orca_agent.tools.registry import get_tool
+
+    return {item.result_id for step, item in current_step_execution_records(run, plan)
+            if item.state == "completed" and item.result_id in run.result_ids
+            and getattr(item, "finished_at", None) is not None
+            and any(effect.startswith("execute_") for effect in get_tool(step.tool).effects)}
+
+
 def relevant_result_ids(run, plan=None, *, snapshot=None, feedback_ids=(), terminal_only=False):
     """Select by current bindings, feedback and dependencies, never recency.
 
@@ -181,6 +270,8 @@ def relevant_result_ids(run, plan=None, *, snapshot=None, feedback_ids=(), termi
     from orca_agent.tools.registry import get_tool
     if not terminal_only:
         selected.update(feedback_ids)
+        selected.update(current_execution_result_ids(run, plan))
+        selected.update(binding["result_id"] for binding in current_input_bindings(run))
         selected.update(retained_read_result_ids(run))
         if run.permission.code_execution:
             selected.update(attempt.result_id for attempt in settled_failed_python_attempts(run))

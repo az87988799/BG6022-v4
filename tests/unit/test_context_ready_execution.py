@@ -42,10 +42,10 @@ def input_context(tmp_path, monkeypatch, *, ready=(), evidence_reads=24, code=Tr
     return run, plan, identity, prepared_result, wire
 
 
-def test_omitted_identity_result_still_has_completed_receipt_and_empty_ready_fact(tmp_path, monkeypatch):
+def test_bound_identity_result_and_completed_receipt_survive_empty_ready_fact(tmp_path, monkeypatch):
     run, plan, identity, result, wire = input_context(tmp_path, monkeypatch)
-    assert identity.id not in relevant_result_ids(run, plan, feedback_ids=[result.id])
-    assert identity.id not in [item["result_id"] for item in wire["DATA"]["results"]]
+    assert identity.id in relevant_result_ids(run, plan, feedback_ids=[result.id])
+    assert identity.id in [item["result_id"] for item in wire["DATA"]["results"]]
     assert wire["CONTROL"]["pending_step_ids"] == []
     for item in (identity, result):
         assert wire["AUTHORITY"]["step_execution"][item.step_id] == [{

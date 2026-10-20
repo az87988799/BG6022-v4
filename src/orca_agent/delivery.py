@@ -206,6 +206,11 @@ def goal_fact_rows(request, run, selections):
                      "minimum_evidence": assessment.get("minimum_evidence", []),
                      "gaps": gaps or ([] if applicable else ["qualified_current_goal_evidence_missing"]),
                      "next_action": "deliver" if applicable else "resolve_gaps_in_scope"}
+        if assessment.get("verification_basis") == "reported_delivery":
+            row.update(verification_basis="reported_delivery", scientific_qualification=False,
+                goal_completion_basis="reported_delivery",
+                user_obligations_verified=all(entry.get("status") == "passed"
+                    for entry in assessment.get("minimum_evidence", [])))
         for key in ("system_ids", "requested_identity", "source_condition_evidence", "minimum_evidence",
                     "requested_geometry_artifact_ids", "condition_sources"):
             if row[key] in ({}, []):
@@ -401,6 +406,12 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
                 "sources": row.get("condition_sources", {}), "source": row["source_conditions"],
                 "source_evidence": row.get("source_condition_evidence", {}),
                 "geometry_relation": row.get("geometry_relation")})]
+        if row.get("verification_basis") == "reported_delivery":
+            refs.append(fact(goal_ref, "verification_limits", {
+                "basis": "reported_delivery", "scientific_qualification": False,
+                "minimum_evidence": row.get("minimum_evidence", []),
+                "meaning": "Sourced observations are delivered; unverified user obligations are not checked or qualified.",
+            }, source_ref))
         if result:
             refs.append(fact(goal_ref, "operation", {"status": result.operation_status,
                 "source_integrity": integrity["status"], "qualified_ports": sorted(result.qualified_outputs)}, source_ref))
@@ -458,7 +469,11 @@ def delivery_snapshot(request, run, selections, *, allowed_actions=(), control_g
             if resources["unsettled_attempt_ids"] or resources["unsettled_call_ids"]:
                 block("execution_unsettled", {key: resources[key] for key in (
                     "unsettled_attempt_ids", "unsettled_call_ids")}, "Reconcile unsettled execution before new work.")
-        if row["goal_complete"]:
+        if row["goal_complete"] and row.get("verification_basis") == "reported_delivery":
+            relation, text, action = ("reported_observation_delivered",
+                "Sourced observation delivery is complete; unverified minimum-evidence obligations remain unverified and no scientific qualification is granted.",
+                "deliver")
+        elif row["goal_complete"]:
             relation, text, action = "current_goal_satisfied", "Current applicable evidence satisfies this goal.", "deliver"
         elif communication["delivery_scope"] == "registration_only" and not communication["awaiting_reply"]:
             relation, text, action = ("registration_complete_science_unmet",

@@ -10,6 +10,7 @@ from pydantic import ConfigDict, Field, ValidationError, field_validator, model_
 from orca_agent.models import (
     ArtifactCodeSelection,
     CodeRef,
+    ContractValidationError,
     EvidenceRef,
     Identifier,
     InputManifest,
@@ -230,11 +231,16 @@ class ProposalError(ValueError):
 
 
 def validation_error_details(exc):
-    """Expose numeric validation bounds without input values or arbitrary context."""
+    """Expose trusted contract diagnostics, never arbitrary exception/input text."""
     details = []
     for error in exc.errors(include_input=False, include_url=False):
         item = {"type": error["type"], "loc": list(error["loc"])}
         context = error.get("ctx", {})
+        contract = context.get("error")
+        if isinstance(contract, ContractValidationError):
+            item["loc"].extend(contract.path)
+            item["reason"] = str(contract)
+            item.update(contract.declarations)
         bounds = {key: context[key] for key in ("ge", "gt", "le", "lt", "multiple_of", "min_length", "max_length")
                   if key in context and type(context[key]) in (int, float) and math.isfinite(context[key])}
         if bounds:
@@ -284,7 +290,8 @@ def _schema_error(exc, *, path, tool=None, errors_details=None):
                 "instruction": (
                     "Use a registered Artifact reference. Under workflow_policy=simplified-1, its known "
                     "hash/language may be omitted, or use an explicit producer_step_id/producer_key "
-                    "with port (written_artifact or prepared_geometry) or exact file_key. Manifest entries "
+                    "with port (written_artifact or prepared_geometry) or exact file_key. For a file-writing "
+                    "producer, file_key must equal its declared name. Manifest entries "
                     "also require target_path and purpose. The program validates dependencies, permissions "
                     "and qualifications and freezes actual hashes before execution. Choose one reference form; "
                     "union alternatives are not cumulative. Historical policies "
@@ -301,7 +308,11 @@ def _schema_error(exc, *, path, tool=None, errors_details=None):
         for group in groups.values():
             if group and len(displayed) < 8:
                 displayed.append(group.pop(0))
-    return ProposalError("Use the declared parameter schema at each listed path.", **detail, errors=displayed)
+    requirement = "Use the declared parameter schema at each listed path."
+    reasons = list(dict.fromkeys(item["reason"] for item in displayed if "reason" in item))
+    if reasons:
+        requirement += " " + " ".join(reasons)
+    return ProposalError(requirement, **detail, errors=displayed)
 
 
 class ProposedStep(Record):
@@ -310,7 +321,10 @@ class ProposedStep(Record):
     tool: str | None = None
     parameters: dict[str, Any] = Field(default_factory=dict)
     system_id: str | None = None
-    geometry: dict[str, Any] | None = None
+    geometry: dict[str, Any] | None = Field(default=None,
+        description="Geometry-role Tools bind an Artifact or producer here. File-manifest Tools use "
+        "parameters.inputs entries with explicit target_path and purpose; an identical geometry "
+        "reference here is accepted only as a redundant alias of that manifest entry.")
     depends_on: list[str] = Field(default_factory=list)
     inputs: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
@@ -537,6 +551,100 @@ def _parameter_file_refs(parameters):
         yield from (entry for entry in manifest.get("entries", []) if isinstance(entry, dict))
 
 
+def _normalize_producer_reference(reference, ids, history, *, path):
+    """One exact symbolic producer resolver for every proposal reference role."""
+    selectors = [key for key in ("producer_key", "producer_step_id") if key in reference]
+    if not selectors:
+        return
+    canonical_ids = {**{identifier: identifier for identifier in ids.values()}, **ids}
+    resolved = [_resolve_step_keys([reference[key]], canonical_ids, history, path=[*path, key])[0]
+                for key in selectors]
+    if len(set(resolved)) != 1:
+        raise ProposalError("producer_key and producer_step_id must identify the same declared Step.",
+                            path=path, code="conflicting_producer_reference")
+    reference.pop("producer_key", None)
+    reference["producer_step_id"] = resolved[0]
+
+
+def _file_reference_items(parameters):
+    for name in ("code", "input"):
+        if isinstance(parameters.get(name), dict):
+            yield parameters[name], [name]
+    manifest = parameters.get("inputs")
+    if isinstance(manifest, dict) and isinstance(manifest.get("entries"), list):
+        for index, entry in enumerate(manifest["entries"]):
+            if isinstance(entry, dict):
+                yield entry, ["inputs", "entries", index]
+
+
+def _normalize_file_role_aliases(item, definition, ids, history, *, path):
+    """Consume structural aliases using the Tool's single declared file contract.
+
+    No filename, source, permission or scientific scope is inferred. In particular,
+    an outer geometry is redundant only when its exact source is already an
+    explicit manifest copy; the normal preflight still checks its qualification.
+    """
+    if not definition.check_contract.get("generic_observations"):
+        return
+    if "input_manifest" in definition.input_roles and "input_manifest" in item.inputs:
+        alias = item.inputs["input_manifest"]
+        for reference, location in _file_reference_items({"inputs": alias}):
+            _normalize_producer_reference(reference, ids, history,
+                path=[*path, "inputs", "input_manifest", *location[1:]])
+        current = item.parameters.get("inputs")
+        for reference, location in _file_reference_items({"inputs": current}):
+            _normalize_producer_reference(reference, ids, history, path=[*path, "parameters", *location])
+        if current is not None and current != alias:
+            raise ProposalError("Declare one consistent input manifest through its role or parameter.",
+                                path=[*path, "inputs", "input_manifest"], code="conflicting_file_reference")
+        item.parameters["inputs"] = alias
+        item.inputs.pop("input_manifest")
+    for reference, location in _file_reference_items(item.parameters):
+        _normalize_producer_reference(reference, ids, history, path=[*path, "parameters", *location])
+    for role, field in (("code", "code"), ("native_input", "input")):
+        if role not in definition.input_roles or role not in item.inputs:
+            continue
+        alias = item.inputs[role]
+        _normalize_producer_reference(alias, ids, history, path=[*path, "inputs", role])
+        current = item.parameters.get(field)
+        if current is not None:
+            if (not isinstance(current, dict)
+                    or any(current[key] != alias[key] for key in current.keys() & alias.keys())
+                    or {key: current.get(key) for key in ("artifact_id", "producer_step_id", "port", "file_key")}
+                    != {key: alias.get(key) for key in ("artifact_id", "producer_step_id", "port", "file_key")}):
+                raise ProposalError("The file input role and parameter must select the same exact source.",
+                    path=[*path, "inputs", role], code="conflicting_file_reference")
+        item.parameters[field] = {**alias, **(current or {})}
+        item.inputs.pop(role)
+    if "input_manifest" not in definition.input_roles:
+        return
+    geometries = [(item.geometry, [*path, "geometry"])] if item.geometry is not None else []
+    if "geometry" in item.inputs:
+        geometries.append((item.inputs["geometry"], [*path, "inputs", "geometry"]))
+    for geometry, location in geometries:
+        _normalize_producer_reference(geometry, ids, history, path=location)
+        try:
+            reference = InputRef.model_validate(geometry)
+        except ValidationError as exc:
+            raise _schema_error(exc, path=location) from None
+        matched = any(
+            (reference.artifact_id is not None and entry.get("artifact_id") == reference.artifact_id
+             or reference.producer_step_id is not None
+             and entry.get("producer_step_id") == reference.producer_step_id
+             and entry.get("port") == reference.port)
+            for entry, entry_path in _file_reference_items(item.parameters) if entry_path[0] == "inputs")
+        if not matched:
+            raise ProposalError(
+                "A file-manifest Tool needs the geometry source in parameters.inputs.entries with explicit "
+                "target_path and purpose. An outer geometry alias must match that exact source; "
+                "it cannot authorize a file or replace the managed initial-geometry preflight.",
+                path=location, code="geometry_manifest_reference_required",
+                manifest_path=[*path, "parameters", "inputs", "entries"])
+    if geometries:
+        item.geometry = None
+        item.inputs.pop("geometry", None)
+
+
 def _materialize_file_parameters(store, run, parameters, definition, ids, history, path):
     """Fill known immutable metadata and translate explicit producer keys."""
     from orca_agent.file_references import simplified_workflow
@@ -544,15 +652,15 @@ def _materialize_file_parameters(store, run, parameters, definition, ids, histor
     if not definition.check_contract.get("generic_observations"):
         return []
     dependencies = []
-    for reference in _parameter_file_refs(parameters):
+    for reference, location in _file_reference_items(parameters):
+        reference_path = [*path, *location]
         producer_key = reference.get("producer_key", reference.get("producer_step_id"))
         shorthand = producer_key is not None or "sha256" not in reference
         if shorthand and not simplified_workflow(run):
             raise ProposalError("File shorthand requires workflow_policy=simplified-1.", path=path)
         if producer_key is not None:
-            identifier = _resolve_step_keys([producer_key], ids, history, path=path)[0]
-            reference.pop("producer_key", None)
-            reference["producer_step_id"] = identifier
+            _normalize_producer_reference(reference, ids, history, path=reference_path)
+            identifier = reference["producer_step_id"]
             dependencies.append(identifier)
         elif simplified_workflow(run) and reference.get("artifact_id"):
             identifier = reference["artifact_id"]
@@ -843,6 +951,9 @@ def materialize_plan(store, run, parameters):
                 raise ProposalError(
                     "Use a system identifier declared in the current Request.",
                     path=["parameters", "steps", index, "parameters", "system_id"])
+        if (item.system_id is None and len(request.systems) == 1
+                and ("system_id" in fields or set(definition.effects) & {"execute_orca", "execute_python"})):
+            item.system_id = request.systems[0].id
         if "prepare_geometry" in definition.effects:
             values = preparation_conditions(request, item.system_id)["conditions"]
         else:
@@ -855,6 +966,8 @@ def materialize_plan(store, run, parameters):
         if "system_id" in fields and item.system_id is not None:
             inherited["system_id"] = item.system_id
         item.parameters = {**inherited, **item.parameters}
+        if simplified_workflow(run):
+            _normalize_file_role_aliases(item, definition, ids, history, path=["parameters", "steps", index])
         file_dependencies = _materialize_file_parameters(store, run, item.parameters, definition,
             ids, history, ["parameters", "steps", index, "parameters"])
         artifact = item.parameters.get("artifact_id")
@@ -885,12 +998,8 @@ def materialize_plan(store, run, parameters):
                                     path=["parameters", "steps", index, "inputs", "geometry"])
             geometry = bindings.pop("geometry")
             geometry_path = ["parameters", "steps", index, "inputs", "geometry"]
-        if geometry and "producer_key" in geometry:
-            if set(geometry) != {"producer_key", "port"}:
-                raise ValueError("future geometry has ambiguous or undeclared fields")
-            geometry = {"producer_step_id": _resolve_step_keys([geometry["producer_key"]], ids, history,
-                        path=[*geometry_path, "producer_key"])[0],
-                        "port": geometry.get("port")}
+        if geometry:
+            _normalize_producer_reference(geometry, ids, history, path=geometry_path)
         if geometry is None:
             if "geometry" in definition.input_roles and "execute_orca" in definition.effects:
                 system = next((s for s in request.systems if s.id == item.system_id), None)
@@ -899,11 +1008,12 @@ def materialize_plan(store, run, parameters):
                     geometry = {"artifact_id": artifact}
         inputs = {}
         for name, value in bindings.items():
-            if "producer_key" in value:
-                value = {**value, "producer_step_id": _resolve_step_keys([value["producer_key"]], ids, history,
-                    path=["parameters", "steps", index, "inputs", name, "producer_key"])[0]}
-                value.pop("producer_key")
-            inputs[name] = EvidenceRef.model_validate(value)
+            path = ["parameters", "steps", index, "inputs", name]
+            _normalize_producer_reference(value, ids, history, path=path)
+            try:
+                inputs[name] = EvidenceRef.model_validate(value)
+            except ValidationError as exc:
+                raise _schema_error(exc, path=path) from None
         dependencies = _resolve_step_keys(item.depends_on, ids, history,
             path=["parameters", "steps", index, "depends_on"], indexed=True)
         # A reference itself explicitly declares the dependency relationship.
@@ -911,10 +1021,17 @@ def materialize_plan(store, run, parameters):
         dependencies += file_dependencies
         if geometry and geometry.get("producer_step_id"):
             dependencies.append(geometry["producer_step_id"])
-        steps.append(Step(id=ids[item.key], logical_id=logical[item.key], tool=item.tool,
-                          parameters=item.parameters, system_id=item.system_id,
-                          geometry=InputRef.model_validate(geometry) if geometry else None,
-                          depends_on=list(dict.fromkeys(dependencies)), inputs=inputs))
+        try:
+            resolved_geometry = InputRef.model_validate(geometry) if geometry else None
+        except ValidationError as exc:
+            raise _schema_error(exc, path=geometry_path) from None
+        try:
+            steps.append(Step(id=ids[item.key], logical_id=logical[item.key], tool=item.tool,
+                              parameters=item.parameters, system_id=item.system_id,
+                              geometry=resolved_geometry,
+                              depends_on=list(dict.fromkeys(dependencies)), inputs=inputs))
+        except ValidationError as exc:
+            raise _schema_error(exc, path=["parameters", "steps", index], tool=definition.name) from None
     goals = {}
     requested_goals = {goal.id: goal for goal in request.goals}
     for goal_id, target in proposal.goal_map.items():
@@ -947,8 +1064,11 @@ def materialize_plan(store, run, parameters):
     previous += [{"plan_id": d["prior_plan_id"], "plan_version": d["prior_plan_version"]}
                  for d in run.decisions if d.get("prior_plan_version") is not None]
     last = max(previous, key=lambda d: d["plan_version"]) if previous else {}
-    plan = Plan(id=prior.id if prior else last.get("plan_id") or new_id("plan"),
-                version=prior.version + 1 if prior else last.get("plan_version", 0) + 1,
-                request_id=request.id, request_version=request.version, steps=steps, goal_map=goals)
+    try:
+        plan = Plan(id=prior.id if prior else last.get("plan_id") or new_id("plan"),
+                    version=prior.version + 1 if prior else last.get("plan_version", 0) + 1,
+                    request_id=request.id, request_version=request.version, steps=steps, goal_map=goals)
+    except ValidationError as exc:
+        raise _schema_error(exc, path=["parameters"]) from None
     validate_file_dependencies(plan, run)
     return plan

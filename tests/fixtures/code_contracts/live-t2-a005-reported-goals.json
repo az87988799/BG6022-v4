@@ -1,0 +1,388 @@
+{
+  "provenance": {
+    "kind": "retained real LLM normalized Goal contracts; not synthetic execution evidence",
+    "path": "data/live-repair/attempts/a005/data/runs/run_fae58a39bbdd4b3eab87f57f4c4dba4b/decisions/model_5f48ea477e574147abf7cd3d976ba641.json",
+    "sha256": "95b14ec8641471ccc01814efad78386ab5fa43f10be0a034dd44c799ce76db82",
+    "request_id": "request_b59ca1ad59854124a46f4c82d1eb5ea6",
+    "request_version": 3
+  },
+  "messages": [
+    {
+      "id": "message_346d410624ef4740a489a12214b0b7f2",
+      "text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "source": "user",
+      "created_at": "2026-10-20T20:04:11.551353+00:00",
+      "request_version": 1
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal_candidate_structures",
+      "port": "candidate_structures",
+      "required": true,
+      "minimum_check_version": "generic-observation-1",
+      "evidence_contract_version": "generic-observation-1",
+      "verification": "reported_with_limitations",
+      "quantity": "实际保存至少8份候选结构",
+      "original_text": "实际保存至少8份候选结构",
+      "identity": {
+        "requested_names": [
+          "正己烷"
+        ]
+      },
+      "text_evidence": {
+        "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+        "text_basis": "实际保存至少8份候选结构",
+        "start": 37,
+        "end": 49,
+        "schema": "request-semantics-3",
+        "shared_constraints": [
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "实际保存至少8份候选结构",
+            "start": 37,
+            "end": 49,
+            "schema": "request-semantics-3"
+          },
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "并从中选择至少4个不同的构象",
+            "start": 50,
+            "end": 64,
+            "schema": "request-semantics-3"
+          },
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+            "start": 65,
+            "end": 95,
+            "schema": "request-semantics-3"
+          },
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "至少4个参加比较的构象应两两不同",
+            "start": 151,
+            "end": 167,
+            "schema": "request-semantics-3"
+          }
+        ]
+      },
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "conditions": {},
+      "minimum_evidence": [
+        "实际保存至少8份候选结构",
+        "交付所有实际产生的候选、选中及排除原因"
+      ],
+      "minimum_evidence_source": {
+        "实际保存至少8份候选结构": "explicit",
+        "交付所有实际产生的候选、选中及排除原因": "explicit"
+      },
+      "unresolved": []
+    },
+    {
+      "id": "goal_search_filter_program",
+      "port": "search_filter_program",
+      "required": true,
+      "minimum_check_version": "generic-observation-1",
+      "evidence_contract_version": "generic-observation-1",
+      "verification": "reported_with_limitations",
+      "quantity": "自行编写本次搜索和筛选程序",
+      "original_text": "自行编写本次搜索和筛选程序",
+      "identity": {
+        "requested_names": [
+          "正己烷"
+        ]
+      },
+      "text_evidence": {
+        "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+        "text_basis": "自行编写本次搜索和筛选程序",
+        "start": 23,
+        "end": 36,
+        "schema": "request-semantics-3"
+      },
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "conditions": {},
+      "minimum_evidence": [
+        "自行编写本次搜索和筛选程序"
+      ],
+      "minimum_evidence_source": {
+        "自行编写本次搜索和筛选程序": "explicit"
+      },
+      "unresolved": []
+    },
+    {
+      "id": "goal_selected_conformers",
+      "port": "selected_conformers",
+      "required": true,
+      "minimum_check_version": "generic-observation-1",
+      "evidence_contract_version": "generic-observation-1",
+      "verification": "reported_with_limitations",
+      "quantity": "从中选择至少4个不同的构象",
+      "original_text": "从中选择至少4个不同的构象",
+      "identity": {
+        "requested_names": [
+          "正己烷"
+        ]
+      },
+      "text_evidence": {
+        "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+        "text_basis": "从中选择至少4个不同的构象",
+        "start": 51,
+        "end": 64,
+        "schema": "request-semantics-3",
+        "shared_constraints": [
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "实际保存至少8份候选结构",
+            "start": 37,
+            "end": 49,
+            "schema": "request-semantics-3"
+          },
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "并从中选择至少4个不同的构象",
+            "start": 50,
+            "end": 64,
+            "schema": "request-semantics-3"
+          },
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+            "start": 65,
+            "end": 95,
+            "schema": "request-semantics-3"
+          },
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "至少4个参加比较的构象应两两不同",
+            "start": 151,
+            "end": 167,
+            "schema": "request-semantics-3"
+          }
+        ]
+      },
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "conditions": {},
+      "minimum_evidence": [
+        "从中选择至少4个不同的构象",
+        "至少4个参加比较的构象应两两不同"
+      ],
+      "minimum_evidence_source": {
+        "从中选择至少4个不同的构象": "explicit",
+        "至少4个参加比较的构象应两两不同": "explicit"
+      },
+      "unresolved": []
+    },
+    {
+      "id": "goal_single_point_energies",
+      "port": "energy",
+      "required": true,
+      "minimum_check_version": "generic-observation-1",
+      "evidence_contract_version": "generic-observation-1",
+      "verification": "reported_with_limitations",
+      "quantity": "真实ORCA单点能量比较",
+      "original_text": "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+      "identity": {
+        "requested_names": [
+          "正己烷"
+        ]
+      },
+      "text_evidence": {
+        "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+        "text_basis": "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+        "start": 65,
+        "end": 95,
+        "schema": "request-semantics-3",
+        "shared_constraints": [
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "实际保存至少8份候选结构",
+            "start": 37,
+            "end": 49,
+            "schema": "request-semantics-3"
+          },
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "并从中选择至少4个不同的构象",
+            "start": 50,
+            "end": 64,
+            "schema": "request-semantics-3"
+          },
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+            "start": 65,
+            "end": 95,
+            "schema": "request-semantics-3"
+          },
+          {
+            "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+            "text_basis": "至少4个参加比较的构象应两两不同",
+            "start": 151,
+            "end": 167,
+            "schema": "request-semantics-3"
+          }
+        ]
+      },
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "conditions": {},
+      "minimum_evidence": [
+        "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较",
+        "不能把未做ORCA的候选写成已有ORCA能量"
+      ],
+      "minimum_evidence_source": {
+        "在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较": "explicit",
+        "不能把未做ORCA的候选写成已有ORCA能量": "explicit"
+      },
+      "unresolved": []
+    },
+    {
+      "id": "goal_duplicate_check",
+      "port": "conformer_duplicate_check",
+      "required": true,
+      "minimum_check_version": "generic-observation-1",
+      "evidence_contract_version": "generic-observation-1",
+      "verification": "reported_with_limitations",
+      "quantity": "请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值",
+      "original_text": "请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值",
+      "identity": {
+        "requested_names": [
+          "正己烷"
+        ]
+      },
+      "text_evidence": {
+        "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+        "text_basis": "请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值",
+        "start": 111,
+        "end": 150,
+        "schema": "request-semantics-3"
+      },
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "conditions": {},
+      "minimum_evidence": [
+        "请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复",
+        "以0.15Å为重复阈值"
+      ],
+      "minimum_evidence_source": {
+        "请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复": "explicit",
+        "以0.15Å为重复阈值": "explicit"
+      },
+      "unresolved": []
+    },
+    {
+      "id": "goal_energy_ranking",
+      "port": "energy_ranking",
+      "required": true,
+      "minimum_check_version": "generic-observation-1",
+      "evidence_contract_version": "generic-observation-1",
+      "verification": "reported_with_limitations",
+      "quantity": "绝对能量和相对最低项的kJ/mol排名、最低候选结构",
+      "original_text": "绝对能量和相对最低项的kJ/mol排名、最低候选结构",
+      "identity": {
+        "requested_names": [
+          "正己烷"
+        ]
+      },
+      "text_evidence": {
+        "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+        "text_basis": "绝对能量和相对最低项的kJ/mol排名、最低候选结构",
+        "start": 188,
+        "end": 214,
+        "schema": "request-semantics-3"
+      },
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "conditions": {},
+      "minimum_evidence": [
+        "绝对能量和相对最低项的kJ/mol排名、最低候选结构",
+        "不能把有限搜索最低项称为全局最低或自由能最低"
+      ],
+      "minimum_evidence_source": {
+        "绝对能量和相对最低项的kJ/mol排名、最低候选结构": "explicit",
+        "不能把有限搜索最低项称为全局最低或自由能最低": "explicit"
+      },
+      "unresolved": []
+    },
+    {
+      "id": "goal_provenance_report",
+      "port": "search_provenance_report",
+      "required": true,
+      "minimum_check_version": "generic-observation-1",
+      "evidence_contract_version": "generic-observation-1",
+      "verification": "reported_with_limitations",
+      "quantity": "说明搜索范围、几何来源以及力场处理是否收敛",
+      "original_text": "说明搜索范围、几何来源以及力场处理是否收敛",
+      "identity": {
+        "requested_names": [
+          "正己烷"
+        ]
+      },
+      "text_evidence": {
+        "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+        "text_basis": "说明搜索范围、几何来源以及力场处理是否收敛",
+        "start": 216,
+        "end": 237,
+        "schema": "request-semantics-3"
+      },
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "conditions": {},
+      "minimum_evidence": [
+        "说明搜索范围、几何来源以及力场处理是否收敛",
+        "方法和基组由你选择并说明依据"
+      ],
+      "minimum_evidence_source": {
+        "说明搜索范围、几何来源以及力场处理是否收敛": "explicit",
+        "方法和基组由你选择并说明依据": "explicit"
+      },
+      "unresolved": []
+    },
+    {
+      "id": "goal_random_seed",
+      "port": "random_seed",
+      "required": true,
+      "minimum_check_version": "generic-observation-1",
+      "evidence_contract_version": "generic-observation-1",
+      "verification": "reported_with_limitations",
+      "quantity": "统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性",
+      "original_text": "统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性",
+      "identity": {
+        "requested_names": [
+          "正己烷"
+        ]
+      },
+      "text_evidence": {
+        "message_id": "message_346d410624ef4740a489a12214b0b7f2",
+        "text_basis": "统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性",
+        "start": 318,
+        "end": 368,
+        "schema": "request-semantics-3"
+      },
+      "system_ids": [
+        "system_n_hexane"
+      ],
+      "conditions": {},
+      "minimum_evidence": [
+        "统一采用种子 1701 并在报告中记录",
+        "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性"
+      ],
+      "minimum_evidence_source": {
+        "统一采用种子 1701 并在报告中记录": "explicit",
+        "若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性": "explicit"
+      },
+      "unresolved": []
+    }
+  ]
+}

@@ -39,10 +39,35 @@ ConditionSource = Literal[
 ]
 
 
+class ContractValidationError(ValueError):
+    """Trusted program-authored validation feedback, without rejected input values.
+
+    Only fixed contract text and declared Tool metadata belong here. Ordinary
+    ValueError/validator context remains private at the model feedback boundary.
+    """
+
+    def __init__(self, message, *, path=(), **declarations):
+        super().__init__(message)
+        self.path = tuple(path)
+        self.declarations = declarations
+
+
+def _producer_alias(values):
+    if not isinstance(values, dict) or "producer_key" not in values:
+        return values
+    values = dict(values)
+    alias = values.pop("producer_key")
+    if "producer_step_id" in values and values["producer_step_id"] != alias:
+        raise ContractValidationError("producer_key and producer_step_id must identify the same declared Step",
+                                      path=("producer_step_id",))
+    values["producer_step_id"] = alias
+    return values
+
+
 def require_electronic_integer(value: Any) -> int:
     """Check the incoming scalar before Pydantic can coerce it or compare Literals."""
     if type(value) is not int:
-        raise ValueError("charge/multiplicity require exact integer values")
+        raise ContractValidationError("charge/multiplicity require exact integer values")
     return value
 
 
@@ -76,7 +101,7 @@ class CalculationParameters(Record):
     @model_validator(mode="after")
     def within_memory(self) -> CalculationParameters:
         if self.cores * self.maxcore_mb > self.memory_mb:
-            raise ValueError("aggregate MaxCore exceeds the requested total memory")
+            raise ContractValidationError("aggregate MaxCore exceeds the requested total memory")
         return self
 
 
@@ -110,11 +135,12 @@ class ProducerFileRef(Record):
     port: Literal["written_artifact", "prepared_geometry"] | None = None
     file_key: Annotated[str, Field(strict=True, min_length=1, max_length=240)] | None = None
     language: Literal["python", "orca"] | None = None
+    normalize_producer_alias = model_validator(mode="before")(_producer_alias)
 
     @model_validator(mode="after")
     def exact_selector(self):
         if (self.port is None) == (self.file_key is None):
-            raise ValueError("select exactly one producer output port or exact file_key")
+            raise ContractValidationError("select exactly one producer output port or exact file_key")
         return self
 
     @model_serializer(mode="wrap")
@@ -137,7 +163,8 @@ class InputManifestEntry(Record):
                 or PurePosixPath(self.target_path).is_absolute()
                 or any(part in {"", ".", ".."} or part.endswith((" ", "."))
                        or PureWindowsPath(part).is_reserved() for part in parts)):
-            raise ValueError("manifest target must be an unambiguous relative task path")
+            raise ContractValidationError("manifest target must be an unambiguous relative task path",
+                                          path=("target_path",))
         return self
 
 
@@ -170,15 +197,17 @@ class InputManifest(Record):
     def unique_targets(self):
         targets = [entry.target_path.casefold() for entry in self.entries]
         if len(set(targets)) != len(targets):
-            raise ValueError("manifest target paths collide")
+            raise ContractValidationError("manifest target paths collide", path=("entries",))
         for target in targets:
             if any(other.startswith(target + "/") for other in targets if other != target):
-                raise ValueError("manifest target cannot be both a file and a directory")
+                raise ContractValidationError("manifest target cannot be both a file and a directory",
+                                              path=("entries",))
         artifacts = {}
         for entry in self.entries:
             if (isinstance(entry, InputManifestEntry)
                     and artifacts.setdefault(entry.artifact_id, entry.sha256) != entry.sha256):
-                raise ValueError("one manifest Artifact cannot have different hashes")
+                raise ContractValidationError("one manifest Artifact cannot have different hashes",
+                                              path=("entries",))
         return self
 
 
@@ -202,13 +231,13 @@ class CodeExecutionParameters(Record):
     @model_validator(mode="after")
     def python_code(self):
         if self.code.language not in {None, "python"}:
-            raise ValueError("Python execution requires a Python code Artifact")
+            raise ContractValidationError("Python execution requires a Python code Artifact", path=("code", "language"))
         if isinstance(self.code, CodeRef) and any(
                 isinstance(entry, InputManifestEntry) and entry.artifact_id == self.code.artifact_id
                 and entry.sha256 != self.code.sha256 for entry in self.inputs.entries):
-            raise ValueError("code and input manifest disagree on the Artifact hash")
+            raise ContractValidationError("code and input manifest disagree on the Artifact hash", path=("inputs",))
         if len(set(self.observation_names)) != len(self.observation_names):
-            raise ValueError("observation names must be unique")
+            raise ContractValidationError("observation names must be unique", path=("observation_names",))
         return self
 
 
@@ -221,13 +250,13 @@ class NativeOrcaParameters(Record):
     @model_validator(mode="after")
     def native_input(self):
         if self.input.language not in {None, "orca"}:
-            raise ValueError("native ORCA execution requires an ORCA input Artifact")
+            raise ContractValidationError("native ORCA execution requires an ORCA input Artifact", path=("input", "language"))
         if isinstance(self.input, CodeRef) and any(
                 isinstance(entry, InputManifestEntry) and entry.artifact_id == self.input.artifact_id
                 and entry.sha256 != self.input.sha256 for entry in self.inputs.entries):
-            raise ValueError("native input and manifest disagree on the Artifact hash")
+            raise ContractValidationError("native input and manifest disagree on the Artifact hash", path=("inputs",))
         if len(set(self.observation_names)) != len(self.observation_names):
-            raise ValueError("observation names must be unique")
+            raise ContractValidationError("observation names must be unique", path=("observation_names",))
         return self
 
 
@@ -300,15 +329,16 @@ class InputRef(Record):
     artifact_id: Identifier | None = None
     producer_step_id: Identifier | None = None
     port: Literal["optimized_geometry", "prepared_geometry"] | None = None
+    normalize_producer_alias = model_validator(mode="before")(_producer_alias)
 
     @model_validator(mode="after")
     def unambiguous(self) -> InputRef:
         direct = self.artifact_id is not None
         future = self.producer_step_id is not None and self.port is not None
         if direct == future or (direct and (self.producer_step_id or self.port)):
-            raise ValueError("geometry must bind an artifact OR a producer step and port")
+            raise ContractValidationError("geometry must bind an artifact OR a producer step and port")
         if not direct and not future:
-            raise ValueError("geometry reference is incomplete")
+            raise ContractValidationError("geometry reference is incomplete")
         return self
 
 
@@ -361,14 +391,15 @@ class EvidenceRef(Record):
     sha256: str | None = None
     port: Port = "energy"
     rule_version: str | None = None
+    normalize_producer_alias = model_validator(mode="before")(_producer_alias)
 
     @model_validator(mode="after")
     def exact_or_future(self):
         if self.producer_step_id:
             if any(getattr(self, name) for name in _EVIDENCE_CONCRETE_FIELDS):
-                raise ValueError("future reference cannot also select concrete evidence")
+                raise ContractValidationError("future reference cannot also select concrete evidence")
         elif not all(getattr(self, name) for name in _EVIDENCE_IDENTITIES):
-            raise ValueError("concrete evidence must identify its Run and Result")
+            raise ContractValidationError("concrete evidence must identify its Run and Result")
         return self
 
 
@@ -392,7 +423,7 @@ class OutputBinding(Record):
     @model_validator(mode="after")
     def one_source(self):
         if sum(value is not None for value in (self.step_id, self.evidence, self.gap)) != 1:
-            raise ValueError("goal needs one future output, existing evidence, or explicit gap")
+            raise ContractValidationError("goal needs one future output, existing evidence, or explicit gap")
         return self
 
 
@@ -450,9 +481,11 @@ class Step(Record):
         tool = get_tool(self.tool)
         if ("execute_orca" in tool.effects and "native_input" not in tool.input_roles
                 and self.geometry is None):
-            raise ValueError("scientific tool requires geometry")
+            raise ContractValidationError("scientific tool requires geometry", path=("geometry",))
         if ("execute_orca" not in tool.effects or "native_input" in tool.input_roles) and self.geometry:
-            raise ValueError("non-scientific tool cannot claim a scientific geometry binding")
+            raise ContractValidationError(
+                "This Tool consumes files through its declared parameters, not a top-level geometry binding.",
+                path=("geometry",), input_roles=tool.input_roles)
         return self
 
 
@@ -469,32 +502,40 @@ class Plan(Record):
         from orca_agent.tools.registry import declared_outputs, get_tool
         steps = {step.id: step for step in self.steps}
         if len(steps) != len(self.steps):
-            raise ValueError("step identities must be unique")
+            raise ContractValidationError("step identities must be unique", path=("steps",))
         if len({s.logical_id for s in self.steps}) != len(self.steps):
-            raise ValueError("logical step identities must be unique in a fixed plan")
-        for step in self.steps:
+            raise ContractValidationError("logical step identities must be unique in a fixed plan", path=("steps",))
+        for index, step in enumerate(self.steps):
+            path = ("steps", index)
             if len(set(step.depends_on)) != len(step.depends_on):
-                raise ValueError("duplicate dependencies")
+                raise ContractValidationError("duplicate dependencies", path=(*path, "depends_on"))
             if any(dep not in steps for dep in step.depends_on):
-                raise ValueError("dependency references an unknown step")
+                raise ContractValidationError("dependency references an unknown step", path=(*path, "depends_on"))
             producer = step.geometry.producer_step_id if step.geometry else None
             if producer:
                 if producer not in step.depends_on:
-                    raise ValueError("future geometry producer must be an explicit dependency")
+                    raise ContractValidationError("future geometry producer must be an explicit dependency",
+                                                  path=(*path, "geometry", "producer_step_id"))
                 if step.geometry.port not in get_tool(steps[producer].tool).output_ports:
-                    raise ValueError("producer does not declare optimized_geometry")
-            for reference in step.inputs.values():
+                    raise ContractValidationError("producer does not declare the required geometry port",
+                        path=(*path, "geometry", "port"),
+                        allowed_ports=get_tool(steps[producer].tool).output_ports)
+            for role, reference in step.inputs.items():
                 if reference.producer_step_id:
                     if reference.producer_step_id not in step.depends_on:
-                        raise ValueError("future evidence producer must be an explicit dependency")
+                        raise ContractValidationError("future evidence producer must be an explicit dependency",
+                                                      path=(*path, "inputs", role, "producer_step_id"))
                     if reference.port not in declared_outputs(steps[reference.producer_step_id]):
-                        raise ValueError("producer does not declare the required port")
+                        raise ContractValidationError("producer does not declare the required port",
+                            path=(*path, "inputs", role, "port"),
+                            allowed_ports=declared_outputs(steps[reference.producer_step_id]),
+                            input_roles=get_tool(step.tool).input_roles)
         visited: set[str] = set()
         active: set[str] = set()
 
         def visit(step_id: str) -> None:
             if step_id in active:
-                raise ValueError("cyclic plan")
+                raise ContractValidationError("cyclic plan", path=("steps",))
             if step_id in visited:
                 return
             active.add(step_id)
@@ -505,11 +546,12 @@ class Plan(Record):
 
         for step_id in steps:
             visit(step_id)
-        for binding in self.goal_map.values():
+        for goal_id, binding in self.goal_map.items():
             if binding.step_id is not None and binding.step_id not in steps:
-                raise ValueError("goal binding references an unknown step")
+                raise ContractValidationError("goal binding references an unknown step", path=("goal_map", goal_id))
             if binding.step_id and binding.port not in declared_outputs(steps[binding.step_id]):
-                raise ValueError("step does not produce the goal's port")
+                raise ContractValidationError("step does not produce the goal's port",
+                    path=("goal_map", goal_id, "port"), allowed_ports=declared_outputs(steps[binding.step_id]))
         return self
 
     def validate_request(self, request: Request) -> None:
@@ -746,12 +788,15 @@ class RunConfiguration(Record):
     # Missing in historical snapshots means the original model feedback path.
     mechanical_progression: bool = Field(default=False, strict=True)
     workflow_policy: Literal["simplified-1"] | None = None
+    observation_delivery_policy: Literal["reported-observation-1"] | None = None
 
     @model_serializer(mode="wrap")
     def preserve_historical_workflow(self, handler):
         value = handler(self)
         if self.workflow_policy is None:
             value.pop("workflow_policy", None)
+        if self.observation_delivery_policy is None:
+            value.pop("observation_delivery_policy", None)
         return value
 
     @model_validator(mode="before")

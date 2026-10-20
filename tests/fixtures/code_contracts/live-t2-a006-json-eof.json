@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "source": "T2 live-repair a006, immutable rejected response evidence",
+  "sanitization": "Only final proposal text and safe rejection facts retained. No credentials, headers, provider metadata, reasoning, paths or usage. Raw proposal strings unchanged.",
+  "cases": [
+    {
+      "model_id": "model_968a7a4c298141439285dd6d8df9ac4a",
+      "source_response_sha256": "3d2116666319ee150eb58263bc2d1a357123fb4fe2557cfea6bd2a84d27b8986",
+      "raw_content_sha256": "cca6963a74c1937b2df9a4379618f8515bd0f3597d13e2dea047db4e3902126a",
+      "reply": {
+        "raw_content": "{\"action\":\"select_conditions\",\"parameters\":{\"request_version\":2,\"choices\":{\"method\":{\"value\":\"B3LYP\",\"reason\":\"Use a consistent hybrid DFT single-point level for neutral closed-shell alkane conformers. B3LYP with an explicit D3(BJ) dispersion correction in the ORCA input accounts for London dispersion, which is important for hydrocarbon conformer relative energies; this selection is for single-point comparison, not a free-energy claim.\"},\"basis\":{\"value\":\"def2-TZVP\",\"reason\":\"A triple-zeta Ahlrichs basis provides a practical balance between cost and intramolecular conformer-energy sensitivity for C/H-only neutral systems. Diffuse functions are not required for these neutral gas-phase hydrocarbons, and all compared conformers will use the same method/basis/input type.\"}},\"reason\":\"Method and basis must be fixed before ORCA single-point execution. I choose B3LYP/def2-TZVP with explicit D3(BJ) dispersion because it is a defensible, affordable level for neutral alkane conformer relative single-point energies; no literature source is claimed.\"}",
+        "finish_reason": "stop",
+        "error_category": "invalid_proposal_json"
+      }
+    },
+    {
+      "model_id": "model_9b3ad9dda4a24c738409fabe49ef4d04",
+      "source_response_sha256": "6dfdff8ab9d01ba29501ef91d2ecb655d20c0ff474dada4bad820fd88f7cc696",
+      "raw_content_sha256": "9e80618638a3cc78ed0e487cb1802c794b55ed5a23d845ef2f5247d229f69351",
+      "reply": {
+        "raw_content": "{\"action\":\"select_conditions\",\"parameters\":{\"request_version\":2,\"choices\":{\"method\":{\"value\":\"B3LYP\",\"reason\":\"模型依据（未检索文献）：B3LYP 是烷烃构象相对能量比较中最常用、最稳健的杂化泛函之一，对本体系（C6H14，中性单重态）单点能量排序足够可靠；因烷烃色散作用对构象能差有贡献，执行时在同一输入中以 D3BJ 色散修正关键字施加（与所选方法标签一同记录，单点任务中不改变波函数），并在报告中明确写出实际使用的组合。\"},\"basis\":{\"value\":\"def2-TZVP\",\"reason\":\"模型依据（未检索文献）：def2-TZVP 为 Ahlrichs 三重ζ极化基组，对 C/H 有机分子给出良好且均衡的描述，与 B3LYP 搭配是常规做法，且 ORCA 原生支持；所有参与比较的构象统一使用同一方法/基组/同一计算类型（SP，RKS，charge 0，multiplicity 1，气相），保证绝对能量与相对 kJ/mol 排名在同一水平下可比。\"}},\"reason\":\"Request 授权自动选择 method 和 basis（automatic_selection=[method,basis]，二者均为 null），因此先冻结方法与基组，再提议包含真实 ORCA 单点任务的计划。选择 B3LYP/def2-TZVP 并附加 D3BJ：三重ζ极化基组可可靠描述 C6 烷烃构象差异，色散修正对烷烃构象能差不缺失；本步仅记录选择，不构成科学验证。\"}",
+        "finish_reason": "stop",
+        "error_category": "invalid_proposal_json"
+      }
+    },
+    {
+      "model_id": "model_d7c3dfe0806040bcbd0bd53792ff87bd",
+      "source_response_sha256": "acb422a4c9f439d1e10e22445a3bd94f180a0d4952124fb7c7145938d4cb1d1c",
+      "raw_content_sha256": "271afb86bada825c9dc2cb2fcd17f97fca7c42850dafa3251e471b847d35fc58",
+      "reply": {
+        "raw_content": "{\"action\":\"select_conditions\",\"parameters\":{\"request_version\":2,\"choices\":{\"method\":{\"value\":\"B3LYP\",\"reason\":\"Request 未指定方法（automatic_selection 允许我选择 method/basis）。选择 B3LYP：对饱和碳氢化合物（正己烷 C6 直链烷烃）的构象能差描述可靠、成本适中，适合在同一方法/基组下做多构象单点能量比较。色散作用对烷烃构象能差不可忽略，将在 ORCA 输入中显式附加 D3BJ 色散修正作为科学修饰符（本步只冻结方法标签本身）。本选择仅记录决策，不构成科学验证。\"},\"basis\":{\"value\":\"def2-TZVP\",\"reason\":\"选择 def2-TZVP：三重ζ带极化函数，对 sp 碳/氢的构象能差与几何描述充分，且与 B3LYP 搭配在 ORCA 中为标准可用组合，规模（正己烷 20 原子）下有 4 核/192MB per-core 的资源可承受。与 method 一同冻结后，全部参与比较的构象将在同一 method+basis+单点任务类型下计算。本选择仅记录决策，不构成科学验证。\"}},\"reason\":\"当前方法/基组均为 null 且 automatic_selection 授权选择 method 与 basis；尚未检索文档，故仅记录 model_reason。先冻结条件，随后提议包含真实 ORCA 单点任务的计划。\"}",
+        "finish_reason": "stop",
+        "error_category": "invalid_proposal_json"
+      }
+    }
+  ]
+}

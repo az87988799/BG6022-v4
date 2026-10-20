@@ -29,7 +29,7 @@ DOCUMENTS = {
     "orca_frequencies": ("ORCA 6.1 Vibrational Frequencies", "https://www.faccts.de/docs/orca/6.1/manual/contents/structurereactivity/frequencies.html"),
     "rdkit": ("RDKit 2025.09.6 Getting Started", "https://raw.githubusercontent.com/rdkit/rdkit/Release_2025_09_6/Docs/Book/GettingStartedInPython.rst"),
     "guide_input": ("Task input guide 1", "package://orca_agent/tools/knowledge.py#guide_input-1"),
-    "guide_method": ("Method selection guide 1", "package://orca_agent/tools/knowledge.py#guide_method-1"),
+    "guide_method": ("Method selection guide 2", "package://orca_agent/tools/knowledge.py#guide_method-2"),
     "guide_diagnostics": ("Output diagnosis guide 1", "package://orca_agent/tools/knowledge.py#guide_diagnostics-1"),
 }
 GUIDES = {
@@ -42,9 +42,13 @@ GUIDES = {
         "geometry. A generated structure is an initial geometry, not evidence of optimization convergence."),
     "guide_method": (
         "Method selection: preserve all explicit user conditions. Select only fields the user authorized for "
-        "automatic selection. Read versioned official method and basis documentation, compare applicability "
-        "to the requested quantity and element coverage, and state cost/accuracy limitations. Record the selected "
-        "value, rationale, retrieved Result and exact supporting quote with select_conditions before computation. "
+        "automatic selection. Under simplified-1, delegated method/basis choices may use model reasoning about "
+        "the requested quantity, element coverage and cost/accuracy tradeoffs. Record each value and reason with "
+        "select_conditions before scientific execution; documentation retrieval is optional, and geometry preparation "
+        "may precede selection. An uncited choice records model_reason, not literature support. Honor any user-required "
+        "documentation and minimum evidence. When citing literature, use a completed current-Run knowledge.search "
+        "Result; the program binds its document hash and returned excerpt when omitted. Any supplied hash or quote "
+        "must match that Result; never invent a citation. Older frozen workflows retain their source requirements. "
         "Electron-count parity alone does not determine an electronic state. An unresolved charge, spin or "
         "identity that changes the scientific target requires clarification. A cited choice is not scientific validation."),
     "guide_diagnostics": (
@@ -56,7 +60,7 @@ GUIDES = {
         "unknown execution requires reconciliation, and a repair cannot reset budgets or alter frozen inputs."),
 }
 DOCUMENT_METADATA = {name: {
-    "document_version": "guide-1" if name in GUIDES else "2025.09.6" if name == "rdkit" else "2.0" if name == "opi" else "6.1",
+    "document_version": "guide-2" if name == "guide_method" else "guide-1" if name in GUIDES else "2025.09.6" if name == "rdkit" else "2.0" if name == "opi" else "6.1",
     "kind": "project_guide" if name in GUIDES else "official_document",
     "format": "text" if name in GUIDES or name == "rdkit" else "html",
     **({"content_sha256": hashlib.sha256(GUIDES[name].encode()).hexdigest()} if name in GUIDES else {}),

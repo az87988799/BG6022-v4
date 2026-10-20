@@ -5,10 +5,10 @@ import re
 from copy import deepcopy
 from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from orca_agent.models import Identifier, Record, Request, fingerprint, require_electronic_integer
-from orca_agent.proposals import ProposalError
+from orca_agent.proposals import ProposalError, _schema_error
 from orca_agent.store import StoreError
 
 ConditionName = Literal["method", "basis", "charge", "multiplicity", "electronic_state", "environment",
@@ -267,7 +267,10 @@ def validate_selection_revision(store, run, prior, proposed, record):
 
 
 def commit_selections(store, run, parameters, *, decision_id, basis, related_results=None, fault=None):
-    parameters = _parameters(run, parameters)
+    try:
+        parameters = _parameters(run, parameters)
+    except ValidationError as exc:
+        raise _schema_error(exc, path=["parameters"]) from exc
     prior = store.load_request(run)
     proposed = selected_request(store, run, prior, parameters)
     return store.commit_revision(run, None, request=proposed, decision_id=decision_id, basis=basis,

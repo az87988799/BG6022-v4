@@ -19,6 +19,7 @@ from orca_agent.models import (
     Step,
 )
 from orca_agent.orca.native import prepare_native_input, validate_native_input
+from orca_agent.orca.native_profile import profile_contract
 from tests.unit.test_native_managed import POLICY, XYZ, bound, source
 
 
@@ -93,17 +94,46 @@ def test_missing_iteration_controls_are_materialized_without_changing_explicit_v
     assert manifest["execution_impact"]["geom_maxiter"] == POLICY.max_geom_iterations
 
 
-def test_known_property_block_order_is_actionable_before_execution(tmp_path):
+@pytest.mark.parametrize("controls,expected", [
+    ("NMR true", {"nmr": "true"}),
+    ("Nuclei all", {"nuclei": "all"}),
+    ("Nuclei 0", {"nuclei": "0"}),
+    ("NMR false Nuclei 0", {"nmr": "false", "nuclei": "0"}),
+])
+def test_known_property_block_order_is_actionable_before_execution(tmp_path, controls, expected):
     with pytest.raises(ValueError, match="eprnmr must follow"):
-        prepare(tmp_path, source(blocks="%eprnmr NMR true end"))
-    text = source() + "%eprnmr NMR true end\n"
+        prepare(tmp_path, source(blocks=f"%eprnmr {controls} end"))
+    assert not (tmp_path / "attempt/job.inp").exists()
+    text = source() + f"%eprnmr {controls} end\n"
     manifest = prepare(tmp_path, text)
-    assert "eprnmr" in manifest["actual_conditions"]["input_blocks"]
+    assert manifest["actual_conditions"]["input_blocks"]["eprnmr"] == expected
+    assert (tmp_path / "attempt/job.inp").read_bytes() == text.encode()
+    assert manifest["input_sha256"] == hashlib.sha256(text.encode()).hexdigest()
+    assert "materialization" not in manifest
 
 
 def test_non_nuclear_property_controls_do_not_add_an_order_gate(tmp_path):
     manifest = prepare(tmp_path, source(blocks="%eprnmr NMR false end"))
     assert manifest["actual_conditions"]["input_blocks"]["eprnmr"]["nmr"] == "false"
+
+
+def test_actual_a004_nuclei_order_failure_is_rejected_before_staging():
+    # Exact settled a004/step_ed3720508cc5466eb0e31389de3639a3/attempt-001
+    # source-input.inp and stderr.txt bytes. No ORCA or model is called here.
+    original = (b"! PBE0 def2-TZVP RKS NMR NoAutoStart\n%maxcore 192\n"
+                b"%scf MaxIter 256 AutoTRAH false end\n%eprnmr\n  Nuclei = all\nend\n"
+                b"* xyzfile 0 1 hcn.xyz\n")
+    stderr = (b"[file orca_main/main_read_eprnmr.cpp, line 237]: Error in [EPRNMR] block: "
+              b"nuclear properties are requested but no coordinates have been read!\n"
+              b"Please put the coordinates input before the [EPRNMR] block in your input file!\n\n")
+    assert hashlib.sha256(original).hexdigest() == "6fd07e60e1f7372dd97291be82d9802e2d4760dd657ba4c09eccaca27807563a"
+    assert hashlib.sha256(stderr).hexdigest() == "861dcf5b151f46b783c12519ce3910f4d4e368cb22a9b789c726777cabf415f7"
+    with pytest.raises(ValueError, match="Nuclei requests nuclear properties"):
+        validate_native_input(original.decode(), {"hcn.xyz": XYZ}, ResourceLimits(), policy=POLICY,
+                              binding={**bound(), "workflow_policy": "simplified-1"})
+    contract = profile_contract(POLICY)["geometry"]
+    assert "before" in contract and "%eprnmr" in contract and "Nuclei" in contract
+    assert "atom index 0" in contract and "not automatically reordered" in contract
 
 
 def test_authorized_environment_variants_do_not_permit_arbitrary_solvents():

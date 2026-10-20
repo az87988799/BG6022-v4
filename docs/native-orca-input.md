@@ -10,7 +10,7 @@
 
 执行边界仍要求固定依赖清单的 `xyzfile`、`NoAutoStart`、显式 MaxCore 和 SCF MaxIter/AutoTRAH false，优化及响应另有相应有限控制。未建立契约的外部程序、多作业/隐藏循环、重启文件、任意文件路径与控制嵌套明确拒绝。自定义基组文件、任意 ORCA 嵌套语法、全部 ORCA 复合工作流并未因此获得支持；不能把开放科学标签宣称为全部 ORCA 请求保证。完整模型可见契约由 [native_managed.py](../src/orca_agent/orca/native_managed.py) 的同一规则生成。
 
-新 Run 冻结 `workflow_policy = "simplified-1"` 时，模型可以省略已有批准电子态及冻结的核数、MaxCore、NoAutoStart、SCF/优化/响应迭代控制；程序将缺项写入最终执行输入，再用同一准入器校验。响应根数等任务科学参数不代选。保存源 Artifact、必要时的 `source-input.inp`、最终 `job.inp` 及两份 hash 和补入记录；显式冲突或超限值不会被覆盖。已知的 NMR `%eprnmr` 块在坐标之前时返回具体改序提示，不自动重排任意语法。缺少该工作流标记的旧 Run 保持原规则。决定见 [0056](decisions/0056-simplify-execution-workflow.md)。
+新 Run 冻结 `workflow_policy = "simplified-1"` 时，模型可以省略已有批准电子态及冻结的核数、MaxCore、NoAutoStart、SCF/优化/响应迭代控制；程序将缺项写入最终执行输入，再用同一准入器校验。响应根数等任务科学参数不代选。保存源 Artifact、必要时的 `source-input.inp`、最终 `job.inp` 及两份 hash 和补入记录；显式冲突或超限值不会被覆盖。请求核性质的 `%eprnmr` 块（`NMR true` 或存在 `Nuclei` 选择器，含合法核索引 `0`）必须放在坐标声明之后；这是 ORCA 自身的读取顺序要求，程序在启动前返回改序提示，不自动重排科学块。只有 `NMR false` 且没有 `Nuclei` 的块不增加此顺序限制。缺少该工作流标记的旧 Run 保持原规则。决定见 [0056](decisions/0056-simplify-execution-workflow.md)。
 
 结构准备允许身份已确认且状态一致的离子、自由基和已指定立体结构，实际 OPI/RDKit 依赖失败如实保留。新工作流可先完成身份查询和初始几何，再选择已授权自动选择的方法/基组；选择后仅在身份、几何、元素、电荷及多重度绑定仍相同时复用原输入，不改写原 Call/Result。方法/基组选择保存实际理由和来源，官方检索按需进行；有检索引用仍验证原文/hash。其他条件及旧工作流保留原取证要求。资料查询可用 `orca:index.html` 和返回的 `orca:contents/...html` 引用读取固定 ORCA 6.1 官方手册，仍一次有界 GET、禁止重定向和域外链接。
 

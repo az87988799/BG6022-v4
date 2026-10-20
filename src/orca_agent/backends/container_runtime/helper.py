@@ -7,6 +7,7 @@ import re
 import signal
 import stat
 import struct
+import subprocess
 import sys
 import time
 import uuid
@@ -305,6 +306,137 @@ def keeper():
         time.sleep(0.1)
 
 
+def gated_child(folder, area, timeout, identity_fd=None):
+    """The fixed pre-exec child publishes its identity before the trusted gate."""
+    identity = next(item for item in processes(os.getuid()) if item["pid"] == os.getpid())
+    with (folder / ".launch.json").open("x") as target:
+        json.dump(identity, target)
+    if identity_fd is not None:
+        raw = json.dumps(identity, separators=(",", ":")).encode()
+        if len(raw) > 4096 or os.write(identity_fd, raw) != len(raw):
+            raise ValueError("invalid bounded child identity")
+        os.close(identity_fd)
+    deadline = time.monotonic() + min(timeout, 20)
+    while not (ROOT / "gates" / f"{area}.gate").exists():
+        if time.monotonic() >= deadline:
+            raise TimeoutError("workload gate was never released")
+        time.sleep(0.025)
+
+
+def executable_identity(expected):
+    """Observe the immutable executable, retaining the pre-exec PID identity."""
+    actual = next((p for p in processes(os.getuid()) if p["pid"] == expected["pid"]), None)
+    if not actual or actual["start_ticks"] != expected["start_ticks"]:
+        raise ValueError("launch process identity unavailable")
+    if any(int(actual[k], 16) for k in ("cap_eff", "cap_prm", "cap_inh", "cap_amb")):
+        raise ValueError("workload retained capabilities")
+    if actual["no_new_privs"] != "1" or actual["seccomp"] != "2":
+        raise ValueError("workload base isolation unavailable")
+    target = Path("/opt/orca/orca")
+    loaded = Path(f"/proc/{actual['pid']}/exe")
+    fixed, observed = target.stat(), loaded.stat()
+    if ((observed.st_dev, observed.st_ino) != (fixed.st_dev, fixed.st_ino)
+            or os.readlink(loaded) != str(target)):
+        raise ValueError("ORCA executable has not been observed")
+    again = next((p for p in processes(os.getuid()) if p["pid"] == actual["pid"]), None)
+    if not again or again["start_ticks"] != actual["start_ticks"]:
+        raise ValueError("ORCA process identity changed during observation")
+    return {"method": "proc_exe_inode_and_pid_start_ticks", "executable": str(target),
+            "device": observed.st_dev, "inode": observed.st_ino,
+            "pid": actual["pid"], "start_ticks": actual["start_ticks"]}
+
+
+def native_start_receipt(process, identity, fixed):
+    """Popen's private exec-error pipe distinguishes a fast normal exit from exec failure.
+
+    EOF alone is insufficient: a signal before exec also closes the pipe. Such
+    exits stay unconfirmed unless the loaded executable was positively observed.
+    """
+    receipt = {"version": 1, "kind": "orca", "identity": identity,
+               "status": "unconfirmed"}
+    until = time.monotonic() + 0.25
+    while True:
+        try:
+            proof = executable_identity(identity)
+        except (OSError, ValueError):
+            code = process.poll()
+            if code is not None:
+                if code >= 0:
+                    proof = {"method": "trusted_subprocess_exec_error_pipe",
+                             "executable": "/opt/orca/orca", "device": fixed.st_dev,
+                             "inode": fixed.st_ino, "pid": identity["pid"],
+                             "start_ticks": identity["start_ticks"],
+                             "exec_error_pipe": "closed_without_error", "child_exit_code": code}
+                    receipt.update(status="confirmed", actual_start_evidence=proof)
+                else:
+                    receipt["reason"] = "native_process_signaled_before_exec_confirmation"
+                return receipt
+            if time.monotonic() >= until:
+                receipt["reason"] = "native_executable_identity_unavailable"
+                return receipt
+            time.sleep(0.001)
+        else:
+            receipt.update(status="confirmed", actual_start_evidence=proof)
+            return receipt
+
+
+def supervise_orca(folder, area, timeout, env):
+    """Only this image-owned parent retains the Docker management output FD."""
+    read_fd, write_fd = os.pipe2(os.O_CLOEXEC)
+
+    def before_exec():
+        os.close(read_fd)
+        gated_child(folder, area, timeout, write_fd)
+
+    process, failure, write_open = None, None, True
+    try:
+        fixed = Path("/opt/orca/orca").stat()
+        with (folder / "stdout.out").open("xb", buffering=0) as out, (
+                folder / "stderr.txt").open("xb", buffering=0) as err:
+            try:
+                # Popen does not return until exec closes its private error pipe,
+                # or reports the child's pre-exec/exec error. Task code never runs
+                # in before_exec, and receives neither management nor identity FDs.
+                process = subprocess.Popen(["/opt/orca/orca", "job.inp"],
+                    stdin=subprocess.DEVNULL, stdout=out, stderr=err, env=env,
+                    close_fds=True, pass_fds=(write_fd,), preexec_fn=before_exec)
+            except (OSError, subprocess.SubprocessError) as exc:
+                # Only Popen's explicit child-side failure is evidence of no
+                # exec. An interrupted parent/read/transport is not that proof.
+                if not ((isinstance(exc, OSError) and exc.filename == "/opt/orca/orca")
+                        or (type(exc) is subprocess.SubprocessError
+                            and str(exc) == "Exception occurred in preexec_fn.")):
+                    raise
+                failure = {"type": type(exc).__name__, "errno": getattr(exc, "errno", None),
+                           "source": "subprocess_child_exec_error_pipe"}
+            finally:
+                os.close(write_fd)
+                write_open = False
+            raw = os.read(read_fd, 4097)
+            if len(raw) > 4096:
+                raise ValueError("child identity exceeds bound")
+            identity = json.loads(raw) if raw else None
+    finally:
+        if write_open:
+            os.close(write_fd)
+        os.close(read_fd)
+    if failure is not None:
+        receipt = {"version": 1, "kind": "orca", "identity": identity,
+                   "status": "not_started", "reason": "native_exec_rejected", "error": failure}
+    else:
+        if not isinstance(identity, dict) or process.pid != identity.get("pid"):
+            raise ValueError("private child identity differs from spawned process")
+        receipt = native_start_receipt(process, identity, fixed)
+    raw = json.dumps(receipt, separators=(",", ":"))
+    if len(raw.encode()) > 8192:
+        raise ValueError("native launch receipt exceeds bound")
+    print(raw, flush=True)
+    if process is None:
+        return 126
+    code = process.wait()
+    return code if code >= 0 else 128 - code
+
+
 def launch(kind, timeout, area=None):
     area = area or kind
     require_identity(area)
@@ -312,33 +444,24 @@ def launch(kind, timeout, area=None):
         raise ValueError("invalid workload kind")
     folder = area_root(area)
     os.chdir(folder)
-    identity = next(item for item in processes(os.getuid()) if item["pid"] == os.getpid())
-    with (folder / ".launch.json").open("x") as target:
-        json.dump(identity, target)
-    deadline = time.monotonic() + min(timeout, 20)
-    while not (ROOT / "gates" / f"{area}.gate").exists():
-        if time.monotonic() >= deadline:
-            raise TimeoutError("workload gate was never released")
-        time.sleep(0.025)
-    with (folder / "stdout.out").open("xb", buffering=0) as out:
-        os.dup2(out.fileno(), 1)
-    with (folder / "stderr.txt").open("xb", buffering=0) as err:
-        os.dup2(err.fileno(), 2)
     env = {"PATH": "/usr/bin:/bin", "HOME": str(folder),
            "TMPDIR": str(folder), "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8",
            "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
            "ORCA_TASK_REQUESTS": "/work/requests", "ORCA_TASK_RESPONSES": "/work/responses",
            "ORCA_TASK_TIMEOUT_SECONDS": str(timeout)}
-    if kind == "python":
-        executable = str(RUNTIME / "venv/bin/python")
-        argv = [executable, "-I", str(RUNTIME / "python_task.py")]
-    else:
+    if kind == "orca":
         env.update(PATH="/opt/orca:/opt/openmpi/bin:/usr/bin:/bin",
                    LD_LIBRARY_PATH="/opt/orca/lib:/opt/openmpi/lib", OMPI_MCA_plm="isolated",
                    OMPI_MCA_pml="ob1", OMPI_MCA_btl="self,vader",
                    OMPI_MCA_btl_vader_single_copy_mechanism="none")
-        executable = "/opt/orca/orca"
-        argv = [executable, "job.inp"]
+        return supervise_orca(folder, area, timeout, env)
+    gated_child(folder, area, timeout)
+    with (folder / "stdout.out").open("xb", buffering=0) as out:
+        os.dup2(out.fileno(), 1)
+    with (folder / "stderr.txt").open("xb", buffering=0) as err:
+        os.dup2(err.fileno(), 2)
+    executable = str(RUNTIME / "venv/bin/python")
+    argv = [executable, "-I", str(RUNTIME / "python_task.py")]
     os.execve(executable, argv, env)
 
 
@@ -422,7 +545,7 @@ def main():
     elif command == "control":
         control(args[0])
     elif command == "launch":
-        launch(args[0], float(args[1]), args[2] if len(args) > 2 else None)
+        return launch(args[0], float(args[1]), args[2] if len(args) > 2 else None)
     elif command == "identity":
         launch_identity(args[0])
     elif command == "exec-identity":
