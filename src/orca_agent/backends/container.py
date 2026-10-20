@@ -545,8 +545,9 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
         _ACTIVE[boundary["handle"]["launch_id"]] = controls
         if fault:
             fault("after_resumed")
-        while process.poll() is None:
-            controls()
+
+        def observe_actual_start():
+            nonlocal handle
             if kind == "orca" and result["actual_start_status"] != "confirmed":
                 code, data, _ = _helper(boundary, _UID[area], ["exec-identity", scoped_area], check=False)
                 if code == 0:
@@ -564,11 +565,21 @@ def run_managed(boundary, *, kind, local_workdir, timeout_s, on_started, cancel_
                         on_actual_started(handle)
                     if fault:
                         fault("after_actual_start_saved")
+
+        while process.poll() is None:
+            # The executable may be short lived. Observe the fixed /proc/exe
+            # inode before cgroup sampling/heartbeat or a parent control callback
+            # consumes that window. A process-name sample is never this proof.
+            observe_actual_start()
+            controls()
             if transport.tell() > 65536:
                 raise ValueError("Docker workload transport error log exceeded bound")
             if on_poll:
                 on_poll(handle)
             time.sleep(0.1)
+        # Docker transport can finish between its poll and the observation.
+        # Keep the same strong proof requirement on this final opportunity.
+        observe_actual_start()
         controls()
         _helper(boundary, _UID[area], ["quiesce", scoped_area], timeout=5)
         result.update(exit_code=process.returncode,

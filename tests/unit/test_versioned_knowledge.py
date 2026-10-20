@@ -70,7 +70,7 @@ def test_retrieval_does_not_follow_redirects_retry_or_accept_oversized_documents
 
 
 def test_search_schema_comes_from_same_fixed_index_and_cannot_select_arbitrary_url():
-    assert set(knowledge.SearchParameters.model_json_schema()["properties"]["document"]["enum"]) == set(knowledge.DOCUMENTS)
+    assert set(knowledge.SearchParameters.model_json_schema()["properties"]["document"]["anyOf"][0]["enum"]) == set(knowledge.DOCUMENTS)
     with pytest.raises(ValidationError):
         call("https://unregistered.invalid", "input")
     with pytest.raises(ValidationError):
@@ -141,3 +141,41 @@ def test_short_exact_label_is_searchable_and_unknown_query_cannot_fabricate_a_ro
     labels = {0: "A", 1: "B"}
     assert knowledge.matched_excerpt(parts, "B", row_labels=labels) == (parts[1], [1])
     assert knowledge.matched_excerpt(parts, "C", row_labels=labels) == ("", [])
+
+
+@pytest.mark.parametrize("reference", ["orca:../private.html", "orca:contents/%2e%2e/private.html",
+    "orca://evil.invalid/index.html", "orca:index.html?secret=1", "orca:index.html#anchor",
+    "orca:contents/../../6.0/manual/index.html", "orca:C:/secret.html"])
+def test_manual_references_cannot_escape_versioned_official_root(reference):
+    with pytest.raises(ValidationError):
+        call(reference, "input")
+
+
+def test_general_manual_sections_keep_single_get_hash_and_scoped_discovery(monkeypatch):
+    raw = b'<article><p>TDDFT response roots.</p><a href="../essentialelements/solvation.html">solvent</a>' \
+          b'<a href="https://evil.invalid/private.html">bad</a><a href="../../../6.0/manual/index.html">old</a></article>'
+    requests = mock_server(monkeypatch, lambda request: httpx.Response(200, content=raw))
+    policy = SimpleNamespace(profile="managed-native-1")
+    store = SimpleNamespace(run_configuration=lambda run: SimpleNamespace(execution=SimpleNamespace(native_input_policy=policy)))
+    result = knowledge.retrieve(store, None, call("orca:contents/spectroscopyproperties/tddft.html", "response"))
+    assert len(requests) == 1
+    assert str(requests[0].url) == knowledge.MANUAL_ROOT + "contents/spectroscopyproperties/tddft.html"
+    assert result["document_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert result["manual_references"] == ["orca:contents/essentialelements/solvation.html"]
+    assert result["scientific_qualification"] is False
+    policy.profile = "bounded-analytic-1"
+    with pytest.raises(ValueError, match="explicit managed-native"):
+        knowledge.retrieve(store, None, call("orca:index.html", "input"))
+    assert len(requests) == 1
+
+
+def test_discovered_manual_references_share_call_schema_length_bound():
+    limit = knowledge.MAX_MANUAL_REFERENCE_LENGTH
+    accepted = "orca:" + "a" * (limit - len("orca:.html")) + ".html"
+    rejected = accepted.replace(".html", "a.html")
+    parser = knowledge._ManualLinks(knowledge.MANUAL_ROOT + "index.html")
+    parser.feed(f'<a href="{rejected[5:]}">too long</a><a href="{accepted[5:]}">bounded</a>')
+    assert parser.links == [accepted]
+    assert knowledge.SearchParameters(document=accepted, query="input").document == accepted
+    with pytest.raises(ValidationError):
+        knowledge.SearchParameters(document=rejected, query="input")

@@ -594,12 +594,21 @@ class NativeInputPolicy(Record):
     """Frozen execution compatibility, never a scientific qualification rule."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
-    profile: Literal["bounded-analytic-1"] = "bounded-analytic-1"
-    max_atoms: Annotated[int, Field(strict=True, ge=1, le=32)] = 32
-    max_geom_iterations: Annotated[int, Field(strict=True, ge=1, le=128)] = 128
-    max_scf_iterations: Annotated[int, Field(strict=True, ge=1, le=256)] = 256
-    max_response_iterations: Annotated[int, Field(strict=True, ge=1, le=128)] = 128
+    profile: Literal["bounded-analytic-1", "managed-native-1"] = "bounded-analytic-1"
+    max_atoms: Annotated[int, Field(strict=True, ge=1)] = 32
+    max_geom_iterations: Annotated[int, Field(strict=True, ge=1)] = 128
+    max_scf_iterations: Annotated[int, Field(strict=True, ge=1)] = 256
+    max_response_iterations: Annotated[int, Field(strict=True, ge=1)] = 128
     allow_task_geometry: Annotated[bool, Field(strict=True)] = False
+
+    @model_validator(mode="after")
+    def preserve_historical_limits(self):
+        if self.profile == "bounded-analytic-1":
+            for field, maximum in (("max_atoms", 32), ("max_geom_iterations", 128),
+                                   ("max_scf_iterations", 256), ("max_response_iterations", 128)):
+                if getattr(self, field) > maximum:
+                    raise ValueError(f"historical bounded-analytic-1 {field} cannot exceed {maximum}")
+        return self
 
     @model_serializer(mode="wrap")
     def preserve_historical_shape(self, handler):

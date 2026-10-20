@@ -135,7 +135,7 @@ def test_all_native_submission_contracts_and_correction_are_literal():
     assert set(step["properties"]) == set(schema["$defs"]["ProposedStep"]["properties"])
     assert step["required"] == ["key"] and step["additionalProperties"] is False
     assert step["properties"]["logical_key"]["default"] is None
-    assert set(repair["properties"]) == {"key", "repair_of", "code"}
+    assert set(repair["properties"]) == {"key", "repair_of", "code", "inputs"}
     assert repair["required"] == ["key", "repair_of", "code"] and repair["additionalProperties"] is False
     assert repair["properties"]["code"]["properties"]["sha256"]["pattern"] == "^[a-f0-9]{64}$"
     assert isinstance(wire["TOOLS"], list)  # Table encoding must not hide protected child paths.

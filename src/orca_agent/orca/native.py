@@ -172,8 +172,13 @@ def validate_native_input(text: str, dependencies: Mapping[str, bytes],
     optimization switch is called after the existing RHF adapter profile check.
     """
     if policy is not None:
-        from orca_agent.orca.native_profile import BLOCK_FIELDS
         policy = NativeInputPolicy.model_validate(policy)
+        if policy.profile == "managed-native-1":
+            if legacy_optimization:
+                raise ValueError("legacy adapter cannot inherit the new native execution profile")
+            from orca_agent.orca.native_managed import validate_managed_input
+            return validate_managed_input(text, dependencies, resources, policy, binding)
+        from orca_agent.orca.native_profile import BLOCK_FIELDS
         if legacy_optimization:
             raise ValueError("legacy adapter cannot inherit the new native execution profile")
         fields = BLOCK_FIELDS

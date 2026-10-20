@@ -4,7 +4,8 @@ import hashlib
 import json
 import re
 from html.parser import HTMLParser
-from typing import Literal
+from typing import Annotated, Literal
+from urllib.parse import urldefrag, urljoin
 
 import httpx
 from pydantic import Field
@@ -12,7 +13,10 @@ from pydantic import Field
 from orca_agent.models import Identifier, Record, utc_now
 
 RULE = "knowledge-answer-1"
-INDEX_VERSION = "knowledge-index-2"
+INDEX_VERSION = "knowledge-index-3"
+MANUAL_ROOT = "https://www.faccts.de/docs/orca/6.1/manual/"
+MANUAL_REFERENCE = r"^orca:(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.html$"
+MAX_MANUAL_REFERENCE_LENGTH = 240
 DOCUMENTS = {
     "orca_electric": ("ORCA 6.1 Electrical Properties", "https://www.faccts.de/docs/orca/6.1/manual/contents/spectroscopyproperties/electric.html"),
     "orca_optimization": ("ORCA 6.1 Geometry Optimization", "https://www.faccts.de/docs/orca/6.1/manual/contents/structurereactivity/optimizations.html"),
@@ -57,12 +61,18 @@ DOCUMENT_METADATA = {name: {
     "format": "text" if name in GUIDES or name == "rdkit" else "html",
     **({"content_sha256": hashlib.sha256(GUIDES[name].encode()).hexdigest()} if name in GUIDES else {}),
 } for name in DOCUMENTS}
-INDEX_SHA256 = hashlib.sha256(json.dumps({name: {"title": title, "url": url, **DOCUMENT_METADATA[name]}
-    for name, (title, url) in DOCUMENTS.items()}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+INDEX_SHA256 = hashlib.sha256(json.dumps({
+    "documents": {name: {"title": title, "url": url, **DOCUMENT_METADATA[name]}
+        for name, (title, url) in DOCUMENTS.items()},
+    "manual_root": MANUAL_ROOT, "manual_reference": MANUAL_REFERENCE,
+    "max_manual_reference_length": MAX_MANUAL_REFERENCE_LENGTH,
+}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 class SearchParameters(Record):
-    document: Literal[*DOCUMENTS]
+    document: Literal[*DOCUMENTS] | Annotated[str, Field(
+        pattern=MANUAL_REFERENCE, max_length=MAX_MANUAL_REFERENCE_LENGTH,
+        description="Under managed-native-1, orca:index.html or orca:contents/...html reads the frozen official ORCA 6.1 manual.")]
     query: str = Field(min_length=1, max_length=120)
 
 
@@ -165,10 +175,37 @@ def matched_excerpt(parts, query, *, row_labels=None):
     return "\n\n".join(parts[index][:1800] for index in chosen)[:5400], chosen
 
 
+class _ManualLinks(HTMLParser):
+    """Return only bounded follow-up references inside the frozen manual."""
+
+    def __init__(self, url):
+        super().__init__()
+        self.url, self.links = url, []
+
+    def handle_starttag(self, tag, attrs):
+        if tag != "a" or len(self.links) >= 128:
+            return
+        href = dict(attrs).get("href", "")
+        target = urldefrag(urljoin(self.url, href))[0]
+        if target.startswith(MANUAL_ROOT):
+            reference = "orca:" + target[len(MANUAL_ROOT):]
+            if (len(reference) <= MAX_MANUAL_REFERENCE_LENGTH
+                    and re.fullmatch(MANUAL_REFERENCE, reference) and reference not in self.links):
+                self.links.append(reference)
+
+
 def retrieve(store, run, call):
     identifier = call.parameters["document"]
-    title, url = DOCUMENTS[identifier]
-    metadata = DOCUMENT_METADATA[identifier]
+    if identifier in DOCUMENTS:
+        title, url = DOCUMENTS[identifier]
+        metadata = DOCUMENT_METADATA[identifier]
+    else:
+        SearchParameters.model_validate(call.parameters)
+        policy = store.run_configuration(run).execution.native_input_policy
+        if policy is None or policy.profile != "managed-native-1":
+            raise ValueError("manual section retrieval requires the explicit managed-native-1 policy")
+        title, url = "ORCA 6.1 Manual: " + identifier[5:], MANUAL_ROOT + identifier[5:]
+        metadata = {"document_version": "6.1", "kind": "official_document", "format": "html"}
     # Exactly one GET; no redirects, cookies, credentials, search engine, or retries.
     raw = bytearray()
     if identifier in GUIDES:
@@ -192,7 +229,7 @@ def retrieve(store, run, call):
     else:
         parts = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
     excerpt, indices = matched_excerpt(parts, call.parameters["query"], row_labels=row_labels)
-    return {"status": "found" if excerpt else "missing", "title": title, "url": url,
+    result = {"status": "found" if excerpt else "missing", "title": title, "url": url,
             "document_id": identifier, "index_version": INDEX_VERSION, "index_sha256": INDEX_SHA256,
             "document_version": metadata["document_version"], "kind": metadata["kind"],
             "rendering_version": "html-readable-2" if metadata["format"] == "html" else "text-1",
@@ -204,6 +241,11 @@ def retrieve(store, run, call):
                          "table_row_labels": {str(index): row_labels[index] for index in indices if index in row_labels}},
             "scientific_qualification": False,
             "retrieval": "versioned packaged guide; no network" if identifier in GUIDES else "versioned official-document index; one HTTPS GET"}
+    if identifier.startswith("orca:"):
+        links = _ManualLinks(url)
+        links.feed(text)
+        result["manual_references"] = links.links
+    return result
 
 
 def question_source_facts(store, source_run):

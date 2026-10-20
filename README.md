@@ -1,5 +1,7 @@
 # ORCA DFT Agent
 
+当前 Code as Tools 新任务使用 [config.code.example.toml](config.code.example.toml) 的 `managed-native-1`：方法/基组不再受小范围枚举限制，开放元素、开壳层、离子、溶剂及独立计算阶段；Python 可分析已有证据与跨条件结果。运行与科学资格分别记录，旧 Run 保留原策略。配置本机镜像、模型和有限许可后，以 `orca-agent --config <配置文件> web` 启动；不要用旧的 `config.text.example.toml` 期待启用生成代码。边界和证据见[当前输入契约](docs/native-orca-input.md)及[验证报告](docs/acceptance/code-as-tools-general-admission/report.md)。下文保留各历史交付时点。
+
 阶段 A 提供不依赖 LLM 的本地计算底座：结构化 Request/Plan → 注册 Tool → OPI 输入 → Windows 受管 ORCA → 逐输出科学检查 → 不可变证据及结果。阶段 A 已于 2026-10-06 获得[用户验收通过](docs/acceptance/phase-a/user-acceptance.md)，接受的代码基线为 `236376e`；历史真实证据见[验收报告](docs/acceptance/phase-a/report.md)。
 
 阶段 B 已建立独立参考、受控修订、DeepSeek 适配与单一反馈循环，并完成首个自然语言请求到真实水分子单点的闭环，见 [B-04/B-05 证据](docs/acceptance/phase-b/b04-b05.md)。查询、导入、能差分析及受限 SCF 修复已有真实开发证据；采样追加和模型解释仍有失败，正式三次重复未启动，详见[当前实施状态](docs/acceptance/phase-b/implementation-status.md)。阶段 B 尚未完成或验收通过。

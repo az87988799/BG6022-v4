@@ -47,7 +47,7 @@ from orca_agent.schema_projection import project_schema as _schema
 from orca_agent.semantic import selectable_conditions, selection_action_parameters
 from orca_agent.tools.registry import get_tool
 
-PROMPT_VERSION = "agent-json-v69"
+PROMPT_VERSION = "agent-json-v71"
 REASON_TEMPLATE = (
     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
 SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
@@ -170,6 +170,43 @@ _CODE_NATIVE_GUIDANCE = (
 _TERMINAL_OUTCOME_PROMPT = (
     "Members qualified!=goals met. Use goal_status; disclose gaps and "
     "permission/budget blocks, including zero.")
+
+
+def _managed_native(run):
+    policy = run.configuration.execution.native_input_policy if run.configuration else None
+    return policy is not None and policy.profile == "managed-native-1"
+
+
+def _native_code_guidance(run):
+    """Versioned input rules; old Runs retain their narrower frozen contract."""
+    if not _managed_native(run):
+        return _CODE_NATIVE_GUIDANCE
+    return _CODE_NATIVE_GUIDANCE.replace(
+        "Include exactly one explicit RHF or RKS keyword matching the selected electronic_state. ",
+        "Use the explicit wavefunction and environment matching the selected Request/System conditions; "
+        "method/basis/element/spin are not restricted to the historical analytic profile. "
+        "knowledge.search can read document=orca:index.html or orca:contents/...html inside the frozen "
+        "official ORCA 6.1 manual; use returned manual_references to locate further documentation. "
+        "Follow AUTHORITY.native_input_contract for the input grammar and bounded execution effects. "
+    ).replace(
+        "Temperature/standard-state evidence remains unsupported. ",
+        "Retain only physical conditions evidenced by the source; unresolved temperature/standard-state "
+        "requirements remain gaps. "
+    ).replace(
+        "optimized needs OptFreq/final XYZ.", "optimized needs an optimization output/final XYZ."
+    ).replace(
+        "Compute+parse through managed SDK receipts; preserve each original Attempt and source binding. "
+        "orca.run only archives raw outputs; separate Python parsing imported stdout lacks scientific Goal condition provenance. ",
+        "Compute through managed SDK or direct orca.run; preserve each original Attempt and source binding. "
+        "A separate Python analysis can cite completed direct ORCA outputs through a frozen input manifest; "
+        "the program binds their archived admission record and original conditions without a new ORCA call. "
+    ).replace(
+        "Input=job.inp; OptFreq final geometry=job.xyz; ",
+        "Input=job.inp; optimization final geometry=job.xyz; "
+    ).replace(
+        "Observation sources use filename=original files key and internal_request_key=receipt.request_key, never the copy path. ",
+        "SDK observation sources use filename=original files key and internal_request_key=receipt.request_key, "
+        "never the copy path. Direct ORCA outputs and registered inputs use their frozen task-relative filenames. ")
 
 
 def _terminal_prompt(prompt, actions):
@@ -1562,8 +1599,9 @@ def _action_examples(request, run, plan, catalog, final_only, control):
                     "unresolved": ["<1-5 texts,1-1000 chars>"]},
         "stop": {},
     }
-    if (selectable_conditions(request) and not run.attempts
-            and not any("write_input_artifact" in get_tool(call.tool).effects for call in run.calls)
+    from orca_agent.condition_selection import selection_available
+
+    if (selectable_conditions(request) and selection_available(None, run)
             and run.usage.plan_revisions < run.budget.plan_revisions):
         examples["select_conditions"] = {"request_version": request.version, "choices": {}}
     if not catalog:
@@ -2777,6 +2815,7 @@ def build_context(
                     "Include required Tool parameters and known charge/multiplicity. "
                     "Bind every consumer input:Step.inputs[role]/geometry={producer_key,port}, "
                     "using producer output_ports; order alone is no binding.")
+    native_guidance = _native_code_guidance(run)
     template = {
         "PROPOSAL_SCHEMA": proposal_schema,
         "ACTION_PARAMETERS": examples,
@@ -2794,10 +2833,24 @@ def build_context(
             "the analysis when its permission/budget and saved sources suffice. Bind future outputs with "
             "step_key+unchanged port; a gap is only for a Goal with no chosen producer or evidence. "
             "Existing Attempts and scientific requirements stay unchanged.")
+        if _managed_native(run):
+            template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
+                "and existing completed SDK sources (original filename+internal_request_key), without run_orca. ",
+                "and existing completed managed outputs or registered inputs, without run_orca. "
+            ).replace(
+                "Scientific-task report records cite both local data files and original SDK outputs establishing actual calculation conditions. ",
+                "Scientific-task reports cite local data files and original managed outputs or registered inputs; "
+                "only trusted admission evidence establishes actual calculation conditions. "
+            ).replace(
+                "Scientific Goals need a completed SDK native receipt with verified original provenance; pure file tasks need no ORCA.",
+                "New scientific calculations require managed native provenance. Analysis of authorized existing "
+                "input files can cite those archived task copies without new ORCA calls; unknown conditions remain "
+                "unknown and explicit scientific evidence requirements still apply. Cross-system comparisons "
+                "retain each source's conditions and the formula; bind each calculation to its requested system.")
         if authority.get("failed_python_attempts"):
             template["TASK_CODE_RULES"] += " " + _CODE_REPAIR_GUIDANCE
         if run.permission.scientific_execution and "orca.run" in run.permission.allowed_tools:
-            template["TASK_CODE_RULES"] += " " + _CODE_NATIVE_GUIDANCE
+            template["TASK_CODE_RULES"] += " " + native_guidance
         if (not run.permission.scientific_execution
                 and all(goal.port in {"artifacts", "observations"} for goal in request.goals)):
             # This pure-file scope cannot launch native science. Keep the
@@ -2817,6 +2870,10 @@ def build_context(
             "completed current-Run Result ID, document_sha256 and exact excerpt quote. Method/basis require official "
             "documentation. Choose before identity/geometry preparation or execution; explicit values/unknowns stay fixed. "
             "A cited choice is not scientific validation.")
+        if _managed_native(run):
+            template["CONDITION_SELECTION_RULES"] = template["CONDITION_SELECTION_RULES"].replace(
+                "Choose before identity/geometry preparation or execution;",
+                "Identity lookup may precede selection. Choose before geometry preparation or execution;")
     if not final_only and not semantic_intake and set(examples) & {"initial_plan", "revise_plan"}:
         template["PLAN_RULES"] = _PLAN_RULES
         if request.systems and any("execute_orca" in tool["effects"] for tool in catalog):
@@ -2849,12 +2906,17 @@ def build_context(
             contract = authority["native_input_contract"]
             authority["native_input_contract"] = {"sha256": _hash(contract), "new_start_capacity": 0}
             template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
-                _CODE_NATIVE_GUIDANCE,
+                native_guidance,
                 "ORCA start cap exhausted; native admission details omitted, frozen hash retained. "
                 "Completed stable request_key+identical input may reuse receipts; reconcile unknown work. "
                 "Existing receipts retain actual_conditions and files mapping original filenames to read-only copies. "
                 "Inspect files keys; never guess names. Sources need original filename+internal_request_key; "
                 "copied inputs are not outputs. Receipts remain unverified. No new starts or key changes to regain quota.")
+            if _managed_native(run):
+                template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
+                    "Sources need original filename+internal_request_key; ",
+                    "SDK sources need original filename+internal_request_key. Direct ORCA outputs and registered "
+                    "inputs use frozen task-relative filenames; original hashes and conditions remain checked; ")
             template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
                 _CODE_REPAIR_GUIDANCE,
                 "Repair history is not ready work/permission. Use a new key, repair_of:failed frozen_step.id, "

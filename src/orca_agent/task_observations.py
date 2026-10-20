@@ -2,6 +2,7 @@
 
 import json
 from pathlib import PurePosixPath
+from types import SimpleNamespace
 
 from pydantic import Field
 
@@ -29,11 +30,81 @@ class _Manifest(Record):
     observations: list[object] = Field(max_length=32)
 
 
+def _general_admission(store, run):
+    policy = store.run_configuration(run).execution.native_input_policy
+    return policy is not None and policy.profile == "managed-native-1"
+
+
+def _registered_input(store, run, step, name, files):
+    """Bind a task input to its original immutable source, never a rewritten copy."""
+    entries = [entry for entry in step.parameters.inputs.entries if entry.target_path == name]
+    if not entries:
+        return None
+    entry, = entries
+    artifact = store.load_artifact(entry.artifact_id)
+    if artifact.sha256 != entry.sha256:
+        raise ValueError("observation input hash differs from the frozen manifest")
+    store.artifact_path(artifact.id)
+    if artifact.id not in run.permission.artifact_ids and artifact.id not in store.verified_own_artifacts(run):
+        raise ValueError("observation input is outside the frozen input authorization")
+    copied = files.get("task/" + name)
+    if copied is not None:
+        copy = store.load_artifact(copied["artifact_id"])
+        store.artifact_path(copy.id)
+        if copy.sha256 != entry.sha256:
+            raise ValueError("observation input copy changed; cite the derived file separately")
+    return artifact
+
+
+def _direct_native_source(store, run, artifact):
+    """Recover admitted conditions from a completed direct call's archived receipt."""
+    parent = next((item for item in run.attempts if item.id == artifact.attempt_id), None)
+    if artifact.run_id != run.id or parent is None or parent.tool != "orca.run":
+        return None
+    if (parent.state != "completed" or parent.finished_at is None or parent.result_id not in run.result_ids
+            or parent.frozen_step is None or parent.request_version is None or parent.native_workload is None):
+        raise ValueError("direct native source lacks completed frozen provenance")
+    result = store.load_result(run.id, parent.result_id)
+    if ((result.run_id, result.attempt_id, result.step_id) != (run.id, parent.id, parent.step_id)
+            or result.operation_status != "completed" or artifact.id not in result.artifact_ids
+            or result.observations.get("evidence_collection_complete") is not True):
+        raise ValueError("direct native source Result is incomplete or mismatched")
+    reference = result.source.get("files", {}).get("prepared.json", {})
+    record = store.load_artifact(reference["artifact_id"])
+    if ((record.run_id, record.attempt_id, record.role) != (run.id, parent.id, "execution_record")
+            or record.sha256 != reference.get("sha256") or record.id not in result.artifact_ids):
+        raise ValueError("direct native admission archive binding differs")
+    path = store.artifact_path(record.id)
+    if path.stat().st_size > 65536:
+        raise ValueError("direct native admission archive exceeds its read bound")
+    from orca_agent.llm import _strict_json
+
+    prepared = _strict_json(path.read_bytes())
+    workload = parent.native_workload
+    if (not isinstance(prepared, dict) or any(prepared.get(key) != value for key, value in workload.items())
+            or prepared.get("admission_version") not in {"native-orca-input-2", "native-orca-input-3"}
+            or prepared.get("input_sha256") != parent.frozen_step.parameters.input.sha256):
+        raise ValueError("direct native admission differs from the frozen workload")
+    code = store.load_artifact(parent.frozen_step.parameters.input.artifact_id)
+    store.artifact_path(code.id)
+    if code.sha256 != prepared["input_sha256"]:
+        raise ValueError("direct native source input changed")
+    actual = prepared.get("actual_conditions")
+    if not isinstance(actual, dict) or actual.get("request_version") != parent.request_version:
+        raise ValueError("direct native admission conditions are missing or changed")
+    return SimpleNamespace(request_key=None, parent_attempt_id=parent.id, state="completed",
+        actual_conditions={**actual, "native_attempt_id": parent.id}, conditions=workload,
+        inputs=parent.frozen_step.parameters.inputs, artifact_ids=result.artifact_ids,
+        direct_attempt=parent)
+
+
 def _receipt_parent(run, receipt, attempt):
     """A reused source retains its original, settled Python provenance."""
     parent = next((item for item in run.attempts if item.id == receipt.parent_attempt_id), None)
     if parent is None:
         raise ValueError("observation internal source has no original Attempt")
+    if getattr(receipt, "direct_attempt", None) is parent:
+        return parent
     if parent.id != attempt.id:
         if (receipt.state != "completed" or receipt.finished_at is None
                 or parent.finished_at is None or parent.state in {"intent", "running", "unknown"}
@@ -55,9 +126,12 @@ def _task_relative(name):
 
 def _record(store, run, step, attempt, files, item):
     sources, native_conditions = [], []
+    general = _general_admission(store, run)
     for declaration in item.sources:
         name = _task_relative(declaration.filename)
         admitted = {}
+        registered_input = None
+        request_key = declaration.internal_request_key
         if declaration.internal_request_key:
             receipt = next((r for r in run.internal_calls
                 if r.request_key == declaration.internal_request_key), None)
@@ -79,16 +153,38 @@ def _record(store, run, step, attempt, files, item):
             native_conditions.append(admitted)
         else:
             parent = attempt
-            selected = files.get("task/" + name)
-            if selected is None:
-                raise ValueError("observation task source was not archived")
-            artifact = store.load_artifact(selected["artifact_id"])
+            registered_input = _registered_input(store, run, step, name, files) if general else None
+            if registered_input is not None:
+                artifact = registered_input
+                admitted = {"origin": "registered_task_input", "input_artifact_id": artifact.id,
+                            "input_sha256": artifact.sha256}
+                producers = [receipt for receipt in run.internal_calls if artifact.id in receipt.artifact_ids]
+                if producers:
+                    if len(producers) != 1 or producers[0].state != "completed":
+                        raise ValueError("registered input native source is incomplete or ambiguous")
+                    receipt, = producers
+                    parent = _receipt_parent(run, receipt, attempt)
+                    if (artifact.run_id, artifact.attempt_id) != (run.id, parent.id):
+                        raise ValueError("registered input native source provenance differs")
+                    request_key = receipt.request_key
+                    admitted = dict(receipt.actual_conditions)
+                    native_conditions.append(admitted)
+                else:
+                    direct = _direct_native_source(store, run, artifact)
+                    if direct is not None:
+                        admitted = direct.actual_conditions
+                        native_conditions.append(admitted)
+            else:
+                selected = files.get("task/" + name)
+                if selected is None:
+                    raise ValueError("observation task source was not archived")
+                artifact = store.load_artifact(selected["artifact_id"])
         store.artifact_path(artifact.id)
-        if artifact.run_id != run.id or artifact.attempt_id != parent.id:
+        if registered_input is None and (artifact.run_id != run.id or artifact.attempt_id != parent.id):
             raise ValueError("observation source does not belong to its original Attempt")
         sources.append(ObservationSource(artifact_id=artifact.id, sha256=artifact.sha256,
-            location=declaration.location, attempt_id=parent.id,
-            internal_request_key=declaration.internal_request_key, actual_conditions=admitted))
+            location=declaration.location, attempt_id=artifact.attempt_id if registered_input is not None else parent.id,
+            internal_request_key=request_key, actual_conditions=admitted))
     artifacts = []
     for name in item.artifacts:
         selected = files.get("task/" + _task_relative(name))
@@ -118,14 +214,18 @@ def _record(store, run, step, attempt, files, item):
         "Source locations and interpretation are task declarations; only archived file identity is checked.",
         "Conditions describe admitted input, not independent output verification.", *item.limitations]
     if conflicts:
-        detail = "Source conditions or calculation stages conflict: " + ", ".join(conflicts)
-        checks.append(Check(name="source_conditions_consistent", status="failed",
-                            rule_version="generic-observation-1", detail=detail))
+        detail = ("Source conditions or calculation stages differ: " if general else
+                  "Source conditions or calculation stages conflict: ") + ", ".join(conflicts)
+        if not general:
+            checks.append(Check(name="source_conditions_consistent", status="failed",
+                                rule_version="generic-observation-1", detail=detail))
         limitations.append(detail)
+    if any(source.actual_conditions.get("origin") == "registered_task_input" for source in sources):
+        limitations.append("Registered input identity/hash is checked; its calculation conditions and scientific contents remain unknown.")
     return Observation(name=item.name, value=item.value, unit=item.unit, actual_conditions=conditions,
         sources=sources, code_sha256=step.parameters.code.sha256, formula=item.formula,
         artifact_ids=list(dict.fromkeys(artifacts)), checks=checks,
-        validation_status="failed" if conflicts else "unverified", limitations=limitations)
+        validation_status="failed" if conflicts and not general else "unverified", limitations=limitations)
 
 
 def collect(store, run, step, attempt, files, *, diagnostics=None):
@@ -164,7 +264,7 @@ def collect(store, run, step, attempt, files, *, diagnostics=None):
     return records
 
 
-def _native_current_conditions(request, goal, system_id):
+def _native_current_conditions(request, goal, system_id, *, policy=None):
     """Normalize this profile's spellings before comparing all condition scopes.
 
     This is a read-only projection. Provenance and genuine conflicts still go
@@ -178,7 +278,7 @@ def _native_current_conditions(request, goal, system_id):
         # method/electronic_state consistency check.
         if name == "method" and isinstance(value, str) and value.strip().casefold() == "rhf":
             return "RHF"
-        return canonical_native_condition(name, value)
+        return canonical_native_condition(name, value, policy=policy) if policy else canonical_native_condition(name, value)
 
     def mapping(conditions):
         return {name: canonical(name, value) if name in CONDITION_FIELDS else value
@@ -195,7 +295,7 @@ def _native_current_conditions(request, goal, system_id):
     return effective_conditions(projected, constraint, system_id)
 
 
-def _additional_conditions(request, goal, system_id):
+def _additional_conditions(request, goal, system_id, *, actual=None):
     """No unimplemented physical condition becomes true by being unqualified."""
     from orca_agent.applicability import CONDITION_FIELDS
 
@@ -219,7 +319,10 @@ def _additional_conditions(request, goal, system_id):
         if value is None or sources.get(name) in {"unknown", "inferred", "not_applicable"}:
             reasons.append("unknown_condition:" + name)
         if name != "geometry_relation":
-            reasons.append("native_condition_not_verified:" + name)
+            if actual is None or name not in actual:
+                reasons.append("native_condition_not_verified:" + name)
+            elif type(actual[name]) is not type(value) or actual[name] != value:
+                reasons.append("native_source_condition_missing_or_mismatch:" + name)
         elif not isinstance(value, str) or value not in {"fixed_initial", "optimized"}:
             reasons.append("unsupported_geometry_relation")
     return values.get("geometry_relation"), reasons
@@ -231,14 +334,16 @@ def _geometry_relation_evidence(store, run, request, step, attempt, observation,
     from orca_agent.orca.native import _xyz_file, read_pinned_input
 
     keys = {source.internal_request_key for source in observation.sources if source.internal_request_key}
-    selected = [receipt for receipt in receipts if receipt.request_key in keys]
+    selected = [receipt for receipt in receipts if receipt.request_key in keys
+                or getattr(receipt, "direct_attempt", None) is not None]
     if len(selected) != 1 or selected[0].state != "completed":
         raise ValueError("geometry_relation_requires_one_completed_native_source")
     receipt = selected[0]
     parent = _receipt_parent(run, receipt, attempt)
     source_step = parent.frozen_step or step
     binding = receipt.conditions.get("input_binding", {})
-    if (not isinstance(binding, dict) or receipt.conditions.get("admission_version") != "native-orca-input-2"
+    versions = {"native-orca-input-2", "native-orca-input-3"} if _general_admission(store, run) else {"native-orca-input-2"}
+    if (not isinstance(binding, dict) or receipt.conditions.get("admission_version") not in versions
             or any(binding.get(name) != expected for name, expected in {
                 "request_id": request.id, "request_version": request.version,
                 "step_id": source_step.id, "system_id": system_id}.items())):
@@ -277,10 +382,16 @@ def _geometry_relation_evidence(store, run, request, step, attempt, observation,
              if source.internal_request_key == receipt.request_key}
     run_type = receipt.actual_conditions.get("run_type")
     if relation == "fixed_initial":
-        if run_type != "single_point" or stdout.id not in cited:
+        fixed_types = {"single_point"}
+        if _general_admission(store, run):
+            fixed_types.update({"analytic_frequencies", "numerical_frequencies"})
+        if run_type not in fixed_types or stdout.id not in cited:
             raise ValueError("fixed_initial_requires_bound_single_point_output")
     elif relation == "optimized":
-        if run_type != "optimization_and_analytic_frequencies":
+        optimizing = {"optimization_and_analytic_frequencies"}
+        if _general_admission(store, run):
+            optimizing.update({"optimization", "optimization_and_numerical_frequencies"})
+        if run_type not in optimizing:
             raise ValueError("optimized_requires_optimization_native_output")
         if dependency.target_path.casefold() == "job.xyz":
             raise ValueError("optimized_geometry_output_overlaps_initial_input")
@@ -339,6 +450,86 @@ def _same_archived_observations(rebuilt, recorded):
     return True
 
 
+def _assess_general_sources(store, run, request, goal, step, attempt, observation):
+    """Compare each admitted source with its requested scope, not with its peers."""
+    from orca_agent.orca.native_profile import canonical_native_condition
+
+    systems = {system.id: system for system in request.systems}
+    requested = goal.system_ids or list(systems)
+    if len(requested) != len(set(requested)) or set(requested) - systems.keys():
+        raise ValueError("generic_observation_system_binding_mismatch")
+    if step.system_id is not None and (step.system_id not in systems
+            or requested and requested != [step.system_id]):
+        raise ValueError("generic_observation_system_binding_mismatch")
+    keys = {source.internal_request_key for source in observation.sources if source.internal_request_key}
+    reasons = []
+    direct_sources = {source.actual_conditions["native_attempt_id"]: source for source in observation.sources
+                      if source.actual_conditions.get("native_attempt_id")}
+    if keys or direct_sources:
+        selected = [receipt for receipt in run.internal_calls if receipt.request_key in keys]
+        if len(selected) != len(keys) or any(receipt.state != "completed" for receipt in selected):
+            raise ValueError("requested_observation_lacks_completed_native_source")
+        for source in direct_sources.values():
+            direct = _direct_native_source(store, run, store.load_artifact(source.artifact_id))
+            if direct is None:
+                raise ValueError("direct native observation source lost its original provenance")
+            selected.append(direct)
+        covered = set()
+        for receipt in selected:
+            actual = receipt.actual_conditions
+            system_id = actual.get("system_id")
+            if (actual.get("origin") != "admitted_native_input"
+                    or actual.get("request_version") != request.version
+                    or (system_id not in requested if requested else system_id is not None)
+                    or step.system_id is not None and system_id != step.system_id):
+                raise ValueError("native_input_purpose_binding_missing_or_changed")
+            covered.add(system_id)
+            assessment = _native_current_conditions(request, goal, system_id, policy="managed-native-1")
+            reasons.extend(assessment["reasons"])
+            for name, expected in assessment["conditions"].items():
+                canonical = canonical_native_condition(name, expected, policy="managed-native-1")
+                if canonical is None or canonical != canonical_native_condition(
+                        name, actual.get(name), policy="managed-native-1"):
+                    reasons.append("native_source_condition_missing_or_mismatch:" + name)
+            relation, extra = _additional_conditions(request, goal, system_id, actual=actual)
+            reasons.extend(extra)
+            if relation is not None:
+                source_observation = observation.model_copy(update={"sources": [source for source in observation.sources
+                    if (source.internal_request_key == receipt.request_key if receipt.request_key is not None else
+                        source.actual_conditions.get("native_attempt_id") == receipt.parent_attempt_id)]})
+                _geometry_relation_evidence(store, run, request, step, attempt, source_observation,
+                                            [receipt], system_id, relation)
+        if requested and covered != set(requested):
+            reasons.append("generic_observation_requested_system_source_missing")
+        if any(source.actual_conditions.get("origin") == "registered_task_input"
+               for source in observation.sources):
+            # A known native source cannot lend its conditions to another raw
+            # imported source used in the same derived value.
+            reasons.append("mixed_input_source_conditions_unverified")
+        return reasons
+
+    # Explicit analysis of registered input files is an execution in its own
+    # right. File identity does not establish ORCA conditions or qualification.
+    inputs = [source for source in observation.sources
+              if source.actual_conditions.get("origin") == "registered_task_input"]
+    declared = set(_declared_scientific_conditions(request, goal))
+    for system_id in requested:
+        declared.update(name for name in systems[system_id].conditions
+                        if name in {"method", "basis", "charge", "multiplicity", "electronic_state", "environment"})
+    for system_id in requested or [None]:
+        relation, extra = _additional_conditions(request, goal, system_id)
+        reasons.extend(extra)
+        if relation is not None:
+            reasons.append("geometry_relation_requires_native_evidence")
+    reasons.extend("scientific_condition_requires_native_evidence:" + name for name in sorted(declared))
+    if (requested or request.geometry_artifact_id is not None) and not inputs:
+        reasons.append("scientific_system_observation_lacks_registered_input_evidence")
+    if inputs and (not run.permission.code_execution or not run.permission.artifact_writes
+                   or "python.execute" not in run.permission.allowed_tools):
+        reasons.append("registered_input_analysis_not_authorized")
+    return reasons
+
+
 def assess(store, run, request, goal, result):
     """Assess only a sourced delivery contract; scientific requirements stay hard."""
     from orca_agent.minimum_evidence import assess_minimum_evidence
@@ -357,9 +548,10 @@ def assess(store, run, request, goal, result):
                 or not getattr(attempt.frozen_step.parameters, "code", None)):
             raise ValueError("generic_observation_attempt_purpose_mismatch")
         step = attempt.frozen_step
+        general = _general_admission(store, run)
         system_ids = goal.system_ids or [s.id for s in request.systems]
         system_id = step.system_id or (request.systems[0].id if len(request.systems) == 1 else None)
-        if system_ids and (len(system_ids) != 1 or system_id != system_ids[0]):
+        if not general and system_ids and (len(system_ids) != 1 or system_id != system_ids[0]):
             raise ValueError("generic_observation_system_binding_mismatch")
         if result.observations.get("evidence_collection_complete") is not True:
             raise ValueError("generic_observation_collection_incomplete")
@@ -379,6 +571,27 @@ def assess(store, run, request, goal, result):
         if observation.validation_status == "failed" or any(check.status == "failed" for check in observation.checks):
             raise ValueError("requested_observation_has_failed_consistency_checks")
         conditions = observation.actual_conditions
+        if general:
+            reasons.extend(_assess_general_sources(store, run, request, goal, step, attempt, observation))
+        else:
+            reasons.extend(_assess_legacy_sources(store, run, request, goal, step, attempt,
+                                                 observation, system_id, conditions))
+    except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
+        reasons.append(str(exc))
+    requirements = assess_minimum_evidence(goal, result, purpose_passed=not reasons)
+    reasons.extend(item["reason"] + ":" + item["requested"] for item in requirements
+                   if item["status"] != "passed")
+    return {"status": "unresolved" if reasons else "passed", "reasons": list(dict.fromkeys(reasons)),
+            "minimum_evidence": requirements, "scientific_qualification": False,
+            "current_use": {"source_conditions": conditions,
+                "source_condition_evidence": {"origin": "admitted_native_input" if conditions else "unknown",
+                    "scientific_output_verification": "unverified"}}}
+
+
+def _assess_legacy_sources(store, run, request, goal, step, attempt, observation, system_id, conditions):
+    """Frozen older Runs retain their original delivery contract."""
+    reasons = []
+    try:
         source_keys = {source.internal_request_key for source in observation.sources
                        if source.internal_request_key}
         receipts = [r for r in run.internal_calls
@@ -416,11 +629,4 @@ def assess(store, run, request, goal, result):
                            for name in _declared_scientific_conditions(request, goal))
     except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
         reasons.append(str(exc))
-    requirements = assess_minimum_evidence(goal, result, purpose_passed=not reasons)
-    reasons.extend(item["reason"] + ":" + item["requested"] for item in requirements
-                   if item["status"] != "passed")
-    return {"status": "unresolved" if reasons else "passed", "reasons": list(dict.fromkeys(reasons)),
-            "minimum_evidence": requirements, "scientific_qualification": False,
-            "current_use": {"source_conditions": conditions,
-                "source_condition_evidence": {"origin": "admitted_native_input" if conditions else "unknown",
-                    "scientific_output_verification": "unverified"}}}
+    return reasons
