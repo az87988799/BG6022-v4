@@ -1,0 +1,136 @@
+{
+  "source_response": {
+    "path": "data/live-repair/attempts/a024/data/runs/run_39851ada3f394de7bfa804d9aaad218d/model/model_6c6a5c3a668d4a1bb5b8471240905462.response.json",
+    "sha256": "f645f82e5f84ebeb1451e94809b2643d690284d7c8453dd2157453f793947d1e"
+  },
+  "source_request": {
+    "path": "data/live-repair/attempts/a024/data/runs/run_39851ada3f394de7bfa804d9aaad218d/request-revisions/1.json",
+    "sha256": "bc58cf05bc1af01a1a7458099faac34479d9fe070c8fb52c667b63829e6b775a"
+  },
+  "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+  "parameters": {
+    "schema_version": "request-semantics-3",
+    "message_ids": [
+      "message_a2e2ec90346a49c0aa3532585da45642"
+    ],
+    "kind": "normalize",
+    "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "automatic_selection": {
+      "basis": {
+        "message_id": "message_a2e2ec90346a49c0aa3532585da45642",
+        "text_basis": "自行选择同一方法与基组"
+      },
+      "method": {
+        "message_id": "message_a2e2ec90346a49c0aa3532585da45642",
+        "text_basis": "自行选择同一方法与基组"
+      }
+    },
+    "conditions": {
+      "charge": {
+        "message_id": "message_a2e2ec90346a49c0aa3532585da45642",
+        "source": "explicit",
+        "text_basis": "乙醇（中性、单重态）",
+        "value": 0,
+        "value_basis": "中性"
+      },
+      "multiplicity": {
+        "message_id": "message_a2e2ec90346a49c0aa3532585da45642",
+        "source": "explicit",
+        "text_basis": "乙醇（中性、单重态）",
+        "value": 1,
+        "value_basis": "单重态"
+      }
+    },
+    "goals": [
+      {
+        "key": "gas_energy",
+        "port": "energy",
+        "quantity": "绝对能量（Eh）",
+        "geometry_relation": "fixed_initial",
+        "required": true,
+        "system_refs": [
+          "ethanol"
+        ],
+        "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+        "verification": "reported_with_limitations",
+        "conditions": {
+          "environment": {
+            "message_id": "message_a2e2ec90346a49c0aa3532585da45642",
+            "source": "explicit",
+            "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+            "value": "gas_phase",
+            "value_basis": "气相"
+          }
+        }
+      },
+      {
+        "key": "cpcm_energy",
+        "port": "energy",
+        "quantity": "绝对能量（Eh）",
+        "geometry_relation": "fixed_initial",
+        "required": true,
+        "system_refs": [
+          "ethanol"
+        ],
+        "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+        "verification": "reported_with_limitations",
+        "conditions": {
+          "environment": {
+            "message_id": "message_a2e2ec90346a49c0aa3532585da45642",
+            "source": "explicit",
+            "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+            "value": "CPCM(water)",
+            "value_basis": "ORCA C-PCM水环境"
+          }
+        }
+      },
+      {
+        "key": "delta_energy",
+        "port": "energy_difference",
+        "quantity": "ΔE=E(C-PCM水)-E(气相) in kJ/mol with sign explanation",
+        "required": true,
+        "system_refs": [
+          "ethanol"
+        ],
+        "text_basis": "按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释",
+        "verification": "reported_with_limitations"
+      },
+      {
+        "key": "io_files",
+        "port": "artifacts",
+        "quantity": "两份原始输入输出文件",
+        "required": true,
+        "system_refs": [
+          "ethanol"
+        ],
+        "text_basis": "交付两份原始输入输出",
+        "verification": "reported_with_limitations"
+      },
+      {
+        "key": "xyz_hash",
+        "port": "geometry_file",
+        "quantity": "共用XYZ及hash",
+        "required": true,
+        "system_refs": [
+          "ethanol"
+        ],
+        "text_basis": "共用XYZ及hash",
+        "verification": "reported_with_limitations"
+      }
+    ],
+    "identities": [
+      {
+        "key": "ethanol",
+        "message_id": "message_a2e2ec90346a49c0aa3532585da45642",
+        "name": "乙醇",
+        "query_name": "ethanol",
+        "text_basis": "乙醇（中性、单重态）"
+      }
+    ],
+    "notices": [
+      "除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。",
+      "这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+      "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。"
+    ]
+  }
+}

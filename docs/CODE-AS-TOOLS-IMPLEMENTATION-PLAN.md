@@ -44,6 +44,8 @@ a021 已认证目标的显示标签反复逐字拒绝按 [0069](decisions/0069-s
 
 a023 的并列环境能量目标按 [0072](decisions/0072-scoped-energy-source-coverage.md) 复用认证原文及逐目标条件进行覆盖，程序显示名称不再决定物理量类型；不合并气相/溶剂义务或放宽科学检查。
 
+a024 的后置绝对能交付重复覆盖按 [0074](decisions/0074-energy-delivery-source-association.md) 修复：纯交付引用只关联同消息、同体系、同几何且已逐环境覆盖的计算义务，原句与 Eh 等单位保留为显式最低证据；新范围或额外计算仍独立校验。
+
 a019 的可执行空脚本示例按 [0070](decisions/0070-nonexecutable-code-guidance.md) 改为字段说明。新 Run 可冻结非空 Python 入口检查，实际代码仍由模型编写；来源、权限、预算和科学证据校验保持，旧 Run 不升级。
 
 a022 已读原生错误被后续查询窗口挤掉的问题按 [0071](decisions/0071-preserve-current-execution-failure.md) 修复：当前未修复失败保留有界、同源核验的日志证据，新失败在执行链内保存摘要；不扩大上下文或隐式重读旧文件，不修改历史结果。

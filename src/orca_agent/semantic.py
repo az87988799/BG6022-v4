@@ -1606,6 +1606,8 @@ _ENERGY_NAME = re.compile(
     r"(?:电子|单点|绝对|总)(?:电子)?能(?:量)?|"
     r"(?<![A-Za-z0-9_])(?:electronic|single[- ]point|sp|absolute|total)\s+"
     r"(?:electronic\s+)?energ(?:y|ies)(?![A-Za-z0-9_])", re.I)
+_ENERGY_DIFFERENCE_REFERENCE = re.compile(
+    r"(?:Δ\s*E|\bdelta\s*E)\s*=\s*E\(([^()\n]{1,80})\)\s*-\s*E\(([^()\n]{1,80})\)", re.I)
 _ENERGY_DISPLAY = (
     r"(?:数值|值|数据|结果|表格?|排名|排序|比较|曲线|图|清单)|"
     r"(?:values?|data|results?|tables?|rankings?|ranks?|comparisons?|curves?|plots?|lists?)")
@@ -1661,6 +1663,8 @@ def _energy_quantity_kinds(text, *, target_names=(), source=False):
     accounted for: unknown mathematical modifiers never certify raw energy.
     Source propositions additionally allow a leading request/action clause.
     """
+    if _ENERGY_DIFFERENCE_REFERENCE.fullmatch(text.strip()):
+        return {"difference"}
     kinds = set()
     for match in _ENERGY_NAME.finditer(text):
         before, after = text[:match.start()], text[match.end():]
@@ -1732,8 +1736,28 @@ def _energy_quantity_phrases(text, *, source=False):
             yield phrase
 
 
-def _energy_source_requirements(text, target_names):
-    requirements, pending_conditions = [], []
+def _energy_formula_requirements(text):
+    """Keep unknown formula modifiers literal, rather than stripping them."""
+    for part in re.split(_ENERGY_ITEM_BOUNDARY, text, flags=re.I):
+        matches = list(_ENERGY_DIFFERENCE_REFERENCE.finditer(part))
+        for match in matches:
+            prefix = _energy_phrase_prefix(part[:match.start()], source=True)
+            suffix = part[match.end():]
+            plain = (len(matches) == 1 and re.fullmatch(
+                r"\s*(?:并|再|按|按照|请|\b(?:according\s+to|using|please)\b|\s)*", prefix, re.I)
+                and re.fullmatch(
+                    r"\s*(?:给出|报告|交付|\b(?:give|report|deliver)\b)?\s*"
+                    r"(?:[（(]?\s*(?:in\s+)?(?:Hartree|Eh|a\.?u\.?|eV|kJ/mol|kcal/mol)\s*[)）]?)?"
+                    r"\s*(?:差值|差量|值|结果|\b(?:difference|value|result)s?\b)?\s*", suffix, re.I))
+            phrase = match.group() if plain else (prefix + part[match.start():]).strip()
+            yield {"source_quantity": phrase, "energy_reference_formula": match.group(),
+                   **({"energy_kinds": ["difference"]} if plain else {"literal_quantity": phrase})}
+
+
+def _energy_source_requirements(text, target_names, *, include_formulas=False):
+    # Formula operands reference calculations, not simultaneous execution fields.
+    requirements = list(_energy_formula_requirements(text)) if include_formulas else []
+    pending_conditions = []
 
     def append(phrase, *, condition=None):
         kinds = _energy_quantity_kinds(phrase, target_names=target_names)
@@ -1871,6 +1895,12 @@ def _energy_condition_mentions(name, phrase, *, labels=True):
 def _energy_source_condition_quantities(request, goal, obligation):
     """Check source conditions before either physical-kind or literal matching."""
     source, quantities = obligation["source_quantity"], []
+    if obligation.get("energy_reference_formula"):
+        # Both operands must remain verbatim in this Goal's own authenticated
+        # source. Their individual calculation obligations are checked as usual.
+        formula = obligation["energy_reference_formula"]
+        return ([source] if _ENERGY_DIFFERENCE_REFERENCE.fullmatch(formula)
+                and formula in source and source in goal.original_text else None)
     for conditions, proofs in _energy_condition_contexts(request, goal):
         unqualified, matched = _energy_quantity_with_conditions(obligation, conditions, proofs)
         if obligation.get("source_condition"):
@@ -1914,7 +1944,8 @@ def _canonical_goal_energy_quantities(request, goal):
                 or audit["proposed_value"] in goal.original_text)):
         return None
     quantities = []
-    for source in _energy_source_requirements(goal.original_text, _energy_target_names(request)):
+    for source in _energy_source_requirements(goal.original_text, _energy_target_names(request),
+                                               include_formulas=_simplified_request(request)):
         source.update({name: evidence[name] for name in ("message_id", "start", "end")})
         scoped = _energy_source_condition_quantities(request, goal, source)
         if scoped is not None:
@@ -1928,6 +1959,9 @@ def _literal_energy_matches(request, goal, obligation, quantities, supplied_quan
     names = _energy_target_names(request)
     for unqualified in quantities:
         normalized = {re.sub(r"\s+", " ", value).strip().casefold() for value in (literal, unqualified)}
+        if any(re.sub(r"\s+", " ", quantity).strip().casefold() in normalized
+               for quantity in supplied_quantities):
+            continue
         if any(re.sub(r"\s+", " ", phrase).strip().casefold() in normalized
                for quantity in supplied_quantities for phrase in _energy_quantity_phrases(quantity)):
             continue
@@ -1989,14 +2023,20 @@ def _explicit_energy_requests(request, messages):
             ends = [*(match.start() for match in boundaries), len(clause)]
             for left, right in zip(positions, ends, strict=True):
                 part = clause[left:right]
-                names = {item[2] for item in _mentions(part, targets=True)}
+                # Named solvent references in an explicit energy difference
+                # remain operands, not a new molecular target named "water".
+                target_text = _ENERGY_DIFFERENCE_REFERENCE.sub(
+                    lambda match: " ".join(value for value in match.groups()
+                                           if not _energy_condition_mentions("environment", value, labels=False)),
+                    part) if _simplified_request(request) else part
+                names = {item[2] for item in _mentions(target_text, targets=True)}
                 if names:
                     carry = names
                 targets = names or carry
                 withdrawn = (re.search(r"(?:取消|撤回).{0,24}目标|\b(?:cancel|withdraw).{0,40}goal\b", part, re.I)
                              and not re.search(_NEGATED_GOAL_CHANGE, part, re.I))
                 energy_text = re.sub(r"目标|\bgoals?\b", "", part, flags=re.I) if withdrawn else part
-                energy_requirements = (_energy_source_requirements(energy_text, target_names)
+                energy_requirements = (_energy_source_requirements(energy_text, target_names, include_formulas=True)
                                        if _simplified_request(request)
                                        else [{}] if _ELECTRONIC_ENERGY.search(part) else [])
                 if withdrawn and energy_requirements:
@@ -2017,7 +2057,7 @@ def _explicit_energy_requests(request, messages):
                     r"\bwithout\s+(?:executing|running|starting)\s+(?:any\s+)?(?:calculations?|computations?|orca|jobs?)\b",
                     " ", part, flags=re.I)
                 if _simplified_request(request):
-                    energy_requirements = _energy_source_requirements(quantity_text, target_names)
+                    energy_requirements = _energy_source_requirements(quantity_text, target_names, include_formulas=True)
                 if re.search(r"不要|不得|不(?:再|必|需|想)?(?:给出|报告|计算|提供|登记|记录|要求|需要)|"
                              r"无[须需]|或者|也许|可能需要|\b(?:not|no|never|without|if|either|or|maybe|perhaps)\b|n't\b",
                              quantity_text, re.I):
@@ -2042,6 +2082,123 @@ def _explicit_energy_requests(request, messages):
                                             "start": start + left, "end": start + right,
                                             **requirement})
     return obligations
+
+
+def _plain_energy_delivery(obligation, message):
+    """Recognize a delivery list, never a new physical scope or operation.
+
+    Unknown words remain outside this deliberately small grammar. In particular,
+    the permissive trailing-clause support for source quantity extraction must
+    not turn "energy at another geometry" into a reference to an earlier value.
+    """
+    if obligation.get("literal_quantity") or obligation.get("source_condition"):
+        return False
+    clause = message["text"][obligation["start"]:obligation["end"]]
+    head = re.match(r"\s*(?:请\s*|please\s+)?(?:交付|报告|给出|\b(?:deliver|report|give)\b)\s*", clause, re.I)
+    if head is None:
+        return False
+    remaining = clause[head.end():]
+    plain = (r"\s*(?:相对\s*|relative\s+)?(?:" + _ENERGY_NAME.pattern
+             + r")(?:\s*(?:差(?:值)?|differences?))?(?:\s*(?:的\s*)?(?:" + _ENERGY_DISPLAY + r"))*"
+             r"\s*(?:[\[(（]?\s*(?:(?:in|单位为?|用)\s*)?"
+             r"(?:Hartree|Eh|a\.?u\.?|eV|kJ/mol|kcal/mol)\s*[\])）]?)?\s*")
+    for source in _energy_source_requirements(clause, (), include_formulas=True):
+        phrase = source["source_quantity"]
+        if (source.get("literal_quantity") or source.get("source_condition")
+                or re.fullmatch(plain, phrase, re.I) is None):
+            return False
+        remaining = remaining.replace(phrase, " ", 1)
+    # Non-energy list members can name existing files, not scientific settings.
+    return re.fullmatch(
+        r"(?:\s|[、:：()（）\-]|和|与|及|以及|共用|共同|原始|输入|输出|文件|哈希|"
+        r"两|[一二三四五六七八九十\d]|份|个|"
+        r"(?<![A-Za-z0-9_])(?:and|the|both|shared|common|original|raw|input|output|files?|XYZ|hash|sha256)"
+        r"(?![A-Za-z0-9_]))*",
+        remaining, re.I) is not None
+
+
+def _unchanged_delivery_scope(text):
+    """Only explicit preservation clauses may bridge calculation and delivery."""
+    for _, _, clause in _propositions(text):
+        # These are preservation statements, not a vocabulary for arbitrary
+        # conditions. Values, new operations and unknown qualifiers cannot fit.
+        if not any(re.fullmatch(pattern, clause.strip(), re.I) for pattern in (
+            r"除(?:\s|溶剂|模型|环境|和|与|及|它|其|必需|必要|的|参数)+外",
+            r"(?:两|[一二三四五六七八九十\d]|次|份|个|\s)*(?:科学)?"
+            r"(?:设置|条件|方法|基组|参数|原子顺序|坐标|几何)(?:保持)?(?:一致|相同|不变)",
+            r"(?:不要|不得|无需|无须|不必)(?:分别|单独|重新|再)?优化"
+            r"(?:两|[一二三四五六七八九十\d]|套|份|个|\s)*(?:几何|结构)",
+            r"(?:keep|retain)\s+(?:the\s+)?(?:same\s+)?"
+            r"(?:settings|conditions|method|basis|parameters|atom\s+order|coordinates|geometry)"
+            r"(?:\s+(?:unchanged|identical))?",
+            r"(?:do\s+not|don't|never)\s+(?:(?:separately|independently|again)\s+)?"
+            r"optimi[sz]e(?:\s+(?:the|both|two|geometries|structures))*",
+        )):
+            return False
+    return True
+
+
+def _energy_delivery_links(request, messages, obligation, covered):
+    """Link a plain report reference to an already covered calculation group."""
+    if not _simplified_request(request) or obligation["target"] is None:
+        return []
+    message = next(item for item in messages if item.get("id") == obligation["message_id"])
+    if not _plain_energy_delivery(obligation, message):
+        return []
+    prior = [(source, matching) for source, matching in covered
+             if source["message_id"] == obligation["message_id"]
+             and source["end"] <= obligation["start"]
+             and source["target"] == obligation["target"]
+             and source["geometry_relation"] == obligation["geometry_relation"]
+             and re.search(r"计算|\b(?:calculate|compute)\b",
+                           message["text"][source["start"]:source["end"]], re.I)]
+    if not prior:
+        return []
+    last = max(source["end"] for source, _ in prior)
+    if not _unchanged_delivery_scope(message["text"][last:obligation["start"]]):
+        return []
+    links = []
+    for source, matching in prior:
+        if source["end"] != last:
+            continue
+        eligible = []
+        for goal in matching:
+            if goal.evidence_contract_version != "generic-observation-1":
+                continue
+            quantities = _energy_source_condition_quantities(request, goal, source)
+            kinds = set().union(*(_energy_quantity_kinds(value, target_names=_energy_target_names(request))
+                                 for value in quantities or []))
+            if set(obligation["energy_kinds"]) <= kinds:
+                eligible.append(goal)
+        if not eligible:
+            # Every member of this calculation group must already be covered;
+            # one water Goal cannot absorb a missing gas calculation (or reverse).
+            return []
+        links.extend((goal, source) for goal in eligible)
+    return links
+
+
+def _retain_energy_source(goal, obligation, messages, *, whole_clause=False):
+    message = next(item for item in messages if item.get("id") == obligation["message_id"])
+    clause = message["text"][obligation["start"]:obligation["end"]]
+    minimum = clause if whole_clause else obligation["source_quantity"]
+    if minimum not in goal.minimum_evidence:
+        goal.minimum_evidence.append(minimum)
+    goal.minimum_evidence_source[minimum] = "explicit"
+    evidence = _source_evidence(clause, [message], message["id"])
+    shared = goal.text_evidence.setdefault("shared_constraints", [])
+    if evidence not in shared:
+        shared.append(evidence)
+
+
+def _retain_energy_delivery(goal, obligation, calculation, messages):
+    _retain_energy_source(goal, obligation, messages)
+    audit = {"rule": "energy-delivery-reference-1", "minimum_evidence": obligation["source_quantity"],
+             "delivery": {key: obligation[key] for key in ("message_id", "start", "end")},
+             "calculation": deepcopy(calculation)}
+    references = goal.text_evidence.setdefault("energy_delivery_references", [])
+    if audit not in references:
+        references.append(audit)
 
 
 def _require_energy_coverage(candidate, request, messages, goals):
@@ -2107,12 +2264,19 @@ def _require_energy_coverage(candidate, request, messages, goals):
             required = _general_goal_geometry_relation(request, message, item)
         return required is None or goal.conditions.get("geometry_relation") == required
 
-    for obligation in _explicit_energy_requests(request, messages):
-        if any(energy_quantity(goal, obligation) and goal.required
-               and (obligation["target"] is None
-                    or goal_targets(goal) == {obligation["target"]})
-               and geometry_matches(goal, obligation)
-               for goal in goals):
+    obligations = _explicit_energy_requests(request, messages)
+    covered = [(obligation, [goal for goal in goals if energy_quantity(goal, obligation) and goal.required
+                and (obligation["target"] is None or goal_targets(goal) == {obligation["target"]})
+                and geometry_matches(goal, obligation)]) for obligation in obligations]
+    for obligation, matching in covered:
+        if obligation.get("energy_reference_formula"):
+            for goal in matching:
+                _retain_energy_source(goal, obligation, messages, whole_clause=True)
+        links = _energy_delivery_links(request, messages, obligation, covered)
+        if links:
+            for goal, calculation in links:
+                _retain_energy_delivery(goal, obligation, calculation, messages)
+        if matching or links:
             continue
         missing.append(obligation)
     if missing:
@@ -2570,6 +2734,7 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
         # inheritance against the original Request above.
         condition_request = Request.model_validate(values) if simplified_workflow(run) else request
         _require_energy_coverage(candidate, condition_request, grounding, goals)
+        values["goals"] = [goal.model_dump() for goal in goals]
     for goal_id, system_ids in candidate.goal_bindings.items():
         goal = next((g for g in values["goals"] if g["id"] == goal_id), None)
         if (goal is None or not system_ids or len(system_ids) != len(set(system_ids))
