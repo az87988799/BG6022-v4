@@ -8,9 +8,9 @@ import hashlib
 import re
 import unicodedata
 from copy import deepcopy
-from typing import Any, Literal, get_args
+from typing import Annotated, Any, Literal, get_args
 
-from pydantic import Field, TypeAdapter, ValidationError
+from pydantic import Field, TypeAdapter, ValidationError, field_validator
 
 from orca_agent.applicability import (
     PROFILE,
@@ -53,6 +53,10 @@ from orca_agent.tools.structure import CURRENT_IDENTITY_CONTRACT, GENERAL_IDENTI
 
 VERSION = "request-semantics-3"
 LEGACY_VERSION = "request-semantics-1"
+SEMANTIC_TEXT_LIMIT = 1000
+_PERSISTED_QUANTITY = TypeAdapter(ScientificLabel)
+_PROPOSED_QUANTITY = TypeAdapter(Annotated[ScientificLabel, Field(max_length=SEMANTIC_TEXT_LIMIT)])
+_SOURCE_QUANTITY_CONTEXT = object()
 ConditionName = Literal["method", "basis", "charge", "multiplicity", "electronic_state", "environment",
                         "temperature_K", "standard_state"]
 CONDITIONS = frozenset(get_args(ConditionName))
@@ -114,7 +118,7 @@ def _continue_command(text):
 class FieldEvidence(Record):
     value: Any = None
     source: Literal["explicit", "default", "inherited", "inferred", "unknown", "not_applicable"]
-    text_basis: str = Field(default="", max_length=1000)
+    text_basis: str = Field(default="", max_length=SEMANTIC_TEXT_LIMIT)
     request_version: int | None = None
     system_ref: Identifier | None = None
     default_rule: str | None = None
@@ -126,10 +130,10 @@ class FieldEvidence(Record):
 class SemanticGoal(Record):
     key: Identifier
     port: str
-    text_basis: str = Field(default="", max_length=1000)
+    text_basis: str = Field(default="", max_length=SEMANTIC_TEXT_LIMIT)
     source_refs: list[Identifier] = Field(default_factory=list, max_length=16)
     system_refs: list[Identifier] = Field(default_factory=list, max_length=5)
-    system_refs_note: str | None = Field(default=None, max_length=1000)
+    system_refs_note: str | None = Field(default=None, max_length=SEMANTIC_TEXT_LIMIT)
     required: bool = Field(default=True, strict=True)
     geometry_relation: Literal["fixed_initial", "optimized"] | None = None
     minimum_evidence: list[str] = Field(default_factory=list, max_length=8)
@@ -141,18 +145,28 @@ class SemanticGoal(Record):
     quantity: ScientificLabel | None = None
     verification: Literal["qualified", "reported_with_limitations"] | None = None
 
+    @field_validator("quantity", mode="wrap")
+    @classmethod
+    def proposed_quantity(cls, value, handler, info):
+        # A JSON field cannot provide this identity: only the current simplified
+        # commit entry enables a bounded proposal before authenticating its quote.
+        if (value is not None and isinstance(info.context, dict)
+                and info.context.get("source_quantity_labels") is _SOURCE_QUANTITY_CONTEXT):
+            return _PROPOSED_QUANTITY.validate_python(value)
+        return handler(value)
+
 
 class SemanticIdentity(Record):
     key: Identifier = Field(max_length=48)
     name: str = Field(min_length=1, max_length=100)
     query_name: str | None = Field(default=None, min_length=1, max_length=100)
-    text_basis: str = Field(min_length=1, max_length=1000)
+    text_basis: str = Field(min_length=1, max_length=SEMANTIC_TEXT_LIMIT)
     message_id: Identifier
     ambiguities: list[str] = Field(default_factory=list, max_length=8)
 
 
 class SelectionAuthorization(Record):
-    text_basis: str = Field(default="", max_length=1000)
+    text_basis: str = Field(default="", max_length=SEMANTIC_TEXT_LIMIT)
     message_id: Identifier | None = None
     source_refs: list[Identifier] = Field(default_factory=list, max_length=16)
 
@@ -162,7 +176,7 @@ class SemanticCandidate(Record):
     schema_version: Literal["request-semantics-1", "request-semantics-2", "request-semantics-3"]
     message_ids: list[Identifier] = Field(min_length=1, max_length=24)
     kind: Literal["normalize", "amend", "replace_goals", "clarify", "continue", "status"]
-    text_basis: str = Field(min_length=1, max_length=1000)
+    text_basis: str = Field(min_length=1, max_length=SEMANTIC_TEXT_LIMIT)
     conditions: dict[ConditionName, FieldEvidence] = Field(default_factory=dict, max_length=8)
     system_conditions: dict[Identifier, dict[ConditionName, FieldEvidence]] = Field(default_factory=dict, max_length=5)
     goals: list[SemanticGoal] | None = Field(default=None, min_length=1, max_length=8)
@@ -194,6 +208,9 @@ def _goal_binding_contract(request, *, defines_goals=False):
 def action_parameters(allowed_tools=(), *, request=None, text_input=False, code_authorized=False,
                       messages=None, workflow_simplified=False):
     raw_schema = SemanticCandidate.model_json_schema()
+    if workflow_simplified:
+        raw_schema["$defs"]["SemanticGoal"]["properties"]["quantity"]["anyOf"] = [
+            _PROPOSED_QUANTITY.json_schema(), {"type": "null"}]
     if not workflow_simplified:
         for name in ("FieldEvidence", "SemanticGoal", "SelectionAuthorization"):
             definition = raw_schema["$defs"][name]
@@ -423,7 +440,7 @@ def _apply_source_references(candidate, messages, *, enabled):
 
 def _source_quantity_label(text):
     """A bounded literal display excerpt; the complete source remains the Goal."""
-    validator = TypeAdapter(ScientificLabel)
+    validator = _PERSISTED_QUANTITY
     try:
         return validator.validate_python(text)
     except ValidationError:
@@ -434,6 +451,32 @@ def _source_quantity_label(text):
             if value:
                 return validator.validate_python(value)
     return None
+
+
+def _source_quantity_label_needed(proposed, source):
+    """One eligibility rule for normalization and its later provenance audit."""
+    if proposed is None:
+        return True
+    try:
+        _PROPOSED_QUANTITY.validate_python(proposed)
+    except ValidationError:
+        return False
+    if proposed not in source:
+        return True
+    try:
+        _PERSISTED_QUANTITY.validate_python(proposed)
+    except ValidationError:
+        return True
+    return False
+
+
+def _require_persistable_quantities(candidate):
+    for index, item in enumerate(candidate.goals or []):
+        if item.quantity is not None:
+            try:
+                _PERSISTED_QUANTITY.validate_python(item.quantity)
+            except ValidationError as exc:
+                raise _schema_error(exc, path=["parameters", "goals", index, "quantity"]) from None
 
 
 def _apply_general_program_fields(candidate, request, messages):
@@ -465,7 +508,7 @@ def _apply_general_program_fields(candidate, request, messages):
         if not matches or len({entry[0]["id"] for entry in matches}) != 1:
             continue
         if (candidate.schema_version == VERSION
-                and (item.quantity is None or item.quantity not in item.text_basis)):
+                and _source_quantity_label_needed(item.quantity, item.text_basis)):
             if (item.port in INPUT_TOOLS and _text_geometry_relation(
                     request, [{"text": item.text_basis}], item.system_refs) == "optimized"):
                 raise ProposalError("An optimized quantity requires its separate scientific Goal; "
@@ -1939,9 +1982,7 @@ def _canonical_goal_energy_quantities(request, goal):
             or evidence.get("text_basis") != goal.original_text
             or _source_quantity_label(goal.original_text) != goal.quantity
             or "proposed_value" not in audit
-            or audit["proposed_value"] is not None and (
-                not isinstance(audit["proposed_value"], str)
-                or audit["proposed_value"] in goal.original_text)):
+            or not _source_quantity_label_needed(audit["proposed_value"], goal.original_text)):
         return None
     quantities = []
     for source in _energy_source_requirements(goal.original_text, _energy_target_names(request),
@@ -2580,8 +2621,11 @@ def _communication(candidate, request, messages, gaps):
 
 
 def commit_candidate(store, run, parameters, *, decision_id, basis, related_results=None, fault=None):
+    context = ({"source_quantity_labels": _SOURCE_QUANTITY_CONTEXT}
+               if simplified_workflow(run) and isinstance(parameters, dict)
+               and parameters.get("schema_version") == VERSION else None)
     try:
-        candidate = SemanticCandidate.model_validate(parameters)
+        candidate = SemanticCandidate.model_validate(parameters, context=context)
     except ValidationError as exc:
         if any(error["type"] == "literal_error" and error["loc"][-1] == "[key]"
                for error in exc.errors(include_input=False, include_context=False, include_url=False)):
@@ -2653,6 +2697,7 @@ def commit_candidate(store, run, parameters, *, decision_id, basis, related_resu
     program_defaults = _apply_authorized_defaults(candidate, request, pending)
     program_fields = (_apply_general_program_fields(candidate, request, pending)
                       if simplified_workflow(run) else [])
+    _require_persistable_quantities(candidate)
     _validate_general_intake(candidate, request, pending, run, extra_corrections=source_errors)
     if source_errors:
         raise ProposalError("Source references require the frozen simplified workflow and valid user fragments.",

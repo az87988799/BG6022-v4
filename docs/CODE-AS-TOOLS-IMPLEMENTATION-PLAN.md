@@ -46,6 +46,8 @@ a023 的并列环境能量目标按 [0072](decisions/0072-scoped-energy-source-c
 
 a024 的后置绝对能交付重复覆盖按 [0074](decisions/0074-energy-delivery-source-association.md) 修复：纯交付引用只关联同消息、同体系、同几何且已逐环境覆盖的计算义务，原句与 Eh 等单位保留为显式最低证据；新范围或额外计算仍独立校验。
 
+a025 的长显示名称在来源认证前被拒按 [0075](decisions/0075-bounded-proposed-quantity-labels.md) 消除：当前简化入口使用既有 1000 字符输入界及原字符规则，认证后复用原短名称规范化；完整来源、原提议审计、物理字段和持久名称界限不变。
+
 a019 的可执行空脚本示例按 [0070](decisions/0070-nonexecutable-code-guidance.md) 改为字段说明。新 Run 可冻结非空 Python 入口检查，实际代码仍由模型编写；来源、权限、预算和科学证据校验保持，旧 Run 不升级。
 
 a022 已读原生错误被后续查询窗口挤掉的问题按 [0071](decisions/0071-preserve-current-execution-failure.md) 修复：当前未修复失败保留有界、同源核验的日志证据，新失败在执行链内保存摘要；不扩大上下文或隐式重读旧文件，不修改历史结果。
