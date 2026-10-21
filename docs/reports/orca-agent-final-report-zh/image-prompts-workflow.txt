@@ -1,0 +1,37 @@
+Auto-ORCA: Open-loop versus closed-loop workflow figure
+Date: 2026-10-21
+Mode: built-in image_gen__imagegen (new image generation)
+Requested model preference: gpt-image2, retained from user's report-figure request.
+Exact backend model: not returned by the built-in tool; no backend identity claim is made.
+Local artifact: figures/open-loop-vs-auto-orca.png
+Source: generated output copied losslessly into this workspace.
+Reference: AutoDFT: A Closed-Loop Multi-Agent Framework for Autonomous DFT Calculations, https://arxiv.org/html/2605.26179v2, conceptual open/closed-loop distinction from Figure 1 and Section 3. Original layout and original Auto-ORCA single-agent design; no reference image was supplied to the image tool. The diagram is conceptual, not a measured baseline comparison.
+
+Final generation prompt
+=======================
+Use case: scientific-educational
+Asset type: original publication-quality figure for a Chinese research report, all figure labels in English.
+Primary request: Create an exceptionally crisp two-panel academic flowchart contrasting an illustrative open-loop agent with the Auto-ORCA closed-loop agent. This is a conceptual architecture comparison, NOT an empirical performance comparison. Original layout and original graphic design. Landscape aspect ratio about 1.8:1, pure white background, flat vector-like shapes, highly legible professional sans-serif typography, navy #17354B and teal #18848C with pale blue/teal fill, thin consistent lines, large readable labels. Use ample white space. Arrange two stacked horizontal panels with similar widths. No decorative illustrations.
+
+Panel A in upper third:
+Heading exactly "(a) Illustrative open-loop agent"
+Four major blocks linked left to right by simple navy arrows:
+"Natural-language request" -> "One-time planning" -> a wide block labelled "Fixed execution plan" containing small sequential cells "Step 1" -> "Step 2" -> "Step 3" -> final block "Output".
+Directly below the execution-plan block show a smaller light-grey block labelled "Rule-based monitoring / recovery" with a short two-way connection to the fixed execution plan. No return arrow to One-time planning.
+Below panel A, a readable sentence: "No LLM replanning from intermediate results"
+DO NOT suggest that open-loop means no error handling. DO NOT mark open-loop as failed.
+
+Panel B in lower two-thirds:
+Heading exactly "(b) Auto-ORCA closed-loop agent"
+Six linked blocks left to right:
+"Request + geometry" -> "Intent + fixed goals" -> "Single LLM agent" (smaller subline "Plan + task code") -> "Tool checks + ORCA" -> "Evidence + goal checks" -> "Results + provenance".
+Make the three middle blocks visually prominent, each with sufficient space for its words. The Single LLM agent is a SINGLE block, not multiple agents.
+Two clearly visible, noncrossing feedback paths travel from Evidence + goal checks BACK to the Single LLM agent, with arrowheads pointing into the agent:
+one teal return path above the execution row labelled exactly "Success: next step / revise plan";
+one muted amber return path below the execution row labelled exactly "Failure: diagnose / repair".
+The paths must originate only from Evidence + goal checks and terminate at Single LLM agent; the forward path continues to Results + provenance.
+A thin enclosing control bracket around the agent, tool and evidence loop, with a readable footer label "Fixed goals • Finite budget".
+Make feedback arrows very clear and keep all labels free of line crossings.
+
+Footer small but legible: "Conceptual workflow comparison"
+All text must be spelled exactly and remain readable when printed at 160 mm wide. Avoid tiny text, 3D, shadows, gradients, robots, brains, molecules, icons, fake charts, data values, percentages, metrics, claims of tested superiority, colored background, watermarks. Do not use the AutoDFT architecture or labels for the Auto-ORCA panel; these are our own single-agent design.
