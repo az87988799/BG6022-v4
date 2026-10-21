@@ -172,7 +172,7 @@ def proposal_recovery_kind(reply: Mapping[str, Any], *, workflow_simplified: boo
         if workflow_simplified and reply.get("finish_reason") == "length":
             return "smaller_action"
         return "fatal"
-    if category in {"authentication", "permission", "token_bound_exceeded", "credential_in_response",
+    if category in {"authentication", "permission", "insufficient_balance", "token_bound_exceeded", "credential_in_response",
                     "response_missing", "redirect_rejected", "response_encoding_rejected"}:
         return "fatal"
     if category in {"rate_limit", "timeout", "connection", "transport_error", "http_error"}:
@@ -519,6 +519,8 @@ def _exception_reply(request: PreparedRequest, exc: Exception) -> ModelReply:
         category, retryable = "timeout", True
     elif status in {401, 403}:
         category, retryable = "authentication" if status == 401 else "permission", False
+    elif status == 402:
+        category, retryable = "insufficient_balance", False
     elif status == 429:
         category, retryable = "rate_limit", True
     elif status is not None and 300 <= status < 400:

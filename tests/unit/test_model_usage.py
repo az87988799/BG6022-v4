@@ -118,12 +118,12 @@ def test_delivery_snapshot_local_capacity_is_shared_and_bounded(setup):
         read_delivery_snapshot(store, run, record)
 
 
-@pytest.mark.parametrize("category", [None, "timeout", "authentication", "rate_limit"])
+@pytest.mark.parametrize("category", [None, "timeout", "authentication", "rate_limit", "insufficient_balance"])
 def test_missing_usage_and_http_failures_keep_full_occupancy(setup, category):
     store, run, prepared = setup
     reply = ModelReply(request_hash=prepared.request_hash,
                        proposal={"action": "stop"} if category is None else None,
-                       error_category=category)
+                       error_category=category, http_status=402 if category == "insufficient_balance" else None)
     transport = ScriptedTransport(reply)
     assert invoke(setup, transport) == reply
     assert run.usage.model_tokens_unknown == prepared.reserved_tokens

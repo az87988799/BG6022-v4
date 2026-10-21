@@ -37,7 +37,7 @@ _ERRORS = {
     "proposal_too_large", "credential_in_response", "invalid_proposal_json", "proposal_not_object",
     "response_too_large", "timeout", "authentication", "permission", "rate_limit",
     "redirect_rejected", "http_error", "connection", "transport_error", "response_missing",
-    "response_encoding_rejected",
+    "response_encoding_rejected", "insufficient_balance",
 }
 _LEGACY_REPLY_FIELDS = {
     "request_hash", "proposal", "error_category", "retryable", "usage", "response_hash",

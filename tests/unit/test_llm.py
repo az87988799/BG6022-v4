@@ -311,6 +311,7 @@ def test_escaped_surrogate_is_failed_but_its_safe_original_text_and_usage_surviv
 
 @pytest.mark.parametrize(("status", "category", "retryable"), [
     (401, "authentication", False), (403, "permission", False),
+    (402, "insufficient_balance", False),
     (429, "rate_limit", True), (302, "redirect_rejected", False),
     (500, "http_error", False), (400, "http_error", False),
 ])

@@ -217,12 +217,21 @@ def _stop_reason(run):
     diagnostics = [{key: item[key] for key in ("category", "message", "error_category", "model_id") if key in item}
                    for item in run.diagnostics if isinstance(item, dict)]
     model_errors = [{key: item[key] for key in ("id", "status", "error_category") if key in item}
+                    | ({"http_status": item["http_status"]} if type(item.get("http_status")) is int
+                       and 100 <= item["http_status"] <= 599 else {})
                     for item in run.model_records if item.get("error_category")]
     categories = list(dict.fromkeys(item["category"] for item in diagnostics if item.get("category")))
     if stopped:
         categories.insert(0, run.state)
-    return _safe({"state": run.state, "categories": categories, "diagnostics": diagnostics,
-                  "model_errors": model_errors}, bounded=False)
+    reason = {"state": run.state, "categories": categories, "diagnostics": diagnostics,
+              "model_errors": model_errors}
+    latest = run.model_records[-1] if run.model_records else {}
+    if stopped and (latest.get("error_category") == "insufficient_balance"
+            or latest.get("error_category") == "http_error" and latest.get("http_status") == 402):
+        reason["model_service"] = {
+            "category": "insufficient_balance", "required_action": "restore_provider_service",
+            "message": "模型服务余额不足；需充值或恢复服务后才能继续。已有结果和未知用量占用保留。"}
+    return _safe(reason, bounded=False)
 
 
 def _money(records):
@@ -492,6 +501,8 @@ def render_report(report: dict[str, Any]) -> str:
         lines.insert(4, "停止/当前状态原因：" + _cell(stop["categories"]) + "。")
         if stop.get("diagnostics") or stop.get("model_errors"):
             lines.insert(5, "停止诊断：" + _cell({"diagnostics": stop["diagnostics"], "model_errors": stop["model_errors"]}) + "。")
+        if stop.get("model_service"):
+            lines.insert(6, _cell(stop["model_service"]["message"]))
     for goal in report["goals"]:
         lines.append("| " + " | ".join(_cell(goal[key]) for key in (
             "goal_id", "port", "required", "recorded_status", "evidence_status")) + " |")
