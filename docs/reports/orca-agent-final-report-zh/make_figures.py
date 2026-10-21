@@ -119,8 +119,8 @@ def latest_tasks(data: dict) -> None:
     fig.legend(handles, legend_labels, loc="lower right", bbox_to_anchor=(0.97, 0.072),
                frameon=False, ncol=2, borderaxespad=0, handlelength=1.1,
                columnspacing=1.1, handletextpad=0.5)
-    fig.text(0.075, 0.965, "V4 final evaluation: complete task goals 0/7", fontsize=11, weight="bold", va="top")
-    fig.text(0.075, 0.025, "Normal termination does not establish scientific qualification or goal completion.", fontsize=9)
+    fig.text(0.075, 0.965, "V4 frozen batch: ORCA calculation success 7/8 (87.5%)", fontsize=11, weight="bold", va="top")
+    fig.text(0.075, 0.025, "Success = normal ORCA termination; unstarted tasks are reported separately.", fontsize=9)
     export(fig, "latest-tasks")
 
 
@@ -166,7 +166,7 @@ def evaluation_history(data: dict) -> None:
             display = f"{value:.3f}" if ax is axes[0] else str(value)
             ax.text(bar.get_x() + bar.get_width() / 2, value + ymax * 0.035, display,
                     ha="center", fontsize=9.5)
-    fig.text(0.085, 0.965, "V4 successive evaluations: complete task goals 0/7 in each", fontsize=10.5, weight="bold", va="top")
+    fig.text(0.085, 0.965, "V4 successive evaluations: model usage and actual ORCA starts", fontsize=10.5, weight="bold", va="top")
     fig.text(0.085, 0.075, "Different versions and repeated task exposure preclude causal comparisons.", fontsize=9)
     fig.text(0.085, 0.025, "Resource use and ORCA starts do not establish improved task completion.", fontsize=9)
     export(fig, "evaluation-history")

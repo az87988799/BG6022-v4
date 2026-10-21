@@ -1,0 +1,49 @@
+% !TeX root = ../main.tex
+\section{相关工作与评价基础}
+\subsection{计算工作流与闭环科学 Agent}
+ASE、AiiDA、Atomate2 和 cclib 分别发展了原子模拟接口、来源可追溯工作流、模块化计算流程及统一输出解析\cite{ase,aiida,atomate2,cclib}。这些方法说明，标准化执行与数据组织本身就是科学自动化的重要组成部分。语言模型的引入增加了需求解释、候选操作选择和任务代码生成能力，但并不替代既有数值算法、程序适配或科学检查。
+
+AutoDFT 将战略规划、即时参数规划、监控、恢复、反思与后处理组织为多角色闭环。在包含 34 个任务和 9 类计算的 VASPBench 上，原文表 1 报告完整系统、开环系统和规则基线分别完成 32、28 和 23 个任务；性质评价另采用 20 个材料，并在成功计算上统计误差\cite{autodft}。其主要启发是：成功结果同样需要进入反馈过程，因为新的结构或物性信息可能改变后续计算需求。相关数字对应论文自身的软件、任务和单次运行设置，不作为本文系统的直接性能参照。
+
+Lee 与 Rondinelli 研究基于 ORCA 的自主多参考计算，采用 CASSCF/SC-NEVPT2 与 aug-cc-pVTZ。在 558 个跃迁目标中，基线、决策阶梯和完整信息复制设置分别覆盖 139、246、378 个目标，对应已确认电子态子集的 MAE 为 0.373、0.339、0.023 eV\cite{multirefagent}。不同设置的误差分母并不相同，完整信息复制还使用更充分的先验协议。该研究进一步表明，数值收敛、电子态身份与目标覆盖必须分别评价。
+
+CASSCF 需要明确活性空间，NEVPT2 在多参考波函数基础上补充动态电子相关\cite{casscf,nevpt2}；AVAS 等方法为自动构建活性轨道提供了专门算法基础\cite{avas}。QUESTDB 则提供激发能参照\cite{questdb}。这些研究对本文的意义在于界定科学验证问题，而非证明 BG6022 已具备多参考自主求解能力。本文不将尚未经实际验证的活性空间选择或态识别列为 V4 成果。
+
+\subsection{方法条件与科学含义}
+固定核构型下，Kohn--Sham 电子能泛函可写为
+\begin{equation}
+E[n]=T_{\mathrm s}[n]+\int v_{\mathrm{ext}}(\bm r)n(\bm r)\,\mathrm d\bm r
++E_{\mathrm H}[n]+E_{\mathrm{xc}}[n].
+\end{equation}
+分子势能还需加上核间排斥能。交换相关近似、基组、色散处理和几何均影响实际求解；PBE、Becke 杂化方案、LYP 相关泛函、def2 基组及 D3 色散修正代表相关方法选择\cite{pbe,becke,lyp,def2,d3}。本文各案例按实际使用的理论水平报告，不以不同方法的绝对能量差评价准确度。
+
+含时密度泛函理论为激发态计算提供理论基础\cite{tddft}，CPCM 等连续介质方法则用于描述环境效应\cite{cpcm}。因此，“计算能量”不足以唯一确定科学任务：基态或激发态、气相或溶液、固定几何或优化几何均需明确。构象问题还涉及采样范围；GFN2-xTB 和 CREST 为低成本势能描述与构象集合搜索提供了专业方法\cite{gfn2,crest}。本文正己烷案例实际使用力场候选与 DFT 单点，上述文献仅说明相关研究背景。
+
+\subsection{计算成功的定义与科学解释}
+本文以 ORCA 原始输出的正常结束记录作为计算成功判据，记 $X_i=\text{正常结束}$ 为成功；未启动的调用记为未计算，异常结束记为计算失败。对已启动调用，计算成功比例为 $N_{\mathrm{normal}}/N_{\mathrm{started}}$。科学结论按所获证据另行解释。令 $X_i$ 表示第 $i$ 次计算的执行事实，$S_{ik}$ 表示其第 $k$ 个输出的科学检查，$G_j$ 表示第 $j$ 个必需目标是否满足。三种状态分别为
+\begin{equation}
+X_i=\text{正常结束},\qquad
+S_{ik}=\text{通过规定检查},\qquad
+G_j=\text{目标证据充分}.
+\label{eq:states}
+\end{equation}
+正常结束可能产生未经验证的观察；已验证单点能量也不能替代优化自由能或完整势能扫描。完整任务还要求必需交付项齐备：
+\begin{equation}
+C_{\mathrm{task}}
+=\left(\bigwedge_{j\in\mathcal G_{\mathrm{required}}}G_j\right)
+\land D_{\mathrm{required}}.
+\label{eq:complete}
+\end{equation}
+这一表达强调评价语义，并不意味着所有科学问题具有相同检查清单。
+
+存在独立参考时，覆盖率和误差应共同报告：
+\begin{equation}
+\mathrm{Coverage}=\frac{N_{\mathrm{matched}}}{N_{\mathrm{target}}},
+\qquad
+\mathrm{MAE}_{\mathrm{matched}}
+=\frac{1}{N_{\mathrm{matched}}}\sum_{i\in\mathcal M}
+|E_i-E_i^{\mathrm{ref}}|.
+\end{equation}
+$\mathcal M$ 仅包含可确认对应关系的目标。本文的系统评测主要检验执行、收敛、来源与目标交付；没有独立高精度参考的任务不报告数值 MAE。可追溯数据有助于复核和复用\cite{fair}，但文件完整性不等于物理结论正确。
+
+% Chronological predecessor studies; statistics are version-scoped.

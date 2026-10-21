@@ -1,0 +1,70 @@
+% !TeX program = xelatex
+% 在 VS Code 中修改 sections/ 内各章；主文件只管理格式和章节顺序。
+% 编译：XeLaTeX 两遍；无需 BibTeX、Python 或 ORCA。
+\documentclass[UTF8,fontset=fandol,a4paper,11pt]{ctexart}
+\usepackage[margin=2.35cm,headheight=14pt]{geometry}
+\usepackage{amsmath,amssymb,bm,booktabs,longtable,tabularx,array}
+\usepackage{graphicx,float,caption,enumitem,xcolor,fancyhdr}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{hyperref,xurl,microtype}
+\definecolor{navy}{HTML}{17324D}
+\definecolor{teal}{HTML}{287D8E}
+\hypersetup{colorlinks=true,linkcolor=navy,citecolor=teal,urlcolor=teal,
+ pdftitle={从工作流到代码生成：面向 ORCA 的闭环自主量子化学计算},
+ pdfauthor={BG6022 研究报告}}
+\urlstyle{same}
+\graphicspath{{figures/}}
+\renewcommand{\arraystretch}{1.18}
+\setlength{\tabcolsep}{5pt}
+\setlength{\emergencystretch}{3em}
+\linespread{1.18}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.8}
+\setlist{nosep,leftmargin=2em}
+\captionsetup{font=small,labelfont=bf,labelsep=quad}
+\ctexset{section={format=\Large\bfseries},subsection={format=\large\bfseries}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small 面向 ORCA 的自主量子化学计算}
+\fancyhead[R]{\small 方法演进与 V4 评估}
+\fancyfoot[C]{\thepage}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\Eh}{E_{\mathrm h}}
+\newcommand{\code}[1]{\texttt{#1}}
+\title{\vspace{-1.2cm}\bfseries 从工作流到代码生成：\\面向 ORCA 的闭环自主量子化学计算\\
+ \large BG6022 V2--V4 的方法演进与 V4 系统评估}
+\author{}
+\date{}
+\begin{document}
+\maketitle
+\vspace{-1.7cm}
+\input{sections/00-abstract.tex}
+\noindent\textbf{关键词：}自主量子化学；大语言模型；ORCA；工具组合；代码生成；闭环决策；科学验证
+
+
+\input{sections/01-introduction.tex}
+
+\input{sections/02-related-work.tex}
+
+\input{sections/03-v2.tex}
+
+\input{sections/04-v3.tex}
+
+\input{sections/05-v4-method.tex}
+
+\input{sections/06-v4-results.tex}
+
+\input{sections/07-discussion.tex}
+
+\input{sections/08-conclusion.tex}
+\medskip
+\renewcommand{\refname}{参考文献}
+\begingroup
+\footnotesize
+\linespread{1.05}\selectfont
+\interlinepenalty=10000
+\input{references.tex}
+\endgroup
+\end{document}
