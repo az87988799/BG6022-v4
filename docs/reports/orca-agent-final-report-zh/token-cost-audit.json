@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "date": "2026-10-21",
   "scope": "Existing Agent Run usage linked to the reported completed ORCA outputs; no new model or ORCA execution.",
   "rows": [
@@ -15,8 +15,16 @@
       "total_tokens": 398392,
       "cached_input_tokens": 128384,
       "unknown_tokens": 0,
-      "conservative_estimated_usd": "0.1975449",
-      "historical_run_state": "completed"
+      "historical_run_state": "completed",
+      "historical_conservative_estimated_usd": "0.1975449",
+      "uncached_input_tokens": 183311,
+      "off_peak_cost_components_usd": {
+        "cached_input": "0.000385152",
+        "uncached_input": "0.02749665",
+        "output": "0.0520182"
+      },
+      "off_peak_estimated_usd": "0.079900002",
+      "off_peak_estimated_usd_display": "0.079900"
     },
     {
       "task": "T2",
@@ -30,8 +38,16 @@
       "total_tokens": 230968,
       "cached_input_tokens": 46848,
       "unknown_tokens": 0,
-      "conservative_estimated_usd": "0.1133994",
-      "historical_run_state": "failed"
+      "historical_run_state": "failed",
+      "historical_conservative_estimated_usd": "0.1133994",
+      "uncached_input_tokens": 135110,
+      "off_peak_cost_components_usd": {
+        "cached_input": "0.000140544",
+        "uncached_input": "0.0202665",
+        "output": "0.029406"
+      },
+      "off_peak_estimated_usd": "0.049813044",
+      "off_peak_estimated_usd_display": "0.049813"
     },
     {
       "task": "T3",
@@ -45,8 +61,16 @@
       "total_tokens": 338495,
       "cached_input_tokens": 44032,
       "unknown_tokens": 0,
-      "conservative_estimated_usd": "0.1979826",
-      "historical_run_state": "failed"
+      "historical_run_state": "failed",
+      "historical_conservative_estimated_usd": "0.1979826",
+      "uncached_input_tokens": 187314,
+      "off_peak_cost_components_usd": {
+        "cached_input": "0.000132096",
+        "uncached_input": "0.0280971",
+        "output": "0.0642894"
+      },
+      "off_peak_estimated_usd": "0.092518596",
+      "off_peak_estimated_usd_display": "0.092519"
     },
     {
       "task": "T4",
@@ -60,8 +84,16 @@
       "total_tokens": 442816,
       "cached_input_tokens": 86656,
       "unknown_tokens": 0,
-      "conservative_estimated_usd": "0.2009145",
-      "historical_run_state": "budget_exhausted"
+      "historical_run_state": "budget_exhausted",
+      "historical_conservative_estimated_usd": "0.2009145",
+      "uncached_input_tokens": 280527,
+      "off_peak_cost_components_usd": {
+        "cached_input": "0.000259968",
+        "uncached_input": "0.04207905",
+        "output": "0.0453798"
+      },
+      "off_peak_estimated_usd": "0.087718818",
+      "off_peak_estimated_usd_display": "0.087719"
     },
     {
       "task": "T5",
@@ -75,8 +107,16 @@
       "total_tokens": 254405,
       "cached_input_tokens": 16000,
       "unknown_tokens": 0,
-      "conservative_estimated_usd": null,
-      "historical_run_state": "failed"
+      "historical_run_state": "failed",
+      "historical_conservative_estimated_usd": null,
+      "uncached_input_tokens": 176013,
+      "off_peak_cost_components_usd": {
+        "cached_input": "0.000352",
+        "uncached_input": "0.11616858",
+        "output": "0.12353616"
+      },
+      "off_peak_estimated_usd": "0.24005674",
+      "off_peak_estimated_usd_display": "0.240057"
     },
     {
       "task": "H1",
@@ -90,42 +130,20 @@
       "total_tokens": 485195,
       "cached_input_tokens": 76032,
       "unknown_tokens": 0,
-      "conservative_estimated_usd": "0.2509485",
-      "historical_run_state": "failed"
+      "historical_run_state": "failed",
+      "historical_conservative_estimated_usd": "0.2509485",
+      "uncached_input_tokens": 292063,
+      "off_peak_cost_components_usd": {
+        "cached_input": "0.000228096",
+        "uncached_input": "0.04380945",
+        "output": "0.07026"
+      },
+      "off_peak_estimated_usd": "0.114297546",
+      "off_peak_estimated_usd_display": "0.114298"
     }
   ],
   "complete_usage_samples": 6,
   "source_files_checked": 142,
-  "pricing": {
-    "frozen_checked_date": "2026-10-06",
-    "provider": "DeepSeek",
-    "model": "deepseek-flash",
-    "documented_version": "DeepSeek-V4.1-Flash",
-    "unit_tokens": 1000000,
-    "input_uncached_peak_usd": "0.30",
-    "output_peak_usd": "1.20",
-    "semantics": "Conservative estimate from actual known provider token receipts at frozen uncached peak rates; not account deductions or a billed amount; cache/off-peak discounts not applied; no extrapolation to another model.",
-    "sources": [
-      {
-        "path": "docs/acceptance/phase-b/pricing-basis.json",
-        "sha256": "229b7547bcc7f39a3641a4cdb103860b2f9940b10028b7d3807a3ead81a0bdba",
-        "role": "frozen_pricing_evidence",
-        "bytes": 1205
-      },
-      {
-        "path": "docs/acceptance/phase-b/pricing-recheck-b04.json",
-        "sha256": "2b72f092da8908b39ea7c26f463d09869d37029edfed5f95552a0ff3f6cfc359",
-        "role": "frozen_pricing_evidence",
-        "bytes": 705
-      },
-      {
-        "path": "src/orca_agent/model_usage.py",
-        "sha256": "2b996c7dbc472553d9432a72900f9b612877a3756cafe1b8d137d50bd4b8880f",
-        "role": "pricing_implementation",
-        "bytes": 30982
-      }
-    ]
-  },
   "exclusions": "T5 / def2-SVP has 208431 known tokens plus one request without provider usage; its 93280 unknown reservation is not actual consumption and it is excluded from the complete-sample table.",
   "all_costs_are_estimates_not_invoices": true,
   "token_scope": "All model calls within each selected Run, including preparation, decisions, repair and reporting; not per ORCA job and not summed across earlier attempts.",
@@ -1505,5 +1523,87 @@
         }
       ]
     }
-  }
+  },
+  "historical_runtime_pricing": {
+    "frozen_checked_date": "2026-10-06",
+    "provider": "DeepSeek",
+    "model": "deepseek-flash",
+    "documented_version": "DeepSeek-V4.1-Flash",
+    "unit_tokens": 1000000,
+    "input_uncached_peak_usd": "0.30",
+    "output_peak_usd": "1.20",
+    "semantics": "Conservative estimate from actual known provider token receipts at frozen uncached peak rates; not account deductions or a billed amount; cache/off-peak discounts not applied; no extrapolation to another model.",
+    "sources": [
+      {
+        "path": "docs/acceptance/phase-b/pricing-basis.json",
+        "sha256": "229b7547bcc7f39a3641a4cdb103860b2f9940b10028b7d3807a3ead81a0bdba",
+        "role": "frozen_pricing_evidence",
+        "bytes": 1205
+      },
+      {
+        "path": "docs/acceptance/phase-b/pricing-recheck-b04.json",
+        "sha256": "2b72f092da8908b39ea7c26f463d09869d37029edfed5f95552a0ff3f6cfc359",
+        "role": "frozen_pricing_evidence",
+        "bytes": 705
+      },
+      {
+        "path": "src/orca_agent/model_usage.py",
+        "sha256": "2b996c7dbc472553d9432a72900f9b612877a3756cafe1b8d137d50bd4b8880f",
+        "role": "pricing_implementation",
+        "bytes": 30982
+      }
+    ]
+  },
+  "pricing": {
+    "schema_version": 1,
+    "checked_date": "2026-10-21",
+    "provider": "DeepSeek",
+    "currency": "USD",
+    "unit_tokens": 1000000,
+    "scenario": "All recorded token usage priced at the current official off-peak rates, including recorded cache hits; not an actual invoice or a claim about request timestamps.",
+    "formula": "(cache_hit_input_tokens * input_cache_hit_rate + (input_tokens - cache_hit_input_tokens) * input_cache_miss_rate + output_tokens * output_rate) / 1000000",
+    "sources": [
+      {
+        "url": "https://api-docs.deepseek.com/quick_start/pricing/",
+        "retrieved_url": "https://api-docs.deepseek.com/quick_start/pricing/?push_animated=1&theme=light&webview_progress_bar=1",
+        "role": "Official USD rates and current model names; retrieved 2026-10-21"
+      },
+      {
+        "url": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+        "role": "Official Beijing peak/off-peak schedule; retrieved 2026-10-21"
+      }
+    ],
+    "off_peak_schedule": {
+      "timezone": "Asia/Shanghai (UTC+08:00)",
+      "peak_hours": [
+        "09:00-12:00",
+        "14:00-18:00"
+      ],
+      "peak_days": "Monday-Friday, excluding Chinese public holidays",
+      "off_peak": "All other times, including full weekends and Chinese public holidays",
+      "actual_request_times_classified": false
+    },
+    "models": {
+      "deepseek-flash": {
+        "current_version": "DeepSeek-V4.1-Flash-1017",
+        "input_cache_hit_usd": "0.003",
+        "input_cache_miss_usd": "0.15",
+        "output_usd": "0.60"
+      },
+      "deepseek-v4-pro": {
+        "current_version": "DeepSeek-V4-Pro-0813",
+        "input_cache_hit_usd": "0.022",
+        "input_cache_miss_usd": "0.66",
+        "output_usd": "1.98"
+      }
+    },
+    "version_note": "Current model versions are pricing-page context only; historical token receipts retain their original API model names.",
+    "rounding": "Compute in Decimal at full precision; round displayed USD values to 6 decimal places with ROUND_HALF_UP. Sum full-precision costs before rounding the aggregate."
+  },
+  "pricing_evidence_file": {
+    "path": "deepseek-offpeak-pricing.json",
+    "sha256": "c57979dfec5a5b804a86dc2f3204042a19778937e0fbc6a540a93c64201e1642"
+  },
+  "off_peak_total_estimated_usd": "0.664304746",
+  "off_peak_total_estimated_usd_display": "0.664305"
 }

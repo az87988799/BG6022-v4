@@ -8,14 +8,15 @@
 
 - `main.tex`：主文及章节组织。
 - `v4-calculation-results.tex`：当前七题的数值、完整频率与屏蔽张量；文件名沿用原有依赖。
-- `references.tex`：正文实际引用的 24 项文献。
+- `references.tex`：正文实际引用的 25 项文献。
 - `figures/auto-orca-architecture.png` 与 `figures/agent-capability-map.png`：系统架构与七题能力测试示意图。
 - `figures/open-loop-vs-auto-orca.png`：新增的原创开环／闭环工作机制对照图。
 - `image-prompts-current.txt`：两张图的完整提示词与内置生图模式记录；工具未回传具体模型身份。
 - `image-prompts-workflow.txt`：新对照图的完整提示词、参考来源及生成模式记录。
 - `final-report-zh-academic.pdf`：与当前源码一致的编译阅读版。
 - `successful-calculations.json`：当前数值、结果口径和原始来源校验。
-- `token-cost-audit.json`：六次已有 ORCA 产出对应的完整 Agent token 用量、登记费率估算及原始回执校验；另列一项用量不完整的记录。
+- `token-cost-audit.json`：六次已有 ORCA 产出对应的完整 Agent token 用量、闲时费用估算及原始回执校验；另列一项用量不完整的记录，保留原有登记费率供追溯。
+- `deepseek-offpeak-pricing.json`：2026 年 10 月 21 日核对的官方闲时费率、来源和计算口径。
 - `make_current_results_figure.py`：已从正文移除的数值图绘图程序，保留供复用。
 - `validation.json`：当前编译、数值与排版验证记录。
 
@@ -23,6 +24,6 @@
 
 主文、测试结果和参考文献源码已按句子与短语分行，表格和公式按环境缩进，便于在 VS Code 中直接编辑。空白行表示段落；行末 `%` 用来保持源码换行前后的排版一致。仅源码格式整理时，19 页 PDF 的逐页像素与整理前完全一致。
 
-正文新增 token 用量与费用表：五个 `deepseek-flash` 运行按登记的输入 0.30 USD／百万 tokens、输出 1.20 USD／百万 tokens 折算；未计缓存优惠，属于保守估算而非实付账单。`deepseek-v4-pro` 未登记适用单价，保留 token 数、费用记为未知。统计范围是对应 Agent Run 的全部模型调用，不是 ORCA 程序本身或单个扫描点的 token。
+正文的 token 用量与费用表统一采用 [DeepSeek 官方闲时价格](https://api-docs.deepseek.com/quick_start/pricing/)，核对日期为 2026 年 10 月 21 日。按缓存命中输入、未命中输入、输出的顺序，每百万 tokens 的美元费率分别为：`deepseek-flash` 0.003／0.15／0.60，`deepseek-v4-pro` 0.022／0.66／1.98。使用真实回执中的缓存拆分计算，六次完整运行合计约 0.664305 USD。这是统一闲时情景估算，不表示原始请求均处于闲时，也不是实付账单。统计范围是对应 Agent Run 的全部模型调用，不是 ORCA 程序本身或单个扫描点的 token；实际运行记录及其历史状态保持不变。
 
 其余历史数据、图表与阅读版为原有资料，不被当前主文引用，也不用于当前七题的成功率。实际运行记录未改写。本次扩写文档并生成示意图，未新增 ORCA 计算或 Agent 能力测试。
