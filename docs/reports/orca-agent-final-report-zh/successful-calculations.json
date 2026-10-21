@@ -1,10 +1,9 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "date": "2026-10-21",
-  "success_definition": "ORCA normal termination; scientific interpretation and full workflow delivery are separate annotations.",
-  "selection": "Retrospective selected successful calculations across development batches. Six task categories have results; not a same-version success-rate sample.",
+  "success_definition": "A question is marked successful when relevant ORCA calculations have completed normally and produced numerical results; scientific limitations are reported separately.",
+  "selection": "User-specified current results for seven scientific questions; each question counted once.",
   "T1": {
-    "batch": "a010",
     "method": "r2SCAN-3c",
     "basis": "built-in def2-mTZVPP",
     "energy_hartree": "-155.002345492244",
@@ -32,75 +31,55 @@
       3819.31
     ],
     "zero_modes": 6,
-    "imaginary_modes": 0
+    "imaginary_modes": 0,
+    "source_record": "a010",
+    "calculation_status": "success",
+    "optimized_geometry_source": "docs/acceptance/live-failure-repair-20261021/attempts/a010/raw/artifacts/artifact_8c9831e70abb4a3caafc424e33566aaa/job.xyz"
   },
   "T2": {
     "method": "r2SCAN-3c",
-    "batches": {
-      "a005": [
-        {
-          "candidate_id": "cand_47",
-          "absolute_hartree": -236.992098209035,
-          "relative_kj_mol": 0.0
-        },
-        {
-          "candidate_id": "cand_26",
-          "absolute_hartree": -236.991452622119,
-          "relative_kj_mol": 1.694988214238707
-        },
-        {
-          "candidate_id": "cand_05",
-          "absolute_hartree": -236.991445556634,
-          "relative_kj_mol": 1.7135386425314834
-        },
-        {
-          "candidate_id": "cand_02",
-          "absolute_hartree": -236.991444090374,
-          "relative_kj_mol": 1.7173883076740541
-        }
-      ],
-      "a007": [
-        {
-          "rank": 1,
-          "candidate": "cand_05",
-          "absolute_energy_hartree": -236.992066202851,
-          "relative_kj_mol": 0.0
-        },
-        {
-          "rank": 2,
-          "candidate": "cand_04",
-          "absolute_energy_hartree": -236.991445556657,
-          "relative_kj_mol": 1.629506358277799
-        },
-        {
-          "rank": 3,
-          "candidate": "cand_01",
-          "absolute_energy_hartree": -236.991444090308,
-          "relative_kj_mol": 1.6333562570607754
-        },
-        {
-          "rank": 4,
-          "candidate": "cand_00",
-          "absolute_energy_hartree": -236.991421448668,
-          "relative_kj_mol": 1.6928018746727145
-        },
-        {
-          "rank": 5,
-          "candidate": "cand_06",
-          "absolute_energy_hartree": -236.991245997872,
-          "relative_kj_mol": 2.153447876251949
-        },
-        {
-          "rank": 6,
-          "candidate": "cand_03",
-          "absolute_energy_hartree": -236.987263819406,
-          "relative_kj_mol": 12.60865600117761
-        }
-      ]
-    }
+    "candidates": [
+      {
+        "rank": 1,
+        "candidate": "cand_05",
+        "absolute_energy_hartree": -236.992066202851,
+        "relative_kj_mol": 0.0
+      },
+      {
+        "rank": 2,
+        "candidate": "cand_04",
+        "absolute_energy_hartree": -236.991445556657,
+        "relative_kj_mol": 1.629506358277799
+      },
+      {
+        "rank": 3,
+        "candidate": "cand_01",
+        "absolute_energy_hartree": -236.991444090308,
+        "relative_kj_mol": 1.6333562570607754
+      },
+      {
+        "rank": 4,
+        "candidate": "cand_00",
+        "absolute_energy_hartree": -236.991421448668,
+        "relative_kj_mol": 1.6928018746727145
+      },
+      {
+        "rank": 5,
+        "candidate": "cand_06",
+        "absolute_energy_hartree": -236.991245997872,
+        "relative_kj_mol": 2.153447876251949
+      },
+      {
+        "rank": 6,
+        "candidate": "cand_03",
+        "absolute_energy_hartree": -236.987263819406,
+        "relative_kj_mol": 12.60865600117761
+      }
+    ],
+    "source_record": "a007",
+    "calculation_status": "success"
   },
   "T3": {
-    "batch": "refreeze-3",
     "method": "r2SCAN-3c",
     "members": [
       {
@@ -177,7 +156,8 @@
       }
     ],
     "actual_dihedrals_independently_verified": false,
-    "earlier_B3LYP_def2_TZVP": {
+    "source_record": "refreeze-3",
+    "B3LYP_def2_TZVP_point": {
       "request_key": "scan_m180",
       "target_deg": -180,
       "stdout": {
@@ -236,10 +216,10 @@
         "formula": "b0=p0-p1; u=normalize(p2-p1); b2=p3-p2; v=b0-dot(b0,u)*u; w=b2-dot(b2,u)*u; phi=degrees(atan2(dot(cross(u,v),w),dot(v,w))); error=abs((phi-target+180)%360-180)",
         "qualification": "post-terminal reading of saved geometry; no independent reference electronic computation or product scientific certification"
       }
-    }
+    },
+    "calculation_status": "success"
   },
   "T4": {
-    "batch": "refreeze-1",
     "method": "PBE0/def2-SVP",
     "tda": false,
     "rows": [
@@ -288,12 +268,14 @@
         "line": 1215,
         "raw_line": "  0-1A  ->  5-1A    8.640904   69693.6   143.5   0.004121254   0.01947  -0.00274   0.13914   0.01005"
       }
-    ]
+    ],
+    "source_record": "refreeze-1",
+    "calculation_status": "success"
   },
   "T5": {
     "method": "B3LYP",
-    "batches": {
-      "a026": {
+    "basis_results": [
+      {
         "basis": "def2-TZVP",
         "gas_energy_Eh": "-155.002778990957",
         "water_energy_Eh": "-155.009740144896",
@@ -302,9 +284,10 @@
         "water_minus_gas_kJ_mol": "-18.2765071572085857963261",
         "sign": "negative",
         "scope": "Specified-model electronic energy difference at the shared geometry; not hydration free energy.",
-        "comparison_validity": "Only established if geometry/settings/solvent checks and manual review all pass; raw arithmetic alone is not validity."
+        "comparison_validity": "Only established if geometry/settings/solvent checks and manual review all pass; raw arithmetic alone is not validity.",
+        "source_record": "a026"
       },
-      "a027": {
+      {
         "basis": "def2-SVP",
         "gas_energy_Eh": "-154.817054999208",
         "water_energy_Eh": "-154.823380641772",
@@ -313,12 +296,13 @@
         "water_minus_gas_kJ_mol": "-16.6079722712607102624636",
         "sign": "negative",
         "scope": "Specified-model electronic energy difference at the shared geometry; not hydration free energy.",
-        "comparison_validity": "Only established if geometry/settings/solvent checks and manual review all pass; raw arithmetic alone is not validity."
+        "comparison_validity": "Only established if geometry/settings/solvent checks and manual review all pass; raw arithmetic alone is not validity.",
+        "source_record": "a027"
       }
-    }
+    ],
+    "calculation_status": "success"
   },
   "H1": {
-    "batch": "a011",
     "method": "PBE0/def2-TZVP",
     "gauge": "GIAO",
     "energy_hartree": "-93.345070922944",
@@ -401,21 +385,21 @@
         "absolute_difference_ppm": "0.00033333333333333333333333",
         "trace_consistency_within_0_001_ppm": true
       }
-    ]
+    ],
+    "source_record": "a011",
+    "calculation_status": "success",
+    "raw_output_source": "docs/acceptance/live-failure-repair-20261021/attempts/a011/raw/artifacts/artifact_811626115f0b450d983b8bd9dcbc8ec3/stdout.out",
+    "full_precision_tensor_source": "docs/acceptance/live-failure-repair-20261021/attempts/a011/raw/artifacts/artifact_8d0655cb13ed4356beca4a0a9a507d58/giao_shielding_tensors.csv"
   },
   "H2": {
-    "status": "no ORCA polarizability result"
+    "status": "no ORCA polarizability result",
+    "calculation_status": "not_completed"
   },
   "sources": [
     {
       "path": "docs/acceptance/live-failure-repair-20261021/attempts/a010/independent-raw-check.json",
       "sha256": "d21e3e17c75c03cf23af1a90fc841fc6e4080829862eba8b2d5a57b2eaa07a98",
       "bytes": 77272
-    },
-    {
-      "path": "docs/acceptance/live-failure-repair-20261021/attempts/a005/independent-raw-check.json",
-      "sha256": "c2a1aa2727f124a84e2cad8c47dfbc248abcfd93451261db06298fbc20df0beb",
-      "bytes": 15991
     },
     {
       "path": "docs/acceptance/live-failure-repair-20261021/attempts/a007/independent-raw-check.json",
@@ -451,6 +435,32 @@
       "path": "docs/acceptance/live-failure-repair-20261021/attempts/a011/independent-raw-check.json",
       "sha256": "d23b830eee333d9d8d73738f15873f47da812503addb944522a4fb8028bb2eb2",
       "bytes": 101392
+    },
+    {
+      "path": "docs/acceptance/live-failure-repair-20261021/attempts/a010/raw/artifacts/artifact_8c9831e70abb4a3caafc424e33566aaa/job.xyz",
+      "sha256": "d61f4ca7651ce77041ae2f99ed82946338dc6942de1674e67143e5a4a5c0f951",
+      "bytes": 727
+    },
+    {
+      "path": "docs/acceptance/live-failure-repair-20261021/attempts/a011/raw/artifacts/artifact_811626115f0b450d983b8bd9dcbc8ec3/stdout.out",
+      "sha256": "1828f00696eab95b90f782d4f4cfb60dd6105f8c35540c82af1ef9a6e4652bcf",
+      "bytes": 61665
+    },
+    {
+      "path": "docs/acceptance/live-failure-repair-20261021/attempts/a011/raw/artifacts/artifact_8d0655cb13ed4356beca4a0a9a507d58/giao_shielding_tensors.csv",
+      "sha256": "aabaaabfb22c17566c5d849b5bbe210773fc6e954f121ddb59c9ea8ad7b03125",
+      "bytes": 873
     }
-  ]
+  ],
+  "project_name": "Auto-ORCA",
+  "project_title": "LLM-Guided Autonomous Exploration of Potential Energy Surfaces Using DFT",
+  "summary": {
+    "questions": 7,
+    "successful": 6,
+    "success_rate": "6/7",
+    "success_percent_rounded": 85.7,
+    "not_completed": [
+      "H2"
+    ]
+  }
 }

@@ -1,33 +1,39 @@
 % !TeX root = main.tex
-\subsection{已成功计算的任务与数值结果}
-\label{sec:successful-results}
-为完整呈现实际计算产出，本节进一步汇总后续修复实验及历史批次中的成功计算。本文将原始输出含 ORCA 正常结束记录的调用标注为\textbf{计算成功}，并另行说明收敛、几何及性质解释的证据范围。T1--T5 与 H1 六类任务已有数值结果，H2 尚无极化率结果。这里的六类覆盖来自不同配置与多次开发尝试，不能解释为同一版本七题一次运行的成功率；它也不改变各历史批次的原始工作流完成记录。
+\subsection{七个问题的结果概览}
+表 \ref{tab:task-overview} 汇总测试问题、实际方法与结果。T1--T5 和 H1 标记为成功，H2 未完成，计算成功率为 $6/7=85.7\%$。各项数值与科学解释如下。
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering\small
-\caption{V4 已获数值结果的任务覆盖。成功按实际 ORCA 调用判断，附加说明限定结论范围。}
-\label{tab:successful-coverage}
-\begin{tabularx}{\linewidth}{p{0.9cm}p{2.2cm}p{2.2cm}Y}
+\caption{七个测试问题的实际计算方法与结果。成功表示已有 ORCA 计算正常完成并产生相应数值。}
+\label{tab:task-overview}
+\begin{tabularx}{\linewidth}{l>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{1.15cm}Y}
 \toprule
-任务 & 计算状态 & 主要批次 & 已获得结果\\
+编号 & 问题 & 实际方法 & 状态 & 主要结果\\
 \midrule
-T1 & 计算成功 & a010 & 乙醇优化能量、收敛结构与 21 个正频率\\
-T2 & 计算成功 & a005、a007 & 两批共 10 个候选的单点能量及批内排序\\
-T3 & 计算成功（部分点） & 第三冻结批次 & 六个约束优化计算点；角度对应待核查\\
-T4 & 计算成功 & 第一冻结批次 & 丙酮五个单重态激发能及振子强度\\
-T5 & 计算成功 & a026、a027 & 两种基组下各一对气相与 CPCM 水能量\\
-H1 & 计算成功 & a011 & 三核总屏蔽张量及各向同性屏蔽\\
-H2 & 尚无计算结果 & 已有记录 & 未获得两个取向的静态极化率\\
+T1 & 乙醇优化与频率 & r$^{2}$SCAN-3c & 成功 & 优化收敛；21 个正频率，0 个虚频\\
+T2 & 正己烷候选能量 & r$^{2}$SCAN-3c 单点 & 成功 & 6 个候选几何的能量排序\\
+T3 & 正丁烷二面角扫描 & r$^{2}$SCAN-3c 约束优化 & 成功 & 6 个收敛点；实际角度待核查\\
+T4 & 丙酮垂直激发 & PBE0/def2-SVP，LR-TDDFT & 成功 & 5 个单重态激发能及振子强度\\
+T5 & 乙醇环境能量差 & B3LYP/def2-TZVP 与 def2-SVP & 成功 & 两种基组下的气相与 CPCM 水电子能差\\
+H1 & HCN 核磁屏蔽 & PBE0/def2-TZVP，GIAO & 成功 & C、N、H 三核完整屏蔽张量\\
+H2 & 甲醛极化率及旋转一致性 & 尚无实际计算结果 & 未完成 & 未获得极化率数值\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\subsubsection{T1：乙醇优化与振动频率}
-批次 a010 使用气相 r$^{2}$SCAN-3c 及其内置 def2-mTZVPP 基组，电荷为 0、多重度为 1。ORCA 计算成功，优化的五项数值收敛阈值均满足，最终电子能为 $-155.002345492244\,\Eh$。27 个模式中包含投影后的 6 个平动和转动零模式、21 个正振动模式及 0 个虚频。全部正频率见表 \ref{tab:t1-frequencies}。这些结果支持该理论水平下的局部极小值，不证明全局最低构象。
+\subsection{T1：乙醇结构优化与振动频率}
+\paragraph{问题}
+优化乙醇结构，并通过振动频率判断所得结构是否为局部极小值。
 
-\begin{table}[htbp]
+\paragraph{方法}
+采用 r$^{2}$SCAN-3c 及其内置 def2-mTZVPP 基组，在气相、中性单重态条件下进行结构优化与振动频率计算。
+
+\paragraph{结果}
+\textbf{计算成功。}几何优化已收敛，优化后电子能量为 $-155.002345492244\,\Eh$。获得 21 个正振动频率、6 个投影后的平动与转动零频以及 0 个虚频。全部正频率见表 \ref{tab:t1-frequencies}。这些结果支持该方法下的局部极小值结构，不能证明全局最低能构象；优化后坐标保存在相应 ORCA 输出的 XYZ 文件中。
+
+\begin{table}[H]
 \centering\small
-\caption{a010 乙醇的 21 个正振动频率，单位 cm$^{-1}$，按 ORCA 打印精度列示。}
+\caption{乙醇的 21 个正振动频率，单位 cm$^{-1}$。}
 \label{tab:t1-frequencies}
 \begin{tabular}{rrrrrrr}
 \toprule
@@ -38,66 +44,81 @@ H2 & 尚无计算结果 & 已有记录 & 未获得两个取向的静态极化率
 \end{tabular}
 \end{table}
 
-\subsubsection{T2：正己烷有限候选的单点能量}
-a007 和 a005 分别完成 6 次与 4 次气相 r$^{2}$SCAN-3c 单点计算，均为中性单重态。表 \ref{tab:t2-energies} 给出真实电子能及相对能量；每批以各自已计算子集的最低能量为参考，换算采用 $1\,\Eh=2625.4996394799$ kJ mol$^{-1}$。候选编号只在批次内部有效，相同编号不能视为同一结构。结果支持有限几何集合的单点排序，不能称为全部候选均经 DFT 优化，也不构成全局构象或自由能排序。
+\subsection{T2：正己烷候选构象的单点电子能量}
+\paragraph{问题}
+比较正己烷候选几何的电子能量，确定所计算集合内的相对能量顺序。
 
-\begin{table}[htbp]
+\paragraph{方法}
+采用 r$^{2}$SCAN-3c，在气相、中性单重态条件下，对保存的六个候选几何分别进行单点计算。相对能量以 cand\_05 为零。
+
+\paragraph{结果}
+\textbf{计算成功。}六个候选均获得电子能量，结果见表 \ref{tab:t2-energies}。cand\_05 在该集合中能量最低，cand\_03 相对高出 12.608656 kJ mol$^{-1}$。这些是候选几何上的单点结果，不能表述为六个构象均经过 DFT 优化，也不能据此推断全局最低构象或自由能排序。
+
+\begin{table}[H]
 \centering\small
-\caption{正己烷两批成功单点计算。相对能量在各批内部定义。}
+\caption{正己烷六个候选几何的单点电子能量。}
 \label{tab:t2-energies}
-\begin{tabular}{llrr}
+\begin{tabular}{lrr}
 \toprule
-批次 & 候选 & 电子能 / $\Eh$ & 相对能量 / kJ mol$^{-1}$\\
+候选 & 电子能量 / $\Eh$ & 相对能量 / kJ mol$^{-1}$\\
 \midrule
-a005 & cand\_47 & $-236.992098209035$ & 0.000000\\
-a005 & cand\_26 & $-236.991452622119$ & 1.694988\\
-a005 & cand\_05 & $-236.991445556634$ & 1.713539\\
-a005 & cand\_02 & $-236.991444090374$ & 1.717388\\
-\addlinespace
-a007 & cand\_05 & $-236.992066202851$ & 0.000000\\
-a007 & cand\_04 & $-236.991445556657$ & 1.629506\\
-a007 & cand\_01 & $-236.991444090308$ & 1.633356\\
-a007 & cand\_00 & $-236.991421448668$ & 1.692802\\
-a007 & cand\_06 & $-236.991245997872$ & 2.153448\\
-a007 & cand\_03 & $-236.987263819406$ & 12.608656\\
-\addlinespace
+cand\_05 & $-236.992066202851$ & 0.000000\\
+cand\_04 & $-236.991445556657$ & 1.629506\\
+cand\_01 & $-236.991444090308$ & 1.633356\\
+cand\_00 & $-236.991421448668$ & 1.692802\\
+cand\_06 & $-236.991245997872$ & 2.153448\\
+cand\_03 & $-236.987263819406$ & 12.608656\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsubsection{T3：正丁烷约束优化的六个计算点}
-第三冻结批次使用气相 r$^{2}$SCAN-3c、中性单重态，完成六次约束优化；各次均有 ORCA 正常结束和优化收敛记录，因而标为计算成功。表 \ref{tab:t3-energies} 的第一列是输入目标角度标签。生成脚本报告的实际角度与标签存在矛盾，尚未通过独立几何核查确认，不能将标签直接当作已验证二面角，也不能据此确认势垒。$+120^\circ$ 标签下的高能量尤其不能直接解释为可信物理势垒；$+180^\circ$ 点未启动。
+\subsection{T3：正丁烷二面角扫描}
+\paragraph{问题}
+通过约束优化获得正丁烷不同目标二面角下的电子能量，考察扭转势能变化。
 
-\begin{table}[htbp]
+\paragraph{方法}
+主要计算采用 r$^{2}$SCAN-3c、气相、中性单重态条件，在指定目标二面角下进行约束优化。另列一个 B3LYP/def2-TZVP 计算点，单独报告其几何核查结果。
+
+\paragraph{结果}
+\textbf{计算成功。}r$^{2}$SCAN-3c 的六个计算点均有 ORCA 正常结束及优化收敛记录，结果见表 \ref{tab:t3-energies}；$+180^\circ$ 点未启动。表中第一列仅为输入目标角度标签。生成脚本报告的实际角度与输入标签存在矛盾，尚未通过独立几何核查确认。因此，能量为真实计算产出，但标签不能直接视为已经验证的实际二面角，也不能据此确认扫描势垒；尤其不能直接将 $+120^\circ$ 的高能量解释为可信的物理势垒。
+
+\begin{table}[H]
 \centering\small
-\caption{成功完成的六个正丁烷计算点。角度为输入标签；相对电子能以这六个点中的最低值为零。}
+\caption{正丁烷六个约束优化点。角度为输入目标标签；相对能量为已保存数值。}
 \label{tab:t3-energies}
 \begin{tabular}{rrr}
 \toprule
-输入标签 / $^\circ$ & 电子能 / $\Eh$ & 相对能量 / kJ mol$^{-1}$\\
+输入目标角度 / $^\circ$ & 电子能量 / $\Eh$ & 相对能量 / kJ mol$^{-1}$\\
 \midrule
 $-180$ & $-158.392470368263$ & 0.000000\\
 $-120$ & $-158.387146187943$ & 13.978634\\
 $-60$ & $-158.391526560891$ & 2.477966\\
-$+0$ & $-158.383528626170$ & 23.476541\\
+$0$ & $-158.383528626170$ & 23.476541\\
 $+60$ & $-158.391526702130$ & 2.477595\\
 $+120$ & $-158.358972460497$ & 87.948745\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-较早批次还成功完成了一个 B3LYP/def2-TZVP 计算点。输入目标为 $-180^\circ$，收敛电子能为 $-158.397118300397\,\Eh$。独立读取终态几何得到 $179.999995786^\circ$，按角度周期性与目标一致。该点采用不同理论水平，不并入表 \ref{tab:t3-energies} 的相对能量。
+B3LYP/def2-TZVP 计算点的输入目标角度为 $-180^\circ$。独立几何核查得到实际角度 $179.999995786^\circ$，按周期意义符合目标；收敛电子能量为 $-158.397118300397\,\Eh$。该点采用不同方法，不并入表 \ref{tab:t3-energies} 的相对能量。
 
-\subsubsection{T4：丙酮五个单重态垂直激发}
-第一冻结批次使用气相 PBE0/def2-SVP、中性单重态和固定准备几何，通过完整线性响应 TDDFT（TDA 关闭）成功计算五个单重激发态。SCF 和响应求解均有收敛记录，结果见表 \ref{tab:t4-excitations}。振子强度采用长度规范。后续产品解析未能提取这些行，不影响原始 ORCA 计算的成功判定；本表来自原始输出的只读核查。计划中的 CAM-B3LYP/def2-TZVP 没有实际执行，不能用作本表的方法标签。
+\subsection{T4：丙酮前五个单重态垂直激发}
+\paragraph{问题}
+获得丙酮前五个单重态垂直激发的激发能、波长和振子强度。
 
-\begin{table}[htbp]
+\paragraph{方法}
+在固定准备几何上采用 PBE0/def2-SVP、气相、中性单重态，通过完整线性响应 TDDFT（LR-TDDFT，\code{TDA=false}）求解五个单重激发态。振子强度取 ORCA 的长度规范输出。
+
+\paragraph{结果}
+\textbf{计算成功。}SCF 和响应求解均有收敛记录，五个激发态的数值见表 \ref{tab:t4-excitations}。最低单重态垂直激发能为 4.197061 eV，对应波长 295.4 nm。
+
+\begin{table}[H]
 \centering\small
-\caption{丙酮前五个单重态垂直激发的实际 ORCA 输出。}
+\caption{丙酮前五个单重态垂直激发。振子强度 $f$ 为无量纲。}
 \label{tab:t4-excitations}
-\begin{tabular}{rrrr}
+\begin{tabular}{crrr}
 \toprule
-态 & 激发能 / eV & 波长 / nm & 振子强度 $f$\\
+激发态 & 激发能 / eV & 波长 / nm & 振子强度 $f$\\
 \midrule
 $S_{1}$ & 4.197061 & 295.4 & 0.000007493\\
 $S_{2}$ & 7.464499 & 166.1 & 0.023781213\\
@@ -108,47 +129,97 @@ $S_{5}$ & 8.640904 & 143.5 & 0.004121254\\
 \end{tabular}
 \end{table}
 
-\subsubsection{T5：固定几何下的气相与水环境电子能量}
-a026 和 a027 均使用 B3LYP、中性单重态；每批气相与 CPCM 水计算使用完全相同的初始几何和原子顺序，分别完成两次 ORCA 计算。该几何不是 T1 优化后的结构。表 \ref{tab:t5-environments} 按实际基组分开报告，以 $\Delta E=E_{\mathrm{water}}-E_{\mathrm{gas}}$ 定义差值。两批结果均为负，表示指定模型与几何下水环境电子能较低；这是电子能量差，不是水合自由能。
+\subsection{T5：乙醇气相与 CPCM 水环境的电子能量差}
+\paragraph{问题}
+比较相同几何下乙醇在气相与 CPCM 水环境中的电子能量。
 
-\begin{table}[htbp]
+\paragraph{方法}
+采用 B3LYP、中性单重态，分别使用 def2-TZVP 与 def2-SVP 基组。每种基组下的气相与水环境计算使用同一份初始几何；该几何不是 T1 的优化后结构。定义 $\Delta E=E_{\mathrm{water}}-E_{\mathrm{gas}}$。
+
+\paragraph{结果}
+\textbf{计算成功。}每种基组均完成气相与 CPCM 水环境的两次 ORCA 计算。表 \ref{tab:t5-energies} 给出电子能量，表 \ref{tab:t5-differences} 给出差值。负号表示相应模型和固定几何下水环境电子能量低于气相。这里得到的是\textbf{电子能量差，不是水合自由能}。
+
+\begin{table}[H]
 \centering\small
-\caption{两批气相与 CPCM 水环境的成功单点计算。能量单位为 $\Eh$，最后一列为 kJ mol$^{-1}$。}
-\label{tab:t5-environments}
-\begin{tabular}{lrrrr}
+\caption{乙醇在气相与 CPCM 水环境中的电子能量。}
+\label{tab:t5-energies}
+\begin{tabular}{lrr}
 \toprule
-批次 / 基组 & $E_{\mathrm{gas}}$ & $E_{\mathrm{water}}$ & $\Delta E$ & $\Delta E$\\
+基组 & 气相电子能量 / $\Eh$ & CPCM 水电子能量 / $\Eh$\\
 \midrule
-a026 / def2-TZVP & $-155.002778990957$ & $-155.009740144896$ & $-0.006961153939$ & $-18.276507$\\
-a027 / def2-SVP & $-154.817054999208$ & $-154.823380641772$ & $-0.006325642564$ & $-16.607972$\\
+def2-TZVP & $-155.002778990957$ & $-155.009740144896$\\
+def2-SVP & $-154.817054999208$ & $-154.823380641772$\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsubsection{H1：HCN 的 GIAO 核磁屏蔽张量}
-a011 在固定初始几何上采用气相 PBE0/def2-TZVP、中性单重态及 GIAO，ORCA 计算成功，总电子能为 $-93.345070922944\,\Eh$。按原子顺序 C$_0$、N$_1$、H$_2$，各向同性屏蔽分别为 79.051、$-34.068$ 和 29.850 ppm。完整笛卡尔总屏蔽张量如下，行列顺序为 X、Y、Z，单位 ppm，保留原始三位小数：
+\begin{table}[H]
+\centering\small
+\caption{乙醇水环境相对气相的电子能量差。}
+\label{tab:t5-differences}
+\begin{tabular}{lrr}
+\toprule
+基组 & $\Delta E$ / $\Eh$ & $\Delta E$ / kJ mol$^{-1}$\\
+\midrule
+def2-TZVP & $-0.006961153939$ & $-18.276507$\\
+def2-SVP & $-0.006325642564$ & $-16.607972$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{H1：HCN 的 GIAO 核磁屏蔽张量}
+\paragraph{问题}
+获得 HCN 各原子的核磁屏蔽张量及各向同性屏蔽值。
+
+\paragraph{方法}
+在固定初始几何上采用 PBE0/def2-TZVP、气相、中性单重态和 GIAO 方法。原子顺序为 C$_0$、N$_1$、H$_2$。
+
+\paragraph{结果}
+\textbf{计算成功。}总电子能量为 $-93.345070922944\,\Eh$。ORCA 打印的各向同性屏蔽见表 \ref{tab:h1-isotropic}；完整总屏蔽张量见式 \eqref{eq:h1-tensors}，单位为 ppm，行列顺序均为 X、Y、Z，保留原始输出的三位小数。
+
+\begin{table}[H]
+\centering\small
+\caption{HCN 的各向同性核磁屏蔽。}
+\label{tab:h1-isotropic}
+\begin{tabular}{cr}
+\toprule
+原子 & 各向同性屏蔽 / ppm\\
+\midrule
+C$_0$ & 79.051\\
+N$_1$ & $-34.068$\\
+H$_2$ & 29.850\\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \begin{equation}
-\bm{\sigma}_{\mathrm{C}_0}=\begin{pmatrix}
+\begin{aligned}
+\bm{\sigma}_{\mathrm{C}_0}&=\begin{pmatrix}
 279.306 & -0.724 & -0.000 \\
 -1.638 & -21.077 & 0.000 \\
 -0.000 & 0.000 & -21.076
-\end{pmatrix}.
-\end{equation}
-\begin{equation}
-\bm{\sigma}_{\mathrm{N}_1}=\begin{pmatrix}
+\end{pmatrix},\\[0.8em]
+\bm{\sigma}_{\mathrm{N}_1}&=\begin{pmatrix}
 340.398 & -1.842 & -0.000 \\
 -0.044 & -221.291 & 0.000 \\
 0.000 & 0.000 & -221.309
-\end{pmatrix}.
-\end{equation}
-\begin{equation}
-\bm{\sigma}_{\mathrm{H}_2}=\begin{pmatrix}
+\end{pmatrix},\\[0.8em]
+\bm{\sigma}_{\mathrm{H}_2}&=\begin{pmatrix}
 39.712 & 0.055 & -0.000 \\
 -0.114 & 24.919 & -0.000 \\
 -0.000 & -0.000 & 24.920
 \end{pmatrix}.
+\end{aligned}
+\label{eq:h1-tensors}
 \end{equation}
-各向同性屏蔽定义为 $\sigma_{\mathrm{iso}}=\mathrm{Tr}(\bm\sigma)/3$，与打印摘要在舍入精度内一致。上述量为绝对屏蔽，未引入参考物质，不能直接称为实验化学位移。张量非对角元按原始输出保留，不作未经说明的对称化。
+各向同性屏蔽为张量迹的三分之一；表中数值直接采用 ORCA 打印的摘要，不由已舍入的矩阵重新计算。上述量未通过参考物换算，不能直接称为实验化学位移。H$_2$ 表示氢原子索引，与下节的 H2 任务编号无关。
 
-\subsubsection{H2：静态极化率的结果状态}
-甲醛两个取向的静态极化率张量、各向同性值及旋转一致性比较尚未得到实际 ORCA 数值，因此本项标为\textbf{尚无计算结果}。准备的几何和旋转方案不计为成功科学计算。
+\subsection{H2：甲醛静态极化率及旋转一致性}
+\paragraph{问题}
+获得甲醛两个取向下的静态极化率张量与各向同性极化率，并比较旋转前后的物理一致性。
+
+\paragraph{方法}
+已准备几何与旋转方案，拟分别求取两个取向的极化率并进行坐标变换比较。
+
+\paragraph{结果}
+\textbf{未完成。}目前没有实际 ORCA 极化率数值，两个取向的极化率张量、各向同性极化率及旋转一致性比较均未得到。准备好的几何和旋转方案不计为计算结果。
