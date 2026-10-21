@@ -1,0 +1,322 @@
+diff --git a/src/orca_agent/config.py b/src/orca_agent/config.py
+--- a/src/orca_agent/config.py
++++ b/src/orca_agent/config.py
+@@ -43,12 +43,15 @@
+     mechanical_progression: bool = Field(default=True, strict=True)
+     workflow_policy: Literal["simplified-1"] | None = "simplified-1"
+     observation_delivery_policy: Literal["reported-observation-1", "reported-observation-2"] | None = None
++    task_code_policy: Literal["nonempty-python-1"] | None = None
+ 
+     @model_serializer(mode="wrap")
+     def preserve_historical_observation_policy(self, handler):
+         value = handler(self)
+         if self.observation_delivery_policy is None:
+             value.pop("observation_delivery_policy", None)
++        if self.task_code_policy is None:
++            value.pop("task_code_policy", None)
+         return value
+ 
+     def run_configuration(self) -> RunConfiguration:
+@@ -56,7 +59,8 @@
+                                 model_profile=self.model_profile, execution=self.execution,
+                                 mechanical_progression=self.mechanical_progression,
+                                 workflow_policy=self.workflow_policy,
+-                                observation_delivery_policy=self.observation_delivery_policy)
++                                observation_delivery_policy=self.observation_delivery_policy,
++                                task_code_policy=self.task_code_policy)
+ 
+ 
+ def load_config(path: Path | None = None) -> Config:
+diff --git a/src/orca_agent/context.py b/src/orca_agent/context.py
+--- a/src/orca_agent/context.py
++++ b/src/orca_agent/context.py
+@@ -66,7 +66,7 @@
+ from orca_agent.semantic import selectable_conditions, selection_action_parameters
+ from orca_agent.tools.registry import call_usage_counter, get_tool
+ 
+-PROMPT_VERSION = "agent-json-v86"
++PROMPT_VERSION = "agent-json-v87"
+ REASON_TEMPLATE = (
+     "quantity:<?>;unit:<stated/unknown>;conditions:<values/gaps>;source:<refs>;limits:<gaps>;next:<action>")
+ SCHEMA_COLUMNS = ("o:properties,required,additionalProperties,minProperties,maxProperties;"
+@@ -2143,7 +2143,7 @@
+             or tool.get("check_contract", {}).get("immediate")]
+ 
+ 
+-def _code_authoring_example(run, catalog, action):
++def _code_authoring_contract(run, catalog):
+     if (not _simplified_workflow(run) or not run.permission.code_execution
+             or not run.permission.artifact_writes or run.usage.analysis_executions >= run.budget.analysis_executions):
+         return None
+@@ -2152,13 +2152,15 @@
+                      and tool.get("check_contract", {}).get("generic_observations")), None)
+     if not writer or not consumer:
+         return None
+-    return {"action": action, "reason": "Author code and bind its immutable file; replace the placeholder with authorized analysis.",
+-        "parameters": {"steps": [
+-            {"key": "write_code", "tool": writer["name"], "parameters": {
+-                "name": "task.py", "role": "python", "content": "# Replace with authorized analysis code.\n"}},
+-            {"key": "analyze", "tool": consumer["name"], "parameters": {
+-                "code": {"producer_key": "write_code", "port": "written_artifact"},
+-                "sdk_orca": False, "observation_names": []}}], "goal_map": {}}}
++    return {"meaning": "Field map only, not a runnable Plan or task implementation.",
++        "writer": {"tool": writer["name"], "fields": {
++            "parameters.name": "chosen basename", "parameters.role": "python",
++            "parameters.content": "complete authorized task code, not a placeholder/comment-only script"}},
++        "consumer": {"tool": consumer["name"], "fields": {
++            "parameters.code": "producer_key=writer Step.key, port=written_artifact",
++            "parameters.sdk_orca": "explicit true for managed ORCA, false for analysis only",
++            "parameters.observation_names": "the output names this code actually emits"}},
++        "goal_routes": "Bind each chosen producer to unchanged Goal ports; unplanned work remains a gap."}
+ 
+ 
+ def _action_examples(request, run, plan, catalog, final_only, control):
+@@ -2235,9 +2237,9 @@
+         examples.pop("initial_plan", None)
+         references = {}
+     for action in ("initial_plan", "revise_plan"):
+-        if action in examples and (authoring := _code_authoring_example(run, catalog, action)):
+-            examples[action] = {}  # The complete envelope replaces the old placeholder Plan.
+-            references["code_authoring_example"] = authoring
++        if action in examples and (authoring := _code_authoring_contract(run, catalog)):
++            examples[action] = {}  # The schema and field map contain no executable placeholder.
++            references["code_authoring_contract"] = authoring
+     return examples, references
+ 
+ 
+@@ -3610,10 +3612,10 @@
+         if _simplified_workflow(run):
+             template["PLAN_RULES"] = template["PLAN_RULES"].replace(
+                 "map required Goal.port/gap", "bind pending Goal producers; verified settled Goal evidence is retained")
+-            if "code_authoring_example" in references:
++            if "code_authoring_contract" in references:
+                 template["PLAN_RULES"] = (
+                     "Unique keys; unchanged Goal ports. Completed definitions retained; frozen edits/unknown refs rejected. "
+-                    "Bind pending outputs or use verified settled evidence. Example emits no observations or scientific result.")
++                    "Bind pending outputs or use verified settled evidence. Write complete task code; field maps are not implementations.")
+                 template["TASK_CODE_RULES"] = template["TASK_CODE_RULES"].replace(
+                     "Plan writers and consumers together. code/input accepts {producer_key,port:'written_artifact'}; "
+                     "manifest entries use producer_key with port:'written_artifact'/'prepared_geometry' or file_key:<exact filename>, "
+@@ -3621,7 +3623,7 @@
+                     "Unknown filename: execute producer first, inspect Result.source.files, then add analysis; pending Goals may be gaps. "
+                     "Never guess filenames from ports or relabel execution collections as written_artifact. "
+                     "The program adds dependencies and binds actual Artifact identity/hash before execution. ",
+-                    "Use PLAN_REFERENCES.code_authoring_example. Manifest entries require target_path/purpose; "
++                    "Use PLAN_REFERENCES.code_authoring_contract and current Tool schemas. Manifest entries require target_path/purpose; "
+                     "port only written_artifact/prepared_geometry. Raw execution files use exact file_key, "
+                     "not port:artifacts/observations (collections). "
+                     "Unknown filename: execute producer, inspect Result.source.files, then add analysis; pending Goals may be gaps. "
+diff --git a/src/orca_agent/decision_purpose.py b/src/orca_agent/decision_purpose.py
+--- a/src/orca_agent/decision_purpose.py
++++ b/src/orca_agent/decision_purpose.py
+@@ -15,7 +15,7 @@
+     "agent-json-v22", "agent-json-v23", "agent-json-v24", "agent-json-v25", "agent-json-v26", "agent-json-v27",
+     "agent-json-v28", "agent-json-v29", "agent-json-v30", "agent-json-v31", "agent-json-v32", "agent-json-v33", "agent-json-v34",
+     "agent-json-v35", "agent-json-v36", "agent-json-v37", "agent-json-v38", "agent-json-v39", "agent-json-v40", "agent-json-v41",
+-    "agent-json-v74", "agent-json-v75", "agent-json-v76", "agent-json-v77", "agent-json-v78", "agent-json-v79", "agent-json-v80", "agent-json-v81", "agent-json-v82", "agent-json-v83", "agent-json-v84", "agent-json-v85", "agent-json-v86",
++    "agent-json-v74", "agent-json-v75", "agent-json-v76", "agent-json-v77", "agent-json-v78", "agent-json-v79", "agent-json-v80", "agent-json-v81", "agent-json-v82", "agent-json-v83", "agent-json-v84", "agent-json-v85", "agent-json-v86", "agent-json-v87",
+     "agent-json-v42", "agent-json-v43", "agent-json-v44", "agent-json-v45", "agent-json-v46", "agent-json-v47",
+     "agent-json-v48", "agent-json-v49", "agent-json-v50", "agent-json-v51", "agent-json-v52", "agent-json-v53", "agent-json-v54", "agent-json-v55", "agent-json-v56", "agent-json-v57", "agent-json-v58", "agent-json-v59", "agent-json-v60", "agent-json-v61", "agent-json-v62", "agent-json-v63", "agent-json-v64", "agent-json-v65", "agent-json-v66", "agent-json-v67", "agent-json-v68", "agent-json-v69", "agent-json-v70", "agent-json-v71", "agent-json-v73"})
+ 
+diff --git a/src/orca_agent/llm.py b/src/orca_agent/llm.py
+--- a/src/orca_agent/llm.py
++++ b/src/orca_agent/llm.py
+@@ -65,7 +65,7 @@
+     "disabled": {"thinking": {"type": "disabled"}},
+     "thinking_low": {"thinking": {"type": "enabled"}, "reasoning_effort": "low"},
+ }
+-JSON_NORMALIZATION_PROMPT_VERSIONS = frozenset({"agent-json-v85", "agent-json-v86"})
++JSON_NORMALIZATION_PROMPT_VERSIONS = frozenset({"agent-json-v85", "agent-json-v86", "agent-json-v87"})
+ 
+ 
+ def model_profile_parameters(profile: ModelProfile) -> dict[str, Any]:
+diff --git a/src/orca_agent/models.py b/src/orca_agent/models.py
+--- a/src/orca_agent/models.py
++++ b/src/orca_agent/models.py
+@@ -794,6 +794,7 @@
+     mechanical_progression: bool = Field(default=False, strict=True)
+     workflow_policy: Literal["simplified-1"] | None = None
+     observation_delivery_policy: Literal["reported-observation-1", "reported-observation-2"] | None = None
++    task_code_policy: Literal["nonempty-python-1"] | None = None
+ 
+     @model_serializer(mode="wrap")
+     def preserve_historical_workflow(self, handler):
+@@ -802,6 +803,8 @@
+             value.pop("workflow_policy", None)
+         if self.observation_delivery_policy is None:
+             value.pop("observation_delivery_policy", None)
++        if self.task_code_policy is None:
++            value.pop("task_code_policy", None)
+         return value
+ 
+     @model_validator(mode="before")
+diff --git a/src/orca_agent/planning.py b/src/orca_agent/planning.py
+--- a/src/orca_agent/planning.py
++++ b/src/orca_agent/planning.py
+@@ -6,6 +6,7 @@
+ 
+ from __future__ import annotations
+ 
++import ast
+ import hashlib
+ import re
+ 
+@@ -145,6 +146,45 @@
+                  "concrete Artifact is outside the permission snapshot")
+ 
+ 
++def _validate_python_task_content(store, run, step, *, plan=None, allow_pending=False):
++    """Reject only empty task programs under the Run's explicit frozen policy."""
++    if (run is None or run.configuration is None
++            or run.configuration.task_code_policy != "nonempty-python-1"
++            or "execute_python" not in get_tool(step.tool).effects):
++        return
++    from orca_agent.orca.native import read_pinned_input
++    from orca_agent.task_sdk import MAX_REQUEST_BYTES
++
++    code = step.parameters.code
++    if isinstance(code, CodeRef):
++        raw = read_pinned_input(store.artifact_path(code.artifact_id), code.sha256, limit=MAX_REQUEST_BYTES)
++    elif allow_pending and isinstance(code, ProducerFileRef):
++        plan = plan if plan is not None else store.load_plan(run)
++        producer = next((item for item in plan.steps if item.id == code.producer_step_id), None) if plan else None
++        if producer is None or not get_tool(producer.tool).check_contract.get("code_authoring"):
++            return  # Unknown future bytes remain deferred; consumption checks the concrete file.
++        from orca_agent.tools.workspace import _content
++        raw = _content(store, run, producer.parameters).encode("utf-8")
++    else:
++        return
++    position = next((i for i, item in enumerate(plan.steps) if item.id == step.id), None) if plan else None
++    path = (["parameters", "steps", position, "parameters", "code"] if position is not None
++            else ["parameters", "code"])
++    try:
++        module = ast.parse(raw, filename="<task>", mode="exec")
++    except (SyntaxError, ValueError, RecursionError) as exc:
++        raise PlanningError("Python task code has invalid syntax; correct the source before execution.", detail={
++            "code": "invalid_python_task", "path": path, "step_id": step.id,
++            "line": getattr(exc, "lineno", None), "column": getattr(exc, "offset", None),
++            "requirement": "Supply valid Python task code; no source bytes were executed or rewritten."}) from None
++    if not any(not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)
++                    and isinstance(node.value.value, str)) for node in module.body):
++        raise PlanningError("Python task code is empty or contains only comments/docstrings.", detail={
++            "code": "empty_python_task", "path": path, "step_id": step.id,
++            "requirement": "Write the complete authorized task implementation before executing it. "
++                "A statement is not proof of scientific correctness; original source and Goal checks still apply."})
++
++
+ def validate_code_inputs(store, permission, step, *, run=None, request=None, plan=None,
+                          allow_future_geometry=False):
+     """Verify pinned task files at consumption; a declaration cannot expand access."""
+@@ -167,6 +207,7 @@
+         store.artifact_path(reference.artifact_id)
+         artifact = store.load_artifact(reference.artifact_id)
+         _require(artifact.sha256 == reference.sha256, "task input hash differs from pinned Artifact")
++    _validate_python_task_content(store, run, step, plan=plan, allow_pending=allow_future_geometry)
+     if (run is not None and getattr(step.parameters, "sdk_orca", None) is True
+             and not any(attempt.step_id == step.id for attempt in run.attempts)):
+         from orca_agent.tools.managed import validate_sdk_orca_preconditions
+diff --git a/src/orca_agent/semantic.py b/src/orca_agent/semantic.py
+--- a/src/orca_agent/semantic.py
++++ b/src/orca_agent/semantic.py
+@@ -10,7 +10,7 @@
+ from copy import deepcopy
+ from typing import Any, Literal, get_args
+ 
+-from pydantic import Field, ValidationError
++from pydantic import Field, TypeAdapter, ValidationError
+ 
+ from orca_agent.applicability import (
+     PROFILE,
+@@ -335,7 +335,7 @@
+         current["source_reference_rules"] = (
+             "Goals, explicit conditions and automatic_selection authorization may supply source_refs instead of "
+             "recopying text_basis/message_id. References name authenticated user fragments; the program retains "
+-            "the exact source and any intervening text. Keep quantity as the user's physical quantity phrase. "
++            "the exact source and any intervening text. Quantity labels do not authorize physical claims. "
+             "A reference does not prove an arbitrary field value. Exact text_basis remains accepted, including "
+             "a shorter quote contained in the referenced source. A Goal's exact quantity can supply an omitted quote. "
+             "Environment values use gas_phase, CPCM(solvent), or SMD(solvent); retain the user's model and solvent. "
+@@ -347,10 +347,18 @@
+         current["instruction"] = current["instruction"].replace(
+             "Retrieve sources -> select_conditions before geometry preparation/execution; identity queries may precede selection when the frozen profile permits.",
+             "Select authorized method/basis before scientific execution; sources are optional, reasoning is required. Geometry preparation may precede selection.")
++        current["instruction"] = current["instruction"].replace(
++            "General quantity quotes user",
++            "General quantity is a display label grounded in authenticated text_basis")
+         if "generated_task_intent" in current:
+             current["generated_task_intent"] = current["generated_task_intent"].replace(
+                 "Then knowledge.search -> select_conditions before structure.prepare/execution; identity queries may precede selection when the frozen profile permits.",
+                 "Then select_conditions before scientific execution; retrieved sources are optional and geometry preparation may precede selection.")
++            current["generated_task_intent"] = current["generated_task_intent"].replace(
++                "Every general scientific Goal must supply quantity as an exact user phrase and a stable port identifier "
++                "chosen for that quantity; absence of a registered property port/checker is not an unresolved user fact.",
++                "Each general Goal supplies quantity and a stable port. A nonliteral label becomes an authenticated "
++                "source excerpt; full text_basis retains the obligation. Checker absence is not an unresolved user fact.")
+     return contract
+ 
+ 
+@@ -411,6 +419,21 @@
+                         "message_id": message_id, "start": start, "end": end,
+                         **({"supplied_text_basis": supplied_text} if supplied_text else {})})
+     return records, corrections
++
++
++def _source_quantity_label(text):
++    """A bounded literal display excerpt; the complete source remains the Goal."""
++    validator = TypeAdapter(ScientificLabel)
++    try:
++        return validator.validate_python(text)
++    except ValidationError:
++        # Never join separated words or rewrite scientific symbols. A long or
++        # multiline source uses one literal span under the existing label bound.
++        for span in re.findall(r"[^\x00-\x1f\x7f]+", text):
++            value = span.strip()[:160].rstrip()
++            if value:
++                return validator.validate_python(value)
++    return None
+ 
+ 
+ def _apply_general_program_fields(candidate, request, messages):
+@@ -435,10 +458,28 @@
+                          "proposed_value": item.analysis_goal_ref,
+                          "action": "retained_as_nonexecuting_remark"})
+             item.analysis_goal_ref = None
+-        if not _uses_general_goal(candidate, item, request):
++        general = _uses_general_goal(candidate, item, request)
++        if not general and item.port not in INPUT_TOOLS:
+             continue
+         matches = _quote_occurrences(item.text_basis, messages, item.message_id)
+         if not matches or len({entry[0]["id"] for entry in matches}) != 1:
++            continue
++        if (candidate.schema_version == VERSION
++                and (item.quantity is None or item.quantity not in item.text_basis)):
++            if (item.port in INPUT_TOOLS and _text_geometry_relation(
++                    request, [{"text": item.text_basis}], item.system_refs) == "optimized"):
++                raise ProposalError("An optimized quantity requires its separate scientific Goal; "
++                                    "an input preparation Goal cannot substitute for it.",
++                                    path=["parameters", "goals", index, "quantity"])
++            value = _source_quantity_label(item.text_basis)
++            if value is not None:
++                rows.append({"path": ["goals", index, "quantity"],
++                             "proposed_value": item.quantity, "value": value,
++                             "source": "authenticated_goal_text_basis",
++                             "rule": "source-quantity-label-1",
++                             "complete_source_field": "original_text"})
++                item.quantity = value
++        if not general:
+             continue
+         relation = _general_goal_geometry_relation(request, matches[0][0], item)
+         if relation is not None and item.geometry_relation is None:
+@@ -2477,6 +2518,12 @@
+     if candidate.goals is not None:
+         goals = _goals(candidate, request, grounding,
+             text_input=run.science_baseline_policy == "first_science_plan")
++        for row in program_fields:
++            if row.get("rule") == "source-quantity-label-1":
++                item = candidate.goals[row["path"][1]]
++                goal = next(goal for goal in goals if goal.id == "goal_" + item.key)
++                goal.text_evidence["quantity_canonicalization"] = {
++                    key: value for key, value in row.items() if key != "path"}
+         values["goals"] = [goal.model_dump() for goal in goals]
+         if simplified_workflow(run) and not any(goal.required for goal in goals):
+             # Preserve the actionable missing-energy correction before the

@@ -1,0 +1,4466 @@
+{
+  "schema_version": 1,
+  "run_id": "run_d43e58295336493ebad773115b7644bd",
+  "run_state": "failed",
+  "request_id": "request_3cf225119ab94642a0a859329c55b6ba",
+  "request_version": 3,
+  "plan_id": "plan_82dea837ece94f679564a1e4a96f8eb6",
+  "plan_version": 3,
+  "recorded_delivery_status": "partial",
+  "report_delivery_status": "partial",
+  "user_goal_complete": false,
+  "request": {
+    "original_text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "conditions": {
+      "method": "PBE0",
+      "basis": "def2-TZVP",
+      "charge": 0,
+      "multiplicity": 1
+    },
+    "additional_conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "environment": "gas_phase",
+      "electronic_state": "RKS",
+      "method": "PBE0",
+      "basis": "def2-TZVP"
+    },
+    "condition_sources": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "environment": "explicit",
+      "electronic_state": "default",
+      "method": "auto_selected",
+      "basis": "auto_selected"
+    },
+    "systems": [
+      {
+        "id": "system_hcn",
+        "geometry_artifact_id": null,
+        "conditions": {},
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": "氰化氢HCN",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "氰化氢HCN"
+          ],
+          "canonical_names": [],
+          "query_name": "hydrogen cyanide",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_9611322765a0431cbb0566a90bb34435",
+            "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+            "start": 2,
+            "end": 25,
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "unresolved": [],
+    "selection_reasons": {
+      "method": "PBE0 (hybrid DFT) is a well-established choice for GIAO NMR shielding of main-group molecules, giving good balance of accuracy and cost for HCN; RHF would neglect electron correlation. Cost: single small molecule (3 atoms), hybrid functional is affordable within 4 cores/192 MB per process.",
+      "basis": "def2-TZVP triple-zeta basis with polarization is recommended for NMR shielding to reduce basis-set error on the magnetic response; HCN is tiny (3 atoms) so the extra cost over def2-SVP is negligible and well within budget."
+    },
+    "selection_evidence": {
+      "request.method": {
+        "value": "PBE0",
+        "source": "auto_selected",
+        "request_version": 2,
+        "reason": "PBE0 (hybrid DFT) is a well-established choice for GIAO NMR shielding of main-group molecules, giving good balance of accuracy and cost for HCN; RHF would neglect electron correlation. Cost: single small molecule (3 atoms), hybrid functional is affordable within 4 cores/192 MB per process.",
+        "sources": [],
+        "schema": "condition-selection-3",
+        "basis_kind": "model_reason",
+        "scientific_validation": "not_established_by_selection",
+        "user_request_authorization": {
+          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+          "text_basis": "方法请从RHF或PBE0中选择",
+          "start": 64,
+          "end": 79,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        }
+      },
+      "request.basis": {
+        "value": "def2-TZVP",
+        "source": "auto_selected",
+        "request_version": 2,
+        "reason": "def2-TZVP triple-zeta basis with polarization is recommended for NMR shielding to reduce basis-set error on the magnetic response; HCN is tiny (3 atoms) so the extra cost over def2-SVP is negligible and well within budget.",
+        "sources": [],
+        "schema": "condition-selection-3",
+        "basis_kind": "model_reason",
+        "scientific_validation": "not_established_by_selection",
+        "user_request_authorization": {
+          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+          "text_basis": "基组从def2-SVP或def2-TZVP中选择",
+          "start": 80,
+          "end": 104,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        }
+      }
+    }
+  },
+  "goals": [
+    {
+      "goal_id": "goal_prepared_geometry",
+      "port": "prepared_geometry",
+      "required": true,
+      "original_text": "生成并保存一份合理结构",
+      "recorded_status": "satisfied",
+      "report_status": "satisfied",
+      "evidence_status": "query_evidence_read_verified",
+      "minimum_check_version": "structure-prepare-3",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": {
+        "status": "passed",
+        "reasons": [],
+        "minimum_evidence": [],
+        "current_use": null
+      },
+      "binding": {
+        "step_id": "step_01ca8765067f4173bba3da6a93f5836a",
+        "port": "prepared_geometry",
+        "evidence": null,
+        "gap": null
+      },
+      "result_id": "result_037b69c580bf4dd7b81d14455dfbf631",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "gaps": []
+    },
+    {
+      "goal_id": "goal_nmr_shielding",
+      "port": "nmr_shielding",
+      "required": true,
+      "original_text": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {
+        "geometry_relation": "fixed_initial"
+      },
+      "minimum_evidence": [
+        "converged_scf@1"
+      ],
+      "applicability": null,
+      "binding": {
+        "step_id": null,
+        "port": "nmr_shielding",
+        "evidence": null,
+        "gap": "The current Plan does not yet provide this required goal's evidence."
+      },
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "The current Plan does not yet provide this required goal's evidence."
+      ]
+    },
+    {
+      "goal_id": "goal_shielding_tensor_table",
+      "port": "shielding_tensor_table",
+      "required": true,
+      "original_text": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": {
+        "step_id": null,
+        "port": "shielding_tensor_table",
+        "evidence": null,
+        "gap": "The current Plan does not yet provide this required goal's evidence."
+      },
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "The current Plan does not yet provide this required goal's evidence."
+      ]
+    },
+    {
+      "goal_id": "goal_delivery_bundle",
+      "port": "delivery_bundle",
+      "required": true,
+      "original_text": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": {
+        "step_id": null,
+        "port": "delivery_bundle",
+        "evidence": null,
+        "gap": "The current Plan does not yet provide this required goal's evidence."
+      },
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "The current Plan does not yet provide this required goal's evidence."
+      ]
+    }
+  ],
+  "results": [
+    {
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "result_id": "result_9aa321d00cf14bdeba230c531fc5eb42",
+      "step_id": "step_9db1d056e28a4c78b613ff91973f3877",
+      "attempt_id": null,
+      "call_id": "call_161008d0ae4c4eb48f43bb16c6aaaef0",
+      "operation_status": "completed",
+      "scientific_status": "passed",
+      "output_validation": [
+        {
+          "name": "resolved_identity",
+          "kind": "qualified_output",
+          "status": "passed",
+          "scientific_qualification": true,
+          "checks": [
+            {
+              "name": "supported_identity_graph",
+              "status": "passed",
+              "detail": "One returned name candidate and internally consistent graph/formula/charge; ambiguity retained.",
+              "source": {
+                "canonical_name": "hydrogen cyanide",
+                "system_id": "system_hcn",
+                "text_evidence": {
+                  "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                  "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                  "start": 2,
+                  "end": 25,
+                  "schema": "request-semantics-3"
+                },
+                "general_identity": true,
+                "check_version": "structure-identity-3",
+                "requested_identity": {
+                  "contract": "general-identity-3",
+                  "requested_names": [
+                    "氰化氢HCN"
+                  ],
+                  "canonical_names": [],
+                  "query_name": "hydrogen cyanide",
+                  "query_name_source": "inferred_translation_or_alias",
+                  "ambiguities": [],
+                  "text_evidence": {
+                    "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                    "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                    "start": 2,
+                    "end": 25,
+                    "schema": "request-semantics-3"
+                  }
+                },
+                "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hydrogen%20cyanide/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON",
+                "requested_at": "2026-10-20T22:01:50.779610+00:00",
+                "normalization_rule": "structure-identity-3",
+                "http_requests": 1,
+                "timeout_seconds": 120,
+                "http_status": 200,
+                "response_complete": true,
+                "raw_sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+                "raw_artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+                "fetched_at": "2026-10-20T22:01:52.267555+00:00",
+                "name_evidence": {
+                  "rule": "explicit-name-formula-1",
+                  "original_name": "氰化氢HCN",
+                  "name_for_evidence": "氰化氢",
+                  "explicit_formula": "HCN",
+                  "resolved_formula": "CHN",
+                  "formula_matches_graph": true,
+                  "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."
+                }
+              },
+              "rule_version": "structure-identity-3"
+            }
+          ],
+          "source_integrity": "verified"
+        }
+      ],
+      "qualified_outputs": {
+        "resolved_identity": {
+          "value": null,
+          "unit": null,
+          "artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+          "checks": [
+            {
+              "name": "supported_identity_graph",
+              "status": "passed",
+              "detail": "One returned name candidate and internally consistent graph/formula/charge; ambiguity retained.",
+              "source": {
+                "canonical_name": "hydrogen cyanide",
+                "system_id": "system_hcn",
+                "text_evidence": {
+                  "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                  "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                  "start": 2,
+                  "end": 25,
+                  "schema": "request-semantics-3"
+                },
+                "general_identity": true,
+                "check_version": "structure-identity-3",
+                "requested_identity": {
+                  "contract": "general-identity-3",
+                  "requested_names": [
+                    "氰化氢HCN"
+                  ],
+                  "canonical_names": [],
+                  "query_name": "hydrogen cyanide",
+                  "query_name_source": "inferred_translation_or_alias",
+                  "ambiguities": [],
+                  "text_evidence": {
+                    "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                    "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                    "start": 2,
+                    "end": 25,
+                    "schema": "request-semantics-3"
+                  }
+                },
+                "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hydrogen%20cyanide/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON",
+                "requested_at": "2026-10-20T22:01:50.779610+00:00",
+                "normalization_rule": "structure-identity-3",
+                "http_requests": 1,
+                "timeout_seconds": 120,
+                "http_status": 200,
+                "response_complete": true,
+                "raw_sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+                "raw_artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+                "fetched_at": "2026-10-20T22:01:52.267555+00:00",
+                "name_evidence": {
+                  "rule": "explicit-name-formula-1",
+                  "original_name": "氰化氢HCN",
+                  "name_for_evidence": "氰化氢",
+                  "explicit_formula": "HCN",
+                  "resolved_formula": "CHN",
+                  "formula_matches_graph": true,
+                  "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."
+                }
+              },
+              "rule_version": "structure-identity-3"
+            }
+          ],
+          "source": {
+            "canonical_name": "hydrogen cyanide",
+            "system_id": "system_hcn",
+            "text_evidence": {
+              "message_id": "message_9611322765a0431cbb0566a90bb34435",
+              "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+              "start": 2,
+              "end": 25,
+              "schema": "request-semantics-3"
+            },
+            "general_identity": true,
+            "check_version": "structure-identity-3",
+            "requested_identity": {
+              "contract": "general-identity-3",
+              "requested_names": [
+                "氰化氢HCN"
+              ],
+              "canonical_names": [],
+              "query_name": "hydrogen cyanide",
+              "query_name_source": "inferred_translation_or_alias",
+              "ambiguities": [],
+              "text_evidence": {
+                "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                "start": 2,
+                "end": 25,
+                "schema": "request-semantics-3"
+              }
+            },
+            "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hydrogen%20cyanide/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON",
+            "requested_at": "2026-10-20T22:01:50.779610+00:00",
+            "normalization_rule": "structure-identity-3",
+            "http_requests": 1,
+            "timeout_seconds": 120,
+            "http_status": 200,
+            "response_complete": true,
+            "raw_sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+            "raw_artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+            "fetched_at": "2026-10-20T22:01:52.267555+00:00",
+            "name_evidence": {
+              "rule": "explicit-name-formula-1",
+              "original_name": "氰化氢HCN",
+              "name_for_evidence": "氰化氢",
+              "explicit_formula": "HCN",
+              "resolved_formula": "CHN",
+              "formula_matches_graph": true,
+              "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."
+            },
+            "sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa"
+          }
+        }
+      },
+      "checks": {
+        "resolved_identity": [
+          {
+            "name": "supported_identity_graph",
+            "status": "passed",
+            "detail": "One returned name candidate and internally consistent graph/formula/charge; ambiguity retained.",
+            "source": {
+              "canonical_name": "hydrogen cyanide",
+              "system_id": "system_hcn",
+              "text_evidence": {
+                "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                "start": 2,
+                "end": 25,
+                "schema": "request-semantics-3"
+              },
+              "general_identity": true,
+              "check_version": "structure-identity-3",
+              "requested_identity": {
+                "contract": "general-identity-3",
+                "requested_names": [
+                  "氰化氢HCN"
+                ],
+                "canonical_names": [],
+                "query_name": "hydrogen cyanide",
+                "query_name_source": "inferred_translation_or_alias",
+                "ambiguities": [],
+                "text_evidence": {
+                  "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                  "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                  "start": 2,
+                  "end": 25,
+                  "schema": "request-semantics-3"
+                }
+              },
+              "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hydrogen%20cyanide/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON",
+              "requested_at": "2026-10-20T22:01:50.779610+00:00",
+              "normalization_rule": "structure-identity-3",
+              "http_requests": 1,
+              "timeout_seconds": 120,
+              "http_status": 200,
+              "response_complete": true,
+              "raw_sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+              "raw_artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+              "fetched_at": "2026-10-20T22:01:52.267555+00:00",
+              "name_evidence": {
+                "rule": "explicit-name-formula-1",
+                "original_name": "氰化氢HCN",
+                "name_for_evidence": "氰化氢",
+                "explicit_formula": "HCN",
+                "resolved_formula": "CHN",
+                "formula_matches_graph": true,
+                "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."
+              }
+            },
+            "rule_version": "structure-identity-3"
+          }
+        ]
+      },
+      "observations": {
+        "classification": "evidence_observation_only",
+        "scientific_qualification": false,
+        "data": {
+          "input_preparation": {
+            "operation_status": "completed",
+            "artifact_ids": [
+              "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+              "artifact_405b437f6b114d6d84e2f8158d0ed903"
+            ],
+            "qualified_outputs": {
+              "resolved_identity": {
+                "artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+                "checks": [
+                  {
+                    "name": "supported_identity_graph",
+                    "status": "passed",
+                    "rule_version": "structure-identity-3",
+                    "detail": "One returned name candidate and internally consistent graph/formula/charge; ambiguity retained.",
+                    "source": {
+                      "canonical_name": "hydrogen cyanide",
+                      "system_id": "system_hcn",
+                      "text_evidence": {
+                        "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                        "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                        "start": 2,
+                        "end": 25,
+                        "schema": "request-semantics-3"
+                      },
+                      "general_identity": true,
+                      "check_version": "structure-identity-3",
+                      "requested_identity": {
+                        "contract": "general-identity-3",
+                        "requested_names": [
+                          "氰化氢HCN"
+                        ],
+                        "canonical_names": [],
+                        "query_name": "hydrogen cyanide",
+                        "query_name_source": "inferred_translation_or_alias",
+                        "ambiguities": [],
+                        "text_evidence": {
+                          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                          "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                          "start": 2,
+                          "end": 25,
+                          "schema": "request-semantics-3"
+                        }
+                      },
+                      "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hydrogen%20cyanide/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON",
+                      "requested_at": "2026-10-20T22:01:50.779610+00:00",
+                      "normalization_rule": "structure-identity-3",
+                      "http_requests": 1,
+                      "timeout_seconds": 120,
+                      "http_status": 200,
+                      "response_complete": true,
+                      "raw_sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+                      "raw_artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+                      "fetched_at": "2026-10-20T22:01:52.267555+00:00",
+                      "name_evidence": {
+                        "rule": "explicit-name-formula-1",
+                        "original_name": "氰化氢HCN",
+                        "name_for_evidence": "氰化氢",
+                        "explicit_formula": "HCN",
+                        "resolved_formula": "CHN",
+                        "formula_matches_graph": true,
+                        "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."
+                      }
+                    }
+                  }
+                ],
+                "source": {
+                  "canonical_name": "hydrogen cyanide",
+                  "system_id": "system_hcn",
+                  "text_evidence": {
+                    "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                    "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                    "start": 2,
+                    "end": 25,
+                    "schema": "request-semantics-3"
+                  },
+                  "general_identity": true,
+                  "check_version": "structure-identity-3",
+                  "requested_identity": {
+                    "contract": "general-identity-3",
+                    "requested_names": [
+                      "氰化氢HCN"
+                    ],
+                    "canonical_names": [],
+                    "query_name": "hydrogen cyanide",
+                    "query_name_source": "inferred_translation_or_alias",
+                    "ambiguities": [],
+                    "text_evidence": {
+                      "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                      "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                      "start": 2,
+                      "end": 25,
+                      "schema": "request-semantics-3"
+                    }
+                  },
+                  "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hydrogen%20cyanide/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON",
+                  "requested_at": "2026-10-20T22:01:50.779610+00:00",
+                  "normalization_rule": "structure-identity-3",
+                  "http_requests": 1,
+                  "timeout_seconds": 120,
+                  "http_status": 200,
+                  "response_complete": true,
+                  "raw_sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+                  "raw_artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+                  "fetched_at": "2026-10-20T22:01:52.267555+00:00",
+                  "name_evidence": {
+                    "rule": "explicit-name-formula-1",
+                    "original_name": "氰化氢HCN",
+                    "name_for_evidence": "氰化氢",
+                    "explicit_formula": "HCN",
+                    "resolved_formula": "CHN",
+                    "formula_matches_graph": true,
+                    "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."
+                  },
+                  "sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa"
+                }
+              }
+            },
+            "identity": {
+              "schema": "structure-identity-3",
+              "canonical_name": "hydrogen cyanide",
+              "cid": 768,
+              "smiles": "C#N",
+              "formula": "CHN",
+              "charge": 0,
+              "elements": [
+                "C",
+                "N",
+                "H"
+              ],
+              "graph": {
+                "elements": [
+                  "C",
+                  "N",
+                  "H"
+                ],
+                "bonds": [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    0,
+                    2
+                  ]
+                ],
+                "formula": "CHN",
+                "formal_charge": 0,
+                "radical_electrons": 0,
+                "stereochemistry": [],
+                "unspecified_stereochemistry": [],
+                "isomeric_smiles": "C#N",
+                "isotopes": []
+              },
+              "metadata": {
+                "Charge": 0,
+                "IsotopeAtomCount": 0,
+                "AtomStereoCount": 0,
+                "BondStereoCount": 0,
+                "CovalentUnitCount": 1
+              },
+              "limitations": [
+                "Name lookup does not establish a unique experimental specimen or electronic ground state.",
+                "Unspecified stereochemistry is retained and blocks initial-geometry preparation.",
+                "The queried PubChem candidate and its graph/formula/charge were checked; the original name or inferred translation was not independently matched against synonyms or a cross-reference."
+              ],
+              "query": {
+                "canonical_name": "hydrogen cyanide",
+                "system_id": "system_hcn",
+                "text_evidence": {
+                  "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                  "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                  "start": 2,
+                  "end": 25,
+                  "schema": "request-semantics-3"
+                },
+                "general_identity": true,
+                "check_version": "structure-identity-3",
+                "requested_identity": {
+                  "contract": "general-identity-3",
+                  "requested_names": [
+                    "氰化氢HCN"
+                  ],
+                  "canonical_names": [],
+                  "query_name": "hydrogen cyanide",
+                  "query_name_source": "inferred_translation_or_alias",
+                  "ambiguities": [],
+                  "text_evidence": {
+                    "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                    "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                    "start": 2,
+                    "end": 25,
+                    "schema": "request-semantics-3"
+                  }
+                },
+                "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hydrogen%20cyanide/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON",
+                "requested_at": "2026-10-20T22:01:50.779610+00:00",
+                "normalization_rule": "structure-identity-3",
+                "http_requests": 1,
+                "timeout_seconds": 120,
+                "http_status": 200,
+                "response_complete": true,
+                "raw_sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+                "raw_artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+                "fetched_at": "2026-10-20T22:01:52.267555+00:00",
+                "name_evidence": {
+                  "rule": "explicit-name-formula-1",
+                  "original_name": "氰化氢HCN",
+                  "name_for_evidence": "氰化氢",
+                  "explicit_formula": "HCN",
+                  "resolved_formula": "CHN",
+                  "formula_matches_graph": true,
+                  "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."
+                }
+              },
+              "name_evidence": {
+                "rule": "explicit-name-formula-1",
+                "original_name": "氰化氢HCN",
+                "name_for_evidence": "氰化氢",
+                "explicit_formula": "HCN",
+                "resolved_formula": "CHN",
+                "formula_matches_graph": true,
+                "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."
+              },
+              "original_name": "氰化氢HCN",
+              "query_name": "hydrogen cyanide",
+              "query_name_source": "inferred_translation_or_alias",
+              "name_mapping_independently_verified": false
+            },
+            "source": {
+              "run_id": "run_d43e58295336493ebad773115b7644bd",
+              "call_id": "call_161008d0ae4c4eb48f43bb16c6aaaef0",
+              "step_id": "step_9db1d056e28a4c78b613ff91973f3877",
+              "request_version": 3,
+              "canonical_name": "hydrogen cyanide",
+              "system_id": "system_hcn",
+              "text_evidence": {
+                "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                "start": 2,
+                "end": 25,
+                "schema": "request-semantics-3"
+              },
+              "general_identity": true,
+              "check_version": "structure-identity-3",
+              "requested_identity": {
+                "contract": "general-identity-3",
+                "requested_names": [
+                  "氰化氢HCN"
+                ],
+                "canonical_names": [],
+                "query_name": "hydrogen cyanide",
+                "query_name_source": "inferred_translation_or_alias",
+                "ambiguities": [],
+                "text_evidence": {
+                  "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                  "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                  "start": 2,
+                  "end": 25,
+                  "schema": "request-semantics-3"
+                }
+              },
+              "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hydrogen%20cyanide/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON",
+              "requested_at": "2026-10-20T22:01:50.779610+00:00",
+              "normalization_rule": "structure-identity-3",
+              "http_requests": 1,
+              "timeout_seconds": 120,
+              "http_status": 200,
+              "response_complete": true,
+              "raw_sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+              "raw_artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+              "fetched_at": "2026-10-20T22:01:52.267555+00:00",
+              "name_evidence": {
+                "rule": "explicit-name-formula-1",
+                "original_name": "氰化氢HCN",
+                "name_for_evidence": "氰化氢",
+                "explicit_formula": "HCN",
+                "resolved_formula": "CHN",
+                "formula_matches_graph": true,
+                "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."
+              }
+            }
+          }
+        }
+      },
+      "observation_records": [],
+      "artifacts": [
+        {
+          "artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+          "sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_2f5a5c814bb24584a3c5ff18959a0f03\\files\\pubchem-response.json",
+          "role": "identity_raw_response",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": null,
+          "status": "verified"
+        },
+        {
+          "artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+          "sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_405b437f6b114d6d84e2f8158d0ed903\\files\\identity.json",
+          "role": "resolved_identity",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": null,
+          "status": "verified"
+        }
+      ],
+      "conditions": {},
+      "source": {
+        "run_id": "run_d43e58295336493ebad773115b7644bd",
+        "call_id": "call_161008d0ae4c4eb48f43bb16c6aaaef0",
+        "step_id": "step_9db1d056e28a4c78b613ff91973f3877",
+        "request_version": 3,
+        "canonical_name": "hydrogen cyanide",
+        "system_id": "system_hcn",
+        "text_evidence": {
+          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+          "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+          "start": 2,
+          "end": 25,
+          "schema": "request-semantics-3"
+        },
+        "general_identity": true,
+        "check_version": "structure-identity-3",
+        "requested_identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "氰化氢HCN"
+          ],
+          "canonical_names": [],
+          "query_name": "hydrogen cyanide",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_9611322765a0431cbb0566a90bb34435",
+            "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+            "start": 2,
+            "end": 25,
+            "schema": "request-semantics-3"
+          }
+        },
+        "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hydrogen%20cyanide/property/MolecularFormula,SMILES,Charge,IsotopeAtomCount,AtomStereoCount,BondStereoCount,CovalentUnitCount/JSON",
+        "requested_at": "2026-10-20T22:01:50.779610+00:00",
+        "normalization_rule": "structure-identity-3",
+        "http_requests": 1,
+        "timeout_seconds": 120,
+        "http_status": 200,
+        "response_complete": true,
+        "raw_sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+        "raw_artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+        "fetched_at": "2026-10-20T22:01:52.267555+00:00",
+        "name_evidence": {
+          "rule": "explicit-name-formula-1",
+          "original_name": "氰化氢HCN",
+          "name_for_evidence": "氰化氢",
+          "explicit_formula": "HCN",
+          "resolved_formula": "CHN",
+          "formula_matches_graph": true,
+          "limitation": "Formula agreement does not confirm the name, connectivity or electronic state."
+        },
+        "tool": "structure.resolve",
+        "consumption": {
+          "_input_purpose": {
+            "version": "structure-input-purpose-1",
+            "request_id": "request_3cf225119ab94642a0a859329c55b6ba",
+            "request_version": 3,
+            "system_id": "system_hcn",
+            "identity": {
+              "contract": "general-identity-3",
+              "requested_names": [
+                "氰化氢HCN"
+              ],
+              "canonical_names": [],
+              "query_name": "hydrogen cyanide",
+              "query_name_source": "inferred_translation_or_alias",
+              "ambiguities": [],
+              "text_evidence": {
+                "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                "start": 2,
+                "end": 25,
+                "schema": "request-semantics-3"
+              }
+            },
+            "geometry_source": "prepare",
+            "conditions": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          }
+        },
+        "plan_version": 1
+      },
+      "diagnostics": [],
+      "gaps": []
+    },
+    {
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "result_id": "result_037b69c580bf4dd7b81d14455dfbf631",
+      "step_id": "step_01ca8765067f4173bba3da6a93f5836a",
+      "attempt_id": null,
+      "call_id": "call_8628e3cec2d7482eb85c95491dc05047",
+      "operation_status": "completed",
+      "scientific_status": "passed",
+      "output_validation": [
+        {
+          "name": "prepared_geometry",
+          "kind": "qualified_output",
+          "status": "passed",
+          "scientific_qualification": true,
+          "checks": [
+            {
+              "name": "initial_geometry_identity",
+              "status": "passed",
+              "detail": "Finite angstrom coordinates preserve supported identity and explicit hydrogen atom mapping; not optimized.",
+              "source": {
+                "canonical_name": "hydrogen cyanide",
+                "system_id": "system_hcn",
+                "text_evidence": {
+                  "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                  "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                  "start": 2,
+                  "end": 25,
+                  "schema": "request-semantics-3"
+                },
+                "general_identity": true,
+                "check_version": "structure-prepare-3",
+                "requested_identity": {
+                  "contract": "general-identity-3",
+                  "requested_names": [
+                    "氰化氢HCN"
+                  ],
+                  "canonical_names": [],
+                  "query_name": "hydrogen cyanide",
+                  "query_name_source": "inferred_translation_or_alias",
+                  "ambiguities": [],
+                  "text_evidence": {
+                    "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                    "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                    "start": 2,
+                    "end": 25,
+                    "schema": "request-semantics-3"
+                  }
+                },
+                "identity_artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+                "identity_sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+                "smiles": "C#N",
+                "charge": 0,
+                "multiplicity": 1,
+                "generator": "opi.Structure.from_smiles",
+                "random_seed": null,
+                "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+                "admission_profile": "managed-native-1",
+                "timeout_seconds": 30,
+                "versions": {
+                  "orca-pi": "2.0.0",
+                  "rdkit": "2025.9.6",
+                  "python": "3.11.4"
+                },
+                "execution": {
+                  "state": "completed",
+                  "exit_code": 0,
+                  "handle": {
+                    "pid": 55316,
+                    "create_time": 1792533714.954092,
+                    "create_time_100ns": "134370073149540918",
+                    "job_name": "Local\\ORCAAgent-fb401a855c7543ba857d0cf5084be532",
+                    "launch_id": "09afb69d0d2a4a15942c16f9808bbd93",
+                    "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                    "args": [
+                      "-m",
+                      "orca_agent.tools.structure",
+                      "--worker",
+                      "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047\\worker-input.json"
+                    ],
+                    "workdir": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047",
+                    "started_at": "2026-10-20T22:01:54.941134+00:00",
+                    "coordinator_pid": 35744,
+                    "coordinator_create_time": 1792533670.1253262,
+                    "coordinator_create_time_100ns": "134370072701253262",
+                    "atomic_job_assignment": true,
+                    "parent_job_name": null,
+                    "argv0": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe"
+                  },
+                  "resource_usage": {
+                    "wall_seconds": 1.9070000000065193,
+                    "user_cpu_seconds": 0.671875,
+                    "kernel_cpu_seconds": 0.84375,
+                    "total_processes": 3,
+                    "active_processes": 0,
+                    "peak_job_commit_bytes": 67260416,
+                    "job_commit_limit_bytes": 1073741824,
+                    "memory_metric": "Windows Job Object committed virtual memory, not working set",
+                    "cpu_affinity_mask": 1,
+                    "cores": 1,
+                    "observed_processes": [
+                      {
+                        "pid": 55316,
+                        "create_time": 1792533714.954092,
+                        "create_time_100ns": "134370073149540918",
+                        "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                        "job_membership_confirmed": true,
+                        "cpu_affinity_mask": 1
+                      },
+                      {
+                        "pid": 48852,
+                        "create_time": 1792533714.9976273,
+                        "create_time_100ns": "134370073149976277",
+                        "executable": "C:\\Windows\\System32\\conhost.exe",
+                        "job_membership_confirmed": true,
+                        "cpu_affinity_mask": 1
+                      },
+                      {
+                        "pid": 5604,
+                        "create_time": 1792533715.0194168,
+                        "create_time_100ns": "134370073150194169",
+                        "executable": "C:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+                        "job_membership_confirmed": true,
+                        "cpu_affinity_mask": 1
+                      }
+                    ],
+                    "process_sampling_errors": [],
+                    "process_sampling_truncated": false,
+                    "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+                  },
+                  "started_at": "2026-10-20T22:01:54.941134+00:00",
+                  "ended_at": "2026-10-20T22:01:56.852346+00:00",
+                  "reason": "process_tree_exited"
+                },
+                "elements": [
+                  "C",
+                  "N",
+                  "H"
+                ],
+                "atom_mapping": [
+                  0,
+                  1,
+                  2
+                ],
+                "unit": "angstrom",
+                "stereochemistry_checked": {},
+                "isotopes": [],
+                "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+                "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7"
+              },
+              "rule_version": "structure-prepare-3"
+            }
+          ],
+          "source_integrity": "verified"
+        }
+      ],
+      "qualified_outputs": {
+        "prepared_geometry": {
+          "value": null,
+          "unit": "angstrom",
+          "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+          "checks": [
+            {
+              "name": "initial_geometry_identity",
+              "status": "passed",
+              "detail": "Finite angstrom coordinates preserve supported identity and explicit hydrogen atom mapping; not optimized.",
+              "source": {
+                "canonical_name": "hydrogen cyanide",
+                "system_id": "system_hcn",
+                "text_evidence": {
+                  "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                  "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                  "start": 2,
+                  "end": 25,
+                  "schema": "request-semantics-3"
+                },
+                "general_identity": true,
+                "check_version": "structure-prepare-3",
+                "requested_identity": {
+                  "contract": "general-identity-3",
+                  "requested_names": [
+                    "氰化氢HCN"
+                  ],
+                  "canonical_names": [],
+                  "query_name": "hydrogen cyanide",
+                  "query_name_source": "inferred_translation_or_alias",
+                  "ambiguities": [],
+                  "text_evidence": {
+                    "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                    "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                    "start": 2,
+                    "end": 25,
+                    "schema": "request-semantics-3"
+                  }
+                },
+                "identity_artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+                "identity_sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+                "smiles": "C#N",
+                "charge": 0,
+                "multiplicity": 1,
+                "generator": "opi.Structure.from_smiles",
+                "random_seed": null,
+                "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+                "admission_profile": "managed-native-1",
+                "timeout_seconds": 30,
+                "versions": {
+                  "orca-pi": "2.0.0",
+                  "rdkit": "2025.9.6",
+                  "python": "3.11.4"
+                },
+                "execution": {
+                  "state": "completed",
+                  "exit_code": 0,
+                  "handle": {
+                    "pid": 55316,
+                    "create_time": 1792533714.954092,
+                    "create_time_100ns": "134370073149540918",
+                    "job_name": "Local\\ORCAAgent-fb401a855c7543ba857d0cf5084be532",
+                    "launch_id": "09afb69d0d2a4a15942c16f9808bbd93",
+                    "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                    "args": [
+                      "-m",
+                      "orca_agent.tools.structure",
+                      "--worker",
+                      "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047\\worker-input.json"
+                    ],
+                    "workdir": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047",
+                    "started_at": "2026-10-20T22:01:54.941134+00:00",
+                    "coordinator_pid": 35744,
+                    "coordinator_create_time": 1792533670.1253262,
+                    "coordinator_create_time_100ns": "134370072701253262",
+                    "atomic_job_assignment": true,
+                    "parent_job_name": null,
+                    "argv0": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe"
+                  },
+                  "resource_usage": {
+                    "wall_seconds": 1.9070000000065193,
+                    "user_cpu_seconds": 0.671875,
+                    "kernel_cpu_seconds": 0.84375,
+                    "total_processes": 3,
+                    "active_processes": 0,
+                    "peak_job_commit_bytes": 67260416,
+                    "job_commit_limit_bytes": 1073741824,
+                    "memory_metric": "Windows Job Object committed virtual memory, not working set",
+                    "cpu_affinity_mask": 1,
+                    "cores": 1,
+                    "observed_processes": [
+                      {
+                        "pid": 55316,
+                        "create_time": 1792533714.954092,
+                        "create_time_100ns": "134370073149540918",
+                        "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                        "job_membership_confirmed": true,
+                        "cpu_affinity_mask": 1
+                      },
+                      {
+                        "pid": 48852,
+                        "create_time": 1792533714.9976273,
+                        "create_time_100ns": "134370073149976277",
+                        "executable": "C:\\Windows\\System32\\conhost.exe",
+                        "job_membership_confirmed": true,
+                        "cpu_affinity_mask": 1
+                      },
+                      {
+                        "pid": 5604,
+                        "create_time": 1792533715.0194168,
+                        "create_time_100ns": "134370073150194169",
+                        "executable": "C:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+                        "job_membership_confirmed": true,
+                        "cpu_affinity_mask": 1
+                      }
+                    ],
+                    "process_sampling_errors": [],
+                    "process_sampling_truncated": false,
+                    "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+                  },
+                  "started_at": "2026-10-20T22:01:54.941134+00:00",
+                  "ended_at": "2026-10-20T22:01:56.852346+00:00",
+                  "reason": "process_tree_exited"
+                },
+                "elements": [
+                  "C",
+                  "N",
+                  "H"
+                ],
+                "atom_mapping": [
+                  0,
+                  1,
+                  2
+                ],
+                "unit": "angstrom",
+                "stereochemistry_checked": {},
+                "isotopes": [],
+                "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+                "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7"
+              },
+              "rule_version": "structure-prepare-3"
+            }
+          ],
+          "source": {
+            "canonical_name": "hydrogen cyanide",
+            "system_id": "system_hcn",
+            "text_evidence": {
+              "message_id": "message_9611322765a0431cbb0566a90bb34435",
+              "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+              "start": 2,
+              "end": 25,
+              "schema": "request-semantics-3"
+            },
+            "general_identity": true,
+            "check_version": "structure-prepare-3",
+            "requested_identity": {
+              "contract": "general-identity-3",
+              "requested_names": [
+                "氰化氢HCN"
+              ],
+              "canonical_names": [],
+              "query_name": "hydrogen cyanide",
+              "query_name_source": "inferred_translation_or_alias",
+              "ambiguities": [],
+              "text_evidence": {
+                "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                "start": 2,
+                "end": 25,
+                "schema": "request-semantics-3"
+              }
+            },
+            "identity_artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+            "identity_sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+            "smiles": "C#N",
+            "charge": 0,
+            "multiplicity": 1,
+            "generator": "opi.Structure.from_smiles",
+            "random_seed": null,
+            "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+            "admission_profile": "managed-native-1",
+            "timeout_seconds": 30,
+            "versions": {
+              "orca-pi": "2.0.0",
+              "rdkit": "2025.9.6",
+              "python": "3.11.4"
+            },
+            "execution": {
+              "state": "completed",
+              "exit_code": 0,
+              "handle": {
+                "pid": 55316,
+                "create_time": 1792533714.954092,
+                "create_time_100ns": "134370073149540918",
+                "job_name": "Local\\ORCAAgent-fb401a855c7543ba857d0cf5084be532",
+                "launch_id": "09afb69d0d2a4a15942c16f9808bbd93",
+                "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                "args": [
+                  "-m",
+                  "orca_agent.tools.structure",
+                  "--worker",
+                  "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047\\worker-input.json"
+                ],
+                "workdir": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047",
+                "started_at": "2026-10-20T22:01:54.941134+00:00",
+                "coordinator_pid": 35744,
+                "coordinator_create_time": 1792533670.1253262,
+                "coordinator_create_time_100ns": "134370072701253262",
+                "atomic_job_assignment": true,
+                "parent_job_name": null,
+                "argv0": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe"
+              },
+              "resource_usage": {
+                "wall_seconds": 1.9070000000065193,
+                "user_cpu_seconds": 0.671875,
+                "kernel_cpu_seconds": 0.84375,
+                "total_processes": 3,
+                "active_processes": 0,
+                "peak_job_commit_bytes": 67260416,
+                "job_commit_limit_bytes": 1073741824,
+                "memory_metric": "Windows Job Object committed virtual memory, not working set",
+                "cpu_affinity_mask": 1,
+                "cores": 1,
+                "observed_processes": [
+                  {
+                    "pid": 55316,
+                    "create_time": 1792533714.954092,
+                    "create_time_100ns": "134370073149540918",
+                    "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                    "job_membership_confirmed": true,
+                    "cpu_affinity_mask": 1
+                  },
+                  {
+                    "pid": 48852,
+                    "create_time": 1792533714.9976273,
+                    "create_time_100ns": "134370073149976277",
+                    "executable": "C:\\Windows\\System32\\conhost.exe",
+                    "job_membership_confirmed": true,
+                    "cpu_affinity_mask": 1
+                  },
+                  {
+                    "pid": 5604,
+                    "create_time": 1792533715.0194168,
+                    "create_time_100ns": "134370073150194169",
+                    "executable": "C:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+                    "job_membership_confirmed": true,
+                    "cpu_affinity_mask": 1
+                  }
+                ],
+                "process_sampling_errors": [],
+                "process_sampling_truncated": false,
+                "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+              },
+              "started_at": "2026-10-20T22:01:54.941134+00:00",
+              "ended_at": "2026-10-20T22:01:56.852346+00:00",
+              "reason": "process_tree_exited"
+            },
+            "elements": [
+              "C",
+              "N",
+              "H"
+            ],
+            "atom_mapping": [
+              0,
+              1,
+              2
+            ],
+            "unit": "angstrom",
+            "stereochemistry_checked": {},
+            "isotopes": [],
+            "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+            "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7"
+          }
+        }
+      },
+      "checks": {
+        "prepared_geometry": [
+          {
+            "name": "initial_geometry_identity",
+            "status": "passed",
+            "detail": "Finite angstrom coordinates preserve supported identity and explicit hydrogen atom mapping; not optimized.",
+            "source": {
+              "canonical_name": "hydrogen cyanide",
+              "system_id": "system_hcn",
+              "text_evidence": {
+                "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                "start": 2,
+                "end": 25,
+                "schema": "request-semantics-3"
+              },
+              "general_identity": true,
+              "check_version": "structure-prepare-3",
+              "requested_identity": {
+                "contract": "general-identity-3",
+                "requested_names": [
+                  "氰化氢HCN"
+                ],
+                "canonical_names": [],
+                "query_name": "hydrogen cyanide",
+                "query_name_source": "inferred_translation_or_alias",
+                "ambiguities": [],
+                "text_evidence": {
+                  "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                  "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                  "start": 2,
+                  "end": 25,
+                  "schema": "request-semantics-3"
+                }
+              },
+              "identity_artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+              "identity_sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+              "smiles": "C#N",
+              "charge": 0,
+              "multiplicity": 1,
+              "generator": "opi.Structure.from_smiles",
+              "random_seed": null,
+              "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+              "admission_profile": "managed-native-1",
+              "timeout_seconds": 30,
+              "versions": {
+                "orca-pi": "2.0.0",
+                "rdkit": "2025.9.6",
+                "python": "3.11.4"
+              },
+              "execution": {
+                "state": "completed",
+                "exit_code": 0,
+                "handle": {
+                  "pid": 55316,
+                  "create_time": 1792533714.954092,
+                  "create_time_100ns": "134370073149540918",
+                  "job_name": "Local\\ORCAAgent-fb401a855c7543ba857d0cf5084be532",
+                  "launch_id": "09afb69d0d2a4a15942c16f9808bbd93",
+                  "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                  "args": [
+                    "-m",
+                    "orca_agent.tools.structure",
+                    "--worker",
+                    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047\\worker-input.json"
+                  ],
+                  "workdir": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047",
+                  "started_at": "2026-10-20T22:01:54.941134+00:00",
+                  "coordinator_pid": 35744,
+                  "coordinator_create_time": 1792533670.1253262,
+                  "coordinator_create_time_100ns": "134370072701253262",
+                  "atomic_job_assignment": true,
+                  "parent_job_name": null,
+                  "argv0": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe"
+                },
+                "resource_usage": {
+                  "wall_seconds": 1.9070000000065193,
+                  "user_cpu_seconds": 0.671875,
+                  "kernel_cpu_seconds": 0.84375,
+                  "total_processes": 3,
+                  "active_processes": 0,
+                  "peak_job_commit_bytes": 67260416,
+                  "job_commit_limit_bytes": 1073741824,
+                  "memory_metric": "Windows Job Object committed virtual memory, not working set",
+                  "cpu_affinity_mask": 1,
+                  "cores": 1,
+                  "observed_processes": [
+                    {
+                      "pid": 55316,
+                      "create_time": 1792533714.954092,
+                      "create_time_100ns": "134370073149540918",
+                      "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                      "job_membership_confirmed": true,
+                      "cpu_affinity_mask": 1
+                    },
+                    {
+                      "pid": 48852,
+                      "create_time": 1792533714.9976273,
+                      "create_time_100ns": "134370073149976277",
+                      "executable": "C:\\Windows\\System32\\conhost.exe",
+                      "job_membership_confirmed": true,
+                      "cpu_affinity_mask": 1
+                    },
+                    {
+                      "pid": 5604,
+                      "create_time": 1792533715.0194168,
+                      "create_time_100ns": "134370073150194169",
+                      "executable": "C:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+                      "job_membership_confirmed": true,
+                      "cpu_affinity_mask": 1
+                    }
+                  ],
+                  "process_sampling_errors": [],
+                  "process_sampling_truncated": false,
+                  "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+                },
+                "started_at": "2026-10-20T22:01:54.941134+00:00",
+                "ended_at": "2026-10-20T22:01:56.852346+00:00",
+                "reason": "process_tree_exited"
+              },
+              "elements": [
+                "C",
+                "N",
+                "H"
+              ],
+              "atom_mapping": [
+                0,
+                1,
+                2
+              ],
+              "unit": "angstrom",
+              "stereochemistry_checked": {},
+              "isotopes": [],
+              "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+              "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7"
+            },
+            "rule_version": "structure-prepare-3"
+          }
+        ]
+      },
+      "observations": {
+        "classification": "evidence_observation_only",
+        "scientific_qualification": false,
+        "data": {
+          "input_preparation": {
+            "operation_status": "completed",
+            "artifact_ids": [
+              "artifact_cebfd0ea65a24a9a85500a49374760f3",
+              "artifact_122f364a25194ea285c1cb545def60f2",
+              "artifact_911ac7af73ca43499e96ded1a4848086",
+              "artifact_d3fe8323fcbe43d4b806d9d833cba92c"
+            ],
+            "qualified_outputs": {
+              "prepared_geometry": {
+                "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+                "unit": "angstrom",
+                "checks": [
+                  {
+                    "name": "initial_geometry_identity",
+                    "status": "passed",
+                    "rule_version": "structure-prepare-3",
+                    "detail": "Finite angstrom coordinates preserve supported identity and explicit hydrogen atom mapping; not optimized.",
+                    "source": {
+                      "canonical_name": "hydrogen cyanide",
+                      "system_id": "system_hcn",
+                      "text_evidence": {
+                        "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                        "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                        "start": 2,
+                        "end": 25,
+                        "schema": "request-semantics-3"
+                      },
+                      "general_identity": true,
+                      "check_version": "structure-prepare-3",
+                      "requested_identity": {
+                        "contract": "general-identity-3",
+                        "requested_names": [
+                          "氰化氢HCN"
+                        ],
+                        "canonical_names": [],
+                        "query_name": "hydrogen cyanide",
+                        "query_name_source": "inferred_translation_or_alias",
+                        "ambiguities": [],
+                        "text_evidence": {
+                          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                          "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                          "start": 2,
+                          "end": 25,
+                          "schema": "request-semantics-3"
+                        }
+                      },
+                      "identity_artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+                      "identity_sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+                      "smiles": "C#N",
+                      "charge": 0,
+                      "multiplicity": 1,
+                      "generator": "opi.Structure.from_smiles",
+                      "random_seed": null,
+                      "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+                      "admission_profile": "managed-native-1",
+                      "timeout_seconds": 30,
+                      "versions": {
+                        "orca-pi": "2.0.0",
+                        "rdkit": "2025.9.6",
+                        "python": "3.11.4"
+                      },
+                      "execution": {
+                        "state": "completed",
+                        "exit_code": 0,
+                        "handle": {
+                          "pid": 55316,
+                          "create_time": 1792533714.954092,
+                          "create_time_100ns": "134370073149540918",
+                          "job_name": "Local\\ORCAAgent-fb401a855c7543ba857d0cf5084be532",
+                          "launch_id": "09afb69d0d2a4a15942c16f9808bbd93",
+                          "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                          "args": [
+                            "-m",
+                            "orca_agent.tools.structure",
+                            "--worker",
+                            "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047\\worker-input.json"
+                          ],
+                          "workdir": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047",
+                          "started_at": "2026-10-20T22:01:54.941134+00:00",
+                          "coordinator_pid": 35744,
+                          "coordinator_create_time": 1792533670.1253262,
+                          "coordinator_create_time_100ns": "134370072701253262",
+                          "atomic_job_assignment": true,
+                          "parent_job_name": null,
+                          "argv0": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe"
+                        },
+                        "resource_usage": {
+                          "wall_seconds": 1.9070000000065193,
+                          "user_cpu_seconds": 0.671875,
+                          "kernel_cpu_seconds": 0.84375,
+                          "total_processes": 3,
+                          "active_processes": 0,
+                          "peak_job_commit_bytes": 67260416,
+                          "job_commit_limit_bytes": 1073741824,
+                          "memory_metric": "Windows Job Object committed virtual memory, not working set",
+                          "cpu_affinity_mask": 1,
+                          "cores": 1,
+                          "observed_processes": [
+                            {
+                              "pid": "[bounded report: deeper data omitted]",
+                              "create_time": "[bounded report: deeper data omitted]",
+                              "create_time_100ns": "[bounded report: deeper data omitted]",
+                              "executable": "[bounded report: deeper data omitted]",
+                              "job_membership_confirmed": "[bounded report: deeper data omitted]",
+                              "cpu_affinity_mask": "[bounded report: deeper data omitted]"
+                            },
+                            {
+                              "pid": "[bounded report: deeper data omitted]",
+                              "create_time": "[bounded report: deeper data omitted]",
+                              "create_time_100ns": "[bounded report: deeper data omitted]",
+                              "executable": "[bounded report: deeper data omitted]",
+                              "job_membership_confirmed": "[bounded report: deeper data omitted]",
+                              "cpu_affinity_mask": "[bounded report: deeper data omitted]"
+                            },
+                            {
+                              "pid": "[bounded report: deeper data omitted]",
+                              "create_time": "[bounded report: deeper data omitted]",
+                              "create_time_100ns": "[bounded report: deeper data omitted]",
+                              "executable": "[bounded report: deeper data omitted]",
+                              "job_membership_confirmed": "[bounded report: deeper data omitted]",
+                              "cpu_affinity_mask": "[bounded report: deeper data omitted]"
+                            }
+                          ],
+                          "process_sampling_errors": [],
+                          "process_sampling_truncated": false,
+                          "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+                        },
+                        "started_at": "2026-10-20T22:01:54.941134+00:00",
+                        "ended_at": "2026-10-20T22:01:56.852346+00:00",
+                        "reason": "process_tree_exited"
+                      },
+                      "elements": [
+                        "C",
+                        "N",
+                        "H"
+                      ],
+                      "atom_mapping": [
+                        0,
+                        1,
+                        2
+                      ],
+                      "unit": "angstrom",
+                      "stereochemistry_checked": {},
+                      "isotopes": [],
+                      "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+                      "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7"
+                    }
+                  }
+                ],
+                "source": {
+                  "canonical_name": "hydrogen cyanide",
+                  "system_id": "system_hcn",
+                  "text_evidence": {
+                    "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                    "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                    "start": 2,
+                    "end": 25,
+                    "schema": "request-semantics-3"
+                  },
+                  "general_identity": true,
+                  "check_version": "structure-prepare-3",
+                  "requested_identity": {
+                    "contract": "general-identity-3",
+                    "requested_names": [
+                      "氰化氢HCN"
+                    ],
+                    "canonical_names": [],
+                    "query_name": "hydrogen cyanide",
+                    "query_name_source": "inferred_translation_or_alias",
+                    "ambiguities": [],
+                    "text_evidence": {
+                      "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                      "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                      "start": 2,
+                      "end": 25,
+                      "schema": "request-semantics-3"
+                    }
+                  },
+                  "identity_artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+                  "identity_sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+                  "smiles": "C#N",
+                  "charge": 0,
+                  "multiplicity": 1,
+                  "generator": "opi.Structure.from_smiles",
+                  "random_seed": null,
+                  "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+                  "admission_profile": "managed-native-1",
+                  "timeout_seconds": 30,
+                  "versions": {
+                    "orca-pi": "2.0.0",
+                    "rdkit": "2025.9.6",
+                    "python": "3.11.4"
+                  },
+                  "execution": {
+                    "state": "completed",
+                    "exit_code": 0,
+                    "handle": {
+                      "pid": 55316,
+                      "create_time": 1792533714.954092,
+                      "create_time_100ns": "134370073149540918",
+                      "job_name": "Local\\ORCAAgent-fb401a855c7543ba857d0cf5084be532",
+                      "launch_id": "09afb69d0d2a4a15942c16f9808bbd93",
+                      "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                      "args": [
+                        "-m",
+                        "orca_agent.tools.structure",
+                        "--worker",
+                        "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047\\worker-input.json"
+                      ],
+                      "workdir": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047",
+                      "started_at": "2026-10-20T22:01:54.941134+00:00",
+                      "coordinator_pid": 35744,
+                      "coordinator_create_time": 1792533670.1253262,
+                      "coordinator_create_time_100ns": "134370072701253262",
+                      "atomic_job_assignment": true,
+                      "parent_job_name": null,
+                      "argv0": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe"
+                    },
+                    "resource_usage": {
+                      "wall_seconds": 1.9070000000065193,
+                      "user_cpu_seconds": 0.671875,
+                      "kernel_cpu_seconds": 0.84375,
+                      "total_processes": 3,
+                      "active_processes": 0,
+                      "peak_job_commit_bytes": 67260416,
+                      "job_commit_limit_bytes": 1073741824,
+                      "memory_metric": "Windows Job Object committed virtual memory, not working set",
+                      "cpu_affinity_mask": 1,
+                      "cores": 1,
+                      "observed_processes": [
+                        {
+                          "pid": 55316,
+                          "create_time": 1792533714.954092,
+                          "create_time_100ns": "134370073149540918",
+                          "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                          "job_membership_confirmed": true,
+                          "cpu_affinity_mask": 1
+                        },
+                        {
+                          "pid": 48852,
+                          "create_time": 1792533714.9976273,
+                          "create_time_100ns": "134370073149976277",
+                          "executable": "C:\\Windows\\System32\\conhost.exe",
+                          "job_membership_confirmed": true,
+                          "cpu_affinity_mask": 1
+                        },
+                        {
+                          "pid": 5604,
+                          "create_time": 1792533715.0194168,
+                          "create_time_100ns": "134370073150194169",
+                          "executable": "C:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+                          "job_membership_confirmed": true,
+                          "cpu_affinity_mask": 1
+                        }
+                      ],
+                      "process_sampling_errors": [],
+                      "process_sampling_truncated": false,
+                      "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+                    },
+                    "started_at": "2026-10-20T22:01:54.941134+00:00",
+                    "ended_at": "2026-10-20T22:01:56.852346+00:00",
+                    "reason": "process_tree_exited"
+                  },
+                  "elements": [
+                    "C",
+                    "N",
+                    "H"
+                  ],
+                  "atom_mapping": [
+                    0,
+                    1,
+                    2
+                  ],
+                  "unit": "angstrom",
+                  "stereochemistry_checked": {},
+                  "isotopes": [],
+                  "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+                  "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7"
+                }
+              }
+            },
+            "source": {
+              "run_id": "run_d43e58295336493ebad773115b7644bd",
+              "call_id": "call_8628e3cec2d7482eb85c95491dc05047",
+              "step_id": "step_01ca8765067f4173bba3da6a93f5836a",
+              "request_version": 3,
+              "canonical_name": "hydrogen cyanide",
+              "system_id": "system_hcn",
+              "text_evidence": {
+                "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                "start": 2,
+                "end": 25,
+                "schema": "request-semantics-3"
+              },
+              "general_identity": true,
+              "check_version": "structure-prepare-3",
+              "requested_identity": {
+                "contract": "general-identity-3",
+                "requested_names": [
+                  "氰化氢HCN"
+                ],
+                "canonical_names": [],
+                "query_name": "hydrogen cyanide",
+                "query_name_source": "inferred_translation_or_alias",
+                "ambiguities": [],
+                "text_evidence": {
+                  "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                  "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                  "start": 2,
+                  "end": 25,
+                  "schema": "request-semantics-3"
+                }
+              },
+              "identity_artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+              "identity_sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+              "smiles": "C#N",
+              "charge": 0,
+              "multiplicity": 1,
+              "generator": "opi.Structure.from_smiles",
+              "random_seed": null,
+              "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+              "admission_profile": "managed-native-1",
+              "timeout_seconds": 30,
+              "versions": {
+                "orca-pi": "2.0.0",
+                "rdkit": "2025.9.6",
+                "python": "3.11.4"
+              },
+              "execution": {
+                "state": "completed",
+                "exit_code": 0,
+                "handle": {
+                  "pid": 55316,
+                  "create_time": 1792533714.954092,
+                  "create_time_100ns": "134370073149540918",
+                  "job_name": "Local\\ORCAAgent-fb401a855c7543ba857d0cf5084be532",
+                  "launch_id": "09afb69d0d2a4a15942c16f9808bbd93",
+                  "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                  "args": [
+                    "-m",
+                    "orca_agent.tools.structure",
+                    "--worker",
+                    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047\\worker-input.json"
+                  ],
+                  "workdir": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047",
+                  "started_at": "2026-10-20T22:01:54.941134+00:00",
+                  "coordinator_pid": 35744,
+                  "coordinator_create_time": 1792533670.1253262,
+                  "coordinator_create_time_100ns": "134370072701253262",
+                  "atomic_job_assignment": true,
+                  "parent_job_name": null,
+                  "argv0": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe"
+                },
+                "resource_usage": {
+                  "wall_seconds": 1.9070000000065193,
+                  "user_cpu_seconds": 0.671875,
+                  "kernel_cpu_seconds": 0.84375,
+                  "total_processes": 3,
+                  "active_processes": 0,
+                  "peak_job_commit_bytes": 67260416,
+                  "job_commit_limit_bytes": 1073741824,
+                  "memory_metric": "Windows Job Object committed virtual memory, not working set",
+                  "cpu_affinity_mask": 1,
+                  "cores": 1,
+                  "observed_processes": [
+                    {
+                      "pid": 55316,
+                      "create_time": 1792533714.954092,
+                      "create_time_100ns": "134370073149540918",
+                      "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                      "job_membership_confirmed": true,
+                      "cpu_affinity_mask": 1
+                    },
+                    {
+                      "pid": 48852,
+                      "create_time": 1792533714.9976273,
+                      "create_time_100ns": "134370073149976277",
+                      "executable": "C:\\Windows\\System32\\conhost.exe",
+                      "job_membership_confirmed": true,
+                      "cpu_affinity_mask": 1
+                    },
+                    {
+                      "pid": 5604,
+                      "create_time": 1792533715.0194168,
+                      "create_time_100ns": "134370073150194169",
+                      "executable": "C:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+                      "job_membership_confirmed": true,
+                      "cpu_affinity_mask": 1
+                    }
+                  ],
+                  "process_sampling_errors": [],
+                  "process_sampling_truncated": false,
+                  "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+                },
+                "started_at": "2026-10-20T22:01:54.941134+00:00",
+                "ended_at": "2026-10-20T22:01:56.852346+00:00",
+                "reason": "process_tree_exited"
+              },
+              "elements": [
+                "C",
+                "N",
+                "H"
+              ],
+              "atom_mapping": [
+                0,
+                1,
+                2
+              ],
+              "unit": "angstrom",
+              "stereochemistry_checked": {},
+              "isotopes": [],
+              "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+              "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7"
+            }
+          }
+        }
+      },
+      "observation_records": [],
+      "artifacts": [
+        {
+          "artifact_id": "artifact_cebfd0ea65a24a9a85500a49374760f3",
+          "sha256": "6fd7feb8447f54bc38de12dba94c85fc4f732f51e99c30ca34b8a56d8847d41a",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_cebfd0ea65a24a9a85500a49374760f3\\files\\worker-outcome.json",
+          "role": "structure_execution",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": null,
+          "status": "verified"
+        },
+        {
+          "artifact_id": "artifact_122f364a25194ea285c1cb545def60f2",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_122f364a25194ea285c1cb545def60f2\\files\\stdout.out",
+          "role": "structure_execution",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": null,
+          "status": "verified"
+        },
+        {
+          "artifact_id": "artifact_911ac7af73ca43499e96ded1a4848086",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_911ac7af73ca43499e96ded1a4848086\\files\\stderr.txt",
+          "role": "structure_execution",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": null,
+          "status": "verified"
+        },
+        {
+          "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+          "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_d3fe8323fcbe43d4b806d9d833cba92c\\files\\prepared.xyz",
+          "role": "prepared_geometry_candidate",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": null,
+          "status": "verified"
+        },
+        {
+          "artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+          "sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_2f5a5c814bb24584a3c5ff18959a0f03\\files\\pubchem-response.json",
+          "role": "identity_raw_response",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": null,
+          "status": "verified"
+        },
+        {
+          "artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+          "sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_405b437f6b114d6d84e2f8158d0ed903\\files\\identity.json",
+          "role": "resolved_identity",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": null,
+          "status": "verified"
+        }
+      ],
+      "conditions": {},
+      "source": {
+        "run_id": "run_d43e58295336493ebad773115b7644bd",
+        "call_id": "call_8628e3cec2d7482eb85c95491dc05047",
+        "step_id": "step_01ca8765067f4173bba3da6a93f5836a",
+        "request_version": 3,
+        "canonical_name": "hydrogen cyanide",
+        "system_id": "system_hcn",
+        "text_evidence": {
+          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+          "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+          "start": 2,
+          "end": 25,
+          "schema": "request-semantics-3"
+        },
+        "general_identity": true,
+        "check_version": "structure-prepare-3",
+        "requested_identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "氰化氢HCN"
+          ],
+          "canonical_names": [],
+          "query_name": "hydrogen cyanide",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_9611322765a0431cbb0566a90bb34435",
+            "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+            "start": 2,
+            "end": 25,
+            "schema": "request-semantics-3"
+          }
+        },
+        "identity_artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+        "identity_sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+        "smiles": "C#N",
+        "charge": 0,
+        "multiplicity": 1,
+        "generator": "opi.Structure.from_smiles",
+        "random_seed": null,
+        "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+        "admission_profile": "managed-native-1",
+        "timeout_seconds": 30,
+        "versions": {
+          "orca-pi": "2.0.0",
+          "rdkit": "2025.9.6",
+          "python": "3.11.4"
+        },
+        "execution": {
+          "state": "completed",
+          "exit_code": 0,
+          "handle": {
+            "pid": 55316,
+            "create_time": 1792533714.954092,
+            "create_time_100ns": "134370073149540918",
+            "job_name": "Local\\ORCAAgent-fb401a855c7543ba857d0cf5084be532",
+            "launch_id": "09afb69d0d2a4a15942c16f9808bbd93",
+            "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+            "args": [
+              "-m",
+              "orca_agent.tools.structure",
+              "--worker",
+              "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047\\worker-input.json"
+            ],
+            "workdir": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047",
+            "started_at": "2026-10-20T22:01:54.941134+00:00",
+            "coordinator_pid": 35744,
+            "coordinator_create_time": 1792533670.1253262,
+            "coordinator_create_time_100ns": "134370072701253262",
+            "atomic_job_assignment": true,
+            "parent_job_name": null,
+            "argv0": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe"
+          },
+          "resource_usage": {
+            "wall_seconds": 1.9070000000065193,
+            "user_cpu_seconds": 0.671875,
+            "kernel_cpu_seconds": 0.84375,
+            "total_processes": 3,
+            "active_processes": 0,
+            "peak_job_commit_bytes": 67260416,
+            "job_commit_limit_bytes": 1073741824,
+            "memory_metric": "Windows Job Object committed virtual memory, not working set",
+            "cpu_affinity_mask": 1,
+            "cores": 1,
+            "observed_processes": [
+              {
+                "pid": 55316,
+                "create_time": 1792533714.954092,
+                "create_time_100ns": "134370073149540918",
+                "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                "job_membership_confirmed": true,
+                "cpu_affinity_mask": 1
+              },
+              {
+                "pid": 48852,
+                "create_time": 1792533714.9976273,
+                "create_time_100ns": "134370073149976277",
+                "executable": "C:\\Windows\\System32\\conhost.exe",
+                "job_membership_confirmed": true,
+                "cpu_affinity_mask": 1
+              },
+              {
+                "pid": 5604,
+                "create_time": 1792533715.0194168,
+                "create_time_100ns": "134370073150194169",
+                "executable": "C:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+                "job_membership_confirmed": true,
+                "cpu_affinity_mask": 1
+              }
+            ],
+            "process_sampling_errors": [],
+            "process_sampling_truncated": false,
+            "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+          },
+          "started_at": "2026-10-20T22:01:54.941134+00:00",
+          "ended_at": "2026-10-20T22:01:56.852346+00:00",
+          "reason": "process_tree_exited"
+        },
+        "elements": [
+          "C",
+          "N",
+          "H"
+        ],
+        "atom_mapping": [
+          0,
+          1,
+          2
+        ],
+        "unit": "angstrom",
+        "stereochemistry_checked": {},
+        "isotopes": [],
+        "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+        "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+        "tool": "structure.prepare",
+        "consumption": {
+          "identity": {
+            "run_id": "run_d43e58295336493ebad773115b7644bd",
+            "result_id": "result_9aa321d00cf14bdeba230c531fc5eb42",
+            "attempt_id": null,
+            "port": "resolved_identity",
+            "artifact_hashes": {
+              "artifact_2f5a5c814bb24584a3c5ff18959a0f03": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+              "artifact_405b437f6b114d6d84e2f8158d0ed903": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa"
+            },
+            "rule_version": "structure-identity-3",
+            "result_fingerprint": "b62420ca25b3401fc4ccecb7633338c74b84122589eda68ef26e8b9af16e8cc9",
+            "status": "qualified",
+            "unavailable_reason": null
+          },
+          "_input_purpose": {
+            "version": "structure-input-purpose-1",
+            "request_id": "request_3cf225119ab94642a0a859329c55b6ba",
+            "request_version": 3,
+            "system_id": "system_hcn",
+            "identity": {
+              "contract": "general-identity-3",
+              "requested_names": [
+                "氰化氢HCN"
+              ],
+              "canonical_names": [],
+              "query_name": "hydrogen cyanide",
+              "query_name_source": "inferred_translation_or_alias",
+              "ambiguities": [],
+              "text_evidence": {
+                "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                "start": 2,
+                "end": 25,
+                "schema": "request-semantics-3"
+              }
+            },
+            "geometry_source": "prepare",
+            "conditions": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "_decision_id": "model_2769b1650e73411e8cf3fe47a638d313"
+        },
+        "plan_version": 1
+      },
+      "diagnostics": [],
+      "gaps": []
+    },
+    {
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "result_id": "result_c65e871e5ede40c9b33ae346a93fa6f1",
+      "step_id": "step_083dacc4982a4a058b0cea4a2e8f6633",
+      "attempt_id": null,
+      "call_id": "call_2427bd3133b04c998692d0e09e5bf000",
+      "operation_status": "completed",
+      "scientific_status": "no_currently_verified_scientific_output",
+      "output_validation": [
+        {
+          "name": "written_artifact",
+          "kind": "checked_output",
+          "status": "unverified",
+          "scientific_qualification": false,
+          "checks": [
+            {
+              "name": "immutable_task_file_write",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "artifact_id": "artifact_e702291db67847c0a516e65fbcc03279",
+                "sha256": "c39e5831a943c46d5cd9edaa2e9c6d472ef57be79bd8e24efa126d6690cec191"
+              },
+              "rule_version": "workspace-write-1"
+            }
+          ],
+          "source_integrity": "verified"
+        }
+      ],
+      "qualified_outputs": {},
+      "checks": {
+        "written_artifact": [
+          {
+            "name": "immutable_task_file_write",
+            "status": "passed",
+            "detail": "operation only; content and observed values remain scientifically unverified",
+            "source": {
+              "artifact_id": "artifact_e702291db67847c0a516e65fbcc03279",
+              "sha256": "c39e5831a943c46d5cd9edaa2e9c6d472ef57be79bd8e24efa126d6690cec191"
+            },
+            "rule_version": "workspace-write-1"
+          }
+        ]
+      },
+      "observations": {
+        "classification": "evidence_observation_only",
+        "scientific_qualification": false,
+        "data": {
+          "written_artifact": {
+            "artifact_id": "artifact_e702291db67847c0a516e65fbcc03279",
+            "sha256": "c39e5831a943c46d5cd9edaa2e9c6d472ef57be79bd8e24efa126d6690cec191",
+            "name": "hcn_nmr.inp",
+            "bytes": 126,
+            "role": "orca",
+            "artifact_ids": [
+              "artifact_e702291db67847c0a516e65fbcc03279"
+            ]
+          }
+        }
+      },
+      "observation_records": [],
+      "artifacts": [
+        {
+          "artifact_id": "artifact_e702291db67847c0a516e65fbcc03279",
+          "sha256": "c39e5831a943c46d5cd9edaa2e9c6d472ef57be79bd8e24efa126d6690cec191",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_e702291db67847c0a516e65fbcc03279\\files\\hcn_nmr.inp",
+          "role": "native_input",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": null,
+          "status": "verified"
+        }
+      ],
+      "conditions": {},
+      "source": {
+        "tool": "workspace.write",
+        "consumption": {
+          "_decision_id": "model_03031ba0c12946a28268c1653091c18d"
+        },
+        "request_version": 3,
+        "plan_version": 1
+      },
+      "diagnostics": [],
+      "gaps": []
+    },
+    {
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "result_id": "result_941d53de49d4472c9f44beed12a13457",
+      "step_id": "step_d66a79b6a7764fa38ec7b54dc9cb8d65",
+      "attempt_id": "attempt_8e8e2eb209924e25baf3c9e6616d6e2d",
+      "call_id": null,
+      "operation_status": "failed",
+      "scientific_status": "no_currently_verified_scientific_output",
+      "output_validation": [],
+      "qualified_outputs": {},
+      "checks": {},
+      "observations": {
+        "classification": "evidence_observation_only",
+        "scientific_qualification": false,
+        "data": {
+          "execution_completed": false,
+          "evidence_collection_complete": true,
+          "scientific_validation": "unverified"
+        }
+      },
+      "observation_records": [],
+      "artifacts": [
+        {
+          "artifact_id": "artifact_add705510c9d4907a3135c301ac43010",
+          "sha256": "47c97d06f5d33d73991f9b346201a36e98e7c29c23c23032faf5beb11e1e9184",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_add705510c9d4907a3135c301ac43010\\files\\execution.json",
+          "role": "execution_record",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": "attempt_8e8e2eb209924e25baf3c9e6616d6e2d",
+          "status": "verified"
+        },
+        {
+          "artifact_id": "artifact_ef69040929f14a2cadb9300ea6f4c888",
+          "sha256": "2a5d3b3b02dda2ec166d257eeabcb77f2ef26340b74c9c406c1f9bbc041dc952",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_ef69040929f14a2cadb9300ea6f4c888\\files\\intent.json",
+          "role": "execution_record",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": "attempt_8e8e2eb209924e25baf3c9e6616d6e2d",
+          "status": "verified"
+        }
+      ],
+      "conditions": {},
+      "source": {
+        "files": {
+          "execution.json": {
+            "artifact_id": "artifact_add705510c9d4907a3135c301ac43010",
+            "sha256": "47c97d06f5d33d73991f9b346201a36e98e7c29c23c23032faf5beb11e1e9184"
+          },
+          "intent.json": {
+            "artifact_id": "artifact_ef69040929f14a2cadb9300ea6f4c888",
+            "sha256": "2a5d3b3b02dda2ec166d257eeabcb77f2ef26340b74c9c406c1f9bbc041dc952"
+          }
+        },
+        "execution": {
+          "state": "failed",
+          "reason": "%eprnmr must follow the xyzfile coordinate declaration when NMR or Nuclei requests nuclear properties; move this block after the coordinates",
+          "not_started": true,
+          "handle": null,
+          "exit_code": null,
+          "resource_usage": {}
+        },
+        "code_sha256": "c39e5831a943c46d5cd9edaa2e9c6d472ef57be79bd8e24efa126d6690cec191",
+        "request_version": 3,
+        "plan_version": 1,
+        "permission_version": 1
+      },
+      "diagnostics": [
+        {
+          "category": "failed",
+          "detail": "%eprnmr must follow the xyzfile coordinate declaration when NMR or Nuclei requests nuclear properties; move this block after the coordinates"
+        }
+      ],
+      "gaps": []
+    },
+    {
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "result_id": "result_24a96ca21a4748fd8372e3cfb4132be2",
+      "step_id": "step_6f1940e183a64a8a8ab426ab6c1da8d9",
+      "attempt_id": null,
+      "call_id": "call_0402ed6fc31841c08dc303e31ed12c27",
+      "operation_status": "completed",
+      "scientific_status": "no_currently_verified_scientific_output",
+      "output_validation": [
+        {
+          "name": "written_artifact",
+          "kind": "checked_output",
+          "status": "unverified",
+          "scientific_qualification": false,
+          "checks": [
+            {
+              "name": "immutable_task_file_write",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "artifact_id": "artifact_c7b279590d1d4f6fa70f8016dd0650fb",
+                "sha256": "a980873c42e53ae68fc36cd62614f31eb5ca5815d4f60ee66b9d2c76bae6028a"
+              },
+              "rule_version": "workspace-write-1"
+            }
+          ],
+          "source_integrity": "verified"
+        }
+      ],
+      "qualified_outputs": {},
+      "checks": {
+        "written_artifact": [
+          {
+            "name": "immutable_task_file_write",
+            "status": "passed",
+            "detail": "operation only; content and observed values remain scientifically unverified",
+            "source": {
+              "artifact_id": "artifact_c7b279590d1d4f6fa70f8016dd0650fb",
+              "sha256": "a980873c42e53ae68fc36cd62614f31eb5ca5815d4f60ee66b9d2c76bae6028a"
+            },
+            "rule_version": "workspace-write-1"
+          }
+        ]
+      },
+      "observations": {
+        "classification": "evidence_observation_only",
+        "scientific_qualification": false,
+        "data": {
+          "written_artifact": {
+            "artifact_id": "artifact_c7b279590d1d4f6fa70f8016dd0650fb",
+            "sha256": "a980873c42e53ae68fc36cd62614f31eb5ca5815d4f60ee66b9d2c76bae6028a",
+            "name": "parse_nmr.py",
+            "bytes": 5007,
+            "role": "python",
+            "artifact_ids": [
+              "artifact_c7b279590d1d4f6fa70f8016dd0650fb"
+            ]
+          }
+        }
+      },
+      "observation_records": [],
+      "artifacts": [
+        {
+          "artifact_id": "artifact_c7b279590d1d4f6fa70f8016dd0650fb",
+          "sha256": "a980873c42e53ae68fc36cd62614f31eb5ca5815d4f60ee66b9d2c76bae6028a",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_c7b279590d1d4f6fa70f8016dd0650fb\\files\\parse_nmr.py",
+          "role": "code",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": null,
+          "status": "verified"
+        }
+      ],
+      "conditions": {},
+      "source": {
+        "tool": "workspace.write",
+        "consumption": {
+          "_decision_id": "model_fcc75a44edc5414196a14cd8a54ae1bc"
+        },
+        "request_version": 3,
+        "plan_version": 1
+      },
+      "diagnostics": [],
+      "gaps": []
+    },
+    {
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "result_id": "result_d50058ec585e45d3bdbcf9a86a897ff3",
+      "step_id": "step_64d3b8fbc537414193caf86ee8de66d7",
+      "attempt_id": "attempt_3327c6aa20b8462a901e35265c74a525",
+      "call_id": null,
+      "operation_status": "failed",
+      "scientific_status": "no_currently_verified_scientific_output",
+      "output_validation": [],
+      "qualified_outputs": {},
+      "checks": {},
+      "observations": {
+        "classification": "evidence_observation_only",
+        "scientific_qualification": false,
+        "data": {
+          "execution_completed": false,
+          "evidence_collection_complete": true,
+          "scientific_validation": "unverified"
+        }
+      },
+      "observation_records": [],
+      "artifacts": [
+        {
+          "artifact_id": "artifact_12de248ca6d64f47bd47ecd2a9a16eeb",
+          "sha256": "d54f695da823499539b5ecad5a6b3be46cc81c5052ee041724d2f7556feab570",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_12de248ca6d64f47bd47ecd2a9a16eeb\\files\\execution.json",
+          "role": "execution_record",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": "attempt_3327c6aa20b8462a901e35265c74a525",
+          "status": "verified"
+        },
+        {
+          "artifact_id": "artifact_1a1285a2cee04f399f2186df274b6651",
+          "sha256": "3cdef10a1077d4bade22f5482632f4a28cc3fbae2289ae358eccd8b0fee90197",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_1a1285a2cee04f399f2186df274b6651\\files\\intent.json",
+          "role": "execution_record",
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "attempt_id": "attempt_3327c6aa20b8462a901e35265c74a525",
+          "status": "verified"
+        }
+      ],
+      "conditions": {},
+      "source": {
+        "files": {
+          "execution.json": {
+            "artifact_id": "artifact_12de248ca6d64f47bd47ecd2a9a16eeb",
+            "sha256": "d54f695da823499539b5ecad5a6b3be46cc81c5052ee041724d2f7556feab570"
+          },
+          "intent.json": {
+            "artifact_id": "artifact_1a1285a2cee04f399f2186df274b6651",
+            "sha256": "3cdef10a1077d4bade22f5482632f4a28cc3fbae2289ae358eccd8b0fee90197"
+          }
+        },
+        "execution": {
+          "state": "failed",
+          "reason": "native input needs a scientific keyword line",
+          "not_started": true,
+          "handle": null,
+          "exit_code": null,
+          "resource_usage": {}
+        },
+        "code_sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+        "request_version": 3,
+        "plan_version": 2,
+        "permission_version": 1
+      },
+      "diagnostics": [
+        {
+          "category": "failed",
+          "detail": "native input needs a scientific keyword line"
+        }
+      ],
+      "gaps": []
+    }
+  ],
+  "attempts": [
+    {
+      "attempt_id": "attempt_8e8e2eb209924e25baf3c9e6616d6e2d",
+      "step_id": "step_d66a79b6a7764fa38ec7b54dc9cb8d65",
+      "logical_id": "logical_a845f1e370e941bc9dfe67f3c9127b04",
+      "number": 1,
+      "state": "failed",
+      "started": false,
+      "result_id": "result_941d53de49d4472c9f44beed12a13457",
+      "input_fingerprint": "ed8fe28ab342f21c427b83711680f6aed43e51b7900314f4308ef9a4aaede38d",
+      "geometry_artifact_id": null,
+      "request_version": 3,
+      "plan_version": 1,
+      "parameters": {
+        "input": {
+          "artifact_id": "artifact_e702291db67847c0a516e65fbcc03279",
+          "sha256": "c39e5831a943c46d5cd9edaa2e9c6d472ef57be79bd8e24efa126d6690cec191",
+          "language": "orca",
+          "version": 1
+        },
+        "inputs": {
+          "version": 1,
+          "entries": [
+            {
+              "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+              "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+              "target_path": "hcn.xyz",
+              "purpose": "fixed initial geometry for GIAO shielding"
+            }
+          ]
+        },
+        "observation_names": [
+          "nmr_shielding"
+        ],
+        "conditions": {}
+      },
+      "parameter_changes": {}
+    },
+    {
+      "attempt_id": "attempt_3327c6aa20b8462a901e35265c74a525",
+      "step_id": "step_64d3b8fbc537414193caf86ee8de66d7",
+      "logical_id": "logical_a845f1e370e941bc9dfe67f3c9127b04",
+      "number": 2,
+      "state": "failed",
+      "started": false,
+      "result_id": "result_d50058ec585e45d3bdbcf9a86a897ff3",
+      "input_fingerprint": "bc084fc891efbed9c80c38227c6ee6806ada59643a18c4dac5e67c80cf92e417",
+      "geometry_artifact_id": null,
+      "request_version": 3,
+      "plan_version": 2,
+      "parameters": {
+        "input": {
+          "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+          "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+          "language": "orca",
+          "version": 1
+        },
+        "inputs": {
+          "version": 1,
+          "entries": [
+            {
+              "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+              "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+              "target_path": "hcn.xyz",
+              "purpose": "fixed initial geometry for GIAO shielding"
+            }
+          ]
+        },
+        "observation_names": [
+          "nmr_shielding"
+        ],
+        "conditions": {}
+      },
+      "parameter_changes": {
+        "input": {
+          "before": {
+            "artifact_id": "artifact_e702291db67847c0a516e65fbcc03279",
+            "sha256": "c39e5831a943c46d5cd9edaa2e9c6d472ef57be79bd8e24efa126d6690cec191",
+            "language": "orca",
+            "version": 1
+          },
+          "after": {
+            "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+            "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+            "language": "orca",
+            "version": 1
+          }
+        }
+      }
+    }
+  ],
+  "goal_facts": [
+    {
+      "goal_id": "goal_prepared_geometry",
+      "port": "prepared_geometry",
+      "required": true,
+      "system_ids": [
+        "system_hcn"
+      ],
+      "requested_identity": {
+        "contract": "general-identity-3",
+        "requested_names": [
+          "氰化氢HCN"
+        ],
+        "canonical_names": [],
+        "query_name": "hydrogen cyanide",
+        "query_name_source": "inferred_translation_or_alias",
+        "ambiguities": [],
+        "text_evidence": {
+          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+          "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+          "start": 2,
+          "end": 25,
+          "schema": "request-semantics-3"
+        }
+      },
+      "current_conditions": {
+        "system_hcn": {
+          "method": "PBE0",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_hcn": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "satisfied",
+      "current_evidence_status": "passed",
+      "goal_complete": true,
+      "answer": {
+        "kind": "qualified_input_artifact",
+        "value": null,
+        "unit": "angstrom",
+        "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+        "check_versions": [
+          "structure-prepare-3"
+        ],
+        "scientific_qualification": false
+      },
+      "source": {
+        "run_id": "run_d43e58295336493ebad773115b7644bd",
+        "result_id": "result_037b69c580bf4dd7b81d14455dfbf631",
+        "call_id": "call_8628e3cec2d7482eb85c95491dc05047",
+        "artifact_ids": [
+          "artifact_cebfd0ea65a24a9a85500a49374760f3",
+          "artifact_122f364a25194ea285c1cb545def60f2",
+          "artifact_911ac7af73ca43499e96ded1a4848086",
+          "artifact_d3fe8323fcbe43d4b806d9d833cba92c"
+        ]
+      },
+      "minimum_check_version": "structure-prepare-3",
+      "gaps": [],
+      "next_action": "deliver"
+    },
+    {
+      "goal_id": "goal_nmr_shielding",
+      "port": "nmr_shielding",
+      "required": true,
+      "system_ids": [
+        "system_hcn"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "氰化氢HCN"
+        ]
+      },
+      "current_conditions": {
+        "system_hcn": {
+          "method": "PBE0",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_hcn": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": "fixed_initial",
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "The current Plan does not yet provide this required goal's evidence."
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_shielding_tensor_table",
+      "port": "shielding_tensor_table",
+      "required": true,
+      "system_ids": [
+        "system_hcn"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "氰化氢HCN"
+        ]
+      },
+      "current_conditions": {
+        "system_hcn": {
+          "method": "PBE0",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_hcn": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "The current Plan does not yet provide this required goal's evidence."
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_delivery_bundle",
+      "port": "delivery_bundle",
+      "required": true,
+      "system_ids": [
+        "system_hcn"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "氰化氢HCN"
+        ]
+      },
+      "current_conditions": {
+        "system_hcn": {
+          "method": "PBE0",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_hcn": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "request.conditions"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "The current Plan does not yet provide this required goal's evidence."
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    }
+  ],
+  "permission": {
+    "version": 1,
+    "scientific_execution": true,
+    "allowed_tools": [
+      "structure.resolve",
+      "structure.prepare",
+      "workspace.write",
+      "python.execute",
+      "orca.run",
+      "evidence.list",
+      "evidence.discover",
+      "evidence.search",
+      "evidence.value",
+      "evidence.text",
+      "knowledge.search",
+      "knowledge.answer"
+    ],
+    "max_cores": 4,
+    "max_memory_mb": 1024,
+    "artifact_ids": [],
+    "source_ids": [],
+    "result_ids": [],
+    "model_execution": true,
+    "code_execution": true,
+    "artifact_writes": true,
+    "allowed_repairs": {},
+    "allow_additional_science": true,
+    "external_identity_queries": true,
+    "geometry_preparation": true
+  },
+  "budget": {
+    "limits": {
+      "logical_steps": 12,
+      "attempts_per_step": 3,
+      "orca_starts": 12,
+      "extra_orca_starts": 11,
+      "postprocess_starts": 0,
+      "run_seconds": 7200.0,
+      "model_calls": 24,
+      "plan_revisions": 12,
+      "model_tokens": 1200000,
+      "input_tokens": 64000,
+      "output_tokens": 32768,
+      "decision_rounds": 40,
+      "evidence_reads": 12,
+      "analysis_executions": 4,
+      "file_writes": 32,
+      "corrections_per_proposal": 23,
+      "transport_retries": 0,
+      "identity_queries": 2,
+      "structure_preparations": 1,
+      "knowledge_queries": 4,
+      "internal_work_units": 10000,
+      "code_retries": 2,
+      "artifact_count": 800,
+      "artifact_bytes": 268435456,
+      "artifact_total_bytes": 268435456
+    },
+    "usage": {
+      "internal_work_units": 0,
+      "internal_calls_by_purpose": {},
+      "code_retries": 0,
+      "orca_starts_reserved": 2,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {
+        "logical_a845f1e370e941bc9dfe67f3c9127b04": 2
+      },
+      "fingerprint_attempts": {
+        "ed8fe28ab342f21c427b83711680f6aed43e51b7900314f4308ef9a4aaede38d": 1,
+        "bc084fc891efbed9c80c38227c6ee6806ada59643a18c4dac5e67c80cf92e417": 1
+      },
+      "extra_orca_starts_reserved": 1,
+      "model_calls": 16,
+      "model_tokens_used": 238334,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 2,
+      "decision_rounds": 17,
+      "evidence_reads": 0,
+      "analysis_executions": 0,
+      "file_writes": 2,
+      "logical_steps": [
+        "logical_1caa79b5ce484bf08d10c19797df6a16",
+        "logical_4ad2aa47f7e84fde8eb6321291024b97",
+        "logical_71d8810e34c54a32b72db549de40eb3b",
+        "logical_a845f1e370e941bc9dfe67f3c9127b04",
+        "logical_e29443bd09e44a969490f89460960dda",
+        "logical_f9e8cb3dc960401a9d2121a50c15facb"
+      ],
+      "identity_queries": 1,
+      "structure_preparations": 1,
+      "knowledge_queries": 0
+    },
+    "deadline": "2026-10-21T00:01:11.684236+00:00",
+    "unresolved_scientific_attempt_ids": [],
+    "model_cost": {
+      "currency": "USD",
+      "known_cost": "0.0781368",
+      "unsettled_reservation": null,
+      "cost_basis": "frozen_peak_uncached_upper_bound_from_known_tokens",
+      "provider_billing_queried": false,
+      "provider_charged_amount": null,
+      "cost_records_complete": true,
+      "known_call_count": 16,
+      "unsettled_call_count": 0,
+      "records": [
+        {
+          "id": "model_8a4d2810b639454b9a3a984998f799db",
+          "logical_id": "decision_300450ef7079ea3c22b470e9_1",
+          "request_hash": "ee02c070ecaa1c1b630e423cf2ede5299dfe3f511ba03315e5010347383eb9e8",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 24239,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0465933",
+          "input_tokens": 6123,
+          "output_tokens": 992,
+          "total_tokens": 7115,
+          "cost_known_usd": "0.0030273",
+          "error_category": null,
+          "response_hash": "b7db2efcc348ff7fcca66b892f344703448c366a0cbbfb76a83135291c34d536",
+          "latency_seconds": 8.10899999999674
+        },
+        {
+          "id": "model_6c646868ab7e455499013cff3564f09e",
+          "logical_id": "decision_341e74899b5526463d94505e_1",
+          "request_hash": "5ca7a4e4ce3ef57b7cf2076d9ac1f0e1c6daa930d72be306a7d471a6c707382f",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 51596,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0548004",
+          "input_tokens": 13157,
+          "output_tokens": 264,
+          "total_tokens": 13421,
+          "cost_known_usd": "0.0042639",
+          "error_category": "invalid_proposal_json",
+          "response_hash": "a17f75fb5eebcdd5ede082e63467b909dd313ac8aa2f879cfc96a639f54b5809",
+          "latency_seconds": 2.2969999999913853
+        },
+        {
+          "id": "model_36e1dd0943e546889abd53ecb248b463",
+          "logical_id": "decision_341e74899b5526463d94505e_2",
+          "request_hash": "1a16f2afb309032616c96c0d2bddc51d476a0b9c88ee21605960294168c83375",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 52343,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0550245",
+          "input_tokens": 13329,
+          "output_tokens": 292,
+          "total_tokens": 13621,
+          "cost_known_usd": "0.0043491",
+          "error_category": "invalid_proposal_json",
+          "response_hash": "1b7262a28ae55f113ec4c63f99732ef50c74131a5b826f4ea690e20df9c83845",
+          "latency_seconds": 2.687000000005355
+        },
+        {
+          "id": "model_a02442f801aa4a79a7e147576d7b99ea",
+          "logical_id": "decision_341e74899b5526463d94505e_3",
+          "request_hash": "91137a77e2f29ce1980a3a8feed88aea28218b5a69ef57b11d6389eca0da8a47",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 52342,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0550242",
+          "input_tokens": 13332,
+          "output_tokens": 215,
+          "total_tokens": 13547,
+          "cost_known_usd": "0.0042576",
+          "error_category": "invalid_proposal_json",
+          "response_hash": "4bedb6f581951f24861c4e358271f742de914087f11cb8d152a9106a867323ea",
+          "latency_seconds": 2.7339999999967404
+        },
+        {
+          "id": "model_5b26caf78ac141a19b8d4d2db0f62298",
+          "logical_id": "decision_341e74899b5526463d94505e_4",
+          "request_hash": "b9dfafe2a7ad0a6707ab1ebfaca5d078e6a73244601f1855173db47c7cc9088c",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 52338,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.055023",
+          "input_tokens": 13328,
+          "output_tokens": 143,
+          "total_tokens": 13471,
+          "cost_known_usd": "0.00417",
+          "error_category": "invalid_proposal_json",
+          "response_hash": "d290c7eee8017b0034cd1120adf193caa0eb87ab593d6aa2b290b419f122ab11",
+          "latency_seconds": 1.3599999999860302
+        },
+        {
+          "id": "model_cd301d861af9416eb7cd82b8a4ee1e4b",
+          "logical_id": "decision_341e74899b5526463d94505e_5",
+          "request_hash": "5f4eef10b69c5a03a1afd5e555c5f2bddb2acc5539d8662d972bd2cb7e0ffa42",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 52342,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0550242",
+          "input_tokens": 13323,
+          "output_tokens": 198,
+          "total_tokens": 13521,
+          "cost_known_usd": "0.0042345",
+          "error_category": null,
+          "response_hash": "a7fc15aa75bda1fb3535141859e6f02a9fc4d6c8cfe52f333805dd2e514e15e6",
+          "latency_seconds": 1.7660000000032596
+        },
+        {
+          "id": "model_8604af7499e04cff8cb3e1052a8e5d85",
+          "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_1",
+          "request_hash": "37b5b16743ba87c3be4a5afc0e5d7e4a36e021727cabc0c51384769aff7e5a57",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 49368,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.054132",
+          "input_tokens": 12621,
+          "output_tokens": 1412,
+          "total_tokens": 14033,
+          "cost_known_usd": "0.0054807",
+          "error_category": null,
+          "response_hash": "65ae5432bd1b50ce994bd4d8fbd0920cf26979e9ee1902b8bb5741ad9c298303",
+          "latency_seconds": 6.687000000005355
+        },
+        {
+          "id": "model_ba657dd23bdb4465b7ba7fd44dbb1a67",
+          "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_2",
+          "request_hash": "6f647ac7dfdfb827042bf118466a4b0ac33074b643a0b4055d8dc13ee6934df4",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 54456,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0556584",
+          "input_tokens": 14028,
+          "output_tokens": 2224,
+          "total_tokens": 16252,
+          "cost_known_usd": "0.0068772",
+          "error_category": null,
+          "response_hash": "cafed09273aad82d5ba70df620efd5659513f0b18214e3ea53b483226ea100d0",
+          "latency_seconds": 8.0
+        },
+        {
+          "id": "model_2769b1650e73411e8cf3fe47a638d313",
+          "logical_id": "decision_7d099d0fdff19dca3e83d928_1",
+          "request_hash": "bd5e1b87038448b3946abd4ad13dd330292d98a1f3273e9fbbabccc891bae3cb",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 62470,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0580626",
+          "input_tokens": 17120,
+          "output_tokens": 86,
+          "total_tokens": 17206,
+          "cost_known_usd": "0.0052392",
+          "error_category": null,
+          "response_hash": "27b1ad75b33d3985cb9a8b13c7cbb5ef8b2c6d184b11e79cd72f3d484528d91c",
+          "latency_seconds": 1.0469999999913853
+        },
+        {
+          "id": "model_03031ba0c12946a28268c1653091c18d",
+          "logical_id": "decision_a88fc1b4a2964b4dced6b753_1",
+          "request_hash": "c9d544ff402e09c5494465e926e5e17f0d97238774c19339dd9e07c8f7e5a7e1",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 53335,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0553221",
+          "input_tokens": 15509,
+          "output_tokens": 118,
+          "total_tokens": 15627,
+          "cost_known_usd": "0.0047943",
+          "error_category": null,
+          "response_hash": "6aa66cda7082216baf628451b1fb836bec84f50025df7c3e5aa98f104cd98258",
+          "latency_seconds": 1.312999999994645
+        },
+        {
+          "id": "model_fcc75a44edc5414196a14cd8a54ae1bc",
+          "logical_id": "decision_e95220f4f8e02ddaebbadca4_1",
+          "request_hash": "2af90ad16198b410e65fe8432c27efbde1fe973f0a413d85a59486b88d03bf2f",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 58606,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0569034",
+          "input_tokens": 17138,
+          "output_tokens": 137,
+          "total_tokens": 17275,
+          "cost_known_usd": "0.0053058",
+          "error_category": null,
+          "response_hash": "45454bb87a0b62ec395e8d8f8ba5064bdc5fde002a764bf86df5aadd4f447bf3",
+          "latency_seconds": 1.6400000000139698
+        },
+        {
+          "id": "model_c3bfd581383a4fb79db1bcd1a4815239",
+          "logical_id": "decision_e21905b864d3de6b2f598753_1",
+          "request_hash": "e20bffc109e083851f291bf4b40b84a1a4fd1a50e5b38184c1b4c0a59b79107e",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 54119,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0555573",
+          "input_tokens": 15943,
+          "output_tokens": 223,
+          "total_tokens": 16166,
+          "cost_known_usd": "0.0050505",
+          "error_category": null,
+          "response_hash": "cfc73ab4a1d0d1106615a1d7ac8f955fe77525ef728a21680ae78f3199e316f6",
+          "latency_seconds": 2.5
+        },
+        {
+          "id": "model_1faff988cc55467eaca4a98ca8ac46dc",
+          "logical_id": "decision_78c98f9a776652182ab42eb2_1",
+          "request_hash": "53aa89ded8d529a6f800f60e145e1bd6702f3143208ac18bae84f4eee0f7b4f1",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 54689,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0557283",
+          "input_tokens": 16109,
+          "output_tokens": 233,
+          "total_tokens": 16342,
+          "cost_known_usd": "0.0051123",
+          "error_category": null,
+          "response_hash": "f7a3c9a12b0bcf407f0ebbb51fdc34e4c25392cb5b32d9a64d024e71074ce4e1",
+          "latency_seconds": 1.687000000005355
+        },
+        {
+          "id": "model_0b9c16a2ca4240d68766a83b4e0f6560",
+          "logical_id": "decision_78c98f9a776652182ab42eb2_2",
+          "request_hash": "2b4e7e3499534d09d01f5258f7d9622dfece994367f2f4658e5cd283e3e6b07e",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 56004,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0561228",
+          "input_tokens": 16529,
+          "output_tokens": 244,
+          "total_tokens": 16773,
+          "cost_known_usd": "0.0052515",
+          "error_category": null,
+          "response_hash": "e5ee0ac078e427ab8a195244fdc930369b23f9e1ba943020d1a0662eba34a2d2",
+          "latency_seconds": 1.75
+        },
+        {
+          "id": "model_0437d4358f63494ba3845a0ce47a9271",
+          "logical_id": "decision_94224f9e3f9b1aab75ebf7c1_1",
+          "request_hash": "1348b35a67593a23d0f05bc31465f98ad7d5179e7cbc350aad21673f07b4f621",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 54712,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0557352",
+          "input_tokens": 16217,
+          "output_tokens": 310,
+          "total_tokens": 16527,
+          "cost_known_usd": "0.0052371",
+          "error_category": null,
+          "response_hash": "79c23a71150905bc9274bbcd7fcf09f2acf8ee0cbc5eba1023c0bed856b76d99",
+          "latency_seconds": 3.437000000005355
+        },
+        {
+          "id": "model_280e1b45bf5b4ad19d5880c632cce8ea",
+          "logical_id": "decision_94224f9e3f9b1aab75ebf7c1_2",
+          "request_hash": "d77e1f0e1c60a60ea892da3eb0172300d11aa42edc26f0caf493863c42674b1c",
+          "prompt_version": "agent-json-v84",
+          "status": "known",
+          "input_reserved": 58074,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0567438",
+          "input_tokens": 17154,
+          "output_tokens": 283,
+          "total_tokens": 17437,
+          "cost_known_usd": "0.0054858",
+          "error_category": null,
+          "response_hash": "844d39cd6c363f71214e99b3d84297eaf784be4781949b4f0d229e6eae5ebd3a",
+          "latency_seconds": 1.687000000005355
+        }
+      ]
+    }
+  },
+  "diagnostics": [
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_6c646868ab7e455499013cff3564f09e",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_36e1dd0943e546889abd53ecb248b463",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_a02442f801aa4a79a7e147576d7b99ea",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_5b26caf78ac141a19b8d4d2db0f62298",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_8604af7499e04cff8cb3e1052a8e5d85",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "step_admission_rejected",
+      "basis": {
+        "request_version": 3,
+        "plan_version": 1,
+        "permission_version": 1,
+        "control_generation": 1
+      },
+      "step_id": "step_64caeddc31d44820afca5b04a56171fa",
+      "logical_id": "logical_e29443bd09e44a969490f89460960dda",
+      "tool": "python.execute",
+      "decision_id": "model_c3bfd581383a4fb79db1bcd1a4815239",
+      "requirement": {
+        "requirement": "Selected producer file does not exist in its archived Result; choose an exact available file_key or revise its producer.",
+        "code": "producer_file_missing",
+        "available_file_keys": [
+          "execution.json",
+          "intent.json"
+        ],
+        "available_file_count": 2,
+        "producer_step_id": "step_d66a79b6a7764fa38ec7b54dc9cb8d65",
+        "result_id": "result_941d53de49d4472c9f44beed12a13457",
+        "requested_file_key": "stdout.out",
+        "step_id": "step_64caeddc31d44820afca5b04a56171fa",
+        "path": [
+          "parameters",
+          "inputs",
+          "entries",
+          0
+        ]
+      },
+      "execution_started": false,
+      "decision_count": 13,
+      "admission_id": "4170df4a8e25645a3c97b0ed1c6b0b688222e268f0035a11f57a090026614f47"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_1faff988cc55467eaca4a98ca8ac46dc",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_0437d4358f63494ba3845a0ce47a9271",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "StoreError",
+      "message": "unchanged failed input cannot be retried automatically",
+      "environment_occupied": false
+    }
+  ],
+  "gaps": [],
+  "execution": {
+    "internal_calls": [],
+    "checkpoints": [],
+    "progress": {
+      "total": 0,
+      "completed": 0,
+      "failed": 0,
+      "running": 0
+    }
+  },
+  "stop_reason": {
+    "state": "failed",
+    "categories": [
+      "failed",
+      "proposal_rejected",
+      "step_admission_rejected",
+      "StoreError"
+    ],
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "error_category": "invalid_proposal_json",
+        "model_id": "model_6c646868ab7e455499013cff3564f09e"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "invalid_proposal_json",
+        "model_id": "model_36e1dd0943e546889abd53ecb248b463"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "invalid_proposal_json",
+        "model_id": "model_a02442f801aa4a79a7e147576d7b99ea"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "invalid_proposal_json",
+        "model_id": "model_5b26caf78ac141a19b8d4d2db0f62298"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "ProposalError",
+        "model_id": "model_8604af7499e04cff8cb3e1052a8e5d85"
+      },
+      {
+        "category": "step_admission_rejected"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "ProposalError",
+        "model_id": "model_1faff988cc55467eaca4a98ca8ac46dc"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "ProposalError",
+        "model_id": "model_0437d4358f63494ba3845a0ce47a9271"
+      },
+      {
+        "category": "StoreError",
+        "message": "unchanged failed input cannot be retried automatically"
+      }
+    ],
+    "model_errors": [
+      {
+        "id": "model_6c646868ab7e455499013cff3564f09e",
+        "status": "known",
+        "error_category": "invalid_proposal_json"
+      },
+      {
+        "id": "model_36e1dd0943e546889abd53ecb248b463",
+        "status": "known",
+        "error_category": "invalid_proposal_json"
+      },
+      {
+        "id": "model_a02442f801aa4a79a7e147576d7b99ea",
+        "status": "known",
+        "error_category": "invalid_proposal_json"
+      },
+      {
+        "id": "model_5b26caf78ac141a19b8d4d2db0f62298",
+        "status": "known",
+        "error_category": "invalid_proposal_json"
+      }
+    ]
+  },
+  "limitations": [
+    "Evidence reading, scientific output qualification, and user goal completion are distinct.",
+    "Electronic energy and its difference are not free energy or thermochemical corrections.",
+    "Finite sampling describes only the sampled discrete geometries.",
+    "An optimized geometry alone does not establish vibrational stability or a global minimum."
+  ],
+  "artifact_index": [
+    {
+      "artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+      "sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_2f5a5c814bb24584a3c5ff18959a0f03\\files\\pubchem-response.json",
+      "role": "identity_raw_response",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": null,
+      "status": "verified",
+      "purposes": [
+        "result_evidence"
+      ]
+    },
+    {
+      "artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+      "sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_405b437f6b114d6d84e2f8158d0ed903\\files\\identity.json",
+      "role": "resolved_identity",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": null,
+      "status": "verified",
+      "purposes": [
+        "result_evidence"
+      ]
+    },
+    {
+      "artifact_id": "artifact_cebfd0ea65a24a9a85500a49374760f3",
+      "sha256": "6fd7feb8447f54bc38de12dba94c85fc4f732f51e99c30ca34b8a56d8847d41a",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_cebfd0ea65a24a9a85500a49374760f3\\files\\worker-outcome.json",
+      "role": "structure_execution",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": null,
+      "status": "verified",
+      "purposes": [
+        "result_evidence"
+      ]
+    },
+    {
+      "artifact_id": "artifact_122f364a25194ea285c1cb545def60f2",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_122f364a25194ea285c1cb545def60f2\\files\\stdout.out",
+      "role": "structure_execution",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": null,
+      "status": "verified",
+      "purposes": [
+        "result_evidence"
+      ]
+    },
+    {
+      "artifact_id": "artifact_911ac7af73ca43499e96ded1a4848086",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_911ac7af73ca43499e96ded1a4848086\\files\\stderr.txt",
+      "role": "structure_execution",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": null,
+      "status": "verified",
+      "purposes": [
+        "result_evidence"
+      ]
+    },
+    {
+      "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+      "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_d3fe8323fcbe43d4b806d9d833cba92c\\files\\prepared.xyz",
+      "role": "prepared_geometry_candidate",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": null,
+      "status": "verified",
+      "purposes": [
+        "result_evidence",
+        "actual_input"
+      ]
+    },
+    {
+      "artifact_id": "artifact_e702291db67847c0a516e65fbcc03279",
+      "sha256": "c39e5831a943c46d5cd9edaa2e9c6d472ef57be79bd8e24efa126d6690cec191",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_e702291db67847c0a516e65fbcc03279\\files\\hcn_nmr.inp",
+      "role": "native_input",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": null,
+      "status": "verified",
+      "purposes": [
+        "result_evidence",
+        "actual_input"
+      ]
+    },
+    {
+      "artifact_id": "artifact_add705510c9d4907a3135c301ac43010",
+      "sha256": "47c97d06f5d33d73991f9b346201a36e98e7c29c23c23032faf5beb11e1e9184",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_add705510c9d4907a3135c301ac43010\\files\\execution.json",
+      "role": "execution_record",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": "attempt_8e8e2eb209924e25baf3c9e6616d6e2d",
+      "status": "verified",
+      "purposes": [
+        "result_evidence"
+      ]
+    },
+    {
+      "artifact_id": "artifact_ef69040929f14a2cadb9300ea6f4c888",
+      "sha256": "2a5d3b3b02dda2ec166d257eeabcb77f2ef26340b74c9c406c1f9bbc041dc952",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_ef69040929f14a2cadb9300ea6f4c888\\files\\intent.json",
+      "role": "execution_record",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": "attempt_8e8e2eb209924e25baf3c9e6616d6e2d",
+      "status": "verified",
+      "purposes": [
+        "result_evidence"
+      ]
+    },
+    {
+      "artifact_id": "artifact_c7b279590d1d4f6fa70f8016dd0650fb",
+      "sha256": "a980873c42e53ae68fc36cd62614f31eb5ca5815d4f60ee66b9d2c76bae6028a",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_c7b279590d1d4f6fa70f8016dd0650fb\\files\\parse_nmr.py",
+      "role": "code",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": null,
+      "status": "verified",
+      "purposes": [
+        "result_evidence",
+        "generated_script"
+      ]
+    },
+    {
+      "artifact_id": "artifact_12de248ca6d64f47bd47ecd2a9a16eeb",
+      "sha256": "d54f695da823499539b5ecad5a6b3be46cc81c5052ee041724d2f7556feab570",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_12de248ca6d64f47bd47ecd2a9a16eeb\\files\\execution.json",
+      "role": "execution_record",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": "attempt_3327c6aa20b8462a901e35265c74a525",
+      "status": "verified",
+      "purposes": [
+        "result_evidence"
+      ]
+    },
+    {
+      "artifact_id": "artifact_1a1285a2cee04f399f2186df274b6651",
+      "sha256": "3cdef10a1077d4bade22f5482632f4a28cc3fbae2289ae358eccd8b0fee90197",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_1a1285a2cee04f399f2186df274b6651\\files\\intent.json",
+      "role": "execution_record",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": "attempt_3327c6aa20b8462a901e35265c74a525",
+      "status": "verified",
+      "purposes": [
+        "result_evidence"
+      ]
+    }
+  ],
+  "generated_scripts": [
+    {
+      "artifact_id": "artifact_c7b279590d1d4f6fa70f8016dd0650fb",
+      "sha256": "a980873c42e53ae68fc36cd62614f31eb5ca5815d4f60ee66b9d2c76bae6028a",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\artifacts\\artifact_c7b279590d1d4f6fa70f8016dd0650fb\\files\\parse_nmr.py",
+      "role": "code",
+      "run_id": "run_d43e58295336493ebad773115b7644bd",
+      "attempt_id": null,
+      "status": "verified",
+      "purposes": [
+        "result_evidence",
+        "generated_script"
+      ]
+    }
+  ],
+  "delivery": {
+    "version": "terminal-delivery-1",
+    "snapshot_ref": "current",
+    "basis": {
+      "request_id": "request_3cf225119ab94642a0a859329c55b6ba",
+      "request_version": 3,
+      "plan_id": "plan_82dea837ece94f679564a1e4a96f8eb6",
+      "plan_version": 3,
+      "permission_version": 1,
+      "control_generation": 1
+    },
+    "request_text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "communication": {
+      "delivery_scope": "science",
+      "awaiting_reply": false,
+      "notices": [],
+      "questions": [],
+      "question_gaps": {}
+    },
+    "resources": {
+      "permission": {
+        "version": 1,
+        "scientific_execution": true,
+        "allowed_tools": [
+          "structure.resolve",
+          "structure.prepare",
+          "workspace.write",
+          "python.execute",
+          "orca.run",
+          "evidence.list",
+          "evidence.discover",
+          "evidence.search",
+          "evidence.value",
+          "evidence.text",
+          "knowledge.search",
+          "knowledge.answer"
+        ],
+        "max_cores": 4,
+        "max_memory_mb": 1024,
+        "artifact_ids": [],
+        "source_ids": [],
+        "result_ids": [],
+        "model_execution": true,
+        "code_execution": true,
+        "artifact_writes": true,
+        "allowed_repairs": {},
+        "allow_additional_science": true,
+        "external_identity_queries": true,
+        "geometry_preparation": true
+      },
+      "remaining": {
+        "orca_starts": 10,
+        "extra_orca_starts": 10,
+        "evidence_reads": 12,
+        "analysis_executions": 4,
+        "identity_queries": 1,
+        "structure_preparations": 0,
+        "knowledge_queries": 4,
+        "file_writes": 30,
+        "internal_work_units": 10000,
+        "code_retries": 2,
+        "postprocess_starts": 0
+      },
+      "limits": {
+        "orca_starts": 12,
+        "extra_orca_starts": 11,
+        "evidence_reads": 12,
+        "analysis_executions": 4,
+        "identity_queries": 2,
+        "structure_preparations": 1,
+        "knowledge_queries": 4,
+        "file_writes": 32,
+        "internal_work_units": 10000,
+        "code_retries": 2,
+        "postprocess_starts": 0
+      },
+      "usage": {
+        "orca_starts_reserved": 2,
+        "orca_starts_actual": 0,
+        "extra_orca_starts_reserved": 1,
+        "evidence_reads": 0,
+        "analysis_executions": 0,
+        "identity_queries": 1,
+        "structure_preparations": 1,
+        "knowledge_queries": 0,
+        "file_writes": 2,
+        "internal_work_units": 0,
+        "code_retries": 0,
+        "postprocess_starts": 0
+      },
+      "unsettled_attempt_ids": [],
+      "unsettled_call_ids": [],
+      "code_attempt_allowance": {
+        "recorded": 0,
+        "effective_used": 0,
+        "basis": "max(recorded, python_attempt_count - 1)",
+        "meaning": "every Python execution after the first, including distinct scripts"
+      },
+      "unsettled_internal_request_keys": [],
+      "execution_cost": {
+        "python_attempts": 0,
+        "cpu_seconds": 0.0,
+        "elapsed_seconds": 0.0,
+        "complete": true
+      },
+      "artifact_limits": {
+        "artifact_count": 800,
+        "artifact_bytes": 268435456,
+        "artifact_total_bytes": 268435456
+      },
+      "artifact_usage": {
+        "status": "not_in_snapshot",
+        "disk_hard_quota": false
+      }
+    },
+    "goals": [
+      {
+        "goal_id": "goal_prepared_geometry",
+        "port": "prepared_geometry",
+        "required": true,
+        "system_ids": [
+          "system_hcn"
+        ],
+        "requested_identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "氰化氢HCN"
+          ],
+          "canonical_names": [],
+          "query_name": "hydrogen cyanide",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_9611322765a0431cbb0566a90bb34435",
+            "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+            "start": 2,
+            "end": 25,
+            "schema": "request-semantics-3"
+          }
+        },
+        "current_conditions": {
+          "system_hcn": {
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "condition_sources": {
+          "system_hcn": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "satisfied",
+        "current_evidence_status": "passed",
+        "goal_complete": true,
+        "answer": {
+          "kind": "qualified_input_artifact",
+          "value": null,
+          "unit": "angstrom",
+          "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+          "check_versions": [
+            "structure-prepare-3"
+          ],
+          "scientific_qualification": false
+        },
+        "source": {
+          "run_id": "run_d43e58295336493ebad773115b7644bd",
+          "result_id": "result_037b69c580bf4dd7b81d14455dfbf631",
+          "call_id": "call_8628e3cec2d7482eb85c95491dc05047",
+          "artifact_ids": [
+            "artifact_cebfd0ea65a24a9a85500a49374760f3",
+            "artifact_122f364a25194ea285c1cb545def60f2",
+            "artifact_911ac7af73ca43499e96ded1a4848086",
+            "artifact_d3fe8323fcbe43d4b806d9d833cba92c"
+          ]
+        },
+        "minimum_check_version": "structure-prepare-3",
+        "gaps": [],
+        "next_action": "deliver",
+        "ref": "g1",
+        "original_text": "生成并保存一份合理结构",
+        "text_evidence": {
+          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+          "text_basis": "生成并保存一份合理结构",
+          "start": 25,
+          "end": 36,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f1",
+          "f2",
+          "f3",
+          "f4",
+          "f5"
+        ],
+        "required_blocker_refs": [],
+        "explanation_refs": [
+          "e1"
+        ],
+        "next_action_refs": [
+          "n1"
+        ]
+      },
+      {
+        "goal_id": "goal_nmr_shielding",
+        "port": "nmr_shielding",
+        "required": true,
+        "system_ids": [
+          "system_hcn"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "current_conditions": {
+          "system_hcn": {
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "condition_sources": {
+          "system_hcn": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": "fixed_initial",
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "The current Plan does not yet provide this required goal's evidence."
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g2",
+        "original_text": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽",
+        "text_evidence": {
+          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+          "text_basis": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽",
+          "start": 37,
+          "end": 63,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [
+          "converged_scf@1"
+        ],
+        "required_fact_refs": [
+          "f6",
+          "f7"
+        ],
+        "required_blocker_refs": [
+          "b1"
+        ],
+        "explanation_refs": [
+          "e2"
+        ],
+        "next_action_refs": [
+          "n2"
+        ]
+      },
+      {
+        "goal_id": "goal_shielding_tensor_table",
+        "port": "shielding_tensor_table",
+        "required": true,
+        "system_ids": [
+          "system_hcn"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "current_conditions": {
+          "system_hcn": {
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "condition_sources": {
+          "system_hcn": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "The current Plan does not yet provide this required goal's evidence."
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g3",
+        "original_text": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性",
+        "text_evidence": {
+          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+          "text_basis": "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性",
+          "start": 128,
+          "end": 210,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f8",
+          "f9"
+        ],
+        "required_blocker_refs": [
+          "b2"
+        ],
+        "explanation_refs": [
+          "e3"
+        ],
+        "next_action_refs": [
+          "n3"
+        ]
+      },
+      {
+        "goal_id": "goal_delivery_bundle",
+        "port": "delivery_bundle",
+        "required": true,
+        "system_ids": [
+          "system_hcn"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "current_conditions": {
+          "system_hcn": {
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "condition_sources": {
+          "system_hcn": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "request.conditions"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "The current Plan does not yet provide this required goal's evidence."
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g4",
+        "original_text": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限",
+        "text_evidence": {
+          "message_id": "message_9611322765a0431cbb0566a90bb34435",
+          "text_basis": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限",
+          "start": 211,
+          "end": 249,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f10",
+          "f11"
+        ],
+        "required_blocker_refs": [
+          "b3"
+        ],
+        "explanation_refs": [
+          "e4"
+        ],
+        "next_action_refs": [
+          "n4"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "ref": "f1",
+        "goal_ref": "g1",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "satisfied",
+          "complete": true,
+          "current_evidence": "passed",
+          "gaps": []
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f2",
+        "goal_ref": "g1",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_hcn": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "sources": {
+            "system_hcn": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "request.conditions"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f3",
+        "goal_ref": "g1",
+        "kind": "operation",
+        "value": {
+          "status": "completed",
+          "source_integrity": "verified",
+          "qualified_ports": [
+            "prepared_geometry"
+          ]
+        },
+        "source_ref": "s1"
+      },
+      {
+        "ref": "f4",
+        "goal_ref": "g1",
+        "kind": "checks",
+        "value": {
+          "prepared_geometry": [
+            {
+              "name": "initial_geometry_identity",
+              "status": "passed",
+              "detail": "Finite angstrom coordinates preserve supported identity and explicit hydrogen atom mapping; not optimized.",
+              "source": {
+                "canonical_name": "hydrogen cyanide",
+                "system_id": "system_hcn",
+                "text_evidence": {
+                  "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                  "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                  "start": 2,
+                  "end": 25,
+                  "schema": "request-semantics-3"
+                },
+                "general_identity": true,
+                "check_version": "structure-prepare-3",
+                "requested_identity": {
+                  "contract": "general-identity-3",
+                  "requested_names": [
+                    "氰化氢HCN"
+                  ],
+                  "canonical_names": [],
+                  "query_name": "hydrogen cyanide",
+                  "query_name_source": "inferred_translation_or_alias",
+                  "ambiguities": [],
+                  "text_evidence": {
+                    "message_id": "message_9611322765a0431cbb0566a90bb34435",
+                    "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+                    "start": 2,
+                    "end": 25,
+                    "schema": "request-semantics-3"
+                  }
+                },
+                "identity_artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+                "identity_sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+                "smiles": "C#N",
+                "charge": 0,
+                "multiplicity": 1,
+                "generator": "opi.Structure.from_smiles",
+                "random_seed": null,
+                "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+                "admission_profile": "managed-native-1",
+                "timeout_seconds": 30,
+                "versions": {
+                  "orca-pi": "2.0.0",
+                  "rdkit": "2025.9.6",
+                  "python": "3.11.4"
+                },
+                "execution": {
+                  "state": "completed",
+                  "exit_code": 0,
+                  "handle": {
+                    "pid": 55316,
+                    "create_time": 1792533714.954092,
+                    "create_time_100ns": "134370073149540918",
+                    "job_name": "Local\\ORCAAgent-fb401a855c7543ba857d0cf5084be532",
+                    "launch_id": "09afb69d0d2a4a15942c16f9808bbd93",
+                    "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                    "args": [
+                      "-m",
+                      "orca_agent.tools.structure",
+                      "--worker",
+                      "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047\\worker-input.json"
+                    ],
+                    "workdir": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a016\\data\\runs\\run_d43e58295336493ebad773115b7644bd\\calls\\call_8628e3cec2d7482eb85c95491dc05047",
+                    "started_at": "2026-10-20T22:01:54.941134+00:00",
+                    "coordinator_pid": 35744,
+                    "coordinator_create_time": 1792533670.1253262,
+                    "coordinator_create_time_100ns": "134370072701253262",
+                    "atomic_job_assignment": true,
+                    "parent_job_name": null,
+                    "argv0": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe"
+                  },
+                  "resource_usage": {
+                    "wall_seconds": 1.9070000000065193,
+                    "user_cpu_seconds": 0.671875,
+                    "kernel_cpu_seconds": 0.84375,
+                    "total_processes": 3,
+                    "active_processes": 0,
+                    "peak_job_commit_bytes": 67260416,
+                    "job_commit_limit_bytes": 1073741824,
+                    "memory_metric": "Windows Job Object committed virtual memory, not working set",
+                    "cpu_affinity_mask": 1,
+                    "cores": 1,
+                    "observed_processes": [
+                      {
+                        "pid": 55316,
+                        "create_time": 1792533714.954092,
+                        "create_time_100ns": "134370073149540918",
+                        "executable": "C:\\Users\\阿妆\\.codex\\worktrees\\live-repair\\BG6022-V4\\candidates\\a016\\.venv\\Scripts\\python.exe",
+                        "job_membership_confirmed": true,
+                        "cpu_affinity_mask": 1
+                      },
+                      {
+                        "pid": 48852,
+                        "create_time": 1792533714.9976273,
+                        "create_time_100ns": "134370073149976277",
+                        "executable": "C:\\Windows\\System32\\conhost.exe",
+                        "job_membership_confirmed": true,
+                        "cpu_affinity_mask": 1
+                      },
+                      {
+                        "pid": 5604,
+                        "create_time": 1792533715.0194168,
+                        "create_time_100ns": "134370073150194169",
+                        "executable": "C:\\Users\\阿妆\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+                        "job_membership_confirmed": true,
+                        "cpu_affinity_mask": 1
+                      }
+                    ],
+                    "process_sampling_errors": [],
+                    "process_sampling_truncated": false,
+                    "process_sampling": "JobObjectBasicProcessIdList + identity/membership/affinity query"
+                  },
+                  "started_at": "2026-10-20T22:01:54.941134+00:00",
+                  "ended_at": "2026-10-20T22:01:56.852346+00:00",
+                  "reason": "process_tree_exited"
+                },
+                "elements": [
+                  "C",
+                  "N",
+                  "H"
+                ],
+                "atom_mapping": [
+                  0,
+                  1,
+                  2
+                ],
+                "unit": "angstrom",
+                "stereochemistry_checked": {},
+                "isotopes": [],
+                "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified",
+                "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7"
+              },
+              "rule_version": "structure-prepare-3"
+            }
+          ]
+        },
+        "source_ref": "s1"
+      },
+      {
+        "ref": "f5",
+        "goal_ref": "g1",
+        "kind": "answer",
+        "value": {
+          "kind": "qualified_input_artifact",
+          "value": null,
+          "unit": "angstrom",
+          "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+          "check_versions": [
+            "structure-prepare-3"
+          ],
+          "scientific_qualification": false
+        },
+        "source_ref": "s1"
+      },
+      {
+        "ref": "f6",
+        "goal_ref": "g2",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "The current Plan does not yet provide this required goal's evidence."
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f7",
+        "goal_ref": "g2",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_hcn": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "sources": {
+            "system_hcn": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "request.conditions"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": "fixed_initial"
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f8",
+        "goal_ref": "g3",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "The current Plan does not yet provide this required goal's evidence."
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f9",
+        "goal_ref": "g3",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_hcn": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "sources": {
+            "system_hcn": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "request.conditions"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f10",
+        "goal_ref": "g4",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "The current Plan does not yet provide this required goal's evidence."
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f11",
+        "goal_ref": "g4",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_hcn": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "sources": {
+            "system_hcn": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "request.conditions"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      }
+    ],
+    "blockers": [
+      {
+        "ref": "b1",
+        "goal_refs": [
+          "g2"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "The current Plan does not yet provide this required goal's evidence."
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b2",
+        "goal_refs": [
+          "g3"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "The current Plan does not yet provide this required goal's evidence."
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b3",
+        "goal_refs": [
+          "g4"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "The current Plan does not yet provide this required goal's evidence."
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      }
+    ],
+    "explanations": [
+      {
+        "ref": "e1",
+        "goal_ref": "g1",
+        "fact_refs": [
+          "f1",
+          "f2",
+          "f3",
+          "f4",
+          "f5"
+        ],
+        "relation": "current_goal_satisfied",
+        "text": "Current applicable evidence satisfies this goal.",
+        "blocker_refs": [],
+        "next_action_refs": [
+          "n1"
+        ]
+      },
+      {
+        "ref": "e2",
+        "goal_ref": "g2",
+        "fact_refs": [
+          "f6",
+          "f7"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b1"
+        ],
+        "next_action_refs": [
+          "n2"
+        ]
+      },
+      {
+        "ref": "e3",
+        "goal_ref": "g3",
+        "fact_refs": [
+          "f8",
+          "f9"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b2"
+        ],
+        "next_action_refs": [
+          "n3"
+        ]
+      },
+      {
+        "ref": "e4",
+        "goal_ref": "g4",
+        "fact_refs": [
+          "f10",
+          "f11"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b3"
+        ],
+        "next_action_refs": [
+          "n4"
+        ]
+      }
+    ],
+    "next_actions": [
+      {
+        "ref": "n1",
+        "kind": "deliver",
+        "goal_refs": [
+          "g1"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n2",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g2"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n3",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g3"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n4",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g4"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      }
+    ],
+    "references": {
+      "s1": {
+        "run_id": "run_d43e58295336493ebad773115b7644bd",
+        "result_id": "result_037b69c580bf4dd7b81d14455dfbf631",
+        "call_id": "call_8628e3cec2d7482eb85c95491dc05047",
+        "artifact_ids": [
+          "artifact_cebfd0ea65a24a9a85500a49374760f3",
+          "artifact_122f364a25194ea285c1cb545def60f2",
+          "artifact_911ac7af73ca43499e96ded1a4848086",
+          "artifact_d3fe8323fcbe43d4b806d9d833cba92c"
+        ],
+        "integrity": {
+          "status": "verified",
+          "artifacts": [
+            {
+              "artifact_id": "artifact_122f364a25194ea285c1cb545def60f2",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "status": "verified"
+            },
+            {
+              "artifact_id": "artifact_2f5a5c814bb24584a3c5ff18959a0f03",
+              "sha256": "35adc8a3fb2cd7e766001480fffec26c2b399e61c7ff20ade1a9efc85dd90200",
+              "status": "verified"
+            },
+            {
+              "artifact_id": "artifact_405b437f6b114d6d84e2f8158d0ed903",
+              "sha256": "f23383cb8011c57310b34a61941ea0b91fe96d1ced8c8e17dbe107626bcdd9aa",
+              "status": "verified"
+            },
+            {
+              "artifact_id": "artifact_911ac7af73ca43499e96ded1a4848086",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "status": "verified"
+            },
+            {
+              "artifact_id": "artifact_cebfd0ea65a24a9a85500a49374760f3",
+              "sha256": "6fd7feb8447f54bc38de12dba94c85fc4f732f51e99c30ca34b8a56d8847d41a",
+              "status": "verified"
+            },
+            {
+              "artifact_id": "artifact_d3fe8323fcbe43d4b806d9d833cba92c",
+              "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+              "status": "verified"
+            }
+          ],
+          "results": [
+            {
+              "run_id": "run_d43e58295336493ebad773115b7644bd",
+              "result_id": "result_9aa321d00cf14bdeba230c531fc5eb42",
+              "result_fingerprint": "b62420ca25b3401fc4ccecb7633338c74b84122589eda68ef26e8b9af16e8cc9",
+              "status": "verified"
+            }
+          ],
+          "gaps": []
+        },
+        "result_fingerprint": "e9b129b961c16af336bdac7fada60f4ebc34236faee2ddd841accda23fb7c030",
+        "rule_versions": [
+          "structure-prepare-3"
+        ]
+      }
+    },
+    "fingerprint": "4696f2b94f081b5201641bd8e866d378f32a855878f3cba058f66a9c4126e3ab"
+  },
+  "model_explanation": {
+    "status": "unavailable",
+    "current_status": "unavailable",
+    "current": false,
+    "free_reason_role": "audit_only"
+  },
+  "report_artifact": {
+    "status": "rendered",
+    "current": true,
+    "version": "terminal-report-1",
+    "snapshot_fingerprint": "4696f2b94f081b5201641bd8e866d378f32a855878f3cba058f66a9c4126e3ab",
+    "path": "runs/run_d43e58295336493ebad773115b7644bd/deliveries/report_a593c28b4850fcd6233d958f.md",
+    "sha256": "24773255a6715cfc4ed2c3f9237be8ac4429ca65aa82be7e1d16c2b45e2f5e23",
+    "error": null
+  }
+}

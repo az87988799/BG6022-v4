@@ -1,0 +1,209 @@
+{
+  "schema": "bounded-live-failure-diagnosis-1",
+  "candidate": "a018",
+  "task": "T3",
+  "run_id": "run_5fdf002bd04244849b3947215fb34225",
+  "scope": "Exact existing model proposal and preflight/commit/consumption chain only; no model, task code, ORCA, container or broad regression execution.",
+  "historical_outcome": {
+    "state": "budget_exhausted",
+    "known_usage": {
+      "model_calls": 24,
+      "model_tokens": 339671,
+      "orca_starts": 0,
+      "internal_work_units": 0,
+      "wall_seconds": 159.35999999998603
+    },
+    "attempt_count": 0,
+    "science": "not_run"
+  },
+  "cause": "Plan preflight loses allow_pending when validate_sdk_orca_preconditions calls native_input_binding. Existing geometry resolves to a concrete manifest while future code stays symbolic; the repeated frozen-Step comparison then strictly resolves that future writer, which has no settled Result yet.",
+  "model_id": "model_e915e9dab6e842d1b0a1ab985c3c25f5",
+  "future_code": {
+    "port": "written_artifact",
+    "producer_key": "write_scan_inputs"
+  },
+  "existing_input_manifest": {
+    "version": 1,
+    "entries": [
+      {
+        "port": "prepared_geometry",
+        "producer_step_id": "step_febbfdf2fb2a498cb3b0c2eaaf8ef3b3",
+        "target_path": "initial.xyz",
+        "purpose": "qualified initial butane geometry anchor for constrained dihedral scan"
+      }
+    ]
+  },
+  "same_run_settled_geometry_call": {
+    "id": "call_e5b43b3cdb51467a8ffe5fe62d51d04c",
+    "tool": "structure.prepare",
+    "parameters": {
+      "system_id": "system_butane",
+      "charge": 0,
+      "multiplicity": 1
+    },
+    "step_id": "step_febbfdf2fb2a498cb3b0c2eaaf8ef3b3",
+    "state": "completed",
+    "result_id": "result_4ab00e01ef53445fb23b01d1461be2c4",
+    "request_version": 2,
+    "plan_version": 1,
+    "control_generation": 1,
+    "created_at": "2026-10-20T22:15:37.013722Z",
+    "frozen_step": {
+      "id": "step_febbfdf2fb2a498cb3b0c2eaaf8ef3b3",
+      "logical_id": "logical_7f297ab8b0db4b73b0b959b16f261d72",
+      "tool": "structure.prepare",
+      "parameters": {
+        "system_id": "system_butane",
+        "charge": 0,
+        "multiplicity": 1
+      },
+      "geometry": null,
+      "depends_on": [
+        "step_33675d40895f498cad68f3c55f4c7de0"
+      ],
+      "inputs": {
+        "identity": {
+          "producer_step_id": "step_33675d40895f498cad68f3c55f4c7de0",
+          "run_id": null,
+          "result_id": null,
+          "attempt_id": null,
+          "artifact_id": null,
+          "sha256": null,
+          "port": "resolved_identity",
+          "rule_version": null
+        }
+      },
+      "system_id": "system_butane"
+    },
+    "consumption": {
+      "identity": {
+        "run_id": "run_5fdf002bd04244849b3947215fb34225",
+        "result_id": "result_03d33667005b405cb8abef17466531f5",
+        "attempt_id": null,
+        "port": "resolved_identity",
+        "artifact_hashes": {
+          "artifact_43ffc496fa4d45ccb7ee9fc068693295": "07fa529bf345c42b73a0f8ab2da1f6e13027935cfd6dad80a4ae9f28a5b5cbdb",
+          "artifact_dd65798801114892bf10c00363081479": "3d5641f5f3e6fcf0e7afbe4960530d11621e48903d6a1ce83bfc7d284c776e49"
+        },
+        "rule_version": "structure-identity-3",
+        "result_fingerprint": "9cbe2af95f25eb49fde26d033b2139a7c3d56d1a47f666e1fc7aa91753f703e1",
+        "status": "qualified",
+        "unavailable_reason": null
+      },
+      "_input_purpose": {
+        "version": "structure-input-purpose-1",
+        "request_id": "request_e91e74dfc1ed4008ac437682a6afb8c6",
+        "request_version": 2,
+        "system_id": "system_butane",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "正丁烷"
+          ],
+          "canonical_names": [],
+          "query_name": "butane",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_f1e2c085e0b2415fb583a2c99bc666f9",
+            "text_basis": "正丁烷",
+            "start": 2,
+            "end": 5,
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare",
+        "conditions": {
+          "method": null,
+          "basis": null,
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "_decision_id": "model_41bdac0374174a9cbcd020805f9c018e"
+    }
+  },
+  "frozen_source_sha256": "a30ec8a8c585d73e1ffb74757daf640da41080de6f61f2dbf45b744eecafa627",
+  "call_chain": [
+    "store.commit_revision -> planning.validate_code_inputs(allow_future_geometry=True)",
+    "resolve_step_files(allow_pending=True): existing geometry concrete, future writer symbolic",
+    "validate_sdk_orca_preconditions -> _plan_step_matches(allow_pending=True)",
+    "native_input_binding -> _plan_step_matches(allow_pending=False before fix)",
+    "resolve_step_files -> _result: file producer has no settled Result"
+  ],
+  "repair": "Thread the existing plan-preflight flag through native_input_binding; its default remains False for all execution callers. Geometry, conditions, ownership, hash, permission and budget checks remain in place.",
+  "offline_replay": {
+    "before": {
+      "path": "data/workflow-root-repair/a018-pending-sdk-plan-before.json",
+      "sha256": "b380183b10718224448fe152ce060aed123405a50e46010a80cbd8a4b3fe5da2",
+      "bytes": 24760
+    },
+    "after": {
+      "path": "data/workflow-root-repair/a018-pending-sdk-plan-after.json",
+      "sha256": "4690beb9784ed42249a39069b16e0beeb5b9bd964a90a857513c940745b5feed",
+      "bytes": 22988
+    },
+    "original_count": 125,
+    "all_original_hashes_unchanged": true,
+    "before_commit": {
+      "status": "rejected",
+      "type": "ValueError",
+      "message": "file producer has no settled Result",
+      "traceback": "Traceback (most recent call last):\n  File \"E:\\BG6022-V4\\data\\workflow-root-repair\\replay_a018_pending_sdk_plan.py\", line 55, in <module>\n    updated = store.commit_revision(run, plan, basis=current_basis(store, run),\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"E:\\BG6022-V4\\src\\orca_agent\\store.py\", line 1754, in commit_revision\n    validate_code_inputs(self, run.permission, step, run=run,\n  File \"E:\\BG6022-V4\\src\\orca_agent\\planning.py\", line 173, in validate_code_inputs\n    validate_sdk_orca_preconditions(store, run, step, request=request, plan=plan,\n  File \"E:\\BG6022-V4\\src\\orca_agent\\tools\\managed.py\", line 122, in validate_sdk_orca_preconditions\n    binding = native_input_binding(store, run, step, request=request, plan=plan)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"E:\\BG6022-V4\\src\\orca_agent\\tools\\managed.py\", line 146, in native_input_binding\n    if not _plan_step_matches(store, run, step, request=request, plan=plan):\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"E:\\BG6022-V4\\src\\orca_agent\\tools\\managed.py\", line 44, in _plan_step_matches\n    return resolve_step_files(store, run, declared, request=request, plan=plan,\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"E:\\BG6022-V4\\src\\orca_agent\\file_references.py\", line 303, in resolve_step_files\n    values[\"parameters\"][parameter_key] = resolve(references[0], parameter_key,\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"E:\\BG6022-V4\\src\\orca_agent\\file_references.py\", line 261, in resolve\n    result, record = _result(store, run, producer, allow_pending=allow_pending)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"E:\\BG6022-V4\\src\\orca_agent\\file_references.py\", line 177, in _result\n    raise ValueError(\"file producer has no settled Result\")\nValueError: file producer has no settled Result\n"
+    },
+    "after_commit": {
+      "status": "accepted",
+      "plan_version": 2
+    },
+    "strict_consumption": {
+      "status": "rejected",
+      "message": "file producer has no settled Result"
+    },
+    "plan_revision_usage": [
+      0,
+      1
+    ],
+    "logical_steps_added_at_commit": [
+      "logical_2adea3abe92b45e695ffbae8200c5fa7",
+      "logical_fe989252ac4a441abbfc9eb43d730102"
+    ]
+  },
+  "direct_validation": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_sdk_pending_plan_binding.py -q --tb=short",
+    "result": "3 passed",
+    "ruff": "passed",
+    "tests": {
+      "path": "tests/unit/test_sdk_pending_plan_binding.py",
+      "sha256": "1f22607b7ea80a32b186883b082c0f593d43b488a712dc50bf726c7fdbd4d9d2",
+      "bytes": 5466
+    },
+    "source": {
+      "path": "src/orca_agent/tools/managed.py",
+      "sha256": "4c2740d1e29af98b7d72fad7682445e3914c1d682606f7553a604371c33c5017",
+      "bytes": 62698
+    }
+  },
+  "task_code_limit": "This inspected unexecuted script only writes seven input/geometry files and a manifest; it does not call the SDK or produce ORCA results. Plan admission is not scientific completion.",
+  "sources": [
+    {
+      "path": "data/live-repair/attempts/a018/attempt.json",
+      "sha256": "65483077f7b07dde3446fae67f3f614782ab04278a5b813157fb895e7d4bbc3b",
+      "bytes": 14493
+    },
+    {
+      "path": "data/live-repair/attempts/a018/outcome.json",
+      "sha256": "f65dcb8dd01be04f64595e0f4f0451bd56f264518bf79b275b91950a25b4564e",
+      "bytes": 1884
+    },
+    {
+      "path": "data/live-repair/attempts/a018/data/runs/run_5fdf002bd04244849b3947215fb34225/model/model_e915e9dab6e842d1b0a1ab985c3c25f5.response.json",
+      "sha256": "e2b9faecb11bc408d02fabd3551dc13ca6d94ae04cb20c48b69bed78c43a5c01",
+      "bytes": 8772
+    }
+  ],
+  "historical_state_unchanged": true,
+  "scientific_qualification": "not_run",
+  "full_task_completion": false
+}

@@ -1,0 +1,128 @@
+{
+  "tool": "orca.run",
+  "input_file": "job.inp",
+  "input_sha256": "d6bfdb864272bf46f88bf5e9f1c7b69f9ab3056f05b17788bffea202cb601726",
+  "input_artifact": {
+    "artifact_id": "artifact_24b8c7300ece4d02b351d5bed519e047",
+    "sha256": "55961f2c4bd6c1d720319a6038a1f8b2d746656ab69fe2f01f3fdf1407a4ab2f",
+    "language": "orca",
+    "version": 1
+  },
+  "input_manifest": {
+    "version": 1,
+    "entries": [
+      {
+        "artifact_id": "artifact_389b751a7cb34bc287fc9d8c95658a8b",
+        "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+        "target_path": "coords.xyz",
+        "purpose": "shared_xyz"
+      }
+    ]
+  },
+  "admission_version": "native-orca-input-3",
+  "native_input_policy": {
+    "profile": "managed-native-1",
+    "max_atoms": 1024,
+    "max_geom_iterations": 128,
+    "max_scf_iterations": 256,
+    "max_response_iterations": 128,
+    "allow_task_geometry": true,
+    "property_block_order": "coordinates-first-1"
+  },
+  "input_binding": {
+    "request_id": "request_3ca72b20ef8747a7988587c189e92f76",
+    "request_version": 3,
+    "step_id": "step_ec92dee155f94dfd95f15c36c935c284",
+    "system_id": "system_ethanol",
+    "conditions": {
+      "method": "b3lyp",
+      "basis": "def2-tzvp",
+      "charge": 0,
+      "multiplicity": 1,
+      "electronic_state": "rks",
+      "environment": "gas_phase"
+    },
+    "condition_sources": {
+      "method": "request.conditions",
+      "basis": "request.conditions",
+      "charge": "request.conditions",
+      "multiplicity": "request.conditions",
+      "electronic_state": "request.conditions",
+      "environment": "goal:goal_energy_gas"
+    },
+    "geometry_artifact_id": "artifact_389b751a7cb34bc287fc9d8c95658a8b",
+    "geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+    "workflow_policy": "simplified-1"
+  },
+  "actual_conditions_origin": "admitted_native_input",
+  "resources": {
+    "cores": 4,
+    "memory_mb": 1024,
+    "maxcore_mb": 192,
+    "timeout_seconds": 900.0
+  },
+  "dependencies": {
+    "coords.xyz": {
+      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+      "bytes": 859
+    }
+  },
+  "actual_conditions": {
+    "method": "B3LYP",
+    "basis": "def2-TZVP",
+    "electronic_state": "RKS",
+    "charge": 0,
+    "multiplicity": 1,
+    "environment": "gas_phase",
+    "input_keywords": [
+      "B3LYP",
+      "def2-TZVP",
+      "RKS",
+      "NoAutoStart"
+    ],
+    "input_blocks": {
+      "pal": {
+        "nprocs": "4"
+      },
+      "maxcore": 192,
+      "scf": {
+        "maxiter": "256",
+        "autotrah": "false"
+      }
+    },
+    "atom_count": 9,
+    "run_type": "single_point",
+    "origin": "admitted_native_input",
+    "geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+    "input_geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+    "input_geometry_relation": "exact_initial",
+    "initial_geometry_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+    "request_version": 3,
+    "system_id": "system_ethanol",
+    "scientific_validation": "unverified",
+    "condition_verification": "explicit input selectors only; all modifiers retained, output not independently verified"
+  },
+  "execution_impact": {
+    "orca_starts": 1,
+    "postprocess_starts": 0,
+    "external_programs": false,
+    "internal_work_units": 1,
+    "work_unit_contract": "declared-managed-workload-1",
+    "work_unit_meaning": "conservative declared task slots, not measured SCF/evaluation counts",
+    "optimization_evaluation_slots": 1,
+    "scan_points": 1,
+    "derivative_slots": 0,
+    "response_roots": 0,
+    "scf_maxiter": 256,
+    "geom_maxiter": 0,
+    "response_maxiter": 0
+  },
+  "source_input_sha256": "55961f2c4bd6c1d720319a6038a1f8b2d746656ab69fe2f01f3fdf1407a4ab2f",
+  "materialization": [
+    {
+      "field": "cores",
+      "value": 4,
+      "source": "frozen_resources"
+    }
+  ]
+}

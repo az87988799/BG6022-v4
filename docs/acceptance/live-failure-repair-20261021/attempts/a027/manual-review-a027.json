@@ -1,0 +1,370 @@
+{
+  "schema": "independent-t5-manual-review-1",
+  "created_at_utc": "2026-10-20T23:55:15.172792+00:00",
+  "candidate": "a027",
+  "run_id": "run_bcb0cc84ad554e99af47183b52ee25ba",
+  "scope": "Read-only settled originals, source mapping and arithmetic. No model, ORCA, independent reference or generated-code execution.",
+  "production_state": {
+    "state": "failed",
+    "delivery_status": "partial"
+  },
+  "terminal_model_failure": {
+    "model_id": "model_4e780a4cc4244293a82e53bedf0d1684",
+    "status": "unknown",
+    "error_category": "http_error",
+    "http_status": 402,
+    "meaning": "Provider HTTP failure; no inference that the two completed native calculations failed. Unknown model-token reservation retained by the original ledger."
+  },
+  "checks": {
+    "method_basis_and_preexecution_rationale": {
+      "status": "pass",
+      "reason": "B3LYP/def2-SVP choice and public suitability/cost reasons are saved before the first SDK native call and reproduced in the final report. Both calculations use the same selections. No independent method-accuracy claim is inferred.",
+      "selection_time": "2026-10-20T23:42:03.927668+00:00",
+      "first_native_time": "2026-10-20T23:45:08.654601Z",
+      "source_refs": [
+        "selection",
+        "report_json",
+        "gas_input",
+        "water_input"
+      ],
+      "report_lines": [
+        60,
+        61,
+        63
+      ]
+    },
+    "actual_solvent_settings_and_source": {
+      "status": "pass",
+      "reason": "Actual native inputs differ only by CPCM(water); both use B3LYP/def2-SVP/RKS, charge 0, multiplicity 1, same SCF controls and identical prepared XYZ. Water stdout explicitly identifies WATER, CPCM epsilon function and epsilon 80.1510. The report retains scoped actual conditions and linked original inputs/outputs.",
+      "source_refs": [
+        "gas_input",
+        "water_input",
+        "water_stdout",
+        "gas_stdout",
+        "gas_xyz",
+        "water_xyz",
+        "prepared_xyz",
+        "report_json"
+      ]
+    },
+    "delivered_table_energies_delta_sign_and_precision": {
+      "status": "fail",
+      "reason": "The two absolute-energy observations in Eh and the computed difference in kJ/mol are present in the machine/text report and match raw values within frozen tolerances. However no actual delivered explanation states what the negative water-minus-gas value means at this fixed geometry. The Plan still leaves the delta and final-delivery Goals as gaps. This is incomplete delivery; the final model HTTP 402 is not evidence of ORCA/scientific failure.",
+      "gas_Eh": "-154.817054999208",
+      "water_Eh": "-154.823380641772",
+      "raw_energy_lines": {
+        "gas": 941,
+        "water": 975
+      },
+      "independent_delta_kJ_mol": "-16.6079722712607102624636",
+      "reported_delta_kJ_mol": "-16.60797226184497",
+      "absolute_error_kJ_mol": "9.4157402624636E-9",
+      "frozen_tolerance_kJ_mol": "0.001",
+      "source_refs": [
+        "report_json",
+        "rendered_report",
+        "gas_stdout",
+        "water_stdout",
+        "delta_result_task_observations.json",
+        "frozen_requirements"
+      ],
+      "report_lines": [
+        22,
+        25,
+        200,
+        231,
+        262,
+        265
+      ]
+    },
+    "generated_analysis_source_and_provenance": {
+      "status": "pass",
+      "reason": "Each repaired extraction script copies its exact SDK receipt stdout and parses the last FINAL SINGLE POINT ENERGY. The independent delta script reads two pinned energy JSON inputs; their hashes match the extraction outputs, and it computes (water-gas)*2625.499638. Code SHA values match archived observation records. Original inputs/outputs and the shared XYZ remain linked; no task script was executed by this audit.",
+      "source_refs": [
+        "gas_result_sealed_task.py",
+        "water_result_sealed_task.py",
+        "delta_result_sealed_task.py",
+        "gas_result_task_gas_energy.json",
+        "water_result_task_water_energy.json",
+        "delta_result_task_gas_energy.json",
+        "delta_result_task_water_energy.json",
+        "gas_stdout",
+        "water_stdout"
+      ]
+    },
+    "electronic_difference_not_hydration_free_energy": {
+      "status": "pass",
+      "reason": "Actual delta observation and rendered report explicitly identify a specified-model electronic difference, not solvation free energy, and state no thermal or standard-state corrections. The analyzed code adds no fabricated thermochemical corrections.",
+      "source_refs": [
+        "delta_result_task_observations.json",
+        "delta_result_sealed_task.py",
+        "rendered_report"
+      ],
+      "report_lines": [
+        268,
+        436
+      ]
+    },
+    "seed_and_geometry_reproducibility_limits": {
+      "status": "pass",
+      "reason": "Complete final report preserves actual preparation provenance: OPI SMILES generation, random_seed null and no exposed seed; immutable XYZ reuse is stated instead of fake seed-1701 determinism. Both native dependency XYZ bytes match the prepared artifact. Extraction and arithmetic scripts contain no random algorithm.",
+      "preparation_source": {
+        "generator": "opi.Structure.from_smiles",
+        "random_seed": null,
+        "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+        "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified"
+      },
+      "shared_xyz_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+      "source_refs": [
+        "prepared_xyz",
+        "gas_xyz",
+        "water_xyz",
+        "report_json",
+        "rendered_report"
+      ],
+      "report_lines": [
+        75,
+        78
+      ]
+    }
+  },
+  "source_refs": {
+    "run": {
+      "path": "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/run.json",
+      "sha256": "51b02708f385d96a6a53f97082a031cc8e15d84f55bcc14df0af27edd03e76f1",
+      "bytes": 315121
+    },
+    "report_json": {
+      "path": "data/live-repair/attempts/a027/report.json",
+      "sha256": "4459c0674a00d6b206bf880a9e80d54e818779621d3cd1c4dd77a810077c8d16",
+      "bytes": 599365
+    },
+    "report_text": {
+      "path": "data/live-repair/attempts/a027/report.txt",
+      "sha256": "cef287cbf3efeb0bb217921e3942c228eb829813e9dcfc4ccb655ca610fa6863",
+      "bytes": 178243
+    },
+    "outcome": {
+      "path": "data/live-repair/attempts/a027/outcome.json",
+      "sha256": "fdef5bd0404a21398c75cd372827c9a1ea8ae3b850ccf26823e680db3c295d8d",
+      "bytes": 2760
+    },
+    "frozen_requirements": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-4/freeze/public-tasks.json",
+      "sha256": "a064af8a0fcc90792c8276ebaa3b56b9b4c69242a97a8fa49d99166e9d23fa9b",
+      "bytes": 17833
+    },
+    "rendered_report": {
+      "path": "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/deliveries/report_92cc93e56bfbe6b1a4bfbaab.md",
+      "sha256": "cef287cbf3efeb0bb217921e3942c228eb829813e9dcfc4ccb655ca610fa6863",
+      "bytes": 178243
+    },
+    "selection": {
+      "path": "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/model/model_bfaa0bc161be49528ed8aca25f95aa1a.response.json",
+      "sha256": "463c209ea154647bc7754dce88b92cf49425f338334c9e5a6f9c5b17eaba7332",
+      "bytes": 2789,
+      "json_pointer": "/proposal/parameters/choices"
+    },
+    "gas_stdout": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_388049a0406d4ef99d68933623b5bbea/files/stdout.out",
+      "sha256": "9652fb688dbabb6930b7ac80c4f35102a3759c1ec08d8254bf8d908158d02b57",
+      "bytes": 55162,
+      "artifact_id": "artifact_388049a0406d4ef99d68933623b5bbea",
+      "internal_request_key": "gas_sp",
+      "native_file_key": "stdout.out",
+      "lines": [
+        638,
+        941,
+        1146
+      ]
+    },
+    "gas_input": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_72d554f21c1c45ff83576aa86a4a31c9/files/job.inp",
+      "sha256": "fdd4861fec8e1df51b7bfbf0ba75f9b1b28c8cdbfd8c9f2f2a66430be21830bf",
+      "bytes": 137,
+      "artifact_id": "artifact_72d554f21c1c45ff83576aa86a4a31c9",
+      "internal_request_key": "gas_sp",
+      "native_file_key": "job.inp"
+    },
+    "gas_xyz": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_c013451c046140baa16353ced49258dd/files/ethanol.xyz",
+      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+      "bytes": 859,
+      "artifact_id": "artifact_c013451c046140baa16353ced49258dd",
+      "internal_request_key": "gas_sp",
+      "native_file_key": "ethanol.xyz"
+    },
+    "water_stdout": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_cbc3b45c170843aa96c9fa94a86f6e40/files/stdout.out",
+      "sha256": "d3326b2aab8d30957f30d4b12b67cf3890467d0ba7c8622271f6b01208315d41",
+      "bytes": 57333,
+      "artifact_id": "artifact_cbc3b45c170843aa96c9fa94a86f6e40",
+      "internal_request_key": "water_sp",
+      "native_file_key": "stdout.out",
+      "lines": [
+        620,
+        627,
+        628,
+        664,
+        975,
+        1184
+      ]
+    },
+    "water_input": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_e4d43e14b8774a9f8dea9fd16f3fdbad/files/job.inp",
+      "sha256": "11610b3173d90e11f2c7c777cf7d87bd01a2e2a220665f86b33531c559fffbe1",
+      "bytes": 149,
+      "artifact_id": "artifact_e4d43e14b8774a9f8dea9fd16f3fdbad",
+      "internal_request_key": "water_sp",
+      "native_file_key": "job.inp"
+    },
+    "water_xyz": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_a7bd8df24a4249d19fe6d6e213eadd9a/files/ethanol.xyz",
+      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+      "bytes": 859,
+      "artifact_id": "artifact_a7bd8df24a4249d19fe6d6e213eadd9a",
+      "internal_request_key": "water_sp",
+      "native_file_key": "ethanol.xyz"
+    },
+    "gas_result": {
+      "path": "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/results/result_e59ddaee4e3d491fb9d760b75cbb5aa1.json",
+      "sha256": "a019cd224675032251da441c44fdbfd3bc8ef28974b107eb9b9ac3872d360fe8",
+      "bytes": 18212
+    },
+    "gas_result_sealed_task.py": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_6b75ea6e14a94894a21987ac09cb0a85/files/task.py",
+      "sha256": "761112071590928275e617edd20fff4d26dc545bf1b1eb3c5eee7c82bd8d26e1",
+      "bytes": 1521,
+      "artifact_id": "artifact_6b75ea6e14a94894a21987ac09cb0a85",
+      "source_file_key": "sealed/task.py"
+    },
+    "gas_result_task_gas_energy.json": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_8643f2a839b14a489bc50e81a7af7dc8/files/gas_energy.json",
+      "sha256": "6f9827d64d8240c9f10bbc9aba59242c71076afc286b7c807f69700dcf57e86e",
+      "bytes": 29,
+      "artifact_id": "artifact_8643f2a839b14a489bc50e81a7af7dc8",
+      "source_file_key": "task/gas_energy.json"
+    },
+    "gas_result_task_observations.json": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_ea56c49343174200ac06383eccf7b90d/files/observations.json",
+      "sha256": "f2dc1643d0d19943be5c66ba9b8fac1337df5da955749203bbf4144e020c67c1",
+      "bytes": 350,
+      "artifact_id": "artifact_ea56c49343174200ac06383eccf7b90d",
+      "source_file_key": "task/observations.json"
+    },
+    "water_result": {
+      "path": "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/results/result_5038491415a94fbbbd878ca0358b16fb.json",
+      "sha256": "6113ec51eb24edae7b2161e02b2d3acf5fe3e8e25288a158965e0993c0399ff9",
+      "bytes": 18280
+    },
+    "water_result_sealed_task.py": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_4d242d3fcc8045018314c48fcbae16aa/files/task.py",
+      "sha256": "9f8208380ec9bb4f3d2f9346dc8948ff48ef2cef3854e8671fe6112434b0dabe",
+      "bytes": 1547,
+      "artifact_id": "artifact_4d242d3fcc8045018314c48fcbae16aa",
+      "source_file_key": "sealed/task.py"
+    },
+    "water_result_task_observations.json": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_bccb3d3c0e37466888c8ab1ee52e51b7/files/observations.json",
+      "sha256": "274702c7aca075787534d293f247a323c4433325b4da25d776a732abffff9a88",
+      "bytes": 356,
+      "artifact_id": "artifact_bccb3d3c0e37466888c8ab1ee52e51b7",
+      "source_file_key": "task/observations.json"
+    },
+    "water_result_task_water_energy.json": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_00cf654df46a47f2a307cb935b5dd50a/files/water_energy.json",
+      "sha256": "59ad6fc2a5d53cad095fc2a3f171ca15c6084fff8a1edf4ad185c24834d2c058",
+      "bytes": 29,
+      "artifact_id": "artifact_00cf654df46a47f2a307cb935b5dd50a",
+      "source_file_key": "task/water_energy.json"
+    },
+    "delta_result": {
+      "path": "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/results/result_633edcb992c74d52842414b2997e4982.json",
+      "sha256": "6cf87304c7dc870f32fb69bec14d6e6db759ae132ef4a81bf0b41d3c04be63a3",
+      "bytes": 13709
+    },
+    "delta_result_sealed_task.py": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_b0d6fe8e50014c44a349d8d37f47a0f0/files/task.py",
+      "sha256": "85fecee23550259f9e79fcf4acf2c0dd417095b9c593138a121ead8e2ef47638",
+      "bytes": 887,
+      "artifact_id": "artifact_b0d6fe8e50014c44a349d8d37f47a0f0",
+      "source_file_key": "sealed/task.py"
+    },
+    "delta_result_task_gas_energy.json": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_be4d382210cd4bbd9062345d77fa79c7/files/gas_energy.json",
+      "sha256": "6f9827d64d8240c9f10bbc9aba59242c71076afc286b7c807f69700dcf57e86e",
+      "bytes": 29,
+      "artifact_id": "artifact_be4d382210cd4bbd9062345d77fa79c7",
+      "source_file_key": "task/gas_energy.json"
+    },
+    "delta_result_task_observations.json": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_23eebd21e03c4f3c9dfdb3b11a7d928d/files/observations.json",
+      "sha256": "80abb34b2c8c9a1441d6e8e251c427c7432a0f46e729d28960ed9e2c83961dcb",
+      "bytes": 436,
+      "artifact_id": "artifact_23eebd21e03c4f3c9dfdb3b11a7d928d",
+      "source_file_key": "task/observations.json"
+    },
+    "delta_result_task_water_energy.json": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_219e9b7aa2da4724a3b8edb61e6f4640/files/water_energy.json",
+      "sha256": "59ad6fc2a5d53cad095fc2a3f171ca15c6084fff8a1edf4ad185c24834d2c058",
+      "bytes": 29,
+      "artifact_id": "artifact_219e9b7aa2da4724a3b8edb61e6f4640",
+      "source_file_key": "task/water_energy.json"
+    },
+    "prepared_xyz": {
+      "path": "data/live-repair/attempts/a027/data/artifacts/artifact_f03fbaff11e941a7b86e8ca6aff3200c/files/prepared.xyz",
+      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+      "bytes": 859,
+      "artifact_id": "artifact_f03fbaff11e941a7b86e8ca6aff3200c"
+    }
+  },
+  "original_file_hashes": {
+    "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/run.json": "51b02708f385d96a6a53f97082a031cc8e15d84f55bcc14df0af27edd03e76f1",
+    "data/live-repair/attempts/a027/report.json": "4459c0674a00d6b206bf880a9e80d54e818779621d3cd1c4dd77a810077c8d16",
+    "data/live-repair/attempts/a027/report.txt": "cef287cbf3efeb0bb217921e3942c228eb829813e9dcfc4ccb655ca610fa6863",
+    "data/live-repair/attempts/a027/outcome.json": "fdef5bd0404a21398c75cd372827c9a1ea8ae3b850ccf26823e680db3c295d8d",
+    "docs/acceptance/code-as-tools-step7-refreeze-4/freeze/public-tasks.json": "a064af8a0fcc90792c8276ebaa3b56b9b4c69242a97a8fa49d99166e9d23fa9b",
+    "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/deliveries/report_92cc93e56bfbe6b1a4bfbaab.md": "cef287cbf3efeb0bb217921e3942c228eb829813e9dcfc4ccb655ca610fa6863",
+    "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/model/model_bfaa0bc161be49528ed8aca25f95aa1a.response.json": "463c209ea154647bc7754dce88b92cf49425f338334c9e5a6f9c5b17eaba7332",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_388049a0406d4ef99d68933623b5bbea/artifact.json": "2a49b4d0598c11a259af362587aad5fc0c7a7ea4ad4f9eecc3dcb74dd6187b9e",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_388049a0406d4ef99d68933623b5bbea/files/stdout.out": "9652fb688dbabb6930b7ac80c4f35102a3759c1ec08d8254bf8d908158d02b57",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_72d554f21c1c45ff83576aa86a4a31c9/artifact.json": "1188b9d9f8090f48b5753af28a261357aa3e129fa548e6977ba2b21fb4e953ab",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_72d554f21c1c45ff83576aa86a4a31c9/files/job.inp": "fdd4861fec8e1df51b7bfbf0ba75f9b1b28c8cdbfd8c9f2f2a66430be21830bf",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_c013451c046140baa16353ced49258dd/artifact.json": "5310d7830c60338c3ae660c21f92bd288dc5164c581650642e3fc0c7bd9182ba",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_c013451c046140baa16353ced49258dd/files/ethanol.xyz": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_cbc3b45c170843aa96c9fa94a86f6e40/artifact.json": "582cd5df1f79cafe2bbf4622325313d2448b7a8ae5568276c2b5d62f187c3c03",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_cbc3b45c170843aa96c9fa94a86f6e40/files/stdout.out": "d3326b2aab8d30957f30d4b12b67cf3890467d0ba7c8622271f6b01208315d41",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_e4d43e14b8774a9f8dea9fd16f3fdbad/artifact.json": "40da4d55ba2d7f114b826da2dea9b38e42ea1aadea8abea8943cdc94dfda74a0",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_e4d43e14b8774a9f8dea9fd16f3fdbad/files/job.inp": "11610b3173d90e11f2c7c777cf7d87bd01a2e2a220665f86b33531c559fffbe1",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_a7bd8df24a4249d19fe6d6e213eadd9a/artifact.json": "9ac6c5ebb463dddd416f1b5d63239b7314361834f89a0d49c32f35672ab6cfcf",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_a7bd8df24a4249d19fe6d6e213eadd9a/files/ethanol.xyz": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+    "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/results/result_e59ddaee4e3d491fb9d760b75cbb5aa1.json": "a019cd224675032251da441c44fdbfd3bc8ef28974b107eb9b9ac3872d360fe8",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_6b75ea6e14a94894a21987ac09cb0a85/artifact.json": "e3d7a8bbd78e080513164853726e1857b37d7b86d7224bdca18d24656fc80d84",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_6b75ea6e14a94894a21987ac09cb0a85/files/task.py": "761112071590928275e617edd20fff4d26dc545bf1b1eb3c5eee7c82bd8d26e1",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_8643f2a839b14a489bc50e81a7af7dc8/artifact.json": "9f3be7b2f498b0da112e853b1e21481ae258db929ed033d6bea84c1ce099f402",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_8643f2a839b14a489bc50e81a7af7dc8/files/gas_energy.json": "6f9827d64d8240c9f10bbc9aba59242c71076afc286b7c807f69700dcf57e86e",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_ea56c49343174200ac06383eccf7b90d/artifact.json": "6789d92cd11cf6d28a1bb88cb6d0c1196a8529191827a14612cb10b5bcd282cc",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_ea56c49343174200ac06383eccf7b90d/files/observations.json": "f2dc1643d0d19943be5c66ba9b8fac1337df5da955749203bbf4144e020c67c1",
+    "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/results/result_5038491415a94fbbbd878ca0358b16fb.json": "6113ec51eb24edae7b2161e02b2d3acf5fe3e8e25288a158965e0993c0399ff9",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_4d242d3fcc8045018314c48fcbae16aa/artifact.json": "5d9c09282378db897ed15654b0ad851dbb1fc45226c385fb172e294d19aaade8",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_4d242d3fcc8045018314c48fcbae16aa/files/task.py": "9f8208380ec9bb4f3d2f9346dc8948ff48ef2cef3854e8671fe6112434b0dabe",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_bccb3d3c0e37466888c8ab1ee52e51b7/artifact.json": "4112e4534d9ade6b3ac500a26c764647648d926a38617abe248f04fb865fd10d",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_bccb3d3c0e37466888c8ab1ee52e51b7/files/observations.json": "274702c7aca075787534d293f247a323c4433325b4da25d776a732abffff9a88",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_00cf654df46a47f2a307cb935b5dd50a/artifact.json": "ecb478a339e16a4cf3eb34aac26f85e3b44b30a10a84117fbe7a1dc30679b93d",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_00cf654df46a47f2a307cb935b5dd50a/files/water_energy.json": "59ad6fc2a5d53cad095fc2a3f171ca15c6084fff8a1edf4ad185c24834d2c058",
+    "data/live-repair/attempts/a027/data/runs/run_bcb0cc84ad554e99af47183b52ee25ba/results/result_633edcb992c74d52842414b2997e4982.json": "6cf87304c7dc870f32fb69bec14d6e6db759ae132ef4a81bf0b41d3c04be63a3",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_b0d6fe8e50014c44a349d8d37f47a0f0/artifact.json": "838e12e4aa5c92001334f1f9d80c474af533d1e53f6748c0e925e8cb10d9bea1",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_b0d6fe8e50014c44a349d8d37f47a0f0/files/task.py": "85fecee23550259f9e79fcf4acf2c0dd417095b9c593138a121ead8e2ef47638",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_be4d382210cd4bbd9062345d77fa79c7/artifact.json": "2308a83933fda60ec1f033d96d8e74055bd798d4f662b4e5023bcef12aafaacc",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_be4d382210cd4bbd9062345d77fa79c7/files/gas_energy.json": "6f9827d64d8240c9f10bbc9aba59242c71076afc286b7c807f69700dcf57e86e",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_23eebd21e03c4f3c9dfdb3b11a7d928d/artifact.json": "4a818a534eb0bbdc8682484f05d215f6b823d484e9b98a6588fb2725c183a4bc",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_23eebd21e03c4f3c9dfdb3b11a7d928d/files/observations.json": "80abb34b2c8c9a1441d6e8e251c427c7432a0f46e729d28960ed9e2c83961dcb",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_219e9b7aa2da4724a3b8edb61e6f4640/artifact.json": "ff09171906ecb1816866ff13e4f0d8d45468154693bbc3995c34acb41926e649",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_219e9b7aa2da4724a3b8edb61e6f4640/files/water_energy.json": "59ad6fc2a5d53cad095fc2a3f171ca15c6084fff8a1edf4ad185c24834d2c058",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_f03fbaff11e941a7b86e8ca6aff3200c/artifact.json": "6b41e26f8e8c0e85d84a8dab28975dd906cbfd56f9c6ca92c959ddc17b8d56b1",
+    "data/live-repair/attempts/a027/data/artifacts/artifact_f03fbaff11e941a7b86e8ca6aff3200c/files/prepared.xyz": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257"
+  },
+  "original_files_unchanged": true,
+  "raw_delivery_review_status": "fail",
+  "scientific_qualification_assigned": false
+}

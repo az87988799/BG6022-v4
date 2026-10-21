@@ -1,0 +1,202 @@
+{
+  "version": 1,
+  "observations": [
+    {
+      "name": "nmr_shielding_tensor",
+      "value": {
+        "tensors": [
+          {
+            "nucleus": "C",
+            "index": 0,
+            "tensor_ppm": [
+              [
+                279.306442526301,
+                -0.7235059349055165,
+                -3.240156067355309e-08
+              ],
+              [
+                -1.6384105705810197,
+                -21.076538787894037,
+                4.873977045419476e-06
+              ],
+              [
+                -2.0952099302831687e-06,
+                4.796307385349447e-06,
+                -21.076380418879296
+              ]
+            ],
+            "coordinate_system": "Cartesian x,y,z as written by ORCA property output"
+          },
+          {
+            "nucleus": "N",
+            "index": 1,
+            "tensor_ppm": [
+              [
+                340.3978514522527,
+                -1.8417507241526379,
+                -3.7981807850534773e-07
+              ],
+              [
+                -0.04375983603251765,
+                -221.29147420663475,
+                2.95664180274871e-06
+              ],
+              [
+                3.889544329712737e-06,
+                3.398152179935578e-06,
+                -221.30898494239614
+              ]
+            ],
+            "coordinate_system": "Cartesian x,y,z as written by ORCA property output"
+          },
+          {
+            "nucleus": "H",
+            "index": 2,
+            "tensor_ppm": [
+              [
+                39.711929711733575,
+                0.05474263497946058,
+                -5.790559316451899e-09
+              ],
+              [
+                -0.11354180934211006,
+                24.91932798636162,
+                -3.328956933164408e-07
+              ],
+              [
+                -1.346675593209866e-07,
+                -3.248668574793921e-07,
+                24.91986403620953
+              ]
+            ],
+            "coordinate_system": "Cartesian x,y,z as written by ORCA property output"
+          }
+        ]
+      },
+      "unit": "ppm",
+      "sources": [
+        {
+          "filename": "task/job.property.txt",
+          "location": "lines 267-272"
+        },
+        {
+          "filename": "task/job.property.txt",
+          "location": "lines 273-278"
+        },
+        {
+          "filename": "task/job.property.txt",
+          "location": "lines 279-284"
+        }
+      ],
+      "formula": null,
+      "artifacts": [
+        "giao_shielding_tensors.csv"
+      ],
+      "limitations": [
+        "Parsed from ORCA property output; GIAO total shielding tensors, not reference-calibrated chemical shifts.",
+        "Nucleus assignment follows parsed &Elems order and ORCA &STot block order.",
+        "No experimental reference or spectrum used."
+      ]
+    },
+    {
+      "name": "isotropic_shielding",
+      "value": {
+        "isotropic": [
+          {
+            "nucleus": "C",
+            "index": 0,
+            "isotropic_ppm": 79.05117443984255
+          },
+          {
+            "nucleus": "N",
+            "index": 1,
+            "isotropic_ppm": -34.06753589892605
+          },
+          {
+            "nucleus": "H",
+            "index": 2,
+            "isotropic_ppm": 29.85037391143491
+          }
+        ]
+      },
+      "unit": "ppm",
+      "sources": [
+        {
+          "filename": "task/job.property.txt",
+          "location": "lines 267-272"
+        },
+        {
+          "filename": "task/job.property.txt",
+          "location": "lines 273-278"
+        },
+        {
+          "filename": "task/job.property.txt",
+          "location": "lines 279-284"
+        }
+      ],
+      "formula": "isotropic_ppm = (sigma_xx + sigma_yy + sigma_zz)/3",
+      "artifacts": [
+        "giao_shielding_tensors.csv"
+      ],
+      "limitations": [
+        "Parsed from ORCA property output; GIAO total shielding tensors, not reference-calibrated chemical shifts.",
+        "Nucleus assignment follows parsed &Elems order and ORCA &STot block order.",
+        "No experimental reference or spectrum used."
+      ]
+    },
+    {
+      "name": "trace_consistency_check",
+      "value": {
+        "per_nucleus": [
+          {
+            "nucleus": "C",
+            "index": 0,
+            "trace_ppm": 237.15352331952766,
+            "three_times_isotropic_ppm": 237.15352331952766,
+            "deviation_ppm": 0.0
+          },
+          {
+            "nucleus": "N",
+            "index": 1,
+            "trace_ppm": -102.20260769677816,
+            "three_times_isotropic_ppm": -102.20260769677816,
+            "deviation_ppm": 0.0
+          },
+          {
+            "nucleus": "H",
+            "index": 2,
+            "trace_ppm": 89.55112173430473,
+            "three_times_isotropic_ppm": 89.55112173430473,
+            "deviation_ppm": 0.0
+          }
+        ],
+        "max_abs_deviation_ppm": 0.0,
+        "consistent": true
+      },
+      "unit": "ppm",
+      "sources": [
+        {
+          "filename": "task/job.property.txt",
+          "location": "lines 267-272"
+        },
+        {
+          "filename": "task/job.property.txt",
+          "location": "lines 273-278"
+        },
+        {
+          "filename": "task/job.property.txt",
+          "location": "lines 279-284"
+        }
+      ],
+      "formula": "deviation_ppm = isotropic_ppm - trace_ppm/3",
+      "artifacts": [
+        "giao_shielding_tensors.csv"
+      ],
+      "limitations": [
+        "Parsed from ORCA property output; GIAO total shielding tensors, not reference-calibrated chemical shifts.",
+        "Nucleus assignment follows parsed &Elems order and ORCA &STot block order.",
+        "No experimental reference or spectrum used."
+      ]
+    }
+  ]
+}

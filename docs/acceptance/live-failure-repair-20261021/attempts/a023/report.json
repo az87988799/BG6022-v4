@@ -1,0 +1,2046 @@
+{
+  "schema_version": 1,
+  "run_id": "run_b1914eb571224768bb5a643dc5b0e845",
+  "run_state": "paused",
+  "request_id": "request_8f3c89b8f5c44e4cb0ad370c8baef146",
+  "request_version": 3,
+  "plan_id": null,
+  "plan_version": null,
+  "recorded_delivery_status": "partial",
+  "report_delivery_status": "partial",
+  "user_goal_complete": false,
+  "request": {
+    "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "conditions": {
+      "method": "B3LYP",
+      "basis": "def2-TZVP",
+      "charge": 0,
+      "multiplicity": 1
+    },
+    "additional_conditions": {
+      "explain_results": true,
+      "charge": 0,
+      "multiplicity": 1,
+      "electronic_state": "RKS",
+      "method": "B3LYP",
+      "basis": "def2-TZVP"
+    },
+    "condition_sources": {
+      "charge": "explicit",
+      "multiplicity": "explicit",
+      "electronic_state": "default",
+      "method": "auto_selected",
+      "basis": "auto_selected"
+    },
+    "systems": [
+      {
+        "id": "system_ethanol",
+        "geometry_artifact_id": null,
+        "conditions": {},
+        "conditions_source": {},
+        "atom_mapping": [],
+        "label": "乙醇",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "乙醇"
+          ],
+          "canonical_names": [],
+          "query_name": "ethanol",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+            "text_basis": "乙醇（中性、单重态）",
+            "start": 2,
+            "end": 12,
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "unresolved": [],
+    "selection_reasons": {
+      "method": "B3LYP is a widely used DFT hybrid functional suitable for single-point electronic energies of small organic molecules; balances accuracy and cost for gas-phase and implicit solvation calculations.",
+      "basis": "def2-TZVP provides a balanced triple-zeta basis with polarization, appropriate for accurate absolute electronic energies of ethanol without excessive computational cost."
+    },
+    "selection_evidence": {
+      "request.method": {
+        "value": "B3LYP",
+        "source": "auto_selected",
+        "request_version": 2,
+        "reason": "B3LYP is a widely used DFT hybrid functional suitable for single-point electronic energies of small organic molecules; balances accuracy and cost for gas-phase and implicit solvation calculations.",
+        "sources": [],
+        "schema": "condition-selection-3",
+        "basis_kind": "model_reason",
+        "scientific_validation": "not_established_by_selection",
+        "user_request_authorization": {
+          "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+          "text_basis": "自行选择同一方法与基组",
+          "start": 34,
+          "end": 45,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        }
+      },
+      "request.basis": {
+        "value": "def2-TZVP",
+        "source": "auto_selected",
+        "request_version": 2,
+        "reason": "def2-TZVP provides a balanced triple-zeta basis with polarization, appropriate for accurate absolute electronic energies of ethanol without excessive computational cost.",
+        "sources": [],
+        "schema": "condition-selection-3",
+        "basis_kind": "model_reason",
+        "scientific_validation": "not_established_by_selection",
+        "user_request_authorization": {
+          "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+          "text_basis": "自行选择同一方法与基组",
+          "start": 34,
+          "end": 45,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        }
+      }
+    }
+  },
+  "goals": [
+    {
+      "goal_id": "goal_identity_ethanol",
+      "port": "resolved_identity",
+      "required": true,
+      "original_text": "乙醇（中性、单重态）",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "structure-identity-3",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    },
+    {
+      "goal_id": "goal_geometry_ethanol",
+      "port": "prepared_geometry",
+      "required": true,
+      "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "structure-prepare-3",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    },
+    {
+      "goal_id": "goal_energy_gas",
+      "port": "energy",
+      "required": true,
+      "original_text": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {
+        "environment": "gas_phase",
+        "geometry_relation": "fixed_initial"
+      },
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    },
+    {
+      "goal_id": "goal_energy_cpcm",
+      "port": "energy",
+      "required": true,
+      "original_text": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {
+        "environment": "CPCM(water)",
+        "geometry_relation": "fixed_initial"
+      },
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    },
+    {
+      "goal_id": "goal_delivery_files",
+      "port": "artifact_metadata",
+      "required": true,
+      "original_text": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    },
+    {
+      "goal_id": "goal_energy_difference",
+      "port": "energy_difference",
+      "required": true,
+      "original_text": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    }
+  ],
+  "results": [],
+  "attempts": [],
+  "goal_facts": [
+    {
+      "goal_id": "goal_identity_ethanol",
+      "port": "resolved_identity",
+      "required": true,
+      "system_ids": [
+        "system_ethanol"
+      ],
+      "requested_identity": {
+        "contract": "general-identity-3",
+        "requested_names": [
+          "乙醇"
+        ],
+        "canonical_names": [],
+        "query_name": "ethanol",
+        "query_name_source": "inferred_translation_or_alias",
+        "ambiguities": [],
+        "text_evidence": {
+          "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+          "text_basis": "乙醇（中性、单重态）",
+          "start": 2,
+          "end": 12,
+          "schema": "request-semantics-3"
+        }
+      },
+      "current_conditions": {
+        "system_ethanol": {
+          "method": "B3LYP",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": null
+        }
+      },
+      "condition_sources": {
+        "system_ethanol": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "unknown:unspecified_condition"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "structure-identity-3",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_geometry_ethanol",
+      "port": "prepared_geometry",
+      "required": true,
+      "system_ids": [
+        "system_ethanol"
+      ],
+      "requested_identity": {
+        "contract": "general-identity-3",
+        "requested_names": [
+          "乙醇"
+        ],
+        "canonical_names": [],
+        "query_name": "ethanol",
+        "query_name_source": "inferred_translation_or_alias",
+        "ambiguities": [],
+        "text_evidence": {
+          "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+          "text_basis": "乙醇（中性、单重态）",
+          "start": 2,
+          "end": 12,
+          "schema": "request-semantics-3"
+        }
+      },
+      "current_conditions": {
+        "system_ethanol": {
+          "method": "B3LYP",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": null
+        }
+      },
+      "condition_sources": {
+        "system_ethanol": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "unknown:unspecified_condition"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "structure-prepare-3",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_energy_gas",
+      "port": "energy",
+      "required": true,
+      "system_ids": [
+        "system_ethanol"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "乙醇"
+        ]
+      },
+      "current_conditions": {
+        "system_ethanol": {
+          "method": "B3LYP",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_ethanol": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "goal:goal_energy_gas"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": "fixed_initial",
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_energy_cpcm",
+      "port": "energy",
+      "required": true,
+      "system_ids": [
+        "system_ethanol"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "乙醇"
+        ]
+      },
+      "current_conditions": {
+        "system_ethanol": {
+          "method": "B3LYP",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "CPCM(water)"
+        }
+      },
+      "condition_sources": {
+        "system_ethanol": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "goal:goal_energy_cpcm"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": "fixed_initial",
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_delivery_files",
+      "port": "artifact_metadata",
+      "required": true,
+      "system_ids": [
+        "system_ethanol"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "乙醇"
+        ]
+      },
+      "current_conditions": {
+        "system_ethanol": {
+          "method": "B3LYP",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": null
+        }
+      },
+      "condition_sources": {
+        "system_ethanol": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "unknown:unspecified_condition"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_energy_difference",
+      "port": "energy_difference",
+      "required": true,
+      "system_ids": [
+        "system_ethanol"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "乙醇"
+        ]
+      },
+      "current_conditions": {
+        "system_ethanol": {
+          "method": "B3LYP",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": null
+        }
+      },
+      "condition_sources": {
+        "system_ethanol": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "request.conditions",
+          "multiplicity": "request.conditions",
+          "electronic_state": "request.conditions",
+          "environment": "unknown:unspecified_condition"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    }
+  ],
+  "permission": {
+    "version": 1,
+    "scientific_execution": true,
+    "allowed_tools": [
+      "structure.resolve",
+      "structure.prepare",
+      "workspace.write",
+      "python.execute",
+      "orca.run",
+      "evidence.list",
+      "evidence.discover",
+      "evidence.search",
+      "evidence.value",
+      "evidence.text",
+      "knowledge.search",
+      "knowledge.answer"
+    ],
+    "max_cores": 4,
+    "max_memory_mb": 1024,
+    "artifact_ids": [],
+    "source_ids": [],
+    "result_ids": [],
+    "model_execution": true,
+    "code_execution": true,
+    "artifact_writes": true,
+    "allowed_repairs": {},
+    "allow_additional_science": true,
+    "external_identity_queries": true,
+    "geometry_preparation": true
+  },
+  "budget": {
+    "limits": {
+      "logical_steps": 32,
+      "attempts_per_step": 12,
+      "orca_starts": 12,
+      "extra_orca_starts": 11,
+      "postprocess_starts": 0,
+      "run_seconds": 7200.0,
+      "model_calls": 48,
+      "plan_revisions": 32,
+      "model_tokens": 1200000,
+      "input_tokens": 64000,
+      "output_tokens": 32768,
+      "decision_rounds": 80,
+      "evidence_reads": 24,
+      "analysis_executions": 12,
+      "file_writes": 32,
+      "corrections_per_proposal": 47,
+      "transport_retries": 0,
+      "identity_queries": 2,
+      "structure_preparations": 1,
+      "knowledge_queries": 4,
+      "internal_work_units": 10000,
+      "code_retries": 11,
+      "artifact_count": 800,
+      "artifact_bytes": 268435456,
+      "artifact_total_bytes": 268435456
+    },
+    "usage": {
+      "internal_work_units": 0,
+      "internal_calls_by_purpose": {},
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 8,
+      "model_tokens_used": 165543,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 0,
+      "decision_rounds": 8,
+      "evidence_reads": 0,
+      "analysis_executions": 0,
+      "logical_steps": [],
+      "identity_queries": 0,
+      "structure_preparations": 0,
+      "knowledge_queries": 0
+    },
+    "deadline": "2026-10-21T00:48:09.673666+00:00",
+    "unresolved_scientific_attempt_ids": [],
+    "model_cost": {
+      "currency": "USD",
+      "known_cost": null,
+      "unsettled_reservation": null,
+      "cost_basis": "frozen_peak_uncached_upper_bound_from_known_tokens",
+      "provider_billing_queried": false,
+      "provider_charged_amount": null,
+      "cost_records_complete": false,
+      "known_call_count": 8,
+      "unsettled_call_count": 0,
+      "records": [
+        {
+          "id": "model_6d2672724054426596b6d1ef067e99ab",
+          "logical_id": "decision_300450ef7079ea3c22b470e9_1",
+          "request_hash": "fabdfcedff3146a9e9c0d3e594f77621a31c8f149bf43502372e51f8269860f1",
+          "prompt_version": "agent-json-v87",
+          "status": "known",
+          "input_reserved": 23135,
+          "output_reserved": 32768,
+          "cost_reserved_usd": null,
+          "input_tokens": 5819,
+          "output_tokens": 14556,
+          "total_tokens": 20375,
+          "cost_known_usd": null,
+          "error_category": null,
+          "response_hash": "7bf49288e11bbdd3b92dd380d0cd6e90a0d6a6e4ee87d3f4780d53f0b30c03cd",
+          "latency_seconds": 94.07800000000861
+        },
+        {
+          "id": "model_1b98c1c104e341aaa12432c9175a7b82",
+          "logical_id": "decision_300450ef7079ea3c22b470e9_2",
+          "request_hash": "1c0e6b5a6a775391761cf40163bd5a6002dd157846d480a1ada1a68eefec89d2",
+          "prompt_version": "agent-json-v87",
+          "status": "known",
+          "input_reserved": 28810,
+          "output_reserved": 32768,
+          "cost_reserved_usd": null,
+          "input_tokens": 7406,
+          "output_tokens": 6185,
+          "total_tokens": 13591,
+          "cost_known_usd": null,
+          "error_category": null,
+          "response_hash": "19697f4a31673077e6c818d24b3cc54e778e0a4c84f29c5480ccd97b4f27e515",
+          "latency_seconds": 40.719000000011874
+        },
+        {
+          "id": "model_54172b744dfb4ea587812d69a675cd06",
+          "logical_id": "decision_300450ef7079ea3c22b470e9_3",
+          "request_hash": "7c9c4ee3d8dd2828e3248a8e3c49a72e072c464b2b6591590a31093bebbe235d",
+          "prompt_version": "agent-json-v87",
+          "status": "known",
+          "input_reserved": 28613,
+          "output_reserved": 32768,
+          "cost_reserved_usd": null,
+          "input_tokens": 7336,
+          "output_tokens": 4479,
+          "total_tokens": 11815,
+          "cost_known_usd": null,
+          "error_category": null,
+          "response_hash": "ee5274e62afc81733c76487188d06a946132f315de7932f7965db730e0e6bab1",
+          "latency_seconds": 29.09399999998277
+        },
+        {
+          "id": "model_0e12b6ae9a414396bdffc0e7af42c779",
+          "logical_id": "decision_341e74899b5526463d94505e_1",
+          "request_hash": "62689b99af2a1a913f68dda6a348c28b2188f4b6c52c09d75895c838b1ce18fa",
+          "prompt_version": "agent-json-v87",
+          "status": "known",
+          "input_reserved": 58700,
+          "output_reserved": 32768,
+          "cost_reserved_usd": null,
+          "input_tokens": 15079,
+          "output_tokens": 856,
+          "total_tokens": 15935,
+          "cost_known_usd": null,
+          "error_category": null,
+          "response_hash": "b8e966830a417e05a6426ebadffa332bbcbabc09ec14c9217f57be602347bd46",
+          "latency_seconds": 8.860000000015134
+        },
+        {
+          "id": "model_a26a914288d244278f082f3c085e824c",
+          "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_1",
+          "request_hash": "ff954c05e4cffc70241a4be36f5d7ca2a4f6d5966d2d57b4d38b13895d89abed",
+          "prompt_version": "agent-json-v87",
+          "status": "known",
+          "input_reserved": 57403,
+          "output_reserved": 32768,
+          "cost_reserved_usd": null,
+          "input_tokens": 14772,
+          "output_tokens": 5621,
+          "total_tokens": 20393,
+          "cost_known_usd": null,
+          "error_category": null,
+          "response_hash": "d30e0aed3fc8871965802b13bbb30d9d2304f6cd9c6a8d94ab446ee23059c105",
+          "latency_seconds": 37.719000000011874
+        },
+        {
+          "id": "model_29b8f894fb64419e9277278d01d63623",
+          "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_2",
+          "request_hash": "df1f7da3f0ea6b5e06244420366f0b2864fa5d7ac61a354ee6edf3a051214c0d",
+          "prompt_version": "agent-json-v87",
+          "status": "known",
+          "input_reserved": 62153,
+          "output_reserved": 32768,
+          "cost_reserved_usd": null,
+          "input_tokens": 16029,
+          "output_tokens": 11950,
+          "total_tokens": 27979,
+          "cost_known_usd": null,
+          "error_category": null,
+          "response_hash": "f778ebe445431904831bc9e26cca90519ba6ace4864b840ada49da654340355f",
+          "latency_seconds": 72.92199999999139
+        },
+        {
+          "id": "model_e3d54ef8ff3346218fe592f68c632153",
+          "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_3",
+          "request_hash": "95e7cd61e8fef6ee80f3529bbbbb6c0a71722e1e2a657c6f6f2f292f60057980",
+          "prompt_version": "agent-json-v87",
+          "status": "known",
+          "input_reserved": 54056,
+          "output_reserved": 32768,
+          "cost_reserved_usd": null,
+          "input_tokens": 15024,
+          "output_tokens": 12960,
+          "total_tokens": 27984,
+          "cost_known_usd": null,
+          "error_category": null,
+          "response_hash": "1d06170ab09192f7b1dbd2532053605f7916038642462e3b4cb37b322020e39b",
+          "latency_seconds": 85.23499999998603
+        },
+        {
+          "id": "model_f100822600224e3c81e31eb3249b908b",
+          "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_4",
+          "request_hash": "181c514b77554fffdb35f85dffbcf1212d094e6ec8d2a9276578ea70e2d37b48",
+          "prompt_version": "agent-json-v87",
+          "status": "known",
+          "input_reserved": 54336,
+          "output_reserved": 32768,
+          "cost_reserved_usd": null,
+          "input_tokens": 15052,
+          "output_tokens": 12419,
+          "total_tokens": 27471,
+          "cost_known_usd": null,
+          "error_category": null,
+          "response_hash": "f016ffb95305984f6cf1429cac145cb9509da1992bf710255fb66d3859f7f013",
+          "latency_seconds": 85.53100000001723
+        }
+      ]
+    }
+  },
+  "diagnostics": [
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_6d2672724054426596b6d1ef067e99ab",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_1b98c1c104e341aaa12432c9175a7b82",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_a26a914288d244278f082f3c085e824c",
+      "error_category": "ProposalError"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_29b8f894fb64419e9277278d01d63623",
+      "error_category": "PlanningError"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_e3d54ef8ff3346218fe592f68c632153",
+      "error_category": "PlanningError"
+    },
+    {
+      "category": "stale_model_response",
+      "model_id": "model_f100822600224e3c81e31eb3249b908b"
+    }
+  ],
+  "gaps": [],
+  "execution": {
+    "internal_calls": [],
+    "checkpoints": [],
+    "progress": {
+      "total": 0,
+      "completed": 0,
+      "failed": 0,
+      "running": 0
+    }
+  },
+  "stop_reason": {
+    "state": "paused",
+    "categories": [
+      "paused",
+      "proposal_rejected",
+      "stale_model_response"
+    ],
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "error_category": "ProposalError",
+        "model_id": "model_6d2672724054426596b6d1ef067e99ab"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "ProposalError",
+        "model_id": "model_1b98c1c104e341aaa12432c9175a7b82"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "ProposalError",
+        "model_id": "model_a26a914288d244278f082f3c085e824c"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "PlanningError",
+        "model_id": "model_29b8f894fb64419e9277278d01d63623"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "PlanningError",
+        "model_id": "model_e3d54ef8ff3346218fe592f68c632153"
+      },
+      {
+        "category": "stale_model_response",
+        "model_id": "model_f100822600224e3c81e31eb3249b908b"
+      }
+    ],
+    "model_errors": []
+  },
+  "limitations": [
+    "Evidence reading, scientific output qualification, and user goal completion are distinct.",
+    "Electronic energy and its difference are not free energy or thermochemical corrections.",
+    "Finite sampling describes only the sampled discrete geometries.",
+    "An optimized geometry alone does not establish vibrational stability or a global minimum."
+  ],
+  "artifact_index": [],
+  "generated_scripts": [],
+  "delivery": {
+    "version": "terminal-delivery-1",
+    "snapshot_ref": "current",
+    "basis": {
+      "request_id": "request_8f3c89b8f5c44e4cb0ad370c8baef146",
+      "request_version": 3,
+      "plan_id": null,
+      "plan_version": null,
+      "permission_version": 1,
+      "control_generation": 2
+    },
+    "request_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "communication": {
+      "delivery_scope": "science",
+      "awaiting_reply": false,
+      "notices": [],
+      "questions": [],
+      "question_gaps": {}
+    },
+    "resources": {
+      "permission": {
+        "version": 1,
+        "scientific_execution": true,
+        "allowed_tools": [
+          "structure.resolve",
+          "structure.prepare",
+          "workspace.write",
+          "python.execute",
+          "orca.run",
+          "evidence.list",
+          "evidence.discover",
+          "evidence.search",
+          "evidence.value",
+          "evidence.text",
+          "knowledge.search",
+          "knowledge.answer"
+        ],
+        "max_cores": 4,
+        "max_memory_mb": 1024,
+        "artifact_ids": [],
+        "source_ids": [],
+        "result_ids": [],
+        "model_execution": true,
+        "code_execution": true,
+        "artifact_writes": true,
+        "allowed_repairs": {},
+        "allow_additional_science": true,
+        "external_identity_queries": true,
+        "geometry_preparation": true
+      },
+      "remaining": {
+        "orca_starts": 12,
+        "extra_orca_starts": 11,
+        "evidence_reads": 24,
+        "analysis_executions": 12,
+        "identity_queries": 2,
+        "structure_preparations": 1,
+        "knowledge_queries": 4,
+        "file_writes": 32,
+        "internal_work_units": 10000,
+        "code_retries": 11,
+        "postprocess_starts": 0
+      },
+      "limits": {
+        "orca_starts": 12,
+        "extra_orca_starts": 11,
+        "evidence_reads": 24,
+        "analysis_executions": 12,
+        "identity_queries": 2,
+        "structure_preparations": 1,
+        "knowledge_queries": 4,
+        "file_writes": 32,
+        "internal_work_units": 10000,
+        "code_retries": 11,
+        "postprocess_starts": 0
+      },
+      "usage": {
+        "orca_starts_reserved": 0,
+        "orca_starts_actual": 0,
+        "extra_orca_starts_reserved": 0,
+        "evidence_reads": 0,
+        "analysis_executions": 0,
+        "identity_queries": 0,
+        "structure_preparations": 0,
+        "knowledge_queries": 0,
+        "file_writes": 0,
+        "internal_work_units": 0,
+        "code_retries": 0,
+        "postprocess_starts": 0
+      },
+      "unsettled_attempt_ids": [],
+      "unsettled_call_ids": [],
+      "code_attempt_allowance": {
+        "recorded": 0,
+        "effective_used": 0,
+        "basis": "max(recorded, python_attempt_count - 1)",
+        "meaning": "every Python execution after the first, including distinct scripts"
+      },
+      "unsettled_internal_request_keys": [],
+      "execution_cost": {
+        "python_attempts": 0,
+        "cpu_seconds": 0.0,
+        "elapsed_seconds": 0.0,
+        "complete": true
+      },
+      "artifact_limits": {
+        "artifact_count": 800,
+        "artifact_bytes": 268435456,
+        "artifact_total_bytes": 268435456
+      },
+      "artifact_usage": {
+        "status": "not_in_snapshot",
+        "disk_hard_quota": false
+      }
+    },
+    "goals": [
+      {
+        "goal_id": "goal_identity_ethanol",
+        "port": "resolved_identity",
+        "required": true,
+        "system_ids": [
+          "system_ethanol"
+        ],
+        "requested_identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "乙醇"
+          ],
+          "canonical_names": [],
+          "query_name": "ethanol",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+            "text_basis": "乙醇（中性、单重态）",
+            "start": 2,
+            "end": 12,
+            "schema": "request-semantics-3"
+          }
+        },
+        "current_conditions": {
+          "system_ethanol": {
+            "method": "B3LYP",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "structure-identity-3",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g1",
+        "original_text": "乙醇（中性、单重态）",
+        "text_evidence": {
+          "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+          "text_basis": "乙醇（中性、单重态）",
+          "start": 2,
+          "end": 12,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f1",
+          "f2"
+        ],
+        "required_blocker_refs": [
+          "b1"
+        ],
+        "explanation_refs": [
+          "e1"
+        ],
+        "next_action_refs": [
+          "n1"
+        ]
+      },
+      {
+        "goal_id": "goal_geometry_ethanol",
+        "port": "prepared_geometry",
+        "required": true,
+        "system_ids": [
+          "system_ethanol"
+        ],
+        "requested_identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "乙醇"
+          ],
+          "canonical_names": [],
+          "query_name": "ethanol",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+            "text_basis": "乙醇（中性、单重态）",
+            "start": 2,
+            "end": 12,
+            "schema": "request-semantics-3"
+          }
+        },
+        "current_conditions": {
+          "system_ethanol": {
+            "method": "B3LYP",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "structure-prepare-3",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g2",
+        "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "text_evidence": {
+          "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+          "text_basis": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "start": 0,
+          "end": 306,
+          "schema": "request-semantics-3",
+          "quantity_canonicalization": {
+            "proposed_value": "乙醇结构（中性、单重态）及共用XYZ/hash，随机数种子1701（若不支持固定则记录不可固定）",
+            "value": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气",
+            "source": "authenticated_goal_text_basis",
+            "rule": "source-quantity-label-1",
+            "complete_source_field": "original_text"
+          }
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f3",
+          "f4"
+        ],
+        "required_blocker_refs": [
+          "b2"
+        ],
+        "explanation_refs": [
+          "e2"
+        ],
+        "next_action_refs": [
+          "n2"
+        ]
+      },
+      {
+        "goal_id": "goal_energy_gas",
+        "port": "energy",
+        "required": true,
+        "system_ids": [
+          "system_ethanol"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "乙醇"
+          ]
+        },
+        "current_conditions": {
+          "system_ethanol": {
+            "method": "B3LYP",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "goal:goal_energy_gas"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": "fixed_initial",
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g3",
+        "original_text": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+        "text_evidence": {
+          "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+          "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+          "start": 46,
+          "end": 74,
+          "schema": "request-semantics-3",
+          "shared_constraints": [
+            {
+              "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+              "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+              "start": 46,
+              "end": 74,
+              "schema": "request-semantics-3"
+            }
+          ],
+          "conditions": {
+            "environment": {
+              "value": "gas_phase",
+              "source": "explicit",
+              "text_basis": "气相",
+              "request_version": null,
+              "system_ref": "system_ethanol",
+              "default_rule": null,
+              "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+              "source_refs": [],
+              "value_basis": null,
+              "start": 50,
+              "end": 52,
+              "schema": "request-semantics-3",
+              "occurrences": [
+                {
+                  "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+                  "start": 50,
+                  "end": 52
+                },
+                {
+                  "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+                  "start": 159,
+                  "end": 161
+                }
+              ]
+            }
+          }
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f5",
+          "f6"
+        ],
+        "required_blocker_refs": [
+          "b3"
+        ],
+        "explanation_refs": [
+          "e3"
+        ],
+        "next_action_refs": [
+          "n3"
+        ]
+      },
+      {
+        "goal_id": "goal_energy_cpcm",
+        "port": "energy",
+        "required": true,
+        "system_ids": [
+          "system_ethanol"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "乙醇"
+          ]
+        },
+        "current_conditions": {
+          "system_ethanol": {
+            "method": "B3LYP",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "CPCM(water)"
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "goal:goal_energy_cpcm"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": "fixed_initial",
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g4",
+        "original_text": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+        "text_evidence": {
+          "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+          "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+          "start": 46,
+          "end": 74,
+          "schema": "request-semantics-3",
+          "shared_constraints": [
+            {
+              "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+              "text_basis": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+              "start": 46,
+              "end": 74,
+              "schema": "request-semantics-3"
+            }
+          ],
+          "conditions": {
+            "environment": {
+              "value": "CPCM(water)",
+              "source": "explicit",
+              "text_basis": "ORCA C-PCM水环境",
+              "request_version": null,
+              "system_ref": "system_ethanol",
+              "default_rule": null,
+              "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+              "source_refs": [],
+              "value_basis": null,
+              "normalization": {
+                "model": "cpcm",
+                "solvent": "water",
+                "source": "program_checked_component_mapping",
+                "raw_phrase": "分别计算气相与ORCA C-PCM水环境下的单点电子能量",
+                "proposed_value": "CPCM(water)",
+                "model_basis": "C-PCM",
+                "solvent_basis": "水"
+              },
+              "start": 53,
+              "end": 66,
+              "schema": "request-semantics-3"
+            }
+          }
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f7",
+          "f8"
+        ],
+        "required_blocker_refs": [
+          "b4"
+        ],
+        "explanation_refs": [
+          "e4"
+        ],
+        "next_action_refs": [
+          "n4"
+        ]
+      },
+      {
+        "goal_id": "goal_delivery_files",
+        "port": "artifact_metadata",
+        "required": true,
+        "system_ids": [
+          "system_ethanol"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "乙醇"
+          ]
+        },
+        "current_conditions": {
+          "system_ethanol": {
+            "method": "B3LYP",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g5",
+        "original_text": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。",
+        "text_evidence": {
+          "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+          "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。",
+          "start": 111,
+          "end": 178,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f9",
+          "f10"
+        ],
+        "required_blocker_refs": [
+          "b5"
+        ],
+        "explanation_refs": [
+          "e5"
+        ],
+        "next_action_refs": [
+          "n5"
+        ]
+      },
+      {
+        "goal_id": "goal_energy_difference",
+        "port": "energy_difference",
+        "required": true,
+        "system_ids": [
+          "system_ethanol"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "乙醇"
+          ]
+        },
+        "current_conditions": {
+          "system_ethanol": {
+            "method": "B3LYP",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": null
+          }
+        },
+        "condition_sources": {
+          "system_ethanol": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "request.conditions",
+            "multiplicity": "request.conditions",
+            "electronic_state": "request.conditions",
+            "environment": "unknown:unspecified_condition"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g6",
+        "original_text": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+        "text_evidence": {
+          "message_id": "message_f6803f79b73e4f5a909eb2386f999f2f",
+          "text_basis": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+          "start": 111,
+          "end": 233,
+          "schema": "request-semantics-3",
+          "quantity_canonicalization": {
+            "proposed_value": "ΔE = E(C-PCM水) - E(气相) (kJ/mol) 及符号解释；说明溶剂设置、来源和计算限制；声明为指定模型电子能量差，非完整水合自由能，无热修正/标准态修正",
+            "value": "交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+            "source": "authenticated_goal_text_basis",
+            "rule": "source-quantity-label-1",
+            "complete_source_field": "original_text"
+          }
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f11",
+          "f12"
+        ],
+        "required_blocker_refs": [
+          "b6"
+        ],
+        "explanation_refs": [
+          "e6"
+        ],
+        "next_action_refs": [
+          "n6"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "ref": "f1",
+        "goal_ref": "g1",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f2",
+        "goal_ref": "g1",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_ethanol": {
+              "method": "B3LYP",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": null
+            }
+          },
+          "sources": {
+            "system_ethanol": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "unknown:unspecified_condition"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f3",
+        "goal_ref": "g2",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f4",
+        "goal_ref": "g2",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_ethanol": {
+              "method": "B3LYP",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": null
+            }
+          },
+          "sources": {
+            "system_ethanol": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "unknown:unspecified_condition"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f5",
+        "goal_ref": "g3",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f6",
+        "goal_ref": "g3",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_ethanol": {
+              "method": "B3LYP",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "sources": {
+            "system_ethanol": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "goal:goal_energy_gas"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": "fixed_initial"
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f7",
+        "goal_ref": "g4",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f8",
+        "goal_ref": "g4",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_ethanol": {
+              "method": "B3LYP",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "CPCM(water)"
+            }
+          },
+          "sources": {
+            "system_ethanol": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "goal:goal_energy_cpcm"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": "fixed_initial"
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f9",
+        "goal_ref": "g5",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f10",
+        "goal_ref": "g5",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_ethanol": {
+              "method": "B3LYP",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": null
+            }
+          },
+          "sources": {
+            "system_ethanol": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "unknown:unspecified_condition"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f11",
+        "goal_ref": "g6",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f12",
+        "goal_ref": "g6",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_ethanol": {
+              "method": "B3LYP",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": null
+            }
+          },
+          "sources": {
+            "system_ethanol": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "request.conditions",
+              "multiplicity": "request.conditions",
+              "electronic_state": "request.conditions",
+              "environment": "unknown:unspecified_condition"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      }
+    ],
+    "blockers": [
+      {
+        "ref": "b1",
+        "goal_refs": [
+          "g1"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b2",
+        "goal_refs": [
+          "g2"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b3",
+        "goal_refs": [
+          "g3"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b4",
+        "goal_refs": [
+          "g4"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b5",
+        "goal_refs": [
+          "g5"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b6",
+        "goal_refs": [
+          "g6"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      }
+    ],
+    "explanations": [
+      {
+        "ref": "e1",
+        "goal_ref": "g1",
+        "fact_refs": [
+          "f1",
+          "f2"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b1"
+        ],
+        "next_action_refs": [
+          "n1"
+        ]
+      },
+      {
+        "ref": "e2",
+        "goal_ref": "g2",
+        "fact_refs": [
+          "f3",
+          "f4"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b2"
+        ],
+        "next_action_refs": [
+          "n2"
+        ]
+      },
+      {
+        "ref": "e3",
+        "goal_ref": "g3",
+        "fact_refs": [
+          "f5",
+          "f6"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b3"
+        ],
+        "next_action_refs": [
+          "n3"
+        ]
+      },
+      {
+        "ref": "e4",
+        "goal_ref": "g4",
+        "fact_refs": [
+          "f7",
+          "f8"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b4"
+        ],
+        "next_action_refs": [
+          "n4"
+        ]
+      },
+      {
+        "ref": "e5",
+        "goal_ref": "g5",
+        "fact_refs": [
+          "f9",
+          "f10"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b5"
+        ],
+        "next_action_refs": [
+          "n5"
+        ]
+      },
+      {
+        "ref": "e6",
+        "goal_ref": "g6",
+        "fact_refs": [
+          "f11",
+          "f12"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b6"
+        ],
+        "next_action_refs": [
+          "n6"
+        ]
+      }
+    ],
+    "next_actions": [
+      {
+        "ref": "n1",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g1"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n2",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g2"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n3",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g3"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n4",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g4"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n5",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g5"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n6",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g6"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      }
+    ],
+    "references": {},
+    "fingerprint": "39798662b0f35bff42ec34d4737ad0caec059af4a1568099199922b6f63d1d7a"
+  },
+  "model_explanation": {
+    "status": "pending",
+    "current_status": "pending",
+    "current": false,
+    "free_reason_role": "audit_only"
+  },
+  "report_artifact": {
+    "status": "rendered",
+    "current": true,
+    "version": "terminal-report-1",
+    "snapshot_fingerprint": "39798662b0f35bff42ec34d4737ad0caec059af4a1568099199922b6f63d1d7a",
+    "path": "runs/run_b1914eb571224768bb5a643dc5b0e845/deliveries/report_afa2b4585bc371497a761ab9.md",
+    "sha256": "5494cc8ae4887baf15cb57930902fdc3d0f672abf49b24da4b0141a09bb422a7",
+    "error": null
+  }
+}

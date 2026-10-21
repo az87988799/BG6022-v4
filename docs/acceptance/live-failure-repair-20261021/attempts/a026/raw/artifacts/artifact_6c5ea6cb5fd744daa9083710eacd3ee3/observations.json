@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "observations": [
+    {
+      "name": "energy_difference",
+      "value": -18.27650714687584,
+      "unit": "kJ/mol",
+      "sources": [
+        {
+          "filename": "gas_stdout.out",
+          "location": "line 987: FINAL SINGLE POINT ENERGY      -155.002778990957"
+        },
+        {
+          "filename": "cpcm_stdout.out",
+          "location": "line 1020: FINAL SINGLE POINT ENERGY      -155.009740144896"
+        }
+      ],
+      "formula": "deltaE = E(CPCM water) - E(gas phase); 1 Eh = 2625.499638 kJ/mol",
+      "artifacts": [
+        "gas_stdout.out",
+        "cpcm_stdout.out"
+      ],
+      "limitations": [
+        "Electronic single-point energy difference only; not a free energy of solvation; no thermal, zero-point, or standard-state corrections."
+      ]
+    },
+    {
+      "name": "input_output_files",
+      "value": [
+        {
+          "path": "gas_input.inp",
+          "sha256": "55961f2c4bd6c1d720319a6038a1f8b2d746656ab69fe2f01f3fdf1407a4ab2f",
+          "purpose": "gas-phase ORCA input"
+        },
+        {
+          "path": "gas_stdout.out",
+          "sha256": "42285d1e670afb81c38eb3e6653c2a0e53ac649b04bb136c9a8a59efbac35b9f",
+          "purpose": "gas-phase ORCA output"
+        },
+        {
+          "path": "cpcm_input.inp",
+          "sha256": "d9bfe702a764955a891eb2652ec0a1b1d875af70e1f54b86545cd6158c575e52",
+          "purpose": "CPCM water ORCA input"
+        },
+        {
+          "path": "cpcm_stdout.out",
+          "sha256": "98f395cf360319ee9bd59ea1325450d6bdfef8d61e3eccd0b9bb7976b431a214",
+          "purpose": "CPCM water ORCA output"
+        },
+        {
+          "path": "coords.xyz",
+          "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+          "purpose": "shared XYZ geometry"
+        }
+      ],
+      "unit": null,
+      "sources": [
+        {
+          "filename": "gas_input.inp",
+          "location": "delivery input"
+        },
+        {
+          "filename": "cpcm_input.inp",
+          "location": "delivery input"
+        },
+        {
+          "filename": "coords.xyz",
+          "location": "shared geometry"
+        }
+      ],
+      "formula": null,
+      "artifacts": [
+        "gas_input.inp",
+        "gas_stdout.out",
+        "cpcm_input.inp",
+        "cpcm_stdout.out",
+        "coords.xyz"
+      ],
+      "limitations": []
+    }
+  ]
+}

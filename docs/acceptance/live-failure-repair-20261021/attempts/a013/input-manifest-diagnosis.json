@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "kind": "read_only_input_role_diagnosis",
+  "conclusion": "no_production_change",
+  "no_production_change": true,
+  "normalization_contract": {
+    "path": "src/orca_agent/proposals.py",
+    "function": "_normalize_file_role_aliases",
+    "existing_behavior": "For simplified-1 generic observation Tools declaring input_manifest, move Step.inputs.input_manifest to parameters.inputs; normalize producer references and reject conflicting values, then run ordinary parameter/file/dependency checks.",
+    "not_authorized": "No relocation into Tools with no corresponding role or parameter; no invented target_path/purpose; no duplicate or ambiguous manifest merging."
+  },
+  "cases": [
+    {
+      "attempt": "a013",
+      "rejected_model_id": "model_57707fa94c974f9890e75929ce1e57e3",
+      "feedback_request_model_id": "model_0ca22e41d43947cf8deb97154feaf82f",
+      "step_index": 0,
+      "step_key": "write_orca_input",
+      "tool": "workspace.write",
+      "input_roles_submitted": [
+        "input_manifest"
+      ],
+      "registered_input_roles": [],
+      "parameter_fields_submitted": [
+        "content",
+        "name",
+        "role"
+      ],
+      "error": {
+        "category": "ProposalError",
+        "requirement": {
+          "errors": [
+            {
+              "loc": [
+                "parameters",
+                "steps",
+                0,
+                "inputs",
+                "input_manifest",
+                "entries"
+              ],
+              "type": "extra_forbidden"
+            }
+          ],
+          "requirement": "Use the declared parameter schema at each listed path."
+        }
+      },
+      "finding": "workspace.write does not consume an input manifest; the subsequent response removed that misplaced writer field. Existing native/Python role normalization remains valid.",
+      "originals": [
+        {
+          "path": "data/live-repair/attempts/a013/data/runs/run_620199b211174f2e910574089d224e23/model/model_0ca22e41d43947cf8deb97154feaf82f.request.json",
+          "sha256": "b3c3d65afb409e3a566335fb8d8203c059196c3568c5be49c7ce8f8904e148ef"
+        },
+        {
+          "path": "data/live-repair/attempts/a013/data/runs/run_620199b211174f2e910574089d224e23/model/model_57707fa94c974f9890e75929ce1e57e3.response.json",
+          "sha256": "1aeac280a4d300dc5c080ee25aac6e6e44cb005e2fd02232996285ffd2530835"
+        },
+        {
+          "path": "data/live-repair/attempts/a013/data/runs/run_620199b211174f2e910574089d224e23/model/model_0ca22e41d43947cf8deb97154feaf82f.response.json",
+          "sha256": "a6ab9ebcc45a0ed9e695025f0bff24d300d6fe9f31b39617b0340ee0e13c2846"
+        }
+      ]
+    },
+    {
+      "attempt": "a010",
+      "rejected_model_id": "model_9030d734d1a14c759171e1fff0bdf04b",
+      "feedback_request_model_id": "model_9720104c0a7d47e6bda8de48d254ca3d",
+      "step_index": 3,
+      "step_key": "orca_opt_freq",
+      "tool": "orca.run",
+      "input_roles_submitted": [
+        "manifest"
+      ],
+      "registered_input_roles": [
+        "native_input",
+        "input_manifest"
+      ],
+      "parameter_fields_submitted": [
+        "input",
+        "inputs"
+      ],
+      "error": {
+        "category": "ProposalError",
+        "requirement": {
+          "errors": [
+            {
+              "loc": [
+                "parameters",
+                "steps",
+                3,
+                "inputs",
+                "manifest",
+                "entries"
+              ],
+              "type": "extra_forbidden"
+            }
+          ],
+          "requirement": "Use the declared parameter schema at each listed path."
+        }
+      },
+      "finding": "The undeclared manifest alias contains entries missing target_path and purpose, while parameters.inputs already exists. Relocation cannot uniquely preserve a complete authorized manifest.",
+      "originals": [
+        {
+          "path": "data/live-repair/attempts/a010/data/runs/run_4121ebb044704dd798780c33895bb8c1/model/model_9720104c0a7d47e6bda8de48d254ca3d.request.json",
+          "sha256": "7fe0134095421146074719aa8045c437c03365700f2421ce25dd4d18c13f5fa4"
+        },
+        {
+          "path": "data/live-repair/attempts/a010/data/runs/run_4121ebb044704dd798780c33895bb8c1/model/model_9030d734d1a14c759171e1fff0bdf04b.response.json",
+          "sha256": "f7962eb9fde881b013e6a92e9def17bdcfe8d019c6f7e5c9518530f9b3889259"
+        }
+      ]
+    }
+  ],
+  "models_invoked": 0,
+  "orca_invoked": 0,
+  "tests_run": 0,
+  "original_files_unchanged": true
+}

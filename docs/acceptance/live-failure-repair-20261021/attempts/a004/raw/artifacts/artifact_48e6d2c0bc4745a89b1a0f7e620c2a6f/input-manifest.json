@@ -1,0 +1,131 @@
+{
+  "tool": "orca.run",
+  "input_file": "job.inp",
+  "input_sha256": "e821b055e2ca22e39d5f24204f98bd6a8e432786d1989911c9eb2b712bba41bc",
+  "input_artifact": {
+    "artifact_id": "artifact_b8359bae64cf4193abfc14ec95422455",
+    "sha256": "ef4e7a3ef305d56cb10daf7c6ddd833419db4248cbd4f5172fda51113170aa4f",
+    "language": "orca",
+    "version": 1
+  },
+  "input_manifest": {
+    "version": 1,
+    "entries": [
+      {
+        "artifact_id": "artifact_b515768b141d4259be070df3b9970d2a",
+        "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+        "target_path": "hcn.xyz",
+        "purpose": "fixed initial HCN geometry for GIAO NMR shielding"
+      }
+    ]
+  },
+  "admission_version": "native-orca-input-3",
+  "native_input_policy": {
+    "profile": "managed-native-1",
+    "max_atoms": 1024,
+    "max_geom_iterations": 128,
+    "max_scf_iterations": 256,
+    "max_response_iterations": 128,
+    "allow_task_geometry": true
+  },
+  "input_binding": {
+    "request_id": "request_ce84acf8a4ff473d9d23c31c80f6401c",
+    "request_version": 3,
+    "step_id": "step_fad6bfab89744c08a7b5c375ed5e60ce",
+    "system_id": "system_hcn",
+    "conditions": {
+      "method": "pbe0",
+      "basis": "def2-tzvp",
+      "charge": 0,
+      "multiplicity": 1,
+      "electronic_state": "rks",
+      "environment": "gas_phase"
+    },
+    "condition_sources": {
+      "method": "request.conditions",
+      "basis": "request.conditions",
+      "charge": "request.conditions",
+      "multiplicity": "request.conditions",
+      "electronic_state": "request.conditions",
+      "environment": "request.conditions"
+    },
+    "geometry_artifact_id": "artifact_b515768b141d4259be070df3b9970d2a",
+    "geometry_sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+    "workflow_policy": "simplified-1"
+  },
+  "actual_conditions_origin": "admitted_native_input",
+  "resources": {
+    "cores": 4,
+    "memory_mb": 1024,
+    "maxcore_mb": 192,
+    "timeout_seconds": 900.0
+  },
+  "dependencies": {
+    "hcn.xyz": {
+      "sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+      "bytes": 289
+    }
+  },
+  "actual_conditions": {
+    "method": "PBE0",
+    "basis": "def2-TZVP",
+    "electronic_state": "RKS",
+    "charge": 0,
+    "multiplicity": 1,
+    "environment": "gas_phase",
+    "input_keywords": [
+      "PBE0",
+      "def2-TZVP",
+      "RKS",
+      "NMR",
+      "NoAutoStart"
+    ],
+    "input_blocks": {
+      "pal": {
+        "nprocs": "4"
+      },
+      "maxcore": 192,
+      "scf": {
+        "maxiter": "256",
+        "autotrah": "false"
+      },
+      "eprnmr": {
+        "nuclei": "all"
+      }
+    },
+    "atom_count": 3,
+    "run_type": "single_point",
+    "origin": "admitted_native_input",
+    "geometry_sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+    "input_geometry_sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+    "input_geometry_relation": "exact_initial",
+    "initial_geometry_sha256": "1d4a7b75058f9f07aab29c88aa1fca7a5b0f33ce46d1b402f787468e066ddca7",
+    "request_version": 3,
+    "system_id": "system_hcn",
+    "scientific_validation": "unverified",
+    "condition_verification": "explicit input selectors only; all modifiers retained, output not independently verified"
+  },
+  "execution_impact": {
+    "orca_starts": 1,
+    "postprocess_starts": 0,
+    "external_programs": false,
+    "internal_work_units": 1,
+    "work_unit_contract": "declared-managed-workload-1",
+    "work_unit_meaning": "conservative declared task slots, not measured SCF/evaluation counts",
+    "optimization_evaluation_slots": 1,
+    "scan_points": 1,
+    "derivative_slots": 0,
+    "response_roots": 0,
+    "scf_maxiter": 256,
+    "geom_maxiter": 0,
+    "response_maxiter": 0
+  },
+  "source_input_sha256": "ef4e7a3ef305d56cb10daf7c6ddd833419db4248cbd4f5172fda51113170aa4f",
+  "materialization": [
+    {
+      "field": "cores",
+      "value": 4,
+      "source": "frozen_resources"
+    }
+  ]
+}

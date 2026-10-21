@@ -1,0 +1,261 @@
+{
+  "schema": "independent-t5-manual-review-1",
+  "created_at_utc": "2026-10-20T23:39:31.032067+00:00",
+  "candidate": "a026",
+  "run_id": "run_4a66f91e2a9b4c999297d7847f7ef1f2",
+  "scope": "Read-only settled originals and arithmetic; no model, ORCA, reference calculation or generated-code execution. No historical state or scientific qualification upgraded.",
+  "production_state": {
+    "state": "failed",
+    "delivery_status": "partial"
+  },
+  "checks": {
+    "method_basis_and_preexecution_rationale": {
+      "status": "pass",
+      "reason": "Structured choices select B3LYP/def2-TZVP and state suitability plus accuracy/cost tradeoff before the first native Attempt. The report retains both reasons; this does not independently certify method accuracy.",
+      "selection_time": "2026-10-20T23:20:42.318798+00:00",
+      "first_native_attempt_time": "2026-10-20T23:23:48.283094Z",
+      "source_refs": [
+        "selection",
+        "report_json",
+        "rendered_report"
+      ],
+      "report_lines": [
+        59,
+        60,
+        61,
+        62,
+        63
+      ]
+    },
+    "actual_solvent_settings_and_source": {
+      "status": "pass",
+      "reason": "Inputs share B3LYP/def2-TZVP/RKS, neutral singlet, initial XYZ and SCF controls; water alone adds CPCM(water). Original stdout prints WATER, CPCM epsilon function and epsilon 80.1510. Report exposes scoped conditions and actual-input/raw-output source artifacts with hashes.",
+      "source_refs": [
+        "gas_input",
+        "water_input",
+        "water_stdout",
+        "gas_stdout",
+        "rendered_report"
+      ],
+      "report_lines": [
+        34,
+        37,
+        192,
+        193,
+        197
+      ]
+    },
+    "delivered_table_energies_delta_sign_and_precision": {
+      "status": "fail",
+      "reason": "The delta, unit and formula are present and agree within frozen tolerance. However the manifest supplies only energy_difference and input_output_files, not two absolute-energy values; the two Eh numbers appear only inside raw-source location strings and both energy goals remain insufficient. No delivered explanation says the negative water-minus-gas value means lower electronic energy in CPCM water at this fixed geometry. Complete numeric delivery and the requested sign explanation are missing.",
+      "reported_observation_names": [
+        "energy_difference",
+        "input_output_files"
+      ],
+      "raw_gas_Eh": "-155.002778990957",
+      "raw_water_Eh": "-155.009740144896",
+      "raw_delta_Eh": "-0.006961153939",
+      "independent_delta_kJ_mol": "-18.2765071572085857963261",
+      "reported_delta_kJ_mol": "-18.27650714687584",
+      "absolute_error_kJ_mol": "1.03327457963261E-8",
+      "frozen_tolerance_kJ_mol": "0.001",
+      "source_refs": [
+        "observation_manifest",
+        "analysis_code",
+        "rendered_report",
+        "report_json",
+        "gas_stdout",
+        "water_stdout",
+        "frozen_requirements"
+      ],
+      "report_lines": [
+        9,
+        10,
+        11,
+        188,
+        191,
+        192,
+        193
+      ]
+    },
+    "generated_analysis_source_and_provenance": {
+      "status": "pass",
+      "reason": "Sealed script parses each final ENERGY line from the two named stdout inputs, retains line references, computes water minus gas and records the conversion. Code hash agrees with the admitted observation; archived input/output copies preserve hashes, and a five-file manifest includes both inputs/outputs and shared XYZ. Audit does not execute generated code.",
+      "code_sha256": "3f5976c1103a6067e7e8d3a92d5cd28913aae4c8d9e7aa8d5c755950673f9dcf",
+      "conversion_in_script": "2625.499638",
+      "source_refs": [
+        "analysis_code",
+        "observation_manifest",
+        "gas_stdout",
+        "water_stdout",
+        "gas_input",
+        "water_input",
+        "prepared_xyz"
+      ]
+    },
+    "electronic_difference_not_hydration_free_energy": {
+      "status": "pass",
+      "reason": "Actual observation/report explicitly limits this to a model electronic single-point difference and excludes free energy of solvation, thermal, zero-point and standard-state corrections. Analysis code contains no fabricated corrections.",
+      "source_refs": [
+        "observation_manifest",
+        "analysis_code",
+        "rendered_report"
+      ],
+      "report_lines": [
+        195,
+        321
+      ]
+    },
+    "seed_and_geometry_reproducibility_limits": {
+      "status": "pass",
+      "reason": "Final machine/text report preserves actual prepared Result source: OPI SMILES generation, random_seed null, no exposed seed and reuse of immutable XYZ, without claiming seed 1701 determinism. Guarantee excludes optimized/ground-state geometry. Deterministic analysis script uses no random algorithm.",
+      "preparation_source": {
+        "generator": "opi.Structure.from_smiles",
+        "random_seed": null,
+        "generation_reproducibility": "no seed exposed; reuse this immutable XYZ",
+        "guarantee": "initial graph/atom mapping and finite geometry only; not optimized or ground-state certified"
+      },
+      "shared_xyz_sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+      "source_refs": [
+        "report_json",
+        "rendered_report",
+        "prepared_xyz",
+        "analysis_code"
+      ],
+      "report_lines": [
+        74,
+        77
+      ]
+    }
+  },
+  "source_refs": {
+    "report_json": {
+      "path": "data/live-repair/attempts/a026/report.json",
+      "sha256": "dc51640fb1873b76d74556f9aba082cfd640cb3cc4b874015a66ceb9015628fb",
+      "bytes": 393480
+    },
+    "report_text": {
+      "path": "data/live-repair/attempts/a026/report.txt",
+      "sha256": "253ab067073796fdc346b8ae6952ac0b9882e20442a9620ebd6e676ad9028e05",
+      "bytes": 98912
+    },
+    "run": {
+      "path": "data/live-repair/attempts/a026/data/runs/run_4a66f91e2a9b4c999297d7847f7ef1f2/run.json",
+      "sha256": "b2ac1eaf7492a8ed7141571278b6e9040bc87035c0e9ef4509d14dcc0dcd490a",
+      "bytes": 216658
+    },
+    "outcome": {
+      "path": "data/live-repair/attempts/a026/outcome.json",
+      "sha256": "5c012cb5d323294ddfef38bf600498cb569ffa2f3ab6ecb956572b394e57f249",
+      "bytes": 2698
+    },
+    "frozen_requirements": {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-4/freeze/public-tasks.json",
+      "sha256": "a064af8a0fcc90792c8276ebaa3b56b9b4c69242a97a8fa49d99166e9d23fa9b",
+      "bytes": 17833
+    },
+    "rendered_report": {
+      "path": "data/live-repair/attempts/a026/data/runs/run_4a66f91e2a9b4c999297d7847f7ef1f2/deliveries/model_2dcc5df8c4e94ad2aab8c12d5777b72f.md",
+      "sha256": "253ab067073796fdc346b8ae6952ac0b9882e20442a9620ebd6e676ad9028e05",
+      "bytes": 98912
+    },
+    "selection": {
+      "path": "data/live-repair/attempts/a026/data/runs/run_4a66f91e2a9b4c999297d7847f7ef1f2/model/model_6fcd770ce99c46af8c1464678382748e.response.json",
+      "sha256": "235e815f2fcd339bc5bb660bfea5b764a0bbc607823dfbddd56f9ceb24f1cafd",
+      "bytes": 2255,
+      "json_pointer": "/proposal/parameters/choices"
+    },
+    "gas_stdout": {
+      "path": "data/live-repair/attempts/a026/data/artifacts/artifact_6c70cc418f274455b03842ae62fa4f02/files/stdout.out",
+      "sha256": "42285d1e670afb81c38eb3e6653c2a0e53ac649b04bb136c9a8a59efbac35b9f",
+      "bytes": 56658,
+      "artifact_id": "artifact_6c70cc418f274455b03842ae62fa4f02",
+      "lines": [
+        642,
+        987,
+        1192
+      ]
+    },
+    "water_stdout": {
+      "path": "data/live-repair/attempts/a026/data/artifacts/artifact_10d47c7a55b24f8580eb6c015be3c80d/files/stdout.out",
+      "sha256": "98f395cf360319ee9bd59ea1325450d6bdfef8d61e3eccd0b9bb7976b431a214",
+      "bytes": 58762,
+      "artifact_id": "artifact_10d47c7a55b24f8580eb6c015be3c80d",
+      "lines": [
+        624,
+        631,
+        632,
+        668,
+        1020,
+        1229
+      ]
+    },
+    "gas_input": {
+      "path": "data/live-repair/attempts/a026/data/artifacts/artifact_90286834176d46f7989ea6ee0d8abd5f/files/gas_input.inp",
+      "sha256": "55961f2c4bd6c1d720319a6038a1f8b2d746656ab69fe2f01f3fdf1407a4ab2f",
+      "bytes": 112,
+      "artifact_id": "artifact_90286834176d46f7989ea6ee0d8abd5f",
+      "lines": [
+        1,
+        7
+      ]
+    },
+    "water_input": {
+      "path": "data/live-repair/attempts/a026/data/artifacts/artifact_7680e9b67a1b43ff861088f8558d343e/files/cpcm_input.inp",
+      "sha256": "d9bfe702a764955a891eb2652ec0a1b1d875af70e1f54b86545cd6158c575e52",
+      "bytes": 124,
+      "artifact_id": "artifact_7680e9b67a1b43ff861088f8558d343e",
+      "lines": [
+        1,
+        7
+      ]
+    },
+    "prepared_xyz": {
+      "path": "data/live-repair/attempts/a026/data/artifacts/artifact_389b751a7cb34bc287fc9d8c95658a8b/files/prepared.xyz",
+      "sha256": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+      "bytes": 859,
+      "artifact_id": "artifact_389b751a7cb34bc287fc9d8c95658a8b",
+      "lines": []
+    },
+    "analysis_code": {
+      "path": "data/live-repair/attempts/a026/data/artifacts/artifact_f010f571b02b4b1098aff5f87493768c/files/task.py",
+      "sha256": "3f5976c1103a6067e7e8d3a92d5cd28913aae4c8d9e7aa8d5c755950673f9dcf",
+      "bytes": 2382,
+      "artifact_id": "artifact_f010f571b02b4b1098aff5f87493768c",
+      "lines": []
+    },
+    "observation_manifest": {
+      "path": "data/live-repair/attempts/a026/data/artifacts/artifact_6c5ea6cb5fd744daa9083710eacd3ee3/files/observations.json",
+      "sha256": "5aa407366e374fe5d0d198fd3d092b792261f56e2bb50c9ec3e15ab784a82a0d",
+      "bytes": 2372,
+      "artifact_id": "artifact_6c5ea6cb5fd744daa9083710eacd3ee3",
+      "lines": []
+    }
+  },
+  "original_files_unchanged": true,
+  "original_file_hashes": {
+    "data/live-repair/attempts/a026/report.json": "dc51640fb1873b76d74556f9aba082cfd640cb3cc4b874015a66ceb9015628fb",
+    "data/live-repair/attempts/a026/report.txt": "253ab067073796fdc346b8ae6952ac0b9882e20442a9620ebd6e676ad9028e05",
+    "data/live-repair/attempts/a026/data/runs/run_4a66f91e2a9b4c999297d7847f7ef1f2/run.json": "b2ac1eaf7492a8ed7141571278b6e9040bc87035c0e9ef4509d14dcc0dcd490a",
+    "data/live-repair/attempts/a026/outcome.json": "5c012cb5d323294ddfef38bf600498cb569ffa2f3ab6ecb956572b394e57f249",
+    "docs/acceptance/code-as-tools-step7-refreeze-4/freeze/public-tasks.json": "a064af8a0fcc90792c8276ebaa3b56b9b4c69242a97a8fa49d99166e9d23fa9b",
+    "data/live-repair/attempts/a026/data/runs/run_4a66f91e2a9b4c999297d7847f7ef1f2/deliveries/model_2dcc5df8c4e94ad2aab8c12d5777b72f.md": "253ab067073796fdc346b8ae6952ac0b9882e20442a9620ebd6e676ad9028e05",
+    "data/live-repair/attempts/a026/data/runs/run_4a66f91e2a9b4c999297d7847f7ef1f2/model/model_6fcd770ce99c46af8c1464678382748e.response.json": "235e815f2fcd339bc5bb660bfea5b764a0bbc607823dfbddd56f9ceb24f1cafd",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_6c70cc418f274455b03842ae62fa4f02/artifact.json": "3ee38424da97c931a95cee365fac9446f82a0876112a39f52bd058a8d0209b5f",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_6c70cc418f274455b03842ae62fa4f02/files/stdout.out": "42285d1e670afb81c38eb3e6653c2a0e53ac649b04bb136c9a8a59efbac35b9f",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_10d47c7a55b24f8580eb6c015be3c80d/artifact.json": "e487f181bc2982e8eeaf4b6b4141312963fc063a8a853059311d83bead9c43b4",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_10d47c7a55b24f8580eb6c015be3c80d/files/stdout.out": "98f395cf360319ee9bd59ea1325450d6bdfef8d61e3eccd0b9bb7976b431a214",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_90286834176d46f7989ea6ee0d8abd5f/artifact.json": "d1ce0fc56f1212f86dbad025dcf2fe598423732729b157778ea35ea4a53327d6",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_90286834176d46f7989ea6ee0d8abd5f/files/gas_input.inp": "55961f2c4bd6c1d720319a6038a1f8b2d746656ab69fe2f01f3fdf1407a4ab2f",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_7680e9b67a1b43ff861088f8558d343e/artifact.json": "7bada6c334d78e832585cbad6769508c951e73657a4b4bfb491787758fff83d7",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_7680e9b67a1b43ff861088f8558d343e/files/cpcm_input.inp": "d9bfe702a764955a891eb2652ec0a1b1d875af70e1f54b86545cd6158c575e52",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_389b751a7cb34bc287fc9d8c95658a8b/artifact.json": "7f264cf0b88109895331a916ebf99159b091301ee65e480a36397a3e7faf857a",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_389b751a7cb34bc287fc9d8c95658a8b/files/prepared.xyz": "5341a7b8b4268ed330dc280e58a3dcf05b1fd766ee331dc1de2eff7cac9d4257",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_f010f571b02b4b1098aff5f87493768c/artifact.json": "62aef8aedf2348b09e94d241f1cadd1fb2dbb0e582617ce4a1394e5c4b72e09c",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_f010f571b02b4b1098aff5f87493768c/files/task.py": "3f5976c1103a6067e7e8d3a92d5cd28913aae4c8d9e7aa8d5c755950673f9dcf",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_6c5ea6cb5fd744daa9083710eacd3ee3/artifact.json": "806bcaffc8b478e090d67c8a35e782f1a2c3c6015b5db0f6acf81f4b287f67e4",
+    "data/live-repair/attempts/a026/data/artifacts/artifact_6c5ea6cb5fd744daa9083710eacd3ee3/files/observations.json": "5aa407366e374fe5d0d198fd3d092b792261f56e2bb50c9ec3e15ab784a82a0d"
+  },
+  "raw_delivery_review_status": "fail",
+  "scientific_qualification_assigned": false
+}

@@ -1,0 +1,270 @@
+{
+  "scope": "Read-only original-task exit checklist; audit only, never supplied as solver instructions or answers to the product model.",
+  "authority": [
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-4/freeze/public-tasks.json",
+      "sha256": "a064af8a0fcc90792c8276ebaa3b56b9b4c69242a97a8fa49d99166e9d23fa9b"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-4/freeze/holdout-selection.json",
+      "sha256": "33ff1d743ce2b4e7db702a73bee59d885d4640f327375ce22ce689999b3f68e5"
+    },
+    {
+      "path": "docs/acceptance/code-as-tools-step7-refreeze-4/freeze/scoring.md",
+      "sha256": "7a080249fbc79415eb008a63b6a7cb35ddaa4e250caf4c1b49b076fea2b1ae4a"
+    }
+  ],
+  "reproducibility_suffix": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+  "separate_statuses": [
+    "actual execution",
+    "raw-output transcription and arithmetic",
+    "explicit original obligations",
+    "reported delivery",
+    "independent reference unverified unless separately executed"
+  ],
+  "common_tolerances": {
+    "definition": "以下是预先选定的工程核对阈值，不是 ORCA/RDKit 对科学准确度的保证。与原始打印值核对和独立重算采用不同阈值。",
+    "reported_energy_vs_raw_hartree_abs": 1e-08,
+    "independent_fixed_geometry_energy_hartree_abs": 1e-06,
+    "reported_relative_energy_kj_mol_abs": 0.001,
+    "independent_relative_energy_kj_mol_abs": 0.01,
+    "reported_coordinate_angstrom_abs": 1e-06,
+    "reported_frequency_vs_raw_cm_inverse_abs": 0.01,
+    "independent_frequency_cm_inverse_abs": 2.0,
+    "reported_excitation_vs_raw_ev_abs": 0.0001,
+    "independent_excitation_ev_abs": 0.001,
+    "reported_oscillator_strength_abs": 1e-06,
+    "independent_oscillator_strength_abs": 0.0001,
+    "constrained_dihedral_degrees_abs": 0.5,
+    "relative_energy_tie_kj_mol": 0.01,
+    "printed_precision_rule": "原始字段或明确舍入的报告精度较粗时，允许 max(上述阈值, 最后打印位半单位加10^-12)；不得借显示舍入隐藏不同来源、方法、态编号或符号错误。完整机器表至少提供8位小数Eh、3位小数kJ/mol、2位小数cm^-1和4位小数eV。",
+    "energy_conversion_kj_mol_per_hartree": 2625.4996394799,
+    "conversion_rule": "相对能量采用本文件固定换算常数。若使用其他有来源常数，先按该常数核对自身算术，再按固定常数比较，不能混用单位；原始 ORCA eV 列优先于另行换算的 eV 值。"
+  },
+  "tasks": [
+    {
+      "task_id": "T1",
+      "original_text": "请为乙醇（中性、单重态、气相）生成结构，在当前资源和预算内自行选择合适的方法和基组并说明依据，完成几何优化和该优化结构上的振动频率计算。交付初始结构、收敛后的全部9个原子坐标（注明Å）、完整27项频率和模式编号（注明cm^-1，保留平移/转动项），解释是否能支持局部极小值结论。保留原始输入、输出、脚本和失败尝试，分别说明执行、科学检查和验证缺项。不要把程序正常结束当成优化收敛或极小值确认；若预算内不能完成，准确说明未完成部分。",
+      "fixed_requirements": {
+        "identity_smiles": "CCO",
+        "formula": "C2H6O",
+        "atom_count": 9,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "method_basis": "agent_selected_before_execution",
+        "required_frequency_rows": 27,
+        "nonlinear_vibrational_modes": 21,
+        "minimum_status": "报告必须依据真实频率判断；显著虚频、近零未决振动或缺项不得声明已确认极小值。收敛优化及完整频率分析可完成本题，但极小值检查状态必须独立真实记录。"
+      },
+      "tolerances": {},
+      "exit_checks": [
+        "Verify ethanol identity, 9 ordered atoms, charge 0, singlet and gas phase, plus the selected method/basis and pre-execution rationale.",
+        "Locate the optimization convergence evidence separately from normal termination, and bind the delivered final 9-atom coordinates in angstrom to that optimized structure.",
+        "Confirm the frequency calculation used that structure; independently read all 27 modes with original mode numbers and cm^-1 units, retaining translation/rotation entries rather than inventing zeros or omitting rows.",
+        "Compare the local-minimum explanation with actual imaginary, near-zero and missing modes. Incomplete or unconverged output must not establish a minimum.",
+        "Check initial/final geometry, raw input/output, generation/analysis scripts and failed-attempt list are accessible and correctly qualified."
+      ]
+    },
+    {
+      "task_id": "T2",
+      "original_text": "请搜索正己烷（中性、单重态、气相）的低能构象。自行编写本次搜索和筛选程序，实际保存至少8份候选结构，并从中选择至少4个不同的构象，在同一方法、基组和统一计算类型下完成真实ORCA单点能量比较；方法和基组由你选择并说明依据。请用考虑碳链正反向等价映射的重原子对齐RMSD检查重复，以0.15Å为重复阈值，至少4个参加比较的构象应两两不同。交付所有实际产生的候选、选中及排除原因、绝对能量和相对最低项的kJ/mol排名、最低候选结构，并说明搜索范围、几何来源以及力场处理是否收敛。可以使用力场预筛选，但不能把未做ORCA的候选写成已有ORCA能量，也不能把有限搜索最低项称为全局最低或自由能最低。",
+      "fixed_requirements": {
+        "identity_smiles": "CCCCCC",
+        "formula": "C6H14",
+        "atom_count": 20,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "method_basis": "one_agent_selected_pair_for_all_ranked_members",
+        "minimum_saved_candidates": 8,
+        "minimum_successful_distinct_ranked_candidates": 4,
+        "ranked_calculation_type": "single_point",
+        "dedup_heavy_atom_rmsd_angstrom": 0.15,
+        "maximum_required_reference_members": 4,
+        "optional_extra_members": "多于4个的额外比较必须有原始来源并纳入实际成本；独立参考按最低能量前4项选择，所有额外项仍逐原文核对，额外项不替换失败重复。"
+      },
+      "tolerances": {},
+      "exit_checks": [
+        "Verify neutral singlet gas-phase n-hexane and actually saved candidate XYZ files; at least 8 distinct file products must exist with correct atom counts and hashes.",
+        "Identify at least 4 ranked conformers, each with its own completed real ORCA single-point receipt and matching same method, basis and calculation type; force-field energies cannot substitute.",
+        "Independently check pairwise heavy-atom aligned RMSD using carbon-chain forward/reverse equivalent mappings and the original 0.15 angstrom threshold. Retain the full matrix and each selected/excluded rationale.",
+        "Read each absolute electronic energy from its own raw output, match the candidate ID/geometry, recompute relative-to-minimum ranking in kJ/mol and locate the delivered minimum candidate.",
+        "Review generated search/filter code and provenance as evidence, without running it as the sole checker; distinguish force-field convergence, finite search scope and ORCA results. Reject claims of global or free-energy minima unsupported by this task."
+      ]
+    },
+    {
+      "task_id": "T3",
+      "original_text": "请为正丁烷（中性、单重态、气相）扫描四个相连碳原子定义的中心C-C-C-C二面角。自行选择一种方法和基组并说明依据；先在-180、-120、-60、0、60、120、180度七个指定角度做保持该二面角的约束优化，记录每个实际角度、优化是否收敛和电子能量，画出相对能量曲线。请在粗扫结果出来前说明你将如何根据数值结果判断是否需要局部加密；粗扫完成后把观察交回主决策循环，再根据该判据和曲线作出继续或停止决定。如果需要加密，最多新增2个未计算角度；不需要时不要追加计算，并解释理由。交付所有点的结构、数据、曲线、初始结构、原始证据和失败清单；不要把未收敛点当成功点，或把离散扫描峰值宣称为已验证过渡态。",
+      "fixed_requirements": {
+        "identity_smiles": "CCCC",
+        "formula": "C4H10",
+        "atom_count": 14,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "method_basis": "one_agent_selected_pair_for_all_points",
+        "coarse_angles_degrees": [
+          -180,
+          -120,
+          -60,
+          0,
+          60,
+          120,
+          180
+        ],
+        "coarse_points": 7,
+        "maximum_additional_angles": 2,
+        "constraint": "relaxed_scan_of_the_same_four_bonded_carbon_atoms",
+        "feedback": "必须存在粗扫结果后的主循环决策；事先无条件运行全部点不能单独证明反馈。"
+      },
+      "tolerances": {},
+      "exit_checks": [
+        "Verify neutral singlet gas-phase n-butane and the same four bonded carbon atoms at every scan point.",
+        "Check all seven coarse targets -180, -120, -60, 0, 60, 120 and 180 degrees, separate original jobs/point evidence, actual final dihedral, optimization convergence and electronic energy.",
+        "Read pre-coarse-run model/decision evidence for a numerical refinement rule; then require a later main-loop decision after the coarse results were returned. A script that ran every point unconditionally does not prove the required feedback.",
+        "If refined, verify no more than 2 new angles, their choice follows the predeclared rule and each has its own original evidence. If not refined, compare the stop explanation with the coarse results.",
+        "Compare relative-energy table and curve point-by-point with raw values and convergence labels; interpolation is not an additional computed point. Verify all point geometries, initial geometry, evidence and failure list; discrete peaks are not verified transition states."
+      ]
+    },
+    {
+      "task_id": "T4",
+      "original_text": "请为丙酮（中性、单重态、气相）生成合理结构，自行选择适合当前预算的线性响应TDDFT方法和基组，说明选用完整TDDFT还是TDA及选择依据，计算该几何上最低5个单重垂直电子激发。按原始态编号列出激发能（eV）和电偶极长度规范的无量纲振子强度，保留弱跃迁和零强度项，并分析低能态与较强跃迁的区别。交付计算几何、实际输入、原始响应及吸收表、生成脚本和数据表，说明几何来源和验证限制。不要用HOMO-LUMO轨道能隙冒充激发能，不把垂直激发结果当作实验吸收峰或绝热激发能。",
+      "fixed_requirements": {
+        "identity_smiles": "CC(=O)C",
+        "formula": "C3H6O",
+        "atom_count": 10,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "method_basis": "agent_selected_linear_response_TDDFT_with_explicit_TDA_choice",
+        "required_singlet_roots": 5,
+        "oscillator_strength_gauge": "electric_dipole_length",
+        "geometry": "本次Agent生成且明确说明的固定几何；不强制新增几何优化，若宣称优化则另需收敛证据。"
+      },
+      "tolerances": {},
+      "exit_checks": [
+        "Verify acetone, 10 atoms, neutral singlet gas phase, actual geometry and the selected linear-response TDDFT method/basis with an explicit full-TDDFT versus TDA choice and rationale.",
+        "Independently associate the five lowest singlet vertical excitation states with their original response-state numbers and converged raw response evidence.",
+        "Match each energy in eV and dimensionless electric-dipole-length oscillator strength to the same job/state; retain weak and zero entries and check no orbital gap was substituted.",
+        "Check the explanation distinguishes low-energy from stronger transitions and confines conclusions to the actual geometry/approximation, without calling them experimental absorption peaks or adiabatic energies.",
+        "Verify actual geometry, input, response output, absorption table, scripts and data files are archived; any claim of optimized geometry needs separate original convergence evidence."
+      ]
+    },
+    {
+      "task_id": "T5",
+      "original_text": "请为乙醇（中性、单重态）生成一份结构，保持完全相同的原子顺序和坐标，自行选择同一方法与基组，分别计算气相与ORCA C-PCM水环境下的单点电子能量。除溶剂模型和它必需的参数外，两次科学设置保持一致；不要分别优化两套几何。交付两份原始输入输出、共用XYZ及hash、绝对能量（Eh），并按ΔE=E(C-PCM水)-E(气相)给出kJ/mol差值及符号解释。说明溶剂设置、来源和计算限制；这个量是指定模型下的电子能量差，不得称为完整水合自由能或补造热修正、标准态修正。",
+      "fixed_requirements": {
+        "identity_smiles": "CCO",
+        "formula": "C2H6O",
+        "atom_count": 9,
+        "charge": 0,
+        "multiplicity": 1,
+        "environments": [
+          "gas_phase",
+          "CPCM(water)"
+        ],
+        "method_basis": "one_agent_selected_pair_for_both_conditions",
+        "geometry_relation": "same_atomic_order_and_exact_input_coordinates",
+        "required_single_points": 2,
+        "difference_sign": "water_minus_gas",
+        "forbidden_substitution": "hydration_free_energy"
+      },
+      "tolerances": {},
+      "exit_checks": [
+        "Verify one neutral singlet ethanol geometry, identical ordered atoms and exact input coordinates across both calculations, common XYZ/hash and no separate geometry optimizations.",
+        "Require two real single-point jobs with identical scientific settings except the intended gas versus ORCA C-PCM water model and its required parameters; inspect actual inputs and output solvent evidence.",
+        "Independently read both absolute energies in Eh, recompute DeltaE = E(C-PCM water) - E(gas) in kJ/mol and check the sign explanation against the original energies.",
+        "Check original inputs/outputs, shared geometry, solvent source/settings and limitations; absent water confirmation or other scientific-setting mismatch cannot be treated as a valid paired comparison.",
+        "Reject interpretations as a full hydration free energy or invented thermal/standard-state corrections."
+      ]
+    },
+    {
+      "task_id": "H2",
+      "original_text": "请为甲醛CH2O（中性、单重态、气相）生成一份合理结构，用RHF/def2-SVP计算固定几何上的静态电偶极-电偶极极化率。再对同一份结构作一个规定的刚体主动旋转：以原坐标原点为中心，绕方向向量(1,2,3)的轴按右手定则旋转37度，保持原子顺序和内部几何，并对旋转副本用完全相同的科学设置独立计算该极化率。请在执行前记录旋转约定和实际数值设置。交付两份XYZ、旋转关系、两次完整3×3笛卡尔极化率张量与各向同性极化率，统一用原子单位，机器表的张量至少保留7位小数、各向同性值至少保留5位小数。依据两次真实结果检验张量分量是否按坐标变换一致、各向同性值是否保持，并解释为什么坐标分量和各向同性量的比较方式不同。保留原始输入输出、生成与分析脚本、数据表及验证限制；不分别优化两个结构，不以永久偶极矩或有限频率动态响应替代静态极化率，不把旋转后的张量仅由第一份数值变换而来冒充第二次ORCA结果。",
+      "fixed_requirements": {
+        "identity_smiles": "C=O",
+        "formula": "CH2O",
+        "atom_count": 4,
+        "charge": 0,
+        "multiplicity": 1,
+        "environment": "gas_phase",
+        "method": "RHF",
+        "basis_set": "def2-SVP",
+        "property": "static electric dipole-dipole polarizability",
+        "property_frequency": "zero_frequency_static",
+        "geometry_relation": "same ordered atoms; exact specified rigid active rotation only; no independent optimization",
+        "rotation": {
+          "axis_direction": [
+            1,
+            2,
+            3
+          ],
+          "angle_degrees": 37,
+          "sense": "right_hand_rule",
+          "center": "original Cartesian coordinate origin",
+          "convention": "active rotation of position vectors in a fixed laboratory frame; product must state its row/column representation"
+        },
+        "required_independent_property_jobs": 2,
+        "required_values": {
+          "raw_cartesian_tensor_components": 18,
+          "isotropic_polarizabilities": 2
+        },
+        "units": "atomic units of polarizability, e^2 a0^2/Eh; not Debye",
+        "numerical_settings": "same SCF, basis, response and numerical settings for both orientations; registered before execution",
+        "minimum_machine_decimal_places": {
+          "tensor": 7,
+          "isotropic": 5
+        },
+        "forbidden_substitutions": [
+          "permanent dipole",
+          "dynamic polarizability",
+          "hyperpolarizability",
+          "rotated algebraic tensor presented as a second ORCA calculation",
+          "independently optimized geometries"
+        ]
+      },
+      "tolerances": {
+        "definition": "预先固定的工程核对阈值；不同方向允许有限浮点和SCF响应数值误差，不代表所选方法的实验准确度。",
+        "cartesian_polarizability_tensor": {
+          "unit": "e^2 a0^2/Eh (atomic unit)",
+          "reported_vs_raw_abs_per_component": 1e-07,
+          "independent_same_settings_abs_per_component": 0.001,
+          "rotation_covariance_max_abs_component": 0.001,
+          "failure": "任一18项抄录/同设置参考或旋转协变残差越界即fail；第二次没有独立真实ORCA响应即fail。"
+        },
+        "isotropic_polarizability": {
+          "unit": "e^2 a0^2/Eh (atomic unit)",
+          "reported_vs_raw_abs": 1e-05,
+          "independent_same_settings_abs": 0.001,
+          "trace_over_three_consistency_abs": 1e-05,
+          "between_orientations_abs": 0.001,
+          "failure": "任一抄录、参考、迹核对或两方向差值越界即fail；缺参考则unverified，不事后扩大阈值。"
+        },
+        "coordinates": {
+          "unit": "angstrom",
+          "reported_vs_original_abs": 1e-06,
+          "specified_rotation_abs_per_coordinate": 1e-06,
+          "pairwise_distance_preservation_abs": 2e-06,
+          "reference_input_rule": "exact original atom order and coordinate values for each orientation",
+          "failure": "原子映射、主动旋转方向/角度/轴或固定内部几何不满足即fail；RMSD近似相同不替代规定旋转核对。"
+        },
+        "reported_rotation": {
+          "angle_unit": "degree",
+          "reported_angle_vs_required_abs": 1e-06,
+          "matrix_unit": "dimensionless",
+          "reported_matrix_vs_independent_required_rotation_abs_per_component": 1e-06,
+          "failure": "如交付矩阵，与指定旋转不一致即fail；若交付轴角，仍须据独立矩阵核对实际坐标，不能仅核对标签。"
+        }
+      },
+      "exit_checks": [
+        "Verify neutral singlet gas-phase CH2O, 4 ordered atoms and RHF/def2-SVP for both independent static-response calculations, with identical SCF/response/numerical settings.",
+        "Independently reconstruct the specified active right-hand 37-degree rotation around axis (1,2,3) about the original coordinate origin; check each ordered coordinate and internal distance, using the predeclared row/column convention.",
+        "Require two separate real ORCA starts and original converged static electric dipole-dipole polarizability responses. Algebraically rotating the first tensor does not supply the second calculation.",
+        "Independently read all 18 Cartesian tensor components and 2 isotropic values in atomic units; check machine precision of at least 7 tensor and 5 isotropic decimal places, then trace/3 for each response.",
+        "Using the predetermined rotation convention, compare the second raw tensor to R alpha R-transpose and the two measured isotropic values with the existing frozen tolerances. Record residuals; do not alter the rotation, average results or widen tolerances.",
+        "Verify both XYZs, rotation relation, original inputs/outputs, scripts, data and limitations; reject independent optimization, permanent dipoles or dynamic responses as substitutes."
+      ]
+    }
+  ]
+}

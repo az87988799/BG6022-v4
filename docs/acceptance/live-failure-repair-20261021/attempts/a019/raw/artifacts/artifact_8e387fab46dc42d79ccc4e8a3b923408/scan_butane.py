@@ -1,0 +1,1 @@
+# Placeholder: constrained C-C-C-C dihedral scan of butane at -180,-120,-60,0,60,120,180 deg via SDK ORCA (B3LYP/def2-TZVP), recording actual dihedral, convergence, energies, and emitting artifact_metadata observation.

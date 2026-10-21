@@ -1,0 +1,264 @@
+{
+  "kind": "read_only_current_code_replay",
+  "run_id": "run_4a66f91e2a9b4c999297d7847f7ef1f2",
+  "original_state": "failed",
+  "request_version": 3,
+  "plan_version": 3,
+  "historical_plan_load_exact": true,
+  "new_plan_structural_rejection": [
+    {
+      "type": "value_error",
+      "loc": [],
+      "msg": "Value error, step does not produce the goal's port"
+    }
+  ],
+  "current_commit_rejection": {
+    "requirement": "The selected producer cannot collect the unchanged Goal's value.",
+    "code": "goal_output_route_mismatch",
+    "goal_id": "goal_energy_gas",
+    "path": [
+      "parameters",
+      "goal_map",
+      "goal_energy_gas",
+      "port"
+    ],
+    "expected": "energy",
+    "producer_tool": "orca.run",
+    "declared_outputs": [
+      "observations",
+      "artifacts"
+    ],
+    "named_observation_collector": "none",
+    "instruction": "Keep the original Goal and its conditions. Use a producer that collects this value, or an explicit task-manifest adapter that reads pinned real source files, declares the unchanged Goal port in observation_names and emits its sourced observation. Raw file collections do not create named values. Unprovided Goals may remain explicit gaps."
+  },
+  "proposal_replay_scope": "Key-only carry reconstructed from exact activated Plan; no task bodies executed.",
+  "current_proposal_rejection": {
+    "requirement": "The selected producer cannot collect the unchanged Goal's value. Keep its real outputs and the original Goal; use a declared producer or an explicit observation adapter.",
+    "code": "goal_output_route_mismatch",
+    "path": [
+      "parameters",
+      "goal_map",
+      "goal_energy_gas",
+      "port"
+    ],
+    "expected": "energy",
+    "valid_route": {
+      "existing_producers": [],
+      "validation": "Routing advice only; existing permission, budget, file and scientific checks still apply.",
+      "instruction": "Keep the original Goal quantity, port, conditions and minimum evidence. Use the current verified evidence binding or a Step that actually declares this port; changing a target label does not create an output.",
+      "observation_adapters": [
+        {
+          "step_key": "step_7b883ad523e644d5bc7c9972bbba977f",
+          "tool": "python.execute",
+          "required_observation_name": "energy"
+        }
+      ],
+      "available_observation_tools": [
+        "python.execute"
+      ],
+      "observation_instruction": "An explicitly executed observation adapter may read the real producer's pinned files/result, include the unchanged Goal port in observation_names, and emit a sourced observation record with that exact name and the requested value. Bind the Goal to that adapter Step. This is reported data, not new scientific qualification; retain all conditions, sources and limitations. Do not relabel the original producer or the Goal to make them match.",
+      "selected_producer": {
+        "step_key": "step_ec92dee155f94dfd95f15c36c935c284",
+        "tool": "orca.run",
+        "declared_outputs": [
+          "observations",
+          "artifacts"
+        ],
+        "named_observation_collector": "none"
+      }
+    }
+  },
+  "rows": [
+    {
+      "goal_id": "goal_energy_gas",
+      "attempt_id": "attempt_63142a4338de4fbebe4eb845114a8857",
+      "result_id": "result_d6184929398b443a946adeb078deb97d",
+      "declared_outputs": [
+        "observations",
+        "artifacts"
+      ],
+      "frozen_observation_names": [
+        "energy"
+      ],
+      "actual_observation_names": [],
+      "assessment": {
+        "status": "unresolved",
+        "reasons": [
+          "generic_observation_requires_task_manifest"
+        ],
+        "minimum_evidence": [
+          {
+            "requested": "绝对能量（Eh）",
+            "canonical": "绝对能量（Eh）",
+            "mapping_version": "minimum-evidence-1",
+            "status": "unverified",
+            "reason": "no_registered_evaluator",
+            "blocking": false,
+            "source": "explicit",
+            "text_evidence_ref": {
+              "goal_id": "goal_energy_gas",
+              "field": "text_evidence"
+            }
+          }
+        ],
+        "scientific_qualification": false,
+        "verification_basis": "reported_delivery",
+        "current_use": {
+          "source_conditions": {},
+          "source_condition_evidence": {
+            "origin": "unknown",
+            "scientific_output_verification": "unverified"
+          }
+        }
+      }
+    },
+    {
+      "goal_id": "goal_energy_cpcm",
+      "attempt_id": "attempt_b4f746bbac3e4c25a361f40cad6842bd",
+      "result_id": "result_3d72c308c1f64752979262f183eee34c",
+      "declared_outputs": [
+        "observations",
+        "artifacts"
+      ],
+      "frozen_observation_names": [
+        "energy"
+      ],
+      "actual_observation_names": [],
+      "assessment": {
+        "status": "unresolved",
+        "reasons": [
+          "generic_observation_requires_task_manifest"
+        ],
+        "minimum_evidence": [
+          {
+            "requested": "绝对能量（Eh）",
+            "canonical": "绝对能量（Eh）",
+            "mapping_version": "minimum-evidence-1",
+            "status": "unverified",
+            "reason": "no_registered_evaluator",
+            "blocking": false,
+            "source": "explicit",
+            "text_evidence_ref": {
+              "goal_id": "goal_energy_cpcm",
+              "field": "text_evidence"
+            }
+          }
+        ],
+        "scientific_qualification": false,
+        "verification_basis": "reported_delivery",
+        "current_use": {
+          "source_conditions": {},
+          "source_condition_evidence": {
+            "origin": "unknown",
+            "scientific_output_verification": "unverified"
+          }
+        }
+      }
+    }
+  ],
+  "originals_unchanged": true,
+  "run_object_unchanged": true,
+  "source_hashes": {
+    "src/orca_agent/tools/registry.py": "86b3a90b0030f428dcde3a2d14d5fcbf5e6dca4c881d856871dce102b2cdb680",
+    "src/orca_agent/models.py": "0ff59fffabf5eb06b87b8753e3bbf9070c70f50a41c273429c413d7b1d28614f",
+    "src/orca_agent/store.py": "ad0cc5b01bc65db3eeaa1d9f5b4d958de4e066444a715a16db897d5a7b29ec54",
+    "src/orca_agent/planning.py": "a3d3928dd0a134841b06aa50787dc728d211b5905ccd8363480c00a2f87ce649",
+    "src/orca_agent/proposals.py": "1d7c06657f1e67c7969e41a59807be57121cf97160a3607eef5d880d938e0bf5",
+    "src/orca_agent/task_observations.py": "0ebe6cb6c312e0af8bb527ed4e1c57887d98c95ab096784203668014b8bf727d"
+  },
+  "files": {
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\run.json": "b2ac1eaf7492a8ed7141571278b6e9040bc87035c0e9ef4509d14dcc0dcd490a",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\configuration.json": "4eb2de3b37a2e80d7c44350d633714e206ef7ae3f95256ab3b55144c54c44240",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\decisions\\model_6fcd770ce99c46af8c1464678382748e.json": "cde6ce3e7a7a3b0e722de8cba5edaa4d2e3a4a517b2e6f95c3ceb946392b1aa8",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\decisions\\model_9cb53e647e3b4f8fb04ab6e462f2c994.json": "43b67fccb1b5a1d3069ad861920bc1a8ba608586069cf25339b3d4cf81b66509",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\decisions\\model_2c6e4dbcac3145bca2ff03447351ff43.json": "9a44efe5c91bebf6775b171b0139edba9df3427ce204d34f00ed280cf349d0c0",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_d6184929398b443a946adeb078deb97d.json": "40d7a3672df6f579c3cf0afbcfc0ec07563f071d061d2de332b096e495ac7e53",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_3d72c308c1f64752979262f183eee34c.json": "6e9b651ef7a3d25b12fe26b9ffb628525cd497e67e2e3586178751dee8a540e5",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_9ac950526403498aacb0d27c294cf0a1.json": "915116ba35c035910f8c4492cb94a7fd480a45d36dd0c6d56086cb8e04f0023d",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_e6616154c11143e0b871d213391b88ec\\artifact.json": "2d6c77bf427f8796c9e87f53eba15acd92f289f3c0cf6347d91b369ffbced7a8",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_6c5ea6cb5fd744daa9083710eacd3ee3\\artifact.json": "806bcaffc8b478e090d67c8a35e782f1a2c3c6015b5db0f6acf81f4b287f67e4",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_0530fec6742a4f6fbe31955cdd027fda\\artifact.json": "19fa4115846f41b756cbba5a85eaf2efbc9869374b3f98231bb11c1126a33ee3",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_11b356fe838049f1b2ac10676c64ca52\\artifact.json": "9e924d1c30f62bbfb0020884e515de56cbb28f1d628f8cd39e2a7a931a239d04",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_6c70cc418f274455b03842ae62fa4f02\\artifact.json": "3ee38424da97c931a95cee365fac9446f82a0876112a39f52bd058a8d0209b5f",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_2cd339589b254f4d8bb441621d542939.json": "eb87f7b55ab45a9db1789ccfe536b764b9b8491e79d9d3d62629b0a41664594f",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_5014619f03e4432cbc9463467fdad2b7\\artifact.json": "6e86f36112edaad510871c9ee9c0c2716712706ee091cc768d32eda569dae1c0",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_63c8b46aa1b946179016aae7c8040186\\artifact.json": "d7219ab0b521a9a666f58a4d25c8be1eca127601c8bdfd55f417af6d7df5e898",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_b6ec5e4db0aa4209b69a0e82254007a1.json": "541ab76d66780100eb7b46c6d73c12fac999f8623d4f3984bf478185ad208889",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_bad592fa4fee47908c2b0f2e4eca76ee\\artifact.json": "9b3992b4d88dd48e03d610ad15e487fbb4d0974c618ffd9f2f0c0132107c8623",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_65d5afaabe3144f2956c71ae876b0b5c\\artifact.json": "508a57f82d3b8c41b07ddd6d9d1456f125ca5e8fc4ceadf534fcdd38c179e4f6",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_3b1e6f56f9b049b6adb7669c0c91e41f\\artifact.json": "42d6468d1d0d1e69c20a237311bbf5b33d0146f4235435110d12c427fdcc3152",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_389b751a7cb34bc287fc9d8c95658a8b\\artifact.json": "7f264cf0b88109895331a916ebf99159b091301ee65e480a36397a3e7faf857a",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_11bcb2f79a484162af400ed4a6a5dc6d.json": "efa050cacbefaa5bdaaec95bb834cd538b8e131e1744a319a5711a5f0aecf91b",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_09fdff061ef7461095fafe83d3e66237\\artifact.json": "1d73b51930aa17713a265911fed61d9a947d57206baf2244c53205d16798ee90",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_8583736a865d4376b346ca5ee46b6ff2.json": "9f525d8767a280154ae2887f3d84fc5755bbc4a8ef886cc85c876bc2e7d0f3e8",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_5d0128319287458eac4dfc9e4693aa3c\\artifact.json": "a7ef539ca80b7c6f9426e82b5c5d43f168319f9270cd30e1f722c780c443a722",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_b7aa3cbb07c84e3ab84f74d7a98d071d.json": "e6c30781e8e9b32239addc1110b99499e0f66a9a09d596bc94ca4245baae4bc7",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_01e359eefbcb4c0988457852a4850ac6.json": "ba01672ec0c967829c1e0d9bc76ba9313610dc12e1e87e617819d65a50a77805",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_5346c234bcc541749f2be2ff001a9867\\artifact.json": "49455193a804ab0f912af630d4c341130cb4c0eea72fed3bdbbaa7f17b60eef4",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_ec604d20aeee4a3a90361fe1e80d4051\\artifact.json": "7951af65cad0359cb43f8a2ed9298e3d3d6bb2fb4f08b6fb5cb4d7acf36ec836",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_4537f7c138db4c559220eed29905d7f4.json": "e186af0d2ab275bf50a138e0f97a983e44ad52dcd68954cd0d4d4b4b161f6654",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_7507f40126eb4ef489a8a3d4916cbdd7\\artifact.json": "0583db4cbd26fb518e5ceab039717d6dc2efb0e5ade6fbdb3330bc7ff61e46e9",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_28a5a77bc1a04de694795e6965a67f93\\artifact.json": "5be1d13ff623cca468a93ed713f1e069eaf3f0decd2cd0f478894be0e69350ed",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_d1b806d352e641718bbe998a5e701ead.json": "bd1c1fe779a7e82d4a1a46e4f25aa8c3a24056bf63d828b95b730a0c7eda543a",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_24b8c7300ece4d02b351d5bed519e047\\artifact.json": "ddf4759c032f8523091b6c5caa28a4f1c5a13f3c2fedc9f13f62bb256b370522",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\results\\result_e15832658aca4c51b2f57238f5e72923.json": "02785996d655abf92712371f10628c8cbff407baef8be1bd6b617f6847a7c3d9",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_ede76d6ed150407fb6d675d69e02b1bd\\artifact.json": "261783c2501a5e8c89afdb2c566509e3e567464a6a1a8d85c5310ab29226bebc",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_e8b66012738543eca1192bd11be14bca\\artifact.json": "44ff6a864d03c6f7fcd7a490dc36fa4c70fd3fd84e4fd0a5e8d5225eb831953c",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_55189ed9d03d4739adf7c7e434c84dbc\\artifact.json": "e6428da5402bb6ef892075e075473a917146da8547d70f1efa6ddc71785dd159",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_54bcb922df1b4e29bae222a4b703f4a4\\artifact.json": "8b66774414e04106ab6e0e9f86afa3186a455024e29bb26ed3beb5e9008e5168",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_9d64a4d2a7b644e586ed45b4346f21bf\\artifact.json": "b34021b918cb53269e6f895455240885163e45ef67a7894ac6aa690e75bacfdf",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_b315a3e5e6f4483b9e3e3d785f67f1ac\\artifact.json": "5a03153ec003d686ce7d75d6e1bb9acb6f7655146f738acebc7935543f52249c",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_bc9a635814e045eea14a68b00865e2fc\\artifact.json": "e2ba7146a1968a48a1e908f8d5554499f875e53d89d7f8c358e06d50f85f065e",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_f8e39245813d4c5fa74b20281fd2a8b1\\artifact.json": "e274cb8bb89af79cca1e3d196ed457feca6e20a855cfb491ab3e8c12a9388afc",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_bc80e7df5aab46b28ea48090a3c9fbe1\\artifact.json": "7e196ad9791d80b19786d4cf23ea131249991c3d04d6572693db1c69bb186942",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_8675469afd86400cbf38a11bcce67f05\\artifact.json": "49ac27fa145ea33daad84656a6380e197d4a5c3c2b5bf1566b13e51fd555c03e",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_adfee083b5ba4c6ab0caeebb77f301b8\\artifact.json": "0e0e2051838a975f1ae44f9b073664a7b09b50bce848508cad70751cf0c80e7b",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_f0e5b2ac720c47b7a810f234777265c3\\artifact.json": "b9c4588c05de1070190c49418ab53e3f43dbf19e8a27c0d4936db473aab37dbf",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_ab1ee184cba84357afe516b2e89cea42\\artifact.json": "32b67f7969e97ec60e70bb87ae6632191a27ad22b13072fa0066eae1861f5aea",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_3c7a7c06dc364786878f9aa4c6424d32\\artifact.json": "ac771c244d0ceb0d68fc3c6bc0832d14db221df6f81c70c7d218b46740a3cf2d",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_edd5dd2e62c44ced81b48d82b3770020\\artifact.json": "f32195f79800ba9e6dfee3246ae9dacfa265fe4c79a7f37d47d0c480115d3ebc",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_41427bb2bf864e4d9f0558a30a65f6e3\\artifact.json": "67bd05eb8b684cfacb4a3ca8ed079ea119f979d21fddcc4e67a8adb14b08f4c0",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_11d31eb34dd148b38aee9ea9d195b09e\\artifact.json": "6cba3c314c94897fe91d29f41f598009c6bc65a8ab61954fb4841c477648c07a",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_c04adedf594c434cb89ad643057b5fff\\artifact.json": "17207dc7fbb971e5b14a701fb40ad59a9dbcb42497e09c62b66e36bac65e2897",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_492d275d04674da1986d4fd9489a45ea\\artifact.json": "9bda79e4367a576ea026eb4706c882410307bbfb5620b159557b48ba1101451f",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_39f99fe4d6ab48589ac7b7df7d5d65a0\\artifact.json": "9f915838d2f92a0a19abeb3ec2615da75efe89f93d745fa1d7f3bbb7ef5be49b",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_96cf61e09d394f7697f615b3fdbf2299\\artifact.json": "1a32991935941b2173da103b4e29eaf6c407158270595c937e58ac0fcec7c0a1",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_910d253439204eaf9a146acba0b95476\\artifact.json": "e3ba5fe8ce4e3e7e5053b3985362f5c8adb9c09788c2e77de6205d943a31b2e4",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_4a3c63bb6f1d4c5c840a5371a782078c\\artifact.json": "b46f82b80af83e44a185b2651de68620ed73e1757574974b3b33b94717d521e3",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_fc784ab9858b40ffb258b55bed406e7a\\artifact.json": "19b1bf0265937d26b1b92d493becd32733c28937e28e7f0ab80eb64209ce6ab2",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_15e2ebf6922d4fee9ed525c8acf8dafc\\artifact.json": "9d2f9ce5b4bdfd8d315857d36ca4ae411794bb4cf739bdf7cf27ec61799fde34",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_baf382c3b1134e47b54fe9f2e6f515fd\\artifact.json": "aa132a1f03d5b0142d6eaaf88f26c8dd9a0fa625baba148e5b2728b8a019a224",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_ca52e198597d47158be046c9a51d7afb\\artifact.json": "66e3b4f7fa5e9f02f8f7d024b5c4581baa75f789fcf5ba386cf5ccdcd1fbb8c4",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_f621cfb22bee4c0b9919a6b9411fe5e2\\artifact.json": "d2baaeb09eb1a6f607844b2f069af01f3f1c54a1b12d89f846d1ddf45f8f7ebd",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_9367a9db54e94ff289c8474bc9591b30\\artifact.json": "e67b376063e2cae8ab8096803bac30bf0c6b9d720cd339d0cfba3e4a8a06462a",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_3d503355327d4f34bd1f66f8b147ef8f\\artifact.json": "4f693dc743bc0bdcaf4f48af0415baa7d98de25ce8c26ac1371698bfac4b4c47",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_e8d491794f0a4756a80e706baf5f1253\\artifact.json": "3d50e3ffec7917af5decbcb09d271f89bdeac43baa975ca6594cfbaef31101d8",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_298d3dc411fb4808b28ac97025d440cb\\artifact.json": "c0d578af1928333d70bb4b1f97b6fd0a1416ba559670cd7268337a3760b71466",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_10d47c7a55b24f8580eb6c015be3c80d\\artifact.json": "e487f181bc2982e8eeaf4b6b4141312963fc063a8a853059311d83bead9c43b4",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_a305c0411195450c8a280bf790ccd5f1\\artifact.json": "3fb1196e9d947f5880c5a7b954c4e71dd2bd3d391a396e7860e60d7b5f46e6e5",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_f0207c99c7d8402c95d032c2cda2ce11\\artifact.json": "0ec55bd435498a01a04caa8639dc670175067f6ba79f909420778fe8105dd95a",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_e1e61597f9b74aad8e6843da6118f831\\artifact.json": "e3c61bcadb65f707cbac7677584147519cf5309f76e74a54c44178ee8c2955d6",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_f298091d9c0c494a84115caabd04c64c\\artifact.json": "0d283e1660be734ec93aadfc6aca030b106ed9dbd2be4278fe8b1fc1b5fe891a",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_9f45bdb1d94e4609a7e92baf61a30310\\artifact.json": "13054507e5472ceab1911bf8905695a503f598a7ee88dc1c97c09a370e8e66ef",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_79895837ba7944718ac159691b0e4333\\artifact.json": "b6cbf0fc9423b507622010cea63aaa7234be8f9f99a48220f5aa40f6cc72b39c",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_d248004ccf9144659b2a0680f5ee6c47\\artifact.json": "819d354d2ed7d4c23f84a4e614690b76bbf15a87439d41d664860905fb347410",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_21a4a1bb37c94b338367e5310fb04848\\artifact.json": "6f5f903e7ff52faead46232d56a7765c0df10e4c2148e1635eaae984ee9e6ee2",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_281999deac4945fba1ceaf8d742da088\\artifact.json": "5a07b97d62a1a3e3868439bec3f0ba36fa1bf9ae84076d70559168e1a60f56ae",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_232f32b7dfd44e5cae487c4bd9fc8468\\artifact.json": "96d6eb2c98aca4031fbbb3d5dd699d4e3e2da66764f8e7bdceb75048acc37516",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_f010f571b02b4b1098aff5f87493768c\\artifact.json": "62aef8aedf2348b09e94d241f1cadd1fb2dbb0e582617ce4a1394e5c4b72e09c",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_0b4fbaf00c704e479ac60d55e98c2d4c\\artifact.json": "38284632fc2ad2902c7762aaea978510d282f4ba02d450dee1aa1e03bfa1e38a",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_7680e9b67a1b43ff861088f8558d343e\\artifact.json": "7bada6c334d78e832585cbad6769508c951e73657a4b4bfb491787758fff83d7",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_90286834176d46f7989ea6ee0d8abd5f\\artifact.json": "d1ce0fc56f1212f86dbad025dcf2fe598423732729b157778ea35ea4a53327d6",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_557f4398ad7243548994a18276ecd55c\\artifact.json": "f9ba8a51888f7fcae118ab2fff3b209db40105bd586a044055d6e9dfa67749fc",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_f055610c7fe54feb9e6a119a353dea9a\\artifact.json": "7cea06817e257ec4af82244ddecc9eb0b64bd2711da9ec4bc9e9a70e2ce683a3",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_a2b866505017470691585a1f56ee408f\\artifact.json": "76d1f9d774c338aba6439f0587f9b6f4578656dbf344c01f6ade1cf774178986",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_7d64ffaaca714983ae957ce6c41bdbc6\\artifact.json": "2c98c3e09aad95b7bd7b7b081a8b2d12d1969015872d5aa032b4c5daa7a5ad25",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_f8b253d7a37b40ceb18dd4038732d2a5\\artifact.json": "17bdf103afd4c090511d7646135fbb1d63009305c47bda886645eea1dde20f6d",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_47146ebbda584ddb8f711be116c70b06\\artifact.json": "6d4b15e7b158e5a283dbbb19d5fc2c841b8b86b66c2e799e26b259bee6542736",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_5efe69b70b1a4f6193edf29eb38c7b82\\artifact.json": "dbfbe22e8cf28f9b7f42062060dda174a58f4535dbd49d6409a598e4a31f9638",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\artifacts\\artifact_c61244b6b1ce413994bcfbd25c933afa\\artifact.json": "d874f23e5f53e21b94da29ec2bf113b30c9ff139e57f7d9376cd98b460ad8ceb",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\decisions\\model_68280e03f88c431b91903a5112f78639.json": "b91edcb0dc7fb923995439e5c898d371ed12f599b017cb9d4dff76731497f3ae",
+    "E:\\BG6022-V4\\data\\live-repair\\attempts\\a026\\data\\runs\\run_4a66f91e2a9b4c999297d7847f7ef1f2\\decisions\\model_aee6d94cf21e46b98d54c2c5181550f5.json": "dc335e91534ec0839a6e5ea7826468cab83cc4cccecf0f4a89fbb2afee905ce6"
+  },
+  "conclusion": "Current routes reject native raw archives as named values and require explicit sourced task-manifest records. Historical Plan remains readable; no old Result, scientific qualification or Run status was changed."
+}

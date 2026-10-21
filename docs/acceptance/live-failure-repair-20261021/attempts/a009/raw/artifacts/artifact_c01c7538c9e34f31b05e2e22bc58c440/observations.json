@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "observations": [
+    {
+      "name": "total_cartesian_shielding_tensor",
+      "value": {
+        "frame": "cartesian",
+        "tensors_ppm": []
+      },
+      "unit": "ppm",
+      "sources": [
+        {
+          "internal_request_key": "nmr_shielding",
+          "filename": "stdout.out",
+          "location": "ORCA stdout.out: total shielding tensor blocks"
+        }
+      ],
+      "formula": null,
+      "artifacts": [
+        "nmr_tensors.csv",
+        "nmr_summary.json"
+      ],
+      "limitations": [
+        "Shielding values are raw ORCA GIAO outputs; no reference-standard calibration or experimental comparison was performed.",
+        "The geometry is the prepared fixed initial geometry, not a PBE0/def2-TZVP reoptimization.",
+        "No random numbers are used in this script; any randomness in structure preparation is outside this script and was not reseeded here."
+      ]
+    },
+    {
+      "name": "isotropic_nmr_shielding_constant",
+      "value": {
+        "constants_ppm": []
+      },
+      "unit": "ppm",
+      "sources": [
+        {
+          "internal_request_key": "nmr_shielding",
+          "filename": "stdout.out",
+          "location": "ORCA stdout.out: total shielding tensor blocks"
+        }
+      ],
+      "formula": "isotropic_ppm = (s_xx + s_yy + s_zz) / 3",
+      "artifacts": [
+        "nmr_tensors.csv",
+        "nmr_summary.json"
+      ],
+      "limitations": [
+        "Shielding values are raw ORCA GIAO outputs; no reference-standard calibration or experimental comparison was performed.",
+        "The geometry is the prepared fixed initial geometry, not a PBE0/def2-TZVP reoptimization.",
+        "No random numbers are used in this script; any randomness in structure preparation is outside this script and was not reseeded here."
+      ]
+    },
+    {
+      "name": "shielding_trace_consistency_check",
+      "value": {
+        "checks_ppm": []
+      },
+      "unit": "ppm",
+      "sources": [
+        {
+          "internal_request_key": "nmr_shielding",
+          "filename": "stdout.out",
+          "location": "ORCA stdout.out: total shielding tensor blocks"
+        }
+      ],
+      "formula": "difference_ppm = isotropic_from_tensor_ppm - reported_isotropic_ppm",
+      "artifacts": [
+        "nmr_tensors.csv",
+        "nmr_summary.json"
+      ],
+      "limitations": [
+        "Shielding values are raw ORCA GIAO outputs; no reference-standard calibration or experimental comparison was performed.",
+        "The geometry is the prepared fixed initial geometry, not a PBE0/def2-TZVP reoptimization.",
+        "No random numbers are used in this script; any randomness in structure preparation is outside this script and was not reseeded here."
+      ]
+    },
+    {
+      "name": "delivery_report",
+      "value": "HCN GIAO NMR shielding calculation using PBE0/def2-TZVP RKS, charge 0, multiplicity 1, gas phase, on the prepared fixed initial geometry. Files: job.inp (actual input), hcn.xyz (initial/computational geometry), nmr_tensors.csv (machine-readable 3x3 tensors and isotropic values), nmr_summary.json (parsed summary and receipt metadata), observations.json. Seed 1701 is not applicable in this analysis script because no random numbers are used here.",
+      "unit": null,
+      "sources": [
+        {
+          "internal_request_key": "nmr_shielding",
+          "filename": "stdout.out",
+          "location": "ORCA stdout.out: total shielding tensor blocks"
+        }
+      ],
+      "formula": null,
+      "artifacts": [
+        "job.inp",
+        "hcn.xyz",
+        "nmr_tensors.csv",
+        "nmr_summary.json",
+        "observations.json"
+      ],
+      "limitations": [
+        "Shielding values are raw ORCA GIAO outputs; no reference-standard calibration or experimental comparison was performed.",
+        "The geometry is the prepared fixed initial geometry, not a PBE0/def2-TZVP reoptimization.",
+        "No random numbers are used in this script; any randomness in structure preparation is outside this script and was not reseeded here."
+      ]
+    }
+  ]
+}

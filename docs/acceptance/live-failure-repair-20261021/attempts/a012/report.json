@@ -1,0 +1,2079 @@
+{
+  "schema_version": 1,
+  "run_id": "run_5d801e875f5a4251ae1760720acb5d38",
+  "run_state": "paused",
+  "request_id": "request_868fd5914f4a465db34d28d9afffaa15",
+  "request_version": 3,
+  "plan_id": null,
+  "plan_version": null,
+  "recorded_delivery_status": "partial",
+  "report_delivery_status": "partial",
+  "user_goal_complete": false,
+  "request": {
+    "original_text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "conditions": {
+      "method": "PBE0",
+      "basis": "def2-TZVP",
+      "charge": null,
+      "multiplicity": null
+    },
+    "additional_conditions": {
+      "explain_results": true,
+      "electronic_state": "RKS",
+      "method": "PBE0",
+      "basis": "def2-TZVP"
+    },
+    "condition_sources": {
+      "electronic_state": "default",
+      "method": "auto_selected",
+      "basis": "auto_selected"
+    },
+    "systems": [
+      {
+        "id": "system_hcn",
+        "geometry_artifact_id": null,
+        "conditions": {
+          "charge": 0,
+          "multiplicity": 1,
+          "environment": "gas_phase"
+        },
+        "conditions_source": {
+          "charge": "explicit",
+          "multiplicity": "explicit",
+          "environment": "explicit"
+        },
+        "atom_mapping": [],
+        "label": "氰化氢HCN",
+        "identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "氰化氢HCN"
+          ],
+          "canonical_names": [],
+          "query_name": "hydrogen cyanide",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_dba35373d9de48ffb5d251beca71e276",
+            "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+            "start": 2,
+            "end": 25,
+            "schema": "request-semantics-3"
+          }
+        },
+        "geometry_source": "prepare"
+      }
+    ],
+    "unresolved": [],
+    "selection_reasons": {
+      "method": "选择 PBE0 杂化密度泛函：体系为中性单重态三原子 HCN，成本很低；PBE0 对主族分子几何与磁屏蔽计算常用且可靠，适合在固定几何上做 GIAO 屏蔽计算。将记录实际输入中的方法设置。",
+      "basis": "选择 def2-TZVP：三原子体系成本仍低；ORCA 手册所检索到的资料指出针对 NMR 屏蔽常数的误差一致双ζ/三ζ基组，三ζ基组通常比 def2-SVP 更适合屏蔽张量计算。将记录实际基组拼写与数值设置。"
+    },
+    "selection_evidence": {
+      "request.method": {
+        "value": "PBE0",
+        "source": "auto_selected",
+        "request_version": 2,
+        "reason": "选择 PBE0 杂化密度泛函：体系为中性单重态三原子 HCN，成本很低；PBE0 对主族分子几何与磁屏蔽计算常用且可靠，适合在固定几何上做 GIAO 屏蔽计算。将记录实际输入中的方法设置。",
+        "sources": [],
+        "schema": "condition-selection-3",
+        "basis_kind": "model_reason",
+        "scientific_validation": "not_established_by_selection",
+        "user_request_authorization": {
+          "message_id": "message_dba35373d9de48ffb5d251beca71e276",
+          "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。",
+          "start": 64,
+          "end": 128,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        }
+      },
+      "request.basis": {
+        "value": "def2-TZVP",
+        "source": "auto_selected",
+        "request_version": 2,
+        "reason": "选择 def2-TZVP：三原子体系成本仍低；ORCA 手册所检索到的资料指出针对 NMR 屏蔽常数的误差一致双ζ/三ζ基组，三ζ基组通常比 def2-SVP 更适合屏蔽张量计算。将记录实际基组拼写与数值设置。",
+        "sources": [
+          {
+            "result_id": "result_4daeded164cc432d90a61de33d2fa429",
+            "result_fingerprint": "42455cf394769349fa401edb1b579b8c5cd098c98001a67cdbdac004d881ea4e",
+            "document_sha256": "a62d80e553aa0e60b83f65687e6cc0238a668021e3305914f642cecadc439c44",
+            "excerpt_sha256": "e4a1e2cb931d6cc39abbb40eff502a6b30c3593ae7bf9e7c69a332f2748a2c30",
+            "quote": "Error-Consistent Segmented Contracted All-Electron Relativistic Basis Sets of Double- and Triple-Zeta Quality for NMR Shielding Constants.",
+            "kind": "official_document",
+            "document_id": "orca:index.html",
+            "index_version": "knowledge-index-3",
+            "document_version": "6.1",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/index.html",
+            "title": "ORCA 6.1 Manual: index.html"
+          }
+        ],
+        "schema": "condition-selection-3",
+        "basis_kind": "retrieved_evidence",
+        "scientific_validation": "not_established_by_selection",
+        "user_request_authorization": {
+          "message_id": "message_dba35373d9de48ffb5d251beca71e276",
+          "text_basis": "方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。",
+          "start": 64,
+          "end": 128,
+          "schema": "request-semantics-3",
+          "source": "explicit"
+        }
+      }
+    }
+  },
+  "goals": [
+    {
+      "goal_id": "goal_prepared_geometry",
+      "port": "prepared_geometry",
+      "required": true,
+      "original_text": "生成并保存一份合理结构",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "structure-prepare-3",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    },
+    {
+      "goal_id": "goal_giao_nmr_shielding",
+      "port": "giao_nmr_shielding",
+      "required": true,
+      "original_text": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {
+        "geometry_relation": "fixed_initial"
+      },
+      "minimum_evidence": [
+        "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。",
+        "此题要求屏蔽常数，不要求参考物或实验谱",
+        "不要将屏蔽常数改称已经过参考标定的化学位移",
+        "也不要仅交付抗磁或顺磁分量来代替总屏蔽",
+        "未收敛或缺少的核应明确标为未完成，不补造数值"
+      ],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    },
+    {
+      "goal_id": "goal_method_selection_rationale",
+      "port": "method_selection_rationale",
+      "required": true,
+      "original_text": "在计算前说明选择与成本依据并记录实际数值设置",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    },
+    {
+      "goal_id": "goal_delivery",
+      "port": "delivery",
+      "required": true,
+      "original_text": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    },
+    {
+      "goal_id": "goal_random_seed",
+      "port": "random_seed",
+      "required": true,
+      "original_text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+      "recorded_status": "insufficient_evidence",
+      "report_status": "insufficient_evidence",
+      "evidence_status": "insufficient_evidence",
+      "minimum_check_version": "generic-observation-1",
+      "conditions": {},
+      "minimum_evidence": [],
+      "applicability": null,
+      "binding": null,
+      "result_id": null,
+      "run_id": null,
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "run_id": "run_5d801e875f5a4251ae1760720acb5d38",
+      "result_id": "result_4daeded164cc432d90a61de33d2fa429",
+      "step_id": null,
+      "attempt_id": null,
+      "call_id": "call_8ebbbc46d62943c9b09aa65631412741",
+      "operation_status": "completed",
+      "scientific_status": "no_currently_verified_scientific_output",
+      "output_validation": [
+        {
+          "name": "document_excerpt",
+          "kind": "checked_output",
+          "status": "unverified",
+          "scientific_qualification": false,
+          "checks": [
+            {
+              "name": "non_scientific_delivery",
+              "status": "passed",
+              "detail": "operation only; content and observed values remain scientifically unverified",
+              "source": {
+                "coverage": {
+                  "complete": false,
+                  "scope": "bounded matched document paragraphs and table rows",
+                  "paragraph_indices": [
+                    1735,
+                    1885,
+                    3003
+                  ],
+                  "paragraph_count": 3271,
+                  "table_row_labels": {},
+                  "document_scope": "navigation",
+                  "limitation": "Index headings and links locate documentation; they do not establish input syntax or output format. Explicitly retrieve the relevant manual section before relying on its syntax. Linked pages were not fetched."
+                }
+              },
+              "rule_version": "knowledge-answer-1"
+            }
+          ],
+          "source_integrity": "verified"
+        }
+      ],
+      "qualified_outputs": {},
+      "checks": {
+        "document_excerpt": [
+          {
+            "name": "non_scientific_delivery",
+            "status": "passed",
+            "detail": "operation only; content and observed values remain scientifically unverified",
+            "source": {
+              "coverage": {
+                "complete": false,
+                "scope": "bounded matched document paragraphs and table rows",
+                "paragraph_indices": [
+                  1735,
+                  1885,
+                  3003
+                ],
+                "paragraph_count": 3271,
+                "table_row_labels": {},
+                "document_scope": "navigation",
+                "limitation": "Index headings and links locate documentation; they do not establish input syntax or output format. Explicitly retrieve the relevant manual section before relying on its syntax. Linked pages were not fetched."
+              }
+            },
+            "rule_version": "knowledge-answer-1"
+          }
+        ]
+      },
+      "observations": {
+        "classification": "evidence_observation_only",
+        "scientific_qualification": false,
+        "data": {
+          "document_excerpt": {
+            "status": "found",
+            "title": "ORCA 6.1 Manual: index.html",
+            "url": "https://www.faccts.de/docs/orca/6.1/manual/index.html",
+            "document_id": "orca:index.html",
+            "index_version": "knowledge-index-3",
+            "index_sha256": "6129ac36cadd12aeb1eb7183370088b445e6c9af654db993f17b961668fd502e",
+            "document_version": "6.1",
+            "kind": "official_document",
+            "rendering_version": "html-readable-2",
+            "published_at": null,
+            "accessed_at": "2026-10-20T21:34:09.519854+00:00",
+            "query": "NMR chemical shielding GIAO calculation keyword and EPRNMR block",
+            "document_sha256": "a62d80e553aa0e60b83f65687e6cc0238a668021e3305914f642cecadc439c44",
+            "excerpt": "Franzke, Yannick J.; Treß, Robert; Pazdera, Tobias M.; Weigend, Florian. Error-Consistent Segmented Contracted All-Electron Relativistic Basis Sets of Double- and Triple-Zeta Quality for NMR Shielding Constants. Phys. Chem. Chem. Phys., 2019, 21 (30), 16658–16664. DOI: 10.1039/C9CP02382H.\n\nFranzke, Yannick J; Weigend, Florian. NMR Shielding Tensors and Chemical Shifts in Scalar-Relativistic Local Exact Two-Component Theory. J. Chem. Theory Comput., 2019, 15 (2), 1028–1043. DOI: 10.1021/acs.jctc.8b01084.\n\nStoychev, Georgi L; Auer, Alexander A; Izsák, Róbert; Neese, Frank. Self-Consistent Field Calculation of Nuclear Magnetic Resonance Chemical Shielding Constants Using Gauge-Including Atomic Orbitals and Approximate Two-Electron Integrals. J. Chem. Theory Comput., 2018, 14 (2), 619–637. DOI: 10.1021/acs.jctc.7b01006.",
+            "excerpt_sha256": "e4a1e2cb931d6cc39abbb40eff502a6b30c3593ae7bf9e7c69a332f2748a2c30",
+            "coverage": {
+              "complete": false,
+              "scope": "bounded matched document paragraphs and table rows",
+              "paragraph_indices": [
+                1735,
+                1885,
+                3003
+              ],
+              "paragraph_count": 3271,
+              "table_row_labels": {},
+              "document_scope": "navigation",
+              "limitation": "Index headings and links locate documentation; they do not establish input syntax or output format. Explicitly retrieve the relevant manual section before relying on its syntax. Linked pages were not fetched."
+            },
+            "scientific_qualification": false,
+            "retrieval": "versioned official-document index; one HTTPS GET",
+            "manual_references": [
+              "orca:index.html",
+              "orca:html_versions.html",
+              "orca:contents/preface/foreword.html",
+              "orca:contents/preface/changes.html",
+              "orca:contents/preface/howtocite.html",
+              "orca:contents/preface/howtousethismanual.html",
+              "orca:contents/quickstartguide/index_quickstartguide.html",
+              "orca:contents/quickstartguide/about.html",
+              "orca:contents/quickstartguide/installation.html",
+              "orca:contents/quickstartguide/gui.html",
+              "orca:contents/quickstartguide/running.html",
+              "orca:contents/quickstartguide/hellowater.html",
+              "orca:contents/quickstartguide/recommendations.html",
+              "orca:contents/quickstartguide/troubleshooting.html",
+              "orca:contents/essentialelements/index_essentialelements.html",
+              "orca:contents/essentialelements/input.html",
+              "orca:contents/essentialelements/coordinates.html",
+              "orca:contents/essentialelements/basics.html",
+              "orca:contents/essentialelements/output.html",
+              "orca:contents/essentialelements/parallel.html",
+              "orca:contents/essentialelements/scf.html",
+              "orca:contents/essentialelements/basisset.html",
+              "orca:contents/essentialelements/RI.html",
+              "orca:contents/essentialelements/numericalintegration.html",
+              "orca:contents/essentialelements/counterpoise.html",
+              "orca:contents/essentialelements/relativistic.html",
+              "orca:contents/essentialelements/solvationmodels.html",
+              "orca:contents/essentialelements/integralhandling.html",
+              "orca:contents/essentialelements/shark.html",
+              "orca:contents/essentialelements/stabilityanalysis.html",
+              "orca:contents/essentialelements/finEfield.html",
+              "orca:contents/essentialelements/fragmentation.html",
+              "orca:contents/essentialelements/symmetry.html",
+              "orca:contents/essentialelements/initialguess.html",
+              "orca:contents/essentialelements/frozencore.html",
+              "orca:contents/essentialelements/cpscf.html",
+              "orca:contents/essentialelements/numericalgradients.html",
+              "orca:contents/modelchemistries/index_modelchemistries.html",
+              "orca:contents/modelchemistries/hftype.html",
+              "orca:contents/modelchemistries/hartreefock.html",
+              "orca:contents/modelchemistries/DensityFunctionalTheory.html",
+              "orca:contents/modelchemistries/dispersioncorrections.html",
+              "orca:contents/modelchemistries/semiempirical.html",
+              "orca:contents/modelchemistries/3cmethods.html",
+              "orca:contents/modelchemistries/analyticDFT.html",
+              "orca:contents/modelchemistries/RPA.html",
+              "orca:contents/modelchemistries/MP2.html",
+              "orca:contents/modelchemistries/mdci.html",
+              "orca:contents/modelchemistries/autoci.html",
+              "orca:contents/modelchemistries/mrcc.html",
+              "orca:contents/modelchemistries/CASSCF.html",
+              "orca:contents/modelchemistries/iceci.html",
+              "orca:contents/modelchemistries/dmrg.html",
+              "orca:contents/modelchemistries/NEVPT2.html",
+              "orca:contents/modelchemistries/caspt2.html",
+              "orca:contents/modelchemistries/casdft.html",
+              "orca:contents/modelchemistries/mrci.html",
+              "orca:contents/modelchemistries/mreom.html",
+              "orca:contents/modelchemistries/dcdcas2.html",
+              "orca:contents/modelchemistries/energygradients_FCI.html",
+              "orca:contents/modelchemistries/mm.html",
+              "orca:contents/structurereactivity/index_structurereactivity.html",
+              "orca:contents/structurereactivity/optimizations.html",
+              "orca:contents/structurereactivity/optimizations_scans.html",
+              "orca:contents/structurereactivity/optimizations_TS.html",
+              "orca:contents/structurereactivity/irc.html",
+              "orca:contents/structurereactivity/neb.html",
+              "orca:contents/structurereactivity/frequencies.html",
+              "orca:contents/structurereactivity/thermochemistry.html",
+              "orca:contents/structurereactivity/conicalintersections.html",
+              "orca:contents/structurereactivity/mecp.html",
+              "orca:contents/structurereactivity/goat.html",
+              "orca:contents/structurereactivity/solvator.html",
+              "orca:contents/structurereactivity/docker.html",
+              "orca:contents/spectroscopyproperties/index_spectroscopyproperties.html",
+              "orca:contents/spectroscopyproperties/population.html",
+              "orca:contents/spectroscopyproperties/nbo.html",
+              "orca:contents/spectroscopyproperties/fod.html",
+              "orca:contents/spectroscopyproperties/excitedstates.html",
+              "orca:contents/spectroscopyproperties/esd.html",
+              "[bounded report: additional items omitted]"
+            ],
+            "artifact_ids": [
+              "artifact_5e6c453b585a42a1992a6d4221c9dd4e"
+            ],
+            "document_artifact_id": "artifact_5e6c453b585a42a1992a6d4221c9dd4e",
+            "document_archive_complete": true,
+            "document_bytes": 702753,
+            "source": {
+              "run_id": "run_5d801e875f5a4251ae1760720acb5d38",
+              "call_id": "call_8ebbbc46d62943c9b09aa65631412741",
+              "tool": "knowledge.search",
+              "url": "https://www.faccts.de/docs/orca/6.1/manual/index.html",
+              "document_id": "orca:index.html",
+              "document_version": "6.1",
+              "accessed_at": "2026-10-20T21:34:09.519854+00:00",
+              "byte_semantics": "HTTP content-decoded body before UTF-8 text decoding; packaged guides use UTF-8 bytes",
+              "scientific_qualification": false,
+              "files": {
+                "document.html": {
+                  "artifact_id": "artifact_5e6c453b585a42a1992a6d4221c9dd4e",
+                  "sha256": "a62d80e553aa0e60b83f65687e6cc0238a668021e3305914f642cecadc439c44"
+                }
+              }
+            }
+          }
+        }
+      },
+      "observation_records": [],
+      "artifacts": [
+        {
+          "artifact_id": "artifact_5e6c453b585a42a1992a6d4221c9dd4e",
+          "sha256": "a62d80e553aa0e60b83f65687e6cc0238a668021e3305914f642cecadc439c44",
+          "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a012\\data\\artifacts\\artifact_5e6c453b585a42a1992a6d4221c9dd4e\\files\\document.html",
+          "role": "knowledge_document",
+          "run_id": "run_5d801e875f5a4251ae1760720acb5d38",
+          "attempt_id": null,
+          "status": "verified"
+        }
+      ],
+      "conditions": {},
+      "source": {
+        "run_id": "run_5d801e875f5a4251ae1760720acb5d38",
+        "call_id": "call_8ebbbc46d62943c9b09aa65631412741",
+        "tool": "knowledge.search",
+        "url": "https://www.faccts.de/docs/orca/6.1/manual/index.html",
+        "document_id": "orca:index.html",
+        "document_version": "6.1",
+        "accessed_at": "2026-10-20T21:34:09.519854+00:00",
+        "byte_semantics": "HTTP content-decoded body before UTF-8 text decoding; packaged guides use UTF-8 bytes",
+        "scientific_qualification": false,
+        "files": {
+          "document.html": {
+            "artifact_id": "artifact_5e6c453b585a42a1992a6d4221c9dd4e",
+            "sha256": "a62d80e553aa0e60b83f65687e6cc0238a668021e3305914f642cecadc439c44"
+          }
+        },
+        "consumption": {
+          "_decision_id": "model_10f2fd85b9e14ef2abe328ebc46611af"
+        },
+        "request_version": 2,
+        "plan_version": null
+      },
+      "diagnostics": [],
+      "gaps": []
+    }
+  ],
+  "attempts": [],
+  "goal_facts": [
+    {
+      "goal_id": "goal_prepared_geometry",
+      "port": "prepared_geometry",
+      "required": true,
+      "system_ids": [
+        "system_hcn"
+      ],
+      "requested_identity": {
+        "contract": "general-identity-3",
+        "requested_names": [
+          "氰化氢HCN"
+        ],
+        "canonical_names": [],
+        "query_name": "hydrogen cyanide",
+        "query_name_source": "inferred_translation_or_alias",
+        "ambiguities": [],
+        "text_evidence": {
+          "message_id": "message_dba35373d9de48ffb5d251beca71e276",
+          "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+          "start": 2,
+          "end": 25,
+          "schema": "request-semantics-3"
+        }
+      },
+      "current_conditions": {
+        "system_hcn": {
+          "method": "PBE0",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_hcn": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "system:system_hcn",
+          "multiplicity": "system:system_hcn",
+          "electronic_state": "request.conditions",
+          "environment": "system:system_hcn"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "structure-prepare-3",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_giao_nmr_shielding",
+      "port": "giao_nmr_shielding",
+      "required": true,
+      "system_ids": [
+        "system_hcn"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "氰化氢HCN"
+        ]
+      },
+      "current_conditions": {
+        "system_hcn": {
+          "method": "PBE0",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_hcn": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "system:system_hcn",
+          "multiplicity": "system:system_hcn",
+          "electronic_state": "request.conditions",
+          "environment": "system:system_hcn"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": "fixed_initial",
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_method_selection_rationale",
+      "port": "method_selection_rationale",
+      "required": true,
+      "system_ids": [
+        "system_hcn"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "氰化氢HCN"
+        ]
+      },
+      "current_conditions": {
+        "system_hcn": {
+          "method": "PBE0",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_hcn": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "system:system_hcn",
+          "multiplicity": "system:system_hcn",
+          "electronic_state": "request.conditions",
+          "environment": "system:system_hcn"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_delivery",
+      "port": "delivery",
+      "required": true,
+      "system_ids": [
+        "system_hcn"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "氰化氢HCN"
+        ]
+      },
+      "current_conditions": {
+        "system_hcn": {
+          "method": "PBE0",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_hcn": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "system:system_hcn",
+          "multiplicity": "system:system_hcn",
+          "electronic_state": "request.conditions",
+          "environment": "system:system_hcn"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    },
+    {
+      "goal_id": "goal_random_seed",
+      "port": "random_seed",
+      "required": true,
+      "system_ids": [
+        "system_hcn"
+      ],
+      "requested_identity": {
+        "requested_names": [
+          "氰化氢HCN"
+        ]
+      },
+      "current_conditions": {
+        "system_hcn": {
+          "method": "PBE0",
+          "basis": "def2-TZVP",
+          "charge": 0,
+          "multiplicity": 1,
+          "electronic_state": "RKS",
+          "environment": "gas_phase"
+        }
+      },
+      "condition_sources": {
+        "system_hcn": {
+          "method": "request.conditions",
+          "basis": "request.conditions",
+          "charge": "system:system_hcn",
+          "multiplicity": "system:system_hcn",
+          "electronic_state": "request.conditions",
+          "environment": "system:system_hcn"
+        }
+      },
+      "source_conditions": {},
+      "geometry_relation": null,
+      "requested_geometry_artifact_ids": [
+        null
+      ],
+      "source_geometry_artifact_id": null,
+      "recorded_status": "insufficient_evidence",
+      "current_evidence_status": "unresolved",
+      "goal_complete": false,
+      "answer": null,
+      "source": null,
+      "minimum_check_version": "generic-observation-1",
+      "gaps": [
+        "goal_has_no_evidence_binding"
+      ],
+      "next_action": "resolve_gaps_in_scope"
+    }
+  ],
+  "permission": {
+    "version": 1,
+    "scientific_execution": true,
+    "allowed_tools": [
+      "structure.resolve",
+      "structure.prepare",
+      "workspace.write",
+      "python.execute",
+      "orca.run",
+      "evidence.list",
+      "evidence.discover",
+      "evidence.search",
+      "evidence.value",
+      "evidence.text",
+      "knowledge.search",
+      "knowledge.answer"
+    ],
+    "max_cores": 4,
+    "max_memory_mb": 1024,
+    "artifact_ids": [],
+    "source_ids": [],
+    "result_ids": [],
+    "model_execution": true,
+    "code_execution": true,
+    "artifact_writes": true,
+    "allowed_repairs": {},
+    "allow_additional_science": true,
+    "external_identity_queries": true,
+    "geometry_preparation": true
+  },
+  "budget": {
+    "limits": {
+      "logical_steps": 12,
+      "attempts_per_step": 3,
+      "orca_starts": 12,
+      "extra_orca_starts": 11,
+      "postprocess_starts": 0,
+      "run_seconds": 7200.0,
+      "model_calls": 24,
+      "plan_revisions": 12,
+      "model_tokens": 1200000,
+      "input_tokens": 64000,
+      "output_tokens": 32768,
+      "decision_rounds": 40,
+      "evidence_reads": 12,
+      "analysis_executions": 4,
+      "file_writes": 32,
+      "corrections_per_proposal": 23,
+      "transport_retries": 0,
+      "identity_queries": 2,
+      "structure_preparations": 1,
+      "knowledge_queries": 4,
+      "internal_work_units": 10000,
+      "code_retries": 2,
+      "artifact_count": 800,
+      "artifact_bytes": 268435456,
+      "artifact_total_bytes": 268435456
+    },
+    "usage": {
+      "internal_work_units": 0,
+      "internal_calls_by_purpose": {},
+      "code_retries": 0,
+      "orca_starts_reserved": 0,
+      "orca_starts_actual": 0,
+      "postprocess_starts": 0,
+      "elapsed_seconds": 0.0,
+      "cpu_seconds": 0.0,
+      "resource_usage_complete": true,
+      "logical_attempts": {},
+      "fingerprint_attempts": {},
+      "extra_orca_starts_reserved": 0,
+      "model_calls": 10,
+      "model_tokens_used": 162085,
+      "model_tokens_unknown": 0,
+      "plan_revisions": 0,
+      "decision_rounds": 10,
+      "evidence_reads": 0,
+      "analysis_executions": 0,
+      "logical_steps": [],
+      "identity_queries": 0,
+      "structure_preparations": 0,
+      "knowledge_queries": 1
+    },
+    "deadline": "2026-10-20T23:33:19.148407+00:00",
+    "unresolved_scientific_attempt_ids": [],
+    "model_cost": {
+      "currency": "USD",
+      "known_cost": "0.0710877",
+      "unsettled_reservation": null,
+      "cost_basis": "frozen_peak_uncached_upper_bound_from_known_tokens",
+      "provider_billing_queried": false,
+      "provider_charged_amount": null,
+      "cost_records_complete": true,
+      "known_call_count": 10,
+      "unsettled_call_count": 0,
+      "records": [
+        {
+          "id": "model_cb02a32526cc4a8cbd0aa473f298ac68",
+          "logical_id": "decision_300450ef7079ea3c22b470e9_1",
+          "request_hash": "d2f21c8cad4a67dbcd8a65b0a75626b6e9fca28005244169245f97b271275760",
+          "prompt_version": "agent-json-v83",
+          "status": "known",
+          "input_reserved": 24239,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0465933",
+          "input_tokens": 6169,
+          "output_tokens": 8036,
+          "total_tokens": 14205,
+          "cost_known_usd": "0.0114939",
+          "error_category": null,
+          "response_hash": "8478da4fb42e8e90dc464f0dec6872a3ad1b9ff385df28fa0be86b7087dcfeb7",
+          "latency_seconds": 34.969000000011874
+        },
+        {
+          "id": "model_10f2fd85b9e14ef2abe328ebc46611af",
+          "logical_id": "decision_341e74899b5526463d94505e_1",
+          "request_hash": "c53508102a70df3117af97635bd59720685081131750f09ac325a58649170d0f",
+          "prompt_version": "agent-json-v83",
+          "status": "known",
+          "input_reserved": 54284,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0556068",
+          "input_tokens": 13898,
+          "output_tokens": 1887,
+          "total_tokens": 15785,
+          "cost_known_usd": "0.0064338",
+          "error_category": null,
+          "response_hash": "3e9fd89efa13f71a57fd93c420ae2e96d0b53ae886c55fca34f36c1bf1a30ad5",
+          "latency_seconds": 10.60899999999674
+        },
+        {
+          "id": "model_dd38cb78b07e4d36bb9e6bb55402e98e",
+          "logical_id": "decision_b9f2d449f3f190b84c3fcba5_1",
+          "request_hash": "ab108f009a2e794e80823484acac5c7d47c273ae78efeb1fafc8a6e4a0d45a90",
+          "prompt_version": "agent-json-v83",
+          "status": "known",
+          "input_reserved": 53195,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0552801",
+          "input_tokens": 14485,
+          "output_tokens": 2382,
+          "total_tokens": 16867,
+          "cost_known_usd": "0.0072039",
+          "error_category": "invalid_proposal_json",
+          "response_hash": "b914b80ab94cbe7e9ee0267b17b5c4bb4932dd4d06ac682e2760ca9941c4b4cc",
+          "latency_seconds": 13.719000000011874
+        },
+        {
+          "id": "model_6cade9e7466e4638bfe2dc3be9dc2176",
+          "logical_id": "decision_b9f2d449f3f190b84c3fcba5_2",
+          "request_hash": "95f906e1acee7ee7e8f03e108d210a2e673b6d990ae499452d33833341d8e51e",
+          "prompt_version": "agent-json-v83",
+          "status": "known",
+          "input_reserved": 53940,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0555036",
+          "input_tokens": 14652,
+          "output_tokens": 559,
+          "total_tokens": 15211,
+          "cost_known_usd": "0.0050664",
+          "error_category": "invalid_proposal_json",
+          "response_hash": "fd1e13d00126a00c0ae32385fbf9442d57aa1ac761ec68a7b0425044a4b5b6dc",
+          "latency_seconds": 3.7969999999913853
+        },
+        {
+          "id": "model_b8cdedb28359470d99afb441c5eec682",
+          "logical_id": "decision_b9f2d449f3f190b84c3fcba5_3",
+          "request_hash": "d118c893acde0f21314ad8784806df2e0e6639fe2f5d0d7de82abb9de5dffe80",
+          "prompt_version": "agent-json-v83",
+          "status": "known",
+          "input_reserved": 53940,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0555036",
+          "input_tokens": 14656,
+          "output_tokens": 785,
+          "total_tokens": 15441,
+          "cost_known_usd": "0.0053388",
+          "error_category": "invalid_proposal_json",
+          "response_hash": "fb8b9a09c40601261b16b121fa7d130f674bb4ecd09facbcc5c3e6298cfa4339",
+          "latency_seconds": 4.875
+        },
+        {
+          "id": "model_49eb34f43bad44b2999300382d6df093",
+          "logical_id": "decision_b9f2d449f3f190b84c3fcba5_4",
+          "request_hash": "f9886da5bc5cb82ad30d36184d5ba468fd7bfb2852cfcbb9667f4aae444ec6ee",
+          "prompt_version": "agent-json-v83",
+          "status": "known",
+          "input_reserved": 53941,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0555039",
+          "input_tokens": 14660,
+          "output_tokens": 839,
+          "total_tokens": 15499,
+          "cost_known_usd": "0.0054048",
+          "error_category": "invalid_proposal_json",
+          "response_hash": "a5a5d674d92bf719415531b1928fda6db2f3862771929b2be18718f79977950e",
+          "latency_seconds": 5.578000000008615
+        },
+        {
+          "id": "model_656a3c0c6de54d7d9e057ab5ac963ebc",
+          "logical_id": "decision_b9f2d449f3f190b84c3fcba5_5",
+          "request_hash": "057f4bf5170b0a7f08aed3498088f17d7936a13376be814d81de952ab3d27f6a",
+          "prompt_version": "agent-json-v83",
+          "status": "known",
+          "input_reserved": 54139,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0555633",
+          "input_tokens": 14717,
+          "output_tokens": 449,
+          "total_tokens": 15166,
+          "cost_known_usd": "0.0049539",
+          "error_category": "invalid_proposal_json",
+          "response_hash": "9439bda6fdd75ca8dd5d2ec535211c7c04b5de796c6b15e6817b6495a53263fa",
+          "latency_seconds": 3.0309999999881256
+        },
+        {
+          "id": "model_eaa0f0c961c8425baf7e305507e51017",
+          "logical_id": "decision_b9f2d449f3f190b84c3fcba5_6",
+          "request_hash": "d4f58a769b0407f5e1b9fb7f2a946f183847302bae82326e21fc61de1ba739bf",
+          "prompt_version": "agent-json-v83",
+          "status": "known",
+          "input_reserved": 54164,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0555708",
+          "input_tokens": 14717,
+          "output_tokens": 290,
+          "total_tokens": 15007,
+          "cost_known_usd": "0.0047631",
+          "error_category": "invalid_proposal_json",
+          "response_hash": "929e234bcc4650359110dd960bff9f141850f52f538812f16dcf2c680cc9ab1a",
+          "latency_seconds": 2.625
+        },
+        {
+          "id": "model_7a34796fa9f8441b96aa41082808b71b",
+          "logical_id": "decision_b9f2d449f3f190b84c3fcba5_7",
+          "request_hash": "c94bca5985e2471e7b51583621d2bfd0c6814c22a727fc7cf2132d6e339c50b7",
+          "prompt_version": "agent-json-v83",
+          "status": "known",
+          "input_reserved": 54156,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0555684",
+          "input_tokens": 14715,
+          "output_tokens": 637,
+          "total_tokens": 15352,
+          "cost_known_usd": "0.0051789",
+          "error_category": null,
+          "response_hash": "d6555a6d5b169eff4327529e40f507deafd37badcb3a3c85451a8571c4acfb33",
+          "latency_seconds": 4.2810000000172295
+        },
+        {
+          "id": "model_f06a3ca4ee8346d598a718a5244ad01f",
+          "logical_id": "decision_8b5904ecdbb7ced3c66a1b27_1",
+          "request_hash": "5b248aa84d9d3b6f577c8d673032c03efb7b4e2c128ce1275d3665892cc0f258",
+          "prompt_version": "agent-json-v83",
+          "status": "known",
+          "input_reserved": 52679,
+          "output_reserved": 32768,
+          "cost_reserved_usd": "0.0551253",
+          "input_tokens": 14458,
+          "output_tokens": 9094,
+          "total_tokens": 23552,
+          "cost_known_usd": "0.0152502",
+          "error_category": null,
+          "response_hash": "9c9ad5063a3d10952b3f0c5dbb03664982584895b25e9365b44e2f2b7b68cf03",
+          "latency_seconds": 43.84299999999348
+        }
+      ]
+    }
+  },
+  "diagnostics": [
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_dd38cb78b07e4d36bb9e6bb55402e98e",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_6cade9e7466e4638bfe2dc3be9dc2176",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_b8cdedb28359470d99afb441c5eec682",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_49eb34f43bad44b2999300382d6df093",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_656a3c0c6de54d7d9e057ab5ac963ebc",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "proposal_rejected",
+      "model_id": "model_eaa0f0c961c8425baf7e305507e51017",
+      "error_category": "invalid_proposal_json"
+    },
+    {
+      "category": "stale_model_response",
+      "model_id": "model_f06a3ca4ee8346d598a718a5244ad01f"
+    }
+  ],
+  "gaps": [],
+  "execution": {
+    "internal_calls": [],
+    "checkpoints": [],
+    "progress": {
+      "total": 0,
+      "completed": 0,
+      "failed": 0,
+      "running": 0
+    }
+  },
+  "stop_reason": {
+    "state": "paused",
+    "categories": [
+      "paused",
+      "proposal_rejected",
+      "stale_model_response"
+    ],
+    "diagnostics": [
+      {
+        "category": "proposal_rejected",
+        "error_category": "invalid_proposal_json",
+        "model_id": "model_dd38cb78b07e4d36bb9e6bb55402e98e"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "invalid_proposal_json",
+        "model_id": "model_6cade9e7466e4638bfe2dc3be9dc2176"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "invalid_proposal_json",
+        "model_id": "model_b8cdedb28359470d99afb441c5eec682"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "invalid_proposal_json",
+        "model_id": "model_49eb34f43bad44b2999300382d6df093"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "invalid_proposal_json",
+        "model_id": "model_656a3c0c6de54d7d9e057ab5ac963ebc"
+      },
+      {
+        "category": "proposal_rejected",
+        "error_category": "invalid_proposal_json",
+        "model_id": "model_eaa0f0c961c8425baf7e305507e51017"
+      },
+      {
+        "category": "stale_model_response",
+        "model_id": "model_f06a3ca4ee8346d598a718a5244ad01f"
+      }
+    ],
+    "model_errors": [
+      {
+        "id": "model_dd38cb78b07e4d36bb9e6bb55402e98e",
+        "status": "known",
+        "error_category": "invalid_proposal_json"
+      },
+      {
+        "id": "model_6cade9e7466e4638bfe2dc3be9dc2176",
+        "status": "known",
+        "error_category": "invalid_proposal_json"
+      },
+      {
+        "id": "model_b8cdedb28359470d99afb441c5eec682",
+        "status": "known",
+        "error_category": "invalid_proposal_json"
+      },
+      {
+        "id": "model_49eb34f43bad44b2999300382d6df093",
+        "status": "known",
+        "error_category": "invalid_proposal_json"
+      },
+      {
+        "id": "model_656a3c0c6de54d7d9e057ab5ac963ebc",
+        "status": "known",
+        "error_category": "invalid_proposal_json"
+      },
+      {
+        "id": "model_eaa0f0c961c8425baf7e305507e51017",
+        "status": "known",
+        "error_category": "invalid_proposal_json"
+      }
+    ]
+  },
+  "limitations": [
+    "Evidence reading, scientific output qualification, and user goal completion are distinct.",
+    "Electronic energy and its difference are not free energy or thermochemical corrections.",
+    "Finite sampling describes only the sampled discrete geometries.",
+    "An optimized geometry alone does not establish vibrational stability or a global minimum."
+  ],
+  "artifact_index": [
+    {
+      "artifact_id": "artifact_5e6c453b585a42a1992a6d4221c9dd4e",
+      "sha256": "a62d80e553aa0e60b83f65687e6cc0238a668021e3305914f642cecadc439c44",
+      "path": "E:\\BG6022-V4\\data\\live-repair\\attempts\\a012\\data\\artifacts\\artifact_5e6c453b585a42a1992a6d4221c9dd4e\\files\\document.html",
+      "role": "knowledge_document",
+      "run_id": "run_5d801e875f5a4251ae1760720acb5d38",
+      "attempt_id": null,
+      "status": "verified",
+      "purposes": [
+        "result_evidence"
+      ]
+    }
+  ],
+  "generated_scripts": [],
+  "delivery": {
+    "version": "terminal-delivery-1",
+    "snapshot_ref": "current",
+    "basis": {
+      "request_id": "request_868fd5914f4a465db34d28d9afffaa15",
+      "request_version": 3,
+      "plan_id": null,
+      "plan_version": null,
+      "permission_version": 1,
+      "control_generation": 2
+    },
+    "request_text": "请为氰化氢HCN（H-C≡N，中性、单重态、气相）生成并保存一份合理结构，在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽。方法请从RHF或PBE0中选择，基组从def2-SVP或def2-TZVP中选择，在计算前说明选择与成本依据并记录实际数值设置。请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限。此题要求屏蔽常数，不要求参考物或实验谱；不要将屏蔽常数改称已经过参考标定的化学位移，也不要仅交付抗磁或顺磁分量来代替总屏蔽。未收敛或缺少的核应明确标为未完成，不补造数值。\n\n若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+    "communication": {
+      "delivery_scope": "science",
+      "awaiting_reply": false,
+      "notices": [],
+      "questions": [],
+      "question_gaps": {}
+    },
+    "resources": {
+      "permission": {
+        "version": 1,
+        "scientific_execution": true,
+        "allowed_tools": [
+          "structure.resolve",
+          "structure.prepare",
+          "workspace.write",
+          "python.execute",
+          "orca.run",
+          "evidence.list",
+          "evidence.discover",
+          "evidence.search",
+          "evidence.value",
+          "evidence.text",
+          "knowledge.search",
+          "knowledge.answer"
+        ],
+        "max_cores": 4,
+        "max_memory_mb": 1024,
+        "artifact_ids": [],
+        "source_ids": [],
+        "result_ids": [],
+        "model_execution": true,
+        "code_execution": true,
+        "artifact_writes": true,
+        "allowed_repairs": {},
+        "allow_additional_science": true,
+        "external_identity_queries": true,
+        "geometry_preparation": true
+      },
+      "remaining": {
+        "orca_starts": 12,
+        "extra_orca_starts": 11,
+        "evidence_reads": 12,
+        "analysis_executions": 4,
+        "identity_queries": 2,
+        "structure_preparations": 1,
+        "knowledge_queries": 3,
+        "file_writes": 32,
+        "internal_work_units": 10000,
+        "code_retries": 2,
+        "postprocess_starts": 0
+      },
+      "limits": {
+        "orca_starts": 12,
+        "extra_orca_starts": 11,
+        "evidence_reads": 12,
+        "analysis_executions": 4,
+        "identity_queries": 2,
+        "structure_preparations": 1,
+        "knowledge_queries": 4,
+        "file_writes": 32,
+        "internal_work_units": 10000,
+        "code_retries": 2,
+        "postprocess_starts": 0
+      },
+      "usage": {
+        "orca_starts_reserved": 0,
+        "orca_starts_actual": 0,
+        "extra_orca_starts_reserved": 0,
+        "evidence_reads": 0,
+        "analysis_executions": 0,
+        "identity_queries": 0,
+        "structure_preparations": 0,
+        "knowledge_queries": 1,
+        "file_writes": 0,
+        "internal_work_units": 0,
+        "code_retries": 0,
+        "postprocess_starts": 0
+      },
+      "unsettled_attempt_ids": [],
+      "unsettled_call_ids": [],
+      "code_attempt_allowance": {
+        "recorded": 0,
+        "effective_used": 0,
+        "basis": "max(recorded, python_attempt_count - 1)",
+        "meaning": "every Python execution after the first, including distinct scripts"
+      },
+      "unsettled_internal_request_keys": [],
+      "execution_cost": {
+        "python_attempts": 0,
+        "cpu_seconds": 0.0,
+        "elapsed_seconds": 0.0,
+        "complete": true
+      },
+      "artifact_limits": {
+        "artifact_count": 800,
+        "artifact_bytes": 268435456,
+        "artifact_total_bytes": 268435456
+      },
+      "artifact_usage": {
+        "status": "not_in_snapshot",
+        "disk_hard_quota": false
+      }
+    },
+    "goals": [
+      {
+        "goal_id": "goal_prepared_geometry",
+        "port": "prepared_geometry",
+        "required": true,
+        "system_ids": [
+          "system_hcn"
+        ],
+        "requested_identity": {
+          "contract": "general-identity-3",
+          "requested_names": [
+            "氰化氢HCN"
+          ],
+          "canonical_names": [],
+          "query_name": "hydrogen cyanide",
+          "query_name_source": "inferred_translation_or_alias",
+          "ambiguities": [],
+          "text_evidence": {
+            "message_id": "message_dba35373d9de48ffb5d251beca71e276",
+            "text_basis": "氰化氢HCN（H-C≡N，中性、单重态、气相）",
+            "start": 2,
+            "end": 25,
+            "schema": "request-semantics-3"
+          }
+        },
+        "current_conditions": {
+          "system_hcn": {
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "condition_sources": {
+          "system_hcn": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "system:system_hcn",
+            "multiplicity": "system:system_hcn",
+            "electronic_state": "request.conditions",
+            "environment": "system:system_hcn"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "structure-prepare-3",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g1",
+        "original_text": "生成并保存一份合理结构",
+        "text_evidence": {
+          "message_id": "message_dba35373d9de48ffb5d251beca71e276",
+          "text_basis": "生成并保存一份合理结构",
+          "start": 25,
+          "end": 36,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f1",
+          "f2"
+        ],
+        "required_blocker_refs": [
+          "b1"
+        ],
+        "explanation_refs": [
+          "e1"
+        ],
+        "next_action_refs": [
+          "n1"
+        ]
+      },
+      {
+        "goal_id": "goal_giao_nmr_shielding",
+        "port": "giao_nmr_shielding",
+        "required": true,
+        "system_ids": [
+          "system_hcn"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "current_conditions": {
+          "system_hcn": {
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "condition_sources": {
+          "system_hcn": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "system:system_hcn",
+            "multiplicity": "system:system_hcn",
+            "electronic_state": "request.conditions",
+            "environment": "system:system_hcn"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": "fixed_initial",
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g2",
+        "original_text": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽",
+        "text_evidence": {
+          "message_id": "message_dba35373d9de48ffb5d251beca71e276",
+          "text_basis": "在这份固定几何上计算全部3个原子核的GIAO核磁屏蔽",
+          "start": 37,
+          "end": 63,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [
+          "请按实际原子顺序列出每个核的完整3×3总笛卡尔屏蔽张量，以及各向同性屏蔽常数，均注明ppm和对应坐标系，机器表至少保留3位小数；核对各向同性值与该核总张量迹的一致性。",
+          "此题要求屏蔽常数，不要求参考物或实验谱",
+          "不要将屏蔽常数改称已经过参考标定的化学位移",
+          "也不要仅交付抗磁或顺磁分量来代替总屏蔽",
+          "未收敛或缺少的核应明确标为未完成，不补造数值"
+        ],
+        "required_fact_refs": [
+          "f3",
+          "f4"
+        ],
+        "required_blocker_refs": [
+          "b2"
+        ],
+        "explanation_refs": [
+          "e2"
+        ],
+        "next_action_refs": [
+          "n2"
+        ]
+      },
+      {
+        "goal_id": "goal_method_selection_rationale",
+        "port": "method_selection_rationale",
+        "required": true,
+        "system_ids": [
+          "system_hcn"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "current_conditions": {
+          "system_hcn": {
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "condition_sources": {
+          "system_hcn": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "system:system_hcn",
+            "multiplicity": "system:system_hcn",
+            "electronic_state": "request.conditions",
+            "environment": "system:system_hcn"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g3",
+        "original_text": "在计算前说明选择与成本依据并记录实际数值设置",
+        "text_evidence": {
+          "message_id": "message_dba35373d9de48ffb5d251beca71e276",
+          "text_basis": "在计算前说明选择与成本依据并记录实际数值设置",
+          "start": 105,
+          "end": 127,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f5",
+          "f6"
+        ],
+        "required_blocker_refs": [
+          "b3"
+        ],
+        "explanation_refs": [
+          "e3"
+        ],
+        "next_action_refs": [
+          "n3"
+        ]
+      },
+      {
+        "goal_id": "goal_delivery",
+        "port": "delivery",
+        "required": true,
+        "system_ids": [
+          "system_hcn"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "current_conditions": {
+          "system_hcn": {
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "condition_sources": {
+          "system_hcn": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "system:system_hcn",
+            "multiplicity": "system:system_hcn",
+            "electronic_state": "request.conditions",
+            "environment": "system:system_hcn"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g4",
+        "original_text": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限",
+        "text_evidence": {
+          "message_id": "message_dba35373d9de48ffb5d251beca71e276",
+          "text_basis": "交付初始及计算几何、实际输入、原始逐核输出、脚本和表格，说明方法与几何的局限",
+          "start": 211,
+          "end": 249,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f7",
+          "f8"
+        ],
+        "required_blocker_refs": [
+          "b4"
+        ],
+        "explanation_refs": [
+          "e4"
+        ],
+        "next_action_refs": [
+          "n4"
+        ]
+      },
+      {
+        "goal_id": "goal_random_seed",
+        "port": "random_seed",
+        "required": true,
+        "system_ids": [
+          "system_hcn"
+        ],
+        "requested_identity": {
+          "requested_names": [
+            "氰化氢HCN"
+          ]
+        },
+        "current_conditions": {
+          "system_hcn": {
+            "method": "PBE0",
+            "basis": "def2-TZVP",
+            "charge": 0,
+            "multiplicity": 1,
+            "electronic_state": "RKS",
+            "environment": "gas_phase"
+          }
+        },
+        "condition_sources": {
+          "system_hcn": {
+            "method": "request.conditions",
+            "basis": "request.conditions",
+            "charge": "system:system_hcn",
+            "multiplicity": "system:system_hcn",
+            "electronic_state": "request.conditions",
+            "environment": "system:system_hcn"
+          }
+        },
+        "source_conditions": {},
+        "geometry_relation": null,
+        "requested_geometry_artifact_ids": [
+          null
+        ],
+        "source_geometry_artifact_id": null,
+        "recorded_status": "insufficient_evidence",
+        "current_evidence_status": "unresolved",
+        "goal_complete": false,
+        "answer": null,
+        "source": null,
+        "minimum_check_version": "generic-observation-1",
+        "gaps": [
+          "goal_has_no_evidence_binding"
+        ],
+        "next_action": "resolve_gaps_in_scope",
+        "ref": "g5",
+        "original_text": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+        "text_evidence": {
+          "message_id": "message_dba35373d9de48ffb5d251beca71e276",
+          "text_basis": "若结构生成、搜索或其他算法使用随机数，请统一采用种子 1701 并在报告中记录；若某一库或模型不支持固定种子，明确记为不可固定，不伪造确定性。",
+          "start": 337,
+          "end": 408,
+          "schema": "request-semantics-3"
+        },
+        "requested_minimum_evidence": [],
+        "required_fact_refs": [
+          "f9",
+          "f10"
+        ],
+        "required_blocker_refs": [
+          "b5"
+        ],
+        "explanation_refs": [
+          "e5"
+        ],
+        "next_action_refs": [
+          "n5"
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "ref": "f1",
+        "goal_ref": "g1",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f2",
+        "goal_ref": "g1",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_hcn": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "sources": {
+            "system_hcn": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "system:system_hcn",
+              "multiplicity": "system:system_hcn",
+              "electronic_state": "request.conditions",
+              "environment": "system:system_hcn"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f3",
+        "goal_ref": "g2",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f4",
+        "goal_ref": "g2",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_hcn": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "sources": {
+            "system_hcn": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "system:system_hcn",
+              "multiplicity": "system:system_hcn",
+              "electronic_state": "request.conditions",
+              "environment": "system:system_hcn"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": "fixed_initial"
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f5",
+        "goal_ref": "g3",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f6",
+        "goal_ref": "g3",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_hcn": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "sources": {
+            "system_hcn": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "system:system_hcn",
+              "multiplicity": "system:system_hcn",
+              "electronic_state": "request.conditions",
+              "environment": "system:system_hcn"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f7",
+        "goal_ref": "g4",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f8",
+        "goal_ref": "g4",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_hcn": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "sources": {
+            "system_hcn": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "system:system_hcn",
+              "multiplicity": "system:system_hcn",
+              "electronic_state": "request.conditions",
+              "environment": "system:system_hcn"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f9",
+        "goal_ref": "g5",
+        "kind": "goal_status",
+        "value": {
+          "recorded": "insufficient_evidence",
+          "complete": false,
+          "current_evidence": "unresolved",
+          "gaps": [
+            "goal_has_no_evidence_binding"
+          ]
+        },
+        "source_ref": null
+      },
+      {
+        "ref": "f10",
+        "goal_ref": "g5",
+        "kind": "conditions",
+        "value": {
+          "current": {
+            "system_hcn": {
+              "method": "PBE0",
+              "basis": "def2-TZVP",
+              "charge": 0,
+              "multiplicity": 1,
+              "electronic_state": "RKS",
+              "environment": "gas_phase"
+            }
+          },
+          "sources": {
+            "system_hcn": {
+              "method": "request.conditions",
+              "basis": "request.conditions",
+              "charge": "system:system_hcn",
+              "multiplicity": "system:system_hcn",
+              "electronic_state": "request.conditions",
+              "environment": "system:system_hcn"
+            }
+          },
+          "source": {},
+          "source_evidence": {},
+          "geometry_relation": null
+        },
+        "source_ref": null
+      }
+    ],
+    "blockers": [
+      {
+        "ref": "b1",
+        "goal_refs": [
+          "g1"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b2",
+        "goal_refs": [
+          "g2"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b3",
+        "goal_refs": [
+          "g3"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b4",
+        "goal_refs": [
+          "g4"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      },
+      {
+        "ref": "b5",
+        "goal_refs": [
+          "g5"
+        ],
+        "code": "current_goal_evidence_missing",
+        "value": [
+          "goal_has_no_evidence_binding"
+        ],
+        "text": "Current goal evidence is incomplete or inapplicable."
+      }
+    ],
+    "explanations": [
+      {
+        "ref": "e1",
+        "goal_ref": "g1",
+        "fact_refs": [
+          "f1",
+          "f2"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b1"
+        ],
+        "next_action_refs": [
+          "n1"
+        ]
+      },
+      {
+        "ref": "e2",
+        "goal_ref": "g2",
+        "fact_refs": [
+          "f3",
+          "f4"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b2"
+        ],
+        "next_action_refs": [
+          "n2"
+        ]
+      },
+      {
+        "ref": "e3",
+        "goal_ref": "g3",
+        "fact_refs": [
+          "f5",
+          "f6"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b3"
+        ],
+        "next_action_refs": [
+          "n3"
+        ]
+      },
+      {
+        "ref": "e4",
+        "goal_ref": "g4",
+        "fact_refs": [
+          "f7",
+          "f8"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b4"
+        ],
+        "next_action_refs": [
+          "n4"
+        ]
+      },
+      {
+        "ref": "e5",
+        "goal_ref": "g5",
+        "fact_refs": [
+          "f9",
+          "f10"
+        ],
+        "relation": "current_goal_unmet",
+        "text": "Current goal remains unmet; qualified members or a completed operation do not complete it.",
+        "blocker_refs": [
+          "b5"
+        ],
+        "next_action_refs": [
+          "n5"
+        ]
+      }
+    ],
+    "next_actions": [
+      {
+        "ref": "n1",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g1"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n2",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g2"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n3",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g3"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n4",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g4"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      },
+      {
+        "ref": "n5",
+        "kind": "stop_with_partial_results",
+        "goal_refs": [
+          "g5"
+        ],
+        "requires": [],
+        "text": "Deliver current facts without starting additional work."
+      }
+    ],
+    "references": {},
+    "fingerprint": "9a8f4723ab01e41c5c53ac7ee11ea197cfd707635a33dc9593fd25b9553328b4"
+  },
+  "model_explanation": {
+    "status": "pending",
+    "current_status": "pending",
+    "current": false,
+    "free_reason_role": "audit_only"
+  },
+  "report_artifact": {
+    "status": "rendered",
+    "current": true,
+    "version": "terminal-report-1",
+    "snapshot_fingerprint": "9a8f4723ab01e41c5c53ac7ee11ea197cfd707635a33dc9593fd25b9553328b4",
+    "path": "runs/run_5d801e875f5a4251ae1760720acb5d38/deliveries/report_fc56a6029fe877474a7eac29.md",
+    "sha256": "c98248824b6ae522cd73bdad4ec83eb2b818f7a76f0436571c8b1df00f7d8274",
+    "error": null
+  }
+}
