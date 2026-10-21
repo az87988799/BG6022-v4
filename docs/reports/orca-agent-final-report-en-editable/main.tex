@@ -347,105 +347,36 @@ A single agent continually addresses the same scientific objectives, generic too
 Computational, analytical, and interpretive requirements share a task without requiring a separate complete workflow for every combination.
 Adaptable routes and stable problem definitions provide a basis for extending to more complex potential-energy-surface exploration.
 
-\section{End-to-End Workflow from Natural Language to a Computational Report}
+\section{End-to-End Workflow}
 \label{sec:end-to-end-workflow}
-Auto-ORCA transforms scientific questions into executable tasks with explicit inputs, conditions, and evidence sources.
-One agent loop coordinates natural-language input, intent recognition and condition confirmation, objective specification, planning with knowledge retrieval as needed, task code generation, ORCA execution, result checking and feedback, and final delivery.
-Subsequent actions depend on established facts and may include evidence queries, plan revisions, and supplementary analyses.
-The following subsections trace this information flow.
+The workflow applies the architecture to a request through four stages.
+Table~\ref{tab:workflow-example} traces the information passed between operations for ethanol optimization and frequency analysis.
 
-\subsection{Natural-Language Input and Scientific Intent Recognition}
-The interface accepts natural-language descriptions and user-provided structures, output files, or existing-result references.
-The system preserves the original request and identifies four elements: the scientific system, required physical quantities, computational conditions, and expected deliverables.
-For example, ``optimize ethanol and calculate its vibrational frequencies'' must specify the molecule, optimization, frequencies at the optimized structure, and delivery of corresponding coordinates and numerical results.
-``Compare the energies of the same structure in two environments'' additionally requires preservation of the common geometry and calculation pairing.
+\subsection{Request Interpretation and Condition Specification}
+The agent extracts the molecular system, target quantities, computational conditions, geometric relationships, and expected deliverables from the request and supplied artifacts.
+The structured specification retains source text for key fields and qualifiers such as ``the same geometry,'' ``the first five states,'' and ``the complete tensor.''
+Missing information that affects the calculation or its interpretation is clarified before execution; delegated choices are recorded and checked for compatibility.
+Confirmed objectives and minimum evidence requirements are then stored independently of the plan.
 
-Intent recognition produces a checkable structured candidate recording the system, objectives, geometric relationships, conditions, minimum evidence, and unresolved information.
-Key fields retain their supporting source text.
-The software checks the candidate against the user message before storing normalized requirements.
-This helps preserve qualifiers such as ``the same geometry,'' ``the first five states,'' and ``the complete tensor,'' reducing the risk of recognizing only broad task categories while omitting delivery requirements.
-
-\subsection{Condition Clarification and Objective Specification}
-The method, basis set, charge, multiplicity, environment, and geometry source define the computational problem.
-The system distinguishes explicit user conditions, traceable inherited conditions, defaults, and authorized automatic choices.
-Missing information remains unresolved; the agent may ask targeted questions when omissions affect the system or result meaning.
-For delegated method or basis-set selection, the system may record a justified choice and check compatibility with remaining conditions before launch.
-
-After condition confirmation, objectives and minimum evidence requirements are stored independently of the execution plan.
-A request may contain multiple objectives, each with its own constraints on the system, environment, electronic state, and geometric relationships.
-For example, gas-phase and solution energy comparisons must preserve two environment-specific objectives and their common geometry, rather than an undifferentiated ``energy'' field.
-Fixed objectives allow flexible routes: plans may add parsing steps or repair inputs but must address the original question.
-
-\subsection{On-Demand Knowledge Queries to Support Operations}
+\subsection{Knowledge Retrieval and Dependency Planning}
 \label{sec:knowledge-retrieval}
-When an operation requires information on software syntax, methods, or property definitions, the agent formulates a specific query.
-It selects sources, formulates search terms, retrieves matching passages, and assesses their support for the decision.
-For example, frequency tasks may require optimization and vibrational-analysis documentation; Python task code may require version-specific OPI interface documentation; and input diagnosis may use ORCA logs to locate relevant manual sections.
+Versioned documentation is queried when syntax, method selection, or diagnosis requires it.
+The plan identifies operations, registered inputs, tools, expected outputs, and data dependencies.
+Post-optimization frequencies depend on the resulting geometry; environmental comparisons require matched structures and otherwise consistent conditions.
+The software checks objective alignment, prerequisites, permissions, and resources.
+Revisions create a new plan version while preserving executed inputs and attempt records.
 
-Knowledge queries may also support result interpretation.
-References can clarify physical quantities, such as the relationship between nuclear magnetic shielding and chemical shifts or the distinction between electronic energy differences and free energies.
-Numerical values, geometries, and convergence states are read from corresponding raw artifacts.
-The final report can thus state the operational rationale, actual conditions, and numerical sources.
+\subsection{Code Generation and Managed Execution}
+The agent may generate Python programs or native ORCA input for repeated calculations, property extraction, and derived analyses.
+Execution steps reference stored code and input identities, and all internal ORCA requests use the shared entry point.
+Receipts record launches; ambiguous states are reconciled before retries.
+Inputs, standard output, errors, geometries, and property files are retained for completed and failed attempts.
 
-\subsection{Organizing the Computational Plan by Dependencies}
-The agent translates objectives into interdependent operations: reading or preparing structures, generating inputs, executing calculations, extracting properties, and organizing results.
-Each step identifies its system, registered input files, tool, and expected outputs.
-The software checks objective alignment, file dependencies, tool permissions, and available budgets.
-Execution requires available prerequisite data that satisfy the step's checks.
-
-The plan expresses scientific ordering as data dependencies.
-Post-optimization frequencies require the corresponding final structure; energy rankings preserve energy--candidate associations; and rotational consistency analysis requires results for two orientations and the rotation definition.
-Route changes create a new plan version while preserving executed inputs and attempt records.
-Exploration can thus adapt while retaining each result's computational route.
-
-\subsection{Task Code Generation through a Unified Tool Boundary}
-For tasks difficult to express through fixed interfaces, the agent may write Python task code and native ORCA input for repeated calculations, field extraction, matrix organization, or deterministic derived-quantity analysis.
-Code is stored with provenance before an execution step references it.
-Execution requires checks of code and input identities, file dependencies, and task declarations.
-Generated programs run in a managed environment; internal ORCA requests use the unified entry point.
-
-With this organization, new tasks are expressed primarily through changes in operation composition and task programs.
-Conformer comparison manages geometries and energies; excited-state analysis organizes state-resolved outputs; shielding analysis preserves atom indices and matrix components.
-All three share file-writing, execution, querying, and archiving mechanisms.
-Programs provide computational capabilities, while the tool boundary preserves traceability of actual inputs, resource consumption, and raw artifacts.
-
-\subsection{Execution, Monitoring, and Raw Artifact Archiving}
-Before launch, the system verifies actual inputs, geometry, conditions, permissions, and remaining resources, and records the operation separately.
-Task code and its internal ORCA calculations share a controlled execution environment and cumulative resource constraints.
-Launch is confirmed by a trusted execution receipt.
-Uncertain execution states require reconciliation of existing processes and receipts before they can be treated as unstarted, preventing duplicate calculations.
-
-After execution, inputs, standard output, error logs, structure files, and property files are archived and linked to results.
-Records are preserved for both normal completion and failure.
-These records support diagnosis and feedback from both numerical results and failure causes.
-
-\subsection{Result Checking and Evidence-Based Continuation}
-The main loop reevaluates objectives after each new result, before choosing the next action.
-Checks cover the actual conditions, file integrity, output readability, and applicable scientific validation.
-Existing checks govern covered outputs; task code may extract new properties as observations with provenance, units, and validation statements.
-Successful reading, calculation completion, reportable observations, and verified scientific requirements are recorded separately to ground conclusions in actual evidence.
-
-Successful feedback may initiate necessary analysis.
-Completed optimization requires acquisition of the final structure and frequency evidence; completed candidate calculations require consolidated associations and consistent energy units.
-Failure feedback identifies fields, program errors, or ORCA log locations for targeted repairs and, when needed, focused documentation queries to inform revisions.
-Repairs use new inputs or subsequent steps, preserving original objectives and still-valid sources; original failures remain accessible.
-
-The system checks for remaining executable work toward current objectives.
-If approved subsequent steps, recoverable failures, or analyses of archived originals remain available, feedback identifies continuation options that the final delivery check uses to prevent premature termination.
-Existing files may support continuation through parsing alone, directing further effort toward actual evidence gaps.
-
-\subsection{Final Output and Verifiable Delivery}
-When the task reaches a deliverable state, or when resources, permissions, or specific execution conditions require termination, the system consolidates the correspondence between objectives and evidence.
-Final outputs include the question, actual methods, numerical results or structures, necessary units and reference definitions, calculation and validation status, artifact locations, and outstanding work.
-Method-selection rationales refer directly to saved records, while numerical values are traced to the corresponding raw outputs and analytical sources.
-Retrieval records link knowledge sources to document versions and passage locations, preserving traceability of both the operational rationale and the result sources.
-
-Tables facilitate comparison, raw files support verification, and limitations indicate what additional evidence is needed.
-The reported calculation success rate describes whether ORCA calculations for the seven questions completed normally and produced numerical results.
-Each result's scientific conclusions remain separately delimited by its method, geometry, and property evidence.
-
-\subsection{Illustration: Information Flow in Ethanol Optimization and Frequency Analysis}
-The table below traces the information flow from a natural-language request to final delivery for ethanol optimization and vibrational frequency analysis.
+\subsection{Evidence Assessment and Reporting}
+After each result, the agent reassesses the objectives using execution facts and applicable output checks.
+New evidence may motivate analysis, further calculations, or targeted repair; existing artifacts are considered before requesting another calculation.
+Accessible files, extracted observations, and satisfied scientific requirements remain distinct.
+The final report associates each objective with actual methods, numerical values, units, structures, validation status, and source artifacts, and identifies outstanding work and the reason for termination.
 
 \begin{table}[htbp]
   \centering\small
@@ -467,6 +398,7 @@ The table below traces the information flow from a natural-language request to f
     \bottomrule
   \end{tabularx}
 \end{table}
+
 \section{Computational Methods and Agent Capability Assessment}
 \subsection{Computational Settings and Scientific Tasks}
 Calculations were performed using ORCA 6.1.1 and organized through OPI 2.0.0 and the unified execution interface.
