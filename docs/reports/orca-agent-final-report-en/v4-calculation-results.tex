@@ -1,0 +1,272 @@
+% !TeX root = main.tex
+\subsection{Overview of the Seven Test Cases}
+The following seven scientific questions were used to evaluate the task organization and execution capabilities of Auto-ORCA Agent;
+their intended capability coverage is summarized in Table~\ref{tab:agent-capability-design}.
+Table~\ref{tab:task-overview} summarizes the methods actually used and the results obtained for each case.
+T1--T5 and H1 were classified as successful calculations, whereas H2 remained incomplete, yielding a calculation success rate of $6/7=85.7\%$.
+The numerical results and their scientific interpretation are presented below.
+
+\begin{table}[H]
+  \centering\small
+  \caption{Methods actually used and results obtained for the seven test cases.
+  Success indicates that an ORCA calculation terminated normally and produced the corresponding numerical results.
+  }
+  \label{tab:task-overview}
+  \begin{tabularx}{\linewidth}{l>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}p{1.8cm}Y}
+    \toprule
+    ID & Question & Actual method & Status & Principal results\\
+    \midrule
+    T1 & Ethanol optimization and frequencies & r$^{2}$SCAN-3c & Success & Converged optimization; 21 positive frequencies and no imaginary frequencies\\
+    T2 & Candidate energies for \textit{n}-hexane & r$^{2}$SCAN-3c single-point calculations & Success & Energy ranking of six candidate geometries\\
+    T3 & Dihedral scan of \textit{n}-butane & r$^{2}$SCAN-3c constrained optimization & Success & Six converged points; actual angles remain unverified\\
+    T4 & Vertical excitations of acetone & PBE0/def2-SVP, LR-TDDFT & Success & Five singlet excitation energies and oscillator strengths\\
+    T5 & Environmental energy differences for ethanol & B3LYP/def2-TZVP and def2-SVP & Success & Gas-phase--CPCM water electronic energy differences with two basis sets\\
+    H1 & Nuclear magnetic shielding of HCN & PBE0/def2-TZVP, GIAO & Success & Full shielding tensors for the C, N, and H nuclei\\
+    H2 & Formaldehyde polarizability and rotational consistency & No actual calculation results & Incomplete & No polarizability values obtained\\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{T1: Geometry Optimization and Vibrational Frequencies of Ethanol}
+\paragraph{Question}
+Optimize the geometry of ethanol and use its vibrational frequencies to assess whether the resulting structure is a local minimum.
+
+\paragraph{Method}
+Geometry optimization and vibrational frequency calculations were performed using r$^{2}$SCAN-3c with its built-in def2-mTZVPP basis set for a neutral singlet in the gas phase.
+
+\paragraph{Results}
+\textbf{Successful calculation.} The geometry optimization converged, giving an optimized electronic energy of $-155.002345492244\,\Eh$.
+The calculation yielded 21 positive vibrational frequencies, six zero-frequency translational and rotational modes after projection, and no imaginary frequencies.
+All positive frequencies are listed in Table~\ref{tab:t1-frequencies}.
+These results support assignment of the structure as a local minimum at the employed level of theory; they do not establish that it is the global minimum-energy conformer.
+The optimized coordinates are retained in the XYZ file associated with the corresponding ORCA output.
+
+\begin{table}[H]
+  \centering\small
+  \caption{The 21 positive vibrational frequencies of ethanol, in cm$^{-1}$.}
+  \label{tab:t1-frequencies}
+  \begin{tabular}{rrrrrrr}
+    \toprule
+    270.90 & 298.95 & 425.86 & 811.51 & 882.13 & 1052.13 & 1066.45\\
+    1134.41 & 1282.25 & 1371.13 & 1396.18 & 1418.25 & 1483.33 & 1487.57\\
+    1509.53 & 2969.59 & 3004.65 & 3061.83 & 3088.36 & 3105.66 & 3819.31\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{T2: Single-Point Electronic Energies of Candidate \textit{n}-Hexane Conformers}
+\paragraph{Question}
+Compare the electronic energies of candidate \textit{n}-hexane geometries and determine their relative energy ordering within the calculated set.
+
+\paragraph{Method}
+Single-point calculations were performed separately for six stored candidate geometries using r$^{2}$SCAN-3c for neutral singlets in the gas phase.
+Relative energies were referenced to cand\_05.
+
+\paragraph{Results}
+\textbf{Successful calculation.} Electronic energies were obtained for all six candidates, as reported in Table~\ref{tab:t2-energies}.
+Within this set, cand\_05 had the lowest energy, whereas cand\_03 was higher by 12.608656~kJ~mol$^{-1}$.
+These are single-point results for candidate geometries; they do not demonstrate that all six conformers underwent DFT optimization,
+nor do they establish the global minimum-energy conformer or a free-energy ordering.
+
+\begin{table}[H]
+  \centering\small
+  \caption{Single-point electronic energies of six candidate \textit{n}-hexane geometries.}
+  \label{tab:t2-energies}
+  \begin{tabular}{lrr}
+    \toprule
+    Candidate & Electronic energy / $\Eh$ & Relative energy / kJ mol$^{-1}$\\
+    \midrule
+    cand\_05 & $-236.992066202851$ & 0.000000\\
+    cand\_04 & $-236.991445556657$ & 1.629506\\
+    cand\_01 & $-236.991444090308$ & 1.633356\\
+    cand\_00 & $-236.991421448668$ & 1.692802\\
+    cand\_06 & $-236.991245997872$ & 2.153448\\
+    cand\_03 & $-236.987263819406$ & 12.608656\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{T3: Dihedral Scan of \textit{n}-Butane}
+\paragraph{Question}
+Obtain the electronic energies of \textit{n}-butane at different target dihedral angles through constrained optimization and examine the variation in torsional potential energy.
+
+\paragraph{Method}
+The main calculations employed r$^{2}$SCAN-3c for a neutral singlet in the gas phase, with constrained optimization at specified target dihedral angles.
+An additional B3LYP/def2-TZVP calculation point is reported separately, together with the result of its geometry verification.
+
+\paragraph{Results}
+\textbf{Successful calculation.} Normal ORCA termination and optimization convergence were recorded for all six r$^{2}$SCAN-3c calculation points;
+the results are given in Table~\ref{tab:t3-energies}.
+The first column contains only the target-angle labels specified in the inputs.
+The actual angles reported by the generated script conflict with these input labels and have not yet been confirmed through independent geometry verification.
+Consequently, the energies are genuine computational outputs, but the labels cannot be treated as verified actual dihedral angles or used to establish a torsional barrier.
+In particular, the high energy associated with the $+120^\circ$ label cannot be directly interpreted as a reliable physical barrier.
+
+\begin{table}[H]
+  \centering\small
+  \caption{Six constrained optimization points for \textit{n}-butane.
+  Angles denote input target labels; relative energies are the stored numerical values.
+  }
+  \label{tab:t3-energies}
+  \begin{tabular}{rrr}
+    \toprule
+    Input target angle / $^\circ$ & Electronic energy / $\Eh$ & Relative energy / kJ mol$^{-1}$\\
+    \midrule
+    $-180$ & $-158.392470368263$ & 0.000000\\
+    $-120$ & $-158.387146187943$ & 13.978634\\
+    $-60$ & $-158.391526560891$ & 2.477966\\
+    $0$ & $-158.383528626170$ & 23.476541\\
+    $+60$ & $-158.391526702130$ & 2.477595\\
+    $+120$ & $-158.358972460497$ & 87.948745\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The input target angle for the B3LYP/def2-TZVP calculation point was $-180^\circ$.
+Independent geometry verification gave an actual angle of $179.999995786^\circ$, consistent with the target under angular periodicity;
+the converged electronic energy was $-158.397118300397\,\Eh$.
+Because this point was obtained using a different method, it is excluded from the relative energies in Table~\ref{tab:t3-energies}.
+
+\subsection{T4: The First Five Singlet Vertical Excitations of Acetone}
+\paragraph{Question}
+Obtain the excitation energies, wavelengths, and oscillator strengths of the first five singlet vertical excitations of acetone.
+
+\paragraph{Method}
+Five singlet excited states were calculated at a fixed, prepared geometry using PBE0/def2-SVP for a neutral singlet in the gas phase,
+with full linear-response TDDFT (LR-TDDFT; \code{TDA=false}).
+Oscillator strengths were taken from the length-gauge output of ORCA.
+
+\paragraph{Results}
+\textbf{Successful calculation.} Convergence was recorded for both the SCF and response calculations; numerical results for the five excited states are listed in Table~\ref{tab:t4-excitations}.
+The lowest singlet vertical excitation energy was 4.197061~eV, corresponding to a wavelength of 295.4~nm.
+
+\begin{table}[H]
+  \centering\small
+  \caption{The first five singlet vertical excitations of acetone.
+  Oscillator strengths $f$ are dimensionless.
+  }
+  \label{tab:t4-excitations}
+  \begin{tabular}{crrr}
+    \toprule
+    Excited state & Excitation energy / eV & Wavelength / nm & Oscillator strength $f$\\
+    \midrule
+    $S_{1}$ & 4.197061 & 295.4 & 0.000007493\\
+    $S_{2}$ & 7.464499 & 166.1 & 0.023781213\\
+    $S_{3}$ & 8.406988 & 147.5 & 0.001899769\\
+    $S_{4}$ & 8.572306 & 144.6 & 0.060276158\\
+    $S_{5}$ & 8.640904 & 143.5 & 0.004121254\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{T5: Electronic Energy Differences between Gas-Phase Ethanol and Ethanol in CPCM Water}
+\paragraph{Question}
+Compare the electronic energies of ethanol at the same geometry in the gas phase and in a CPCM water environment.
+
+\paragraph{Method}
+Calculations employed B3LYP for a neutral singlet with the def2-TZVP and def2-SVP basis sets, respectively.
+For each basis set, the gas-phase and aqueous-environment calculations used the same initial geometry; this geometry was not the optimized structure from T1.
+The energy difference was defined as $\Delta E=E_{\mathrm{water}}-E_{\mathrm{gas}}$.
+
+\paragraph{Results}
+\textbf{Successful calculation.} Two ORCA calculations, one in the gas phase and one in CPCM water, were completed for each basis set.
+Table~\ref{tab:t5-energies} reports the electronic energies, and Table~\ref{tab:t5-differences} reports their differences.
+The negative signs indicate that, for the corresponding model and fixed geometry, the electronic energy in the aqueous environment was lower than that in the gas phase.
+These quantities are \textbf{electronic energy differences, not hydration free energies}.
+
+\begin{table}[H]
+  \centering\small
+  \caption{Electronic energies of ethanol in the gas phase and in CPCM water.}
+  \label{tab:t5-energies}
+  \begin{tabular}{lrr}
+    \toprule
+    Basis set & Gas-phase electronic energy / $\Eh$ & CPCM water electronic energy / $\Eh$\\
+    \midrule
+    def2-TZVP & $-155.002778990957$ & $-155.009740144896$\\
+    def2-SVP & $-154.817054999208$ & $-154.823380641772$\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering\small
+  \caption{Electronic energy differences for ethanol in water relative to the gas phase.}
+  \label{tab:t5-differences}
+  \begin{tabular}{lrr}
+    \toprule
+    Basis set & $\Delta E$ / $\Eh$ & $\Delta E$ / kJ mol$^{-1}$\\
+    \midrule
+    def2-TZVP & $-0.006961153939$ & $-18.276507$\\
+    def2-SVP & $-0.006325642564$ & $-16.607972$\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{H1: GIAO Nuclear Magnetic Shielding Tensors of HCN}
+\paragraph{Question}
+Obtain the nuclear magnetic shielding tensor and isotropic shielding of each atom in HCN.
+
+\paragraph{Method}
+Calculations were performed at a fixed initial geometry using PBE0/def2-TZVP and the GIAO method for a neutral singlet in the gas phase.
+The atom order was C$_0$, N$_1$, and H$_2$.
+
+\paragraph{Results}
+\textbf{Successful calculation.} The total electronic energy was $-93.345070922944\,\Eh$.
+The isotropic shielding values printed by ORCA are listed in Table~\ref{tab:h1-isotropic}; the full total shielding tensors are given in Eq.~\eqref{eq:h1-tensors}.
+The tensor components are expressed in ppm, with both rows and columns ordered as X, Y, and Z; the three decimal places of the original output are retained.
+
+\begin{table}[H]
+  \centering\small
+  \caption{Isotropic nuclear magnetic shielding values for HCN.}
+  \label{tab:h1-isotropic}
+  \begin{tabular}{cr}
+    \toprule
+    Atom & Isotropic shielding / ppm\\
+    \midrule
+    C$_0$ & 79.051\\
+    N$_1$ & $-34.068$\\
+    H$_2$ & 29.850\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{equation}
+  \begin{aligned}
+    \bm{\sigma}_{\mathrm{C}_0}&=\begin{pmatrix}
+      279.306 & -0.724 & -0.000 \\
+      -1.638 & -21.077 & 0.000 \\
+      -0.000 & 0.000 & -21.076
+    \end{pmatrix},\\[0.8em]
+    \bm{\sigma}_{\mathrm{N}_1}&=\begin{pmatrix}
+      340.398 & -1.842 & -0.000 \\
+      -0.044 & -221.291 & 0.000 \\
+      0.000 & 0.000 & -221.309
+    \end{pmatrix},\\[0.8em]
+    \bm{\sigma}_{\mathrm{H}_2}&=\begin{pmatrix}
+      39.712 & 0.055 & -0.000 \\
+      -0.114 & 24.919 & -0.000 \\
+      -0.000 & -0.000 & 24.920
+    \end{pmatrix}.
+  \end{aligned}
+  \label{eq:h1-tensors}
+\end{equation}
+Isotropic shielding is one-third of the tensor trace; the tabulated values were taken directly from the summary printed by ORCA and were not recalculated from the rounded matrices.
+These quantities have not been converted using a reference compound and therefore cannot be directly described as experimental chemical shifts.
+H$_2$ denotes the index of the hydrogen atom and is unrelated to the task identifier H2 in the following subsection.
+
+\subsection{H2: Static Polarizability and Rotational Consistency of Formaldehyde}
+\paragraph{Question}
+Obtain the static polarizability tensors and isotropic polarizabilities of formaldehyde in two orientations, and assess their physical consistency under rotation.
+
+\paragraph{Method}
+The geometries and rotation procedure were prepared, with the intention of calculating the polarizability in each orientation and comparing the results after coordinate transformation.
+
+\paragraph{Results}
+\textbf{Incomplete.} No actual ORCA polarizability values have been obtained.
+Consequently, neither the polarizability tensors and isotropic polarizabilities in the two orientations nor a rotational consistency comparison is available.
+The prepared geometries and rotation procedure do not constitute calculation results.
+
+\paragraph{Analysis of the Failure}
+The execution records indicate that interruption occurred primarily during task orchestration and data handoff before the calculation.
+In the recorded attempts, an identity-description file was incorrectly bound as an XYZ geometry input, causing the rotation preprocessing script to terminate abnormally during coordinate parsing.
+The identification and use of diagnostic information did not yield an effective repair; the corresponding runs terminated upon reaching either the model-call limit or the finite allowance for plan revisions.

@@ -1,0 +1,143 @@
+\begin{abstract}
+  Molecular density functional theory (DFT) studies require the coordination of structure preparation, electronic-structure calculations, result assessment, and subsequent calculations.
+  This work presents Auto-ORCA, which connects the task-planning and code-generation capabilities of large language models to a managed ORCA execution environment.
+  Calculations are performed through a unified ORCA entry point, and their outputs inform plan revisions.
+  The system stores scientific objectives separately from execution plans, retrieves versioned domain information as needed, and records the relationships between results, inputs, geometries, and raw outputs.
+  Seven test cases examine geometry optimization and vibrational frequencies, candidate conformer energies, dihedral scans, vertical excitations, environmental effects, and response tensors.
+  When success is assessed by the production of computational outputs for each test problem, the success rate is $6/7$.
+  Ethanol optimization converged and yielded 21 positive frequencies and no imaginary frequencies; single-point energies were compared for six candidate geometries of \textit{n}-hexane; five singlet excitation energies were obtained for acetone; the electronic-energy differences between CPCM water and the gas phase were $-18.276507$ and $-16.607972$ kJ mol$^{-1}$ with two basis sets; and complete shielding tensors were obtained for all three nuclei of HCN.
+  Six constrained optimization points were computed successfully for \textit{n}-butane, although their actual dihedral angles still require independent verification; no polarizability values have yet been obtained for formaldehyde.
+  These results support the feasibility of combining generic tools with generated code to execute multiple classes of DFT tasks.
+  Comprehensive conclusions about potential energy surfaces require further geometric validation and sampling evidence.
+\end{abstract}
+
+\section{Introduction}
+Molecular structure, conformational stability, and reaction pathways are closely related to potential energy surfaces.
+Density functional theory (DFT) takes the electron density as its fundamental variable, and the Kohn--Sham framework provides the basis for practical electronic-structure calculations~\cite{hk,ks}.
+An individual calculation, however, addresses a question only for a particular method, geometry, and environment.
+A complete study must also organize geometry optimization, vibrational analysis, candidate comparison, and constrained scans, while using intermediate results to determine subsequent actions.
+
+The difficulties in such studies often arise at the interfaces between computational steps.
+Frequency analysis must use the correct optimized structure, candidate energies must be associated with specific geometries, and comparisons across environments must retain common computational conditions.
+When a task cannot be addressed directly by an established protocol, researchers must implement new sampling and analysis procedures.
+An autonomous computational system therefore needs to connect natural-language requirements, computational execution, and scientific evidence within an ongoing decision process, rather than merely generate an input file.
+
+This work presents Auto-ORCA, a system built on ORCA and the ORCA Python Interface (OPI)~\cite{orca2020,orca6,opipaper}.
+A single agent organizes task planning, code generation, and result interpretation, while generic tools handle input validation, computational execution, and artifact management.
+The original objectives and minimum evidence requirements are stored independently of the plan, allowing the execution strategy to be revised while preserving the criteria used to determine whether the task is complete.
+
+The study addresses three questions: whether generated code can express different molecular computation tasks, whether a unified execution entry point can produce actual numerical results, and to what extent those results answer the original scientific questions.
+Seven test problems with different operational requirements are used to examine the agent's capabilities in these respects.
+Geometry optimization, conformer comparison, and dihedral scanning constitute tests related to potential energy surfaces; excited states, environmental effects, and response tensors assess the applicability of the same computational mechanism to other properties.
+The study focuses on the organization and validation of autonomous computation and does not introduce a new electronic-structure approximation.
+Its principal design contributions are the translation of open-ended natural-language requirements into executable tasks, the combination of bounded task code with a unified ORCA entry point, and the preservation of explicit correspondence among original objectives, computational evidence, and final reports.
+Together, these mechanisms aim to reduce repetitive operations, broaden the range of expressible tasks, and improve the verifiability of results.
+
+\section{Related Work and Motivation}
+\subsection{From Traceable Workflows to Semantic Tool Composition}
+Computational automation first requires consistent execution interfaces and provenance records.
+The transfer of structure files, the conditions specified in inputs, the identification of the calculation that produced each output, and the evidence retained after abnormal termination all affect whether results can be independently checked.
+ASE connects different simulation programs through common atomic-structure and calculator interfaces; AiiDA links computational processes to data provenance; Atomate2 provides composable workflows for materials calculations; and cclib supports unified parsing of outputs from different quantum-chemistry packages~\cite{ase,aiida,atomate2,cclib}.
+These approaches provide a foundation for structure transfer, task execution, and result verification.
+
+Building on this foundation, language models can translate natural-language requirements into tool selections, parameters, and operational dependencies.
+Specialized tools provide explicitly defined behavior, but new sampling procedures and analyses spanning multiple results may require additional implementation.
+Generated task code can express bounded loops, candidate selection, and deterministic analysis.
+Fixed workflows, semantic tool composition, and code generation differ in how much is predefined and in the range of operations that can be expressed at runtime; all require input validation and provenance tracking.
+
+\subsection{Language-Model Agents and Task Code in a Closed Loop}
+ReAct interleaves reasoning and action, emphasizing the use of external observations to update subsequent operations; Toolformer investigates how models can learn to use tools; and Reflexion uses linguistic feedback to support task revision~\cite{react,toolformer,reflexion}.
+In chemistry, ChemCrow connects language models to specialist tools, while Coscientist explores how models can coordinate operations in chemical research~\cite{chemcrow,coscientist}.
+These studies indicate that models can interpret requirements and organize operations, but tool use still requires explicit inputs, inspectable outputs, and support from domain knowledge.
+
+For electronic-structure calculations, generating syntactically correct ORCA input alone is insufficient for autonomous exploration.
+An input describes a single calculation, whereas a scientific task often comprises several interdependent calculations.
+Questions concerning the origin of the geometry to be optimized, the structure to use in the next step, the consistency of conditions across energy values, and the sufficiency of the available evidence to justify stopping all extend beyond an individual input file.
+A closed-loop system must reassess these questions after each calculation and incorporate relevant output information into its plan.
+Converting computational outputs into a basis for subsequent decisions is central to constructing such a loop.
+
+Task code offers a flexible means of expressing this process.
+A model can generate a bounded program that combines geometry transformations, calculation requests, and result analysis; execution then returns actual artifacts, which the model uses to determine whether further operations are needed.
+The central requirement is to preserve the correspondence between every internal calculation and the original objective, rather than simply generate a longer script in a single step.
+For example, a conformer-comparison program must retain both candidate geometries and their energies so that the ranking can be traced back to actual structures.
+A scanning program must preserve the correspondence among target labels, optimized geometries, and actual dihedral angles.
+Code represents the algorithm, whereas calculation receipts and raw outputs provide evidence that execution has occurred.
+
+This flexibility also introduces additional requirements.
+A program may contain several internal calculations, so a successful tool call does not establish that every subproblem has been answered.
+Likewise, a script's ability to extract a number does not itself establish that the number represents the required physical quantity.
+Auto-ORCA therefore uses generated code to express task algorithms while managing calculation conditions, resource consumption, and artifact provenance through a shared execution entry point, connecting program flexibility to verifiable execution records.
+
+\subsection{Closed-Loop DFT Automation and System Design Choices}
+AutoDFT targets VASP calculations, translating natural-language tasks and crystal structures into a sequence of computational steps and then generating the parameters for each step from the results already obtained.
+Its seven agent types distribute planning, execution, monitoring, repair, reflection, and property extraction; even converged results can trigger recalculation or plan adjustment, and properties are ultimately produced through deterministic postprocessing~\cite{autodft}.
+
+Auto-ORCA addresses these research questions in molecular calculations and operations related to potential energy surfaces, using a single agent's main loop to organize decisions.
+Intent recognition, plan construction, code generation, result assessment, and report preparation are responsibilities performed at different stages of the same decision process.
+Tools define the execution boundary, ORCA performs the electronic-structure calculations, and programmatic checks together with raw evidence constrain the final interpretation.
+This organization maintains continuity among task objectives, conditions, and subsequent actions within a shared context, while facilitating correspondence among a problem's input structures, execution records, and final conclusions.
+
+\subsection{Scientific Evidence and Scope of Evaluation}
+Autonomous electronic-structure computation must also distinguish completion of a calculation from satisfaction of a scientific objective.
+Lee and Rondinelli's work on autonomous multireference quantum chemistry emphasizes the distinction between computational convergence and correspondence to the target electronic state~\cite{multirefagent}.
+For the tasks considered here, this issue appears in the correspondence between energies and geometries, scan coordinates and final structures, and property values and their physical definitions.
+Findable and reusable data facilitate verification~\cite{fair}, but complete records alone do not establish the validity of scientific conclusions.
+Informed by this prior work, the present study addresses three design questions: how to express open-ended requirements as bounded task programs, how to preserve original objectives during plan revision, and how to distinguish obtained results from outstanding validation in the final report.
+The seven test cases examine whether these designs can support actual calculations.
+The independent contribution of each mechanism and the numerical accuracy of the results are outside the scope of the comparisons completed in this study.
+
+\section{Theoretical Foundations of the Scientific Tasks}
+\subsection{Potential Energy Surfaces, Geometry Optimization, and Local Stability}
+Within the Born--Oppenheimer description, for given nuclear coordinates $\mathbf R$ and electronic-structure conditions $\theta$, the principal contributions to the gas-phase ground-state Kohn--Sham energy can be written schematically as
+\begin{equation}
+  E_{\theta}(\mathbf R)=\min_{n}\!\left\{T_{\mathrm s}[n]
+  +\int v_{\mathrm{ext}}(\mathbf r;\mathbf R)n(\mathbf r)\,\mathrm d\mathbf r
+  +E_{\mathrm H}[n]+E_{\mathrm{xc}}[n]\right\}
+  +E_{\mathrm{NN}}(\mathbf R).
+\end{equation}
+Here, $n$ is a density consistent with the electron number and specified spin conditions; $T_{\mathrm s}$, $E_{\mathrm H}$, and $E_{\mathrm{xc}}$ denote the noninteracting kinetic, Hartree, and exchange--correlation energies, respectively; and $E_{\mathrm{NN}}$ is the nuclear repulsion energy~\cite{hk,ks}.
+Practical composite methods and solvation models include additional correction terms.
+The functional, basis set, charge, multiplicity, and environment jointly define the conditions of the calculation.
+Energy values must therefore be reported together with the method and geometry; when these conditions change, absolute energies cannot be directly compared as points on the same potential energy surface.
+
+Geometry optimization seeks stationary points on a potential energy surface.
+Convergence is assessed using numerical criteria involving energy changes, gradients, and displacements, while the local character of a stationary point requires vibrational analysis.
+The mass-weighted Hessian is
+\begin{equation}
+  H^{\mathrm{mw}}_{ij}=(m_i m_j)^{-1/2}
+  \frac{\partial^2 E}{\partial R_i\partial R_j},
+\end{equation}
+where $i$ and $j$ index Cartesian components, with each atomic mass repeated for its corresponding components.
+Positive eigenvalues in the vibrational subspace correspond to real vibrational frequencies.
+A nonlinear molecule containing $N$ atoms has $3N-6$ vibrational degrees of freedom; ethanol contains nine atoms and therefore has 21 vibrational modes.
+Translational and rotational modes must be distinguished from genuine vibrations.
+The absence of imaginary frequencies supports the local stability of the resulting structure but does not establish that other conformers have been exhaustively explored.
+
+\subsection{Candidate Comparison, Constrained Scans, and Environmental Effects}
+Conformational studies involve distinct steps, including candidate generation, geometry processing, and energy evaluation.
+A single-point calculation evaluates $E_{\theta}(\mathbf R_i)$ at a fixed geometry $\mathbf R_i$, whereas optimization allows the nuclear coordinates to change; the two procedures therefore address different questions.
+Dedicated methods such as GFN2-xTB and CREST demonstrate that conformational sampling and screening have their own algorithmic requirements~\cite{gfn2,crest}.
+The \textit{n}-hexane results in this study concern only DFT single-point comparisons of the saved candidates and do not support inferences about the complete conformational space.
+
+A constrained scan optimizes the remaining degrees of freedom while maintaining specified internal-coordinate conditions.
+An input angle is a computational instruction; the actual angle should be recalculated from the final geometry.
+For a periodic coordinate, target and resulting values can be compared using an angular difference wrapped into $(-\pi,\pi]$.
+The abscissa of an energy curve must have a reliable correspondence to molecular geometry before minima and barriers can be discussed.
+The same principle applies to environmental comparisons: the electronic-energy difference between the gas phase and CPCM water at fixed geometry describes the environmental response within the specified model and does not include all thermodynamic and entropic contributions~\cite{cpcm}.
+
+\subsection{Interpretation of Excited States and Response Tensors}
+Vertical excitation preserves the nuclear configuration, and full linear-response TDDFT provides electronic excitation information at that geometry~\cite{tddft}.
+Excitation energies, wavelengths, and oscillator strengths must be associated with their respective states, and the gauge used for oscillator strengths must also be specified.
+A single lowest excitation energy does not represent a complete absorption spectrum, and discrete transitions do not include experimental linewidths or vibrational structure.
+
+Compared with scalar energies, tensor properties impose additional requirements on the correspondence between coordinates and components.
+If an orthogonal matrix $\mathbf Q$ actively rotates the molecule in the laboratory coordinate frame, the expected transformation of the static polarizability and its isotropic value are
+\begin{equation}
+  \boldsymbol\alpha'=\mathbf Q\boldsymbol\alpha\mathbf Q^{\mathsf T},
+  \qquad \alpha_{\mathrm{iso}}=\tfrac13\operatorname{Tr}(\boldsymbol\alpha).
+  \label{eq:tensor-rotation}
+\end{equation}
+When the method and numerical conditions are held fixed, rotation changes the matrix components but should preserve the trace.
+This provides a testable relationship for H2, although numerical results are not yet available to perform the check.
+H1 instead concerns nuclear magnetic shielding tensors, for which one-third of the trace gives the isotropic shielding.
+Conversion using a reference compound is a separate step; absolute shielding cannot be interpreted directly as an experimental chemical shift.
