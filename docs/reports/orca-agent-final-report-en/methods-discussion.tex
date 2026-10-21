@@ -18,26 +18,20 @@ all results correspond to specified fixed geometries.
 
 \subsection{Design of the Agent Capability Assessment}
 \label{sec:agent-evaluation-design}
-The seven problems below assess \textbf{the ability of the Auto-ORCA agent to translate scientific requests
+The seven problems assess \textbf{the ability of the Auto-ORCA agent to translate scientific requests
 into actual calculations and interpretable results}.
-The assessment covers the full process, from task interpretation, preservation of conditions,
-and input preparation to the organization of results.
-The molecules and properties were selected to impose distinct operational requirements:
-some problems require a structure to be obtained before a property can be calculated;
-others require management of a finite candidate set, preservation of comparable conditions,
-organization of multiple excited states, or tensor analysis.
-Together, these problems constitute a set of capability checks that examine both whether the agent can initiate and complete
-actual ORCA calculations and whether its deliverables clearly identify the calculated system, conditions, and scope of the conclusions.
+The assessment spans task interpretation, preservation of conditions, input preparation, and result organization.
+The selected molecules and properties require structure preparation before property calculation,
+finite candidate management, comparable conditions, organization of multiple excited states, or tensor analysis.
+The checks examine whether the agent initiates and completes actual ORCA calculations
+and clearly reports the calculated system, conditions, and scope of the conclusions.
 
-The test set includes operations relevant to potential energy surfaces as well as property calculations.
 T1--T3 address local structure determination, comparison of candidate geometries,
-and constrained calculations along an internal coordinate, respectively.
-These are common components of potential energy surface exploration.
+and constrained calculations along an internal coordinate, respectively---common components of potential energy surface exploration.
 T4, T5, H1, and H2 extend the assessment to excited states, environmental changes, and response tensors,
-testing whether the same execution interface can support different forms of output.
-Task identifiers serve only to associate problems with their results;
-capability assessments are based on the actual inputs, outputs, and geometry records.
-Table~\ref{tab:agent-capability-design} specifies the capabilities targeted by each problem and the evidence that requires examination.
+testing whether the same execution interface supports different output forms.
+Task identifiers only associate problems with results; capability assessments use actual inputs, outputs, and geometry records.
+Table~\ref{tab:agent-capability-design} specifies the targeted capabilities and required evidence.
 
 \begin{figure}[htbp]
   \centering
@@ -78,24 +72,19 @@ Table~\ref{tab:agent-capability-design} specifies the capabilities targeted by e
 
 \FloatBarrier
 
-Results can be examined at three levels.
-First, the actual method, geometry, charge, and multiplicity are checked to associate each result with a well-defined computational problem.
-Second, the raw ORCA output is examined for normal termination and the requested numerical values are checked for actual preservation.
-Third, the interpretation is assessed against the available evidence.
-For example, the lowest single-point energy in a finite candidate set must not be described as the global minimum conformer,
-and an electronic energy difference at a fixed geometry must not be described as a free energy.
-The first two levels establish the provenance of the computational system and its outputs;
-the third determines the extent to which those outputs answer the scientific question.
+Results can be examined at three levels: the actual method, geometry, charge, and multiplicity;
+normal termination in the raw ORCA output and preservation of the requested values;
+and interpretation against the available evidence.
+For example, the lowest single-point energy in a finite set does not establish the global minimum conformer,
+and an electronic energy difference at fixed geometry is not a free energy.
+The first two levels establish computational provenance; the third determines how far the outputs answer the scientific question.
 
-Accordingly, Table~\ref{tab:agent-capability-design} specifies the dimensions covered by the assessment,
-rather than a set of capabilities that have all been demonstrated successfully.
-The completed calculations provide examples of diverse task formulations, execution, and numerical delivery.
-A more complete assessment still requires individual verification of dependencies, geometric correspondence, and property interpretation.
-The seven-problem success rate also lacks the statistical evidence provided by repeated trials or comparison systems
-and therefore cannot estimate the probability of success on unseen tasks.
-Future evaluations can repeat these problems under identical goals and conditions,
-resolve the remaining verification gaps, and distinguish computational completion, verifiability of results,
-and fulfillment of the scientific goals.
+Table~\ref{tab:agent-capability-design} therefore describes assessment coverage, not uniformly demonstrated capabilities.
+The completed calculations illustrate diverse task formulations, execution, and numerical delivery,
+but dependencies, geometric correspondence, and property interpretation still require individual verification.
+Without repeated trials or comparison systems, the seven-problem success rate cannot estimate success on unseen tasks.
+Repeating the problems under identical goals and conditions can resolve verification gaps
+and distinguish computational completion, verifiability of results, and fulfillment of scientific goals.
 
 \subsection{Calculation Success Rate and Interpretation of Results}
 Normal-termination records in the raw ORCA output serve as evidence that a calculation has completed.
@@ -107,18 +96,17 @@ This classification includes the six completed points in T3 despite the uncomput
   =\frac{6}{7}\approx85.7\%.
   \label{eq:success-rate}
 \end{equation}
-The denominator is the set of seven problems, with each problem counted once.
-Scientific conclusions are interpreted separately using the available evidence on convergence, geometry, method, and property.
+Each of the seven problems is counted once.
+Scientific conclusions depend separately on convergence, geometry, method, and property evidence.
 Normal termination alone does not establish a global minimum conformer, a correct torsional barrier,
-or a response property that can be compared directly with experiment.
+or a response property directly comparable with experiment.
 
 Relative electronic energies are referenced to a specified member of the candidate set.
 Energy conversions use $1\,\Eh=2625.4996394799$ kJ mol$^{-1}$.
-Electronic energies, vibrational frequencies, excitation energies, and shielding tensors retain the precision
-of the original output or verification record.
+Electronic energies, vibrational frequencies, excitation energies, and shielding tensors retain the original output or verification precision.
 Raw data and provenance records support inspection and reuse~\cite{fair}.
-This report presents existing computational results; the reported success rate is not interpreted as a success probability
-for arbitrary new tasks, and energy differences without independent references are not used to assess methodological accuracy.
+The reported success rate describes existing results, not the probability of success on arbitrary new tasks;
+energy differences without independent references are not used to assess methodological accuracy.
 
 \subsection{Scope of the Evaluation}
 The calculation success rate across the seven problems indicates whether the agent has produced actual computational results for those problems.
@@ -132,26 +120,24 @@ For tasks with reliable reference values, the coverage of valid matches and the 
   \frac{1}{N_{\mathrm{matched}}}\sum_{i\in\mathcal M}|y_i-y_i^{\mathrm{ref}}|.
   \label{eq:coverage-accuracy}
 \end{equation}
-Here, $\mathcal M$ includes only targets whose correspondence has been established,
-and $y_i$ and $y_i^{\mathrm{ref}}$ are expressed in the same units.
+Here, $\mathcal M$ contains only targets with established correspondence,
+and $y_i$ and $y_i^{\mathrm{ref}}$ use the same units.
 If $N_{\mathrm{matched}}=0$, the error is not evaluable.
-This formulation specifies the conditions required for future accuracy comparisons.
-No independent high-accuracy references are available in this study; consequently, no empirical MAE is reported,
-and energy differences between distinct methods or geometries are not treated as numerical errors.
+This formulation defines conditions for future accuracy comparisons.
+Without independent high-accuracy references, this study reports no empirical MAE
+and does not treat energy differences between methods or geometries as numerical errors.
 
 \section{Results of the Agent Capability Assessment}
 \input{v4-calculation-results.tex}
 
 \subsection{Agent Token Usage and Costs for Runs Producing Computational Results}
 \label{sec:token-cost}
-To characterize the model resources required for autonomous task organization,
-Table~\ref{tab:token-cost} lists six runs that produced the ORCA numerical results reported above.
-Input, output, and total token counts were accumulated from the provider's per-call usage records
-and cross-checked against the usage records for the corresponding runs.
-The counts cover each entire agent run, including task interpretation, input preparation, planning decisions,
-code repair, analysis, and reporting.
-ORCA itself consumes computational resources rather than language-model tokens.
-Because model calls and ORCA jobs do not correspond one-to-one, their counts are listed separately.
+Table~\ref{tab:token-cost} characterizes model resource use in six runs that produced the reported ORCA results.
+Input, output, and total tokens were summed from provider usage records for each call
+and checked against the corresponding run records.
+Counts cover entire runs: task interpretation, input preparation, planning, code repair, analysis, and reporting.
+ORCA consumes computational resources rather than language-model tokens.
+Model calls and ORCA jobs are counted separately because they do not correspond one-to-one.
 
 \begin{table}[H]
   \centering\small
@@ -174,7 +160,7 @@ Because model calls and ORCA jobs do not correspond one-to-one, their counts are
   \end{tabular*}
 \end{table}
 
-All six cost estimates use the rates for \code{deepseek-flash}.
+All six cost estimates use \code{deepseek-flash} rates.
 The rates for cached input, uncached input, and output are 0.003, 0.15, and 0.60 USD per million tokens, respectively.
 Let $N_{\mathrm{hit}}$ denote the cached input tokens already included in the total input count.
 The cost is then estimated as
@@ -187,42 +173,40 @@ The cost is then estimated as
   \label{eq:token-cost}
 \end{equation}
 Here, $p_{\mathrm{hit}}$, $p_{\mathrm{miss}}$, and $p_{\mathrm{out}}$ are the three Flash off-peak rates.
-Cache-hit counts are obtained from the provider's usage records and are not added again to the input or total token counts.
+Provider-reported cache hits are not added again to input or total token counts.
 
 \section{Discussion}
 \subsection{Execution Across Tasks and Scientific Interpretation}
 The six successful problems cover geometry optimization, harmonic frequencies, single-point energies,
 constrained optimization, vertical excitations, environmental energy comparisons, and nuclear magnetic shielding.
-These results demonstrate that generated programs can organize different types of calculations through a common ORCA interface.
-The numerical results for the \textit{n}-hexane candidates and acetone excitations, reported in the preceding tables,
-illustrate the organization of calculations over a candidate set and the processing of multiple excited states, respectively.
+These results demonstrate that generated programs can organize calculations through a common ORCA interface.
+The preceding \textit{n}-hexane and acetone results illustrate candidate-set calculations
+and processing of multiple excited states, respectively.
 
-The results directly relevant to potential energy surfaces have different evidential scopes.
+The potential energy surface results differ in evidential scope.
 The converged optimization and absence of imaginary frequencies in T1 support a local minimum.
 T2 provides a ranking of single-point energies for a finite set of candidate geometries.
 T3 retains six converged constrained-optimization points but lacks independently verified correspondence between target and actual angles.
-The available results therefore support the execution of operations relevant to potential energy surfaces,
-but do not establish a completed global potential energy surface search or a reliable, complete torsional barrier profile.
+These results support relevant computational operations,
+but establish neither a completed global potential energy surface search nor a reliable, complete torsional barrier profile.
 
-Property calculations likewise require precise identification of the physical quantities involved.
+Property calculations likewise require precise physical definitions.
 T4 describes vertical excitations at a fixed prepared geometry; T5 provides electronic energy differences at fixed geometry;
 and H1 provides absolute nuclear magnetic shielding values.
 H2 has not produced tensor values, so rotational consistency cannot yet be tested.
-Subsequent validation should first address these specific gaps, followed by repeated calculations under identical conditions
-and comparisons with independent references to assess reproducibility and accuracy.
+Validation should address these gaps, then assess reproducibility and accuracy through repeated calculations
+under identical conditions and comparison with independent references.
 
 \subsection{Preserving Goals and Connecting Evidence for Continued Exploration}
-A further contribution of Auto-ORCA is to maintain continuity between the user's scientific question and the final deliverable.
-Natural-language requests typically combine goals, conditions, and expected interpretations,
-whereas a single ORCA calculation can provide only part of the required information.
-When each result enters the next decision cycle, it must therefore be assessed against the current question:
-which structure produced it, under which conditions, what has been answered, and what further evidence is required.
-This stepwise connection decomposes extended tasks into executable and checkable operations while preserving the overall research objective.
+Auto-ORCA maintains continuity between the user's question and the final deliverable.
+Requests typically combine goals, conditions, and expected interpretations that a single ORCA calculation can address only partly.
+Each result must therefore be assessed against the current question: its source structure and conditions,
+what it answers, and what evidence remains necessary.
+This decomposes extended tasks into executable, checkable operations while preserving the research objective.
 
-Auto-ORCA maintains the correspondence among scientific goals, computational conditions, and results,
-and selects subsequent calculations, analyses, or repairs using new evidence.
-The seven tests demonstrate the feasibility of organizing diverse molecular calculations through this process.
-Its efficiency and reliability still require assessment through controlled comparisons and repeated trials under identical conditions.
+The correspondence among goals, conditions, and results guides subsequent calculations, analyses, or repairs.
+The seven tests demonstrate the feasibility of organizing diverse molecular calculations;
+efficiency and reliability still require controlled comparisons and repeated trials under identical conditions.
 
 In the final report, structured results and natural-language explanations serve complementary purposes.
 Tables and matrices preserve numerical values, units, and object identifiers,
@@ -230,12 +214,10 @@ while the accompanying text explains computational methods, physical meaning, an
 This combination allows readers to understand the principal findings and trace the results back to the raw artifacts for inspection.
 
 \subsection{Limitations and Future Evaluation}
-The present dataset is limited in size, and the problems differ in both computational steps and physical quantities.
-Counting each problem once cannot directly measure the quality of individual model decisions,
-the completion rate of all required steps, or numerical accuracy.
-The study does not include comparison systems evaluated under common conditions,
-distributions from repeated trials, or independent high-accuracy references.
-It therefore does not support performance rankings of models or architectures.
+The dataset is small, with problems differing in computational steps and physical quantities.
+Counting each problem once cannot directly measure individual decision quality, the completion rate of all required steps, or numerical accuracy.
+Without comparison systems under common conditions, repeated-trial distributions, or independent high-accuracy references,
+the study cannot rank models or architectures.
 
 Further evaluation can proceed in three directions.
 First, repeated execution with identical inputs and resources can test the stability of results and stopping behavior.
@@ -246,32 +228,29 @@ For scan tasks, final geometries and endpoints should be checked first;
 environmental comparisons should retain common conditions;
 and tensor tasks should verify components, units, and coordinate transformations together.
 
-Comparisons of the underlying mechanisms also require controlled conditions.
-The separation of goals from plans, retention of repair information, and organization of feedback can be studied as independent factors.
-Each comparison must preserve the original scientific problem and minimum requirements.
-Only then can improvements in task organization be distinguished from changes in inputs, budgets, or acceptance criteria.
+Controlled comparisons can examine goal--plan separation, retention of repair information, and feedback organization as independent factors.
+Preserving the original scientific problem and minimum requirements is essential
+to distinguish better task organization from changes in inputs, budgets, or acceptance criteria.
 
 \Needspace{9\baselineskip}
 \section{Conclusions}
-This study presents Auto-ORCA, which combines generic tools and generated code within a single-agent decision loop
-to perform DFT tasks through a unified ORCA interface.
-The system separately preserves the original goals, actual computational conditions, and numerical evidence.
-Among seven test problems, T1--T5 and H1 produced completed ORCA calculations and numerical results,
-yielding a calculation success rate of $6/7=85.7\%$ under the definition adopted here.
-H2 has not yet produced actual polarizability values.
+Auto-ORCA combines generic tools and generated code in a single-agent loop
+to perform DFT tasks through a unified ORCA interface, separately preserving original goals, actual conditions, and numerical evidence.
+T1--T5 and H1 produced completed ORCA calculations and numerical results,
+giving a seven-problem calculation success rate of $6/7=85.7\%$ under the adopted definition.
+H2 has not produced polarizability values.
 
-At the workflow level, Auto-ORCA connects natural-language input, intent recognition, condition clarification,
-knowledge retrieval, dependency planning, task code, managed execution, and result interpretation in a continuous process.
-Successful results inform further progress toward the goals, failure diagnostics support targeted repairs,
-and the final report links conclusions to the methods actually used and the raw artifacts.
-This organization supports multistep calculations centered on a scientific question
-and provides an explicit basis for further analysis and reuse of existing results.
+The workflow connects natural-language input, intent recognition, condition clarification,
+knowledge retrieval, dependency planning, task code, managed execution, and interpretation.
+Successful results inform progress toward goals, diagnostics support targeted repairs,
+and reports link conclusions to actual methods and raw artifacts.
+This supports multistep calculations around a scientific question, further analysis, and result reuse.
 
 The principal results include a converged ethanol structure with 21 positive vibrational frequencies,
 single-point energies for six \textit{n}-hexane candidates, six constrained-optimization points for \textit{n}-butane,
 five singlet excitations of acetone, gas-to-aqueous electronic energy differences with two basis sets,
 and complete shielding tensors for the three nuclei in HCN.
-The interpretation of each structure or property remains conditional on its supporting evidence:
+Interpretation remains conditional on evidence:
 a local minimum does not establish a global minimum, the angle correspondence in the \textit{n}-butane scan still requires verification,
 and an environmental electronic energy difference is not a hydration free energy.
 Future work should address geometric verification, sampling completeness, response-tensor validation,

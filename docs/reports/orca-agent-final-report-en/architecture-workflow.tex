@@ -1,10 +1,10 @@
 \section{Agent Architecture}
 \subsection{Decision Loop and Task Code Generation}
 Auto-ORCA translates natural-language requests into scientific objectives, computational conditions, and executable plans.
-The model proposes parameters, Python programs, or ORCA input based on the available evidence; the software checks dependencies, permissions, and resources before execution.
-New results are read, checked, and evaluated against the objectives before being returned to the next decision cycle.
+The model proposes parameters, Python programs, or ORCA input from available evidence; the software checks dependencies, permissions, and resources before execution.
+New results are read, checked, and evaluated against the objectives to inform the next decision.
 Figure~\ref{fig:architecture} presents the overall architecture.
-Both successful calculations and failure information enter the feedback loop, and the system does not prescribe a fixed sequence of optimization, frequency, and single-point calculations.
+Both successes and failures enter the feedback loop, without a prescribed sequence of optimization, frequency, and single-point calculations.
 
 \begin{figure}[htbp]
   \centering
@@ -15,15 +15,15 @@ Both successful calculations and failure information enter the feedback loop, an
   \label{fig:architecture}
 \end{figure}
 
-Task-specific algorithms are expressed in generated code, while generic tools handle input validation, execution, and artifact management.
+Generated code expresses task-specific algorithms; generic tools handle input validation, execution, and artifact management.
 For example, a program may construct a finite set of geometries, request an energy calculation for each, and compare the results in consistent units.
-OPI input, native ORCA input, and calculation requests issued within Python share the same execution entry point~\cite{opi}.
+OPI input, native ORCA input, and Python calculation requests share one execution entry point~\cite{opi}.
 The thin interface returns execution receipts and raw artifacts without embedding an implicit solution algorithm for an individual problem.
-This design allows the same tools to support different tasks while maintaining explicit execution boundaries.
+The same tools thus support different tasks within explicit execution boundaries.
 
 \subsection{Objective Preservation and Evidence Management}
-The system uses Request, Plan, Step, Tool, Run, Result, and Artifact to represent requirements, computational routes, operations, execution interfaces, run records, results, and raw artifacts, respectively.
-Scientific objectives and minimum evidence requirements are stored independently of the Plan; plan revisions alter only the route used to meet them.
+Request, Plan, Step, Tool, Run, Result, and Artifact represent requirements, computational routes, operations, execution interfaces, run records, results, and raw artifacts, respectively.
+Scientific objectives and minimum evidence requirements are stored independently of the Plan; revisions alter only the route to meeting them.
 
 \begin{table}[htbp]
   \centering\small
@@ -44,21 +44,21 @@ Scientific objectives and minimum evidence requirements are stored independently
   \end{tabularx}
 \end{table}
 
-These representations explicitly connect scientific meaning to the execution process.
+These representations connect scientific meaning to execution.
 Explicit user requirements, defaults, inherited conditions, and automatic choices are recorded separately.
-Subsequent references to structures or numerical values bind to specific artifacts and their provenance, rather than to a ``latest file'' that may change during execution.
-Different objectives for the same molecule may require different environments or electronic states; the software therefore checks conditions for each objective instead of unconditionally merging all settings.
+References to structures or numerical values bind to specific artifacts and provenance, rather than to a changing ``latest file.''
+Different objectives for the same molecule may require different environments or electronic states; conditions are therefore checked per objective rather than unconditionally merged.
 
 The model proposes actions and repairs, whereas the software determines whether an action is executable and whether its outputs satisfy the prescribed checks.
-Initial geometries, inputs, generated programs, and raw outputs from each attempt are stored separately, with provenance bound through content verification.
-Reading evidence does not implicitly initiate a calculation or conversion; additional analyses are performed as explicit operations.
-Properties not yet covered by standard checks may be retained as observations with provenance, units, and stated limitations, but neither the model nor a task script can independently confer scientific validity on them.
+Initial geometries, inputs, generated programs, and each attempt's raw outputs are stored separately, with provenance bound through content verification.
+Reading evidence does not implicitly initiate calculations or conversions; additional analyses require explicit operations.
+Properties outside standard checks may be retained as observations with provenance, units, and limitations, but neither the model nor task scripts can independently confer scientific validity.
 
 \subsection{Versioned Knowledge Base and On-Demand Retrieval}
 \label{sec:knowledge-layer}
-Auto-ORCA incorporates domain knowledge queries into the same agent loop, providing traceable references for task planning, input preparation, and result interpretation.
+Domain knowledge queries within the same agent loop provide traceable references for planning, input preparation, and interpretation.
 Sources include the official ORCA 6.1 manual~\cite{orcamanual}, OPI 2.0 documentation~\cite{opi}, RDKit 2025.09.6 documentation, and project-maintained guides on input preparation, method selection, and output diagnosis.
-Table~\ref{tab:knowledge-sources} summarizes the role of each source category.
+Table~\ref{tab:knowledge-sources} summarizes their roles.
 
 \begin{table}[H]
   \centering\small
@@ -75,29 +75,29 @@ Table~\ref{tab:knowledge-sources} summarizes the role of each source category.
   \end{tabularx}
 \end{table}
 
-The agent answers knowledge queries by retrieving relevant source passages and archiving their documents, versions, source locations, and verification metadata.
+The agent retrieves relevant passages and archives their documents, versions, source locations, and verification metadata.
 Retrieval supports planning, input preparation, diagnosis, and repair as needed.
-Specific computational conclusions nevertheless remain grounded in actual ORCA outputs and the corresponding checks.
+Computational conclusions remain grounded in actual ORCA outputs and corresponding checks.
 
 \subsection{Unified Execution and Observations of Additional Properties}
 Although the model can generate task algorithms, execution responsibilities must remain centralized.
-Each tool definition specifies parameter constraints, execution effects, and output declarations; OPI, native input, and internal calculation requests follow the same management procedures.
-A program may combine several calculations to address a scientific question, but each calculation retains its own input, geometry, execution facts, and artifacts.
+Tool definitions specify parameter constraints, execution effects, and outputs; OPI, native input, and internal calculation requests follow the same management procedures.
+A program may combine several calculations to address a scientific question, but each retains its own input, geometry, execution facts, and artifacts.
 Changing the input representation does not alter resource limits or minimum evidence requirements.
 
-Scientific result acquisition also involves distinct levels of evidence.
+Result acquisition involves distinct evidence levels.
 A readable raw file establishes that evidence is accessible; successful field extraction establishes that a particular datum has been obtained; only the corresponding output checks support interpretation within their defined scope.
-For properties not covered by existing checks, generated code may extract and organize observations with provenance, enabling new analytical questions to yield reportable results while retaining their validation status.
-This mechanism expands the range of expressible tasks without treating a script's ``pass'' assertion or a normal exit code as a scientific judgment.
+For properties outside existing checks, generated code may extract and organize observations with provenance, enabling reportable analyses while retaining their validation status.
+This expands task expressibility without treating a script's ``pass'' assertion or normal exit code as a scientific judgment.
 
 For example, tensor-analysis code may read a matrix from raw output and calculate its trace, but reliable interpretation also depends on correct atom indices, coordinate directions, and units.
 Similarly, scan code may request calculations at several angles, but a target-angle label alone does not demonstrate that the final geometry satisfies the constraint.
-The model proposes an analytical route; actual execution and verifiable evidence jointly delimit the conclusions that the route can support.
+The model proposes the analysis; execution and verifiable evidence delimit its conclusions.
 
 \subsection{Feedback, Resources, and Termination}
-Feedback preserves the original objectives, current results, and applicable diagnostics, together with queryable evidence sources.
-Errors help locate failures in inputs, programs, or numerical solution, while successful outputs help determine whether additional geometry checks, sampling, or cross-result analyses are required.
-When the execution state is uncertain, existing facts are reconciled before further action to avoid duplicate launches.
+Feedback preserves original objectives, current results, applicable diagnostics, and queryable evidence sources.
+Error diagnostics help locate input, program, or numerical-solution failures; successful outputs help determine whether additional geometry checks, sampling, or cross-result analyses are required.
+Uncertain execution states require reconciliation of existing facts before further action to avoid duplicate launches.
 
 Resource constraints cover generated programs and their internal ORCA calculations.
 Let $B_k$ be the limit for budget dimension $k$, $U_k$ the cumulative usage, and $r_k$ the reservation for a new action.
@@ -105,22 +105,22 @@ Execution requires
 \begin{equation}
   U_k+r_k\leq B_k.
 \end{equation}
-Internal calculations, code retries, and model-based corrections all contribute to cumulative usage; pausing or resuming does not reset consumption.
+Internal calculations, code retries, and model-based corrections count toward cumulative usage; pausing or resuming does not reset consumption.
 Generated code accesses input copies, necessary runtime libraries, and task artifact directories only within a managed task environment.
-Completed calculation results and unanswered questions are retained after termination.
+Completed results and unanswered questions are retained after termination.
 
-Repairs must preserve the original objectives and all evidence that remains valid.
-Corrections to input formatting, repairs to code errors, and adjustments to scientific methods have different implications and should be identified separately in subsequent actions.
-A failure does not invalidate other completed calculations, and a success does not automatically validate matters that still require examination.
-When the origin of an execution is unclear, existing processes and artifacts are reconciled first to avoid unsupported repetition.
+Repairs must preserve original objectives and still-valid evidence.
+Input-format corrections, code repairs, and scientific-method adjustments have different implications and should be identified separately in subsequent actions.
+Failure does not invalidate other completed calculations, nor does success automatically validate unresolved matters.
+Unclear execution provenance requires reconciliation of existing processes and artifacts before repetition.
 
-These mechanisms allow feedback to affect subsequent actions, while the original scientific conditions, actual evidence, and remaining resources determine the permissible scope of continuation.
+Feedback informs subsequent actions within the limits of original scientific conditions, actual evidence, and remaining resources.
 
 \subsection{Comparison of Open-Loop and Closed-Loop Mechanisms}
-To clarify the role of result feedback, we distinguish open-loop planning from closed-loop execution~\cite{autodft} and compare the two arrangements in Figure~\ref{fig:open-closed-loop}.
-Here, open-loop operation means that the model specifies a complete route at the outset and execution primarily follows predetermined steps and rules.
+We distinguish open-loop planning from closed-loop execution~\cite{autodft} to clarify result feedback (Figure~\ref{fig:open-closed-loop}).
+In open-loop operation, the model specifies a complete route initially, and execution primarily follows predetermined steps and rules.
 It may include error detection, rule-based retries, and routine recovery.
-Closed-loop operation instead returns newly generated scientific evidence to the model's decision process, allowing the unexecuted portion of the route to change as understanding of the problem develops.
+Closed-loop operation returns new scientific evidence to model decision-making, allowing unexecuted steps to change as understanding develops.
 
 \begin{figure}[htbp]
   \centering
@@ -132,7 +132,7 @@ Closed-loop operation instead returns newly generated scientific evidence to the
 In molecular calculations, later steps often require information available only after earlier steps have been completed.
 For example, frequency analysis must be tied to the optimized structure actually obtained; conformer comparison requires identification of candidates with usable energies; and environmental comparisons require verification that the two calculations share a common geometry.
 Returning this information to the decision process after execution allows plans to be grounded in evidence already obtained.
-The Auto-ORCA closed loop therefore supports both exception handling and the use of successful results to advance the scientific investigation.
+The Auto-ORCA closed loop thus supports exception handling and scientific progress through successful results.
 
 \begin{table}[htbp]
   \centering\small
@@ -152,115 +152,110 @@ The Auto-ORCA closed loop therefore supports both exception handling and the use
   \end{tabularx}
 \end{table}
 
-The design advantage of Auto-ORCA lies in the explicit connection between decision-making and execution responsibilities.
-A single agent continually addresses the same scientific objectives, generic tools implement each action, and raw artifacts provide a shared basis for subsequent decisions.
-Computational, analytical, and interpretive requirements can thus be expressed within a unified task without constructing a separate complete workflow for every combination.
-Combining an adaptable route with a stable problem definition provides a basis for gradual extension to more complex potential-energy-surface exploration.
+Auto-ORCA explicitly connects decision-making and execution responsibilities.
+A single agent continually addresses the same scientific objectives, generic tools implement actions, and raw artifacts inform subsequent decisions.
+Computational, analytical, and interpretive requirements share a task without requiring a separate complete workflow for every combination.
+Adaptable routes and stable problem definitions provide a basis for extending to more complex potential-energy-surface exploration.
 
 \section{End-to-End Workflow from Natural Language to a Computational Report}
 \label{sec:end-to-end-workflow}
-Auto-ORCA progressively transforms a user's scientific question into an executable task with explicit inputs, computational conditions, and evidence sources.
-The process can be summarized as natural-language input, intent recognition and condition confirmation, objective specification, planning with knowledge retrieval as needed, task code generation, ORCA execution, result checking and feedback, and final delivery.
-The same agent loop coordinates these stages.
-Because subsequent actions depend on facts already established, the actual route may include evidence queries, plan revisions, and supplementary analyses.
-The following subsections describe how information passes between the stages.
+Auto-ORCA transforms scientific questions into executable tasks with explicit inputs, conditions, and evidence sources.
+One agent loop coordinates natural-language input, intent recognition and condition confirmation, objective specification, planning with knowledge retrieval as needed, task code generation, ORCA execution, result checking and feedback, and final delivery.
+Subsequent actions depend on established facts and may include evidence queries, plan revisions, and supplementary analyses.
+The following subsections trace this information flow.
 
 \subsection{Natural-Language Input and Scientific Intent Recognition}
-The task interface accepts natural-language descriptions together with user-provided structures, output files, or references to existing results.
-The system first preserves the original request and identifies four types of information: the system to be studied, the physical quantities required, the conditions that the calculations must satisfy, and the materials the user expects to receive.
-For example, ``optimize ethanol and calculate its vibrational frequencies'' must specify the molecular system, structure optimization, frequency calculation at the optimized structure, and delivery of the corresponding coordinates and numerical results.
-``Compare the energies of the same structure in two environments'' additionally requires preservation of the common geometry and the pairing between the calculations.
+The interface accepts natural-language descriptions and user-provided structures, output files, or existing-result references.
+The system preserves the original request and identifies four elements: the scientific system, required physical quantities, computational conditions, and expected deliverables.
+For example, ``optimize ethanol and calculate its vibrational frequencies'' must specify the molecule, optimization, frequencies at the optimized structure, and delivery of corresponding coordinates and numerical results.
+``Compare the energies of the same structure in two environments'' additionally requires preservation of the common geometry and calculation pairing.
 
-Intent recognition produces a checkable structured candidate that records the system, objectives, geometric relationships, conditions, minimum evidence, and unresolved information.
+Intent recognition produces a checkable structured candidate recording the system, objectives, geometric relationships, conditions, minimum evidence, and unresolved information.
 Key fields retain their supporting source text.
-The software checks the correspondence between this candidate and the user message before storing the normalized requirements.
-Consequently, qualifiers such as ``the same geometry,'' ``the first five states,'' and ``the complete tensor'' can be preserved throughout the workflow, reducing the risk of recognizing only a broad task category while omitting delivery requirements.
+The software checks the candidate against the user message before storing normalized requirements.
+This helps preserve qualifiers such as ``the same geometry,'' ``the first five states,'' and ``the complete tensor,'' reducing the risk of recognizing only broad task categories while omitting delivery requirements.
 
 \subsection{Condition Clarification and Objective Specification}
-The method, basis set, charge, multiplicity, environment, and geometry source jointly define the actual computational problem.
-The system distinguishes conditions explicitly supplied by the user, traceable inherited conditions, defaults, and authorized automatic choices.
-Missing information remains recorded as unresolved.
-The agent may ask targeted questions when an omission would change the system being calculated or the meaning of the result.
-Where the user has delegated method or basis-set selection, the system may record a justified choice and check its compatibility with the remaining conditions before launching the calculation.
+The method, basis set, charge, multiplicity, environment, and geometry source define the computational problem.
+The system distinguishes explicit user conditions, traceable inherited conditions, defaults, and authorized automatic choices.
+Missing information remains unresolved; the agent may ask targeted questions when omissions affect the system or result meaning.
+For delegated method or basis-set selection, the system may record a justified choice and check compatibility with remaining conditions before launch.
 
-Once the conditions have been confirmed, the objectives and minimum evidence requirements are stored independently of the execution plan.
+After condition confirmation, objectives and minimum evidence requirements are stored independently of the execution plan.
 A request may contain multiple objectives, each with its own constraints on the system, environment, electronic state, and geometric relationships.
-For example, a comparison of gas-phase and solution energies must preserve two environment-specific objectives and their common geometry; it cannot be reduced to an undifferentiated ``energy'' field.
-Fixing the objectives preserves flexibility in the computational route: the plan may add parsing steps or repair inputs, but it must still address the original scientific question.
+For example, gas-phase and solution energy comparisons must preserve two environment-specific objectives and their common geometry, rather than an undifferentiated ``energy'' field.
+Fixed objectives allow flexible routes: plans may add parsing steps or repair inputs but must address the original question.
 
 \subsection{On-Demand Knowledge Queries to Support Operations}
 \label{sec:knowledge-retrieval}
-When the next operation requires additional information on software syntax, methods, or property definitions, the agent formulates a specific query from the current uncertainty.
-The query process comprises source selection, search-term formulation, retrieval of matching passages, and assessment of whether those passages support the current decision.
-For example, preparing a frequency task may require consulting documentation on optimization and vibrational analysis; writing Python task code may require the interface documentation for the relevant OPI version; and diagnosing an input error may use the ORCA log to locate the relevant manual section.
+When an operation requires information on software syntax, methods, or property definitions, the agent formulates a specific query.
+It selects sources, formulates search terms, retrieves matching passages, and assesses their support for the decision.
+For example, frequency tasks may require optimization and vibrational-analysis documentation; Python task code may require version-specific OPI interface documentation; and input diagnosis may use ORCA logs to locate relevant manual sections.
 
-Knowledge queries may also be used after results have been returned.
-For example, references can help establish the meaning of physical quantities when explaining the relationship between nuclear magnetic shielding and chemical shifts or distinguishing electronic energy differences from free energies.
-The numerical values, geometries, and convergence states of existing results are instead read from their corresponding raw artifacts.
-The final report can therefore state the basis for an operation, the actual computational conditions, and the sources of its numerical results.
+Knowledge queries may also support result interpretation.
+References can clarify physical quantities, such as the relationship between nuclear magnetic shielding and chemical shifts or the distinction between electronic energy differences and free energies.
+Numerical values, geometries, and convergence states are read from corresponding raw artifacts.
+The final report can thus state the operational rationale, actual conditions, and numerical sources.
 
 \subsection{Organizing the Computational Plan by Dependencies}
-The agent next translates the objectives into interdependent operations, including reading or preparing structures, generating inputs, executing calculations, extracting properties, and organizing results.
-Each step identifies the system to be used, the registered files it consumes, the tool it invokes, and the outputs it is expected to provide.
-The software checks the relationship between the plan and the objectives, file dependencies, tool permissions, and available budgets.
-An operation becomes eligible for execution only when its prerequisite data are available and satisfy the checks required by that step.
+The agent translates objectives into interdependent operations: reading or preparing structures, generating inputs, executing calculations, extracting properties, and organizing results.
+Each step identifies its system, registered input files, tool, and expected outputs.
+The software checks objective alignment, file dependencies, tool permissions, and available budgets.
+Execution requires available prerequisite data that satisfy the step's checks.
 
-The plan translates scientific ordering requirements into data dependencies.
-A frequency calculation after optimization must obtain the corresponding final structure; candidate energy ranking must preserve the association between each energy and its candidate identifier; and rotational consistency analysis requires results for two orientations together with the rotation definition.
-When the route must change, the system creates a new plan version while preserving the original records of executed inputs and attempts.
-This allows exploration to adapt to new information while retaining an explanation of the route that produced each result.
+The plan expresses scientific ordering as data dependencies.
+Post-optimization frequencies require the corresponding final structure; energy rankings preserve energy--candidate associations; and rotational consistency analysis requires results for two orientations and the rotation definition.
+Route changes create a new plan version while preserving executed inputs and attempt records.
+Exploration can thus adapt while retaining each result's computational route.
 
 \subsection{Task Code Generation through a Unified Tool Boundary}
-For tasks that are difficult to express directly through fixed interfaces, the agent may write Python task code and native ORCA input to perform repeated calculations, extract fields, organize matrices, or analyze deterministic derived quantities.
-Code is first stored as a file with provenance and then referenced by an execution step.
-Before execution, the system checks the identities of the code and inputs, file dependencies, and task declarations.
-Generated programs run in a managed environment, and internal ORCA requests continue to pass through the unified entry point.
+For tasks difficult to express through fixed interfaces, the agent may write Python task code and native ORCA input for repeated calculations, field extraction, matrix organization, or deterministic derived-quantity analysis.
+Code is stored with provenance before an execution step references it.
+Execution requires checks of code and input identities, file dependencies, and task declarations.
+Generated programs run in a managed environment; internal ORCA requests use the unified entry point.
 
 With this organization, new tasks are expressed primarily through changes in operation composition and task programs.
-For example, conformer comparison requires managing a set of geometries and energies; excited-state analysis requires organizing state-resolved outputs; and shielding analysis requires preserving atom indices and matrix components.
-All three can use the same mechanisms for file writing, execution, querying, and archiving.
-Programs provide general computational capabilities, while the tool boundary maintains traceability of actual inputs, resource consumption, and raw artifacts.
+Conformer comparison manages geometries and energies; excited-state analysis organizes state-resolved outputs; shielding analysis preserves atom indices and matrix components.
+All three share file-writing, execution, querying, and archiving mechanisms.
+Programs provide computational capabilities, while the tool boundary preserves traceability of actual inputs, resource consumption, and raw artifacts.
 
 \subsection{Execution, Monitoring, and Raw Artifact Archiving}
-Before launch, the system verifies the actual inputs, geometry, conditions, permissions, and remaining resources, and creates a separate record for the operation.
+Before launch, the system verifies actual inputs, geometry, conditions, permissions, and remaining resources, and records the operation separately.
 Task code and its internal ORCA calculations share a controlled execution environment and cumulative resource constraints.
 Launch is confirmed by a trusted execution receipt.
-If the execution state is uncertain, existing processes and receipts are reconciled first, preventing an unknown state from being mistaken for a calculation that has not started and thereby duplicated.
+Uncertain execution states require reconciliation of existing processes and receipts before they can be treated as unstarted, preventing duplicate calculations.
 
-After execution, the system archives inputs, standard output, error logs, structure files, and property files, and links each result to its raw artifacts.
+After execution, inputs, standard output, error logs, structure files, and property files are archived and linked to results.
 Records are preserved for both normal completion and failure.
-They provide specific objects for subsequent diagnosis and allow successful numerical results and failure causes to enter the same feedback process.
+These records support diagnosis and feedback from both numerical results and failure causes.
 
 \subsection{Result Checking and Evidence-Based Continuation}
-After receiving a new result, the main loop reevaluates the objectives before deciding on the next action.
+The main loop reevaluates objectives after each new result, before choosing the next action.
 Checks cover the actual conditions, file integrity, output readability, and applicable scientific validation.
-Outputs covered by existing checks are evaluated according to their corresponding rules; new properties may be extracted by task code as observations with provenance, units, and validation statements.
-Successful result reading, calculation completion, reportable observations, and verified scientific requirements are recorded separately so that final conclusions correspond to the evidence actually obtained.
+Existing checks govern covered outputs; task code may extract new properties as observations with provenance, units, and validation statements.
+Successful reading, calculation completion, reportable observations, and verified scientific requirements are recorded separately to ground conclusions in actual evidence.
 
-Successful feedback may initiate a further necessary analysis.
-For example, completed optimization must be followed by acquisition of the final structure and frequency evidence, while completed candidate calculations require consolidation of their associations and consistent energy units.
-Failure feedback includes specific fields, program errors, or locations in ORCA logs so that the agent can propose targeted repairs.
-When software documentation must be checked, the feedback can support a focused knowledge query whose findings inform the proposed revision.
-Repairs use new inputs or subsequent steps while preserving the original objectives and sources that remain valid; the original failure remains accessible.
+Successful feedback may initiate necessary analysis.
+Completed optimization requires acquisition of the final structure and frequency evidence; completed candidate calculations require consolidated associations and consistent energy units.
+Failure feedback identifies fields, program errors, or ORCA log locations for targeted repairs and, when needed, focused documentation queries to inform revisions.
+Repairs use new inputs or subsequent steps, preserving original objectives and still-valid sources; original failures remain accessible.
 
-The system also checks whether executable work remains for the current objectives.
-When approved subsequent steps, recoverable failures, or analytical routes based on archived originals remain available, feedback identifies the corresponding continuation options, and the final delivery check uses this information to prevent premature termination.
-If existing files already support the required analysis, continuation may require only an additional parsing operation.
-This mechanism connects calculation with analysis and directs further effort toward identified evidence gaps.
+The system checks for remaining executable work toward current objectives.
+If approved subsequent steps, recoverable failures, or analyses of archived originals remain available, feedback identifies continuation options that the final delivery check uses to prevent premature termination.
+Existing files may support continuation through parsing alone, directing further effort toward actual evidence gaps.
 
 \subsection{Final Output and Verifiable Delivery}
 When the task reaches a deliverable state, or when resources, permissions, or specific execution conditions require termination, the system consolidates the correspondence between objectives and evidence.
-The final output includes the question and actual methods, the numerical results or structures obtained, necessary units and reference definitions, calculation and validation status, artifact locations, and outstanding work.
+Final outputs include the question, actual methods, numerical results or structures, necessary units and reference definitions, calculation and validation status, artifact locations, and outstanding work.
 Method-selection rationales refer directly to saved records, while numerical values are traced to the corresponding raw outputs and analytical sources.
-Knowledge sources used during the task are linked through retrieval records to document versions and passage locations, preserving traceability of both the operational rationale and the result sources.
+Retrieval records link knowledge sources to document versions and passage locations, preserving traceability of both the operational rationale and the result sources.
 
-For the user, this delivery provides a continuous path from posing a question to obtaining computational materials suitable for further use.
 Tables facilitate comparison, raw files support verification, and limitations indicate what additional evidence is needed.
-The calculation success rate used in this report describes whether corresponding ORCA calculations for the seven questions completed normally and produced numerical results.
-The scientific conclusions supported by each result remain separately delimited by its method, geometry, and property evidence.
+The reported calculation success rate describes whether ORCA calculations for the seven questions completed normally and produced numerical results.
+Each result's scientific conclusions remain separately delimited by its method, geometry, and property evidence.
 
 \subsection{Illustration: Information Flow in Ethanol Optimization and Frequency Analysis}
-Using ethanol optimization and vibrational frequency analysis as an illustrative example, the table below traces the information flow from a natural-language request to final delivery.
+The table below traces the information flow from a natural-language request to final delivery for ethanol optimization and vibrational frequency analysis.
 
 \begin{table}[htbp]
   \centering\small
