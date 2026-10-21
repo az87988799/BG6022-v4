@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "date": "2026-10-21",
   "scope": "Existing Agent Run usage linked to the reported completed ORCA outputs; no new model or ORCA execution.",
   "rows": [
@@ -24,7 +24,8 @@
         "output": "0.0520182"
       },
       "off_peak_estimated_usd": "0.079900002",
-      "off_peak_estimated_usd_display": "0.079900"
+      "off_peak_estimated_usd_display": "0.079900",
+      "pricing_model": "deepseek-flash"
     },
     {
       "task": "T2",
@@ -47,7 +48,8 @@
         "output": "0.029406"
       },
       "off_peak_estimated_usd": "0.049813044",
-      "off_peak_estimated_usd_display": "0.049813"
+      "off_peak_estimated_usd_display": "0.049813",
+      "pricing_model": "deepseek-flash"
     },
     {
       "task": "T3",
@@ -70,7 +72,8 @@
         "output": "0.0642894"
       },
       "off_peak_estimated_usd": "0.092518596",
-      "off_peak_estimated_usd_display": "0.092519"
+      "off_peak_estimated_usd_display": "0.092519",
+      "pricing_model": "deepseek-flash"
     },
     {
       "task": "T4",
@@ -93,7 +96,8 @@
         "output": "0.0453798"
       },
       "off_peak_estimated_usd": "0.087718818",
-      "off_peak_estimated_usd_display": "0.087719"
+      "off_peak_estimated_usd_display": "0.087719",
+      "pricing_model": "deepseek-flash"
     },
     {
       "task": "T5",
@@ -111,12 +115,13 @@
       "historical_conservative_estimated_usd": null,
       "uncached_input_tokens": 176013,
       "off_peak_cost_components_usd": {
-        "cached_input": "0.000352",
-        "uncached_input": "0.11616858",
-        "output": "0.12353616"
+        "cached_input": "0.000048",
+        "uncached_input": "0.02640195",
+        "output": "0.0374352"
       },
-      "off_peak_estimated_usd": "0.24005674",
-      "off_peak_estimated_usd_display": "0.240057"
+      "off_peak_estimated_usd": "0.06388515",
+      "off_peak_estimated_usd_display": "0.063885",
+      "pricing_model": "deepseek-flash"
     },
     {
       "task": "H1",
@@ -139,7 +144,8 @@
         "output": "0.07026"
       },
       "off_peak_estimated_usd": "0.114297546",
-      "off_peak_estimated_usd_display": "0.114298"
+      "off_peak_estimated_usd_display": "0.114298",
+      "pricing_model": "deepseek-flash"
     }
   ],
   "complete_usage_samples": 6,
@@ -1555,12 +1561,12 @@
     ]
   },
   "pricing": {
-    "schema_version": 1,
+    "schema_version": 2,
     "checked_date": "2026-10-21",
     "provider": "DeepSeek",
     "currency": "USD",
     "unit_tokens": 1000000,
-    "scenario": "All recorded token usage priced at the current official off-peak rates, including recorded cache hits; not an actual invoice or a claim about request timestamps.",
+    "scenario": "All six complete recorded Agent runs, including T5, repriced uniformly at DeepSeek Flash off-peak rates at user request. Actual token usage and original receipt model identities are preserved; this is a pricing comparison, not an invoice or a claim that every run used Flash.",
     "formula": "(cache_hit_input_tokens * input_cache_hit_rate + (input_tokens - cache_hit_input_tokens) * input_cache_miss_rate + output_tokens * output_rate) / 1000000",
     "sources": [
       {
@@ -1589,21 +1595,16 @@
         "input_cache_hit_usd": "0.003",
         "input_cache_miss_usd": "0.15",
         "output_usd": "0.60"
-      },
-      "deepseek-v4-pro": {
-        "current_version": "DeepSeek-V4-Pro-0813",
-        "input_cache_hit_usd": "0.022",
-        "input_cache_miss_usd": "0.66",
-        "output_usd": "1.98"
       }
     },
-    "version_note": "Current model versions are pricing-page context only; historical token receipts retain their original API model names.",
-    "rounding": "Compute in Decimal at full precision; round displayed USD values to 6 decimal places with ROUND_HALF_UP. Sum full-precision costs before rounding the aggregate."
+    "version_note": "Model version identifies the pricing basis only; historical token receipts retain their original API model names.",
+    "rounding": "Compute in Decimal at full precision; round displayed USD values to 6 decimal places with ROUND_HALF_UP. Sum full-precision costs before rounding the aggregate.",
+    "pricing_model": "deepseek-flash"
   },
   "pricing_evidence_file": {
     "path": "deepseek-offpeak-pricing.json",
-    "sha256": "c57979dfec5a5b804a86dc2f3204042a19778937e0fbc6a540a93c64201e1642"
+    "sha256": "5284ae8e32b69016e188aca5ab757ef3e4b738b2e82b19cd258d226deefbe44a"
   },
-  "off_peak_total_estimated_usd": "0.664304746",
-  "off_peak_total_estimated_usd_display": "0.664305"
+  "off_peak_total_estimated_usd": "0.488133156",
+  "off_peak_total_estimated_usd_display": "0.488133"
 }
