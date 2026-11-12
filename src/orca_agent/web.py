@@ -1,7 +1,9 @@
 """Foreground loopback UI over the existing coordinator, never an alternate Agent."""
 
 import asyncio
+import hashlib
 import json
+import os
 import secrets
 import threading
 import time
@@ -21,6 +23,15 @@ from orca_agent.report import _safe
 from orca_agent.store import Store, StoreError
 
 STATIC = Path(__file__).with_name("static")
+
+
+def service_identity(data_root):
+    """Identify this local workspace, without exposing its filesystem paths."""
+    basis = [os.path.normcase(str(Path(__file__).resolve().parents[2])),
+             os.path.normcase(str(Path(data_root).resolve()))]
+    digest = hashlib.sha256(json.dumps(basis, ensure_ascii=False).encode("utf-8")).hexdigest()
+    return {"application": "orca-agent-web", "version": 1, "workspace": digest,
+            "status": "ready", "automatic_run_resume": False}
 
 
 def _execution_view(run):
@@ -223,6 +234,10 @@ def create_app(config, *, store=None, port=8765, acceptance_repository=None):
     @app.get("/")
     def index():
         return FileResponse(STATIC / "index.html")
+
+    @app.get("/health")
+    def health():
+        return service_identity(store.root)
 
     @app.get("/static/{name}")
     def static(name: str):

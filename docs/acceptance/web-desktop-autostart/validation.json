@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-13",
+  "timezone": "Asia/Hong_Kong",
+  "status": "deployed_waiting_user_acceptance",
+  "scope": "Current-user Windows web startup and desktop shortcut",
+  "tests": [
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_desktop_web.py tests/unit/test_web.py -q --tb=short",
+      "passed": 41,
+      "failed": 0,
+      "seconds": 11.62
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/unit/test_desktop_web.py::test_missing_windowless_runtime_fails_without_an_alternate_process -q --tb=short",
+      "passed": 1,
+      "failed": 0,
+      "seconds": 1.11
+    }
+  ],
+  "unique_targeted_tests_passed": 42,
+  "ruff": "passed",
+  "python_compile_check": "passed",
+  "scoped_diff_check": "passed",
+  "installer_syntax_windows_powershell_5_1": "passed",
+  "installer_execution_windows_powershell_5_1": "blocked by existing execution policy; not counted as successful installation",
+  "installer_execution_powershell_7_6_9": "install, uninstall, reinstall passed under existing RemoteSigned policy",
+  "execution_policy_changed": false,
+  "shortcuts_installed": [
+    {"known_folder": "Startup", "name": "ORCA 分子工作台（后台）.lnk", "mode": "--serve"},
+    {"known_folder": "DesktopDirectory", "name": "ORCA 分子工作台.lnk", "mode": "--open"}
+  ],
+  "shortcut_targets_arguments_and_working_directories_verified": true,
+  "startup_shortcut_reused_existing_server": true,
+  "desktop_shortcut_recovered_stopped_server": true,
+  "desktop_shortcut_exit_code": 0,
+  "subsequent_ensure_started_new_server": false,
+  "uninstall_left_server_and_data_untouched": true,
+  "final_shortcuts_reinstalled": true,
+  "healthy_loopback_server_count": 1,
+  "health_identity_matched": true,
+  "existing_run_count": 55,
+  "existing_run_file_set_and_hashes_unchanged": true,
+  "new_runs": 0,
+  "new_model_calls": 0,
+  "new_orca_starts": 0,
+  "task_python_executions": 0,
+  "scientific_conversions": 0,
+  "automatic_run_resume": false,
+  "actual_logoff_logon_test": "not performed",
+  "actual_windows_restart_test": "not performed",
+  "full_regression_run": false
+}
