@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "selection_note": "这里汇集不同冻结版本和开发候选的代表性历史 Run，仅用于只读浏览原始数据。六题已有 ORCA 正常完成并产生数值（6/7，85.7%）是计算产出口径，不等于六题完整目标通过，也不是同一版本七题验收。各 Run 的原始状态、逐目标缺口和验证限制保持不变；三次正式重复及独立参考验收仍未完成。",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "乙醇结构优化与振动频率",
+      "summary": "a010 以 r2SCAN-3c 完成乙醇优化和频率计算；电子能为 -155.002345492244 Eh，21 个正振动频率、6 个零模、0 个虚频，原 Run 为 completed/complete。",
+      "limitations": [
+        "结果支持该方法下的局部极小值，不能证明全局最低能构象。",
+        "方法选择理由包含对已有执行前决定的只读补充，不是最新冻结版本完整自主复验。"
+      ],
+      "variants": [
+        {
+          "id": "a010",
+          "label": "a010：优化与频率的历史完整交付",
+          "store_root": "data/live-repair/attempts/a010/data",
+          "run_id": "run_4121ebb044704dd798780c33895bb8c1",
+          "report_path": "data/live-repair/attempts/a010/report.json",
+          "report_sha256": "41618220eade03133fdfab3d65702b893e6d727fc1e946caf8c7564dcb7170c4",
+          "run_sha256": "3827c3519e4329a8b3d22c27c35be49da82d88e5c9955d01f466bf2e79753085"
+        }
+      ]
+    },
+    {
+      "id": "T2",
+      "title": "正己烷候选构象与能量排序",
+      "summary": "a007 对六个候选几何完成 r2SCAN-3c 单点计算；cand_05 在该集合中能量最低，为 -236.992066202851 Eh，已保存候选与能量排序。",
+      "limitations": [
+        "六个单点数值不表示候选均经过 DFT 优化，也不能证明全局最低构象或自由能排序。",
+        "构象搜索、候选结构交付、RMSD 去重、搜索范围和随机种子等原目标仍有缺口，原 Run 为 failed/partial。"
+      ],
+      "variants": [
+        {
+          "id": "a007",
+          "label": "a007：六个候选的真实单点结果",
+          "store_root": "data/live-repair/attempts/a007/data",
+          "run_id": "run_39bae2909fdb4099bce869e20dd15682",
+          "report_path": "data/live-repair/attempts/a007/report.json",
+          "report_sha256": "0f319679252b778956a70cc7b621c0f71fa80975003a399a45371a74e6a6c8f5",
+          "run_sha256": "4a3099e967ad0ba841822403f129fb6b5f4976ed8c421fc60bda545141e2f16f"
+        }
+      ]
+    },
+    {
+      "id": "T3",
+      "title": "正丁烷受限二面角扫描",
+      "summary": "refreeze-3 的六个 r2SCAN-3c 约束优化点均有正常结束与优化收敛记录，保存了输入目标角度、电子能量和最终几何。",
+      "limitations": [
+        "生成脚本报告的实际二面角与输入目标标签矛盾，六点实际角度尚未通过独立几何核查。",
+        "+180 度未计算，扫描、逐点结构与能量、曲线及细化检查等完整目标仍未满足，原 Run 为 failed/partial。",
+        "真实能量不能直接构成已验证的扭转势垒，尤其不能将 +120 度标签的高能量直接解释为可信物理势垒。"
+      ],
+      "variants": [
+        {
+          "id": "refreeze-3",
+          "label": "refreeze-3：六个受限优化点",
+          "store_root": "data/code-tools-refreeze-3-batch/workspaces/formal-T3-001/data",
+          "run_id": "run_46a2c5ba355a47249334fa194b1d33f9",
+          "report_path": "data/code-tools-refreeze-3-batch/first-repetition-evidence/T3/report.json",
+          "report_sha256": "0a2c9bde3b0d45c40b72e1aa61fb0d5e4ad40eccd287ce539e8126b1c9294c0c",
+          "run_sha256": "e72a150a459f48e64821693e07b1950f9dc1020e14ea2d78fc06272338f2c833"
+        }
+      ]
+    },
+    {
+      "id": "T4",
+      "title": "丙酮前五个单重态垂直激发",
+      "summary": "refreeze-1 在固定准备几何上以 PBE0/def2-SVP、完整 LR-TDDFT（TDA=false）完成计算，原始输出含五个激发能、波长和长度规范振子强度；最低激发能为 4.197061 eV。",
+      "limitations": [
+        "该结果对应准备几何上的垂直激发，不代表已完成基态几何优化。",
+        "激发谱交付、方法理由、分析、完整文件包和来源说明等原目标仍未满足，原 Run 为 budget_exhausted/partial。"
+      ],
+      "variants": [
+        {
+          "id": "refreeze-1",
+          "label": "refreeze-1：真实五态 TDDFT 输出",
+          "store_root": "data/code-tools-refreeze-1-batch/workspaces/formal-T4-001/data",
+          "run_id": "run_e73b6f1fdc0845b98541046756dd0489",
+          "report_path": "data/code-tools-refreeze-1-batch/first-repetition-evidence/T4/report.json",
+          "report_sha256": "ed60353799c3aefa0a0c0103dd24ade6026fd8b8ecd4139796c1ac7da140c45f",
+          "run_sha256": "b35b97f012b8abe7dc5b1d8d43d743eaaa98a4e91454acc34016c92f68174e69"
+        }
+      ]
+    },
+    {
+      "id": "T5",
+      "title": "乙醇气相与 CPCM 水环境电子能差",
+      "summary": "a026 和 a027 各完成两次 B3LYP ORCA 计算。水减气电子能差分别为 def2-TZVP 下 -18.276507 kJ/mol、def2-SVP 下 -16.607972 kJ/mol；每组使用同一初始几何。",
+      "limitations": [
+        "两种基组来自不同候选，不能合并声称一个候选完成全部验收；使用的初始几何不是 T1 优化后结构。",
+        "这是固定几何和指定模型下的电子能量差，不是水合自由能。",
+        "两组原 Run 均为 failed/partial；a027 的差值及最终交付目标仍有缺口，模型报告缺少负号含义解释。",
+        "a027 的失败父 Python、后续代码修复与 SDK 回执复用均保留；复用没有新增 ORCA 计算。"
+      ],
+      "variants": [
+        {
+          "id": "a026",
+          "label": "a026：B3LYP/def2-TZVP，原生 ORCA",
+          "store_root": "data/live-repair/attempts/a026/data",
+          "run_id": "run_4a66f91e2a9b4c999297d7847f7ef1f2",
+          "report_path": "data/live-repair/attempts/a026/report.json",
+          "report_sha256": "dc51640fb1873b76d74556f9aba082cfd640cb3cc4b874015a66ceb9015628fb",
+          "run_sha256": "b2ac1eaf7492a8ed7141571278b6e9040bc87035c0e9ef4509d14dcc0dcd490a"
+        },
+        {
+          "id": "a027",
+          "label": "a027：B3LYP/def2-SVP，SDK 与修复复用",
+          "store_root": "data/live-repair/attempts/a027/data",
+          "run_id": "run_bcb0cc84ad554e99af47183b52ee25ba",
+          "report_path": "data/live-repair/attempts/a027/report.json",
+          "report_sha256": "4459c0674a00d6b206bf880a9e80d54e818779621d3cd1c4dd77a810077c8d16",
+          "run_sha256": "51b02708f385d96a6a53f97082a031cc8e15d84f55bcc14df0af27edd03e76f1"
+        }
+      ]
+    },
+    {
+      "id": "H1",
+      "title": "HCN 的 GIAO 核磁屏蔽张量",
+      "summary": "a011 以 PBE0/def2-TZVP、GIAO 完成真实计算，保存 C、N、H 三核完整屏蔽张量；各向同性屏蔽分别为 79.051、-34.068、29.850 ppm。",
+      "limitations": [
+        "数值来自原始输出的独立核对；原运行中的屏蔽、各向同性值和迹一致性交付目标仍未满足，原 Run 为 failed/partial。",
+        "屏蔽量未通过参考物换算，不能直接称为实验化学位移；完整独立参考计算尚未完成。"
+      ],
+      "variants": [
+        {
+          "id": "a011",
+          "label": "a011：真实 GIAO 输出与张量分析",
+          "store_root": "data/live-repair/attempts/a011/data",
+          "run_id": "run_1329f4207b8c447db60717d2e9a0ee06",
+          "report_path": "data/live-repair/attempts/a011/report.json",
+          "report_sha256": "0681e6e3a877b69f7c7418030c7219e857cfbf993b351f190766e5d7be9c970d",
+          "run_sha256": "10f6cf35526b9691b1fb119923993d2ce86314a94991756c68974f98ce40ec02"
+        }
+      ]
+    },
+    {
+      "id": "H2",
+      "title": "甲醛静态极化率与旋转一致性",
+      "summary": "本项尚未取得 ORCA 极化率数值。代表性 refreeze-4 Run 保留原始需求、模型决策及知识查询记录，没有启动 ORCA。",
+      "limitations": [
+        "两个取向的极化率张量、各向同性极化率和旋转一致性比较均未获得。",
+        "代表性 Run 的准备几何、旋转关系、极化率及验证目标均不足，原状态为 failed/partial；准备方案不计为计算结果。"
+      ],
+      "variants": [
+        {
+          "id": "refreeze-4",
+          "label": "refreeze-4：未启动 ORCA 的失败记录",
+          "store_root": "data/code-tools-refreeze-4-batch/workspaces/formal-H2-001/data",
+          "run_id": "run_c570f932acb447b7b3ad79bc4c73d92d",
+          "report_path": "data/code-tools-refreeze-4-batch/first-repetition-evidence/H2/report.json",
+          "report_sha256": "bbef9fc4e4b99286f150016ef716d418f47271f55da58ff8bdc0d4549fbaeb73",
+          "run_sha256": "c56b5dc08b9b5c4ac563efdaeb1e2ae8402a9bc637e52d25a73bb6dd0879626d"
+        }
+      ]
+    }
+  ]
+}

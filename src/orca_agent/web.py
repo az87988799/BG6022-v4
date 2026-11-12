@@ -9,13 +9,13 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Literal
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response
 from filelock import FileLock, Timeout
 from pydantic import Field
 
-from orca_agent import entrypoints
+from orca_agent import acceptance_browser, entrypoints
 from orca_agent.models import Identifier, Record, utc_now
 from orca_agent.report import _safe
 from orca_agent.store import Store, StoreError
@@ -162,12 +162,13 @@ class Coordinator:
         return unfinished
 
 
-def create_app(config, *, store=None, port=8765):
+def create_app(config, *, store=None, port=8765, acceptance_repository=None):
     store = store or Store(config.data_root, configuration=config.run_configuration())
     coordinator = Coordinator(store, config)
     token = secrets.token_urlsafe(32)
     origin = f"http://127.0.0.1:{port}"
     service_lock = FileLock(str(store.path("web-service.lock")), timeout=0)
+    acceptance_repository = acceptance_repository or acceptance_browser.REPOSITORY
 
     @asynccontextmanager
     async def lifespan(app):
@@ -240,6 +241,41 @@ def create_app(config, *, store=None, port=8765):
                 "scope": "自然语言目标 · 受管理的 Python / ORCA · 可追溯分析与交付",
                 "limitations": ["实际执行范围由当前 Run 的许可、依赖、资源与预算决定；上传暂未开放。",
                                 "通用观察逐项显示验证覆盖，缺少专用科学检查时不会标为科学通过。"]}
+
+    @app.get("/api/acceptance/tasks")
+    def acceptance_tasks():
+        return acceptance_browser.tasks(acceptance_repository)
+
+    @app.get("/api/acceptance/tasks/{task_id}/runs/{variant_id}")
+    def acceptance_detail(task_id: str, variant_id: str):
+        return acceptance_browser.detail(task_id, variant_id, repository=acceptance_repository)
+
+    @app.get("/api/acceptance/tasks/{task_id}/runs/{variant_id}/artifacts")
+    def acceptance_artifacts(task_id: str, variant_id: str,
+                             offset: int = Query(0, ge=0, le=10000),
+                             limit: int = Query(40, ge=1, le=100),
+                             category: acceptance_browser.Category = "all"):
+        return acceptance_browser.artifacts(task_id, variant_id, offset=offset, limit=limit,
+                                            category=category, repository=acceptance_repository)
+
+    @app.get("/api/acceptance/tasks/{task_id}/runs/{variant_id}/artifacts/{artifact_id}/text")
+    def acceptance_text(task_id: str, variant_id: str, artifact_id: str,
+                        start_line: int = Query(1, ge=1, le=10000),
+                        lines: int = Query(80, ge=1, le=200)):
+        return acceptance_browser.text(task_id, variant_id, artifact_id, start_line=start_line,
+                                       lines=lines, repository=acceptance_repository)
+
+    @app.get("/api/acceptance/tasks/{task_id}/runs/{variant_id}/artifacts/{artifact_id}/download")
+    def acceptance_download(task_id: str, variant_id: str, artifact_id: str):
+        content, _, digest = acceptance_browser.download(
+            task_id, variant_id, artifact_id, repository=acceptance_repository)
+        return Response(content, media_type="application/octet-stream", headers={
+            "Content-Disposition": f'attachment; filename="{artifact_id}.bin"',
+            "X-Artifact-SHA256": digest})
+
+    @app.api_route("/api/acceptance/{path:path}", methods=["POST", "PUT", "PATCH", "DELETE"])
+    def acceptance_read_only(path: str):
+        raise HTTPException(405, detail="测试记录入口只允许读取已有数据", headers={"Allow": "GET"})
 
     @app.get("/api/runs")
     def runs(offset: int = 0, limit: int = 40):

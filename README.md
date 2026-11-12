@@ -2,6 +2,8 @@
 
 当前 Code as Tools 新任务使用 [config.code.example.toml](config.code.example.toml) 的 `managed-native-1`：方法/基组不再受小范围枚举限制，开放元素、开壳层、离子、溶剂及独立计算阶段；Python 可分析已有证据与跨条件结果。运行与科学资格分别记录，旧 Run 保留原策略。配置本机镜像、模型和有限许可后，以 `orca-agent --config <配置文件> web` 启动；不要用旧的 `config.text.example.toml` 期待启用生成代码。边界和证据见[当前输入契约](docs/native-orca-input.md)及[验证报告](docs/acceptance/code-as-tools-general-admission/report.md)。下文保留各历史交付时点。
 
+七题历史测试可从[本地网页](#本地网页)左侧“七题测试 · 只读”浏览已有结果、脚本与原始输入输出；来源由[固定清单](docs/acceptance/seven-task-browser/catalog.json)绑定，不重新运行模型或 ORCA，也不改变原验收状态。
+
 阶段 A 提供不依赖 LLM 的本地计算底座：结构化 Request/Plan → 注册 Tool → OPI 输入 → Windows 受管 ORCA → 逐输出科学检查 → 不可变证据及结果。阶段 A 已于 2026-10-06 获得[用户验收通过](docs/acceptance/phase-a/user-acceptance.md)，接受的代码基线为 `236376e`；历史真实证据见[验收报告](docs/acceptance/phase-a/report.md)。
 
 阶段 B 已建立独立参考、受控修订、DeepSeek 适配与单一反馈循环，并完成首个自然语言请求到真实水分子单点的闭环，见 [B-04/B-05 证据](docs/acceptance/phase-b/b04-b05.md)。查询、导入、能差分析及受限 SCF 修复已有真实开发证据；采样追加和模型解释仍有失败，正式三次重复未启动，详见[当前实施状态](docs/acceptance/phase-b/implementation-status.md)。阶段 B 尚未完成或验收通过。
@@ -58,6 +60,8 @@ Copy-Item config.text.example.toml config.local.toml
 ```
 
 已有 `config.local.toml` 时不要覆盖；仅启用所需的 `[text]` profile。密钥继续从后端进程的 `DEEPSEEK_API_KEY` 读取，不填入网页。`web --port 8766` 可选择其他本地端口；不提供公网监听或多 worker 选项。不带 `--config` 可启动只读历史页面，默认不允许提交新文本请求。
+
+浏览七题时，点击左侧“七题测试 · 只读”，选择题目及版本，先查看结果、原运行状态与限制，再按脚本、输入、输出筛选文件，分页查看或下载。可直接打开 `http://127.0.0.1:8765/#acceptance/T1/a010` 等链接。该入口只读取固定清单指定的原 Store/Run，不调用模型或 ORCA、不自动恢复；不同候选已有数值不表示同一版本通过验收。完整原件位于本机 `data/`，未随 Git 分发，缺失时明确显示不可用。单文件下载上限为 16 MiB，不隐式转换或打包；边界见 [0082](docs/decisions/0082-read-only-seven-task-browser.md)。
 
 网页服务以前台方式运行。关闭或刷新浏览器不会重复提交或停止已启动的任务；退出前台服务会请求暂停，在原期限内收集当前任务后退出。需要立即停止计算时先点“取消”并核对状态。服务重启不自动执行任何 Run，继续须点击“继续处理”。暂停/取消按钮显示收到请求，实际完成状态另行展示。
 

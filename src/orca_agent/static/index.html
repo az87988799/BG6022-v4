@@ -5,6 +5,8 @@
 <aside class="sidebar">
   <a class="brand" href="/"><span class="brandmark">O</span><span>ORCA<small>分子工作台</small></span></a>
   <button id="new" class="primary">＋ 新建计算</button>
+  <div class="section-label acceptance-label">七题测试 <span class="readonly-tag">只读</span></div>
+  <nav id="acceptance-tasks" aria-label="七题测试历史证据"><p class="muted">正在读取测试索引…</p></nav>
   <div class="section-label">本地任务 <button id="refresh" class="text-button" aria-label="刷新任务">↻</button></div>
   <nav id="runs" aria-label="历史任务"></nav><button id="more-runs" class="text-button" hidden>更多任务</button>
   <div class="sidebar-bottom"><span class="live-dot"></span> 前台本地服务<small>数据保存在本机 · 关闭浏览器可继续运行<br>重启服务后需显式继续任务</small></div>
@@ -26,6 +28,16 @@
     <section class="panel"><h3>通用分析与验证说明 <span>逐输出保留来源、条件及检查缺口</span></h3><div id="observations"></div></section>
     <section class="panel"><h3>生成脚本与实际输入 <span>读取、下载均使用已有文件</span></h3><div id="scripts"></div></section>
     <section class="panel"><div class="row"><h3>原始证据</h3><button id="load-evidence">读取文件清单</button></div><div id="artifacts"></div><button id="more-artifacts" class="text-button" hidden>下一页文件</button><div id="evidence-navigation"></div><pre id="evidence" hidden></pre></section>
+  </section>
+  <section id="acceptance" hidden aria-label="七题测试只读结果">
+    <div class="task-header"><div><span class="eyebrow">七题测试 · 历史证据</span><h2 id="acceptance-title">正在读取…</h2><code id="acceptance-run-id"></code></div><span class="readonly-tag">只读查看</span></div>
+    <div class="toolbar acceptance-jumps"><button id="acceptance-jump-results" type="button">查看结果 ↓</button><button id="acceptance-jump-files" type="button">查看原始文件 ↓</button></div>
+    <div id="acceptance-variants" class="variant-tabs" aria-label="历史尝试版本"></div>
+    <div class="metrics acceptance-metrics"><div><small>报告交付</small><strong id="acceptance-delivery">—</strong></div><div><small>历史目标记录</small><strong id="acceptance-verification">—</strong></div></div>
+    <section class="panel"><h3>本次尝试的结论与限制</h3><p id="acceptance-summary"></p><div id="acceptance-limitations"></div><details><summary>用户原始任务</summary><pre id="acceptance-original"></pre></details></section>
+    <section id="acceptance-results-panel" class="panel"><h3>计算结果 <span>保留历史状态与验证范围</span></h3><p id="acceptance-report-basis" class="muted"></p><div id="acceptance-results"></div><details><summary>实际条件及来源</summary><pre id="acceptance-conditions"></pre></details><details><summary>已保存的历史报告</summary><pre id="acceptance-report"></pre></details></section>
+    <section class="panel"><h3>通用分析与验证说明 <span>逐输出保留来源及检查缺口</span></h3><div id="acceptance-observations"></div></section>
+    <section id="acceptance-files-panel" class="panel acceptance-files-panel"><h3>原始数据与生成文件</h3><div class="acceptance-file-filters"><label>文件分类<select id="acceptance-category" aria-label="文件分类"><option value="all">全部文件</option><option value="script">生成脚本</option><option value="input">实际输入</option><option value="output">计算输出与日志</option><option value="data">分析数据与图表</option></select></label><label class="acceptance-search-label">筛选当前页文件<input id="acceptance-search" type="search" placeholder="文件名、路径或角色" autocomplete="off"></label></div><p id="acceptance-files-count" class="muted" aria-live="polite"></p><div id="acceptance-files"></div><div class="toolbar acceptance-pagination"><button id="acceptance-files-prev" type="button" hidden>上一页文件</button><button id="acceptance-files-next" type="button" hidden>下一页文件</button></div><div id="acceptance-viewer" hidden><div class="row"><h4 id="acceptance-file-title"></h4><button id="acceptance-file-close" type="button" class="text-button">收起预览</button></div><p id="acceptance-file-coverage" class="muted"></p><pre id="acceptance-file-text" tabindex="0"></pre><div id="acceptance-file-navigation" class="toolbar"></div><details><summary>读取范围与来源记录</summary><pre id="acceptance-file-metadata"></pre></details></div></section>
   </section>
   <form id="composer" class="composer"><label for="text" id="input-label">描述新的计算目标</label><textarea id="text" rows="3" maxlength="8192" placeholder="例如：优化乙醇结构并分析振动频率，说明实际条件、原始来源和验证情况。" required></textarea><div><small id="send-hint">提交将按本地配置中的许可与有限预算执行。支持受管理的代码计算与分析；上传暂未开放。</small><button id="ask" type="button" hidden>只读追问</button><button id="send" class="primary" type="submit">提交任务 ↑</button></div></form>
   <footer>证据读取、执行完成、科学检查、用户目标满足与报告完成分别记录。</footer>
