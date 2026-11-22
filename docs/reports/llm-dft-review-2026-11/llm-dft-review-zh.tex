@@ -5,13 +5,13 @@
 \usepackage[top=26mm,bottom=25mm,left=25mm,right=25mm,headheight=14pt,headsep=6mm]{geometry}
 \usepackage{amsmath,array,booktabs,tabularx,caption,cite,fancyhdr,hyperref}
 \hypersetup{unicode,hidelinks,pdfdisplaydoctitle=true,
-  pdftitle={大语言模型辅助密度泛函理论计算的工作流与验证方法综述},
-  pdfsubject={分子量子化学与周期材料计算的叙述性综述},
-  pdfkeywords={大语言模型, 密度泛函理论, 量子化学, 科学工作流, 可复现性}}
+  pdftitle={面向 ORCA 密度泛函计算的大语言模型智能体综述},
+  pdfsubject={ORCA 智能体的任务规划、工具调用、执行反馈与科学验证},
+  pdfkeywords={大语言模型, ORCA, 智能体, 密度泛函理论, 量子化学, 科学工作流, 可复现性}}
 \ctexset{section={format=\large\bfseries\raggedright,beforeskip=2.8ex plus .5ex,afterskip=1.0ex},
   subsection={format=\normalsize\bfseries\raggedright,beforeskip=1.8ex plus .4ex,afterskip=.5ex}}
 \pagestyle{fancy}\fancyhf{}
-\fancyhead[C]{\small 大语言模型辅助密度泛函理论计算的工作流与验证方法综述}
+\fancyhead[C]{\small 面向 ORCA 密度泛函计算的大语言模型智能体综述}
 \fancyfoot[C]{\small\thepage}
 \renewcommand{\headrulewidth}{0.3pt}
 \setlength{\emergencystretch}{2em}
@@ -30,285 +30,133 @@
 \begin{document}
 \thispagestyle{plain}
 \begin{center}
-  {\LARGE\bfseries 大语言模型辅助密度泛函理论计算的\\[.3ex]工作流与验证方法综述\par}
+  {\LARGE\bfseries 面向 ORCA 密度泛函计算的\\[.3ex]大语言模型智能体综述\par}
 \end{center}
-\begin{abstract}
-大语言模型已被用于生成电子结构计算输入、规划多步任务，以及依据中间结果修订计算方案。
-不同研究分别以输入可执行性、作业完成率、专家评分和物理量误差衡量系统性能，
-所得指标的含义差异显著。
-本文对 2025 年 1 月至 2026 年 11 月间的 17 篇原始研究开展叙述性综述，
-并汇总 12 个公开代码或数据仓库。
-在分子计算中，屏蔽常数的参照换算、过渡态的端点连接和激发态匹配直接影响结论的有效性。
-在一项包含 34 项周期材料任务的对照实验中，闭环配置比开环配置多完成 4 项，
-而每项任务平均消耗的 GPU 小时接近翻倍。
-综合现有证据，评价自动化计算流程需要同时给出实际执行的理论水平、目标覆盖率、可比样本上的性质误差以及计算成本。
-在此基础上，本文提出对已有计算证据的复用和有限预算下的构象选择开展对照研究。
-\end{abstract}
-\noindent\textbf{关键词}\quad 大语言模型；密度泛函理论；分子量子化学；周期材料；工作流验证；可复现性
 
 \section{引言}
-密度泛函理论（density functional theory，DFT）
-计算的科学含义取决于研究者如何定义体系、选择理论水平以及解释求解器输出。
-以分子光谱为例，物种的质子化状态决定所研究的跃迁，而溶剂模型与实验条件影响峰位比较。
-在周期材料中，即便采用同一泛函，
-结构弛豫、采样网格及收敛判据也参与定义最终的物性结果\cite{qplanner,dftbench}。
-大语言模型（large language model，LLM）将自然语言请求与计算软件连接起来，
-使部分方法选择和工作流编排可以自动完成。
-其评测因而必须同时考虑电子结构近似引起的偏差，
-以及工作流选错物种、方法或待提取物理量所引起的偏差。
+一次分子计算可以正常结束，却仍未回答研究者的问题。
+例如，ORCA 能给出目标分子的核磁屏蔽常数；
+若要求的是化学位移，工作流还需取得与所用协议一致的参照量\cite{quntur}。
+量子化学智能体（agent）需要从自然语言问题中识别目标物理量，
+决定需要哪些计算，调用求解器，再根据返回的结果判断原计划是否充分。
+大语言模型（large language model，LLM）参与其中哪些决定，
+以及软件和研究者如何检查这些决定，是本文比较各项工作的主线。
 
-本文考察这两类偏差在既有研究中如何被识别。
-分子部分重点比较输入生成、任务规划及性质验证。
-周期材料部分分析求解前校验、执行失败后的修订，以及低成本筛选与 DFT 复核之间的关系。
-对于同样冠以“成功率”的指标，本文保留其任务单位、判定依据和分母，再讨论各研究支持的结论。
+\section{文献范围与比较方法}
+本文考察 17 篇论文或预印本及 1 项独立评测软件。
+重点讨论实际以 ORCA 执行密度泛函理论（density functional theory，DFT）计算的案例，
+并以 ORCA 输入生成和多参考波函数计算作为相邻证据。
+对于支持多种程序的系统，按具体算例采用的求解器与方法归类。
+本文比较计划由谁制定、何种反馈会改变下一步，以及哪些证据足以支持报告中的结论。
+文中保留对照实验的任务单位、基线和判定依据，仅在同一研究的相同设置内比较数值。
 
-\section{文献选择与比较方法}
-本文采用定向叙述性综述，检索时段为 2025 年 1 月 1 日至 2026 年 11 月 22 日。
-检索词由 LLM 或 agent 与 quantum chemistry、DFT、ORCA、Gaussian、VASP、Quantum ESPRESSO 等术语组合，
-并使用 workflow、benchmark 和 provenance 追查评测方案。
-文献来源为期刊网站、arXiv 和 ChemRxiv，数据和软件资料取自作者链接的归档及 GitHub 仓库。
-纳入研究须描述模型参与的计算环节，并报告具体案例、可核对的评测指标或可定位的公开实现。
-多参考波函数计算和交换相关泛函搜索作为相邻方向纳入，用于分析态匹配与外部验证方法。
+\section{ORCA 智能体如何制定并执行计划}
 
-最终纳入 17 篇论文或预印本，另纳入 1 项独立评测软件。
-数据提取包括任务单位、计算后端、重复次数、物理参照及资源用量。
-期刊版和对应预印本按同一研究处理，关键结果按其发表版本或明确标注的预印本版本引用。
-由于各研究的参考值、容差、基础模型与计算预算不同，
-本文采用定性综合，仅在同一研究的对照设置内比较数值。
-项目展望另引两篇方法文献和一份项目档案，作为研究设计的依据。
+\subsection{从生成输入到调用求解器}
+Jacobs 与 Pollice 的工作为输入生成这一环节提供了基线。
+在由真实 ORCA 输入反推的 294 条测试提示上，
+GPT-4o 基线生成的输入有 5.872\% 通过执行检查；
+采用合成数据微调和思维链提示后，该比例升至 18.027\%。
+检查统一附加水分子坐标，并要求 ORCA 在五秒内以零退出码结束。
+这个试验回答的是模型能否把请求转换成程序可接受的输入。
+原分子的几何、计算之间的依赖以及最终物理量，则要在整项任务中检验\cite{input}。
 
+ArIA 将输入生成接入交互式计算。系统解释用户指令，运行 ORCA，
+生成图形和报告，并允许用户针对计算结果继续提问。
+作者分别公开了开发和部署材料。
+模型开发部分利用 ORCA 试运行以及校验和反馈模块检查候选输入，
+部署部分将训练后的模型适配器接入 LangGraph 工作流\cite{aria}。
+因此，可以分别评价输入生成的改进和用户通过追问能否正确理解某次计算。
+这两种评价各自需要对应的输入、输出与交互记录。
 
-\section{分子量子化学的工作流与性质验证}
-\subsection{从输入可执行性到任务完成度}
-量子化学工作流首先要把自然语言中的方法、基组和性质要求译成求解器可以解析的输入。%
-Jacobs 与 Pollice 从 588 份真实 ORCA 输入反向构造提示，等分为验证集和测试集。
-在含 294 份提示的测试集上，GPT-4o 基线识别关键词、选项与设置的总体 $F_1$ 分数为 0.378，
-输入可执行率为 5.872\%。
-用手册样例构造合成数据微调并采用思维链提示后，
-同一测试集的两项指标分别升至 0.513 和 18.027\%。
-可执行性的判据是在每份预测输入中附加相同的水分子坐标，由 ORCA 在五秒内以零退出码结束。
-这样的控制便于比较输入生成策略，但原任务的分子几何和目标性质尚待检验\cite{input}。%
-ArIA 将输入生成与 ORCA 执行、结果可视化及交互式分析相结合，
-公开档案保存了提示构造、模型适配以及根据软件反馈验证输入的实现\cite{aria}。
+\subsection{Q-Planner 的计划表示与提交前校验}
+Q-Planner 将用户请求转换成有向无环图。
+模型识别化合物、选择适用的计算流程，并声明每个节点所需的输入和产物。
+计划通过结构校验后，执行器按依赖顺序调度工具，
+经 ORCA Python Interface 调用 ORCA，并将返回值交给后续节点。
+计划可以预先声明错误类型及对应的参数调整；
+执行器可并行运行独立任务，并依照这些规则处理已知故障\cite{qplanner}。
 
-从输入文件转向整项任务，评测还须说明哪些决定已由题目给出。%
-El Agente Q 公开了六道大学习题与两项案例的产物。
-习题预先指定泛函和基组，每题设两个提示详略等级，每级独立运行十次。
-由此可考察在方法已知时，系统如何分解问题、提交作业并处理失败\cite{agente}。
-后续 Quntur 把方法和手册检索也纳入规划。
-两套系统使用同一底层模型 Claude Opus 4.5，各对 17 题重复五次。
-专家审阅每组 85 条轨迹，按规划、几何、输入与执行、后分析评分，%
-Quntur 和通用 Claude Code 平均分别为 90.5 和 61.7 分（满分 100）。
-在核磁共振与磁性题中，对照组五次运行有四次遗漏至少一项参照计算。
-即使目标分子的屏蔽常数已经求得，化学位移仍缺少共同的参照。
-这一失分揭示了独立检查计算之间依赖关系的必要性\cite{quntur}。
+氯氟乙酸水相 $\mathrm{p}K_\mathrm{a}$ 的算例揭示了这一分工的作用。
+模型第一次规划时漏掉几何优化，校验器在提交 ORCA 前发现缺项。
+第二次规划补齐该步骤后，依赖优化结构的自由能计算才得以执行\cite{qplanner}。
+在另一项批量规划试验中，对 10 至 100 个分子的单点任务，
+模板展开的 30 份计划全部包含所需节点，逐节点生成时则为 28/30。
+这里的分母是计划数。它能衡量代理有没有漏掉任务，
+逐个分子的能量是否可信仍须依据实际作业及其输出判断。
 
-\subsection{批量规划、计算方法与可比观测量}
-对于重复性强的单点任务，计划表示本身可以成为独立的实验变量。%
-Q-Planner 由模型识别化合物、制定计划并撰写报告，
-经过校验的计划由确定性执行器通过 ORCA Python Interface 调用 ORCA。
-五类示例的每次运行平均使用约 9,700 至 25,300 个模型词元（token），
-执行阶段的模型词元用量均为零。
-单点批量规划以 10 至 100 个分子分十档，每档重复三次。
-由模板展开作业时，30 份计划全部包含所需节点，逐节点生成时则有 28/30 份符合要求。
-该试验止于计划验证。
-论文另对酸、碱两种酚酞物种分别加入三个水分子，
-以 B3LYP/def2-SVP 对八个激发根进行含时 DFT（TDDFT）计算。
-中性内酯的最强跃迁位于 262~nm，碱性醌式二阴离子的主要可见峰位于 502~nm。
-计算再现了显色伴随的红移，但可见峰相对实验区间 530--560~nm 仍偏蓝\cite{qplanner}。
+\subsection{El Agente Q 与 Quntur 的任务委派和运行反馈}
+El Agente Q 采用分层委派。上层的计算化学代理将问题拆成步骤，
+负责 DFT 的代理再分别将输入编写和集群提交交给专门角色。
+各角色调用工具后，把结果或故障返回上层，
+使后续步骤能够引用已经生成的文件，并根据失败信息调整安排。
+作者公开了六道习题和两项案例的计算档案。
+习题已给定泛函和基组，因而主要检验的是代理能否把指定方法落实为一组连贯的 ORCA 作业\cite{agente}。
 
-比较不同系统的性质结果，还须追溯生成每个数值的计算方法。%
-ChemGraph 的 13 类任务共含 360 个评测实例，其中小分子几何优化使用 DFT，%
-400~K 甲烷燃烧焓示例采用半经验 GFN2-xTB。
-在反应焓和反应 Gibbs 自由能两类任务上，每类 15 个评测实例，%
-GPT-4o 多代理配置均取得 100\% 的任务评分。
-评分依据是与结构化参考答案的一致性。
-在另一项要求用 MACE 优化几何并写出 XYZ 的任务中，模型曾将势能计算器名称误填为优化器，
-继而根据报错修正了参数\cite{chemgraph}。%
-Aitomia 同样允许通过一个接口选用 ORCA、Gaussian、PySCF 或学习型模型，
-作者报告了分钟尺度的反应热化学实例，而数秒完成的己醇红外光谱采用 AIQM2\cite{aitomia}。
-由此可见，同一性质可以由不同理论水平给出。
-对耗时和精度的比较还取决于目标分子、计算方法及参照数据。
+Quntur 将方法选择和资料检索也纳入这条反馈回路。
+编写输入时，负责协调的代理判断当前缺少的是软件语法还是科学依据，
+再决定查阅 ORCA 手册、检索文献或委派给领域代理。
+读取大型 ORCA 输出时，工具先建立章节及行号索引，
+代理据此定位所需表格，抽查表头和数据行，再提取字段用于分析\cite{quntur}。
+同一输出可能含多个电子态或多种性质，
+章节和行号使研究者可以核查代理选取的数据是否对应所问的物理量。
 
-\subsection{以驻点、路径和态匹配核查科学结论}
-反应能垒只有在鞍点连接指定反应物与产物时才具备明确的机理含义。%
-Cloudra 对 50 道机理题采用四种配置，共计 200 次运行。
-引导式配置与同模型标准配置在各自 50 题上的平均综合分为 0.805 和 0.584，
-其中十道方法局限题只允许 xTB 或 PM7。
-具体的 DFT 证据见甲胺与甲醛加成及随后脱水的案例。
-作者用 Gaussian 在气相中性单重态条件下运行 B3LYP-D3(BJ)/def2-SVP，
-得到的两个鞍点各有一个虚频。
-对每个鞍点沿短程内禀反应坐标向两端追踪，再优化并检查端点振动频率，
-才确认了两步反应各自连接的极小点\cite{cloudra}。
-构象选择会在搜索鞍点之前改变用于比较的起始结构。%
-VirtualLab\_CC 用 CREST 对 17 个物种进行构象搜索后，
-以 $\omega$B97X-D/def2-SVP 筛查 46 个构象，
-其中 40 个收敛，余下六项为调度资源分配失败。
-每个物种入选的一个构象随后以 def2-TZVP 基组重优化、验频并检查波函数稳定性，
-这 17 项计算共耗费 407.8 CPU 小时。
-研究者保留了核查构象身份的职责\cite{virtuallab}。
+\section{ORCA 输出如何改变智能体的科学判断}
+Quntur 对 4-二甲氨基苯甲腈（DMABN）的分析提供了一个实例。
+代理用优化几何和自然跃迁轨道判断两个低能单重态的局域激发或电荷转移特征。
+发现所得态特征的变化与文献描述不符后，代理再次检索文献，
+追查到本次计算采用气相，而被比较的现象涉及溶液条件\cite{quntur}。
+这一步反馈改变了报告可以作出的解释，也指明进一步计算需要控制的环境条件。
 
-激发态计算也有类似的身份判定问题。%
-Lee 与 Rondinelli 用 ORCA 开展的多参考波函数研究提供了一个可以量化其影响的对照。
-在 QUESTDB 的 558 个垂直跃迁中，基线与加入专家决策规则的配置分别匹配 139 和 246 项，
-相应子集的平均绝对误差为 0.373 和 0.339~eV。
-若仅比较双方都匹配的 109 项，误差依次为 0.242 和 0.268~eV，数值次序随比较集合而改变。
-另在给定已知活性空间与态平均方案的复现实验中，%
-558 项中有 378 项满足复现要求，误差为 0.023~eV\cite{mr}。
-这一比较也适用于 TDDFT 光谱评测。
-只有将目标态覆盖率、共同匹配集合上的能量误差与参照协议一并列出，
-才能判断一种新工作流究竟扩大了覆盖范围，还是改善了同一组态的预测。
+在 17 道任务各独立重复五次的对照中，Quntur 与启用 ORCA 技能的 Claude Code
+均使用 Claude Opus 4.5。专家按规划、几何、输入与执行、后分析评分，
+两组平均分别为 90.5 和 61.7 分（满分 100）。
+在核磁与磁性任务中，对照组五次中有四次遗漏了一项或两项参照计算\cite{quntur}。
+这一实例把评分落实到一项可检查的代理决定，即是否为所求性质安排了必要的参照。
+整体均分反映完整配置的表现，各组成模块的独立贡献仍需消融实验估计。
 
-\section{周期材料的闭环计算与多层次筛选}
+Lee 与 Rondinelli 的 ORCA 多参考波函数研究提供了另一种评测设计。
+代理负责选择活性空间、提交作业、处理报错并匹配目标电子态。
+在 558 个参考跃迁中，加入专家决策指导后，匹配数由 139 增至 246；
+在双方共同匹配的 109 项上，平均绝对误差则由 0.242 变为 0.268~eV\cite{mr}。
+这项相邻方法研究说明，评价智能体应同时报告取得可用结果的目标数，以及同一批已匹配目标上的数值误差。
 
-\subsection{运行反馈的收益与代价}
+\section{其他计算平台对智能体设计的启示}
+多后端分子计算系统提供了工具分工的对照。
+ChemGraph 将任务拆解后交由 ASE 工具执行，小分子几何优化基准的参照采用 NWChem。
+Aitomia 通过 MLatom 选择方法并执行脚本，
+其己醇红外示例采用 AIQM2\cite{chemgraph,aitomia}。
+Cloudra 用反应路径端点检验 Gaussian 找到的鞍点；
+VirtualLab\_CC 则由项目负责人审批是否进入下一计算阶段。
+后者的公开方法协议将构象 DFT 筛选交给 Gaussian，将 DLPNO-CCSD(T) 参照计算交给 ORCA\cite{cloudra,virtuallab}。
+这些案例分别说明了工具选择、独立验证和人工复核如何参与同一计算任务。
 
-周期晶体的能带工作流可由结构弛豫、自洽场（SCF）计算和沿指定倒空间路径的能带计算组成。
-前一阶段的结构或密度一旦有误，后续作业即便正常结束，所得能带也可能偏离研究对象。%
-VASPilot 在计算 2H-MoS$_2$ 时遇到布拉维晶格不一致的报错。
-系统从日志中定位到自洽计算的对称性设置，调整容差后重新提交，
-获得了后续非自洽计算所需的电荷密度。
-该算例给出了从原始报错到修复成功的完整过程，
-其他晶体和故障类型的恢复率尚待专门评估\cite{vaspilot}。
-
-AutoDFT 进一步比较了运行反馈对任务完成率的影响。
-在覆盖九类 VASP 计算的 34 道题中，同用 GPT-5.2，
-仅在起始时调用模型制定方案的配置完成 28 题，
-允许按中间结果修订方案的配置完成 32 题，纯规则基线完成 23 题。
-闭环配置多完成四题，每题平均 GPU 用量也由 22.1 增至 44.0 个 H100 GPU 小时。
-作者另取 20 种材料，与 Materials Project 的 PBE 参考值比较，
-得到可提取带隙、磁矩和形成能的样本分别为 16、18 和 17 个。
-三类平均绝对误差均以各自的成功子集为分母。
-因而，对这组结果的解释取决于所考察的是给定任务能否产生收敛且通过基准检查的输出，
-或特定性质能在多大范围内准确复现\cite{autodft}。
-
-\subsection{多阶段计算的依赖与数值验证}
-
-部分错误在提交作业前即可识别。
-例如，在以自洽密度开展非自洽态密度计算的方案中，第二阶段需要第一阶段保存的电荷密度。%
-LatticeMind 将这类跨步骤依赖写入工作流规范，先检查输入文件和数据传递关系，
-再将求解所得的物理量与预设容差比较。
-三种模型各执行 44 项 RESCU 工作流，共 132 次运行，119 次以首份通过校验的计划完成，
-其余 13 次经一轮求解前修复后完成，最终全部满足参考值检查。
-作者还考察了铑团簇修饰氮化物表面的多阶段计算。
-重建试验生成并核验了 23 份输入，但未重新运行原研究中的生产计算。
-由此能够复核的是复杂流程的构建及依赖传递，
-铑诱导的局域电子响应仍由原生产计算提供证据\cite{lattice}。
-
-\subsection{从代理势初筛到第一性原理复核}
-
-当目标由单一结构的性质计算转向材料筛选时，计算反馈还可能改变候选本身。%
-CatMaster 研究石墨烯负载单原子催化剂上的 CO$_2$ 还原，MACE 代理势初筛倾向于磷掺杂结构。
-对四种结构进行 VASP+D3 校准后，部分吸附能描述符与代理势的结果相差 1--2~eV。
-研究者据此批准扩大计算范围。
-覆盖 35 种结构的 DFT 计算及后续溶剂化自由能分析表明，P--CoN$_4$ 对中间体的结合过强，
-最终计算候选为 B--CoN$_4$、NiN$_3$B 和 N--NiN$_3$B。
-筛选因而需要同时考虑中间体的稳定性与 CO 脱附的难易程度\cite{catmaster}。
-
-MOFGen 展示了另一种筛选尺度。
-论文公开了 178,189 个经扩散模型生成、用近似方法弛豫的金属有机框架。
-经筛选的候选在 VASP 中先以 PBE-D4 粗优化，再以 $r^2$SCAN-D4 精优化，
-最终形成约 3,000 个 DFT 优化结构。
-其体模量由 MACE 势估算，团队另以实验合成了四种框架。
-生成库规模衡量搜索覆盖面，DFT 子集给出特定理论水平下的平衡结构，
-合成结果则检验部分设计在实验条件下能否实现。
-这几类数据对应的样本和物理判据各异\cite{mofgen}。
-
-\section{科学验证与跨研究可比性}
-\subsection{执行记录与数值评分}
-仅凭最终数值接近参考值，难以判断规定的计算是否实际发生。%
-DFT-Agent Bench 基于 Quantum ESPRESSO 的参考计算构建了 245 个任务标识，
-引入计算网格完整性和求解器完成记录等检查。
-基础配置的 706 次受评运行中有 11 次未满足执行要求，
-增强配置的 942 次中有 15 次未满足要求。
-两组共 26 次被判无效的运行中，有 20 次原先的数值评分不低于 0.85。
-执行记录因此为数值评分提供了独立约束，
-但其本身仍不能证明每个报告值都取自正确的输出位置\cite{dftbench}。
-
-CompChemBench 在 CP2K、Quantum ESPRESSO、ASE 等工具上设置输入准备、执行、故障修复和科学审计任务。%
-v1.1 共收录 46 项，其中 5 项专门考察科学审计。
-公开的 DeepSeek-V4-Pro 与 Claude Code 组合成绩为 32/40，
-对应较早的 40 项任务集\cite{compbench}。
-同一基准名称可指不同版本，报告任务总数、软件版本和实际评分范围是解释其结果的前提。
-
-\subsection{误差的计算对象与外推范围}
-对能量、谱峰等连续量的评价存在两次选择。
-一项选择取决于系统能否对预定目标给出结果，另一项取决于计算值与参考值能否建立物理对应。
-设预设目标集合为 $T$，满足预定匹配准则的子集为 $M$，
-则覆盖率 $C$ 与条件平均绝对误差 $\mathrm{MAE}_{M}$ 可分别写为
-\begin{equation}
-  C=\frac{|M|}{|T|},\qquad
-  \mathrm{MAE}_{M}=\frac{1}{|M|}\sum_{i\in M}|y_i-y_i^{\mathrm{ref}}|,
-  \quad |M|>0 .
-  \label{eq:coverage}
-\end{equation}
-其中 $y_i$ 和 $y_i^{\mathrm{ref}}$ 分别表示同一目标对应的计算值与参考值。
-若分别在两个系统各自的匹配子集上报告误差，差异可能来自样本构成。%
-QUESTDB 的共同匹配子集即给出了数值排序发生逆转的实证\cite{mr}。
-对量子化学性质而言，匹配规则还需说明电子态、几何条件与参照态。
-表~\ref{tab:evidence} 概括了不同研究中可直接比较的量。
-
-\begin{table}[htbp]
-\centering
-\caption{自动化电子结构计算中不同评价指标的对象与解释范围}
-\label{tab:evidence}
-\small
-\begin{tabularx}{\linewidth}{@{}P{2.55cm}YY@{}}
-\toprule
-评价指标
-  & 单位与参照
-  & 推断范围及主要限制\\
-\midrule
-输入可执行率
-  & 给定测试结构与执行时限的一份输入\cite{input}
-  & 衡量指令转换及软件兼容性。原体系的物性仍须另行核查。\\
-计划结构正确率
-  & 给定分子清单对应的一张作业图\cite{qplanner}
-  & 检查节点和依赖完整性，实际消耗与收敛情况取决于执行。\\
-任务完成率或专家评分
-  & 一次完整任务，按固定规则或专家量规判定\cite{quntur,autodft}
-  & 二元完成率与多维平均分的统计含义不同。\\
-覆盖率与性质误差
-  & 可确认匹配的结构或电子态及独立参考值\cite{mr}
-  & 同时报出总体和匹配子集。共同子集可用于比较误差变化。\\
-执行审计
-  & 一次求解器运行及其所需网格、完成标志\cite{dftbench}
-  & 可识别缺失的计算，还需核对报告数值的提取位置与单位。\\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-LLM 在 DFT 中的另一种用途是提出新的交换相关泛函。
-此时评价对象由工作流转为泛函对独立数据的预测能力。%
-Chandrasekhar 与 Barati Farimani 由模型提出候选形式，经拟合筛选后进行自洽计算。
-其 13 参数泛函 O159 在 MGCDB84 留出集上的加权均方根偏差比 $\omega$B97M-V 低 11.7\%。
-在与 MGCDB84 有部分来源重叠的 36 个 GSCDB137 子集上，
-两者平均归一化误差比分别为 1.139 和 1.144。
-限制到其中 20 个没有 MGCDB84 前身的子集后，相应比值为 1.269 和 1.290。
-该外部比较的配对检验未显示显著差异\cite{xc}。
-训练来源与外部数据的重叠程度因而也是判断改进能否外推的必要信息。
+周期体系研究集中说明代理应在什么时刻再次介入。
+VASPilot 根据作业日志修订输入，LatticeMind 在提交前检查步骤间的数据依赖\cite{vaspilot,lattice}。
+AutoDFT 的同模型对照中，闭环反馈使 34 项 VASP 任务的完成数由 28 增至 32，
+每项平均 H100 GPU 小时由 22.1 增至 44.0\cite{autodft}。
+CatMaster 依据 DFT 复核结果调整候选范围，MOFGen 将生成、筛选和复核分阶段组织\cite{catmaster,mofgen}。
+在评测方面，DFT-Agent Bench 和 CompChemBench 分别检查求解器执行记录与工作流审计能力。
+泛函搜索研究则用留出数据检验代理所提候选的预测能力\cite{dftbench,compbench,xc}。
 
 \section{讨论与局限}
-已有对照研究表明，执行过程中是否需要模型再次介入，取决于中间结果是否影响后续科学决策。
-对于分子清单和任务类型均已给定的批量单点，%
-Q-Planner 的比较支持通过模板减少作业遗漏\cite{qplanner}。
-对于需要根据吸附自由能改变候选集的筛选任务，%
-CatMaster 的结果说明初始代理势的排序会随 DFT 复核而改变\cite{catmaster}。
-对于已完成计算却未确认电子态、反应端点或热化学参照的情形，
-能量数值所支持的结论仍受这些缺项限制\cite{quntur,cloudra,mr}。
+上述 ORCA 工作提示，反馈的价值取决于它能纠正哪一类决定。
+程序试运行可以暴露输入语法错误，计划校验可以发现上游几何优化的缺失。
+识别参照态遗漏或气相与溶液条件混用，则需要把实际输出重新对照用户的问题。
+对于依赖关系已知的任务，Q-Planner 的对照支持在计划生成时展开模板；
+对于解释取决于中间结果的任务，Quntur 的案例给出了重新查阅资料的具体理由\cite{qplanner,quntur}。
 
-本综述的样本来自定向检索，所述趋势可能受公开材料的可获得性影响。
-部分结果来自尚未完成同行评议的预印本，
-模型权重、系统提示、计算预算和人工介入程度也难以在不同研究间统一。
-本文沿用原作者公布的数值与运行记录，未独立重算电子结构结果。
-在统一任务、预算和参考协议下获得的重复测量，
-才足以检验一项工作流改进在其他体系或软件后端中能否保持。
+现有研究采用的题目、专家量规和计算预算不同，
+单个系统的高分难以直接外推为另一类任务上的优势。
+更有辨别力的比较，应在同一模型、工具和预算下记录代理作出的关键选择，
+同时报告任务覆盖、共同样本上的性质误差、重复计算和资源消耗。
+这样才能判断收益来自更完整的计划、更有针对性的修复，还是更多的计算机会\cite{quntur,mr,autodft}。
 
 \section{项目后续发展方向}
 对于基于 ORCA 的分子计算代理，研究者在一次作业结束后往往面临两个连续的判断。
 已有结果能回答哪些后续问题？
 如果确需补算，有限的机时应优先分配给哪些候选？
-下文以 BG6022 项目存档中的乙醇和正己烷计算为例提出两项研究设计。
+下文以项目存档中的乙醇和正己烷计算为例提出两项研究设计。
 评估所需的盲测样本与对照实验均有待建立。
 
 \subsection{面向后续提问的既有计算证据复用}
@@ -325,8 +173,7 @@ Lo Scudo 在热化学工作流中进一步检验了物种记录的完整性，
 按 $\Delta E=E_{\mathrm{water}}-E_{\mathrm{gas}}$ 定义，%
 def2-SVP 和 def2-TZVP 基组给出的差值分别为 $-16.61$ 和 $-18.28$~kJ\,mol$^{-1}$。
 因此，在所考察的几何、泛函与两种基组下，水环境中的电子能均较低，
-两组差值相差约 $1.67$~kJ\,mol$^{-1}$。
-其中一次运行的数值通过了原始输出复核，但报告遗漏了负号的物理含义\cite{projectarchive}。
+两组差值相差约 $1.67$~kJ\,mol$^{-1}$\cite{projectarchive}。
 若提问改为标准水合自由能，则须明确温度、标准态及溶剂化自由能的计算方案，
 并核对已有输出覆盖了哪些贡献。
 
@@ -339,7 +186,6 @@ def2-SVP 和 def2-TZVP 基组给出的差值分别为 $-16.61$ 和 $-18.28$~kJ\,
 同时报告证据不足却给出数值的比例、证据充分却未作答的比例，以及可避免的 ORCA 启动次数。
 
 \subsection{有限预算下的自适应构象选择}
-\enlargethispage{\baselineskip}
 在多层级构象筛选中，较便宜的方法可为大量候选排序，再以 DFT 精化其中一部分。%
 CENSO 已将这一策略用于柔性分子的构象系综与自由能计算\cite{censo}。%
 VirtualLab\_CC 记录了构象筛选与后续精化的机时，AutoDFT 的对照实验也表明，
@@ -363,33 +209,25 @@ VirtualLab\_CC 记录了构象筛选与后续精化的机时，AutoDFT 的对照
 可检验自适应选择在哪些分子上有收益。
 结论限于给定几何及参考层级下的电子能排序。
 
-\clearpage
-\begin{samepage}
 \section{结论}
-现有文献已证明，大语言模型能够将自然语言请求转译为电子结构输入，
-并在选定的分子与周期体系中完成多步计算。
-较可靠的定量结论来自具有明确对照的研究，
-例如在同一批任务上衡量闭环反馈增加的完成数及其计算成本，
-或在共同匹配的激发态上比较误差。
-对于更广的科学适用性，
-证据仍取决于研究是否公开实际采用的理论水平、经过核实的物理对应、缺失样本以及可复查的原始输出。\par
-\end{samepage}
+ORCA 工作流中已有两类经实验证实的智能体设计。
+依赖关系明确时，模型可以在提交前形成可校验的计划，
+由确定性执行器展开批量任务并处理预先定义的错误。
+科学问题随中间结果变化时，代理需要保留原始输出，
+追查缺失的参照或条件，再决定是否补算以及如何解释结果。
+相应的比较应记录计划在哪一步被纠正、哪些判断改变了后续行动，
+以及这些决定对科学结论和计算成本的实际影响\cite{qplanner,agente,quntur}。
 
 \begingroup
 \small
 \begin{thebibliography}{99}
 \raggedright
 \setlength{\itemsep}{.35em plus .1em}
-\bibitem{qplanner}
-  ZHANG R, GAO W, KURASHIGE Y.
-  Q-Planner: A Harness System for Quantum Chemistry Agents [J/OL].
-  \emph{ACS Omega}, 2026-11-10（在线发表）.
-  DOI: \doi{10.1021/acsomega.6c05744}.
-\bibitem{dftbench}
-  LIU S, YANG J, WAN W, et al.
-  DFT-Agent Bench: Scaffold Effects and Execution Provenance in Autonomous DFT [EB/OL].
-  \emph{arXiv}, v1, 2026-11-07.
-  \ax{2611.10629v1}.
+\bibitem{quntur}
+  PÉREZ-SÁNCHEZ J B, ZOU Y, CAMPOS-GONZALEZ-ANGULO J A, et al.
+  El Agente Quntur: A research collaborator agent for quantum chemistry [J/OL].
+  \emph{Chem}, 2026-09-24（在线发表）, 103259.
+  DOI: \doi{10.1016/j.chempr.2026.103259}.
 \bibitem{input}
   JACOBS P F, POLLICE R.
   Developing large language models for quantum chemistry simulation input generation [J].
@@ -400,16 +238,22 @@ VirtualLab\_CC 记录了构象筛选与后续精化的机时，AutoDFT 的对照
   Molecular Simulations Assisted by an Artificial Intelligence Agent (ArIA) [EB/OL].
   \emph{ChemRxiv}, v2, 2026-05-08.
   DOI: \doi{10.26434/chemrxiv.15002344/v2}.
+\bibitem{qplanner}
+  ZHANG R, GAO W, KURASHIGE Y.
+  Q-Planner: A Harness System for Quantum Chemistry Agents [J/OL].
+  \emph{ACS Omega}, 2026-11-10（在线发表）.
+  DOI: \doi{10.1021/acsomega.6c05744}.
 \bibitem{agente}
   ZOU Y, CHENG A H, ALDOSSARY A, et al.
   El Agente: An autonomous agent for quantum chemistry [J].
   \emph{Matter}, 2025, 8(7): 102263.
   DOI: \doi{10.1016/j.matt.2025.102263}.
-\bibitem{quntur}
-  PÉREZ-SÁNCHEZ J B, ZOU Y, CAMPOS-GONZALEZ-ANGULO J A, et al.
-  El Agente Quntur: A research collaborator agent for quantum chemistry [J/OL].
-  \emph{Chem}, 2026-09-24（在线发表）, 103259.
-  DOI: \doi{10.1016/j.chempr.2026.103259}.
+\bibitem{mr}
+  LEE V C, RONDINELLI J M.
+  Can Autonomous LLM Agents Execute Multireference Quantum Chemistry Calculations?
+  [EB/OL].
+  \emph{arXiv}, v1, 2026-09-11.
+  \ax{2609.13357v1}.
 \bibitem{chemgraph}
   PHAM T D, TANIKANTI A, KEÇELİ M.
   ChemGraph as an agentic framework for computational chemistry workflows [J].
@@ -433,29 +277,23 @@ VirtualLab\_CC 记录了构象筛选与后续精化的机时，AutoDFT 的对照
   chemistry research [J].
   \emph{Artificial Intelligence Chemistry}, 2026, 4(2): 100129.
   DOI: \doi{10.1016/j.aichem.2026.100129}.
-\bibitem{mr}
-  LEE V C, RONDINELLI J M.
-  Can Autonomous LLM Agents Execute Multireference Quantum Chemistry Calculations?
-  [EB/OL].
-  \emph{arXiv}, v1, 2026-09-11.
-  \ax{2609.13357v1}.
 \bibitem{vaspilot}
   LIU J, ZHU T, YE C, et al.
   VASPilot: MCP-facilitated multi-agent intelligence for autonomous VASP simulations [J].
   \emph{Chinese Physics B}, 2025, 34(11): 117106.
   DOI: \doi{10.1088/1674-1056/ae0681}.
-\bibitem{autodft}
-  YANG P, ZHANG Z, LI Y, et al.
-  AutoDFT: A Closed-Loop Multi-Agent Framework for Autonomous DFT Calculations [EB/OL].
-  \emph{arXiv}, v2, 2026-06-04.
-  \ax{2605.26179v2}.
-  \href{https://phyang.top/}{KDD 2027 已接收}。
 \bibitem{lattice}
   VEGH N M, ZHU Y, PRENTKI R J, et al.
   LatticeMind: A Validation-Gated Agentic Framework for Density Functional Theory
   Workflows [EB/OL].
   \emph{arXiv}, v1, 2026-07-19.
   \ax{2610.26869v1}.
+\bibitem{autodft}
+  YANG P, ZHANG Z, LI Y, et al.
+  AutoDFT: A Closed-Loop Multi-Agent Framework for Autonomous DFT Calculations [EB/OL].
+  \emph{arXiv}, v2, 2026-06-04.
+  \ax{2605.26179v2}.
+  \href{https://phyang.top/}{KDD 2027 已接收}。
 \bibitem{catmaster}
   CHEN H, QIU J, TEW Y S, et al.
   Autonomous computational catalysis through an agentic research system [EB/OL].
@@ -466,6 +304,11 @@ VirtualLab\_CC 记录了构象筛选与后续精化的机时，AutoDFT 的对照
   System of agentic AI for the discovery of metal--organic frameworks [J].
   \emph{Nature Computational Science}, 2026, 6(11): 1223--1234.
   DOI: \doi{10.1038/s43588-026-01058-x}.
+\bibitem{dftbench}
+  LIU S, YANG J, WAN W, et al.
+  DFT-Agent Bench: Scaffold Effects and Execution Provenance in Autonomous DFT [EB/OL].
+  \emph{arXiv}, v1, 2026-11-07.
+  \ax{2611.10629v1}.
 \bibitem{compbench}
   WU C.
   CompChemBench: A Benchmark for AI Agents on Computational Chemistry Tasks [CP/OL].
@@ -506,9 +349,25 @@ VirtualLab\_CC 记录了构象筛选与后续精化的机时，AutoDFT 的对照
 \renewcommand{\theHtable}{appendix.\Alph{section}.\arabic{table}}
 \section{公开软件与复现材料}
 \label{app:repos}
-表~\ref{tab:repos} 列出 12 个作者公开的 GitHub 仓库及检索时核对的提交。%
-Q-Planner 对应论文标签 \texttt{qplanner-acsomega-r2.2}，其余为检索日可定位的版本。
-计算结果的解释以论文实际采用的配置为依据。
+ORCA 智能体公开的复现材料各有侧重。
+Q-Planner 的代码快照包含技能说明、计划校验器、任务调度器和 ORCA 工具服务，
+可对照计划文件检查节点的输入与产物\cite{qplanner}。
+\href{https://doi.org/10.5683/SP3/JU2BQK}
+  {El Agente Q 的八项任务档案}和%
+\href{https://doi.org/10.5683/SP3/RDSOEA}
+  {Quntur 与对照系统的评测档案}
+保存运行产物，适合复查代理的决策与最后的数值是否对应。
+Quntur 作者另行说明其代理源码未公开\cite{agente,quntur}。
+\href{https://doi.org/10.34894/RNPTDS}
+  {ArIA 的部署与训练材料}可用来追踪输入生成和反馈模块。
+Jacobs 与 Pollice 提供%
+\href{https://git.lwp.rug.nl/pollice-research-group/ORCAInputFileSynthesis/-/blob/f60237db580d44849f30179deed090317a4a768a/Classes/Helpers/ORCARunner.py}
+  {ORCA 测试程序}和%
+\href{https://doi.org/10.34894/WNRHA4}{数据归档}\cite{aria,input}。
+
+表~\ref{tab:repos} 汇总 12 个公开 GitHub 仓库。
+Q-Planner 使用论文标签 \texttt{qplanner-acsomega-r2.2}；
+各条目的提交标识链接到检索时核对的版本。
 
 \begin{table}[htbp]
 \centering
@@ -518,69 +377,49 @@ Q-Planner 对应论文标签 \texttt{qplanner-acsomega-r2.2}，其余为检索�
 \begin{tabularx}{\linewidth}{@{}P{3.45cm}YP{2.95cm}@{}}
 \toprule
 软件或数据集
-  & 公开材料
+  & 可复查的代理或评测环节
   & 提交标识\\
 \midrule
 \gitrepo{zenqiaz/Q-planner}{Q-Planner}
-  & 计划表示、执行器与测试日志\cite{qplanner}
+  & 计划图、校验器与 ORCA 工具调用日志\cite{qplanner}
   & \snap{zenqiaz/Q-planner}{570409b96fa8}\\
 \gitrepo{argonne-lcf/ChemGraph}{ChemGraph}
-  & 模型接口、ASE 计算器与工作流评测\cite{chemgraph}
+  & 任务分解、ASE 工具调用与结果汇总\cite{chemgraph}
   & \snap{argonne-lcf/ChemGraph}{dcb129ef6269}\\
 \gitrepo{dralgroup/aitomia}{Aitomia}
-  & 自然语言任务与 MLatom 后端的适配代码\cite{aitomia}
+  & 方法选择、脚本生成与 MLatom 执行\cite{aitomia}
   & \snap{dralgroup/aitomia}{e9d62acafa53}\\
 \gitrepo{yyywaa/Cloudra-mechanism-agent}{Cloudra}
-  & 机理搜索、几何处理与评测材料\cite{cloudra}
+  & 机理任务规划与路径端点验证\cite{cloudra}
   & \snap{yyywaa/Cloudra-mechanism-agent}{d76d5cca194c}\\
 \gitrepo{CCBG-Lab/VirtualLab_CC}{VirtualLab\_CC}
-  & 研究角色、工作流与人工审核环节\cite{virtuallab}
+  & 研究角色、人工审核与%
+    \href{https://github.com/CCBG-Lab/VirtualLab_CC/blob/1c1a58cc8df6/framework/methods/METH_002_criegee_terpene_pes.md}
+    {计算协议}\cite{virtuallab}
   & \snap{CCBG-Lab/VirtualLab_CC}{1c1a58cc8df6}\\
 \gitrepo{JiaxuanLiu-Arsko/VASPilot}{VASPilot}
-  & VASP 作业提交、监控与错误处理\cite{vaspilot}
+  & 作业监控与基于日志的错误修复\cite{vaspilot}
   & \snap{JiaxuanLiu-Arsko/VASPilot}{2d9b2dfaf6e0}\\
 \gitrepo{penghui-yang/AutoDFT}{AutoDFT}
-  & 闭环执行代码与两组基准输入\cite{autodft}
+  & 闭环执行与开环对照\cite{autodft}
   & \snap{penghui-yang/AutoDFT}{4c8e16ff59b7}\\
 \gitrepo{nathaniel-vegh/latticemind-data-package}{LatticeMind 数据包}
-  & 主基准、消融结果、VASP 对照与核查脚本\cite{lattice}
+  & 输入依赖校验与消融数据\cite{lattice}
   & \snap{nathaniel-vegh/latticemind-data-package}{2a85c9ef5c2b}\\
 \gitrepo{q734738781/CatMaster}{CatMaster}
-  & 催化剂结构建模、筛选与机理分析工具\cite{catmaster}
+  & 催化剂候选筛选与复核工具\cite{catmaster}
   & \snap{q734738781/CatMaster}{06b856814f98}\\
 \gitrepo{tjaffrel/mofgen}{MOFGen}
-  & 工作流代码与作图源数据\cite{mofgen}
+  & 候选生成与分阶段筛选\cite{mofgen}
   & \snap{tjaffrel/mofgen}{841c93995a4c}\\
 \gitrepo{Chenghao-Wu/compchem-bench}{CompChemBench}
-  & 计算任务集、执行环境与评分程序\cite{compbench}
+  & 任务执行与科学审计评分\cite{compbench}
   & \snap{Chenghao-Wu/compchem-bench}{772d3f3e1a93}\\
 \gitrepo{BaratiLab/DFT_functional_agentic_searcher}{交换相关泛函搜索}
-  & 泛函形式搜索与数值验证实现\cite{xc}
+  & 候选泛函提出与独立数据验证\cite{xc}
   & \snap{BaratiLab/DFT_functional_agentic_searcher}{741bd205c5a9}\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-部分研究通过数据平台发布材料。%
-\href{https://doi.org/10.5683/SP3/JU2BQK}
-  {El Agente Q 的八项任务档案}和%
-\href{https://doi.org/10.5683/SP3/RDSOEA}
-  {Quntur 双方评测档案}保存了计算文件。%
-Quntur 作者%
-\href{https://bernales.org/research/el-agente-quntur}
-  {另行说明}其代理源码未公开\cite{agente,quntur}。%
-Jacobs 与 Pollice 在机构 GitLab 上公开了%
-\href{https://git.lwp.rug.nl/pollice-research-group/ORCAInputFileSynthesis/-/blob/f60237db580d44849f30179deed090317a4a768a/Classes/Model/Tester.py}
-  {测试实现}和%
-\href{https://git.lwp.rug.nl/pollice-research-group/ORCAInputFileSynthesis/-/blob/f60237db580d44849f30179deed090317a4a768a/Classes/Helpers/ORCARunner.py}
-  {运行时限设置}，并提供%
-\href{https://doi.org/10.34894/WNRHA4}
-  {数据归档}\cite{input}。%
-ArIA 的%
-\href{https://doi.org/10.34894/RNPTDS}
-  {部署、训练与评测材料}、MOFGen 的%
-\href{https://doi.org/10.5281/zenodo.18452718}
-  {结构数据库}及 DFT-Agent Bench 的%
-\href{https://anonymous.4open.science/r/231e31re91287h/README.md}
-  {审稿材料}分别用于核查相应研究的实现、输出与评测条件\cite{aria,mofgen,dftbench}。
 \end{document}
