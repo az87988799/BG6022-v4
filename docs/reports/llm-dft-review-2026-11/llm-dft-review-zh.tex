@@ -33,7 +33,7 @@
   {\LARGE\bfseries 大语言模型辅助密度泛函理论计算的\\[.3ex]工作流与验证方法综述\par}
 \end{center}
 \begin{abstract}
-大语言模型已被用于生成电子结构计算输入、规划多步任务，以及依据中间结果修订计算方案。不同研究分别以输入可执行性、作业完成率、专家评分和物理量误差衡量系统性能，所得指标的含义差异显著。本文对 2025 年 1 月至 2026 年 11 月间的 17 篇原始研究开展叙述性综述，并汇总 12 个公开代码或数据仓库。在分子计算中，屏蔽常数的参照换算、过渡态的端点连接和激发态匹配直接影响结论的有效性。在一项包含 34 项周期材料任务的对照实验中，闭环配置比开环配置多完成 4 项，而每项任务平均消耗的 GPU 小时接近翻倍。综合现有证据，评价自动化计算流程需要同时给出实际执行的理论水平、目标覆盖率、可比样本上的性质误差以及计算成本。这些信息决定了自动化性能的改进能否推广到特定的科学问题。
+大语言模型已被用于生成电子结构计算输入、规划多步任务，以及依据中间结果修订计算方案。不同研究分别以输入可执行性、作业完成率、专家评分和物理量误差衡量系统性能，所得指标的含义差异显著。本文对 2025 年 1 月至 2026 年 11 月间的 17 篇原始研究开展叙述性综述，并汇总 12 个公开代码或数据仓库。在分子计算中，屏蔽常数的参照换算、过渡态的端点连接和激发态匹配直接影响结论的有效性。在一项包含 34 项周期材料任务的对照实验中，闭环配置比开环配置多完成 4 项，而每项任务平均消耗的 GPU 小时接近翻倍。综合现有证据，评价自动化计算流程需要同时给出实际执行的理论水平、目标覆盖率、可比样本上的性质误差以及计算成本。在此基础上，本文提出对已有计算证据的复用和有限预算下的构象选择开展对照研究。
 \end{abstract}
 \noindent\textbf{关键词}\quad 大语言模型；密度泛函理论；分子量子化学；周期材料；工作流验证；可复现性
 
@@ -45,7 +45,7 @@
 \section{文献选择与比较方法}
 本文采用定向叙述性综述，检索时段为 2025 年 1 月 1 日至 2026 年 11 月 22 日。检索词由 LLM 或 agent 与 quantum chemistry、DFT、ORCA、Gaussian、VASP、Quantum ESPRESSO 等术语组合，并使用 workflow、benchmark 和 provenance 追查评测方案。文献来源为期刊网站、arXiv 和 ChemRxiv，数据和软件资料取自作者链接的归档及 GitHub 仓库。纳入研究须描述模型参与的计算环节，并报告具体案例、可核对的评测指标或可定位的公开实现。多参考波函数计算和交换相关泛函搜索作为相邻方向纳入，用于分析态匹配与外部验证方法。
 
-最终纳入 17 篇论文或预印本，另纳入 1 项独立评测软件。数据提取包括任务单位、计算后端、重复次数、物理参照及资源用量。期刊版和对应预印本按同一研究处理，关键结果按其发表版本或明确标注的预印本版本引用。由于各研究的参考值、容差、基础模型与计算预算不同，本文采用定性综合，仅在同一研究的对照设置内比较数值。
+最终纳入 17 篇论文或预印本，另纳入 1 项独立评测软件。数据提取包括任务单位、计算后端、重复次数、物理参照及资源用量。期刊版和对应预印本按同一研究处理，关键结果按其发表版本或明确标注的预印本版本引用。由于各研究的参考值、容差、基础模型与计算预算不同，本文采用定性综合，仅在同一研究的对照设置内比较数值。项目展望另引两篇方法文献和一份项目档案，作为研究设计的依据。
 
 
 \section{分子量子化学的工作流与性质验证}
@@ -123,6 +123,25 @@ LLM 在 DFT 中的另一种用途是提出新的交换相关泛函。此时评�
 
 本综述的样本来自定向检索，所述趋势可能受公开材料的可获得性影响。部分结果来自尚未完成同行评议的预印本，模型权重、系统提示、计算预算和人工介入程度也难以在不同研究间统一。本文沿用原作者公布的数值与运行记录，未独立重算电子结构结果。在统一任务、预算和参考协议下获得的重复测量，才足以检验一项工作流改进在其他体系或软件后端中能否保持。
 
+\section{项目后续发展方向}
+对于基于 ORCA 的分子计算代理，研究者在一次作业结束后往往面临两个连续的判断。已有结果能回答哪些后续问题？如果确需补算，有限的机时应优先分配给哪些候选？下文以 BG6022 项目存档中的乙醇和正己烷计算为例提出两项研究设计。评估所需的盲测样本与对照实验均有待建立。
+
+\subsection{面向后续提问的既有计算证据复用}
+当研究者改变所问的物理量，同一组输出能够支持的结论也会改变。Quntur 的核磁共振评测表明，即使已获得目标分子的屏蔽常数，遗漏参照计算仍会影响化学位移的推导\cite{quntur}。Lo Scudo 在热化学工作流中进一步检验了物种记录的完整性，在缺少必要物种的热化学数据时阻止了反应量的汇总\cite{tracestate}。后续研究拟检验，当原始文件保持不变而研究者改变提问时，代理能否准确判断证据的适用范围，并指出推导新结论所缺的条件或数据。
+
+项目的乙醇算例说明了这一问题的实际含义。在相同的分子几何上，以 B3LYP 分别计算气相与 CPCM 水环境中的单点电子能。按 $\Delta E=E_{\mathrm{water}}-E_{\mathrm{gas}}$ 定义，def2-SVP 和 def2-TZVP 基组给出的差值分别为 $-16.61$ 和 $-18.28$~kJ\,mol$^{-1}$。因此，在所考察的几何、泛函与两种基组下，水环境中的电子能均较低，两组差值相差约 $1.67$~kJ\,mol$^{-1}$。其中一次运行的数值通过了原始输出复核，但报告遗漏了负号的物理含义\cite{projectarchive}。若提问改为标准水合自由能，则须明确温度、标准态及溶剂化自由能的计算方案，并核对已有输出覆盖了哪些贡献。
+
+拟以未参与开发的分子构造成对盲测。每对问题共用一组封存的 ORCA 输出，只改变差值方向、参照条件或目标物理量。由独立标注者给出可从原件直接读出或经后处理求得的答案，并标明哪些问题需要补充条件或启动新计算。在相同模型、工具和预算下，将现有系统与逐项核对目标量、计算条件和数值出处的方案比较。主要指标为两问的判断与物理解释均正确的题对比例，同时报告证据不足却给出数值的比例、证据充分却未作答的比例，以及可避免的 ORCA 启动次数。
+
+\subsection{有限预算下的自适应构象选择}
+\enlargethispage{\baselineskip}
+在多层级构象筛选中，较便宜的方法可为大量候选排序，再以 DFT 精化其中一部分。CENSO 已将这一策略用于柔性分子的构象系综与自由能计算\cite{censo}。VirtualLab\_CC 记录了构象筛选与后续精化的机时，AutoDFT 的对照实验也表明，允许代理依据中间结果修订方案会改变计算成本\cite{virtuallab,autodft}。后续研究拟检验，在高层级单点计算次数相同的条件下，利用已返回的能量调整下一次选择，能否提高识别低能构象的概率。
+
+项目已完成两批正己烷气相 $r^2$SCAN-3c 单点计算，分别获得四个和六个固定几何的批内电子能排序\cite{projectarchive}。拟另选小分子，每个分子固定多于四个候选几何，在统一参考层级算全单点能并封存。各策略均可见两种低成本方法的排序，并有四次查询参考能量的机会。基线一选取主筛选方法排序最低的四个候选，基线二按预定义的二面角类别兼顾低能候选的构象家族覆盖。自适应策略先选主筛选方法的最低能候选，再依据已返回的能量、两种排序出现分歧的位置和尚未覆盖的家族选择下一项。
+
+揭盲后，按分子统计参考最低能构象的命中率。设 $S$ 为固定候选集，$\hat c$ 为最终选定的构象，能量差 $E_{\mathrm{ref}}(\hat c)-\min_{c\in S}E_{\mathrm{ref}}(c)$ 衡量漏选最低能构象的代价。并列报告实际 CPU 核时与模型词元用量，再按两种低成本排序的一致程度分组，可检验自适应选择在哪些分子上有收益。结论限于给定几何及参考层级下的电子能排序。
+
+\clearpage
 \begin{samepage}
 \section{结论}
 现有文献已证明，大语言模型能够将自然语言请求转译为电子结构输入，并在选定的分子与周期体系中完成多步计算。较可靠的定量结论来自具有明确对照的研究，例如在同一批任务上衡量闭环反馈增加的完成数及其计算成本，或在共同匹配的激发态上比较误差。对于更广的科学适用性，证据仍取决于研究是否公开实际采用的理论水平、经过核实的物理对应、缺失样本以及可复查的原始输出。\par
@@ -151,9 +170,13 @@ LLM 在 DFT 中的另一种用途是提出新的交换相关泛函。此时评�
 \bibitem{mofgen} INIZAN T J, YANG S, KAPLAN A, et al. System of agentic AI for the discovery of metal--organic frameworks [J]. \emph{Nature Computational Science}, 2026, 6(11): 1223--1234. DOI: \doi{10.1038/s43588-026-01058-x}.
 \bibitem{compbench} WU C. CompChemBench: A Benchmark for AI Agents on Computational Chemistry Tasks [CP/OL]. v1.1. \emph{GitHub}, 2026 [2026-11-22]. \href{https://github.com/Chenghao-Wu/compchem-bench/tree/772d3f3e1a93}{版本快照 772d3f3e1a93}.
 \bibitem{xc} CHANDRASEKHAR A, BARATI FARIMANI A. Agent-Guided Discovery of Exchange-Correlation Functionals with Physics-based Validation [EB/OL]. \emph{arXiv}, v1, 2026-11-09. \ax{2611.13329v1}.
+\bibitem{tracestate} LO SCUDO F. Trace-State Validation for Agentic Computational Chemistry Workflows [EB/OL]. \emph{ChemRxiv}, v1, 2026-07-20. DOI: \doi{10.26434/chemrxiv.15006307/v1}.
+\bibitem{projectarchive} BG6022-V4 项目组. 正己烷构象与乙醇环境效应计算记录及报告复核 [R/OL]. \emph{GitHub}, 2026. \href{https://github.com/az87988799/BG6022-v4/blob/1e8795b0b10deb8f288eccb9d95befb742958ff9/FinalReport-LaTeX/sections/06a-calculation-results.tex}{计算结果档案}，\href{https://github.com/az87988799/BG6022-v4/blob/1eefccdb742ed81692900f9660a8db950ae1f273/docs/acceptance/live-failure-repair-20261021/repair-report.md}{乙醇运行复核记录}。
+\bibitem{censo} GRIMME S, BOHLE F, HANSEN A, et al. Efficient Quantum Chemical Calculation of Structure Ensembles and Free Energies for Nonrigid Molecules [J]. \emph{The Journal of Physical Chemistry A}, 2021, 125(19): 4039--4054. DOI: \doi{10.1021/acs.jpca.1c00971}.
 \end{thebibliography}
 \endgroup
 
+\clearpage
 \appendix
 \setcounter{table}{0}
 \renewcommand{\thetable}{\Alph{section}.\arabic{table}}
