@@ -1,0 +1,3683 @@
+{
+  "source": "Three conditions matched by task and replicate number: historical no-skill and previous-skill on 2026-11-25 and current-skill on 2026-11-27. Independent model samples on different dates; control did not run again. The two skill versions were jointly re-reviewed under anonymous IDs; the historical no-skill review is frozen.",
+  "roots": {
+    "without": "auto-orca-real-20261125",
+    "previous": "auto-orca-real-20261125",
+    "current": "auto-orca-real-20261127"
+  },
+  "previous_evidence": {
+    "score_sha256": "5184380e216e32ce421ecc1ac0f5944f0b67f704b1b90fffdb2099afc930cf2a",
+    "trace_audit_sha256": "8ceabc643dd93c9f7302c837c43208098240ce92f849da52746d8f0a0a57cf7e",
+    "blind_review_sha256": "d627969ceb51c4628a1fb1ade3443ec019e7e682e18b9d3aa3cb4a0e94fd8d71"
+  },
+  "current_evidence": {
+    "score_sha256": "1854d6888478f5382b69c10b42718de0b781759f4a5ea091d7d5423f47f0a3ea",
+    "protocol_sha256": "5d5bb4684d83c2a3c7165d296b6b4c9053e7b212639c50703419c2b69630a2c2",
+    "blind_review_sha256": "26be799220f9cfa1e2f0a3bc6932f986015bdc54f3aa2f965da44cea6c6c6d1e"
+  },
+  "definitions": {
+    "elapsed_s": "Wall time of the Codex CLI trial, including tool calls and recovery; excludes reference and grading.",
+    "time_to_first_orca_s": "Kernel-confirmed ORCA main process creation time minus recorded CLI launch time. The historical start timestamp was written just before tempdir/CLI setup, so it is a close upper bound. A separate common metadata-origin column is provided.",
+    "lookups": "Source inspections or CLI --help calls for installed scripts' input or argument contract before the first actual ORCA launch. Include a source read made earlier in the same tool call as the launch, distinguish it from a standalone prelaunch call. Multiple lookups in a single call count once. Reading SKILL.md/chemistry.md alone is excluded.",
+    "repeated_parameter_lookup": "At least two separate prelaunch calls revisited the same runner interface/parameter concern. Manually checked against call source and returned output.",
+    "recorded_tool_wall_s": "Sum of OS receipt resource_usage.wall_seconds across observed calls; the session remaining time includes model, harness and other overhead and is not a pure model-latency measurement.",
+    "driver_count": "Distinct Windows JobObject members with staged ORCA executable identity, OS PID and birth time; helper mentions or completed parse do not count.",
+    "diagnostics": "Explicit retained model/tool/native failures and redundant launches are described separately; absence of traces cannot rule out unobserved activity."
+  },
+  "groups": {
+    "all/without": {
+      "n": 9,
+      "science_pass": 9,
+      "primary_pass": 9,
+      "native_provenance_pass": 9,
+      "cli_completion_pass": 9,
+      "end_to_end_pass": 9,
+      "median_elapsed_s": 57.52,
+      "median_time_to_first_orca_s": 18.527,
+      "median_time_to_first_orca_from_metadata_s": 18.527,
+      "total_drivers": 12,
+      "total_elapsed_s": 615.09,
+      "total_recorded_tool_wall_s": 169.873,
+      "total_outside_recorded_tools_s": 445.217,
+      "total_tool_calls": 33,
+      "orcarunner_computation_trials": 0,
+      "trials_with_executed_skill_entrypoint": 0,
+      "trials_with_intermediate_diagnostics": 0,
+      "repeated_parameter_lookup_trials": 0,
+      "trials_with_trace_notes": 9,
+      "lookup_calls_prelaunch": 0,
+      "lookup_calls_total": 0,
+      "tokens": {
+        "input_tokens": 1255099,
+        "cached_input_tokens": 1147904,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 17598,
+        "reasoning_output_tokens": 400
+      }
+    },
+    "all/previous": {
+      "n": 9,
+      "science_pass": 9,
+      "primary_pass": 9,
+      "native_provenance_pass": 9,
+      "cli_completion_pass": 9,
+      "end_to_end_pass": 9,
+      "median_elapsed_s": 65.02,
+      "median_time_to_first_orca_s": 29.913,
+      "median_time_to_first_orca_from_metadata_s": 29.913,
+      "total_drivers": 14,
+      "total_elapsed_s": 818.73,
+      "total_recorded_tool_wall_s": 217.125,
+      "total_outside_recorded_tools_s": 601.605,
+      "total_tool_calls": 52,
+      "orcarunner_computation_trials": 2,
+      "trials_with_executed_skill_entrypoint": 4,
+      "trials_with_intermediate_diagnostics": 2,
+      "repeated_parameter_lookup_trials": 6,
+      "trials_with_trace_notes": 9,
+      "lookup_calls_prelaunch": 13,
+      "lookup_calls_total": 13,
+      "tokens": {
+        "input_tokens": 1999315,
+        "cached_input_tokens": 1788928,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 24241,
+        "reasoning_output_tokens": 562
+      }
+    },
+    "all/current": {
+      "n": 9,
+      "science_pass": 9,
+      "primary_pass": 9,
+      "native_provenance_pass": 9,
+      "cli_completion_pass": 9,
+      "end_to_end_pass": 9,
+      "median_elapsed_s": 64.34,
+      "median_time_to_first_orca_s": 19.274,
+      "median_time_to_first_orca_from_metadata_s": 19.281,
+      "total_drivers": 12,
+      "total_elapsed_s": 820.74,
+      "total_recorded_tool_wall_s": 196.235,
+      "total_outside_recorded_tools_s": 624.505,
+      "total_tool_calls": 41,
+      "orcarunner_computation_trials": 9,
+      "trials_with_executed_skill_entrypoint": 9,
+      "trials_with_intermediate_diagnostics": 2,
+      "repeated_parameter_lookup_trials": 1,
+      "trials_with_trace_notes": 9,
+      "lookup_calls_prelaunch": 2,
+      "lookup_calls_total": 5,
+      "tokens": {
+        "input_tokens": 1686550,
+        "cached_input_tokens": 1467392,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 22538,
+        "reasoning_output_tokens": 141
+      }
+    },
+    "energy/without": {
+      "n": 3,
+      "science_pass": 3,
+      "primary_pass": 3,
+      "native_provenance_pass": 3,
+      "cli_completion_pass": 3,
+      "end_to_end_pass": 3,
+      "median_elapsed_s": 44.97,
+      "median_time_to_first_orca_s": 18.527,
+      "median_time_to_first_orca_from_metadata_s": 18.527,
+      "total_drivers": 6,
+      "total_elapsed_s": 135.92,
+      "total_recorded_tool_wall_s": 15.812,
+      "total_outside_recorded_tools_s": 120.108,
+      "total_tool_calls": 10,
+      "orcarunner_computation_trials": 0,
+      "trials_with_executed_skill_entrypoint": 0,
+      "trials_with_intermediate_diagnostics": 0,
+      "repeated_parameter_lookup_trials": 0,
+      "trials_with_trace_notes": 3,
+      "lookup_calls_prelaunch": 0,
+      "lookup_calls_total": 0,
+      "tokens": {
+        "input_tokens": 263538,
+        "cached_input_tokens": 241152,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4395,
+        "reasoning_output_tokens": 116
+      }
+    },
+    "energy/previous": {
+      "n": 3,
+      "science_pass": 3,
+      "primary_pass": 3,
+      "native_provenance_pass": 3,
+      "cli_completion_pass": 3,
+      "end_to_end_pass": 3,
+      "median_elapsed_s": 61.39,
+      "median_time_to_first_orca_s": 31.437,
+      "median_time_to_first_orca_from_metadata_s": 31.437,
+      "total_drivers": 6,
+      "total_elapsed_s": 181.14,
+      "total_recorded_tool_wall_s": 17.844,
+      "total_outside_recorded_tools_s": 163.296,
+      "total_tool_calls": 15,
+      "orcarunner_computation_trials": 0,
+      "trials_with_executed_skill_entrypoint": 0,
+      "trials_with_intermediate_diagnostics": 0,
+      "repeated_parameter_lookup_trials": 2,
+      "trials_with_trace_notes": 3,
+      "lookup_calls_prelaunch": 5,
+      "lookup_calls_total": 5,
+      "tokens": {
+        "input_tokens": 470267,
+        "cached_input_tokens": 424320,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6269,
+        "reasoning_output_tokens": 285
+      }
+    },
+    "energy/current": {
+      "n": 3,
+      "science_pass": 3,
+      "primary_pass": 3,
+      "native_provenance_pass": 3,
+      "cli_completion_pass": 3,
+      "end_to_end_pass": 3,
+      "median_elapsed_s": 56.45,
+      "median_time_to_first_orca_s": 18.54,
+      "median_time_to_first_orca_from_metadata_s": 18.552,
+      "total_drivers": 6,
+      "total_elapsed_s": 170.25,
+      "total_recorded_tool_wall_s": 27.389,
+      "total_outside_recorded_tools_s": 142.861,
+      "total_tool_calls": 11,
+      "orcarunner_computation_trials": 3,
+      "trials_with_executed_skill_entrypoint": 3,
+      "trials_with_intermediate_diagnostics": 0,
+      "repeated_parameter_lookup_trials": 1,
+      "trials_with_trace_notes": 3,
+      "lookup_calls_prelaunch": 2,
+      "lookup_calls_total": 2,
+      "tokens": {
+        "input_tokens": 454783,
+        "cached_input_tokens": 409984,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 5092,
+        "reasoning_output_tokens": 0
+      }
+    },
+    "ir/without": {
+      "n": 3,
+      "science_pass": 3,
+      "primary_pass": 3,
+      "native_provenance_pass": 3,
+      "cli_completion_pass": 3,
+      "end_to_end_pass": 3,
+      "median_elapsed_s": 101.08,
+      "median_time_to_first_orca_s": 17.192,
+      "median_time_to_first_orca_from_metadata_s": 17.192,
+      "total_drivers": 3,
+      "total_elapsed_s": 310.99,
+      "total_recorded_tool_wall_s": 126.998,
+      "total_outside_recorded_tools_s": 183.992,
+      "total_tool_calls": 13,
+      "orcarunner_computation_trials": 0,
+      "trials_with_executed_skill_entrypoint": 0,
+      "trials_with_intermediate_diagnostics": 0,
+      "repeated_parameter_lookup_trials": 0,
+      "trials_with_trace_notes": 3,
+      "lookup_calls_prelaunch": 0,
+      "lookup_calls_total": 0,
+      "tokens": {
+        "input_tokens": 699169,
+        "cached_input_tokens": 647040,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7857,
+        "reasoning_output_tokens": 192
+      }
+    },
+    "ir/previous": {
+      "n": 3,
+      "science_pass": 3,
+      "primary_pass": 3,
+      "native_provenance_pass": 3,
+      "cli_completion_pass": 3,
+      "end_to_end_pass": 3,
+      "median_elapsed_s": 139.61,
+      "median_time_to_first_orca_s": 29.913,
+      "median_time_to_first_orca_from_metadata_s": 29.913,
+      "total_drivers": 4,
+      "total_elapsed_s": 422.87,
+      "total_recorded_tool_wall_s": 168.796,
+      "total_outside_recorded_tools_s": 254.074,
+      "total_tool_calls": 21,
+      "orcarunner_computation_trials": 1,
+      "trials_with_executed_skill_entrypoint": 3,
+      "trials_with_intermediate_diagnostics": 1,
+      "repeated_parameter_lookup_trials": 3,
+      "trials_with_trace_notes": 3,
+      "lookup_calls_prelaunch": 6,
+      "lookup_calls_total": 6,
+      "tokens": {
+        "input_tokens": 1040535,
+        "cached_input_tokens": 939008,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 10814,
+        "reasoning_output_tokens": 257
+      }
+    },
+    "ir/current": {
+      "n": 3,
+      "science_pass": 3,
+      "primary_pass": 3,
+      "native_provenance_pass": 3,
+      "cli_completion_pass": 3,
+      "end_to_end_pass": 3,
+      "median_elapsed_s": 112.25,
+      "median_time_to_first_orca_s": 18.003,
+      "median_time_to_first_orca_from_metadata_s": 18.013,
+      "total_drivers": 3,
+      "total_elapsed_s": 385.98,
+      "total_recorded_tool_wall_s": 132.61,
+      "total_outside_recorded_tools_s": 253.37,
+      "total_tool_calls": 18,
+      "orcarunner_computation_trials": 3,
+      "trials_with_executed_skill_entrypoint": 3,
+      "trials_with_intermediate_diagnostics": 1,
+      "repeated_parameter_lookup_trials": 0,
+      "trials_with_trace_notes": 3,
+      "lookup_calls_prelaunch": 0,
+      "lookup_calls_total": 3,
+      "tokens": {
+        "input_tokens": 735089,
+        "cached_input_tokens": 616448,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 10728,
+        "reasoning_output_tokens": 126
+      }
+    },
+    "excited/without": {
+      "n": 3,
+      "science_pass": 3,
+      "primary_pass": 3,
+      "native_provenance_pass": 3,
+      "cli_completion_pass": 3,
+      "end_to_end_pass": 3,
+      "median_elapsed_s": 57.52,
+      "median_time_to_first_orca_s": 19.877,
+      "median_time_to_first_orca_from_metadata_s": 19.877,
+      "total_drivers": 3,
+      "total_elapsed_s": 168.18,
+      "total_recorded_tool_wall_s": 27.063,
+      "total_outside_recorded_tools_s": 141.117,
+      "total_tool_calls": 10,
+      "orcarunner_computation_trials": 0,
+      "trials_with_executed_skill_entrypoint": 0,
+      "trials_with_intermediate_diagnostics": 0,
+      "repeated_parameter_lookup_trials": 0,
+      "trials_with_trace_notes": 3,
+      "lookup_calls_prelaunch": 0,
+      "lookup_calls_total": 0,
+      "tokens": {
+        "input_tokens": 292392,
+        "cached_input_tokens": 259712,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 5346,
+        "reasoning_output_tokens": 92
+      }
+    },
+    "excited/previous": {
+      "n": 3,
+      "science_pass": 3,
+      "primary_pass": 3,
+      "native_provenance_pass": 3,
+      "cli_completion_pass": 3,
+      "end_to_end_pass": 3,
+      "median_elapsed_s": 65.02,
+      "median_time_to_first_orca_s": 26.048,
+      "median_time_to_first_orca_from_metadata_s": 26.048,
+      "total_drivers": 4,
+      "total_elapsed_s": 214.72,
+      "total_recorded_tool_wall_s": 30.485,
+      "total_outside_recorded_tools_s": 184.235,
+      "total_tool_calls": 16,
+      "orcarunner_computation_trials": 1,
+      "trials_with_executed_skill_entrypoint": 1,
+      "trials_with_intermediate_diagnostics": 1,
+      "repeated_parameter_lookup_trials": 1,
+      "trials_with_trace_notes": 3,
+      "lookup_calls_prelaunch": 2,
+      "lookup_calls_total": 2,
+      "tokens": {
+        "input_tokens": 488513,
+        "cached_input_tokens": 425600,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7158,
+        "reasoning_output_tokens": 20
+      }
+    },
+    "excited/current": {
+      "n": 3,
+      "science_pass": 3,
+      "primary_pass": 3,
+      "native_provenance_pass": 3,
+      "cli_completion_pass": 3,
+      "end_to_end_pass": 3,
+      "median_elapsed_s": 64.34,
+      "median_time_to_first_orca_s": 19.723,
+      "median_time_to_first_orca_from_metadata_s": 19.73,
+      "total_drivers": 3,
+      "total_elapsed_s": 264.51,
+      "total_recorded_tool_wall_s": 36.236,
+      "total_outside_recorded_tools_s": 228.274,
+      "total_tool_calls": 12,
+      "orcarunner_computation_trials": 3,
+      "trials_with_executed_skill_entrypoint": 3,
+      "trials_with_intermediate_diagnostics": 1,
+      "repeated_parameter_lookup_trials": 0,
+      "trials_with_trace_notes": 3,
+      "lookup_calls_prelaunch": 0,
+      "lookup_calls_total": 0,
+      "tokens": {
+        "input_tokens": 496678,
+        "cached_input_tokens": 440960,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6718,
+        "reasoning_output_tokens": 15
+      }
+    }
+  },
+  "pairs": [
+    {
+      "task": "energy",
+      "replicate": 1,
+      "without": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 44.97,
+        "time_to_first_orca_s": 18.0,
+        "time_to_first_orca_from_metadata_s": 18.0,
+        "session_start_utc": "2026-11-24T18:19:35.640570+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:19:53.640173+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:19:53.425952+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 3,
+        "recorded_tool_wall_s": 5.109,
+        "session_outside_recorded_tools_s": 39.861,
+        "read_skill_text": false,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          2
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Built two native single-point inputs and parsed original energies with Decimal. Final answer linked to files under the short-lived Codex launcher directory; the real raw outputs are in work.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 71864,
+          "cached_input_tokens": 66176,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1451,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 7720,
+            "create_time_100ns": "134400179936401730",
+            "receipt": "calls/edfbd9f0035e48d282e790a20e9b9003/os.json"
+          },
+          {
+            "pid": 25388,
+            "create_time_100ns": "134400179956790763",
+            "receipt": "calls/edfbd9f0035e48d282e790a20e9b9003/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/energy/without/r1",
+          "evaluation_sha256": "19bdb04e08788263a7ce6a3ed6cdb86cacf6f3b7cef49b0c34ad2c8f2b58e6a9",
+          "metadata_sha256": "803b1b6f3658600225de1965793a3da67d4be2abf3334f46e759008e5f3058ae",
+          "events_sha256": "d554ab17c31f467a10bbb0a2df3ab479221cc0bb0c72f4c82e6eca81285d702d",
+          "answer_sha256": "80bf16d9327bb9b002e123ecb4f07402a5374aaa623f2271e4c777a9729ba9c1",
+          "terminal_sha256": "e20c80e16f95866a5b94acbc5d7f6163d59cd090131e5c7dbb7b5981c374394b",
+          "result_and_raw_sha256": {
+            "A.inp": "29b62ff182d59be874ca5973793846cf0d9eac54dc19174ad5a95da1de6ebd21",
+            "A.out": "02a279ed520ab8830392d1f36bc6eaa6a81f419accc7dfe4212e81a9127460a8",
+            "B.inp": "41ada036402271015f9aaed262823f7ad70c90d77b505c1594a61605e6033593",
+            "B.out": "c3d87e04248ee4c364f8e118ff8391a12dd182a00a1c85e01b7168121ce0d915",
+            "result.json": "1cd938a5a5a11a53a602ea5aa30bbd24af17b149921dff5b9e1e3bd9f5e6e081"
+          },
+          "os_receipt_sha256": {
+            "385044afa93b4e43be15326f39bce0f1": "c387f1a011103374062b5a57310c88d532b0486dacd0d9cf13cc33785e4d3289",
+            "edfbd9f0035e48d282e790a20e9b9003": "c87eac2fa4cfa50945698091ae4ba636ba5a6ce29ba62df41cc1dde72f235792",
+            "e3b8fbc4dd294cf08ace0e459cb1596c": "fb14d0b6bb4ec099453d66f4e9e4fd4b80c196b20eb58304293f3bae169144f4"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "385044afa93b4e43be15326f39bce0f1",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "edfbd9f0035e48d282e790a20e9b9003",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "e3b8fbc4dd294cf08ace0e459cb1596c",
+            "exit": 0
+          }
+        ],
+        "review_source": "Historical masked review on 2026-11-25",
+        "review": {
+          "pass": true,
+          "reason": "清楚说明 A 较低、B 相对 A 高约 +59.171783 kJ/mol；分别引用了两次单点计算的收敛与最终能量行。",
+          "evidence": "A.out 第 600、794 行和 B.out 第 602、796 行可在工作目录复核；两条能量直接相减为 +0.022537341950 Eh。",
+          "case": "case-09"
+        },
+        "end_to_end_pass": true
+      },
+      "previous": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 61.39,
+        "time_to_first_orca_s": 31.437,
+        "time_to_first_orca_from_metadata_s": 31.437,
+        "session_start_utc": "2026-11-24T18:18:34.211377+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:19:05.648844+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:19:05.443831+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          4
+        ],
+        "terminal_calls": 5,
+        "recorded_tool_wall_s": 6.469,
+        "session_outside_recorded_tools_s": 54.921,
+        "read_skill_text": true,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          4
+        ],
+        "lookup_call_numbers_before_first_launch": [
+          2,
+          3
+        ],
+        "standalone_lookup_calls": 2,
+        "lookup_types": {
+          "source": [
+            2,
+            3
+          ],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [
+          2,
+          3
+        ],
+        "repeated_parameter_lookup": true,
+        "trace_notes": "Inspected runner construction and exact TightSCF support before writing two explicit native input files. Parsed original energies and computed the signed difference with Decimal in call 5.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 136880,
+          "cached_input_tokens": 125952,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2117,
+          "reasoning_output_tokens": 15
+        },
+        "driver_receipts": [
+          {
+            "pid": 13180,
+            "create_time_100ns": "134400179456488429",
+            "receipt": "calls/9f9710f88280418eb1006030adba96c9/os.json"
+          },
+          {
+            "pid": 19780,
+            "create_time_100ns": "134400179481708107",
+            "receipt": "calls/9f9710f88280418eb1006030adba96c9/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/energy/with/r1",
+          "evaluation_sha256": "624c5cac41565769340f22a7cf5bd576dd6dc9d4d5ded4d78358043e9f7d9234",
+          "metadata_sha256": "ab3285aa63adb6bdae529dd4b9b87ae7e1fee2b09c7d921c1f66824202aefbc4",
+          "events_sha256": "bd6b1090f18203f5d4cac61bc9035742bcff8d63c4eecf6eba331b73be39264a",
+          "answer_sha256": "2cb4dcd62e5fe03d43c5e0a6b459d818c6a436047abe5e459118cc8d028cb54d",
+          "terminal_sha256": "ea0dd1ff444655b23988dc9049635995835a3ef6845eab977d66f9db1b1b955c",
+          "result_and_raw_sha256": {
+            "jobs/A/job.inp": "88915e2472311ae92a330954841e79d24844073a33bece6c9bd3d505bf38f6dc",
+            "jobs/A/job.out": "21b73226b962ed8a6517c1ecd9205a51ffc824dcb4e2fdc51a6adeb411bcc789",
+            "jobs/B/job.inp": "e9dccab39b383a10b72b9b9364d5a30391dc0958c530dacc32f5203e062f90b2",
+            "jobs/B/job.out": "1fc611fae64bdf7838ae57ec255bd97fba3c69de9166aeaede81dc604fa00a49",
+            "result.json": "a35824bff90c439e3ecd799636f52a62e9617658d901a9fccfa8165575e2ac9b"
+          },
+          "os_receipt_sha256": {
+            "9cdb143bb2bc45f38dba99dea5f22504": "124599bf2547c542201a7cfc84d04bc76d4d0b9e1b6c1e47e1cf68fe2de281b9",
+            "8cd09a52881243ceb13dc5d8564afd08": "b54f0bd8b159bd5bee36689ee662e1746c99d12298d78b5bbc799f1d9f4b2ad7",
+            "ef78214792134eaa859e197638cc7a98": "0fca8193f6ac0a2b9d67dfd70c5e02c5eddd9fb7571f655a0c56703b09987af5",
+            "9f9710f88280418eb1006030adba96c9": "fc0867cd0a99a15322c0f6a39b40257ec8eaa29175f9c894791649b92d95ab47",
+            "477db6b187bf4d298f3f4241421e24a6": "93c08c0ee711ee4ed7e2829fcf2e65c5d2f67df8646397ab3846c8b772c40189"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "9cdb143bb2bc45f38dba99dea5f22504",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "8cd09a52881243ceb13dc5d8564afd08",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "ef78214792134eaa859e197638cc7a98",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "9f9710f88280418eb1006030adba96c9",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "477db6b187bf4d298f3f4241421e24a6",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "jobs/A/job.out 的第 598、792 行及 jobs/B/job.out 的第 600、794 行分别给出 SCF 收敛及单点能。两能量相减得到 E(B)−E(A) = +0.022537341950 Eh，与答复的 A 较低及 +59.171783 kJ/mol 一致。",
+          "case": "case-01"
+        },
+        "end_to_end_pass": true
+      },
+      "current": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 56.45,
+        "time_to_first_orca_s": 18.54,
+        "time_to_first_orca_from_metadata_s": 18.552,
+        "session_start_utc": "2026-11-27T04:08:18.801666+00:00",
+        "session_end_utc": "2026-11-27T04:09:15.258513+00:00",
+        "start_basis": "CLI pre-launch wall clock",
+        "first_native_birth_utc": "2026-11-27T04:08:37.341673+00:00",
+        "first_native_receipt_started_utc": "2026-11-27T04:08:36.753516+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 3,
+        "recorded_tool_wall_s": 12.875,
+        "session_outside_recorded_tools_s": 43.575,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "run SP A and B with --tightscf",
+            "calls": [
+              2
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "第 1 次读取 SKILL.md，第 2 次循环执行两个 --tightscf 固定几何单点，第 3 次由原始行复核两次能量和符号。未另外查阅帮助或脚本源码。",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 110830,
+          "cached_input_tokens": 98176,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1562,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 1508,
+            "create_time_100ns": "134402261173416727",
+            "receipt": "calls/225345fdc63049529619cf61b7e35d9d/os.json"
+          },
+          {
+            "pid": 22292,
+            "create_time_100ns": "134402261261952780",
+            "receipt": "calls/225345fdc63049529619cf61b7e35d9d/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/energy/with/r1",
+          "evaluation_sha256": "8bd33d22ded0619c7fe8f22b66d9ec19ccc80a01c45f1e92686292c917b739af",
+          "metadata_sha256": "8bf80560e2745369f4e2cdef7937136bb307ff3aa5641c3137183b7d1cb325ad",
+          "events_sha256": "f039637e1a520475d4f22a169a4b4131b67127ad403a83f2df19b1dd8274c128",
+          "answer_sha256": "aa3ad1bbd93a9265c22a0d9da3791bbc627b3719a465bec1809872c14e4c5170",
+          "terminal_sha256": "73c70ad29e9a657ddf586edea9e7d20d5ac196ff58a904605b66c5f62f007448",
+          "result_and_raw_sha256": {
+            "jobs/A/job.inp": "ae4dcf9c7a6f4b1b3c85aff723fd7a2ce4e1e8d3b054bb6fed2c5f1e88642f04",
+            "jobs/A/job.out": "6bf4953e431d3488d28ddca3bf33d930e9579ed9619608997efba135ed381fd9",
+            "jobs/B/job.inp": "a348ad785db56a291157c618e34c68fc0bcf0b338e7db3190658a5f495e79513",
+            "jobs/B/job.out": "bc63725a4cb2ff795c92a5fe506d90c88c3af7802ebb648aeaff3fc00a93cbd4",
+            "result.json": "ea2bdbc7612a7563debf8ab91010a0d47e0d5958f34a7c431bc138c45cb2d173"
+          },
+          "os_receipt_sha256": {
+            "48059943228d4fc9b4f7ddbb02844654": "6d7c2e7641c6b75909e80f79486cd72b5da259c59a5fbc33bb65d9d15fb96a74",
+            "225345fdc63049529619cf61b7e35d9d": "f89fa883151ed8a04e16ce34d77ec4c1d60e16f9bf93f2ed7f74e26097459739",
+            "d030473c188d4691b2379ec81d4257fd": "6397e5ce9394a16f10c1020113ae4406b534febd86d38b00f2c1c6323921e731"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "48059943228d4fc9b4f7ddbb02844654",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "225345fdc63049529619cf61b7e35d9d",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "d030473c188d4691b2379ec81d4257fd",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "按答复定位到 A、B 各自 job.out 的第 598、600 行，可确认 9、11 轮 SCF 收敛。第 792、794 行的能量为 −76.276372799989、−76.253835458039 Eh，支持 A 较低及所报带正号的 B−A。",
+          "case": "case-03"
+        },
+        "end_to_end_pass": true
+      }
+    },
+    {
+      "task": "energy",
+      "replicate": 2,
+      "without": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 50.62,
+        "time_to_first_orca_s": 22.167,
+        "time_to_first_orca_from_metadata_s": 22.167,
+        "session_start_utc": "2026-11-24T18:32:31.200592+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:32:53.367569+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:32:53.165334+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 4,
+        "recorded_tool_wall_s": 5.719,
+        "session_outside_recorded_tools_s": 44.901,
+        "read_skill_text": false,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          2
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Generated two explicit TightSCF decks and parsed raw SCF, energy and termination rows; a fourth call reread the outputs for final source locations.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 119776,
+          "cached_input_tokens": 112128,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1703,
+          "reasoning_output_tokens": 116
+        },
+        "driver_receipts": [
+          {
+            "pid": 9380,
+            "create_time_100ns": "134400187733675695",
+            "receipt": "calls/1255a55954ca40d6a888d08a16fe4434/os.json"
+          },
+          {
+            "pid": 38636,
+            "create_time_100ns": "134400187754946526",
+            "receipt": "calls/1255a55954ca40d6a888d08a16fe4434/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/energy/without/r2",
+          "evaluation_sha256": "0ab643fbbb1710ad81dbf9883075e32a161924ae3ba01ec819c85e0b9f0b08ad",
+          "metadata_sha256": "2a309a9f5fb3df4c07151e55a398039a6cbb2e7971f1d4be2d1361eea7401dc2",
+          "events_sha256": "4a11ace0c3928ccb87494c846308cf685157d6c891165421e733b879dbbad3f0",
+          "answer_sha256": "4b18044e6ab85c9b2d48898e60ea3ccbe70f178910b414ab676038b96db9c980",
+          "terminal_sha256": "b0aded0c35ecba5733a7e5f6a86065d56788dbee7119074fbe456105e2628b35",
+          "result_and_raw_sha256": {
+            "A.inp": "29b62ff182d59be874ca5973793846cf0d9eac54dc19174ad5a95da1de6ebd21",
+            "A.out": "c30988c16060b11564b74518fa0e651ea6d42033a7aabe7d4249a238c0b46b09",
+            "B.inp": "41ada036402271015f9aaed262823f7ad70c90d77b505c1594a61605e6033593",
+            "B.out": "f371a8c3a373101cbfd44ee174d78958e12db04d6dbb1af43bcc3ab898786156",
+            "result.json": "415ad6e079d24538be3c9cbf67cc682274aadedb3b8659a97dea833fbd2d16d4"
+          },
+          "os_receipt_sha256": {
+            "2f8ae956ce824819ab9325755415f5f4": "aa1522a0a58ae54b69134df471cdf8615340ae6ccc463bbad56013799f518223",
+            "1255a55954ca40d6a888d08a16fe4434": "93c1e6a65b7351fda687ed46e86c31d63b0adc8f76e025f5980e2468f5b8bc2a",
+            "7a524d89a5a5402fa8f7ecb457e6d73c": "0e5e48768305e23c7985d17e3bcfe7a23048cc919bfe319f722b6029237a4a29",
+            "7d057fa19f2a4d43a15204d0ba5409f0": "b67698d5be8d70c89aff8880d74ff3994901897985987942314a438f091f42cc"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "2f8ae956ce824819ab9325755415f5f4",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "1255a55954ca40d6a888d08a16fe4434",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "7a524d89a5a5402fa8f7ecb457e6d73c",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "7d057fa19f2a4d43a15204d0ba5409f0",
+            "exit": 0
+          }
+        ],
+        "review_source": "Historical masked review on 2026-11-25",
+        "review": {
+          "pass": true,
+          "reason": "正确给出 B 比 A 高 +0.022537341950 Eh，换算约 +59.171783 kJ/mol；对 A、B 分别定位了收敛和能量原行。",
+          "evidence": "A.out 第 600、794 行与 B.out 第 602、796 行分别是两次作业的 SCF 收敛与最终电子能。",
+          "case": "case-06"
+        },
+        "end_to_end_pass": true
+      },
+      "previous": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 64.08,
+        "time_to_first_orca_s": 33.198,
+        "time_to_first_orca_from_metadata_s": 33.198,
+        "session_start_utc": "2026-11-24T18:33:21.855682+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:33:55.053902+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:33:54.849134+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          4
+        ],
+        "terminal_calls": 6,
+        "recorded_tool_wall_s": 5.938,
+        "session_outside_recorded_tools_s": 58.142,
+        "read_skill_text": true,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          4
+        ],
+        "lookup_call_numbers_before_first_launch": [
+          2,
+          3
+        ],
+        "standalone_lookup_calls": 2,
+        "lookup_types": {
+          "source": [
+            2,
+            3
+          ],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [
+          2,
+          3
+        ],
+        "repeated_parameter_lookup": true,
+        "trace_notes": "Two source inspection calls preceded direct ORCA execution. Wrote explicit TightSCF inputs and a custom Decimal parser, as in the first with-skill trial; final links use transient launcher directory.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 203086,
+          "cached_input_tokens": 184448,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2158,
+          "reasoning_output_tokens": 128
+        },
+        "driver_receipts": [
+          {
+            "pid": 30804,
+            "create_time_100ns": "134400188350539026",
+            "receipt": "calls/96444762c37e4589a35a16ab3f48a39b/os.json"
+          },
+          {
+            "pid": 10644,
+            "create_time_100ns": "134400188371672547",
+            "receipt": "calls/96444762c37e4589a35a16ab3f48a39b/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/energy/with/r2",
+          "evaluation_sha256": "78462cbd3945c82641daae368ffd627f2a7f34725d9b501ec64399988d37cc6c",
+          "metadata_sha256": "7a80795e3f05ad61927279014a4289cff7bee1b4daef8c2cf0984b1b36e6c210",
+          "events_sha256": "8d202f6fc20676010312e617b3df0466cd6998f30fa971d6ce5000d6606eb51f",
+          "answer_sha256": "14f09c7be480fa10b103be63fcf1d0bada0ccf0310a636c2de039489a7109228",
+          "terminal_sha256": "d2c7fdcd3aa5239151989fe0cce6b34e5ce6d556817137b8b51ad917138f8f89",
+          "result_and_raw_sha256": {
+            "jobs/A/job.inp": "c32006805d2d6b0aa5fe66ea1b331d5aa4c4215f20cb9822e6d1cbd457405db2",
+            "jobs/A/job.out": "a5cbef0d9c39bb29be9e964c04e1196ef5fa37a3bd3c79ac1781167db70a63bd",
+            "jobs/B/job.inp": "c74cdac50cc695c6afd7218f43adfde1d1dae091c3e5e95c8b436695d92673cf",
+            "jobs/B/job.out": "4764509f9c28ed9aa9bf599f054a6875211526ca5b5b07213c51922cba844832",
+            "result.json": "4a6caa8df473aae6e5262d72c265cdcf6ec87bbb0eee290ce6b96a618a307906"
+          },
+          "os_receipt_sha256": {
+            "260cd0a806ba4a12885c1ae357026037": "469245a04f86e6d4da4ceaec36f37358c8c16d5d0f06fef71b96867d881c9412",
+            "8a75bf9a0abb422390b96551a60c7a49": "3654440585c9f700a1c7504dd52eee8634073069a708d728c15a29f0379c3325",
+            "dbab789d603440fe9a0c7555d9311dcd": "7224a0f2ac3477249d33fec41112a87099bff5f3aa1b6f9a8ce78e711f74534f",
+            "96444762c37e4589a35a16ab3f48a39b": "21ad986b4c7b357215999211f92747a68010034abd194bd013df7101dace1fea",
+            "64c05b1e713d4f17af49fbffa02dc1f0": "e87de53d41e38047b87c4de773c87eb4a500cc42a0f969093dcab65a1495208e",
+            "8347b856de384780983ffd3517018c41": "9f0f8b2975bfac1455affe63d7f17738745d53b335628f68cfd38e4a9c4265db"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "260cd0a806ba4a12885c1ae357026037",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "8a75bf9a0abb422390b96551a60c7a49",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "dbab789d603440fe9a0c7555d9311dcd",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "96444762c37e4589a35a16ab3f48a39b",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "64c05b1e713d4f17af49fbffa02dc1f0",
+            "exit": 0
+          },
+          {
+            "n": 6,
+            "receipt": "8347b856de384780983ffd3517018c41",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "答案把两个输出分别对应到 A、B。所引第 792、794 行给出的单点能使 B−A = +59.171783 kJ/mol，所以 A 更低。第 598、600 行分别为 SCF 收敛标记，迭代数亦吻合。",
+          "case": "case-08"
+        },
+        "end_to_end_pass": true
+      },
+      "current": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 54.36,
+        "time_to_first_orca_s": 18.276,
+        "time_to_first_orca_from_metadata_s": 18.283,
+        "session_start_utc": "2026-11-27T04:17:09.578889+00:00",
+        "session_end_utc": "2026-11-27T04:18:03.934168+00:00",
+        "start_basis": "CLI pre-launch wall clock",
+        "first_native_birth_utc": "2026-11-27T04:17:27.854496+00:00",
+        "first_native_receipt_started_utc": "2026-11-27T04:17:27.322856+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 3,
+        "recorded_tool_wall_s": 8.312,
+        "session_outside_recorded_tools_s": 46.048,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "run SP A and B with --tightscf",
+            "calls": [
+              2
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "读 SKILL.md 与 A/B 坐标后，用脚本连续执行两次显式 TightSCF 单点；末次调用对归档输入、退出码、能量和数值格式复核，未查帮助或源码。",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 99304,
+          "cached_input_tokens": 88320,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1695,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 29424,
+            "create_time_100ns": "134402266478544951",
+            "receipt": "calls/71f8cec3434640abab2dcf8c52d70964/os.json"
+          },
+          {
+            "pid": 31800,
+            "create_time_100ns": "134402266509227776",
+            "receipt": "calls/71f8cec3434640abab2dcf8c52d70964/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/energy/with/r2",
+          "evaluation_sha256": "ee3650194f55b7b41f1c3ebb5f550f203eb5aab0eeb08f7511d0cae0a3125b25",
+          "metadata_sha256": "a83d8d9e750ff5d48515f8880a4850941e1781547bdc4d02a716a792383b4ad3",
+          "events_sha256": "0ec4a9298fd2669e858f2716fd97a092c46bc9bb9169d8d300dde2a3ce0487ff",
+          "answer_sha256": "3dd65d7222e9e9421579d32230284a222967fdba1399499553c76a9fd42d4e30",
+          "terminal_sha256": "c90ce5010c2068e721fd3714b30f5f925d224eb0ddc5525ffacee196d2d27ada",
+          "result_and_raw_sha256": {
+            "jobs/A/job.inp": "ae4dcf9c7a6f4b1b3c85aff723fd7a2ce4e1e8d3b054bb6fed2c5f1e88642f04",
+            "jobs/A/job.out": "d1f85db9b5ea08ec7e8578eb44491afa5c55200189d0e1ec20c662e5a61991c3",
+            "jobs/B/job.inp": "a348ad785db56a291157c618e34c68fc0bcf0b338e7db3190658a5f495e79513",
+            "jobs/B/job.out": "3ca0e36e18f8ffa7bf660b1d6393eadf0eccbb7648477f610d4076023d945cdc",
+            "result.json": "1893fd3c5a6b1c78c75bb1cb25be4bcd74a18fab29dcaf87db7dac73a521a9e7"
+          },
+          "os_receipt_sha256": {
+            "d176e9fc7e914da5aca2fda040122a91": "9e81925d7a57e8cee11c808dd88239d855f6b00ae17b84aa10152db7d04efcc4",
+            "71f8cec3434640abab2dcf8c52d70964": "4112c7678277f09f4bc6b0ef563e8eb5f9017558819ab4916cdab4f72abe2cf8",
+            "177c87a7ca234c1baa4aec25a49db7a7": "5632e89f1e688fa231953a5fd2e99fd744ccefe1834d981f0245168257f5b696"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "d176e9fc7e914da5aca2fda040122a91",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "71f8cec3434640abab2dcf8c52d70964",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "177c87a7ca234c1baa4aec25a49db7a7",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "分别检查 jobs/A/job.out、jobs/B/job.out，第 598、600 行显示 SCF 收敛，第 792、794 行给出能量。独立相减得 E(B)−E(A) = +0.022537341950 Eh，支持 A 较低及所报摩尔能差。",
+          "case": "case-18"
+        },
+        "end_to_end_pass": true
+      }
+    },
+    {
+      "task": "energy",
+      "replicate": 3,
+      "without": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 40.33,
+        "time_to_first_orca_s": 18.527,
+        "time_to_first_orca_from_metadata_s": 18.527,
+        "session_start_utc": "2026-11-24T18:36:26.989608+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:36:45.516443+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:36:45.306291+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 3,
+        "recorded_tool_wall_s": 4.984,
+        "session_outside_recorded_tools_s": 35.346,
+        "read_skill_text": false,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          2
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Native single points with independent inputs; validated input coordinates, SCF/termination rows and decimal energy difference in a final Python call.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 71898,
+          "cached_input_tokens": 62848,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1241,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 28068,
+            "create_time_100ns": "134400190055164425",
+            "receipt": "calls/ce8d2c9d3e684c9d9c905e84006afb32/os.json"
+          },
+          {
+            "pid": 4916,
+            "create_time_100ns": "134400190075273892",
+            "receipt": "calls/ce8d2c9d3e684c9d9c905e84006afb32/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/energy/without/r3",
+          "evaluation_sha256": "6da9cdabc68dcb85ba4257336be35416ddc72fee8e76f620e09e056479e3e48b",
+          "metadata_sha256": "5d260035d4417db0435c5db2dca1054e2d39d02e31367f244de54268c057f623",
+          "events_sha256": "01dbbd79a06813ae8c6feb0ab0735d681d1e1657bb876f781748a8ce2feb0e1d",
+          "answer_sha256": "2221a1fa31bbcb867eb0837a32140315e87ba67e4928a221c3210483769197f5",
+          "terminal_sha256": "c7fbc6e0d8296106f2f0848451298e2dac1933d5d28686c7d74f889060575996",
+          "result_and_raw_sha256": {
+            "A.inp": "4cbbb4b252f21f2155dc97f9c78dfbf5b8e344049f9fc70c58e48db22ab9aab5",
+            "A.out": "2231387a85cfba33512bcea8b3a9ec32474255261c01ec41cbb7d8b9e89c1acb",
+            "B.inp": "938b8221c446ee6da05d38d6004e2b70bc04f791b9c046eda1a000fe6875c87c",
+            "B.out": "f2b307ab291a85d62f9b04562d0259f16730298d1406ed95f23a78957c6cd34d",
+            "result.json": "a4406bd29b63943262f89d53b8feaf936aedf5c553b32fa109e26a252aa75542"
+          },
+          "os_receipt_sha256": {
+            "efc7d492541b4d15b281cd541aafb8b4": "48c615f62fc673dcd7564a056fde8a5ce85c3bc6c342be4a979a1d8e746ef9af",
+            "ce8d2c9d3e684c9d9c905e84006afb32": "7519efa77c4360510b9f7e1cf233baca16908436326740f3f7b769b9561d8d4b",
+            "6fc71847a97a46898209e3bd2054b6a4": "b43998eea2e7c5932ef43f97a75a8127097b9b827858c1f4c2e8f020fdbdc1c4"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "efc7d492541b4d15b281cd541aafb8b4",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "ce8d2c9d3e684c9d9c905e84006afb32",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "6fc71847a97a46898209e3bd2054b6a4",
+            "exit": 0
+          }
+        ],
+        "review_source": "Historical masked review on 2026-11-25",
+        "review": {
+          "pass": true,
+          "reason": "给出 A 的电子能较低和正确的正向能量差，两种单位一致；A、B 都有可核对的能量和收敛引用。",
+          "evidence": "A.out 第 600、794 行和 B.out 第 602、796 行分别记录 SCF 收敛与最终能量。",
+          "case": "case-14"
+        },
+        "end_to_end_pass": true
+      },
+      "previous": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 55.67,
+        "time_to_first_orca_s": 30.295,
+        "time_to_first_orca_from_metadata_s": 30.295,
+        "session_start_utc": "2026-11-24T18:37:07.339876+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:37:37.635347+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:37:37.425975+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          3
+        ],
+        "terminal_calls": 4,
+        "recorded_tool_wall_s": 5.437,
+        "session_outside_recorded_tools_s": 50.233,
+        "read_skill_text": true,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          3
+        ],
+        "lookup_call_numbers_before_first_launch": [
+          2
+        ],
+        "standalone_lookup_calls": 1,
+        "lookup_types": {
+          "source": [
+            2
+          ],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [
+          2
+        ],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Read the runner source and wrote the explicit TightSCF deck and comparison code directly. OS confirmed two driver images. Final links use transient launcher directory.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 130301,
+          "cached_input_tokens": 113920,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1994,
+          "reasoning_output_tokens": 142
+        },
+        "driver_receipts": [
+          {
+            "pid": 29580,
+            "create_time_100ns": "134400190576353478",
+            "receipt": "calls/0b2b5e6c86b14ddb88c4fd7467502867/os.json"
+          },
+          {
+            "pid": 33692,
+            "create_time_100ns": "134400190597573576",
+            "receipt": "calls/0b2b5e6c86b14ddb88c4fd7467502867/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/energy/with/r3",
+          "evaluation_sha256": "bc59adbd0c3b25dc10e4caac0d4f7ae9ecf118becc202bc0c18cc7b9c32ce0aa",
+          "metadata_sha256": "34b28c9796080138cf9bcce0d53697508e8d7e212b19c480e20a11e9723612ee",
+          "events_sha256": "f32af297434e4912065e898172b0df25280fe33e1eb7caf9b0c028acebe2e39a",
+          "answer_sha256": "b69a4160861e43e425deb37098f6c5e1d669825b997b7acb1ce8290c08b1c046",
+          "terminal_sha256": "86e24bae2767ada81f449612854f0cac98505336c0306ba6a2aaf80e59285daf",
+          "result_and_raw_sha256": {
+            "jobs/A/job.inp": "c562aa905fa7ba7f8b2a0ac2a1d798d80b502b3b6717bf6cdce01ff10f18476b",
+            "jobs/A/job.out": "1cd2ae4fc11dba6e81f7bab5e3915f81af48633f3315cf85c509877876fdfc37",
+            "jobs/B/job.inp": "82f7047d9f5a04d9d5af2582fc388072f164f9a8f824d5b1a47a35c87cea4881",
+            "jobs/B/job.out": "1e7bffcceb2cc6355aede1de16c47d06eb92996b03c889829106d18039c78373",
+            "result.json": "4a6caa8df473aae6e5262d72c265cdcf6ec87bbb0eee290ce6b96a618a307906"
+          },
+          "os_receipt_sha256": {
+            "a645565d98894df191637e40f4f00c07": "ba709650593c9af7a32d2826f43c958d0cf1438353739da575ddd1d436517410",
+            "dc7be026c63c4e5880afb344bac63271": "80a9e7ad5caaea2032ddb46d0507e194446ea77444471bf4bbbbebbc6fc20212",
+            "0b2b5e6c86b14ddb88c4fd7467502867": "ac19c128a800988a12ad4beae1359b916662ada54ddf9d3925b74c8fa85a2bb9",
+            "4e9b7d8be0d94f0085712133a7d924c3": "9321cef2e669fe051c3112b321a2f50efabe4c7e3740efa9342fce9241cc3121"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "a645565d98894df191637e40f4f00c07",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "dc7be026c63c4e5880afb344bac63271",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "0b2b5e6c86b14ddb88c4fd7467502867",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "4e9b7d8be0d94f0085712133a7d924c3",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "本例 A、B 输出的 SCF 收敛标记实际在第 600、602 行，最终能量实际在第 794、796 行，与答复逐项相符。B−A 为 +0.022537341950 Eh，A 的能量较低。",
+          "case": "case-09"
+        },
+        "end_to_end_pass": true
+      },
+      "current": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 59.44,
+        "time_to_first_orca_s": 30.621,
+        "time_to_first_orca_from_metadata_s": 30.629,
+        "session_start_utc": "2026-11-27T04:19:08.340619+00:00",
+        "session_end_utc": "2026-11-27T04:20:07.775510+00:00",
+        "start_basis": "CLI pre-launch wall clock",
+        "first_native_birth_utc": "2026-11-27T04:19:38.961401+00:00",
+        "first_native_receipt_started_utc": "2026-11-27T04:19:38.476539+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          4
+        ],
+        "terminal_calls": 5,
+        "recorded_tool_wall_s": 6.202,
+        "session_outside_recorded_tools_s": 53.238,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "run SP A and B with --tightscf",
+            "calls": [
+              4
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [],
+        "lookup_call_numbers_before_first_launch": [
+          2,
+          3
+        ],
+        "standalone_lookup_calls": 2,
+        "lookup_types": {
+          "source": [
+            2,
+            3
+          ],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [
+          2,
+          3
+        ],
+        "repeated_parameter_lookup": true,
+        "trace_notes": "第 2 次先在 orca_job.py 搜 TightSCF、色散与默认关键词，第 3 次继续读同一源码片段核对输入和提交方式；第 4 次用脚本连续完成 A、B。两次均在首次 ORCA 前。",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 244649,
+          "cached_input_tokens": 223488,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1835,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 1588,
+            "create_time_100ns": "134402267789614002",
+            "receipt": "calls/f6380c037f2f49c097982098edd68ed5/os.json"
+          },
+          {
+            "pid": 13852,
+            "create_time_100ns": "134402267812986153",
+            "receipt": "calls/f6380c037f2f49c097982098edd68ed5/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/energy/with/r3",
+          "evaluation_sha256": "79da7f8e5d2500f3c8de2640a290426d6f6214bb105260aea0efb83996b6052d",
+          "metadata_sha256": "03c67c89f16864ca52fe3ceceddc79811cb5d70b572ee74508fba801d28b7e49",
+          "events_sha256": "8efb590511b63082ad98e1c6b26ee867b8f920b9b11e73a2307a0b4482b79099",
+          "answer_sha256": "636f870dd1c330c5928a32272418fc1b30c83d5e5a9211a653ee326db5137a9f",
+          "terminal_sha256": "a78d0a01492ac8cf962c1a4a66ee4312f8aed5a7c840edc70990fa6673a19d01",
+          "result_and_raw_sha256": {
+            "jobs/A/job.inp": "ae4dcf9c7a6f4b1b3c85aff723fd7a2ce4e1e8d3b054bb6fed2c5f1e88642f04",
+            "jobs/A/job.out": "30d4dd03a2aa3a8ffde9891ee6dcece8077824943eebfd0ca4a26b4e88bedea1",
+            "jobs/B/job.inp": "a348ad785db56a291157c618e34c68fc0bcf0b338e7db3190658a5f495e79513",
+            "jobs/B/job.out": "5b22f11bcf8487383708f0ca063297f54239d5a4a6653b1d28061c0074759480",
+            "result.json": "4a6caa8df473aae6e5262d72c265cdcf6ec87bbb0eee290ce6b96a618a307906"
+          },
+          "os_receipt_sha256": {
+            "1c65208d6bca4d18bc7cfc959f8ed84e": "be0454e3f304f5da377910a1c8d64b471121cccddc049797a7f21595125a9fd1",
+            "6cd070bda85d47259802cf189014d924": "8a055edf54d76f93d4d56b03de2f537f0dc96c5faf097577ca2f8a943e76b6f3",
+            "80fe9bf7e57040749341c6379ed10d64": "368c787e2e4c0a8ea21edb516cef07b868715d8259f1149a449ade1bc0839000",
+            "f6380c037f2f49c097982098edd68ed5": "9c56e29f6c9442d5150a98aa83592e1946ebfaf6cba1baf794e4a6dd89f9626c",
+            "6aaadd53416f4aba8c11881a4a66f1e4": "e9167a2d5203b1929a03051b2faafa0b6f00b9aa53cd99c9538e51148850dcce"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "1c65208d6bca4d18bc7cfc959f8ed84e",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "6cd070bda85d47259802cf189014d924",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "80fe9bf7e57040749341c6379ed10d64",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "f6380c037f2f49c097982098edd68ed5",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "6aaadd53416f4aba8c11881a4a66f1e4",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "文件与行号均能定位到 A、B 的 SCF 收敛及最终电子能。A 第 792 行为 −76.276372799989 Eh，B 第 794 行为 −76.253835458039 Eh，两值支持 A 较低和 +59.171783 kJ/mol 的 B−A。",
+          "case": "case-13"
+        },
+        "end_to_end_pass": true
+      }
+    },
+    {
+      "task": "ir",
+      "replicate": 1,
+      "without": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 100.14,
+        "time_to_first_orca_s": 19.807,
+        "time_to_first_orca_from_metadata_s": 19.807,
+        "session_start_utc": "2026-11-24T18:20:20.641209+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:20:40.448599+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:20:40.245174+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 4,
+        "recorded_tool_wall_s": 44.155,
+        "session_outside_recorded_tools_s": 55.985,
+        "read_skill_text": false,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          2
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Parsed the output NORMAL MODES table and final coordinates with custom Python. Compared all internal projections and identified the carbonyl stretch in the final answer.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 352833,
+          "cached_input_tokens": 329600,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2463,
+          "reasoning_output_tokens": 34
+        },
+        "driver_receipts": [
+          {
+            "pid": 4360,
+            "create_time_100ns": "134400180404485981",
+            "receipt": "calls/6f04539be7fa47dbbc288c3239b0c3ee/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/ir/without/r1",
+          "evaluation_sha256": "7ed4a83d51e87c3b9f21f646a84839c44795cb41b355cb877e883d5cb702bb96",
+          "metadata_sha256": "487ea2879e2ee28bf125129509bb1c35175aa42f77b0078811ecd92d42682e9e",
+          "events_sha256": "a58b4fbb6717a74666cec889e56a768c5fb0f390e7499efd8f2530c6bf20d7e7",
+          "answer_sha256": "54334f3b37c29a1f37c175033767a3860b7c6eab94340b8232bc2a4f5f459e74",
+          "terminal_sha256": "c7465018610d2d30cdf3e8a5a91473977c826284444ce058bdfe880d0e5346c8",
+          "result_and_raw_sha256": {
+            "formaldehyde_optfreq.hess": "43a7a18eade71de91a61aac233c84e812aafe61a163e15f0814487f427c4cc11",
+            "formaldehyde_optfreq.inp": "395c442ccc65b2bc11e6e1ec608e4374e6ef51dd5e96319744970607183a100e",
+            "formaldehyde_optfreq.out": "44ae3524900f3b18b18c3021a18dbe7cff2f154e4e936abf9fca8caf20469cef",
+            "result.json": "06a6ce40f93a61ff822cf7489830f85413ed31385af10e20b999b359d29c64ce"
+          },
+          "os_receipt_sha256": {
+            "961f0572a12f473d8048f2b9b6848cd8": "6f6eee82e23ee56053d29d3952e11124c522afbe3c454dbe80e892256f11b1e4",
+            "6f04539be7fa47dbbc288c3239b0c3ee": "0c5f2b8ab8c69c990e011109cc8201216b0da879c0a8fef8f3f4b354d2660152",
+            "7a42b767952f473da3b4c92b4f3e5088": "61792ca334059ad2ae74f904fb74de8749e95cc8c071bb1c5a93381740b0bbda",
+            "ec266e45203244f893a55699a64adbee": "ff0727079ec5e09bec6c50e73b66c889b8f6337b3c96f83e65221c85734630d5"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "961f0572a12f473d8048f2b9b6848cd8",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "6f04539be7fa47dbbc288c3239b0c3ee",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "7a42b767952f473da3b4c92b4f3e5088",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "ec266e45203244f893a55699a64adbee",
+            "exit": 0
+          }
+        ],
+        "review_source": "Historical masked review on 2026-11-25",
+        "review": {
+          "pass": true,
+          "reason": "以收敛及零实质虚频判断极小点，并列出其余模式的键轴投影。模式 9 的 C、O 反向轴向位移与其最大投影支持羰基伸缩。",
+          "evidence": "formaldehyde_optfreq.out 第 2822、3687、3707 行可定位优化收敛、频率和位移；第 3752 行为模式 9 的 IR 数据。",
+          "case": "case-12"
+        },
+        "end_to_end_pass": true
+      },
+      "previous": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 139.61,
+        "time_to_first_orca_s": 31.012,
+        "time_to_first_orca_from_metadata_s": 31.012,
+        "session_start_utc": "2026-11-24T18:22:00.814577+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:22:31.826727+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:22:31.607998+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          4
+        ],
+        "terminal_calls": 7,
+        "recorded_tool_wall_s": 43.422,
+        "session_outside_recorded_tools_s": 96.188,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "read optfreq",
+            "calls": [
+              5
+            ]
+          },
+          {
+            "name": "bond_modes.py",
+            "action": "mode projection",
+            "calls": [
+              5,
+              6,
+              7
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [
+          4
+        ],
+        "lookup_call_numbers_before_first_launch": [
+          2,
+          3
+        ],
+        "standalone_lookup_calls": 2,
+        "lookup_types": {
+          "source": [
+            2,
+            3
+          ],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [
+          2,
+          3
+        ],
+        "repeated_parameter_lookup": true,
+        "trace_notes": "Built the exact ORCA input directly. Used the installed ORCA parser after the run and rechecked the final C–O projection from the successful bond_modes.py calculation against custom output-table analysis.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [
+          {
+            "call": 5,
+            "kind": "skill_child_exit_1",
+            "diagnostic": "bond_modes.py rejected C/O --atoms 0 1; message requested distinct one-based atom numbers. Calls 6–7 succeeded with 1 2."
+          }
+        ],
+        "usage": {
+          "input_tokens": 357820,
+          "cached_input_tokens": 325632,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 4142,
+          "reasoning_output_tokens": 94
+        },
+        "driver_receipts": [
+          {
+            "pid": 11472,
+            "create_time_100ns": "134400181518267270",
+            "receipt": "calls/11d041e8110c414b9e9436ef0ab56fc1/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/ir/with/r1",
+          "evaluation_sha256": "c4f823caf9c2caec0928fc9ea8b558803c3246ad260d7e92b1235ad0f7de06d5",
+          "metadata_sha256": "d072d07293223a788a1784cc6ad09edcb0af28ded1c514a17b6034713a4ebfdd",
+          "events_sha256": "9df4d3ebb5a1af254d5d2a2308f819b9f7a1841090daf72e524b35ce2c803c1f",
+          "answer_sha256": "e8217dd7d82b86a3ef50d8b44e539850a7b77e5f27622ae9763b977b00863713",
+          "terminal_sha256": "5cfe7d0b34e861dec61aa02e6052053e7ada7b0d4390fb6643ff23e818a2d092",
+          "result_and_raw_sha256": {
+            "formaldehyde_optfreq/job.hess": "43a7a18eade71de91a61aac233c84e812aafe61a163e15f0814487f427c4cc11",
+            "formaldehyde_optfreq/job.inp": "c6ae91a0d2755c04801e770bf12132e286838d1ed632a2407c95438af038f4d8",
+            "formaldehyde_optfreq/job.out": "f7499ac3c6aa8e8e2329d5c0dc8ada3bdddb5895f14a655221de615987d08fd4",
+            "result.json": "ed01d5f8a58f788a3898aa2ecaa0aa2b59bf736ef194f5bbf238ac28311dc47f"
+          },
+          "os_receipt_sha256": {
+            "5e219b95eb09424e8b2b968d95c02c34": "41cb5e0378a32b65399624198575fb04df0e8f5cbe28c20442e098670113137d",
+            "0b7218c5c73b4806a3cdd902772018ae": "0162d0857bca4a66b17df3c35564f8eccab5b05b056eb96c7eeb771696f91b08",
+            "361764817f21488b93b4c8b0f3223cc7": "80579fd3e57a3deeab7e6fa312a78fdb10118be4ffee71cae6332b602755838b",
+            "11d041e8110c414b9e9436ef0ab56fc1": "31d4f99d48a707e85d078f61cd0377230d72afb57af886015f5ec1f102e98b43",
+            "0e6b4523cb6a4b07b4e156be6dbf10ee": "43cab5491c92795c777031af468c48a64a0f2fabb30e3472922fe4fa50a01a6b",
+            "60d03694670b40229b6d753439151711": "00af5dbc9d8e47b5721181fae750c0b476bb4172f4c4d60c7ee2aabc434560c7",
+            "f517669e91ae41658dc5f3cc2cfcdf20": "36908fcb5b51379a5d8de0feba87a17333b1abd7e811d3a1d405fe75ca6a0fd1"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "5e219b95eb09424e8b2b968d95c02c34",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "0b7218c5c73b4806a3cdd902772018ae",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "361764817f21488b93b4c8b0f3223cc7",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "11d041e8110c414b9e9436ef0ab56fc1",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "0e6b4523cb6a4b07b4e156be6dbf10ee",
+            "exit": 0
+          },
+          {
+            "n": 6,
+            "receipt": "60d03694670b40229b6d753439151711",
+            "exit": 0
+          },
+          {
+            "n": 7,
+            "receipt": "f517669e91ae41658dc5f3cc2cfcdf20",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "第 2824 行与第 3700–3705 行分别证实优化收敛和全部六个内部频率为正。Hessian 中模式 9 的 C、O 沿键轴反向运动，复算相对投影为 1.047656，约是模式 8 的 14.9 倍，频率与第 3754 行 IR 强度均与答复一致。",
+          "case": "case-10"
+        },
+        "end_to_end_pass": true
+      },
+      "current": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 112.25,
+        "time_to_first_orca_s": 18.003,
+        "time_to_first_orca_from_metadata_s": 18.013,
+        "session_start_utc": "2026-11-27T04:09:15.295513+00:00",
+        "session_end_utc": "2026-11-27T04:11:07.541265+00:00",
+        "start_basis": "CLI pre-launch wall clock",
+        "first_native_birth_utc": "2026-11-27T04:09:33.298433+00:00",
+        "first_native_receipt_started_utc": "2026-11-27T04:09:32.792537+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 5,
+        "recorded_tool_wall_s": 46.094,
+        "session_outside_recorded_tools_s": 66.156,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "run combined optfreq with --tightscf",
+            "calls": [
+              2
+            ]
+          },
+          {
+            "name": "bond_modes.py",
+            "action": "mode projection using 1-based C/O atoms 1,2",
+            "calls": [
+              4,
+              5
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {
+          "source": [
+            3
+          ],
+          "cli_help": []
+        },
+        "lookup_call_numbers_all": [
+          3
+        ],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "首次 ORCA 前只读取 SKILL.md。第 2 次工具调用运行优化/频率；第 3 次在作业完结后阅读 bond_modes.py 源码，第 4、5 次用 1、2 号原子计算和复核键轴位移。",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 238494,
+          "cached_input_tokens": 213120,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2793,
+          "reasoning_output_tokens": 36
+        },
+        "driver_receipts": [
+          {
+            "pid": 15384,
+            "create_time_100ns": "134402261732984324",
+            "receipt": "calls/a3d9b955939b431c8e231024bcff6578/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/ir/with/r1",
+          "evaluation_sha256": "4b2f6317e85adc57804e32a17e3b00a6e7cffe6e8f0b20a9196a8823c8ffea9f",
+          "metadata_sha256": "76b77a42bc4f38410a094ab55183b58d931138352c3cb7de445cb4b4aa05e74c",
+          "events_sha256": "909647fa71899d4570d981642f946c30a010c3bedc5b8f84e23f00b785b4f0ee",
+          "answer_sha256": "1d1b6bb6f105b1fe31520c326f64f4886b020669740940fc3ae22908751efdbb",
+          "terminal_sha256": "d98f5fd38e9cb09480ae0d62ed3f1981d8b00d084cd57ded20e5d5ed9ec78a8b",
+          "result_and_raw_sha256": {
+            "formaldehyde_optfreq/job.hess": "43a7a18eade71de91a61aac233c84e812aafe61a163e15f0814487f427c4cc11",
+            "formaldehyde_optfreq/job.inp": "c8fbc44ffc6c1d6ba5a5923756fa546ddc73c7befc38015ad561ff17bc1b64f9",
+            "formaldehyde_optfreq/job.out": "c72acbda6812044f426449fc725aee0658c85beb8dd10b84dcfdd47ba687f32a",
+            "result.json": "fc69969b58fd988b9855b092a3550fd7e62273494ae9911249032028a5c0c2ca"
+          },
+          "os_receipt_sha256": {
+            "b0151436199c44ef9286b01594b97956": "5957407633b160c4d5c7e612739c18929d4d187047b0a7404a86505022824a12",
+            "a3d9b955939b431c8e231024bcff6578": "1f240a2b2cd5720b0e08a5e23020640a8ea1640485b4c4671177d3f11202bec8",
+            "5dedfe7e5b0448b99befd8f91a325b05": "0ae0ceb9c3df5c95a2a33e275041238d8ebe8886f33a135dd4f0984edfa20251",
+            "4abb51da146945b6a882bda3f957844d": "bf4735bf24f9871868f6edbeb405f697f62d78edb733ce6eccc682df997eb8c1",
+            "a9f1720865fa4db4a57e3501897037fc": "be144044c175b963f7dc2e530c9efc3aebc30433a2f6a234678734119da20c81"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "b0151436199c44ef9286b01594b97956",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "a3d9b955939b431c8e231024bcff6578",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "5dedfe7e5b0448b99befd8f91a325b05",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "4abb51da146945b6a882bda3f957844d",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "a9f1720865fa4db4a57e3501897037fc",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "所引优化收敛标记与六个内部正频率支持局部极小点。原始模式 9 的 1896.68 cm⁻¹、114.78 km/mol 与答复一致，Hessian 证实 C/O 沿轴反向，净投影为 1.047656，约为模式 8 的 14.9 倍。",
+          "case": "case-17"
+        },
+        "end_to_end_pass": true
+      }
+    },
+    {
+      "task": "ir",
+      "replicate": 2,
+      "without": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 101.08,
+        "time_to_first_orca_s": 17.192,
+        "time_to_first_orca_from_metadata_s": 17.192,
+        "session_start_utc": "2026-11-24T18:26:46.515698+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:27:03.707914+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:27:03.504319+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 5,
+        "recorded_tool_wall_s": 41.64,
+        "session_outside_recorded_tools_s": 59.44,
+        "read_skill_text": false,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          2
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Read ORCA frequency, normal-mode, IR and Hessian sections and wrote a custom normalized bond-displacement projection. Final answer reported mode 9 and its local-minimum evidence.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 192102,
+          "cached_input_tokens": 177920,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2458,
+          "reasoning_output_tokens": 13
+        },
+        "driver_receipts": [
+          {
+            "pid": 27668,
+            "create_time_100ns": "134400184237079141",
+            "receipt": "calls/a119a5fc284b4dd1a76c294eebd233a1/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/ir/without/r2",
+          "evaluation_sha256": "60cfb1f15b7eac75083d1d686362a085bdf8243315bfa3cf4969a2b2cfeb68bf",
+          "metadata_sha256": "31f567cceb70bbf8d6dd82207e26f4648a44b0acf614f750c373fc3c99c0ec4d",
+          "events_sha256": "5418f1c84291acff121597dcf6f9ddd9c80ea8fce1fba12b510530b7cf5d00c3",
+          "answer_sha256": "f95cab7516582c638bed3bbcdac605d2ac04acde6a00330cfb37155ff5ab9257",
+          "terminal_sha256": "fba82b3000f89aaba5d4810ba8c61b3cda680012449478dcd01362f092a0acc0",
+          "result_and_raw_sha256": {
+            "formaldehyde_optfreq.hess": "43a7a18eade71de91a61aac233c84e812aafe61a163e15f0814487f427c4cc11",
+            "formaldehyde_optfreq.inp": "395c442ccc65b2bc11e6e1ec608e4374e6ef51dd5e96319744970607183a100e",
+            "formaldehyde_optfreq.out": "499921139162721e205eda5617a505b86772733869b25f6e15146a3f6ee9ec39",
+            "result.json": "906810c1a8de2c73cb74dcca1ee2e7df6e4053031204b24e8278bccc4ec15fb6"
+          },
+          "os_receipt_sha256": {
+            "a3a279553d6b4c2ab4185a6d6a8ba5c2": "ef033751e812a1b62158538cd055e52c2b51e57b18dac853b9b5021babf6b9ba",
+            "a119a5fc284b4dd1a76c294eebd233a1": "db65c0564b0a3d01a894c145564c5af1bc5976946d9b965907d30160b180d7b8",
+            "8cfb4cf7072142219111210fa4d165a8": "f69b58ebe04321de3f25c62d44c1519b88cb975612a6837d45ed43a4c3032e20",
+            "731be0eae76d4c1ebde36d8b7344b5c3": "843bc6eea6a28de990f027c780e630860e3ffd557ccc0fdbd8a963794fb8f369",
+            "2da6f5d15eee4733818fd388ff0052f5": "500f77545b7eba979454395d524b8518b11ff25702153191c99509cfa4e43db3"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "a3a279553d6b4c2ab4185a6d6a8ba5c2",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "a119a5fc284b4dd1a76c294eebd233a1",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "8cfb4cf7072142219111210fa4d165a8",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "731be0eae76d4c1ebde36d8b7344b5c3",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "2da6f5d15eee4733818fd388ff0052f5",
+            "exit": 0
+          }
+        ],
+        "review_source": "Historical masked review on 2026-11-25",
+        "review": {
+          "pass": true,
+          "reason": "用优化收敛和六个内部模式无实质虚频共同判断极小点；由 C、O 沿键轴反向运动及模式 9 投影最大解释 C=O 归属。",
+          "evidence": "formaldehyde_optfreq.out 第 2822 行记录收敛，第 3687 行起为频率表，第 3707 行起为位移表，第 3752 行为 IR 数据；复算模式 9、8 投影分别为 1.047656、0.070283。",
+          "case": "case-03"
+        },
+        "end_to_end_pass": true
+      },
+      "previous": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 127.59,
+        "time_to_first_orca_s": 28.79,
+        "time_to_first_orca_from_metadata_s": 28.79,
+        "session_start_utc": "2026-11-24T18:28:27.625017+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:28:56.414610+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:28:56.204481+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          4
+        ],
+        "terminal_calls": 7,
+        "recorded_tool_wall_s": 42.625,
+        "session_outside_recorded_tools_s": 84.965,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "read optfreq",
+            "calls": [
+              5,
+              7
+            ]
+          },
+          {
+            "name": "bond_modes.py",
+            "action": "mode projection",
+            "calls": [
+              5,
+              7
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [
+          4
+        ],
+        "lookup_call_numbers_before_first_launch": [
+          2,
+          3
+        ],
+        "standalone_lookup_calls": 2,
+        "lookup_types": {
+          "source": [
+            2,
+            3
+          ],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [
+          2,
+          3
+        ],
+        "repeated_parameter_lookup": true,
+        "trace_notes": "Used a direct native Opt/Freq input for calculation. Ran both skill readers, then fetched the Hessian/printed sections and used the reader outputs to write the final projected mode and evidence.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 291148,
+          "cached_input_tokens": 250880,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3592,
+          "reasoning_output_tokens": 147
+        },
+        "driver_receipts": [
+          {
+            "pid": 14640,
+            "create_time_100ns": "134400185364146107",
+            "receipt": "calls/e92826a70ba944f9a22fe3a895704f9b/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/ir/with/r2",
+          "evaluation_sha256": "d67de759559e8f51bbed86404af5f9a5c81039e4b632155ad5cc53dafa298df1",
+          "metadata_sha256": "b20ef1f6fffb2bf52f44010bcd623cf78de11216dbdbaa4923f6e143c5963350",
+          "events_sha256": "d215296a591b9ee3bcb8dd3cad2d11d8b5e212b7441d46ae41be18b9713f7f2e",
+          "answer_sha256": "9ca451f4f675099b778547242ac29b4493b6f8b704b1fc31e20c210bdbf01b1b",
+          "terminal_sha256": "cb2873810f5b05257553667e2f1b480951472ee59e600138892edb27ad2e3f3f",
+          "result_and_raw_sha256": {
+            "formaldehyde_optfreq/job.hess": "43a7a18eade71de91a61aac233c84e812aafe61a163e15f0814487f427c4cc11",
+            "formaldehyde_optfreq/job.inp": "f347826eca2a1871a1a581d4ea5d39452f7b22218579d04312d7235d4c1d8311",
+            "formaldehyde_optfreq/job.out": "087be6fa3a3f6537a6d26ec7b188100247745c0bd8a4590af7b5b164e350af05",
+            "result.json": "dfc8a3dab6008547f0e7b3672e16c27539d9815d5da9cfcbea3ba5dfa4280260"
+          },
+          "os_receipt_sha256": {
+            "2f6e743988f649de8cc5fdacca447b02": "ae06e603cc91496b65af8af6cc43612e2e723ac94098453ee02c1417c5214b68",
+            "2b0225bf14b54b7e87cd58376d2beaa5": "43c4106492b93ea16ab6aa471f710a08fbd54dc86d15b0d14699c824f2ed05d2",
+            "fad37fc105e94fb09389bc8bc5e8de1a": "7341153a866db62ebd9db5535bf86e767e4214d7a92bc432fb353095925efbd2",
+            "e92826a70ba944f9a22fe3a895704f9b": "70b7af47f294f4ebfe82b99a20ee31c28f35ee64ea1534f01ad9e98984e609f1",
+            "66cb3a4dd6514bb8b192fddcab007ac4": "e0600184d6935a39d774b81ab52c76b780409bacacd06c51c26d8057209124d0",
+            "d74f17cbd905482b996844d98f27b2e2": "cc26e0ec069cfae280ecc0a12801228745184c00e9f333ede7aef893a7095579",
+            "e037dfa06036433393a8e5141893b519": "c0d0bf76c6d928858d0f8d2f44eb9077e87e5d2f73c924ae49c24c74bf12b5c4"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "2f6e743988f649de8cc5fdacca447b02",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "2b0225bf14b54b7e87cd58376d2beaa5",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "fad37fc105e94fb09389bc8bc5e8de1a",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "e92826a70ba944f9a22fe3a895704f9b",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "66cb3a4dd6514bb8b192fddcab007ac4",
+            "exit": 0
+          },
+          {
+            "n": 6,
+            "receipt": "d74f17cbd905482b996844d98f27b2e2",
+            "exit": 0
+          },
+          {
+            "n": 7,
+            "receipt": "e037dfa06036433393a8e5141893b519",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "第 2822 行的优化收敛与第 3698–3703 行的六个正内部频率支持局部极小点判断。模式 9 在第 3752 行的 IR 强度为 114.78 km/mol，Hessian 复算显示其反向 C/O 位移产生 1.047656 的键长投影，显著超过模式 8 的 0.070282。",
+          "case": "case-07"
+        },
+        "end_to_end_pass": true
+      },
+      "current": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 161.67,
+        "time_to_first_orca_s": 17.319,
+        "time_to_first_orca_from_metadata_s": 17.327,
+        "session_start_utc": "2026-11-27T04:13:23.732769+00:00",
+        "session_end_utc": "2026-11-27T04:16:05.407736+00:00",
+        "start_basis": "CLI pre-launch wall clock",
+        "first_native_birth_utc": "2026-11-27T04:13:41.051287+00:00",
+        "first_native_receipt_started_utc": "2026-11-27T04:13:40.550717+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 8,
+        "recorded_tool_wall_s": 44.375,
+        "session_outside_recorded_tools_s": 117.295,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "run combined optfreq with --tightscf",
+            "calls": [
+              2
+            ]
+          },
+          {
+            "name": "bond_modes.py",
+            "action": "C/O mode projection from Hessian; --atoms 1 2",
+            "calls": [
+              4,
+              5,
+              6,
+              8
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {
+          "source": [
+            3
+          ],
+          "cli_help": []
+        },
+        "lookup_call_numbers_all": [
+          3
+        ],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "首次 ORCA 前未读脚本源码或 --help。计算后先读 bond_modes.py，再对同一 Hessian 用 1、2 号原子复核；两个模型后处理断言故障均在已有作业上修复。",
+        "tool_nonzero_call_numbers": [
+          5,
+          6
+        ],
+        "retained_native_failures": [],
+        "diagnostics": [
+          {
+            "call": 5,
+            "kind": "model_postprocessing_keyerror",
+            "diagnostic": "Solver looked for normal_termination inside checks; the actual native helper JSON records this key at top level. No native restart."
+          },
+          {
+            "call": 6,
+            "kind": "model_postprocessing_assertion",
+            "diagnostic": "After converting Bohr to angstrom, absolute Hessian and printed coordinates differed by a common translation. Call 7 printed the offset and call 8 verified relative geometry against the same run."
+          }
+        ],
+        "usage": {
+          "input_tokens": 277474,
+          "cached_input_tokens": 236160,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 5078,
+          "reasoning_output_tokens": 44
+        },
+        "driver_receipts": [
+          {
+            "pid": 20308,
+            "create_time_100ns": "134402264210512861",
+            "receipt": "calls/e140bfbab26c42bf9f2d5eaaf9c3ddba/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/ir/with/r2",
+          "evaluation_sha256": "95d55b1b92cabfaf009726b88638940ee06c3c7946dcaa95e165a708a6248efd",
+          "metadata_sha256": "ebf4aa182379a83ba605aeb1db20cfe39c28d8f701e4c2784e017fcba2ab11c8",
+          "events_sha256": "62824780a321b83429fc7fad5a99735b17ebf6c1bb93d3e7e4974d71ad5f1030",
+          "answer_sha256": "12f00948aa2b91348528e476419c8ca8618df3de83c1194771dbd7e4a57bf9fc",
+          "terminal_sha256": "854b3ff62cbcd455c9405310c2d5ec9934e97977f02d0dc419170a88064a3c56",
+          "result_and_raw_sha256": {
+            "formaldehyde_optfreq/job.hess": "43a7a18eade71de91a61aac233c84e812aafe61a163e15f0814487f427c4cc11",
+            "formaldehyde_optfreq/job.inp": "c8fbc44ffc6c1d6ba5a5923756fa546ddc73c7befc38015ad561ff17bc1b64f9",
+            "formaldehyde_optfreq/job.out": "8e0c801768791277f7e79c8baded1ff1da92e46a722231b8e5da4cc61b21b3f8",
+            "result.json": "e60a7ee237d31bf073f955139d3e4f279bb038ee9b91859b04f5b53652caa9be"
+          },
+          "os_receipt_sha256": {
+            "b1ab74f7bf9344f8b88ca4f7fd2ca84c": "450cafb0aa8f7b9b1c59073d984982ac9dc90037d315adad194fc176d2a855fd",
+            "e140bfbab26c42bf9f2d5eaaf9c3ddba": "6d1b77756bf1ba2c077354a9009a57b6ec7786ceaa9e66ad38e9200620099195",
+            "2c988745a0414f89added8170f4b8776": "eae542ca7fa44a41521ba0b56507950eac45c3cff7f099598dece1eeea288950",
+            "63e1114a54ff43d594fb4f4bb5453a54": "5d415806a32f2eb1236e3450bf896d0fa3cdcf1641872d7d7d395e48514cced6",
+            "73a936227a594ccdb54009053034ba99": "f22a08efcc25745040579afbbef0f6f1db61b5a0529d4b6e2dd86374ffb7260c",
+            "8b11a065c44343e29aa999fc992f31eb": "0e28e10cdb3351a7e17f84af7c980e2eea75f1f810c041161d8ecb123845df90",
+            "598d210d54bb46ee9fd5bcbddfc13d0d": "c4ea9d0f141de6a7f46a6b464fbc47c7326c69f92139bb11ba5aa9393e047c9d",
+            "a7a44b8fbe08468fbe6dd4475565901d": "9353fc4ef8c4ca2c9cb1d8f631dc597a28b51c1441e15599c9bc5d67d15b90cf"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "b1ab74f7bf9344f8b88ca4f7fd2ca84c",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "e140bfbab26c42bf9f2d5eaaf9c3ddba",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "2c988745a0414f89added8170f4b8776",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "63e1114a54ff43d594fb4f4bb5453a54",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "73a936227a594ccdb54009053034ba99",
+            "exit": 1
+          },
+          {
+            "n": 6,
+            "receipt": "8b11a065c44343e29aa999fc992f31eb",
+            "exit": 1
+          },
+          {
+            "n": 7,
+            "receipt": "598d210d54bb46ee9fd5bcbddfc13d0d",
+            "exit": 0
+          },
+          {
+            "n": 8,
+            "receipt": "a7a44b8fbe08468fbe6dd4475565901d",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "优化收敛及六个内部模式全为正频率分别有原始输出支持。模式 9 给出 1896.68 cm⁻¹、114.78 km/mol。按 Hessian 全分子位移范数归一后，C、O 沿键轴反向，相对投影为 1.047656，其余模式最大仅 0.070282。",
+          "case": "case-12"
+        },
+        "end_to_end_pass": true
+      }
+    },
+    {
+      "task": "ir",
+      "replicate": 3,
+      "without": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 109.77,
+        "time_to_first_orca_s": 15.276,
+        "time_to_first_orca_from_metadata_s": 15.276,
+        "session_start_utc": "2026-11-24T18:40:38.748983+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:40:54.025454+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:40:53.783033+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 4,
+        "recorded_tool_wall_s": 41.203,
+        "session_outside_recorded_tools_s": 68.567,
+        "read_skill_text": false,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          2
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Used a native XYZ-file input, read optimization/frequency and IR/normal-mode sections, then used custom Python to project all mode vectors against the optimized bond; final answer identified mode 9.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 154234,
+          "cached_input_tokens": 139520,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2936,
+          "reasoning_output_tokens": 145
+        },
+        "driver_receipts": [
+          {
+            "pid": 18312,
+            "create_time_100ns": "134400192540254536",
+            "receipt": "calls/001f83a3ad5545f594929ec54e1e31d2/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/ir/without/r3",
+          "evaluation_sha256": "a86116e2c7ea52d2bfe6d21d0b75af39c9128cb5df652f307219d2bbd6a7ac11",
+          "metadata_sha256": "d6efefa4e3d99a0c8150984c385de1e2cec79f47149089f43be5b32fa5445223",
+          "events_sha256": "c0141344816ac25e58a648fb7d89d647ae8a6224aa452be67a89cf86e8022b57",
+          "answer_sha256": "89de8b330d2d5b4ce6d3fae1744908d3bc4c3c7702015d2e9f12319a1ecdd856",
+          "terminal_sha256": "46248e95b24a219b259d0d43a0ad65c4170387010ba835eae7d4eb6bd5855c81",
+          "result_and_raw_sha256": {
+            "formaldehyde_optfreq.hess": "43a7a18eade71de91a61aac233c84e812aafe61a163e15f0814487f427c4cc11",
+            "formaldehyde_optfreq.inp": "2f307de94928559e7068f228197a71d6285acf78f97b9ba7fe9918169d11996c",
+            "formaldehyde_optfreq.out": "5758419f54829efaa7c27d39792216abae11d55d559475a31b112bf828ba43ab",
+            "result.json": "1c3abdca42564be762acf8927f7c64ec1b679a9c4f79da6cfc58a946bbbf7a7d"
+          },
+          "os_receipt_sha256": {
+            "aa04fe9f88484c76b4cf0e6a31ff2b49": "eb9e5274905d1c0ef403483b947c9a973650a818f045f67d4d2d738db6556e90",
+            "001f83a3ad5545f594929ec54e1e31d2": "3515da6b69ddb0423e840830ea7043bae11dfb007901877fe76668f85a7a1894",
+            "afe3c466a8924fc0b96bd344fb3402e1": "6bfec03fe2e9fe4088786c93cd7db3ed07f5530f5670029774927706db62e7a2",
+            "6f8b700482b24ae693d036b4ccfac8f9": "f4b5929b126fa40a7adf1790fb538b9bdd4a95fd8cd178c0b543d0aa1128d813"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "aa04fe9f88484c76b4cf0e6a31ff2b49",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "001f83a3ad5545f594929ec54e1e31d2",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "afe3c466a8924fc0b96bd344fb3402e1",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "6f8b700482b24ae693d036b4ccfac8f9",
+            "exit": 0
+          }
+        ],
+        "review_source": "Historical masked review on 2026-11-25",
+        "review": {
+          "pass": true,
+          "reason": "由收敛结构的六个正内部频率判断局部极小点。说明 C、O 轴向位移异号，并比较模式 9 与次高模式 8 的投影。",
+          "evidence": "formaldehyde_optfreq.out 第 2819 行记录优化收敛，第 3684 行起为频率表；第 3704 行起的位移给出最大键轴投影，第 3749 行为对应 IR 数据。",
+          "case": "case-10"
+        },
+        "end_to_end_pass": true
+      },
+      "previous": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 155.67,
+        "time_to_first_orca_s": 29.913,
+        "time_to_first_orca_from_metadata_s": 29.913,
+        "session_start_utc": "2026-11-24T18:38:03.040759+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:38:32.953978+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:38:32.317385+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          4,
+          5
+        ],
+        "terminal_calls": 7,
+        "recorded_tool_wall_s": 82.749,
+        "session_outside_recorded_tools_s": 72.921,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "CLI help only",
+            "calls": [
+              3
+            ]
+          },
+          {
+            "name": "orca_job.py",
+            "action": "run combined Opt/Freq from XYZ",
+            "calls": [
+              4
+            ]
+          },
+          {
+            "name": "orca_job.py",
+            "action": "read optfreq",
+            "calls": [
+              6
+            ]
+          },
+          {
+            "name": "bond_modes.py",
+            "action": "mode projection",
+            "calls": [
+              6,
+              7
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [
+          5
+        ],
+        "lookup_call_numbers_before_first_launch": [
+          3,
+          4
+        ],
+        "standalone_lookup_calls": 1,
+        "lookup_types": {
+          "source": [
+            3,
+            4
+          ],
+          "cli_help": [
+            3
+          ]
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [
+          3,
+          4
+        ],
+        "repeated_parameter_lookup": true,
+        "trace_notes": "The wrapper Opt/Freq job succeeded. The solver repeated the calculation directly to make TightSCF explicit in job.inp. Both raw outputs show TolE 1e−8 Eh and identical mode 9 (1896.68 cm−1, 114.78 km/mol). Used bond_modes.py on the second Hessian for the final assignment.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 391567,
+          "cached_input_tokens": 362496,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3080,
+          "reasoning_output_tokens": 16
+        },
+        "driver_receipts": [
+          {
+            "pid": 13696,
+            "create_time_100ns": "134400191129539767",
+            "receipt": "calls/ff2f70b47c9d4b079b170b1e43617a59/os.json"
+          },
+          {
+            "pid": 40184,
+            "create_time_100ns": "134400191597239289",
+            "receipt": "calls/eab193fafd4f4c9d85cefca8514e9d30/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/ir/with/r3",
+          "evaluation_sha256": "8059a218f65a5a17d8960bcfae1b42ccb5dd6e9b2ad08c332702b76231a7eef8",
+          "metadata_sha256": "adf905367fab4e907a74d297992c52b3d740716c0621c4466f2428c070b928ca",
+          "events_sha256": "009cdb9032107bed2d3d3c905eb8dca02c28489b47a7015be8f31fd48450492f",
+          "answer_sha256": "e3c301340c34963a141959265d87fc6e6271fa75c609dabf0265b7febec58286",
+          "terminal_sha256": "4ee2e9240453480011b198b9e360d2ae07341041e5cf4af4aca7c2e7490a7fdf",
+          "result_and_raw_sha256": {
+            "formaldehyde_optfreq/job.hess": "43a7a18eade71de91a61aac233c84e812aafe61a163e15f0814487f427c4cc11",
+            "formaldehyde_optfreq/job.inp": "e647cf52796d38272614fe99556b316ad2636d043431163e26e249499410ed5b",
+            "formaldehyde_optfreq/job.out": "05bd9aba54b05e6b72413e4c64015766ad2c0fcd95e0c76bd5dab9f40ab1e593",
+            "formaldehyde_tightscf/job.hess": "43a7a18eade71de91a61aac233c84e812aafe61a163e15f0814487f427c4cc11",
+            "formaldehyde_tightscf/job.inp": "81ac4f229b9d3d20dc24279c3f9c7c51c667d82b900a3343240017ac7a0ffb1e",
+            "formaldehyde_tightscf/job.out": "3969ea344332db34cb55138a162903f461e016e766aa724a4b4984fd9af4ba2f",
+            "result.json": "38025725038d8a639f6d0abfed0f85c419c1b74d45cc779dc124afc35b6b3089"
+          },
+          "os_receipt_sha256": {
+            "4571fad7abdc4febb28c50e5f666999e": "a7fee0f85aed8ae59011eb6e00b32e3e08bf86042b724c56547437777ecc3a64",
+            "f79bc2c080dd49928cf37b4ebcaff713": "08c83b044dd5064d02c5b3f63a548864e554170f97eb495ac5da7847497028fc",
+            "3c83a5c447554c02aafff78b3cd433e6": "6b10ce54fe419324aab215931ecefd2fc73761e6fcec9e21deae79634cb4dec6",
+            "ff2f70b47c9d4b079b170b1e43617a59": "ce8d13177d347c5f344deddc6754f78315a0dcd92b81783987c3135769d74581",
+            "eab193fafd4f4c9d85cefca8514e9d30": "61b4a9cd794c6a08f77a8854fb85833d2cea15652b1b91255e8be7a5812971d6",
+            "7269b0e90fa6463392f691c330825bb7": "2d8c94ca76d3d6cf223d504f64420c5fd24331408f0f68266de63df00b119201",
+            "f87a102bf1e14432b9295f7da9a535c7": "3db090714de15abfeafac333a6226fc38160a709a7b2f0cf628318080aa7545e"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "4571fad7abdc4febb28c50e5f666999e",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "f79bc2c080dd49928cf37b4ebcaff713",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "3c83a5c447554c02aafff78b3cd433e6",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "ff2f70b47c9d4b079b170b1e43617a59",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "eab193fafd4f4c9d85cefca8514e9d30",
+            "exit": 0
+          },
+          {
+            "n": 6,
+            "receipt": "7269b0e90fa6463392f691c330825bb7",
+            "exit": 0
+          },
+          {
+            "n": 7,
+            "receipt": "f87a102bf1e14432b9295f7da9a535c7",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "答复引用明确加 TightSCF 的重算。该输出第 2820 行确认优化收敛，六个内部频率均正，模式 9 为 1896.68 cm⁻¹、114.78 km/mol。由同一 Hessian 复算 C、O 反向轴向位移，相对投影 1.047656，约为次高模式 8 的 14.9 倍。",
+          "case": "case-05"
+        },
+        "end_to_end_pass": true
+      },
+      "current": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 112.06,
+        "time_to_first_orca_s": 19.6,
+        "time_to_first_orca_from_metadata_s": 19.606,
+        "session_start_utc": "2026-11-27T04:20:07.807080+00:00",
+        "session_end_utc": "2026-11-27T04:21:59.862487+00:00",
+        "start_basis": "CLI pre-launch wall clock",
+        "first_native_birth_utc": "2026-11-27T04:20:27.406738+00:00",
+        "first_native_receipt_started_utc": "2026-11-27T04:20:26.928546+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 5,
+        "recorded_tool_wall_s": 42.141,
+        "session_outside_recorded_tools_s": 69.919,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "run single combined optfreq with explicit --tightscf",
+            "calls": [
+              2
+            ]
+          },
+          {
+            "name": "bond_modes.py",
+            "action": "mode projection using 1-based atoms 1,2",
+            "calls": [
+              4,
+              5
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {
+          "source": [
+            3
+          ],
+          "cli_help": []
+        },
+        "lookup_call_numbers_all": [
+          3
+        ],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "首次 ORCA 前无脚本源码或帮助查询；任务脚本完成一次 Opt/Freq 后，第 3 次查 bond_modes.py 源码，第 4、5 次用同一 Hessian 分别分析和核验。",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 219121,
+          "cached_input_tokens": 167168,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2857,
+          "reasoning_output_tokens": 46
+        },
+        "driver_receipts": [
+          {
+            "pid": 2548,
+            "create_time_100ns": "134402268274067382",
+            "receipt": "calls/1aea40a998844ca1821ff111556fc3bf/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/ir/with/r3",
+          "evaluation_sha256": "1bad304f730a0ea9fc115397f43d0bc028d7a2f16c1b05d50c0c9623e6be223b",
+          "metadata_sha256": "b2457e094126bcbbf5c0cddd83d328a2aad179db2c0244e9444fcaaef6192d0e",
+          "events_sha256": "ab84183c48fa077c301264540fa26923e8dc9c8c1697a5de7d0b34a9be5e7d4d",
+          "answer_sha256": "793c81618c072958cbd2aadf5559deb21bd0929500866ee6f3cb79de2814e84a",
+          "terminal_sha256": "524e080d8713569d2dc6726d80ca865de83ba54555526934b44940423f6a6d0c",
+          "result_and_raw_sha256": {
+            "formaldehyde_optfreq/job.hess": "43a7a18eade71de91a61aac233c84e812aafe61a163e15f0814487f427c4cc11",
+            "formaldehyde_optfreq/job.inp": "c8fbc44ffc6c1d6ba5a5923756fa546ddc73c7befc38015ad561ff17bc1b64f9",
+            "formaldehyde_optfreq/job.out": "f9d50c920ed60d53eea217acbb3ebb7d1183b0153b4eb6ab9264ca50fe71d4a7",
+            "result.json": "f7ee75e7a85d1db89f9f72a837c5ba17dc7f942c54aad32c54260d781cfa45f7"
+          },
+          "os_receipt_sha256": {
+            "da452a510b5c4a27afbbcdc736a112f5": "0bf87997c9440aeb33c1d7d1b9e109c4bc0a0b07f97db47118296873bda4e9d8",
+            "1aea40a998844ca1821ff111556fc3bf": "d2462e96224fed710bb19457b449265f08aa54f153545343d5088f6afbc48143",
+            "3df6e784ea1249e78d190dcdeb3abb8a": "36e7eaf04c20b9203a4e5c1f60a62fe3931885e782c4d812e59e3be17de388df",
+            "c543f4f5e85444c8a6933778b1cf8288": "1fe760829238daa5718c4dccc602f4a86166b8697d235855bc8ce47f3ddbca7e",
+            "478ecc7cfaf547e6878788de9a59def6": "eedea920a4aee0a2d810dfedf8e7ced0fec096e278619dbef7f6bd495380251e"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "da452a510b5c4a27afbbcdc736a112f5",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "1aea40a998844ca1821ff111556fc3bf",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "3df6e784ea1249e78d190dcdeb3abb8a",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "c543f4f5e85444c8a6933778b1cf8288",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "478ecc7cfaf547e6878788de9a59def6",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "所引输出第 2820 行确认优化收敛，第 3696–3701 行显示六个正内部频率，可判定局部极小点。由 Hessian 得到模式 9 的 C、O 轴向位移 −0.608309、+0.439347，净伸缩幅度居首，与次强模式的比值为 14.91。",
+          "case": "case-06"
+        },
+        "end_to_end_pass": true
+      }
+    },
+    {
+      "task": "excited",
+      "replicate": 1,
+      "without": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 59.77,
+        "time_to_first_orca_s": 19.879,
+        "time_to_first_orca_from_metadata_s": 19.879,
+        "session_start_utc": "2026-11-24T18:25:46.721653+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:26:06.600859+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:26:06.399432+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 4,
+        "recorded_tool_wall_s": 8.875,
+        "session_outside_recorded_tools_s": 50.895,
+        "read_skill_text": false,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          2
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Wrote native TD-DFT input using Triplets false and parsed canonical length-form rows, ground-state geometry and termination from job.out. Final Markdown links use transient launcher directory.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 111851,
+          "cached_input_tokens": 97664,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2030,
+          "reasoning_output_tokens": 92
+        },
+        "driver_receipts": [
+          {
+            "pid": 31488,
+            "create_time_100ns": "134400183666008581",
+            "receipt": "calls/af299e30b6ec41898fafddf388e1585f/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/excited/without/r1",
+          "evaluation_sha256": "d7748176145ce753a86f4cd8a44406c2a41a9098e1cb181f4873a956a4c93c45",
+          "metadata_sha256": "aae8a524a5270fee69d9d70c0b4f63c4ca52b40d96e401002d13ff9acfcb2481",
+          "events_sha256": "956d4fe99032aedde135f3e4508a8f885fbcc42611236af73f6e33bcd0a0232e",
+          "answer_sha256": "75ab9c9021fa416106d1c462230a6339fbf7705b4cd33ad266ae8fa7986dd95d",
+          "terminal_sha256": "88f8dfe0bbb7ae635b0f213a9d772db141b2b9c6ec385b2bbbba8d121bfcf023",
+          "result_and_raw_sha256": {
+            "jobs/attempt-1/job.inp": "5f058c40084d95ec63c585f1e1f7230a03e38d3b6d26f94019120fe4be86906b",
+            "jobs/attempt-1/job.out": "288844a98e3ec36a4b105d1acb62bc59e9144f6f58e6065f87774ad8a10abdee",
+            "result.json": "4400b4d6afbc94fa448d3156fdd13e3f77eefad8f497041d3c547741bf32460e"
+          },
+          "os_receipt_sha256": {
+            "c116b78d4de547c5b38ab35711a92a3a": "1cf4ae49a4e592f98b6cda91574aaafc514654fa3e37e01ce5668de2b49ac7c7",
+            "af299e30b6ec41898fafddf388e1585f": "36fe7bdaff3cd40de8e76249d3ce6e7e7287df18464fd1ba2648a689e163b7db",
+            "42f13615841547f2ad8bff71115027ce": "ebf7e60d3731d317f56d719dc2d11a70c63415965e37cbee9933c2758f07e94b",
+            "2ed7f1c42b4f45bdbd6b1456931e998d": "27f3afc89d7eb057b8ac88da592fe74481d76665923b7f76859604de62f3f59d"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "c116b78d4de547c5b38ab35711a92a3a",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "af299e30b6ec41898fafddf388e1585f",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "42f13615841547f2ad8bff71115027ce",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "2ed7f1c42b4f45bdbd6b1456931e998d",
+            "exit": 0
+          }
+        ],
+        "review_source": "Historical masked review on 2026-11-25",
+        "review": {
+          "pass": true,
+          "reason": "将六个单重根按能量和吸收强度分别比较，以长度形式的跃迁偶极强度说明第 1 根近暗、第 2 根最亮，并识别另一个近暗根 5。",
+          "evidence": "jobs/attempt-1/job.out 第 1070–1075 行均为电偶极长度表数据，根 2 的 f 为 0.165507874。",
+          "case": "case-05"
+        },
+        "end_to_end_pass": true
+      },
+      "previous": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 86.25,
+        "time_to_first_orca_s": 29.695,
+        "time_to_first_orca_from_metadata_s": 29.695,
+        "session_start_utc": "2026-11-24T18:24:20.446315+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:24:50.140987+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:24:49.566766+00:00",
+        "driver_count": 2,
+        "driver_call_numbers": [
+          4,
+          6
+        ],
+        "terminal_calls": 7,
+        "recorded_tool_wall_s": 12.53,
+        "session_outside_recorded_tools_s": 73.72,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "run native TD-DFT",
+            "calls": [
+              4,
+              6
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [],
+        "lookup_call_numbers_before_first_launch": [
+          2,
+          3
+        ],
+        "standalone_lookup_calls": 2,
+        "lookup_types": {
+          "source": [
+            2,
+            3
+          ],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [
+          2,
+          3
+        ],
+        "repeated_parameter_lookup": true,
+        "trace_notes": "Installed runner generated both native ORCA jobs. Following replacement of unsupported keyword, the solver used the successful runner receipt with output SHA and checked printed length-gauge table rows.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [
+          {
+            "file": "work/jobs/attempt-1/job.out",
+            "mtime_utc": "2026-11-24T18:24:50.194130+00:00",
+            "sha256": "17f08e783e78a8f25e952a44dc21e43b3cc3f785648213e7b699c4e6b0045855",
+            "line": 177,
+            "diagnostic": "Unknown identifier in CIS block line    6  : SINGLETS",
+            "kind": "explicit_failure",
+            "normal_termination_present": false
+          }
+        ],
+        "diagnostics": [
+          {
+            "call": 4,
+            "kind": "orca_child_exit_11",
+            "diagnostic": "ORCA scanner rejected SINGLETS in CIS block (attempt-1/job.out:177–181); installed runner exited 1. Call 6 removed singlets true, retained closed-shell singlet calculation and triplets false; successful attempt-2."
+          }
+        ],
+        "usage": {
+          "input_tokens": 215207,
+          "cached_input_tokens": 185472,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2882,
+          "reasoning_output_tokens": 20
+        },
+        "driver_receipts": [
+          {
+            "pid": 22560,
+            "create_time_100ns": "134400182901409866",
+            "receipt": "calls/f70a6e82912340f699ed3ec37bdcfdb1/os.json"
+          },
+          {
+            "pid": 25140,
+            "create_time_100ns": "134400183039389710",
+            "receipt": "calls/be1c16babf4c46ee866b3392f21cb0fc/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/excited/with/r1",
+          "evaluation_sha256": "7fc20be0a914a2508964ed73e3556fcdcb1b0cafe5431f5637a021e008108018",
+          "metadata_sha256": "8e7421270c3db807f3303890cafdfb07441e058b0ede91c6f62bfbd99991e346",
+          "events_sha256": "292513e54dee86f6388879ee692769d8d75ec5b03bb880051a922bc904c7de7c",
+          "answer_sha256": "99836724d877537d60c3eeb82da2843748823934fcdb57da5fa449ff0b5e806e",
+          "terminal_sha256": "f1fd4cb4008c6e65190d320a57cb1d11014d53c5fd196ea2fc0a7ef221b09869",
+          "result_and_raw_sha256": {
+            "jobs/attempt-1/job.inp": "a1ba457030c948349d2239bde5a9e302ddf84ccf25cce20bf55fb83768db4cd9",
+            "jobs/attempt-1/job.out": "17f08e783e78a8f25e952a44dc21e43b3cc3f785648213e7b699c4e6b0045855",
+            "jobs/attempt-1/source.inp": "ee4e8f737077155d1c7f5d716d3691c2e3260813706d0ff0297782dcde5c201f",
+            "jobs/attempt-2/job.inp": "12ccf785b7ece7c5cffae9f653ef7404c784f63932b9c8c90e5b16bd75cdc9b3",
+            "jobs/attempt-2/job.out": "7a5124c25354828bed815cb5486740076cef7f1e3f15282332673484934e2865",
+            "jobs/attempt-2/source.inp": "a33265948247d196ac7a607501daf1792b2128fec128d8507416c802cce865aa",
+            "jobs/formaldehyde.inp": "a33265948247d196ac7a607501daf1792b2128fec128d8507416c802cce865aa",
+            "result.json": "0bdb70bb6d6fe444699542dac330f9a225deb33f9705b42fc0ebf5bbe399e233"
+          },
+          "os_receipt_sha256": {
+            "a60938fcde654eebaa5eddfa8d2d5ca8": "6d5417e52d345d097a9a280eb2462d2caa1b5885927b76c0c257e79c6dc759ef",
+            "e0e1c643747c45cc9ad490f2a68613aa": "915343721a45584bd0dab941517ddca9e0f51efb214d319206522b34c400719e",
+            "2998024f24c84e2d9ae77e0af1c09a4c": "8b6a44335467f8336c6ba242af45ec72e6bcb1f8c123d95b49ffc800ac33cc38",
+            "f70a6e82912340f699ed3ec37bdcfdb1": "a86f6348d0aed7903dbc63c3b4354c11d851962b48ccbd5a422d0a59fea9aa28",
+            "52d43b18196a4992ace41866f5f699e2": "53fdd6b4cc1b9b605ccc4c63b43e2c2df921e9b08bbf49cb447834ca2bcf9c0f",
+            "be1c16babf4c46ee866b3392f21cb0fc": "4797a0265faa07605133cd758769b19b5a59030617efd64dd43a2f222104f771",
+            "39efc3ed0bd047d69b1a56c2a1a0f09a": "191b05bb995ff73cbe7daf0328cd083d2d6dde8789557ef1d8f706db27b1300d"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "a60938fcde654eebaa5eddfa8d2d5ca8",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "e0e1c643747c45cc9ad490f2a68613aa",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "2998024f24c84e2d9ae77e0af1c09a4c",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "f70a6e82912340f699ed3ec37bdcfdb1",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "52d43b18196a4992ace41866f5f699e2",
+            "exit": 0
+          },
+          {
+            "n": 6,
+            "receipt": "be1c16babf4c46ee866b3392f21cb0fc",
+            "exit": 0
+          },
+          {
+            "n": 7,
+            "receipt": "39efc3ed0bd047d69b1a56c2a1a0f09a",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "成功的 attempt-2 输出第 1064–1069 行给出六个单重跃迁的长度形式 fosc(D2)。根 1 最低（4.002069 eV），根 2 的 f 最大（0.165507874），根 1、5 的 f 显示为零。答复用该列解释吸收强弱，并正确区分首次解析失败。",
+          "case": "case-02"
+        },
+        "end_to_end_pass": true
+      },
+      "current": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 136.12,
+        "time_to_first_orca_s": 19.723,
+        "time_to_first_orca_from_metadata_s": 19.73,
+        "session_start_utc": "2026-11-27T04:11:07.574266+00:00",
+        "session_end_utc": "2026-11-27T04:13:23.704257+00:00",
+        "start_basis": "CLI pre-launch wall clock",
+        "first_native_birth_utc": "2026-11-27T04:11:27.296858+00:00",
+        "first_native_receipt_started_utc": "2026-11-27T04:11:26.654424+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 5,
+        "recorded_tool_wall_s": 10.766,
+        "session_outside_recorded_tools_s": 125.354,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "run native TDA from explicit input",
+            "calls": [
+              2
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "先读入口，即以原生输入运行 TDA；保留第 3 次工具调用的字符串比对失败，第 5 次以数值复核成功。该失败属于结果核对，不是原生计算失败。",
+        "tool_nonzero_call_numbers": [
+          3
+        ],
+        "retained_native_failures": [],
+        "diagnostics": [
+          {
+            "call": 3,
+            "kind": "model_postprocessing_assertion",
+            "diagnostic": "After the successful calculation, an equality assertion compared formatted coordinate tokens (e.g. 0.0 and 0.000000). Call 4 printed both files; call 5 compared numerical Decimal tuples and parsed the length-form table. No additional ORCA start."
+          }
+        ],
+        "usage": {
+          "input_tokens": 138997,
+          "cached_input_tokens": 104576,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2661,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 20168,
+            "create_time_100ns": "134402262872968586",
+            "receipt": "calls/4a4113f1262442ddbf43b985f3ec6d7c/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/excited/with/r1",
+          "evaluation_sha256": "e64c274981b758ca518e15e21807aca5438c7ffba32296cf368cf1d2ff1c8e2c",
+          "metadata_sha256": "b875f61b0466a665340fa80f04370735f73475bcbf7cda35656bac4ce778189b",
+          "events_sha256": "48a48fc631e1d5c16e792710e6d91507e46c7061fedb7546eb14d153041c114f",
+          "answer_sha256": "f3aabf9e9276ed49678927b63c32667cd8dcbeffe0520dd213f358e0b60987cc",
+          "terminal_sha256": "2c6d8bcd739cd3cba99a81d0698e58ce7609db8b4ab08d5ad5a6deb68428f949",
+          "result_and_raw_sha256": {
+            "jobs/attempt-1/job.inp": "12ccf785b7ece7c5cffae9f653ef7404c784f63932b9c8c90e5b16bd75cdc9b3",
+            "jobs/attempt-1/job.out": "bc217e8ade38e1abd7af240320707da09c3524dfa87f80d60f647440937c31ba",
+            "jobs/attempt-1/source.inp": "b0d493b9e8e638698a87ba0272948be3fc1366c6fdcb25d2a606b4ce40fb0d40",
+            "jobs/formaldehyde-tda.inp": "b0d493b9e8e638698a87ba0272948be3fc1366c6fdcb25d2a606b4ce40fb0d40",
+            "result.json": "360ee3b871bfb627a49507404b3ba5b2f59b0bec3bf30c9599ed2c7ad3797eac"
+          },
+          "os_receipt_sha256": {
+            "d45c4e56e03f4233bc0ba1c6be66ff7a": "42d1bb24d601e08633b08d88704b137a0a67ba52d1f9ee32426789cd97bca49c",
+            "4a4113f1262442ddbf43b985f3ec6d7c": "017752eef113bec33603864efbf611e80f925e18ca20bc83c8daffe429f0ada3",
+            "6e4e0f66d25a4bb1b9f870937165163a": "f7498f67e61a11ff602a59a1fb1bc90ea0c212d50f1f05c291a7deba97fe3251",
+            "be0684cdfff240a280a04eb07ce85d63": "b31b7c8d31982da404acd42c5a6e2ae90a6fd584e8c30f06f0221c15b53daa3e",
+            "d50c24973dcf4737898339a4d6791d46": "65c64db0d5dbe0dd2c86c9ab9f89906051dc9611103b2186e4451d81796dcaa2"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "d45c4e56e03f4233bc0ba1c6be66ff7a",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "4a4113f1262442ddbf43b985f3ec6d7c",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "6e4e0f66d25a4bb1b9f870937165163a",
+            "exit": 1
+          },
+          {
+            "n": 4,
+            "receipt": "be0684cdfff240a280a04eb07ce85d63",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "d50c24973dcf4737898339a4d6791d46",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "答复明确以长度形式振子强度衡量电偶极吸收强弱。原始长度表第 1064–1069 行证实根 1 在 4.002069 eV、根 2 的 f = 0.165507874 为最大，六根中只有根 1、5 的 f ≤ 10⁻⁵。",
+          "case": "case-11"
+        },
+        "end_to_end_pass": true
+      }
+    },
+    {
+      "task": "excited",
+      "replicate": 2,
+      "without": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 50.89,
+        "time_to_first_orca_s": 15.794,
+        "time_to_first_orca_from_metadata_s": 15.794,
+        "session_start_utc": "2026-11-24T18:31:40.276808+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:31:56.070496+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:31:55.856358+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          1
+        ],
+        "terminal_calls": 2,
+        "recorded_tool_wall_s": 8.453,
+        "session_outside_recorded_tools_s": 42.437,
+        "read_skill_text": false,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          1
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Two Python calls: first built, ran and inspected native six-root TDA job; second validated output geometry and wrote the length-form result. Final links point into the transient Codex launcher directory.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 76457,
+          "cached_input_tokens": 68992,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1553,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 12272,
+            "create_time_100ns": "134400187160704962",
+            "receipt": "calls/ee71bc8968e94ec79cab8bc127ab5c67/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/excited/without/r2",
+          "evaluation_sha256": "dad3f9a3383b3d9c62e6dfc1bf228965c0c91871fbc574503de8d8dfaf8b5186",
+          "metadata_sha256": "505973e6f3065775b829533175957dae8353408c75604b792610600a17badb7c",
+          "events_sha256": "a8a68ab296a9d58a4beebfc3d8d593d74132ae0017a435140972818a4bd5cf14",
+          "answer_sha256": "805649636dc36df2bec9fba0507db5cf9341a6ea4b88119737ff2f7eeb92a0eb",
+          "terminal_sha256": "2ba3e7ebbd527f7e9e86a1990a24cece5f7aae5e0bf39e984d661295b9ccf4d9",
+          "result_and_raw_sha256": {
+            "jobs/attempt-1/job.inp": "29735c7181be3e7222e3ce6e20e3ed509cc32dcea6d9e8711dfb276c5f335253",
+            "jobs/attempt-1/job.out": "992e33924a10bac07bde8608f9d53c8614a67afca9a49b933e540371b146877d",
+            "result.json": "fea2ab30f6168bf79df280b28385a3b1312f84f78189de0c7c0b8532032c55e9"
+          },
+          "os_receipt_sha256": {
+            "ee71bc8968e94ec79cab8bc127ab5c67": "39ec00af8566d84722e1868fe2c877f3fa1af29fd3aab90b6824baa56edbf6cf",
+            "9afaeff3e3504097bd3b2b5d9eaa050c": "721f88618392ad356214df25e5f8e2d54bf454fb8600d68b65c44fed0ea7a14a"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "ee71bc8968e94ec79cab8bc127ab5c67",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "9afaeff3e3504097bd3b2b5d9eaa050c",
+            "exit": 0
+          }
+        ],
+        "review_source": "Historical masked review on 2026-11-25",
+        "review": {
+          "pass": true,
+          "reason": "明确六个单重根中最低能根 1 近暗、根 2 最亮，指出根 5 同样近暗；用电偶极跃迁矩解释能量排序不足以确定亮度。",
+          "evidence": "jobs/attempt-1/job.out 第 1065 行为长度表，第 1070–1075 行的 fosc(D2) 与结果一致。",
+          "case": "case-16"
+        },
+        "end_to_end_pass": true
+      },
+      "previous": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 65.02,
+        "time_to_first_orca_s": 26.048,
+        "time_to_first_orca_from_metadata_s": 26.048,
+        "session_start_utc": "2026-11-24T18:30:35.241364+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:31:01.289499+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:31:01.084501+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          3
+        ],
+        "terminal_calls": 4,
+        "recorded_tool_wall_s": 8.781,
+        "session_outside_recorded_tools_s": 56.239,
+        "read_skill_text": true,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          3
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Read the skill and its chemistry reference; authored native TD-DFT input and custom evidence parser without executing any installed script. Reported dark first state and brightest second root.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 117242,
+          "cached_input_tokens": 99712,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2289,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 40448,
+            "create_time_100ns": "134400186612894985",
+            "receipt": "calls/94008130d71d4bff958a2e32cf117d9c/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/excited/with/r2",
+          "evaluation_sha256": "c327e2dd147c493c61ed796b7d51e58317bf521448fb9cc2f53ebe1fa3f9f490",
+          "metadata_sha256": "5391d4df42efede01ee4452885e7b3a36fc4c6887cbee238790d2f865d9e03a2",
+          "events_sha256": "856a70ed0b93e0a604d418a7313e85d4e4d1f4c41910f2a8be03c3e856e03d7d",
+          "answer_sha256": "9a17536cb0a3e5395087de9d674c65a6b6377d0e8df5ce52283a84dcf118b641",
+          "terminal_sha256": "08eb9db871e85ea2834f96a8161f7f63e106ecadbc9956a7eea2153c18299485",
+          "result_and_raw_sha256": {
+            "jobs/attempt-1/job.inp": "9c3a431bb8c32c6ca48ebbb5e1387f155590b99b14c0de68783b64a77d0daac3",
+            "jobs/attempt-1/job.out": "bd9e91b658df1a4beeab3ac19706c35d75cdfdde3a1665c00772060e0c05569c",
+            "result.json": "4b706b433f848e239dfbbc427d6e3e18eda6fedde83b55fb1593e06703faad25"
+          },
+          "os_receipt_sha256": {
+            "dca540a7b9884643a9de1a8c1612777e": "cb87533af24342b5f6570918bd0c90cf85abee7da6ba3fa7f0e882716ec52a54",
+            "0dd81d0bf875453ea5ebb368ebbde598": "c264504a2e365d58db83bf309a29be87fcb995b0b63bfbd683efe597c528403e",
+            "94008130d71d4bff958a2e32cf117d9c": "3c58b85891bc77864a7ece1c91b2846fb8c433a35aeae646c54895813c25eaaf",
+            "908da8f0e251477683c3ce6eb6203430": "4f29c1bb0ff922bc6257e0e21302da2ff16d525dfa7e3454ece4a65dcdafd2eb"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "dca540a7b9884643a9de1a8c1612777e",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "0dd81d0bf875453ea5ebb368ebbde598",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "94008130d71d4bff958a2e32cf117d9c",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "908da8f0e251477683c3ce6eb6203430",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "所引第 1054–1059 行确为六个跃迁的电偶极长度表。根 1 的能量最低且打印 f 为零，根 2 的 f 最大，根 5 也满足近暗阈值。答复依据这些长度形式数值区分光子能量与吸收强弱。",
+          "case": "case-16"
+        },
+        "end_to_end_pass": true
+      },
+      "current": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 64.05,
+        "time_to_first_orca_s": 20.668,
+        "time_to_first_orca_from_metadata_s": 20.675,
+        "session_start_utc": "2026-11-27T04:16:05.496591+00:00",
+        "session_end_utc": "2026-11-27T04:17:09.547873+00:00",
+        "start_basis": "CLI pre-launch wall clock",
+        "first_native_birth_utc": "2026-11-27T04:16:26.164112+00:00",
+        "first_native_receipt_started_utc": "2026-11-27T04:16:24.331652+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 3,
+        "recorded_tool_wall_s": 14.969,
+        "session_outside_recorded_tools_s": 49.081,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "run native six-root TDA input",
+            "calls": [
+              2
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "第 1 次读取 SKILL.md 和输入，第 2 次从原生 .inp 调用 orca_job.py；第 3 次复核固定几何和结果证据。",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 193224,
+          "cached_input_tokens": 182784,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1994,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 9112,
+            "create_time_100ns": "134402265861641128",
+            "receipt": "calls/bb7e71316d734c9f94f2a87f9f9667a6/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/excited/with/r2",
+          "evaluation_sha256": "34abeceb80e10a054e321f1f545f1aed44972319a8e5d94c99d3dbcd9f74173a",
+          "metadata_sha256": "ff1b77d2ceaa5ad949b03d644749b1ba0f95220419394e33d4c160ffde8a2731",
+          "events_sha256": "01bc609e61292e053c7e94137e6f422edd9d9f3959be422c3c057facea58f8bb",
+          "answer_sha256": "66ee340f5ee81c1e614fb4dd7a4219070d48ac82efc4d5a9a2ea307ff4d32f4f",
+          "terminal_sha256": "379f36ef0604b8619705acd84c2805a14e22e66d07b47d0339ab409548dc09ca",
+          "result_and_raw_sha256": {
+            "jobs/attempt-1/job.inp": "12ccf785b7ece7c5cffae9f653ef7404c784f63932b9c8c90e5b16bd75cdc9b3",
+            "jobs/attempt-1/job.out": "a46dbe1949c7c7a0b9cd70359dcc74720d895836dfc4b8ec7087ffb6bf833bd8",
+            "jobs/attempt-1/source.inp": "b0d493b9e8e638698a87ba0272948be3fc1366c6fdcb25d2a606b4ce40fb0d40",
+            "jobs/formaldehyde-tda.inp": "b0d493b9e8e638698a87ba0272948be3fc1366c6fdcb25d2a606b4ce40fb0d40",
+            "result.json": "413a42872102f7bc04610be6acaabca7f4a43f5459765221ca95760007170d99"
+          },
+          "os_receipt_sha256": {
+            "3aae35967ba0440d940b995cb5019333": "a7831343171f2cb36a5622da4626f4aca928c3f5a5835748adbf33c2615739b8",
+            "bb7e71316d734c9f94f2a87f9f9667a6": "b355a9691e76334266b5b92cd549aeda54fbba88e4d31fac7f41b5e3997cf3e7",
+            "75af7aa593434c7682abcad0a75e5cc9": "9c18d9a364c3c6f61bffa5257afeaa7c6b75d90e4dec1c8df3edb23f00d23273"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "3aae35967ba0440d940b995cb5019333",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "bb7e71316d734c9f94f2a87f9f9667a6",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "75af7aa593434c7682abcad0a75e5cc9",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "长度形式电偶极吸收表第 1064–1069 行与六根表逐行吻合，根 1 最低、根 2 最亮，根 1 和 5 达到近暗阈值。答复还说明吸收强度取决于跃迁电偶极矩。",
+          "case": "case-04"
+        },
+        "end_to_end_pass": true
+      }
+    },
+    {
+      "task": "excited",
+      "replicate": 3,
+      "without": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 57.52,
+        "time_to_first_orca_s": 19.877,
+        "time_to_first_orca_from_metadata_s": 19.877,
+        "session_start_utc": "2026-11-24T18:35:29.449245+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:35:49.326635+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:35:49.119855+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 4,
+        "recorded_tool_wall_s": 9.735,
+        "session_outside_recorded_tools_s": 47.785,
+        "read_skill_text": false,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          2
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Direct TDA run followed by two inspection/checking calls over transition table and input geometry. Final links use transient launcher directory.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 104084,
+          "cached_input_tokens": 93056,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1763,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 10300,
+            "create_time_100ns": "134400189493266362",
+            "receipt": "calls/40ff269d6ff2438092b9384cab83f3c7/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/excited/without/r3",
+          "evaluation_sha256": "7708c33e9ce2eb7bfc17c3c8a49a4e2296ca7d1529fb543e6b023d07b982cbef",
+          "metadata_sha256": "ad71f28f5898116dfd77461cce7060a1e4d7f7c562698dc490cc2149f60ef158",
+          "events_sha256": "839af8285addf5fdfb028950670eef3a7b32a108777d90d043163b81a01394d3",
+          "answer_sha256": "a57880ef38ba23dab34195b5a60faaa84ccb28a1e6d50124d4521c0944272766",
+          "terminal_sha256": "9dd6003f72ec7310fcaddcfdb9d9363672b5ee14b121ffbbb9b5644f96446403",
+          "result_and_raw_sha256": {
+            "jobs/attempt-1/job.inp": "5f058c40084d95ec63c585f1e1f7230a03e38d3b6d26f94019120fe4be86906b",
+            "jobs/attempt-1/job.out": "ae61cf5cef2a345de8e94b52e43fcefe641cac9c866ef3153e2ba62d000df60d",
+            "result.json": "d4a0b1fad6ca872bd724ddf474cebf487244fc1848705a83b4c54a9de502ae43"
+          },
+          "os_receipt_sha256": {
+            "228dd18e4ba84284b294973f8f1b7b68": "354f57722ca371a2b6d94013c1f16e94ca604ab0ba1e85802698fe58331b34e1",
+            "40ff269d6ff2438092b9384cab83f3c7": "07fc02d9838d0e28af2485344529544cf6a6b7564f9d3296fea5606c35bc3253",
+            "1ea488671095412d8c140b3a6cf76362": "039787614e62ccd0c46e1f18b146e716b6ef735a9d445fbabfa938cf6206622b",
+            "022365e64df84d9388c3718f39aecb05": "4d5e41f18f37970e3a3b1563bf22c0c410806ecc7a2474ebdadac0c411b29b36"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "228dd18e4ba84284b294973f8f1b7b68",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "40ff269d6ff2438092b9384cab83f3c7",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "1ea488671095412d8c140b3a6cf76362",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "022365e64df84d9388c3718f39aecb05",
+            "exit": 0
+          }
+        ],
+        "review_source": "Historical masked review on 2026-11-25",
+        "review": {
+          "pass": true,
+          "reason": "说明电偶极振子强度与激发能和跃迁偶极矩平方有关，正确区分六根中的最低能根 1 和最亮根 2，并指出根 1、5 近暗。",
+          "evidence": "jobs/attempt-1/job.out 第 1065 行为长度表，第 1070–1075 行给出六根能量和 fosc(D2)。",
+          "case": "case-02"
+        },
+        "end_to_end_pass": true
+      },
+      "previous": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 63.45,
+        "time_to_first_orca_s": 25.948,
+        "time_to_first_orca_from_metadata_s": 25.948,
+        "session_start_utc": "2026-11-24T18:34:25.974391+00:00",
+        "session_end_utc": null,
+        "start_basis": "pre-launch metadata wall clock",
+        "first_native_birth_utc": "2026-11-24T18:34:51.922213+00:00",
+        "first_native_receipt_started_utc": "2026-11-24T18:34:51.712599+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          3
+        ],
+        "terminal_calls": 5,
+        "recorded_tool_wall_s": 9.174,
+        "session_outside_recorded_tools_s": 54.276,
+        "read_skill_text": true,
+        "helper_actions": [],
+        "direct_orca_call_numbers": [
+          3
+        ],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "Read skill and chemistry reference, then wrote its own ORCA input and raw-table parser. No installed script was executed. Final links use transient launcher directory.",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 156064,
+          "cached_input_tokens": 140416,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1987,
+          "reasoning_output_tokens": 0
+        },
+        "driver_receipts": [
+          {
+            "pid": 39020,
+            "create_time_100ns": "134400188919222127",
+            "receipt": "calls/55f6492a9a30410f9b606072058c9b08/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/excited/with/r3",
+          "evaluation_sha256": "f9c09cc754b42f2bf9c45823988880e5398f75dfacbbe3f12b16842097dfa507",
+          "metadata_sha256": "77be745d86b3e6f2b2a988796c177e1055cceb85895156ab7244076b41a7fdcb",
+          "events_sha256": "d0b481611c30ccde496868d077c0bc7978c999c061534a461fb4876ee864f1bc",
+          "answer_sha256": "1b78cc611d04da0a989b480638a8b3a5359d5417c6fbc5593f731eff6ba1a7d7",
+          "terminal_sha256": "4a6c2dbf1fe48a4b2ea4c2da8e778d68d0706ce65f0d977ea57e458d310d2e71",
+          "result_and_raw_sha256": {
+            "jobs/attempt-1/job.inp": "29735c7181be3e7222e3ce6e20e3ed509cc32dcea6d9e8711dfb276c5f335253",
+            "jobs/attempt-1/job.out": "d7e3a57c2855cccfa186e6d7744a580c3cf9a6adae1046312172e4ce6b7aed21",
+            "result.json": "d27bbfe5f4f0a1c4f0fb787749183f9d3535f98ea8bed20ed2c75d88153be407"
+          },
+          "os_receipt_sha256": {
+            "a019c1dbb6a249b39751a6c86ec58481": "3dd3babc5e5788b0994828ac2261896d1aacb9ebfd9f3700c327d75f53fbd29d",
+            "9e833e9a09434147a2398c6a8651d53b": "19ef388a3ed7beeed695d69e76fb99f1fa6e0002adbf44e16f18c66b2006bb97",
+            "55f6492a9a30410f9b606072058c9b08": "a8e8ba6772bcd15c77c7505851a449c3bd75e5540b7328758910c7fc9020104c",
+            "82974a931e5a4fdc9b7c02fadea5b92c": "8357b00d3dc55d28c263486f72e78ba41e39876e53c7fbb29574634f1249d90d",
+            "7a608b106c9e438b944052e8712bfd60": "bf5f6032a664acedcb07dd27ec1191747892d8965348908201a35c73b343016a"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "a019c1dbb6a249b39751a6c86ec58481",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "9e833e9a09434147a2398c6a8651d53b",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "55f6492a9a30410f9b606072058c9b08",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "82974a931e5a4fdc9b7c02fadea5b92c",
+            "exit": 0
+          },
+          {
+            "n": 5,
+            "receipt": "7a608b106c9e438b944052e8712bfd60",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "本例第 1070–1075 行的长度形式 fosc(D2) 表与答复六行一致。答复依此解释亮度排序，分清能量最低的根 1 与 f 最大的根 2，并用 f ≤ 10⁻⁵ 正确筛出根 1、5。",
+          "case": "case-14"
+        },
+        "end_to_end_pass": true
+      },
+      "current": {
+        "science_pass": true,
+        "primary_pass": true,
+        "native_provenance_pass": true,
+        "cli_completion_pass": true,
+        "failed_checks": [],
+        "elapsed_s": 64.34,
+        "time_to_first_orca_s": 19.274,
+        "time_to_first_orca_from_metadata_s": 19.281,
+        "session_start_utc": "2026-11-27T04:18:03.964697+00:00",
+        "session_end_utc": "2026-11-27T04:19:08.311087+00:00",
+        "start_basis": "CLI pre-launch wall clock",
+        "first_native_birth_utc": "2026-11-27T04:18:23.238241+00:00",
+        "first_native_receipt_started_utc": "2026-11-27T04:18:22.629770+00:00",
+        "driver_count": 1,
+        "driver_call_numbers": [
+          2
+        ],
+        "terminal_calls": 4,
+        "recorded_tool_wall_s": 10.501,
+        "session_outside_recorded_tools_s": 53.839,
+        "read_skill_text": true,
+        "helper_actions": [
+          {
+            "name": "orca_job.py",
+            "action": "run native TDA input",
+            "calls": [
+              2
+            ]
+          }
+        ],
+        "direct_orca_call_numbers": [],
+        "lookup_call_numbers_before_first_launch": [],
+        "standalone_lookup_calls": 0,
+        "lookup_types": {
+          "source": [],
+          "cli_help": []
+        },
+        "postlaunch_lookup_types": {},
+        "lookup_call_numbers_all": [],
+        "repeated_parameter_lookup": false,
+        "trace_notes": "读 SKILL.md 后即提交原生 TDA 输入。该次作业产物支撑第 3、4 次对几何、六个根及原始表行的核验。",
+        "tool_nonzero_call_numbers": [],
+        "retained_native_failures": [],
+        "diagnostics": [],
+        "usage": {
+          "input_tokens": 164457,
+          "cached_input_tokens": 153600,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2063,
+          "reasoning_output_tokens": 15
+        },
+        "driver_receipts": [
+          {
+            "pid": 6316,
+            "create_time_100ns": "134402267032382417",
+            "receipt": "calls/994a1cf2601f49d79275aad2c7fa0a7a/os.json"
+          }
+        ],
+        "evidence": {
+          "trial_path": "jobs/excited/with/r3",
+          "evaluation_sha256": "f5cf8f3f862fb0ca4611102204426e8af8b989db2ef1c075bf691848fa042442",
+          "metadata_sha256": "59eabdcb149df7c2d9bea2d89c30b5d0388e46c40f92b5a3ed340059555a9c06",
+          "events_sha256": "6ee6ec1a26707b86df561840fd57a6597fa7ad36ea7bdae47295737520fdf57f",
+          "answer_sha256": "ae2e1d569bd573cf4a2d07e09253cfbcc82a4b7fd144da521ade838159688630",
+          "terminal_sha256": "4c5446ac321067f3c29218c00905f2cbefc256252e4b3ea3f3094fd117859b06",
+          "result_and_raw_sha256": {
+            "jobs/attempt-1/job.inp": "12ccf785b7ece7c5cffae9f653ef7404c784f63932b9c8c90e5b16bd75cdc9b3",
+            "jobs/attempt-1/job.out": "69f7538677910d48fe969b2a33f4a4758563a66095d9508c05a33730e00423f8",
+            "jobs/attempt-1/source.inp": "51a0157a8d0cc4fcbd2d8e52ef1543376dedc568acd80ded6ce5e4649f7f2d8e",
+            "jobs/formaldehyde.inp": "51a0157a8d0cc4fcbd2d8e52ef1543376dedc568acd80ded6ce5e4649f7f2d8e",
+            "result.json": "222506bf22549073841e1a441f98573462d201cec9c70d7c615f1f376c71925f"
+          },
+          "os_receipt_sha256": {
+            "a1c9a017cb0e4516add56c61fa303514": "b73bfd16dccf100a22362bbccddea7784b446e13b08281306c810bd58c47b8ce",
+            "994a1cf2601f49d79275aad2c7fa0a7a": "785bdd71ae090e4e2cc121b47bc93622acd4411ad7a992b012e8effbaf54334f",
+            "d23f293ccd52491a9125f7fd97bf275c": "5ce1f46a71ef7f986bb6d497520bf23773ef7ced39ddb79eaeb6287c43725983",
+            "513a7636d7944de19165bbd597ea2b06": "f33d4c3adb9edeff2c8d83d308e89f89b0510762a9d30740b030dc2fa75d837c"
+          }
+        },
+        "call_index": [
+          {
+            "n": 1,
+            "receipt": "a1c9a017cb0e4516add56c61fa303514",
+            "exit": 0
+          },
+          {
+            "n": 2,
+            "receipt": "994a1cf2601f49d79275aad2c7fa0a7a",
+            "exit": 0
+          },
+          {
+            "n": 3,
+            "receipt": "d23f293ccd52491a9125f7fd97bf275c",
+            "exit": 0
+          },
+          {
+            "n": 4,
+            "receipt": "513a7636d7944de19165bbd597ea2b06",
+            "exit": 0
+          }
+        ],
+        "review_source": "Joint follow-up masked review",
+        "review": {
+          "pass": true,
+          "reason": "第 1059 行所标电偶极表及其 fosc(D2) 列支持根 1 的最低能量、根 2 的最大强度，以及根 1、5 的近暗判断。答案说明跃迁偶极矩影响电偶极吸收强度，排序适用范围限定为六个单重根。",
+          "case": "case-15"
+        },
+        "end_to_end_pass": true
+      }
+    }
+  ]
+}
