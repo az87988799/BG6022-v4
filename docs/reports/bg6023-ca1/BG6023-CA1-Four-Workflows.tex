@@ -1,0 +1,263 @@
+% !TeX program = pdflatex
+% Compile twice with pdfLaTeX. The bibliography is included below.
+\documentclass[12pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,microtype}
+\usepackage[margin=1in]{geometry}
+\usepackage{array,tabularx,titlesec,setspace}
+\usepackage[table]{xcolor}
+\usepackage[numbers]{natbib}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Manual, Scripted and Agent-Assisted ORCA Workflows},
+  pdfauthor={CHEN GENG},pdflang={en}}
+
+% Replace \blankfield with the relevant details when ready.
+\newcommand{\blankfield}{\rule{3.5cm}{0.35pt}}
+\newcommand{\StudentName}{CHEN GENG}
+\newcommand{\StudentID}{\blankfield}
+\newcommand{\Supervisor}{\blankfield}
+\newcommand{\SubmissionDate}{\blankfield} % DD/MM/YYYY
+
+\singlespacing
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.42em}
+\setlength{\emergencystretch}{1.5em}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.16}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\titleformat{\section}{\fontsize{12}{14}\selectfont\bfseries}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{1.05em}{0.35em}
+\newcommand{\subhead}[1]{\par\addvspace{0.4em}\textbf{#1}\par\nobreak}
+\newcommand{\unitE}{\ensuremath{\mathrm{kJ\,mol^{-1}}}}
+\newcommand{\doi}[1]{\href{https://doi.org/#1}{doi:\,#1}}
+\raggedbottom
+\begin{document}
+
+\textbf{BG6023 MSc Research I}\hfill CA1 Research Proposal\par
+\vspace{0.25em}
+{\fontsize{12}{15}\selectfont\bfseries
+Project Title\quad Manual, Scripted and Agent-Assisted ORCA Workflows\par}
+\begin{tabularx}{\linewidth}{|p{0.456\linewidth}|Y|}
+\hline
+\rowcolor[HTML]{F2F2F2}\textbf{Field} & \textbf{Details} \\ \hline
+Student name & \StudentName \\ \hline
+Student ID & \StudentID \\ \hline
+Supervisor & \Supervisor \\ \hline
+Date of submission & \SubmissionDate \\ \hline
+\end{tabularx}
+
+\section{Introduction and Background}
+In molecular density functional theory (DFT), preparing an input, obtaining
+a converged solution and interpreting the resulting property are separate
+tasks. Jacobs and Pollice tested whether large language models (LLMs) could write
+executable ORCA inputs~\cite{jacobs}. Q-Planner coupled LLM planning with
+deterministic execution~\cite{qplanner}. Quntur was benchmarked against
+Claude Code using ORCA skills and the same base model~\cite{quntur}.
+For a chemist with an established protocol, the practical question is whether
+either agent can match a checked manual result more economically than a fixed
+script. Answering it calls for measuring hands-on time as well as correctness.
+
+After a calculation, a chemist must decide whether to reuse the output or
+spend resources on another geometry. CENSO screens conformers inexpensively
+before refining their energies~\cite{censo}. Under a fixed DFT budget,
+an early energy could help decide which candidate to evaluate next.
+
+\section{Problem Statement}
+In my preliminary Auto-ORCA trial, seven of eight ORCA jobs terminated
+normally, but none of seven requests met all its requirements. A butane
+scan stopped one endpoint short. In separate ethanol pilots, the electronic
+energy decreased in implicit water at both basis sets. Inferring a standard
+hydration free energy would require further thermodynamic information.
+Six \emph{n}-hexane geometries spanned $12.61$~\unitE{} in electronic energy.
+These cases motivate independent checks of delivery, evidence reuse and
+candidate selection.
+
+\section{Aim, Objectives and Research Questions}
+\textbf{Aim.} To compare the scientific reliability and cost of four ORCA
+workflows and test two decisions made by the project's dedicated Auto-ORCA agent.
+
+\textbf{1. Benchmark delivery.} Which automated workflows reproduce the
+independently checked manual result on six tasks, and what operator time and
+compute does each of the four workflows require?
+
+\textbf{2. Test evidence reuse.} Does checking the requested quantity and
+conditions increase the fraction of eight question pairs answered correctly?
+
+\textbf{3. Test conformer selection.} Across six molecules, does seeing
+each DFT energy before the next choice increase the chance of finding the
+lowest-energy candidate within four queries, or reduce the energy missed?
+
+\clearpage
+\section{Methodology}
+\subhead{Study 1 \enspace Four workflows on the same six ORCA tasks}
+I will freeze two held-out cases in each of three families. The first asks
+for a signed gas-to-water electronic energy difference at fixed geometry
+(B3LYP/def2-SVP with a conductor-like polarizable continuum model, CPCM).
+The second asks for an optimised carbonyl
+structure, a minimum check and a C=O stretching frequency assigned from
+the normal-mode displacements. The third asks for six vertical singlet
+excitation energies and the brightest root by length-form oscillator strength.
+I will use PBE0/def2-SVP for the last two families and the Tamm--Dancoff
+approximation for excitations. Each case specifies charge, multiplicity,
+coordinates, method and deliverables.
+
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.27\linewidth}Y@{}}
+\hline
+\textbf{Workflow} & \textbf{Who prepares, executes and interprets the calculation} \\ \hline
+Manual ORCA & I will write the inputs, run ORCA and read the raw outputs. A second chemistry reader will check my inputs and readings before they become the hidden reference. \\
+Fixed script & A frozen script with no LLM takes the case parameters, runs its predefined protocol and extracts the requested quantities. I will record the time to prepare the script separately. \\
+Dedicated Auto-ORCA & The project's specialised agent receives the natural-language task and coordinates, plans the work, launches ORCA and interprets the output. \\
+General agent with ORCA Skill & A general coding agent receives the same text and coordinates, plus a frozen ORCA Skill containing instructions and helper scripts. It plans, executes and interprets independently. \\ \hline
+\end{tabularx}
+
+The manual and scripted workflows run once per case. Each agent runs twice in
+fresh workspaces, with order counterbalanced. The script is fixed before the
+held-out cases are revealed. Automated workflows cannot read the manual inputs,
+answer keys or other runs. I will match solver version, numerical settings,
+cores and time limits across workflows. I will use a common base LLM for the
+two agents if both support it. Any model or backend difference will be recorded
+and the comparison interpreted at the level of the configured systems.
+
+A reviewer will score masked automated submissions against the checked key.
+A pass requires a fresh ORCA execution, the correct geometry and conditions,
+convergence, the requested physical interpretation and evidence in the raw output.
+Agreement limits are $0.1$~\unitE{} for the signed energy difference,
+$2$~cm$^{-1}$ for the assigned stretch, and $0.002$~eV per excitation with the
+correct brightest root. A minimum requires a converged geometry and no
+imaginary internal harmonic modes there. I will report passes per case, failures and retries, along with
+elapsed time, CPU core-hours, active operator minutes and model tokens. The manual
+run supplies a timing baseline and a checked reference. A separate execution
+check addresses the incomplete runs observed by Liu et al.\ in a materials
+DFT benchmark~\cite{dftbench}.
+
+\clearpage
+\subhead{Study 2 \enspace What can the archived outputs establish?}
+For eight held-out neutral singlets I will prepare gas and CPCM-water
+B3LYP/def2-SVP energies at identical coordinates. Two molecules will use the
+four checked manual outputs from Study~1. In four question pairs the direction
+of subtraction reverses. In two, a question about the electronic energy
+difference is followed in a separate session by one about the standard
+hydration free energy. In the final two pairs I will withhold the water output
+and ask for either the available gas energy or the solvent effect.
+
+Both Auto-ORCA conditions receive identical read-only files and must give
+units and source lines or explain what is missing. Only one prompts an explicit
+check of quantity, geometry, method and solvent. I will counterbalance order and
+run each question twice per condition in a fresh session (64 sessions).
+A pair passes only if both answers agree with the independently reviewed key.
+Tolerances are $0.1$~\unitE{} for differences and $10^{-5}$~hartree for total
+energies. An unsupported quantity requires withholding the value and naming
+the missing evidence. Per repeat and condition there are 12 answerable and
+four unanswerable questions. I will count avoidable rerun requests, omissions
+and unsupported numbers against their respective denominators.
+
+\subhead{Study 3 \enspace Which conformer merits the next calculation?}
+For six additional neutral molecules containing only C, H and O, with at
+least three rotatable bonds and at most eight heavy atoms, I will embed up
+to 200 candidates with a fixed seed, relax them with
+MMFF94, and retain the first eight distinct geometries after symmetry-aware
+heavy-atom alignment (0.35~\AA{} cutoff). MMFF94 and GFN2-xTB will rank the
+same geometries. I will calculate and withhold all 48 gas-phase
+$r^2$SCAN-3c single-point energies. Each lookup consumes one of four DFT
+queries. Using fixed coordinates makes the penalty for a poor choice directly
+measurable.
+
+Two fixed rules will pick the four lowest MMFF94 candidates or favour distinct
+predefined torsion families in that order. In the latter rule any remaining
+places go to the next lowest candidates. Two Auto-ORCA conditions receive both
+rankings and family labels, start with the MMFF94 minimum and make four choices
+in four rounds. Both see their chosen IDs and remaining budget. Only one sees
+each returned DFT energy. I will run each rule once per molecule and each agent
+condition three times (36 sessions). AutoDFT's comparison of adaptive and
+fixed plans in VASP illustrates why computational cost should accompany
+success rates~\cite{autodft}.
+
+A hit means finding a geometry within $0.01$~\unitE{} of the minimum in the
+eight-candidate set. The energy missed is the best queried energy minus the
+full-set minimum. Incomplete sessions count as misses, with their query count
+and best available energy reported. In Studies~2 and~3 I will average repeats
+within each molecule, report paired differences and show how the mean changes
+when each molecule is left out in turn.
+
+\clearpage
+\section{Expected Outcomes and Significance}
+The four-workflow comparison will show where a fixed script suffices and where
+either agent can complete a task with less hands-on work. If the workflows
+agree numerically, differences in interventions, retries and elapsed time may
+still matter to a laboratory. I expect evidence checks to help most when a
+question changes the physical quantity, and energy feedback to help most when
+the two inexpensive rankings disagree. I will publish the reference inputs,
+scoring rules, anonymised answers and selection sequences where licences allow.
+Six benchmark cases and one manual operator support case-level conclusions.
+The conformer study measures electronic-energy rankings within fixed candidate
+sets. Equilibrium populations would require further sampling and free energies.
+
+\section{Timeline}
+\begin{tabularx}{\linewidth}{|>{\raggedright\arraybackslash}p{0.30\linewidth}|c|c|Y|}
+\hline
+\rowcolor[HTML]{F2F2F2}\textbf{Task} & \textbf{Start (week)} & \textbf{End (week)} & \textbf{Output} \\ \hline
+Select cases and methods & 1 & 2 & Matched tasks and scoring protocol \\ \hline
+Pilot and freeze & 3 & 4 & Feasibility checks and fixed workflows \\ \hline
+Run four workflows & 5 & 6 & Checked references, outputs and cost logs \\ \hline
+Test reuse and selection & 7 & 8 & Paired answers and energy tables \\ \hline
+Audit and analyse & 9 & 10 & Per-case scores and error analysis \\ \hline
+Write up and present & 11 & 12 & Research paper and presentation \\ \hline
+\end{tabularx}
+
+\section{Resources}
+I will use ORCA~6.1.1, Python, RDKit, xTB, two agent environments and a
+second chemistry reader. The benchmark will use one core per job and a
+1~GiB memory limit, with serial scheduling and 192~MB MaxCore per process.
+Each pass over the six tasks needs eight solver starts if optimisation and
+frequencies run together. The six passes need 48 starts. The two later
+studies need 16 solvent/gas and 48 conformer starts. Sharing four manual
+outputs gives 108 planned starts. A proposed ceiling of 128, including pilots
+and retries, at 15 minutes per start bounds solver time at 32 hours.
+The 124 agent sessions (24, 64 and 36) each allow at most eight model calls.
+
+By week 4 I will check that both agents can launch ORCA under the stated
+limits, time a representative case, review model credit and confirm an
+independent reader. I will freeze inputs, script, Skill, model identifiers,
+reference criteria and settings before evaluation. Ineligible molecules may
+be replaced from a prespecified list before unblinding. Failed submissions
+stay in the denominator. Budget or service interruptions will be reported
+with coverage by arm. Human time is my own operating time. Hidden answers
+and credentials will stay outside agent workspaces.
+
+\clearpage
+\renewcommand{\bibsection}{\section{References}}
+\setlength{\bibsep}{0.65em}
+\begin{thebibliography}{9}
+\raggedright
+\bibitem{jacobs}
+P. F. Jacobs and R. Pollice. Developing large language models for quantum
+chemistry simulation input generation. \emph{Digital Discovery} 4 (2025),
+762--775. \doi{10.1039/D4DD00366G}.
+
+\bibitem{qplanner}
+R. Zhang, W. Gao and Y. Kurashige. Q-Planner: A harness system for quantum
+chemistry agents. \emph{ACS Omega} (2026). \doi{10.1021/acsomega.6c05744}.
+
+\bibitem{quntur}
+J. B. P\'erez-S\'anchez, Y. Zou, J. A. Campos-Gonzalez-Angulo, et al.
+El Agente Quntur: A research collaborator agent for quantum chemistry.
+\emph{Chem} (2026), 103259. \doi{10.1016/j.chempr.2026.103259}.
+
+\bibitem{censo}
+S. Grimme, F. Bohle, A. Hansen, P. Pracht, S. Spicher and M. Stahn.
+Efficient quantum chemical calculation of structure ensembles and free
+energies for nonrigid molecules. \emph{Journal of Physical Chemistry A}
+125 (2021), 4039--4054. \doi{10.1021/acs.jpca.1c00971}.
+
+\bibitem{dftbench}
+S. Liu, J. Yang, W. Wan, J. Han, J. Li and T. Deng. DFT-Agent Bench:
+Scaffold effects and execution provenance in autonomous DFT.
+\emph{arXiv} (2026), \href{https://arxiv.org/abs/2611.10629v1}{2611.10629v1}
+(preprint).
+
+\bibitem{autodft}
+P. Yang, Z. Zhang, Y. Li, et al. AutoDFT: A closed-loop multi-agent framework
+for autonomous DFT calculations. \emph{arXiv} (2026),
+\href{https://arxiv.org/abs/2605.26179v2}{2605.26179v2} (preprint).
+\end{thebibliography}
+\end{document}
