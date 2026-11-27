@@ -1,10 +1,11 @@
 % !TeX program = pdflatex
 % Compile twice with pdfLaTeX. The bibliography is included below.
-\documentclass[11pt,a4paper]{article}
+\documentclass[12pt,a4paper]{article}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern,microtype}
 \usepackage[margin=1in]{geometry}
-\usepackage{array,booktabs,tabularx,titlesec}
+\usepackage{array,tabularx,titlesec,setspace}
+\usepackage[table]{xcolor}
 \usepackage[numbers]{natbib}
 \usepackage[hidelinks]{hyperref}
 \hypersetup{pdftitle={Evidence Reuse and Conformer Selection in Auto-ORCA},
@@ -17,6 +18,7 @@
 \newcommand{\Supervisor}{\blankfield}
 \newcommand{\SubmissionDate}{\blankfield} % DD/MM/YYYY
 
+\singlespacing
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.42em}
 \setlength{\emergencystretch}{1.5em}
@@ -35,10 +37,14 @@
 \textbf{BG6023 MSc Research I}\hfill CA1 Research Proposal\par
 \vspace{0.25em}
 {\fontsize{12}{15}\selectfont\bfseries
-Evidence Reuse and Conformer Selection in Auto-ORCA\par}
-\begin{tabularx}{\linewidth}{@{}l Y l Y@{}}
-Student name & \StudentName & Student ID & \StudentID \\
-Supervisor   & \Supervisor  & Date of submission & \SubmissionDate
+Project Title\quad Evidence Reuse and Conformer Selection in Auto-ORCA\par}
+\begin{tabularx}{\linewidth}{|p{0.456\linewidth}|Y|}
+\hline
+\rowcolor[HTML]{F2F2F2}\textbf{Field} & \textbf{Details} \\ \hline
+Student name & \StudentName \\ \hline
+Student ID & \StudentID \\ \hline
+Supervisor & \Supervisor \\ \hline
+Date of submission & \SubmissionDate \\ \hline
 \end{tabularx}
 
 \section{Introduction and Background}
@@ -66,8 +72,9 @@ using one workstation, each additional job must justify its computational cost.
 In an earlier trial of Auto-ORCA, seven of eight ORCA jobs terminated normally,
 yet none of the seven research requests met all its delivery requirements.
 For example, six completed points in a butane torsion scan still left a
-requested endpoint missing~\cite{trial}. This makes the agent's decision
-after a calculation a natural subject for evaluation.
+requested endpoint missing~\cite{trial}. A count of successful jobs therefore
+gives a researcher little guidance about whether the current evidence answers
+the original question.
 
 In the project's ethanol pilot, B3LYP calculations at fixed geometry gave
 water-minus-gas electronic energy differences of $-16.61$ and $-18.28$~\unitE{}
@@ -78,24 +85,27 @@ undetermined from those records. In a separate pilot, ORCA ranked two sets
 of four and six fixed \emph{n}-hexane geometries. The six-candidate set spanned
 $12.61$~\unitE{}~\cite{archive}. Both sets were evaluated in full. The open
 question is how reliably the agent can find the lowest-energy geometry in
-a fresh set with just four queries.
+a fresh set with just four queries. One experiment varies the question
+asked of the same files. The other varies when the agent can see the energy
+of the geometry it has just selected.
 
+\clearpage
 \section{Aim, Objectives and Research Questions}
 \textbf{Aim.} To test how reliably Auto-ORCA can answer questions from existing
 DFT evidence and allocate a fixed number of new calculations when that evidence
 is incomplete.
 
-\textbf{Objective 1.} Measure the proportion of eight question pairs answered
-correctly with and without an explicit check of the available evidence.
-\emph{RQ1. Does checking the requested quantity and calculation conditions
-reduce unsupported answers while preserving answers the files can support?}
+\textbf{Objective 1.} Measure the difference in the fraction of question pairs
+answered correctly across eight held-out molecules.
+\emph{RQ1. Does an explicit check of the requested quantity and calculation
+conditions improve paired accuracy? Which gains come from avoiding unsupported
+answers, and which from recovering answers the files support?}
 
-\textbf{Objective 2.} Compare strategies for selecting four geometries for
-DFT evaluation on six held-out molecules.
-\emph{RQ2. How often does feedback from early DFT energies help Auto-ORCA
-recover the lowest-energy candidate, and how much energy does it miss?}
+\textbf{Objective 2.} Measure how often four selections recover the
+lowest-energy candidate on six held-out molecules and the energy penalty of a miss.
+\emph{RQ2. With four queries per molecule, does revealing each DFT energy before
+the next choice improve the hit rate or reduce the energy penalty?}
 
-\clearpage
 \section{Methodology}
 \subhead{Study 1 \enspace Answering paired questions from the same files}
 I will prepare one gas-phase and one CPCM-water B3LYP/def2-SVP single-point
@@ -108,10 +118,11 @@ and ask first for the available gas-phase energy and separately for the solvent
 effect. Each pair thus shares exactly the same files. Ethanol will serve as a
 development example.
 
-I will compare the existing agent with the same agent prompted to identify the
-target quantity, match geometry and conditions, and cite the source of each
-value before deciding whether further work is needed. Both will have the same
-read-only files, tools, model version and call limit. Each question will be
+Both conditions will ask the agent for an answer with units and source lines,
+or a reason the quantity cannot be determined. Only the intervention will
+prompt it to check the target quantity, geometry, method and solvent against
+the files before answering. Both conditions will use the same read-only files,
+tools, model version and call limit. Each question will be
 asked in a fresh session twice per condition (64 sessions), with the order of
 conditions counterbalanced. A request to rerun ORCA will be recorded without
 launching a job. I will write a reference answer from each raw output and
@@ -123,37 +134,43 @@ For a numerical answer I will require the correct sign, units, supporting
 output lines and agreement within $0.1$~\unitE{} for a difference, or
 $10^{-5}$~hartree for a total energy. When evidence is insufficient,
 the answer must withhold the number and name the missing calculation or
-thermodynamic information. I will score anonymised responses
-against the frozen key and report paired counts per molecule. I will also
-count unsupported numbers among unanswerable questions, and omissions and
-unnecessary rerun requests among answerable questions.
+thermodynamic information. I will mask the condition labels before scoring.
+Per repeat and condition, 12 questions support a numerical answer and four
+do not. I will report unsupported numbers out of those four, and omissions or
+avoidable rerun requests out of the 12. I will code missing citations
+separately from errors in physical interpretation. A timed-out response
+counts as an unanswered question.
 
+\clearpage
 \subhead{Study 2 \enspace Selecting four conformers without seeing the full ranking}
-For six additional neutral, flexible molecules containing C, H and O, I will
-generate candidates with a fixed embedding seed and relax them with the MMFF94
-force field. I will remove duplicates using a symmetry-aware heavy-atom
+I will select six additional neutral, flexible molecules containing only C,
+H and O, with at most eight heavy atoms and at least three rotatable bonds.
+For each I will embed up to 200 candidates with a fixed seed and relax them
+with the MMFF94 force field. I will remove duplicates using a symmetry-aware heavy-atom
 root-mean-square displacement cutoff of 0.35~\AA{} and retain the first eight
 distinct geometries in generation order. MMFF94 and the GFN2-xTB tight-binding
 method will rank those same coordinates. I will compute all 48 gas-phase
-$r^2$SCAN-3c single-point reference energies, verify convergence, and withhold
-the table from the selectors. Looking up one energy will count as one DFT
-evaluation for every selector.
+$r^2$SCAN-3c single-point energies at the level used in the \emph{n}-hexane
+pilot~\cite{archive}. Using identical geometries isolates the ranking decision
+from geometry relaxation. I will verify convergence and match each energy to
+its input geometry before withholding the reference table. For every selector,
+looking up one energy will use one of its four DFT queries.
 
 The first rule takes the four lowest MMFF94 candidates. The second takes the
 lowest member of each distinct torsion family in MMFF94 order, then fills spare
 places from the same ranking. Families will be defined in advance by the
-anti and two gauche regions of designated torsions. In two further conditions,
-Auto-ORCA receives both rankings and the family labels and starts with the
-MMFF94 minimum. In one condition it commits to the remaining three choices
-immediately. In the other it sees the DFT energy after each choice. This
-comparison isolates the information in the feedback. Each fixed rule runs
-once. Each agent condition runs three times per molecule in fresh sessions
-with the same model and limits. A session that ends before making four
-selections counts as a miss. I will report its number of completed
-queries and mark the four-query energy comparison as missing.
+anti and two gauche regions of designated torsions. Each fixed rule runs once.
 
-\clearpage
-\subhead{How to score a conformer selection}
+The main comparison is between two versions of the same agent. Both receive
+the two low-cost rankings and the family labels, start with the MMFF94 minimum,
+and make four selections in four rounds, each with the same model settings
+and time allowance. After each choice both see the candidate ID and remaining
+budget. Only the feedback condition also sees its DFT energy. Each condition
+runs three times per molecule in fresh sessions, alternating which runs first.
+Holding the number of decision rounds fixed lets us attribute a difference
+to seeing an energy before the next choice.
+
+\subhead{Scoring and paired analysis}
 For each molecule I will score a hit when the best selected geometry lies
 within $0.01$~\unitE{} of the lowest reference energy in its eight-candidate
 set. I will also report the energy missed, in \unitE{},
@@ -162,14 +179,23 @@ set. I will also report the energy missed, in \unitE{},
   \qquad |Q|=4,\quad |S|=8,
 \]
 where $Q$ contains the four queried geometries and $S$ all eight candidates.
-I will average repeats within each molecule and report paired differences
-in hit rate and energy missed, alongside individual cases. I will record
-model calls, tokens and CPU core-hours, costing reference generation once.
+An incomplete session counts as a miss. I will show its best energy after
+the actual number of queries and flag zero-query sessions separately.
 
+The molecule is the unit of comparison in both studies. I will average repeats
+within each molecule, show its paired difference, and report how many molecules
+improved, tied or worsened. I will give the range of mean differences obtained
+by leaving out one molecule at a time. This shows whether one molecule drives
+the finding in these small samples. Model calls, tokens and CPU core-hours
+will be reported separately, with reference generation costed once.
+
+\clearpage
 \section{Expected Outcomes and Significance}
 I expect the explicit evidence check to help most when a familiar output is
 used to ask for a different physical quantity. For conformers, I expect the
 adaptive procedure to help chiefly when the two inexpensive rankings disagree.
+I will compare the energy penalties for each molecule alongside the number
+of candidates shared by the two low-cost top-four lists.
 If the fixed rules find the same minima at lower cost, they would be preferable
 for those molecules.
 The deliverables will be a scored set of follow-up questions, six candidate
@@ -179,38 +205,43 @@ will apply to the tested model, molecular set and fixed geometries. Establishing
 equilibrium populations would require additional sampling and free energies.
 
 \section{Timeline}
-\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.34\linewidth}
-  c c Y@{}}
-\toprule
-\textbf{Task} & \shortstack{\textbf{Start}\\(week)} & \shortstack{\textbf{End}\\(week)} & \textbf{Output} \\
-\midrule
-Review literature and pilots    & 1 & 2 & Case definitions and scoring rules \\
-Pilot and freeze protocols      & 3 & 4 & Checked keys, candidate lists and budget \\
-Collect paired answers          & 5 & 6 & Anonymised answers and decision logs \\
-Evaluate conformer selection    & 5 & 8 & DFT reference tables and query sequences \\
-Audit and analyse outcomes      & 9 & 10 & Paired comparisons and cost tables \\
-Write up and present            & 11 & 12 & Research paper and presentation \\
-\bottomrule
+\begin{tabularx}{\linewidth}{|>{\raggedright\arraybackslash}p{0.30\linewidth}|c|c|Y|}
+\hline
+\rowcolor[HTML]{F2F2F2}\textbf{Task} & \textbf{Start (week)} & \textbf{End (week)} & \textbf{Output} \\ \hline
+Review literature and pilots    & 1 & 2 & Case definitions and scoring rules \\ \hline
+Pilot and freeze protocols      & 3 & 4 & Timing, reference key and eligible pools \\ \hline
+Collect paired answers          & 5 & 6 & Masked responses and rerun requests \\ \hline
+Evaluate conformer selection    & 5 & 8 & DFT tables and selection records \\ \hline
+Audit and analyse outcomes      & 9 & 10 & Paired results and cost estimates \\ \hline
+Write up and present            & 11 & 12 & Research paper and presentation \\ \hline
 \end{tabularx}
 
 \section{Resources}
-The study requires the local ORCA~6.1.1 installation, the ORCA Python
-Interface, Python, RDKit, xTB, one LLM endpoint and a chemistry reader.
-The workstation will run one ORCA job at a time on up to four cores with
-1~GiB total memory and 192~MB MaxCore per process. The two studies require
-16 solvent/gas jobs and 48 conformer reference jobs. I will cap the total
-at 80 ORCA starts including pilots and retries, and each of the 100 planned
-agent sessions at eight model calls. If a reference fails, I will log the cause and
-use a prespecified reserve molecule only before unblinding. An incomplete
-set will be reported if the budget expires. The study uses generated molecular
-structures and involves no human participants. I will restrict model access
-to the study files, protect credentials and share inputs and scoring scripts
-under their applicable licences.
+I will use ORCA~6.1.1, its Python interface, RDKit, xTB, one LLM endpoint
+and a chemistry reader. Jobs run serially on up to four cores with 1~GiB
+total memory and 192~MB MaxCore per process. The plan requires 16 solvent/gas
+jobs and 48 conformer jobs. A limit of 80 ORCA starts, including pilots and
+retries, at 15 minutes each bounds solver time at 20 hours. The 100 evaluation
+sessions (64 and 36, respectively) each allow at most eight model calls.
+
+By week 4 I will time a single point on a development molecule at the size
+limit, check peak memory and use pilot token logs to estimate the remaining
+cost. I will freeze the molecule list, model settings and scoring key before
+evaluation. If a molecule yields fewer than eight distinct candidates or a
+reference fails, I will use the next eligible molecule on a prespecified
+reserve list before results are revealed. If the budget is exhausted or the
+model version changes, I will report completed pairs and coverage separately.
+
+Only generated molecular structures enter the study. There are no human
+participants. The model will have access only to the files needed for each
+decision. Shared inputs and scoring scripts will respect software licences
+and exclude credentials.
 
 \clearpage
 \renewcommand{\bibsection}{\section{References}}
 \setlength{\bibsep}{0.65em}
 \begin{thebibliography}{9}
+\raggedright
 \bibitem{neese}
 F. Neese. Software update: The ORCA program system---version 6.0.
 \emph{WIREs Computational Molecular Science} 15 (2025), e70019.
