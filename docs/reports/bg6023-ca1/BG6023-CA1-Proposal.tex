@@ -1,0 +1,249 @@
+% !TeX program = pdflatex
+% Compile twice with pdfLaTeX. The bibliography is included below.
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,microtype}
+\usepackage[margin=1in]{geometry}
+\usepackage{array,booktabs,tabularx,titlesec}
+\usepackage[numbers]{natbib}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Evidence Reuse and Conformer Selection in Auto-ORCA},
+  pdfauthor={CHEN GENG},pdflang={en}}
+
+% Replace \blankfield with the relevant details when ready.
+\newcommand{\blankfield}{\rule{3.5cm}{0.35pt}}
+\newcommand{\StudentName}{CHEN GENG}
+\newcommand{\StudentID}{\blankfield}
+\newcommand{\Supervisor}{\blankfield}
+\newcommand{\SubmissionDate}{\blankfield} % DD/MM/YYYY
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.42em}
+\setlength{\emergencystretch}{1.5em}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.16}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\titleformat{\section}{\fontsize{12}{14}\selectfont\bfseries}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{1.05em}{0.35em}
+\newcommand{\subhead}[1]{\par\addvspace{0.4em}\textbf{#1}\par\nobreak}
+\newcommand{\unitE}{\ensuremath{\mathrm{kJ\,mol^{-1}}}}
+\newcommand{\doi}[1]{\href{https://doi.org/#1}{doi:\,#1}}
+\newcommand{\archivebase}{https://github.com/az87988799/BG6022-v4/blob/9aaa4ae40dabe83ef496f71b4434f7f4987b2089}
+\raggedbottom
+\begin{document}
+
+\textbf{BG6023 MSc Research I}\hfill CA1 Research Proposal\par
+\vspace{0.25em}
+{\fontsize{12}{15}\selectfont\bfseries
+Evidence Reuse and Conformer Selection in Auto-ORCA\par}
+\begin{tabularx}{\linewidth}{@{}l Y l Y@{}}
+Student name & \StudentName & Student ID & \StudentID \\
+Supervisor   & \Supervisor  & Date of submission & \SubmissionDate
+\end{tabularx}
+
+\section{Introduction and Background}
+An ORCA output can answer several questions about a molecule, but the answer
+depends on what was calculated. Two single-point energies at the same geometry
+can show how an implicit solvent changes the electronic energy. A researcher
+asking for a hydration free energy also needs a thermodynamic model and defined
+standard states. This distinction matters when a large language model (LLM)
+interprets density functional theory (DFT) calculations for a user.
+ORCA supplies the quantum chemistry methods~\cite{neese}. Jacobs and Pollice
+tested whether an LLM could generate executable ORCA inputs~\cite{jacobs},
+and the El Agente Quntur system used ORCA results to guide the interpretation
+of multistep investigations~\cite{quntur}.
+
+Conformer screening poses a related decision. A flexible molecule can have
+several low-energy shapes, and a researcher may be able to afford DFT
+calculations for only a few of them. Multilevel workflows such as CENSO use
+inexpensive calculations to screen candidates before refining their
+energies~\cite{censo}. Auto-ORCA, the prototype developed in this project,
+turns a research question into ORCA jobs, retains the input geometries and
+raw outputs, and lets a single agent choose what to run next. For a laboratory
+using one workstation, each additional job must justify its computational cost.
+
+\section{Problem Statement}
+In an earlier trial of Auto-ORCA, seven of eight ORCA jobs terminated normally,
+yet none of the seven research requests met all its delivery requirements.
+For example, six completed points in a butane torsion scan still left a
+requested endpoint missing~\cite{trial}. This makes the agent's decision
+after a calculation a natural subject for evaluation.
+
+In the project's ethanol pilot, B3LYP calculations at fixed geometry gave
+water-minus-gas electronic energy differences of $-16.61$ and $-18.28$~\unitE{}
+with def2-SVP and def2-TZVP, respectively. Water was represented by a
+conductor-like polarizable continuum model (CPCM). Those values establish
+the sign of the electronic effect. A standard hydration free energy remains
+undetermined from those records. In a separate pilot, ORCA ranked two sets
+of four and six fixed \emph{n}-hexane geometries. The six-candidate set spanned
+$12.61$~\unitE{}~\cite{archive}. Both sets were evaluated in full. The open
+question is how reliably the agent can find the lowest-energy geometry in
+a fresh set with just four queries.
+
+\section{Aim, Objectives and Research Questions}
+\textbf{Aim.} To test how reliably Auto-ORCA can answer questions from existing
+DFT evidence and allocate a fixed number of new calculations when that evidence
+is incomplete.
+
+\textbf{Objective 1.} Measure the proportion of eight question pairs answered
+correctly with and without an explicit check of the available evidence.
+\emph{RQ1. Does checking the requested quantity and calculation conditions
+reduce unsupported answers while preserving answers the files can support?}
+
+\textbf{Objective 2.} Compare strategies for selecting four geometries for
+DFT evaluation on six held-out molecules.
+\emph{RQ2. How often does feedback from early DFT energies help Auto-ORCA
+recover the lowest-energy candidate, and how much energy does it miss?}
+
+\clearpage
+\section{Methodology}
+\subhead{Study 1 \enspace Answering paired questions from the same files}
+I will prepare one gas-phase and one CPCM-water B3LYP/def2-SVP single-point
+output for each of eight neutral, closed-shell organic molecules held out from
+development. Each pair of calculations will use identical coordinates. For four
+molecules the two questions will reverse the direction of the energy difference.
+For two more, the target will change from that difference to a standard
+hydration free energy. For the final two, I will withhold the water output
+and ask first for the available gas-phase energy and separately for the solvent
+effect. Each pair thus shares exactly the same files. Ethanol will serve as a
+development example.
+
+I will compare the existing agent with the same agent prompted to identify the
+target quantity, match geometry and conditions, and cite the source of each
+value before deciding whether further work is needed. Both will have the same
+read-only files, tools, model version and call limit. Each question will be
+asked in a fresh session twice per condition (64 sessions), with the order of
+conditions counterbalanced. A request to rerun ORCA will be recorded without
+launching a job. I will write a reference answer from each raw output and
+have a second chemistry reader check the values and missing prerequisites
+before either condition sees a question.
+
+A pair passes a repeat only if both answers identify what the files support.
+For a numerical answer I will require the correct sign, units, supporting
+output lines and agreement within $0.1$~\unitE{} for a difference, or
+$10^{-5}$~hartree for a total energy. When evidence is insufficient,
+the answer must withhold the number and name the missing calculation or
+thermodynamic information. I will score anonymised responses
+against the frozen key and report paired counts per molecule. I will also
+count unsupported numbers among unanswerable questions, and omissions and
+unnecessary rerun requests among answerable questions.
+
+\subhead{Study 2 \enspace Selecting four conformers without seeing the full ranking}
+For six additional neutral, flexible molecules containing C, H and O, I will
+generate candidates with a fixed embedding seed and relax them with the MMFF94
+force field. I will remove duplicates using a symmetry-aware heavy-atom
+root-mean-square displacement cutoff of 0.35~\AA{} and retain the first eight
+distinct geometries in generation order. MMFF94 and the GFN2-xTB tight-binding
+method will rank those same coordinates. I will compute all 48 gas-phase
+$r^2$SCAN-3c single-point reference energies, verify convergence, and withhold
+the table from the selectors. Looking up one energy will count as one DFT
+evaluation for every selector.
+
+The first rule takes the four lowest MMFF94 candidates. The second takes the
+lowest member of each distinct torsion family in MMFF94 order, then fills spare
+places from the same ranking. Families will be defined in advance by the
+anti and two gauche regions of designated torsions. In two further conditions,
+Auto-ORCA receives both rankings and the family labels and starts with the
+MMFF94 minimum. In one condition it commits to the remaining three choices
+immediately. In the other it sees the DFT energy after each choice. This
+comparison isolates the information in the feedback. Each fixed rule runs
+once. Each agent condition runs three times per molecule in fresh sessions
+with the same model and limits. A session that ends before making four
+selections counts as a miss. I will report its number of completed
+queries and mark the four-query energy comparison as missing.
+
+\clearpage
+\subhead{How to score a conformer selection}
+For each molecule I will score a hit when the best selected geometry lies
+within $0.01$~\unitE{} of the lowest reference energy in its eight-candidate
+set. I will also report the energy missed, in \unitE{},
+\[
+  \min_{c\in Q} E_{\mathrm{DFT}}(c)-\min_{c\in S} E_{\mathrm{DFT}}(c),
+  \qquad |Q|=4,\quad |S|=8,
+\]
+where $Q$ contains the four queried geometries and $S$ all eight candidates.
+I will average repeats within each molecule and report paired differences
+in hit rate and energy missed, alongside individual cases. I will record
+model calls, tokens and CPU core-hours, costing reference generation once.
+
+\section{Expected Outcomes and Significance}
+I expect the explicit evidence check to help most when a familiar output is
+used to ask for a different physical quantity. For conformers, I expect the
+adaptive procedure to help chiefly when the two inexpensive rankings disagree.
+If the fixed rules find the same minima at lower cost, they would be preferable
+for those molecules.
+The deliverables will be a scored set of follow-up questions, six candidate
+energy tables and a record of each selection. These will let computational
+chemists inspect a recommendation against the underlying calculation. Findings
+will apply to the tested model, molecular set and fixed geometries. Establishing
+equilibrium populations would require additional sampling and free energies.
+
+\section{Timeline}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.34\linewidth}
+  c c Y@{}}
+\toprule
+\textbf{Task} & \shortstack{\textbf{Start}\\(week)} & \shortstack{\textbf{End}\\(week)} & \textbf{Output} \\
+\midrule
+Review literature and pilots    & 1 & 2 & Case definitions and scoring rules \\
+Pilot and freeze protocols      & 3 & 4 & Checked keys, candidate lists and budget \\
+Collect paired answers          & 5 & 6 & Anonymised answers and decision logs \\
+Evaluate conformer selection    & 5 & 8 & DFT reference tables and query sequences \\
+Audit and analyse outcomes      & 9 & 10 & Paired comparisons and cost tables \\
+Write up and present            & 11 & 12 & Research paper and presentation \\
+\bottomrule
+\end{tabularx}
+
+\section{Resources}
+The study requires the local ORCA~6.1.1 installation, the ORCA Python
+Interface, Python, RDKit, xTB, one LLM endpoint and a chemistry reader.
+The workstation will run one ORCA job at a time on up to four cores with
+1~GiB total memory and 192~MB MaxCore per process. The two studies require
+16 solvent/gas jobs and 48 conformer reference jobs. I will cap the total
+at 80 ORCA starts including pilots and retries, and each of the 100 planned
+agent sessions at eight model calls. If a reference fails, I will log the cause and
+use a prespecified reserve molecule only before unblinding. An incomplete
+set will be reported if the budget expires. The study uses generated molecular
+structures and involves no human participants. I will restrict model access
+to the study files, protect credentials and share inputs and scoring scripts
+under their applicable licences.
+
+\clearpage
+\renewcommand{\bibsection}{\section{References}}
+\setlength{\bibsep}{0.65em}
+\begin{thebibliography}{9}
+\bibitem{neese}
+F. Neese. Software update: The ORCA program system---version 6.0.
+\emph{WIREs Computational Molecular Science} 15 (2025), e70019.
+\doi{10.1002/wcms.70019}.
+
+\bibitem{jacobs}
+P. F. Jacobs and R. Pollice. Developing large language models for quantum
+chemistry simulation input generation. \emph{Digital Discovery} 4 (2025),
+762--775. \doi{10.1039/D4DD00366G}.
+
+\bibitem{quntur}
+J. B. P\'erez-S\'anchez, Y. Zou, J. A. Campos-Gonzalez-Angulo, et al.
+El Agente Quntur: A research collaborator agent for quantum chemistry.
+\emph{Chem} (2026), 103259. \doi{10.1016/j.chempr.2026.103259}.
+
+\bibitem{censo}
+S. Grimme, F. Bohle, A. Hansen, P. Pracht, S. Spicher and M. Stahn.
+Efficient quantum chemical calculation of structure ensembles and free
+energies for nonrigid molecules. \emph{Journal of Physical Chemistry A}
+125 (2021), 4039--4054. \doi{10.1021/acs.jpca.1c00971}.
+
+\bibitem{trial}
+Auto-ORCA project. \emph{Seven-task evaluation of the frozen Auto-ORCA
+workflow} (2026). Experiment report, 20--21 October.
+\href{\archivebase/docs/acceptance/code-as-tools-step7-refreeze-3/report.md}
+{Per-task execution records and independent reviews}.
+
+\bibitem{archive}
+Auto-ORCA project. \emph{Archived ORCA calculation results} (2026).
+Project data at revision \texttt{9aaa4ae4}.
+\href{\archivebase/FinalReport-LaTeX/data/T5-environments.csv}{Ethanol
+solvent and gas energies (T5)} and
+\href{\archivebase/FinalReport-LaTeX/data/T2-candidates.csv}{\emph{n}-hexane
+candidate energies (T2)}.
+\end{thebibliography}
+\end{document}
