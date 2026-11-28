@@ -1,0 +1,161 @@
+% !TeX program = xelatex
+% UTF-8。用 XeLaTeX 编译两次即可解析交叉引用。
+\documentclass[12pt,a4paper]{article}
+\usepackage[UTF8,scheme=plain,heading=false,fontset=none]{ctex}
+\IfFontExistsTF{SimSun}
+  {\setCJKmainfont[BoldFont=SimHei]{SimSun}}
+  {\IfFontExistsTF{Noto Serif CJK SC}
+    {\setCJKmainfont{Noto Serif CJK SC}}
+    {\setCJKmainfont[BoldFont=FandolSong-Bold.otf]{FandolSong-Regular.otf}}}
+\usepackage[margin=1in]{geometry}
+\usepackage{array,tabularx,booktabs,titlesec,setspace}
+\usepackage[table]{xcolor}
+\usepackage[numbers]{natbib}
+\usepackage[unicode,hidelinks]{hyperref}
+\hypersetup{pdftitle={面向 DFT 初学者的小分子量子化学计算：Auto-ORCA 与加载 ORCA 技能的通用智能体比较},
+  pdfauthor={CHEN GENG},pdflang={zh-CN}}
+\singlespacing
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.36em}
+\setlength{\tabcolsep}{5pt}
+\setlength{\emergencystretch}{1.2em}
+\renewcommand{\arraystretch}{1.16}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\titleformat{\section}{\normalsize\bfseries}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{0.80em}{0.32em}
+\newcommand{\subhead}[1]{\par\addvspace{0.38em}\textbf{#1}\par\nobreak}
+\newcommand{\doi}[1]{\href{https://doi.org/#1}{doi:\,#1}}
+\newcommand{\blankfield}{\rule{3.5cm}{0.35pt}}
+\newcommand{\StudentName}{CHEN GENG}
+\newcommand{\StudentID}{\blankfield}
+\newcommand{\Supervisor}{\blankfield}
+\newcommand{\SubmissionDate}{\blankfield} % DD/MM/YYYY
+\raggedbottom
+\begin{document}
+\textbf{BG6023 硕士研究 I}\hfill CA1 研究提案\par
+\textbf{项目名称\quad 面向 DFT 初学者的小分子量子化学计算}\\
+\textbf{专用 Auto-ORCA 与加载 ORCA 技能的通用智能体比较}\par
+\begin{tabularx}{\linewidth}{|P{0.45\linewidth}|Y|}
+\hline
+\rowcolor[HTML]{F2F2F2}\textbf{项目} & \textbf{信息} \\ \hline
+学生姓名 & \StudentName \\ \hline
+学号 & \StudentID \\ \hline
+导师 & \Supervisor \\ \hline
+提交日期 & \SubmissionDate \\ \hline
+\end{tabularx}
+
+\section{引言与研究背景}
+本研究面向掌握基础化学、刚开始用 ORCA 做密度泛函理论（DFT）计算的学生和研究人员。以正丁烷为例，初学者可能想知道给定的反式与邻交构象哪一个电子能更低。要回答这个问题，需要保留两套几何，在相同理论水平下分别计算，核对是否收敛，再按约定顺序取差。即使两个作业都正常结束，调换输出文件的标签也会把构象排序写反。
+
+Jacobs 与 Pollice 研究了如何从自然语言生成 ORCA 输入文件\cite{jacobs}。Quntur 的作者进一步比较了专用智能体与加载 ORCA 技能的通用智能体\cite{quntur}。在材料计算中，DFT-Agent Bench 发现部分高分答案缺少完整的求解器执行记录\cite{dftbench}。Lee 与 Rondinelli 在多参考量子化学研究中发现，引入专家规则后，目标跃迁的覆盖率由 24.9\% 增至 44.1\%，而在两种流程都得到结果的跃迁上，平均绝对误差并未随之减小\cite{lee}。对于初学者，核对工具完成了哪些计算、数值取自哪份输出，是判断答案可信程度的起点。
+
+\section{研究问题陈述}
+在我的前期正丁烷扭转扫描中，ORCA 完成了六个角度的计算，却遗漏了题目指定的一个端点。单看作业状态会掩盖这个缺口。本项目要查明，在相同题目和资源预算下，专用 Auto-ORCA 对作业的组织、检查和反馈处理，在哪些小分子任务上能交付更完整的答案，以及这些收益需要多少额外计算或人工复核。
+
+\section{研究目的、目标与问题}
+\textbf{总体目的}\quad 比较两种智能体在 36 项小分子计算中的独立完成能力、数值可靠性及成本，并用原始作业记录解释差异。
+
+\textbf{目标一}\quad 测量预算内独立通过率。两种智能体各能完成哪些题目，与经复核的人工 ORCA 结果及固定脚本基线相比表现如何？
+
+\textbf{目标二}\quad 比较双方均得到有效结果时各物理量的误差，并计量作业启动次数、计算时间和人工用时。简单单点与多步任务的差异有多大？
+
+\textbf{目标三}\quad 在四种相同的作业异常下比较实际恢复动作。哪些动作避免了重复计算，哪些遗漏或错误最终影响了科学结论？
+
+\clearpage
+\section{研究方法}
+\subhead{任务与科学参照}
+B01--B36 共 36 题，按主要分子或分子离子计有 34 个物种。顺反异构体和不同质子化态分别计数，同位素、构象和聚集体归入母物种。题目与坐标取材于 Quntur 补充材料、ChemGraph 数据集、NIST CCCBDB、GMTKN55 及 FrontierChallenge 第 199 题\cite{quntur,chemgraph,nist,gmtkn,frontier}。逐题登记来源版本、坐标、电荷、自旋多重度、理论水平、单位和所需原始文件。下表按每题的主要交付物归类。
+
+\begin{tabularx}{\linewidth}{@{}P{0.19\linewidth}P{0.31\linewidth}Y@{}}
+\toprule
+\textbf{任务} & \textbf{题号（省略 B）} & \textbf{代表性判断} \\
+\midrule
+由名称建模并优化 & 02、12、18 & 从“甲醇”建立结构，对应初末原子编号，在收敛几何上读 C--O 键长。\\
+优化给定几何 & 19、23、29、33 & 在甲酸中区分羰基氧与羟基氧，分别测量两个 C--O 键长。\\
+优化后计算振动 & 01、04、08、14、25、31、32 & 根据原子位移辨认甲醛 C=O 伸缩。二氧化碳须找全一对简并弯曲模式。\\
+固定几何的电学与轨道性质 & 03、05、11、13、20、21、28、35、36 & 苯与硝基苯的偶极矩模长和平均极化率取自不同输出量。轨道能隙须核对占据数。\\
+由分量计算能差 & 06、07、09、10、15、16、17、22、24、26、27、30、34 & 乙酸和乙酸根各在同一几何上求水相减气相电子能。水二聚体解离能取两倍单体能量减去二聚体能量。\\
+\bottomrule
+\end{tabularx}
+
+我将按题面条件独立运行人工 ORCA，保存输入、原始输出、几何和读数位置。第二位读者复核数值提取与单位换算。用独立复算估计数值波动，为能量、几何、频率和电学性质分别设容差。B01 研究水与重水的同位素频移，改变核质量时保持力常数不变。B08 的实验基频用于解释谐振近似的偏差，流程复现性则依据同理论水平下的人工谐振频率判定。B15 删除坐标注释中的旧能量，B27 保留团簇几何并核对乙酸与水三聚体的原子归属。
+
+\subhead{四种工作流与独立作答}
+人工组逐题编写输入和读数。固定脚本组在禁用大语言模型的条件下执行预设流程。专用 Auto-ORCA 根据运行反馈决定下一步。通用智能体加载 ORCA 技能（Skill），自行选择准备、提交、查询和提取操作。两种智能体接收相同题面、名称或坐标、理论水平与资源限额，尽可能使用相同模型、ORCA 版本和硬件，并登记差异。每次作答都使用独立目录，智能体另开会话，参考答案对自动化组隐藏。各题均要求在本次作答中实际启动 ORCA。
+
+两个智能体各做 36 题，其中预定的 12 题各另做两次，故每个系统 $36+2\times12=60$ 次。人工与固定脚本各做 36 次，四组共 $60+60+36+36=192$ 次正式作答。人工参考即人工组首次作答，校准容差的复算另记。单题可能含多个组分作业或重试，ORCA 实际启动数逐次记录。
+
+\clearpage
+\subhead{分批、判分与配对分析}
+第 8、9 周各测 18 题，每批含 6 道重复题，两种智能体合计每批 60 次作答。首批为 B01、02、05、06、07、08、11、14、16、18、19、21、22、24、27、29、33、35，余题归第二批。两批中各做三次的题合计为 B01、02、04、05、06、09、12、14、20、24、31、32。交替安排两种智能体的先后顺序。批次间只核对记录完整性，两批结束后统一评分。
+
+每次作答须完成所需计算，使用题目指定的分子与方法，提交可核验的当次启动记录和原始输出，并给出符合题目标准的数值、单位与结论。四项均满足才算通过。智能体主评分只计预算内独立完成的作答。分别报告首次即通过、自主修正后通过及需人工纠正的次数。超时、未启动、未收敛和缺乏证据的作答均保留在计划分母中，并记录原因。
+
+对工作流 $s$ 的第 $i$ 题，记计划作答数为 $r_{si}$、通过数为 $c_{si}$。四组均按题等权计分。主要指标为 Auto-ORCA 得分减去通用智能体得分，以百分点表示。
+\[
+ S_s=\frac{100}{36}\sum_{i=1}^{36}\frac{c_{si}}{r_{si}} .
+\]
+逐题列出双方均通过、仅一方通过及均未通过的情况（以该题至少一次独立通过计），并保留每题的通过次数。按题目和重复序号配对，在双方均取得有效数值时，计算各自相对人工参考的绝对误差。按物理量分别报告平均绝对误差、单位和配对样本数。依次剔除共享苯、乙酸或丁二烯的题组，观察总体分差方向是否改变。各组统计实际启动数、总用时、可得的核时、模型用量和人工时间，计入失败消耗。人工和脚本的一次性准备时间单列。
+
+\subhead{作业异常与恢复诊断}
+先在开发题上分别复现优化中断、频率文件缺失、作业仍在运行和必需计算预算耗尽四种状态，并预先写明可接受的处置。例如，作业仍在运行时先查询状态，缺频率文件时核对已有输出及剩余额度再决定是否补算。第 9 周给两种智能体各呈现四种状态一次，共 8 场诊断，另列于正式评分之外。比较系统提出的动作与实际动作，记录额外启动数、恢复用时、成本与最终科学检查。对结论不同的个案，逐步追溯分子识别、作业执行、数值提取和化学解释。例如，对 B31 核对原子位移能否支持二氧化硫弯曲模式的归属，对 B36 则核查轨道占据数与能隙单位。
+
+\section{预期结果与意义}
+预期产出一张 36 题、四种工作流的通过次数表，以及误差与成本图。简单单点题可用于估计准备和读数开销。若两种智能体在优化后振动分析或多组分能差上得分不同，将核查差异出现在几何传递、模式归属还是能量组合。若得分接近，则考察是否有一方花了更多时间重算或复核。带原始输出的实例可供初学者核查自己的计算。结论限于所测分子、方法与系统配置，八场诊断用于解释具体案例。初学者的学习效果需另行研究。
+
+\clearpage
+\section{时间安排}
+\begin{tabularx}{\linewidth}{@{}P{0.24\linewidth}ccY@{}}
+\toprule
+\textbf{任务} & \textbf{开始周} & \textbf{结束周} & \textbf{可检查的交付物} \\
+\midrule
+界定问题与题目 & 1 & 1 & 36 份任务规格和来源索引，注明结构、方法、目标量及减法方向。\\
+建立人工参照 & 2 & 2 & 36 题人工参考表、原始输出索引、逐性质容差及第二读者复核记录。\\
+改进 Auto-ORCA & 3 & 3 & 基准外开发题的题意与实际输入对照表，每处修正用原例及一个新例复测。\\
+恢复与读数追溯 & 4 & 4 & 四种作业状态的动作与成本记录，以及一例多组分能差的完整来源。\\
+封装通用智能体技能 & 5 & 5 & 可独立安装的 Skill 及单点、优化后频率、双组分能差三项实际运行记录。\\
+验证评分工具 & 6 & 6 & 反转能差、遗漏组分、选错模式及简并模式互换的评分结果和人工判定依据。\\
+冻结正式条件 & 7 & 7 & 版本、资源预算、重试上限、分批表、重复题清单及两批耗时估计。\\
+运行第一批 & 8 & 8 & 18 题的 60 次智能体作答、人工和脚本基线及原始文件索引。\\
+运行第二批与诊断 & 9 & 9 & 其余 18 题的 60 次智能体作答、两项基线及 8 场恢复诊断。\\
+分析与撰写 & 10 & 10 & 逐题配对结果、分性质误差和成本图、可复核的失败案例及研究报告。\\
+\bottomrule
+\end{tabularx}
+
+\section{资源、可行性与风险}
+需要获许可的 ORCA 计算环境、固定脚本、两种智能体及模型额度、原始输出存储空间和一位独立复核者。第 7 周用开发作业的实测耗时、核时、模型用量和人工用时估算两批负载。重点估算 B01 水分子的耦合簇（CCSD）频率计算，以及 B32 中性 16 原子分子的 B3LYP/6-31G* 优化和频率计算\cite{frontier}。为两系统设定共同的逐题时间、计算资源和重试上限，留出失败与复核工时。若某题仍超限，保留该次失败和消耗。若服务中断，先核对已启动作业，按预定预算恢复并记录未完成范围。
+
+研究使用公开分子资料与计算记录。逐项登记来源及许可，在允许范围内提供题面、判分规则和原始证据。开发题与正式题分开管理，参考值、复核记录和模型凭据与作答目录隔离。仅记录研究操作者的用时。若两智能体的底层模型或运行环境无法匹配，解释结果时将差异归于所测系统整体。
+
+\clearpage
+\renewcommand{\bibsection}{\section{参考文献}}
+\setlength{\bibsep}{0.7em}
+\begin{thebibliography}{9}
+\raggedright
+\bibitem{jacobs}
+P. F. Jacobs and R. Pollice. Developing large language models for quantum chemistry simulation input generation.
+\emph{Digital Discovery} 4 (2025), 762--775. \doi{10.1039/D4DD00366G}.
+\bibitem{quntur}
+J. B. P\'erez-S\'anchez, Y. Zou, J. A. Campos-Gonzalez-Angulo, et al. El Agente Quntur: A research collaborator agent for quantum chemistry.
+\emph{Chem} (2026), 103259. \doi{10.1016/j.chempr.2026.103259}.
+\bibitem{dftbench}
+S. Liu, J. Yang, W. Wan, J. Han, J. Li and T. Deng. DFT-Agent Bench: Scaffold effects and execution provenance in autonomous DFT.
+\emph{arXiv} (2026), \href{https://arxiv.org/abs/2611.10629v1}{2611.10629v1}（预印本）.
+\bibitem{lee}
+V. C. Lee and J. M. Rondinelli. Can autonomous LLM agents execute multireference quantum chemistry calculations?
+\emph{arXiv} (2026), \href{https://arxiv.org/abs/2609.13357v1}{2609.13357v1}（预印本）.
+\bibitem{chemgraph}
+T. Pham, A. Tanikanti and M. Ke\c{c}eli. Evaluation dataset for ChemGraph: An agentic framework for computational chemistry workflows.
+\emph{Zenodo} (2025), v1.3. \doi{10.5281/zenodo.17290519}.
+\bibitem{nist}
+National Institute of Standards and Technology. Computational Chemistry Comparison and Benchmark Database.
+\emph{NIST Standard Reference Database} 101. \doi{10.18434/T47C7Z}.
+\bibitem{gmtkn}
+L. Goerigk, A. Hansen, C. Bauer, S. Ehrlich, A. Najibi and S. Grimme. A look at the density functional theory zoo with the advanced GMTKN55 database for general main group thermochemistry, kinetics and noncovalent interactions.
+\emph{Physical Chemistry Chemical Physics} 19 (2017), 32184--32215. \doi{10.1039/C7CP04913G}.
+\bibitem{frontier}
+Apodex. FrontierChallenge, task 199.
+\href{https://huggingface.co/datasets/apodex/FrontierChallenge/tree/main/tasks/task_199_b3lyp_opt_freq_minimum}{公开任务说明与初始结构} (2026).
+\end{thebibliography}
+\end{document}
